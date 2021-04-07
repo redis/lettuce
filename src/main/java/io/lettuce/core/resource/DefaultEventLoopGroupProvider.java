@@ -31,7 +31,6 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.DefaultPromise;
-import io.netty.util.concurrent.DefaultThreadFactory;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ImmediateEventExecutor;
@@ -59,7 +58,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
 
     private final int numberOfThreads;
 
-    private final ThreadFactoryProvider threadFactoryProvider;
+    private final io.lettuce.core.resource.ThreadFactoryProvider threadFactoryProvider;
 
     private volatile boolean shutdownCalled = false;
 
@@ -80,6 +79,23 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * @since 6.0
      */
     public DefaultEventLoopGroupProvider(int numberOfThreads, ThreadFactoryProvider threadFactoryProvider) {
+
+        LettuceAssert.isTrue(numberOfThreads > 0, "Number of threads must be greater than zero");
+        LettuceAssert.notNull(threadFactoryProvider, "ThreadFactoryProvider must not be null");
+
+        this.numberOfThreads = numberOfThreads;
+        this.threadFactoryProvider = threadFactoryProvider;
+    }
+
+    /**
+     * Creates a new instance of {@link DefaultEventLoopGroupProvider}.
+     *
+     * @param numberOfThreads number of threads (pool size)
+     * @param threadFactoryProvider provides access to {@link io.lettuce.core.resource.ThreadFactoryProvider}.
+     * @since 6.1.1
+     */
+    public DefaultEventLoopGroupProvider(int numberOfThreads,
+            io.lettuce.core.resource.ThreadFactoryProvider threadFactoryProvider) {
 
         LettuceAssert.isTrue(numberOfThreads > 0, "Number of threads must be greater than zero");
         LettuceAssert.notNull(threadFactoryProvider, "ThreadFactoryProvider must not be null");
@@ -170,7 +186,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * @since 6.0
      */
     protected <T extends EventLoopGroup> EventExecutorGroup doCreateEventLoopGroup(Class<T> type, int numberOfThreads,
-            ThreadFactoryProvider threadFactoryProvider) {
+            io.lettuce.core.resource.ThreadFactoryProvider threadFactoryProvider) {
         return createEventLoopGroup(type, numberOfThreads, threadFactoryProvider);
     }
 
@@ -209,8 +225,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      * @throws IllegalArgumentException if the {@code type} is not supported.
      * @since 5.3
      */
-    private static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads,
-            ThreadFactoryProvider factoryProvider) {
+    static <T extends EventExecutorGroup> EventExecutorGroup createEventLoopGroup(Class<T> type, int numberOfThreads,
+            io.lettuce.core.resource.ThreadFactoryProvider factoryProvider) {
 
         logger.debug("Creating executor {}", type.getName());
 
@@ -322,7 +338,7 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
      *
      * @since 6.0
      */
-    public interface ThreadFactoryProvider {
+    public interface ThreadFactoryProvider extends io.lettuce.core.resource.ThreadFactoryProvider {
 
         /**
          * Return a {@link ThreadFactory} for the given {@code poolName}.
@@ -330,18 +346,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
          * @param poolName a descriptive pool name. Typically used as prefix for thread names.
          * @return the {@link ThreadFactory}.
          */
-        ThreadFactory getThreadFactory(String poolName);
-
-    }
-
-    enum DefaultThreadFactoryProvider implements ThreadFactoryProvider {
-
-        INSTANCE;
-
         @Override
-        public ThreadFactory getThreadFactory(String poolName) {
-            return new DefaultThreadFactory(poolName, true);
-        }
+        ThreadFactory getThreadFactory(String poolName);
 
     }
 

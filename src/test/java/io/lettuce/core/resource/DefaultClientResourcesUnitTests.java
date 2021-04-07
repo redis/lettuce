@@ -19,7 +19,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
+import io.lettuce.test.Wait;
 import org.junit.jupiter.api.Test;
 
 import reactor.test.StepVerifier;
@@ -33,6 +36,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
+import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 
@@ -262,4 +266,55 @@ class DefaultClientResourcesUnitTests {
         copyTimer.stop();
         timer.stop();
     }
+
+    @Test
+    void shouldApplyThreadFactory() {
+
+        ClientResources clientResources = ClientResources.builder().threadFactoryProvider(name -> runnable -> {
+            return new MyThread(runnable, name);
+        }).ioThreadPoolSize(2).computationThreadPoolSize(2).build();
+
+        HashedWheelTimer hwt = (HashedWheelTimer) clientResources.timer();
+        assertThat(hwt).extracting("workerThread").isInstanceOf(MyThread.class);
+
+        AtomicReference<Thread> eventExecutorThread = new AtomicReference<>();
+        EventExecutor eventExecutor = clientResources.eventExecutorGroup().next();
+        eventExecutor.submit(() -> eventExecutorThread.set(Thread.currentThread())).awaitUninterruptibly();
+
+        AtomicReference<Thread> eventLoopThread = new AtomicReference<>();
+        NioEventLoopGroup eventLoopGroup = clientResources.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+        eventLoopGroup.next().submit(() -> eventLoopThread.set(Thread.currentThread())).awaitUninterruptibly();
+
+        clientResources.eventLoopGroupProvider().release(eventLoopGroup, 0, 0, TimeUnit.SECONDS);
+
+        clientResources.shutdown(0, 0, TimeUnit.SECONDS);
+
+        assertThat(MyThread.started).hasValue(5);
+        Wait.untilEquals(5, () -> MyThread.finished).waitOrTimeout();
+    }
+
+    static class MyThread extends Thread {
+
+        public static AtomicInteger started = new AtomicInteger();
+
+        public static AtomicInteger finished = new AtomicInteger();
+
+        public MyThread(Runnable target, String name) {
+            super(target, name);
+        }
+
+        @Override
+        public synchronized void start() {
+            started.incrementAndGet();
+            super.start();
+        }
+
+        @Override
+        public void run() {
+            super.run();
+            finished.incrementAndGet();
+        }
+
+    }
+
 }
