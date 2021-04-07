@@ -27,12 +27,22 @@ import io.lettuce.core.event.metrics.DefaultCommandLatencyEventPublisher;
 import io.lettuce.core.event.metrics.MetricEventPublisher;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceLists;
-import io.lettuce.core.metrics.*;
+import io.lettuce.core.metrics.CommandLatencyCollector;
+import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
+import io.lettuce.core.metrics.CommandLatencyRecorder;
+import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
+import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
+import io.lettuce.core.metrics.MetricCollector;
 import io.lettuce.core.resource.Delay.StatefulDelay;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
-import io.netty.util.concurrent.*;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.ImmediateEventExecutor;
+import io.netty.util.concurrent.PromiseCombiner;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -57,6 +67,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * <li>a {@code dnsResolver} which is a provided instance of {@link DnsResolver}.</li>
  * <li>a {@code nettyCustomizer} that is a provided instance of {@link NettyCustomizer}.</li>
  * <li>a {@code socketAddressResolver} which is a provided instance of {@link SocketAddressResolver}.</li>
+ * <li>a {@code threadFactoryProvider} to provide a {@link java.util.concurrent.ThreadFactory} for default timer, event loop and
+ * event executor instances.</li>
  * <li>a {@code timer} that is a provided instance of {@link io.netty.util.HashedWheelTimer}.</li>
  * <li>a {@code tracing} that is a provided instance of {@link Tracing}.</li>
  * </ul>
@@ -130,6 +142,8 @@ public class DefaultClientResources implements ClientResources {
 
     private final SocketAddressResolver socketAddressResolver;
 
+    private final ThreadFactoryProvider threadFactoryProvider;
+
     private final Timer timer;
 
     private final boolean sharedTimer;
@@ -139,6 +153,8 @@ public class DefaultClientResources implements ClientResources {
     private volatile boolean shutdownCalled = false;
 
     protected DefaultClientResources(Builder builder) {
+
+        threadFactoryProvider = builder.threadFactoryProvider;
 
         if (builder.eventLoopGroupProvider == null) {
             int ioThreadPoolSize = builder.ioThreadPoolSize;
@@ -150,7 +166,7 @@ public class DefaultClientResources implements ClientResources {
             }
 
             this.sharedEventLoopGroupProvider = false;
-            this.eventLoopGroupProvider = new DefaultEventLoopGroupProvider(ioThreadPoolSize);
+            this.eventLoopGroupProvider = new DefaultEventLoopGroupProvider(ioThreadPoolSize, threadFactoryProvider);
 
         } else {
             this.sharedEventLoopGroupProvider = builder.sharedEventLoopGroupProvider;
@@ -167,7 +183,7 @@ public class DefaultClientResources implements ClientResources {
             }
 
             eventExecutorGroup = DefaultEventLoopGroupProvider.createEventLoopGroup(DefaultEventExecutorGroup.class,
-                    computationThreadPoolSize);
+                    computationThreadPoolSize, threadFactoryProvider);
             sharedEventExecutor = false;
         } else {
             sharedEventExecutor = builder.sharedEventExecutor;
@@ -175,7 +191,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         if (builder.timer == null) {
-            timer = new HashedWheelTimer(new DefaultThreadFactory("lettuce-timer"));
+            timer = new HashedWheelTimer(threadFactoryProvider.getThreadFactory("lettuce-timer"));
             sharedTimer = false;
         } else {
             timer = builder.timer;
@@ -292,6 +308,8 @@ public class DefaultClientResources implements ClientResources {
         private Supplier<Delay> reconnectDelay = DEFAULT_RECONNECT_DELAY;
 
         private boolean sharedTimer;
+
+        private ThreadFactoryProvider threadFactoryProvider = DefaultThreadFactoryProvider.INSTANCE;
 
         private Timer timer;
 
@@ -523,6 +541,30 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
+         * Provide a default {@link ThreadFactoryProvider} to obtain {@link java.util.concurrent.ThreadFactory} for a
+         * {@code poolName}.
+         * <p>
+         * Applies only to threading resources created by {@link DefaultClientResources} when not configuring {@link #timer()},
+         * {@link #eventExecutorGroup()}, or {@link #eventLoopGroupProvider()}.
+         *
+         * @param threadFactoryProvider a provider to obtain a {@link java.util.concurrent.ThreadFactory} for a
+         *        {@code poolName}, must not be {@code null}.
+         * @return {@code this} {@link ClientResources.Builder}.
+         * @since 6.0.4
+         * @see #eventExecutorGroup(EventExecutorGroup)
+         * @see #eventLoopGroupProvider(EventLoopGroupProvider)
+         * @see #timer(Timer)
+         */
+        @Override
+        public ClientResources.Builder threadFactoryProvider(ThreadFactoryProvider threadFactoryProvider) {
+
+            LettuceAssert.notNull(threadFactoryProvider, "ThreadFactoryProvider must not be null");
+
+            this.threadFactoryProvider = threadFactoryProvider;
+            return this;
+        }
+
+        /**
          * Sets a shared {@link Timer} that can be used across different instances of {@link io.lettuce.core.RedisClient} and
          * {@link io.lettuce.core.cluster.RedisClusterClient} The provided {@link Timer} instance will not be shut down when
          * shutting down the client resources. You have to take care of that. This is an advanced configuration that should only
@@ -592,8 +634,8 @@ public class DefaultClientResources implements ClientResources {
         builder.commandLatencyRecorder(commandLatencyRecorder())
                 .commandLatencyPublisherOptions(commandLatencyPublisherOptions()).dnsResolver(dnsResolver())
                 .eventBus(eventBus()).eventExecutorGroup(eventExecutorGroup()).reconnectDelay(reconnectDelay)
-                .socketAddressResolver(socketAddressResolver()).nettyCustomizer(nettyCustomizer()).timer(timer())
-                .tracing(tracing());
+                .socketAddressResolver(socketAddressResolver()).nettyCustomizer(nettyCustomizer())
+                .threadFactoryProvider(threadFactoryProvider).timer(timer()).tracing(tracing());
 
         builder.sharedCommandLatencyCollector = sharedEventLoopGroupProvider;
         builder.sharedEventExecutor = sharedEventExecutor;
