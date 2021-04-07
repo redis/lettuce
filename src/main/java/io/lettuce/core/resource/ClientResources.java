@@ -60,10 +60,21 @@ public interface ClientResources {
     /**
      * Create a new {@link ClientResources} using default settings.
      *
-     * @return a new instance of a default client resources.
+     * @return a new instance of default client resources.
      */
     static ClientResources create() {
         return DefaultClientResources.create();
+    }
+
+    /**
+     * Create a new {@link ClientResources} using default settings.
+     *
+     * @param threadFactoryProvider provides a {@link java.util.concurrent.ThreadFactory} to create threads.
+     * @return a new instance of default client resources.
+     * @since 6.1.1
+     */
+    static ClientResources create(ThreadFactoryProvider threadFactoryProvider) {
+        return DefaultClientResources.builder().threadFactoryProvider(threadFactoryProvider).build();
     }
 
     /**
@@ -236,6 +247,23 @@ public interface ClientResources {
          * @since 5.1
          */
         Builder socketAddressResolver(SocketAddressResolver socketAddressResolver);
+
+        /**
+         * Provide a default {@link ThreadFactoryProvider} to obtain {@link java.util.concurrent.ThreadFactory} for a
+         * {@code poolName} to create threads.
+         * <p>
+         * Applies only to threading resources created by {@link ClientResources} when not configuring {@link #timer()},
+         * {@link #eventExecutorGroup()}, or {@link #eventLoopGroupProvider()}.
+         *
+         * @param threadFactoryProvider a provider to obtain a {@link java.util.concurrent.ThreadFactory} for a
+         *        {@code poolName}, must not be {@code null}.
+         * @return {@code this} {@link Builder}.
+         * @since 6.1.1
+         * @see #eventExecutorGroup(EventExecutorGroup)
+         * @see #eventLoopGroupProvider(EventLoopGroupProvider)
+         * @see #timer(Timer)
+         */
+        Builder threadFactoryProvider(ThreadFactoryProvider threadFactoryProvider);
 
         /**
          * Sets a shared {@link Timer} that can be used across different instances of {@link io.lettuce.core.RedisClient} and
