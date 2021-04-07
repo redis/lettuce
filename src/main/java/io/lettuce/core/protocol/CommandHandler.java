@@ -462,21 +462,26 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         TracedCommand<?, ?, ?> traced = CommandWrapper.unwrap(command, TracedCommand.class);
         TraceContextProvider provider = (traced == null ? clientResources.tracing().initialTraceContextProvider() : traced);
         Tracer tracer = clientResources.tracing().getTracerProvider().getTracer();
-        TraceContext context = provider.getTraceContext();
 
-        Tracer.Span span = tracer.nextSpan(context);
-        span.name(command.getType().name());
+        if (provider != null) {
 
-        if (tracedEndpoint != null) {
-            span.remoteEndpoint(tracedEndpoint);
-        } else {
-            span.remoteEndpoint(clientResources.tracing().createEndpoint(ctx.channel().remoteAddress()));
-        }
+            TraceContext context = provider.getTraceContext();
 
-        span.start(command);
+            Tracer.Span span = tracer.nextSpan(context);
+            span.name(command.getType().name());
 
-        if (traced != null) {
-            traced.setSpan(span);
+            if (tracedEndpoint != null) {
+                span.remoteEndpoint(tracedEndpoint);
+            } else {
+                span.remoteEndpoint(clientResources.tracing().createEndpoint(ctx.channel().remoteAddress()));
+            }
+
+            span.start(command);
+
+            if (traced != null) {
+                traced.setSpan(span);
+
+            }
         }
     }
 
