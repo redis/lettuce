@@ -175,11 +175,6 @@
     "allDeclaredConstructors": true
   },
   {
-    "name": "io.lettuce.core.api.sync.BaseRedisCommands",
-    "allPublicMethods": true,
-    "allDeclaredConstructors": true
-  },
-  {
     "name": "reactor.core.publisher.Mono"
   }
 ]
