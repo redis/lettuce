@@ -25,3 +25,9 @@ updates:
   - dependency-name: org.apache.derby:derby
     versions:
     - "> 10.14.2.0"
+  - dependency-name: org.hsqldb:hsqldb
+    versions:
+    - ">= 2.6.0"
+  - dependency-name: jakarta.servlet:jakarta.servlet-api
+    versions:
+    - ">= 5.0.0"
