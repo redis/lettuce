@@ -37,22 +37,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
-
-      - name: Set spring core 5.2
-        id: spring52
-        run: echo "::set-output name=version::$(./scripts/get_latest_version.sh spring-core 5.2)"
-      - name: Set spring batch 4.2
-        id: springbatch42
-        run: echo "::set-output name=version::$(./scripts/get_latest_version.sh batch/spring-batch-core 4.2)"
-
-      - name: Set spring core 5.1
-        id: spring51
-        run: echo "::set-output name=version::$(./scripts/get_latest_version.sh spring-core 5.1)"
-      - name: Set spring batch 4.1
-        id: springbatch41
-        run: echo "::set-output name=version::$(./scripts/get_latest_version.sh batch/spring-batch-core 4.1)"
-
       - name: Test with Spring 5.2 / Spring Batch 4.2 support
-        run: ./mvnw test -Dspring.version=${{steps.spring52.outputs.version}} -Dspring-batch.version=${{steps.springbatch42.outputs.version}}
+        run: ./mvnw test -Dspring.version=$(./scripts/get_latest_version.sh spring-core 5.2) -Dspring-batch.version=$(./scripts/get_latest_version.sh batch/spring-batch-core 4.2)
       - name: Test with Spring 5.1 / Spring Batch 4.1 support
-        run: ./mvnw test -Dspring.version=${{steps.spring51.outputs.version}} -Dspring-batch.version=${{steps.springbatch41.outputs.version}}
+        run: ./mvnw test -Dspring.version=$(./scripts/get_latest_version.sh spring-core 5.1) -Dspring-batch.version=$(./scripts/get_latest_version.sh batch/spring-batch-core 4.1)
