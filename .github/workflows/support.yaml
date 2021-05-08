@@ -38,26 +38,34 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
       - uses: actions/github-script@v4
-        id: spring51
+        id: set-result
         with:
           script: scripts/get_latest_version.sh spring-core 5.1
           result-encoding: string
+      - name: Get result
+        run: echo "spring51=${{steps.set-result.outputs.result}}" >> $GITHUB_ENV
       - uses: actions/github-script@v4
-        id: springbatch41
+        id: set-result
         with:
           script: scripts/get_latest_version.sh batch/spring-batch-core 4.1
           result-encoding: string
+      - name: Get result
+        run: echo "springbatch41=${{steps.set-result.outputs.result}}" >> $GITHUB_ENV
       - uses: actions/github-script@v4
-        id: spring52
+        id: set-result
         with:
           script: scripts/get_latest_version.sh spring-core 5.2
           result-encoding: string
+      - name: Get result
+        run: echo "spring52=${{steps.set-result.outputs.result}}" >> $GITHUB_ENV
       - uses: actions/github-script@v4
-        id: springbatch42
+        id: set-result
         with:
           script: scripts/get_latest_version.sh batch/spring-batch-core 4.2
           result-encoding: string
+      - name: Get result
+        run: echo "springbatch42=${{steps.set-result.outputs.result}}" >> $GITHUB_ENV
       - name: Test with Spring 5.2 / Spring Batch 4.2 support
-        run: ./mvnw test -Dspring.version=${{steps.spring52.outputs.result}} -Dspring-batch.version=${{steps.springbatch42.outputs.result}}
+        run: ./mvnw test -Dspring.version=${{ env.spring52 }} -Dspring-batch.version=${{ env.springbatch42 }}
       - name: Test with Spring 5.1 / Spring Batch 4.1 support
-        run: ./mvnw test -Dspring.version=${{steps.spring51.outputs.result}} -Dspring-batch.version=${{steps.springbatch41.outputs.result}}
+        run: ./mvnw test -Dspring.version=${{ env.spring51 }} -Dspring-batch.version=${{ env.springbatch41 }}
