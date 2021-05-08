@@ -38,6 +38,6 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
       - name: Test with Spring 5.2 / Spring Batch 4.2 support
-        run: ./mvnw test -Dspring.version=$(./scripts/get_latest_version.sh spring-core 5.2) -Dspring-batch.version=$(./scripts/get_latest_version.sh batch/spring-batch-core 4.2)
+        run: ./mvnw test -D"spring.version=$(./scripts/get_latest_version.sh spring-core 5.2)" -Dspring-batch.version="$(./scripts/get_latest_version.sh batch/spring-batch-core 4.2)"
       - name: Test with Spring 5.1 / Spring Batch 4.1 support
-        run: ./mvnw test -Dspring.version=$(./scripts/get_latest_version.sh spring-core 5.1) -Dspring-batch.version=$(./scripts/get_latest_version.sh batch/spring-batch-core 4.1)
+        run: ./mvnw test -D"spring.version=$(./scripts/get_latest_version.sh spring-core 5.1)" -Dspring-batch.version="$(./scripts/get_latest_version.sh batch/spring-batch-core 4.1)"
