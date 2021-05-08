@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-name: Java CI
+name: Spring/Spring Batch Support
 
 on: [push, pull_request]
 
@@ -37,7 +37,27 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
-      - name: Test with Maven Spring 5.2 support
-        run: ./mvnw test -Dspring.version=$(./scripts/get_latest_version.sh spring-core 5.2) -Dspring-batch.version=$(./scripts/get_latest_version.sh batch/spring-batch-core 4.2)
-      - name: Test with Maven Spring 5.1 support
-        run: ./mvnw test -Dspring.version=$(./scripts/get_latest_version.sh spring-core 5.1) -Dspring-batch.version=$(./scripts/get_latest_version.sh batch/spring-batch-core 4.1)
+      - uses: actions/github-script@v4
+        id: spring51
+        with:
+          script: ./scripts/get_latest_version.sh spring-core 5.1
+          result-encoding: string
+      - uses: actions/github-script@v4
+        id: springbatch41
+        with:
+          script: ./scripts/get_latest_version.sh batch/spring-batch-core 4.1
+          result-encoding: string
+      - uses: actions/github-script@v4
+        id: spring52
+        with:
+          script: ./scripts/get_latest_version.sh spring-core 5.2
+          result-encoding: string
+      - uses: actions/github-script@v4
+        id: springbatch42
+        with:
+          script: ./scripts/get_latest_version.sh batch/spring-batch-core 4.2
+          result-encoding: string
+      - name: Test with Spring 5.2 / Spring Batch 4.2 support
+        run: ./mvnw test -Dspring.version=${{steps.spring52.outputs.result}} -Dspring-batch.version=${{steps.springbatch42.outputs.result}}
+      - name: Test with Spring 5.1 / Spring Batch 4.1 support
+        run: ./mvnw test -Dspring.version=${{steps.spring51.outputs.result}} -Dspring-batch.version=${{steps.springbatch41.outputs.result}}
