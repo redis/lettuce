@@ -28,6 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.CommandListenerWriter;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
@@ -425,7 +426,16 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     }
 
     public void disconnectDefaultEndpoint() {
-        ((DefaultEndpoint) defaultWriter).disconnect();
+
+        DefaultEndpoint defaultEndpoint;
+
+        if (defaultWriter instanceof CommandListenerWriter) {
+            defaultEndpoint = (DefaultEndpoint) ((CommandListenerWriter) defaultWriter).getDelegate();
+        } else {
+            defaultEndpoint = ((DefaultEndpoint) defaultWriter);
+        }
+
+        defaultEndpoint.disconnect();
     }
 
     @Override
