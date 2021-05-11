@@ -57,7 +57,7 @@ include::{ext-doc}/Pipelining-and-command-flushing.asciidoc[leveloffset=+2]
 
 === Connection Pooling
 
-include::{ext-doc}/Connection-Pooling-5.1.asciidoc[leveloffset=+2]
+include::{ext-doc}/Connection-Pooling.asciidoc[leveloffset=+2]
 
 === Custom commands
 
