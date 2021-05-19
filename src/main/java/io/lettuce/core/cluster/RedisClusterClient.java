@@ -18,6 +18,7 @@ package io.lettuce.core.cluster;
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,6 +34,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import io.lettuce.core.protocol.PushHandler;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -543,7 +545,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
-        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(writer, endpoint, codec,
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
                 getDefaultTimeout());
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
@@ -555,6 +557,24 @@ public class RedisClusterClient extends AbstractRedisClient {
                 connection.close();
             }
         });
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override that method.
+     *
+     * @param channelWriter the channel writer
+     * @param pushHandler the handler for push notifications
+     * @param codec codec
+     * @param timeout default timeout
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisConnectionImpl
+     */
+    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
+                                                                                  PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
+        return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout);
     }
 
     /**
@@ -639,7 +659,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
-        StatefulRedisClusterConnectionImpl<K, V> connection = new StatefulRedisClusterConnectionImpl<>(clusterWriter,
+        StatefulRedisClusterConnectionImpl<K, V> connection = newStatefulRedisClusterConnection(clusterWriter,
                 pooledClusterConnectionProvider, codec, getDefaultTimeout());
 
         connection.setReadFrom(ReadFrom.UPSTREAM);
@@ -660,6 +680,24 @@ public class RedisClusterClient extends AbstractRedisClient {
         return connectionMono.doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterConnection<K, V>) it).toFuture();
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisClusterConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override that method.
+     *
+     * @param channelWriter the channel writer
+     * @param pushHandler the handler for push notifications
+     * @param codec codec
+     * @param timeout default timeout
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisClusterConnectionImpl
+     */
+    protected <V, K> StatefulRedisClusterConnectionImpl<K,V> newStatefulRedisClusterConnection(RedisChannelWriter channelWriter,
+                                                                                               ClusterPushHandler pushHandler, RedisCodec<K,V> codec, Duration timeout) {
+        return new StatefulRedisClusterConnectionImpl(channelWriter, pushHandler, codec, timeout);
     }
 
     private <T, K, V> Mono<T> connect(Mono<SocketAddress> socketAddressSupplier, DefaultEndpoint endpoint,
