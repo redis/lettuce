@@ -42,23 +42,19 @@ class MyExtendedRedisClusterClientTest {
     protected String key = "key";
     protected String value = "value";
 
-    @BeforeAll
-    static void setupClient() {
+    @BeforeAll static void setupClient() {
         client = getRedisClusterClient();
     }
 
     static MyExtendedRedisClusterClient getRedisClusterClient() {
-        return new MyExtendedRedisClusterClient(null,
-                Collections.singletonList(RedisURI.create(host, port)));
+        return new MyExtendedRedisClusterClient(null, Collections.singletonList(RedisURI.create(host, port)));
     }
 
-    @AfterAll
-    static void shutdownClient() {
+    @AfterAll static void shutdownClient() {
         FastShutdown.shutdown(client);
     }
 
-    @Test
-    void testConnection() throws Exception {
+    @Test void testConnection() throws Exception {
         StatefulRedisClusterConnection<String, String> connection = client.connect();
         RedisAdvancedClusterAsyncCommands<String, String> commands = connection.async();
         assertThat(commands).isInstanceOf(RedisAdvancedClusterAsyncCommandsImpl.class);

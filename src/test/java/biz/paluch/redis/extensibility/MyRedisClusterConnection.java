@@ -27,10 +27,10 @@ import java.time.Duration;
  *
  * @author Julien Ruaux
  */
-@SuppressWarnings("unchecked")
-class MyRedisClusterConnection<K, V> extends StatefulRedisClusterConnectionImpl<K, V> {
+@SuppressWarnings("unchecked") class MyRedisClusterConnection<K, V> extends StatefulRedisClusterConnectionImpl<K, V> {
 
-    public MyRedisClusterConnection(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
+    public MyRedisClusterConnection(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
+            Duration timeout) {
         super(writer, pushHandler, codec, timeout);
     }
 }
