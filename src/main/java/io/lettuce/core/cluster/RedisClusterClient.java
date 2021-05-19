@@ -545,8 +545,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
-                getDefaultTimeout());
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, getDefaultTimeout());
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
@@ -573,7 +572,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return new instance of StatefulRedisConnectionImpl
      */
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
-                                                                                  PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
+            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
         return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout);
     }
 
@@ -695,8 +694,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param <V> Value Type
      * @return new instance of StatefulRedisClusterConnectionImpl
      */
-    protected <V, K> StatefulRedisClusterConnectionImpl<K,V> newStatefulRedisClusterConnection(RedisChannelWriter channelWriter,
-                                                                                               ClusterPushHandler pushHandler, RedisCodec<K,V> codec, Duration timeout) {
+    protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(
+            RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
         return new StatefulRedisClusterConnectionImpl(channelWriter, pushHandler, codec, timeout);
     }
 

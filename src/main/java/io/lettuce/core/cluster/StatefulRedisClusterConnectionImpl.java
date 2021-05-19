@@ -88,7 +88,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      * @param timeout Maximum time to wait for a response.
      */
     public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
-                                              Duration timeout) {
+            Duration timeout) {
 
         super(writer, timeout);
         this.pushHandler = pushHandler;
@@ -104,10 +104,10 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     protected RedisAdvancedClusterCommands<K, V> newRedisAdvancedClusterCommandsImpl() {
-        return clusterSyncHandler(async(), RedisAdvancedClusterCommands.class);
+        return clusterSyncHandler(RedisAdvancedClusterCommands.class);
     }
 
-    protected <T> T clusterSyncHandler(Object asyncApi, Class<?>... interfaces) {
+    protected <T> T clusterSyncHandler(Class<?>... interfaces) {
         return (T) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaces, syncInvocationHandler());
     }
 
