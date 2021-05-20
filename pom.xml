@@ -107,7 +107,7 @@
 
     <mybatis.version>3.5.7</mybatis.version>
     <spring.version>5.3.7</spring.version>
-    <spring-batch.version>4.3.2</spring-batch.version>
+    <spring-batch.version>4.3.3</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
 
     <junit.version>5.7.2</junit.version>
