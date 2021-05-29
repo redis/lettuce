@@ -279,7 +279,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     /**
      * Remove all keys from all databases using the specified [FlushMode].
      *
-     * @param flushMode the flush mode (sync/asnync).
+     * @param flushMode the flush mode (sync/async).
      * @return String simple-string-reply.
      * @since 6.1
      */
@@ -291,7 +291,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      * @deprecated since 6.1, use [flushall(FlushMode)] instead.
      */
-    @Deprecated("since 6.1, use [flushall(FlushMode)] instead")
+    @Deprecated("Use [flushall(FlushMode.ASYNC)] instead.", ReplaceWith("flushall(FlushMode.ASYNC)"))
     suspend fun flushallAsync(): String?
 
     /**
@@ -304,7 +304,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     /**
      * Remove all keys from the current database using the specified [FlushMode].
      *
-     * @param flushMode the flush mode (sync/asnync).
+     * @param flushMode the flush mode (sync/async).
      * @return String simple-string-reply.
      * @since 6.1
      */
@@ -316,7 +316,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      * @deprecated since 6.1, use [flushdb(FlushMode)] instead.
      */
-    @Deprecated("since 6.1, use [flushdb(FlushMode)] instead.")
+    @Deprecated("Use [flushdb(FlushMode.ASYNC)] instead.", ReplaceWith("flushdb(FlushMode.ASYNC)"))
     suspend fun flushdbAsync(): String?
 
     /**
