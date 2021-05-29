@@ -124,7 +124,7 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
     /**
      * Remove all the scripts from the script cache using the specified [FlushMode].
      *
-     * @param flushMode the flush mode (sync/asnync).
+     * @param flushMode the flush mode (sync/async).
      * @return String simple-string-reply.
      * @since 6.1
      */

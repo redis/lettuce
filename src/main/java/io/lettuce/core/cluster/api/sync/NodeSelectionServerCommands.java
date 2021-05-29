@@ -269,7 +269,7 @@ public interface NodeSelectionServerCommands<K, V> {
     /**
      * Remove all keys from all databases using the specified {@link FlushMode}.
      *
-     * @param flushMode the flush mode (sync/asnync).
+     * @param flushMode the flush mode (sync/async).
      * @return String simple-string-reply.
      * @since 6.1
      */
@@ -294,7 +294,7 @@ public interface NodeSelectionServerCommands<K, V> {
     /**
      * Remove all keys from the current database using the specified {@link FlushMode}.
      *
-     * @param flushMode the flush mode (sync/asnync).
+     * @param flushMode the flush mode (sync/async).
      * @return String simple-string-reply.
      * @since 6.1
      */

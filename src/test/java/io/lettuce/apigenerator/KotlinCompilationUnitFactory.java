@@ -60,8 +60,6 @@ class KotlinCompilationUnitFactory {
     private static final Set<String> NON_SUSPENDABLE_METHODS = LettuceSets.unmodifiableSet("isOpen", "flushCommands", "setAutoFlushCommands");
     private static final Set<String> SKIP_METHODS = LettuceSets.unmodifiableSet("BaseRedisCommands.reset", "getStatefulConnection");
 
-    private static final Set<String> KEEP_DEPRECATED_METHODS = LettuceSets.unmodifiableSet("flushallAsync", "flushdbAsync");
-
     private static final Set<String> FLOW_METHODS = LettuceSets.unmodifiableSet("aclList", "aclLog", "dispatch", "geohash", "georadius",
             "georadiusbymember", "geosearch",
             "hgetall", "hkeys", "hmget", "hvals", "keys", "mget", "sdiff", "sinter", "smembers", "smismember", "sort", "srandmember", "sunion",
@@ -75,13 +73,20 @@ class KotlinCompilationUnitFactory {
             "RedisSentinelCoroutinesCommands.clientKill", "RedisSentinelCoroutinesCommands.clientPause",
             "RedisSentinelCoroutinesCommands.clientList", "RedisSentinelCoroutinesCommands.info",
             "RedisSentinelCoroutinesCommands.ping", "pubsubNumsub", "pubsubNumpat", "echo", "ping", "readOnly", "readWrite");
+
     private static final Map<String, String> RESULT_SPEC;
+    private static final Map<String, String> KEEP_DEPRECATED_METHODS;
 
     static {
         Map<String, String> resultSpec = new HashMap<>();
         resultSpec.put("hgetall", "Flow<KeyValue<K, V>>");
         resultSpec.put("zmscore", "List<Double?>");
         RESULT_SPEC = resultSpec;
+
+        Map<String, String> deprecatedMethodsSpec = new HashMap<>();
+        deprecatedMethodsSpec.put("flushallAsync", "flushall(FlushMode.ASYNC)");
+        deprecatedMethodsSpec.put("flushdbAsync", "flushdb(FlushMode.ASYNC)");
+        KEEP_DEPRECATED_METHODS = deprecatedMethodsSpec;
     }
 
     private static final String FORMATTING_INDENT = "    ";
@@ -171,11 +176,12 @@ class KotlinCompilationUnitFactory {
         public void visit(MethodDeclaration method, Object arg) {
 
             // Skip deprecated and StreamingChannel methods
-            if (!contains(KEEP_DEPRECATED_METHODS, method) && (method.isAnnotationPresent(Deprecated.class)
+            if (!contains(KEEP_DEPRECATED_METHODS.keySet(), method) && (method.isAnnotationPresent(Deprecated.class)
                     || contains(SKIP_METHODS, method)
                     || method.getParameters().stream().anyMatch(p -> p.getType().asString().contains("StreamingChannel")))) {
                 return;
             }
+
             result
                     .append(FORMATTING_INDENT)
                     .append(extractJavadoc(method.getJavadoc().get()).replace("\n", "\n" + FORMATTING_INDENT))
@@ -195,7 +201,16 @@ class KotlinCompilationUnitFactory {
             return method
                     .getAnnotations()
                     .stream()
-                    .map(a -> a.getNameAsString() + "\n" + FORMATTING_INDENT)
+                    .map(a -> {
+                        String annotation = a.getNameAsString();
+                        if (annotation.equals("Deprecated")) {
+                            String identifier = method.getName().getIdentifier();
+                            String replacement = KEEP_DEPRECATED_METHODS.get(identifier);
+                            return "@" + annotation + "(\"Use [" + replacement + "] instead.\", ReplaceWith(\"" + replacement + "\"))\n" + FORMATTING_INDENT;
+                        } else {
+                            return "@" + annotation + "\n" + FORMATTING_INDENT;
+                        }
+                    })
                     .collect(joining());
         }
 
