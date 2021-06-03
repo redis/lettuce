@@ -29,7 +29,7 @@ import io.lettuce.core.RedisFuture;
  *
  * @author Mark Paluch
  */
-class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFuture<V> {
+public class PipelinedRedisFuture<V> extends CompletableFuture<V> implements RedisFuture<V> {
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
