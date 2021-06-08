@@ -51,7 +51,7 @@ public interface UserMapper {
 | 샘플 테스트 | 설명 |
 | --- | --- |
 | `SampleMapperTest.java` | `UserMapper` 구현체를 동적으로 빌드 할 `MapperFactoryBean`에 기반한 기본 구성을 보여준다. |
-| `ampleScannerTest.java` | `MapperScannerConfigurer` 를 사용하여 어떻게 프로젝트의 모든 매퍼들을 자동으로 검색되도록 하는 방법을 보여준다. |
+| `SampleScannerTest.java` | `MapperScannerConfigurer` 를 사용하여 어떻게 프로젝트의 모든 매퍼들을 자동으로 검색되도록 하는 방법을 보여준다. |
 | `SampleSqlSessionTest.java` | Spring에서 관리하는 `SqlSession`을 사용하여 DAO를 코딩하고 자체적인 구현체인 `UserDaoImpl.java` 를 제공하는 방법을 보여준다. |
 | `SampleEnableTest.java` | 스프링의 `@Configuration`과 `@MapperScann` annotation을 함께 사용하여 매퍼를 자동으로 검색하는 방법을 보여준다. |
 | `SampleNamespaceTest.java` | 커스텀 MyBatis XML 네임스페이스를 사용하는 방법을 보여준다. |

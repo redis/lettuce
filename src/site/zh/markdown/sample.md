@@ -50,7 +50,7 @@ public interface UserMapper {
 | 样例测试 | 描述 |
 | --- | --- |
 | `SampleMapperTest.java` | 演示基于 `MapperFactoryBean` 的基本配置，这将动态构建 `UserMapper` 的一个实现。 |
-| `ampleScannerTest.java` | 演示如何使用 `MapperScannerConfigurer` 来自动发现项目中所有的映射器。 |
+| `SampleScannerTest.java` | 演示如何使用 `MapperScannerConfigurer` 来自动发现项目中所有的映射器。 |
 | `SampleSqlSessionTest.java` | 演示如何基于 Spring 管理的 `SqlSession` 手动编写 DAO，并在 `UserDaoImpl.java` 中提供你自己的实现。 |
 | `SampleEnableTest.java` | 演示如何使用 Spring 的 `@Configuration` 和 `@MapperScann` 注解来自动发现 mappers. |
 | `SampleNamespaceTest.java` | 演示如何使用自定义 MyBatis XML 命名空间. |
