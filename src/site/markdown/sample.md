@@ -52,7 +52,7 @@ We will see different ways to find the mapper interface, register it to Spring a
 | Sample test | Description |
 | --- | --- |
 | `SampleMapperTest.java` | Shows you the base configuration based on a `MapperFactoryBean` that will dynamically build an implementation for `UserMapper` |
-| `ampleScannerTest.java` | Shows how to use the `MapperScannerConfigurer` so all the mappers in a project are autodiscovered. |
+| `SampleScannerTest.java` | Shows how to use the `MapperScannerConfigurer` so all the mappers in a project are autodiscovered. |
 | `SampleSqlSessionTest.java` | Shows how to hand code a DAO using a Spring managed `SqlSession` and providing your own implementation `UserDaoImpl.java`. |
 | `SampleEnableTest.java` | Shows how to use Spring's `@Configuration` with the `@MapperScann` annotation so mappers are autodiscovered. |
 | `SampleNamespaceTest.java` | Shows how to use the custom MyBatis XML namespace. |
