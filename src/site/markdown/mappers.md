@@ -45,7 +45,7 @@ A mapper is registered to Spring by including a `MapperFactoryBean` in your XML 
 ```
 
 If the UserMapper has a corresponding MyBatis XML mapper file in the same classpath location as the mapper interface, it will be parsed automatically by the `MapperFactoryBean`.
-There is no need to specify the mapper in a MyBatis configuration file unless the mapper XML files are in a different classpath location. See the `SqlSessionFactoryBean`'s `[configLocation](factorybean.html)` property for more information.
+There is no need to specify the mapper in a MyBatis configuration file unless the mapper XML files are in a different classpath location. See the `SqlSessionFactoryBean`'s [`configLocation`](factorybean.html) property for more information.
 
 Note that `MapperFactoryBean` requires either an `SqlSessionFactory` or an `SqlSessionTemplate`. These can be set through the respective `sqlSessionFactory` and `sqlSessionTemplate` properties.
 If both properties are set, the `SqlSessionFactory` is ignored. Since the `SqlSessionTemplate` is required to have a session factory set, that factory will be used by `MapperFactoryBean`.
