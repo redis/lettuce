@@ -17,9 +17,7 @@ package io.lettuce.core.cluster;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Queue;
 
@@ -28,7 +26,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
@@ -40,9 +37,12 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.TestFutures;
 
 /**
+ * Unit tests for {@link ClusterNodeEndpoint}.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(MockitoExtension.class)
@@ -76,8 +76,8 @@ class ClusterNodeEndpointUnitTests {
     @Test
     void closeWithoutCommands() {
 
-        sut.close();
-        verifyZeroInteractions(clusterChannelWriter);
+        sut.closeAsync();
+        verifyNoInteractions(clusterChannelWriter);
     }
 
     @Test
@@ -85,7 +85,7 @@ class ClusterNodeEndpointUnitTests {
 
         disconnectedBuffer.add(command);
 
-        sut.close();
+        sut.closeAsync();
 
         verify(clusterChannelWriter).write(command);
     }
@@ -96,9 +96,9 @@ class ClusterNodeEndpointUnitTests {
         disconnectedBuffer.add(command);
         command.cancel();
 
-        sut.close();
+        sut.closeAsync();
 
-        verifyZeroInteractions(clusterChannelWriter);
+        verifyNoInteractions(clusterChannelWriter);
     }
 
     @Test
@@ -107,7 +107,7 @@ class ClusterNodeEndpointUnitTests {
         disconnectedBuffer.add(command);
         when(clusterChannelWriter.write(any(RedisCommand.class))).thenThrow(new RedisException("meh"));
 
-        sut.close();
+        sut.closeAsync();
 
         assertThat(command.isDone()).isTrue();
 
@@ -122,7 +122,7 @@ class ClusterNodeEndpointUnitTests {
 
         sut.write(command);
 
-        sut.close();
+        sut.closeAsync();
 
         verify(clusterChannelWriter).write(command);
     }
@@ -136,9 +136,9 @@ class ClusterNodeEndpointUnitTests {
         sut.write(command);
         command.cancel();
 
-        sut.close();
+        sut.closeAsync();
 
-        verifyZeroInteractions(clusterChannelWriter);
+        verifyNoInteractions(clusterChannelWriter);
     }
 
     @Test
@@ -150,7 +150,7 @@ class ClusterNodeEndpointUnitTests {
         sut.write(command);
         when(clusterChannelWriter.write(any(RedisCommand.class))).thenThrow(new RedisException(""));
 
-        sut.close();
+        sut.closeAsync();
 
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(command)).isInstanceOf(RedisException.class);
     }
