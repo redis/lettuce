@@ -552,7 +552,7 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
-                connection.close();
+                connection.closeAsync();
             }
         });
     }
@@ -597,7 +597,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 () -> new PubSubCommandHandler<>(getClusterClientOptions(), getResources(), codec, endpoint));
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
-                connection.close();
+                connection.closeAsync();
             }
         });
     }
