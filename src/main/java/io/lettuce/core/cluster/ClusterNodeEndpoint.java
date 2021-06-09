@@ -16,6 +16,7 @@
 package io.lettuce.core.cluster;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
@@ -61,15 +62,15 @@ class ClusterNodeEndpoint extends DefaultEndpoint {
      * and retries on their own.
      */
     @Override
-    public void close() {
+    public CompletableFuture<Void> closeAsync() {
 
-        logger.debug("{} close()", logPrefix());
+        logger.debug("{} closeAsync()", logPrefix());
 
         if (clusterChannelWriter != null) {
             retriggerCommands(doExclusive(this::drainCommands));
         }
 
-        super.close();
+        return super.closeAsync();
     }
 
     protected void retriggerCommands(Collection<RedisCommand<?, ?, ?>> commands) {
