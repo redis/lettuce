@@ -38,7 +38,7 @@ public class MyBatisConfig {
 `SqlSessionFactory` で必須のプロパティは JDBC の `DataSource` のみです。 どのような `DataSource` でも構いません。Spring でデータベース接続を定義する通常の手順で定義してください。
 
 `configLocation` は、MyBatis の XML 設定ファイルの場所を指定する際に使用します。これは、例えば基になる MyBatis の設定の一部を変更したい場合などに必要となります。
-よくあるのは `>settings>` や `<typeAliases>` などの設定です。
+よくあるのは `<settings>` や `<typeAliases>` などの設定です。
 
 ここで指定する設定ファイルは、完全な MyBatis 設定ファイルである必要はありません。 環境、データソース、MyBatis のトランザクションマネージャーに関する設定は**無視されます**。
 `SqlSessionFactoryBean` は、独自にカスタマイズした MyBatis `Environment` を生成し、必要に応じてこれらの値を設定するようになっています。
