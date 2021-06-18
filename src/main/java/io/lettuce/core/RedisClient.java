@@ -281,7 +281,7 @@ public class RedisClient extends AbstractRedisClient {
         future.whenComplete((channelHandler, throwable) -> {
 
             if (throwable != null) {
-                connection.close();
+                connection.closeAsync();
             }
         });
 
@@ -587,8 +587,8 @@ public class RedisClient extends AbstractRedisClient {
         return sync.thenApply(ignore -> (StatefulRedisSentinelConnection<K, V>) connection).whenComplete((ignore, e) -> {
 
             if (e != null) {
-                logger.warn("Cannot connect Redis Sentinel at " + redisURI + ": " + e.toString());
-                connection.close();
+                logger.warn("Cannot connect Redis Sentinel at " + redisURI + ": " + e);
+                connection.closeAsync();
             }
         });
     }
