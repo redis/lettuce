@@ -15,7 +15,9 @@
  */
 package biz.paluch.redis.extensibility;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
+
+import java.util.Collections;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -23,31 +25,32 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
-import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
+import io.lettuce.core.cluster.RedisAdvancedClusterAsyncCommandsImpl;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
 
 /**
- * Test for override/extensability of RedisClient
+ * Test for override/extensibility of RedisClusterClient
  */
-class MyExtendedRedisClientTest {
-    private static final String host = TestSettings.host();
-    private static final int port = TestSettings.port();
+class MyExtendedRedisClusterClientIntegrationTests {
 
-    private static MyExtendedRedisClient client;
+    private static final String host = TestSettings.host();
+
+    private static final int port = TestSettings.port(900);
+
+    private static MyExtendedRedisClusterClient client;
+
     protected RedisCommands<String, String> redis;
+
     protected String key = "key";
+
     protected String value = "value";
 
     @BeforeAll
     static void setupClient() {
-        client = getRedisClient();
-    }
-
-    static MyExtendedRedisClient getRedisClient() {
-        return new MyExtendedRedisClient(null, RedisURI.create(host, port));
+        client = new MyExtendedRedisClusterClient(null, Collections.singletonList(RedisURI.create(host, port)));
     }
 
     @AfterAll
@@ -56,13 +59,17 @@ class MyExtendedRedisClientTest {
     }
 
     @Test
-    void testPubsub() throws Exception {
-        StatefulRedisPubSubConnection<String, String> connection = client
-                .connectPubSub();
-        RedisPubSubAsyncCommands<String, String> commands = connection.async();
-        assertThat(commands).isInstanceOf(RedisPubSubAsyncCommandsImpl.class);
-        assertThat(commands.getStatefulConnection()).isInstanceOf(MyPubSubConnection.class);
+    void testConnection() throws Exception {
+
+        StatefulRedisClusterConnection<String, String> connection = client.connect();
+        RedisAdvancedClusterAsyncCommands<String, String> commands = connection.async();
+
+        assertThat(commands).isInstanceOf(RedisAdvancedClusterAsyncCommandsImpl.class);
+        assertThat(commands.getStatefulConnection()).isInstanceOf(MyRedisClusterConnection.class);
+
         commands.set("key", "value").get();
+
         connection.close();
     }
+
 }
