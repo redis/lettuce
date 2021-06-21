@@ -43,6 +43,17 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun bzpopmin(timeout: Long, vararg keys: K): KeyValue<K, ScoredValue<V>>?
 
     /**
+     * Removes and returns a member with the lowest scores in the sorted set stored at one of the keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return KeyValue<K, ScoredValue<V>> multi-bulk containing the name of the key, the score and the popped
+     *         member.
+     * @since 6.1.3
+     */
+    suspend fun bzpopmin(timeout: Double, vararg keys: K): KeyValue<K, ScoredValue<V>>?
+
+    /**
      * Removes and returns a member with the highest scores in the sorted set stored at one of the keys.
      *
      * @param timeout the timeout in seconds.
@@ -52,6 +63,17 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @since 5.1
      */
     suspend fun bzpopmax(timeout: Long, vararg keys: K): KeyValue<K, ScoredValue<V>>?
+
+    /**
+     * Removes and returns a member with the highest scores in the sorted set stored at one of the keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return KeyValue<K, ScoredValue<V>> multi-bulk containing the name of the key, the score and the popped
+     *         member.
+     * @since 6.1.3
+     */
+    suspend fun bzpopmax(timeout: Double, vararg keys: K): KeyValue<K, ScoredValue<V>>?
 
     /**
      * Add one or more members to a sorted set, or update its score if it already exists.

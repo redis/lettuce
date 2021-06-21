@@ -35,7 +35,7 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Atomically returns and removes the first/last element (head/tail depending on the
-     * wherefrom argument) of the list stored at source, and pushes the element at the
+     * where from argument) of the list stored at source, and pushes the element at the
      * first/last element (head/tail depending on the whereto argument) of the list stored at destination.
      * When source is empty, Redis will block the connection until another client pushes to it
      * or until timeout is reached.
@@ -48,6 +48,22 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @since 6.1
      */
     suspend fun blmove(source: K, destination: K, args: LMoveArgs, timeout: Long): V?
+
+    /**
+     * Atomically returns and removes the first/last element (head/tail depending on the
+     * where from argument) of the list stored at source, and pushes the element at the
+     * first/last element (head/tail depending on the whereto argument) of the list stored at destination.
+     * When source is empty, Redis will block the connection until another client pushes to it
+     * or until timeout is reached.
+     *
+     * @param source the source key.
+     * @param destination the destination type: key.
+     * @param args command arguments to configure source and destination directions.
+     * @param timeout the timeout in seconds.
+     * @return V bulk-string-reply the element being popped and pushed.
+     * @since 6.1.3
+     */
+    suspend fun blmove(source: K, destination: K, args: LMoveArgs, timeout: Double): V?
 
     /**
      * Remove and get the first element in a list, or block until one is available.
@@ -63,6 +79,20 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
     suspend fun blpop(timeout: Long, vararg keys: K): KeyValue<K, V>?
 
     /**
+     * Remove and get the first element in a list, or block until one is available.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return KeyValue<K,V> array-reply specifically:
+     *
+     *         A `null` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with
+     *         the first element being the name of the key where an element was popped and the second element being the value of
+     *         the popped element.
+     * @since 6.1.3
+     */
+    suspend fun blpop(timeout: Double, vararg keys: K): KeyValue<K, V>?
+
+    /**
      * Remove and get the last element in a list, or block until one is available.
      *
      * @param timeout the timeout in seconds.
@@ -76,6 +106,20 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
     suspend fun brpop(timeout: Long, vararg keys: K): KeyValue<K, V>?
 
     /**
+     * Remove and get the last element in a list, or block until one is available.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return KeyValue<K,V> array-reply specifically:
+     *
+     *         A `null` multi-bulk when no element could be popped and the timeout expired. A two-element multi-bulk with
+     *         the first element being the name of the key where an element was popped and the second element being the value of
+     *         the popped element.
+     * @since 6.1.3
+     */
+    suspend fun brpop(timeout: Double, vararg keys: K): KeyValue<K, V>?
+
+    /**
      * Pop a value from a list, push it to another list and return it; or block until one is available.
      *
      * @param timeout the timeout in seconds.
@@ -85,6 +129,18 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      *         `timeout` is reached, a.
      */
     suspend fun brpoplpush(timeout: Long, source: K, destination: K): V?
+
+    /**
+     * Pop a value from a list, push it to another list and return it; or block until one is available.
+     *
+     * @param timeout the timeout in seconds.
+     * @param source the source key.
+     * @param destination the destination type: key.
+     * @return V bulk-string-reply the element being popped from `source` and pushed to `destination`. If
+     *         `timeout` is reached, a.
+     * @since 6.1.3
+     */
+    suspend fun brpoplpush(timeout: Double, source: K, destination: K): V?
 
     /**
      * Get an element from a list by its index.
@@ -117,7 +173,7 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
 
     /**
      * Atomically returns and removes the first/last element (head/tail depending on the
-     * wherefrom argument) of the list stored at source, and pushes the element at the
+     * where from argument) of the list stored at source, and pushes the element at the
      * first/last element (head/tail depending on the whereto argument) of the list stored at destination.
      *
      * @param source the source key.

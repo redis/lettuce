@@ -269,7 +269,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
 
         assertThat(redis.bzpopmin(1, "zset")).isEqualTo(KeyValue.just("zset", ScoredValue.just(2.0, "a")));
-        assertThat(redis.bzpopmin(1, "zset2")).isNull();
+        assertThat(redis.bzpopmin(0.5, "zset2")).isNull();
     }
 
     @Test
@@ -279,7 +279,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         redis.zadd("zset", 2.0, "a", 3.0, "b", 4.0, "c");
 
         assertThat(redis.bzpopmax(1, "zset")).isEqualTo(KeyValue.just("zset", ScoredValue.just(4.0, "c")));
-        assertThat(redis.bzpopmax(1, "zset2")).isNull();
+        assertThat(redis.bzpopmax(0.5, "zset2")).isNull();
     }
 
     @Test

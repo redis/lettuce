@@ -37,19 +37,47 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 @ExperimentalLettuceCoroutinesApi
 internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisSortedSetReactiveCommands<K, V>) : RedisSortedSetCoroutinesCommands<K, V> {
 
-    override suspend fun bzpopmin(timeout: Long, vararg keys: K): KeyValue<K, ScoredValue<V>>? = ops.bzpopmin(timeout, *keys).awaitFirstOrNull()
+    override suspend fun bzpopmin(
+        timeout: Long,
+        vararg keys: K
+    ): KeyValue<K, ScoredValue<V>>? = ops.bzpopmin(timeout, *keys).awaitFirstOrNull()
 
-    override suspend fun bzpopmax(timeout: Long, vararg keys: K): KeyValue<K, ScoredValue<V>>? = ops.bzpopmax(timeout, *keys).awaitFirstOrNull()
+    override suspend fun bzpopmin(
+        timeout: Double,
+        vararg keys: K
+    ): KeyValue<K, ScoredValue<V>>? = ops.bzpopmin(timeout, *keys).awaitFirstOrNull()
 
-    override suspend fun zadd(key: K, score: Double, member: V): Long? = ops.zadd(key, score, member).awaitFirstOrNull()
+    override suspend fun bzpopmax(
+        timeout: Long,
+        vararg keys: K
+    ): KeyValue<K, ScoredValue<V>>? = ops.bzpopmax(timeout, *keys).awaitFirstOrNull()
 
-    override suspend fun zadd(key: K, vararg scoresAndValues: Any): Long? = ops.zadd(key, *scoresAndValues).awaitFirstOrNull()
+    override suspend fun bzpopmax(
+        timeout: Double,
+        vararg keys: K
+    ): KeyValue<K, ScoredValue<V>>? = ops.bzpopmax(timeout, *keys).awaitFirstOrNull()
 
-    override suspend fun zadd(key: K, vararg scoredValues: ScoredValue<V>): Long? = ops.zadd(key, *scoredValues).awaitFirstOrNull()
+    override suspend fun zadd(key: K, score: Double, member: V): Long? =
+        ops.zadd(key, score, member).awaitFirstOrNull()
 
-    override suspend fun zadd(key: K, zAddArgs: ZAddArgs, score: Double, member: V): Long? = ops.zadd(key, zAddArgs, score, member).awaitFirstOrNull()
+    override suspend fun zadd(key: K, vararg scoresAndValues: Any): Long? =
+        ops.zadd(key, *scoresAndValues).awaitFirstOrNull()
 
-    override suspend fun zadd(key: K, zAddArgs: ZAddArgs, vararg scoresAndValues: Any): Long? = ops.zadd(key, zAddArgs, *scoresAndValues).awaitFirstOrNull()
+    override suspend fun zadd(key: K, vararg scoredValues: ScoredValue<V>): Long? =
+        ops.zadd(key, *scoredValues).awaitFirstOrNull()
+
+    override suspend fun zadd(
+        key: K,
+        zAddArgs: ZAddArgs,
+        score: Double,
+        member: V
+    ): Long? = ops.zadd(key, zAddArgs, score, member).awaitFirstOrNull()
+
+    override suspend fun zadd(
+        key: K,
+        zAddArgs: ZAddArgs,
+        vararg scoresAndValues: Any
+    ): Long? = ops.zadd(key, zAddArgs, *scoresAndValues).awaitFirstOrNull()
 
     override suspend fun zadd(key: K, zAddArgs: ZAddArgs, vararg scoredValues: ScoredValue<V>): Long? = ops.zadd(key, zAddArgs, *scoredValues).awaitFirstOrNull()
 
