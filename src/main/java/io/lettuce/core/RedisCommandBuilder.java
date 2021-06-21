@@ -341,7 +341,26 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BLMOVE, new ValueOutput<>(codec), args);
     }
 
+    Command<K, V, V> blmove(K source, K destination, LMoveArgs lMoveArgs, double timeout) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lMoveArgs, "LMoveArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(source).addKey(destination);
+        lMoveArgs.build(args);
+        args.add(timeout);
+        return createCommand(BLMOVE, new ValueOutput<>(codec), args);
+    }
+
     Command<K, V, KeyValue<K, V>> blpop(long timeout, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys).add(timeout);
+        return createCommand(BLPOP, new KeyValueOutput<>(codec), args);
+    }
+
+    Command<K, V, KeyValue<K, V>> blpop(double timeout, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys).add(timeout);
@@ -355,7 +374,23 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BRPOP, new KeyValueOutput<>(codec), args);
     }
 
+    Command<K, V, KeyValue<K, V>> brpop(double timeout, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys).add(timeout);
+        return createCommand(BRPOP, new KeyValueOutput<>(codec), args);
+    }
+
     Command<K, V, V> brpoplpush(long timeout, K source, K destination) {
+        LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(source).addKey(destination).add(timeout);
+        return createCommand(BRPOPLPUSH, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, V> brpoplpush(double timeout, K source, K destination) {
         LettuceAssert.notNull(source, "Source " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
 
@@ -2861,7 +2896,23 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BZPOPMIN, new KeyValueScoredValueOutput<>(codec), args);
     }
 
+    Command<K, V, KeyValue<K, ScoredValue<V>>> bzpopmin(double timeout, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys).add(timeout);
+
+        return createCommand(BZPOPMIN, new KeyValueScoredValueOutput<>(codec), args);
+    }
+
     Command<K, V, KeyValue<K, ScoredValue<V>>> bzpopmax(long timeout, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys).add(timeout);
+
+        return createCommand(BZPOPMAX, new KeyValueScoredValueOutput<>(codec), args);
+    }
+
+    Command<K, V, KeyValue<K, ScoredValue<V>>> bzpopmax(double timeout, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys).add(timeout);

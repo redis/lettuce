@@ -257,7 +257,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<V> blmove(K source, K destination, LMoveArgs args, double timeout) {
+        return dispatch(commandBuilder.blmove(source, destination, args, timeout));
+    }
+
+    @Override
     public RedisFuture<KeyValue<K, V>> blpop(long timeout, K... keys) {
+        return dispatch(commandBuilder.blpop(timeout, keys));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, V>> blpop(double timeout, K... keys) {
         return dispatch(commandBuilder.blpop(timeout, keys));
     }
 
@@ -267,7 +277,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<KeyValue<K, V>> brpop(double timeout, K... keys) {
+        return dispatch(commandBuilder.brpop(timeout, keys));
+    }
+
+    @Override
     public RedisFuture<V> brpoplpush(long timeout, K source, K destination) {
+        return dispatch(commandBuilder.brpoplpush(timeout, source, destination));
+    }
+
+    @Override
+    public RedisFuture<V> brpoplpush(double timeout, K source, K destination) {
         return dispatch(commandBuilder.brpoplpush(timeout, source, destination));
     }
 
@@ -1985,7 +2005,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<KeyValue<K, ScoredValue<V>>> bzpopmin(double timeout, K... keys) {
+        return dispatch(commandBuilder.bzpopmin(timeout, keys));
+    }
+
+    @Override
     public RedisFuture<KeyValue<K, ScoredValue<V>>> bzpopmax(long timeout, K... keys) {
+        return dispatch(commandBuilder.bzpopmax(timeout, keys));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, ScoredValue<V>>> bzpopmax(double timeout, K... keys) {
         return dispatch(commandBuilder.bzpopmax(timeout, keys));
     }
 

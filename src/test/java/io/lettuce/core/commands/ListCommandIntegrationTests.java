@@ -68,6 +68,13 @@ public class ListCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("BLMOVE") // Redis 6.2
+    void blpopDoubleTimeout() {
+        redis.rpush("two", "2", "3");
+        assertThat(redis.blpop(0.5, "one", "two")).isEqualTo(kv("two", "2"));
+    }
+
+    @Test
     void blpopTimeout() {
         redis.setTimeout(Duration.ofSeconds(10));
         assertThat(redis.blpop(1, key)).isNull();
@@ -80,10 +87,27 @@ public class ListCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("BLMOVE") // Redis 6.2
+    void brpopDoubleTimeout() {
+        redis.rpush("two", "2", "3");
+        assertThat(redis.brpop(0.5, "one", "two")).isEqualTo(kv("two", "3"));
+    }
+
+    @Test
     void brpoplpush() {
         redis.rpush("one", "1", "2");
         redis.rpush("two", "3", "4");
         assertThat(redis.brpoplpush(1, "one", "two")).isEqualTo("2");
+        assertThat(redis.lrange("one", 0, -1)).isEqualTo(list("1"));
+        assertThat(redis.lrange("two", 0, -1)).isEqualTo(list("2", "3", "4"));
+    }
+
+    @Test
+    @EnabledOnCommand("BLMOVE") // Redis 6.2
+    void brpoplpushDoubleTimeout() {
+        redis.rpush("one", "1", "2");
+        redis.rpush("two", "3", "4");
+        assertThat(redis.brpoplpush(0.5, "one", "two")).isEqualTo("2");
         assertThat(redis.lrange("one", 0, -1)).isEqualTo(list("1"));
         assertThat(redis.lrange("two", 0, -1)).isEqualTo(list("2", "3", "4"));
     }
@@ -308,6 +332,19 @@ public class ListCommandIntegrationTests extends TestSupport {
 
         redis.rpush(list1, "one", "two", "three");
         redis.blmove(list1, list2, LMoveArgs.Builder.leftRight(), 1000);
+
+        assertThat(redis.lrange(list1, 0, -1)).containsExactly("two", "three");
+        assertThat(redis.lrange(list2, 0, -1)).containsOnly("one");
+    }
+
+    @Test
+    @EnabledOnCommand("BLMOVE") // Redis 6.2
+    void blmoveDoubleTimeout() {
+        String list1 = key;
+        String list2 = "38o54"; // yields in same slot as "key"
+
+        redis.rpush(list1, "one", "two", "three");
+        redis.blmove(list1, list2, LMoveArgs.Builder.leftRight(), 1.5);
 
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("two", "three");
         assertThat(redis.lrange(list2, 0, -1)).containsOnly("one");

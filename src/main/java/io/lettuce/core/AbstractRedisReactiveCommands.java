@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import io.lettuce.core.models.stream.ClaimedMessages;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.GeoArgs.Unit;
@@ -35,6 +34,7 @@ import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.CommandOutput;
@@ -273,7 +273,17 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<V> blmove(K source, K destination, LMoveArgs args, double timeout) {
+        return createMono(() -> commandBuilder.blmove(source, destination, args, timeout));
+    }
+
+    @Override
     public Mono<KeyValue<K, V>> blpop(long timeout, K... keys) {
+        return createMono(() -> commandBuilder.blpop(timeout, keys));
+    }
+
+    @Override
+    public Mono<KeyValue<K, V>> blpop(double timeout, K... keys) {
         return createMono(() -> commandBuilder.blpop(timeout, keys));
     }
 
@@ -283,7 +293,17 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<KeyValue<K, V>> brpop(double timeout, K... keys) {
+        return createMono(() -> commandBuilder.brpop(timeout, keys));
+    }
+
+    @Override
     public Mono<V> brpoplpush(long timeout, K source, K destination) {
+        return createMono(() -> commandBuilder.brpoplpush(timeout, source, destination));
+    }
+
+    @Override
+    public Mono<V> brpoplpush(double timeout, K source, K destination) {
         return createMono(() -> commandBuilder.brpoplpush(timeout, source, destination));
     }
 
@@ -2059,7 +2079,17 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<KeyValue<K, ScoredValue<V>>> bzpopmin(double timeout, K... keys) {
+        return createMono(() -> commandBuilder.bzpopmin(timeout, keys));
+    }
+
+    @Override
     public Mono<KeyValue<K, ScoredValue<V>>> bzpopmax(long timeout, K... keys) {
+        return createMono(() -> commandBuilder.bzpopmax(timeout, keys));
+    }
+
+    @Override
+    public Mono<KeyValue<K, ScoredValue<V>>> bzpopmax(double timeout, K... keys) {
         return createMono(() -> commandBuilder.bzpopmax(timeout, keys));
     }
 
