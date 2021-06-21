@@ -15,22 +15,24 @@
  */
 package biz.paluch.redis.extensibility;
 
+import java.time.Duration;
+
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.cluster.ClusterPushHandler;
 import io.lettuce.core.cluster.StatefulRedisClusterConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
-
-import java.time.Duration;
 
 /**
  * Demo code for extending a @{@link StatefulRedisClusterConnectionImpl}
  *
  * @author Julien Ruaux
  */
-@SuppressWarnings("unchecked") class MyRedisClusterConnection<K, V> extends StatefulRedisClusterConnectionImpl<K, V> {
+@SuppressWarnings("unchecked")
+class MyRedisClusterConnection<K, V> extends StatefulRedisClusterConnectionImpl<K, V> {
 
     public MyRedisClusterConnection(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
             Duration timeout) {
         super(writer, pushHandler, codec, timeout);
     }
+
 }

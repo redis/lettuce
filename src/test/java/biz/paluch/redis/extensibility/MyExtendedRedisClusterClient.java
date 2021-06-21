@@ -15,6 +15,10 @@
  */
 package biz.paluch.redis.extensibility;
 
+import java.time.Duration;
+
+import javax.enterprise.inject.Alternative;
+
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.ClusterPushHandler;
@@ -22,9 +26,6 @@ import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.StatefulRedisClusterConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.resource.ClientResources;
-
-import javax.enterprise.inject.Alternative;
-import java.time.Duration;
 
 /**
  * Demo code for extending a RedisClusterClient.
@@ -42,7 +43,9 @@ public class MyExtendedRedisClusterClient extends RedisClusterClient {
     }
 
     @Override
-    protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
+    protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(
+            RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
         return new MyRedisClusterConnection<>(channelWriter, pushHandler, codec, timeout);
     }
+
 }
