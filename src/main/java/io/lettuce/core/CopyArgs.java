@@ -31,7 +31,7 @@ public class CopyArgs implements CompositeArgument {
 
 	private Long destinationDb;
 
-	private Boolean replace;
+    private boolean replace;
 
 	/**
 	 * Builder entry points for {@link CopyArgs}.
@@ -95,7 +95,7 @@ public class CopyArgs implements CompositeArgument {
 			args.add(CommandKeyword.DB).add(destinationDb);
 		}
 
-		if(replace != null) {
+        if (replace) {
 			args.add(CommandKeyword.REPLACE);
 		}
 	}
