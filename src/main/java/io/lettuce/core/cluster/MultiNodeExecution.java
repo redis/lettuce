@@ -30,9 +30,9 @@ import io.lettuce.core.internal.Exceptions;
  *
  * @author Mark Paluch
  */
-class MultiNodeExecution {
+public class MultiNodeExecution {
 
-    static <T> T execute(Callable<T> function) {
+    public static <T> T execute(Callable<T> function) {
         try {
             return function.call();
         } catch (Exception e) {
@@ -46,7 +46,7 @@ class MultiNodeExecution {
      * @param executions mapping of a key to the future
      * @return future producing an aggregation result
      */
-    protected static RedisFuture<Long> aggregateAsync(Map<?, ? extends CompletionStage<Long>> executions) {
+    public static RedisFuture<Long> aggregateAsync(Map<?, ? extends CompletionStage<Long>> executions) {
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             AtomicLong result = new AtomicLong();
@@ -68,7 +68,7 @@ class MultiNodeExecution {
      * @param <T> result type
      * @return future returning the first result.
      */
-    protected static <T> RedisFuture<T> firstOfAsync(Map<?, ? extends CompletionStage<T>> executions) {
+    public static <T> RedisFuture<T> firstOfAsync(Map<?, ? extends CompletionStage<T>> executions) {
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             // make sure, that all futures are executed before returning the result.
@@ -89,7 +89,7 @@ class MultiNodeExecution {
      * @param <T> result type
      * @return future returning the first result.
      */
-    static <T> RedisFuture<T> lastOfAsync(Map<?, ? extends CompletionStage<T>> executions) {
+    public static <T> RedisFuture<T> lastOfAsync(Map<?, ? extends CompletionStage<T>> executions) {
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             // make sure, that all futures are executed before returning the result.
@@ -107,7 +107,7 @@ class MultiNodeExecution {
      * @param executions mapping of a key to the future
      * @return future returning the first result.
      */
-    static RedisFuture<String> alwaysOkOfAsync(Map<?, ? extends CompletionStage<String>> executions) {
+    public static RedisFuture<String> alwaysOkOfAsync(Map<?, ? extends CompletionStage<String>> executions) {
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
 
