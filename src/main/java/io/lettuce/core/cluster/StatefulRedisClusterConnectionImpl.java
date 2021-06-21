@@ -94,10 +94,25 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         this.pushHandler = pushHandler;
         this.codec = codec;
 
-        this.async = new RedisAdvancedClusterAsyncCommandsImpl<>(this, codec);
-        this.sync = (RedisAdvancedClusterCommands) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(),
-                new Class<?>[] { RedisAdvancedClusterCommands.class }, syncInvocationHandler());
-        this.reactive = new RedisAdvancedClusterReactiveCommandsImpl<>(this, codec);
+        this.async = newRedisAdvancedClusterAsyncCommandsImpl();
+        this.sync = newRedisAdvancedClusterCommandsImpl();
+        this.reactive = newRedisAdvancedClusterReactiveCommandsImpl();
+    }
+
+    protected RedisAdvancedClusterReactiveCommandsImpl<K, V> newRedisAdvancedClusterReactiveCommandsImpl() {
+        return new RedisAdvancedClusterReactiveCommandsImpl<>((StatefulRedisClusterConnection<K, V>) this, codec);
+    }
+
+    protected RedisAdvancedClusterCommands<K, V> newRedisAdvancedClusterCommandsImpl() {
+        return clusterSyncHandler(RedisAdvancedClusterCommands.class);
+    }
+
+    protected <T> T clusterSyncHandler(Class<?>... interfaces) {
+        return (T) Proxy.newProxyInstance(AbstractRedisClient.class.getClassLoader(), interfaces, syncInvocationHandler());
+    }
+
+    protected RedisAdvancedClusterAsyncCommandsImpl<K, V> newRedisAdvancedClusterAsyncCommandsImpl() {
+        return new RedisAdvancedClusterAsyncCommandsImpl((StatefulRedisClusterConnection<K, V>) this, codec);
     }
 
     @Override
