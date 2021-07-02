@@ -60,9 +60,9 @@ public class IOUringProvider {
         try {
             Class.forName("io.netty.incubator.channel.uring.IOUring");
             availability = IOUring.isAvailable();
-        } catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException | ExceptionInInitializerError e) {
             availability = false;
-        }
+        } 
 
         IOURING_AVAILABLE = availability;
 
