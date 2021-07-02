@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
 import io.lettuce.core.protocol.DecodeBufferPolicy;
@@ -196,9 +197,14 @@ public class ClientOptions implements Serializable {
         /**
          * Allows cancelling queued commands in case a reconnect fails.Defaults to {@code false}. See
          * {@link #DEFAULT_CANCEL_CMD_RECONNECT_FAIL}.
+         * <b>This flag is deprecated and should not be used as it can lead to race conditions and protocol offsets.
+         * The reason is that it internally calls reset() which causes a protocol offset.</b>
+         * See {@link StatefulConnection#reset}
          *
          * @param cancelCommandsOnReconnectFailure true/false
          * @return {@code this}
+         * @deprecated since 7.0 This feature is unsafe and may cause protocol offsets if true
+         *             (i.e. Redis commands are completed with previous command values).
          */
         public Builder cancelCommandsOnReconnectFailure(boolean cancelCommandsOnReconnectFailure) {
             this.cancelCommandsOnReconnectFailure = cancelCommandsOnReconnectFailure;
@@ -436,6 +442,7 @@ public class ClientOptions implements Serializable {
      * sequence. Default is {@code false}.
      *
      * @return {@code true} if commands should be cancelled on reconnect failures.
+     * @deprecated since 7.0 See {@link Builder#cancelCommandsOnReconnectFailure(boolean)}.
      */
     public boolean isCancelCommandsOnReconnectFailure() {
         return cancelCommandsOnReconnectFailure;
