@@ -527,9 +527,9 @@ public abstract class AbstractRedisClient {
     private CompletableFuture<Void> closeResources() {
 
         List<CompletionStage<Void>> closeFutures = new ArrayList<>();
+        List<Closeable> closeableResources = new ArrayList<>(this.closeableResources);
 
-        while (!closeableResources.isEmpty()) {
-            Closeable closeableResource = closeableResources.iterator().next();
+        for (Closeable closeableResource : closeableResources) {
 
             if (closeableResource instanceof AsyncCloseable) {
 
@@ -541,10 +541,14 @@ public abstract class AbstractRedisClient {
                     logger.debug("Exception on Close: " + e.getMessage(), e);
                 }
             }
-            closeableResources.remove(closeableResource);
+            this.closeableResources.remove(closeableResource);
         }
 
-        for (Channel c : channels) {
+        for (Channel c : channels.toArray(new Channel[0])) {
+
+            if (c == null) {
+                continue;
+            }
 
             ChannelPipeline pipeline = c.pipeline();
 

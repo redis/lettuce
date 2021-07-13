@@ -390,6 +390,22 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
+    void shutdownWithOpenConnectionShouldCloseCorrectly() {
+
+        ClusterTopologyRefreshOptions refreshOptions = ClusterTopologyRefreshOptions.builder()
+                .enableAllAdaptiveRefreshTriggers().enablePeriodicRefresh(Duration.ofSeconds(1)).build();
+
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), ClusterTestSettings.port1).build());
+
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(refreshOptions).build());
+
+        clusterClient.connect().sync();
+
+        FastShutdown.shutdown(clusterClient);
+    }
+
+    @Test
     void partitionRetrievalShouldFail() {
 
         RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
