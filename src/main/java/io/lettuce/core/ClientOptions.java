@@ -196,16 +196,16 @@ public class ClientOptions implements Serializable {
 
         /**
          * Allows cancelling queued commands in case a reconnect fails.Defaults to {@code false}. See
-         * {@link #DEFAULT_CANCEL_CMD_RECONNECT_FAIL}.
-         * <b>This flag is deprecated and should not be used as it can lead to race conditions and protocol offsets.
-         * The reason is that it internally calls reset() which causes a protocol offset.</b>
+         * {@link #DEFAULT_CANCEL_CMD_RECONNECT_FAIL}. <b>This flag is deprecated and should not be used as it can lead to race
+         * conditions and protocol offsets. The reason is that it internally calls reset() which causes a protocol offset.</b>
          * See {@link StatefulConnection#reset}
          *
          * @param cancelCommandsOnReconnectFailure true/false
          * @return {@code this}
-         * @deprecated since 7.0 This feature is unsafe and may cause protocol offsets if true
-         *             (i.e. Redis commands are completed with previous command values).
+         * @deprecated since 6.2, to be removed with 7.0. This feature is unsafe and may cause protocol offsets if true (i.e.
+         *             Redis commands are completed with previous command values).
          */
+        @Deprecated
         public Builder cancelCommandsOnReconnectFailure(boolean cancelCommandsOnReconnectFailure) {
             this.cancelCommandsOnReconnectFailure = cancelCommandsOnReconnectFailure;
             return this;
@@ -423,7 +423,6 @@ public class ClientOptions implements Serializable {
         return builder;
     }
 
-
     /**
      * Controls auto-reconnect behavior on connections. If auto-reconnect is {@code true} (default), it is enabled. As soon
      * as a connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any
@@ -438,12 +437,13 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * If this flag is {@code true} any queued commands will be canceled when a reconnect fails within the activation
-     * sequence. Default is {@code false}.
+     * If this flag is {@code true} any queued commands will be canceled when a reconnect fails within the activation sequence.
+     * Default is {@code false}.
      *
      * @return {@code true} if commands should be cancelled on reconnect failures.
-     * @deprecated since 7.0 See {@link Builder#cancelCommandsOnReconnectFailure(boolean)}.
+     * @deprecated since 6.2, to be removed with 7.0. See {@link Builder#cancelCommandsOnReconnectFailure(boolean)}.
      */
+    @Deprecated
     public boolean isCancelCommandsOnReconnectFailure() {
         return cancelCommandsOnReconnectFailure;
     }

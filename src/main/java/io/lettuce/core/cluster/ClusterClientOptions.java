@@ -175,7 +175,15 @@ public class ClusterClientOptions extends ClientOptions {
             return this;
         }
 
+        /**
+         *
+         * @param cancelCommandsOnReconnectFailure true/false
+         * @return
+         * @deprecated since 6.2, to be removed with 7.0. This feature is unsafe and may cause protocol offsets if true (i.e.
+         *             Redis commands are completed with previous command values).
+         */
         @Override
+        @Deprecated
         public Builder cancelCommandsOnReconnectFailure(boolean cancelCommandsOnReconnectFailure) {
             super.cancelCommandsOnReconnectFailure(cancelCommandsOnReconnectFailure);
             return this;
