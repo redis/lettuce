@@ -68,7 +68,7 @@
         <mockito.version>3.9.0</mockito.version>
         <netty.version>4.1.65.Final</netty.version>
         <openwebbeans.version>2.0.22</openwebbeans.version>
-        <reactor.version>3.3.18.RELEASE</reactor.version>
+        <reactor.version>3.4.8</reactor.version>
         <rxjava.version>1.3.8</rxjava.version>
         <rxjava-reactive-streams.version>1.2.1</rxjava-reactive-streams.version>
         <rxjava2.version>2.2.21</rxjava2.version>
