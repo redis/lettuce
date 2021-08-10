@@ -68,28 +68,26 @@ class JfrEventRecorder implements EventRecorder {
     }
 
     private Constructor<?> getEventConstructor(Event event) throws NoSuchMethodException {
-
-        Constructor<?> constructor;
-
-        synchronized (constructorMap) {
-            constructor = constructorMap.get(event.getClass());
-        }
+        Class<? extends Event> aClass = event.getClass();
+        Constructor<?> constructor = constructorMap.get(aClass);
 
         if (constructor == null) {
-
-            String jfrClassName = event.getClass().getPackage().getName() + ".Jfr" + event.getClass().getSimpleName();
-
-            Class<?> eventClass = LettuceClassUtils.findClass(jfrClassName);
-
-            if (eventClass == null) {
-                constructor = Object.class.getConstructor();
-            } else {
-                constructor = eventClass.getDeclaredConstructors()[0];
-                constructor.setAccessible(true);
-            }
-
             synchronized (constructorMap) {
-                constructorMap.put(event.getClass(), constructor);
+                constructor = constructorMap.get(aClass);
+                if (constructor == null) {
+                    String jfrClassName = aClass.getPackage().getName() + ".Jfr" + aClass.getSimpleName();
+
+                    Class<?> eventClass = LettuceClassUtils.findClass(jfrClassName);
+
+                    if (eventClass == null) {
+                        constructor = Object.class.getConstructor();
+                    } else {
+                        constructor = eventClass.getDeclaredConstructors()[0];
+                        constructor.setAccessible(true);
+                    }
+
+                    constructorMap.put(aClass, constructor);
+                }
             }
         }
 
