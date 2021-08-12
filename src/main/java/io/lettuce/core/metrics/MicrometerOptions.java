@@ -204,7 +204,7 @@ public class MicrometerOptions {
          * @return this {@link Builder}.
          */
         public Builder minLatency(Duration minLatency) {
-            LettuceAssert.notNull(maxLatency, "Max Latency must not be null");
+            LettuceAssert.notNull(minLatency, "Min Latency must not be null");
             this.minLatency = minLatency;
             return this;
         }
