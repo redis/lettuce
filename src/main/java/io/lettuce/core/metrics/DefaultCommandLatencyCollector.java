@@ -105,7 +105,12 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                     PAUSE_DETECTOR_UPDATER.get(this).retain();
                 }
             }
-            pauseDetector = ((DefaultPauseDetectorWrapper) PAUSE_DETECTOR_UPDATER.get(this)).getPauseDetector();
+            PauseDetectorWrapper pauseDetectorWrapper = PAUSE_DETECTOR_UPDATER.get(this);
+            if (pauseDetectorWrapper instanceof DefaultPauseDetectorWrapper) {
+                pauseDetector = ((DefaultPauseDetectorWrapper) pauseDetectorWrapper).getPauseDetector();
+            } else {
+                return;
+            }
         } while (pauseDetector == null);
 
         PauseDetector pauseDetectorToUse = pauseDetector;
