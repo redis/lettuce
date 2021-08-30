@@ -23,6 +23,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 
+import io.lettuce.core.SslConnectionBuilder;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelInitializer;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
@@ -39,6 +42,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * @author Mark Paluch
+ * @author Aashish Amrute
  */
 class ReconnectionHandler {
 
@@ -108,6 +112,14 @@ class ReconnectionHandler {
     }
 
     private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {
+
+        final ChannelHandler handler = bootstrap.config().handler();
+
+        // reinitialize SslChannelInitializer if Redis - SSL connection.
+        if (SslConnectionBuilder.isSslChannelInitializer(handler)) {
+            final ChannelInitializer<Channel> channelInitializer = SslConnectionBuilder.sslConnectionBuilder().rebuildWithNewSocketAddress(handler, remoteAddress);
+            bootstrap.handler(channelInitializer);
+        }
 
         ChannelFuture connectFuture = bootstrap.connect(remoteAddress);
 

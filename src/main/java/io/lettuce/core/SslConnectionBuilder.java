@@ -44,6 +44,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
  * @author Mark Paluch
  * @author Amin Mohtashami
  * @author Felipe Ruiz
+ * @author Aashish Amrute
  */
 public class SslConnectionBuilder extends ConnectionBuilder {
 
@@ -58,6 +59,10 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         return new SslConnectionBuilder();
     }
 
+    public static boolean isSslChannelInitializer(ChannelHandler handler){
+        return handler instanceof SslChannelInitializer;
+    }
+
     @Override
     protected List<ChannelHandler> buildHandlers() {
         LettuceAssert.assertState(redisURI != null, "RedisURI must not be null");
@@ -70,6 +75,21 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     public ChannelInitializer<Channel> build(SocketAddress socketAddress) {
         return new SslChannelInitializer(this::buildHandlers, toHostAndPort(socketAddress), redisURI.getVerifyMode(),
                 redisURI.isStartTls(), clientResources(), clientOptions().getSslOptions());
+    }
+
+    /**
+     * Rebuild SslChannelInitializer with new Socket Address in case of reconnect due to master failover.
+     *
+     * @param handler previous handler
+     * @param socketAddress new remote address
+     * @return new SslChannelInitializer
+     */
+    public ChannelInitializer<Channel> rebuildWithNewSocketAddress(ChannelHandler handler, SocketAddress socketAddress) {
+        LettuceAssert.assertState(isSslChannelInitializer(handler), "ChannelHandler is not instance of SslChannelInitializer");
+
+        SslChannelInitializer sslChannelInitializer = (SslChannelInitializer) handler;
+        return new SslChannelInitializer(sslChannelInitializer.handlers, toHostAndPort(socketAddress), sslChannelInitializer.verifyPeer,
+                sslChannelInitializer.startTls, sslChannelInitializer.clientResources, sslChannelInitializer.sslOptions);
     }
 
     static HostAndPort toHostAndPort(SocketAddress socketAddress) {
