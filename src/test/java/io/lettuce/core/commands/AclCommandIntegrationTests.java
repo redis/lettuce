@@ -119,7 +119,7 @@ public class AclCommandIntegrationTests extends TestSupport {
     @Test
     void aclSetuserWithCategories() {
         assertThat(redis.aclDeluser("foo")).isNotNull();
-        AclSetuserArgs args = AclSetuserArgs.Builder.on().addCategories(AclCategory.CONNECTION);
+        AclSetuserArgs args = AclSetuserArgs.Builder.on().addCategory(AclCategory.CONNECTION);
         assertThat(redis.aclSetuser("foo", args)).isEqualTo("OK");
         assertThat(redis.aclGetuser("foo")).contains("-@all +@connection");
         assertThat(redis.aclDeluser("foo")).isNotNull();
