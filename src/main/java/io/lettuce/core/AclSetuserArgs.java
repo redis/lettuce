@@ -651,7 +651,7 @@ public class AclSetuserArgs implements CompositeArgument {
             }
         }
 
-        if (removeCategories != null) {
+        if (addCategories != null) {
             for (AclCategory category : addCategories) {
                 args.add("+@" + category.name());
             }
