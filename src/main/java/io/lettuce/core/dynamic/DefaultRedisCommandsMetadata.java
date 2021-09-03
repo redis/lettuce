@@ -74,7 +74,7 @@ class DefaultRedisCommandsMetadata implements RedisCommandsMetadata {
      * @return
      */
     private boolean isQueryMethodCandidate(Method method) {
-        return !method.isBridge() && !method.isDefault();
+        return !method.isBridge() && !method.isDefault() && !Modifier.isStatic(method.getModifiers());
     }
 
     @Override
