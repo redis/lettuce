@@ -23,19 +23,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 
-import io.lettuce.core.SslConnectionBuilder;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelInitializer;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisCommandTimeoutException;
+import io.lettuce.core.SslConnectionBuilder;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
 import io.netty.util.Timer;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -113,12 +112,11 @@ class ReconnectionHandler {
 
     private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {
 
-        final ChannelHandler handler = bootstrap.config().handler();
+        ChannelHandler handler = bootstrap.config().handler();
 
         // reinitialize SslChannelInitializer if Redis - SSL connection.
         if (SslConnectionBuilder.isSslChannelInitializer(handler)) {
-            final ChannelInitializer<Channel> channelInitializer = SslConnectionBuilder.sslConnectionBuilder().rebuildWithNewSocketAddress(handler, remoteAddress);
-            bootstrap.handler(channelInitializer);
+            bootstrap.handler(SslConnectionBuilder.withSocketAddress(handler, remoteAddress));
         }
 
         ChannelFuture connectFuture = bootstrap.connect(remoteAddress);
