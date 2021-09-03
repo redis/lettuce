@@ -50,6 +50,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
     private RedisURI redisURI;
 
+
     public SslConnectionBuilder ssl(RedisURI redisURI) {
         this.redisURI = redisURI;
         return this;
@@ -59,8 +60,30 @@ public class SslConnectionBuilder extends ConnectionBuilder {
         return new SslConnectionBuilder();
     }
 
+    /**
+     * Check whether the {@link ChannelHandler} is a {@link SslChannelInitializer}.
+     *
+     * @param handler
+     * @return
+     * @since 6.0.8
+     */
     public static boolean isSslChannelInitializer(ChannelHandler handler){
         return handler instanceof SslChannelInitializer;
+    }
+
+    /**
+     * Create an updated {@link SslChannelInitializer} with the new {@link SocketAddress} in place.
+     *
+     * @param handler
+     * @param socketAddress
+     * @return
+     * @since 6.0.8
+     */
+    public static ChannelHandler withSocketAddress(ChannelHandler handler, SocketAddress socketAddress) {
+
+        LettuceAssert.assertState(isSslChannelInitializer(handler), "handler must be SslChannelInitializer");
+
+        return ((SslChannelInitializer) handler).withHostAndPort(toHostAndPort(socketAddress));
     }
 
     @Override
@@ -75,21 +98,6 @@ public class SslConnectionBuilder extends ConnectionBuilder {
     public ChannelInitializer<Channel> build(SocketAddress socketAddress) {
         return new SslChannelInitializer(this::buildHandlers, toHostAndPort(socketAddress), redisURI.getVerifyMode(),
                 redisURI.isStartTls(), clientResources(), clientOptions().getSslOptions());
-    }
-
-    /**
-     * Rebuild SslChannelInitializer with new Socket Address in case of reconnect due to master failover.
-     *
-     * @param handler previous handler
-     * @param socketAddress new remote address
-     * @return new SslChannelInitializer
-     */
-    public ChannelInitializer<Channel> rebuildWithNewSocketAddress(ChannelHandler handler, SocketAddress socketAddress) {
-        LettuceAssert.assertState(isSslChannelInitializer(handler), "ChannelHandler is not instance of SslChannelInitializer");
-
-        SslChannelInitializer sslChannelInitializer = (SslChannelInitializer) handler;
-        return new SslChannelInitializer(sslChannelInitializer.handlers, toHostAndPort(socketAddress), sslChannelInitializer.verifyPeer,
-                sslChannelInitializer.startTls, sslChannelInitializer.clientResources, sslChannelInitializer.sslOptions);
     }
 
     static HostAndPort toHostAndPort(SocketAddress socketAddress) {
@@ -127,6 +135,10 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             this.startTls = startTls;
             this.clientResources = clientResources;
             this.sslOptions = sslOptions;
+        }
+
+        ChannelHandler withHostAndPort(HostAndPort hostAndPort) {
+            return new SslChannelInitializer(handlers, hostAndPort, verifyPeer, startTls, clientResources, sslOptions);
         }
 
         @Override
