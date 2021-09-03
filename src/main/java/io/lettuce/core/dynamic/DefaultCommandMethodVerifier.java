@@ -20,7 +20,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import io.lettuce.core.*;
+import io.lettuce.core.GeoCoordinates;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.Limit;
+import io.lettuce.core.Range;
+import io.lettuce.core.ScoredValue;
 import io.lettuce.core.dynamic.parameter.Parameter;
 import io.lettuce.core.dynamic.segment.CommandSegment;
 import io.lettuce.core.dynamic.segment.CommandSegments;
@@ -63,6 +67,7 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
      * @param commandSegments
      * @param commandMethod
      */
+    @Override
     public void validate(CommandSegments commandSegments, CommandMethod commandMethod) throws CommandMethodSyntaxException {
 
         LettuceAssert.notEmpty(commandSegments.getCommandType().name(), "Command name must not be empty");
