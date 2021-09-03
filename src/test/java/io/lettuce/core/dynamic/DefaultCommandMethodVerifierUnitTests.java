@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.dynamic;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Fail.fail;
 
 import java.lang.reflect.Method;
@@ -35,6 +35,8 @@ import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.models.command.CommandDetail;
 
 /**
+ * Unit tests for {@link DefaultCommandMethodVerifier}.
+ *
  * @author Mark Paluch
  */
 class DefaultCommandMethodVerifierUnitTests {
