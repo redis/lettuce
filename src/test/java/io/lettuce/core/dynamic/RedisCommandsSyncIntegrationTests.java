@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.dynamic;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +37,8 @@ import io.lettuce.core.dynamic.domain.Timeout;
 import io.lettuce.test.LettuceExtension;
 
 /**
+ * Integration tests for synchronous command interface methods.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
@@ -117,6 +119,10 @@ class RedisCommandsSyncIntegrationTests extends TestSupport {
 
         default byte[] getAsBytes() {
             return getAsBytes("key");
+        }
+
+        static int someStaticMethod() {
+            return 1;
         }
 
         @Command("GET ?0")
