@@ -28,7 +28,7 @@ import io.lettuce.core.metrics.CommandMetrics;
  */
 public class CommandLatencyEvent implements Event {
 
-    private Map<CommandLatencyId, CommandMetrics> latencies;
+    private final Map<CommandLatencyId, CommandMetrics> latencies;
 
     public CommandLatencyEvent(Map<CommandLatencyId, CommandMetrics> latencies) {
         this.latencies = latencies;
@@ -45,9 +45,7 @@ public class CommandLatencyEvent implements Event {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(latencies);
-        return sb.toString();
+        return latencies.toString();
     }
 
 }
