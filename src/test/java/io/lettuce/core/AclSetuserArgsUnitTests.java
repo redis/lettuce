@@ -36,7 +36,7 @@ class AclSetuserArgsUnitTests {
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         args.build(commandArgs);
 
-        assertThat(commandArgs.toCommandString()).isEqualTo("ON -@ALL");
+        assertThat(commandArgs.toCommandString()).isEqualTo("ON NOCOMMANDS");
     }
 
     @Test
