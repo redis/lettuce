@@ -30,6 +30,16 @@ import io.lettuce.core.protocol.CommandArgs;
 class AclSetuserArgsUnitTests {
 
     @Test
+    void shouldRemoveAllCommands() {
+
+        AclSetuserArgs args = AclSetuserArgs.Builder.on().noCommands();
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        args.build(commandArgs);
+
+        assertThat(commandArgs.toCommandString()).isEqualTo("ON -@ALL");
+    }
+
+    @Test
     void shouldAddCategory() {
 
         AclSetuserArgs args = AclSetuserArgs.Builder.on().addCategory(AclCategory.CONNECTION);

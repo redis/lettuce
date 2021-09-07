@@ -474,7 +474,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs noCommands() {
-        this.noCommands = false;
+        this.noCommands = true;
         return this;
     }
 
