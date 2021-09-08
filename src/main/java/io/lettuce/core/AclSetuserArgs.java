@@ -30,49 +30,12 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * {@link AclSetuserArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mikhael Sokolov
- * @Rohan Nagar
+ * @author Rohan Nagar
  * @since 6.1
  */
 public class AclSetuserArgs implements CompositeArgument {
 
-    private boolean active;
-
-    private List<String> keyPatterns;
-
-    private boolean allKeys;
-
-    private boolean resetKeys;
-
-    private List<String> channelPatterns;
-
-    private boolean allChannels;
-
-    private boolean resetChannels;
-
-    private List<CommandSubcommandPair> addCommands;
-
-    private boolean allCommands;
-
-    private List<CommandSubcommandPair> removeCommands;
-
-    private boolean noCommands;
-
-    private List<AclCategory> addCategories;
-
-    private List<AclCategory> removeCategories;
-
-    private boolean nopass;
-
-    private List<String> addPasswords;
-
-    private List<String> addHashedPasswords;
-
-    private List<String> removePasswords;
-
-    private List<String> removeHashedPasswords;
-
-    private boolean reset;
-
+    private final List<SetuserArg> arguments = new ArrayList<>();
 
     /**
      * Builder entry points for {@link AclSetuserArgs}.
@@ -112,7 +75,7 @@ public class AclSetuserArgs implements CompositeArgument {
          * @return new {@link AclSetuserArgs} and adds accessible key pattern.
          * @see AclSetuserArgs#keyPattern(String)
          */
-        public static  AclSetuserArgs keyPattern(String keyPattern) {
+        public static AclSetuserArgs keyPattern(String keyPattern) {
             return new AclSetuserArgs().keyPattern(keyPattern);
         }
 
@@ -266,6 +229,16 @@ public class AclSetuserArgs implements CompositeArgument {
         }
 
         /**
+         * Creates new {@link AclSetuserArgs} and sets the user as having no associated passwords.
+         *
+         * @return new {@link AclSetuserArgs} and sets the user as having no associated passwords.
+         * @see AclSetuserArgs#resetpass()
+         */
+        public static AclSetuserArgs resetpass() {
+            return new AclSetuserArgs().resetpass();
+        }
+
+        /**
          * Creates new {@link AclSetuserArgs} and adds the specified clear text password as an hashed password in the list of the users passwords.
          *
          * @param password clear text password
@@ -329,7 +302,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs on() {
-        this.active = true;
+        this.arguments.add(new Active(true));
         return this;
     }
 
@@ -339,7 +312,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs off() {
-        this.active = false;
+        this.arguments.add(new Active(false));
         return this;
     }
 
@@ -350,10 +323,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs keyPattern(String keyPattern) {
-        if (this.keyPatterns == null) {
-            this.keyPatterns = new ArrayList<>();
-        }
-        this.keyPatterns.add(keyPattern);
+        this.arguments.add(new KeyPattern(keyPattern));
         return this;
     }
 
@@ -363,7 +333,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs allKeys() {
-        this.allKeys = true;
+        this.arguments.add(new AllKeys());
         return this;
     }
 
@@ -373,7 +343,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs resetKeys() {
-        this.resetKeys = true;
+        this.arguments.add(new ResetKeys());
         return this;
     }
 
@@ -384,10 +354,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs channelPattern(String channelPattern) {
-        if (this.channelPatterns == null) {
-            this.channelPatterns = new ArrayList<>();
-        }
-        this.channelPatterns.add(channelPattern);
+        this.arguments.add(new ChannelPattern(channelPattern));
         return this;
     }
 
@@ -397,7 +364,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs allChannels() {
-        this.allChannels = true;
+        this.arguments.add(new AllChannels());
         return this;
     }
 
@@ -407,7 +374,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs resetChannels() {
-        this.resetChannels = true;
+        this.arguments.add(new ResetChannels());
         return this;
     }
 
@@ -427,10 +394,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs addCommand(CommandType command, ProtocolKeyword subCommand) {
-        if (this.addCommands == null) {
-            this.addCommands = new ArrayList<>();
-        }
-        this.addCommands.add(new CommandSubcommandPair(command, subCommand));
+        this.arguments.add(new AddCommand(new CommandSubcommandPair(command, subCommand)));
         return this;
     }
 
@@ -440,7 +404,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs allCommands() {
-        this.allCommands = true;
+        this.arguments.add(new AllCommands());
         return this;
     }
 
@@ -462,10 +426,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs removeCommand(CommandType command, ProtocolKeyword subCommand) {
-        if (removeCommands == null) {
-            this.removeCommands = new ArrayList<>();
-        }
-        this.removeCommands.add(new CommandSubcommandPair(command, subCommand));
+        this.arguments.add(new RemoveCommand(new CommandSubcommandPair(command, subCommand)));
         return this;
     }
 
@@ -475,7 +436,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs noCommands() {
-        this.noCommands = true;
+        this.arguments.add(new NoCommands());
         return this;
     }
 
@@ -486,10 +447,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs addCategory(AclCategory category) {
-        if (this.addCategories == null) {
-            this.addCategories = new ArrayList<>();
-        }
-        this.addCategories.add(category);
+        this.arguments.add(new AddCategory(category));
         return this;
     }
 
@@ -500,10 +458,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs removeCategory(AclCategory category) {
-        if (this.removeCategories == null) {
-            this.removeCategories = new ArrayList<>();
-        }
-        this.removeCategories.add(category);
+        this.arguments.add(new RemoveCategory(category));
         return this;
     }
 
@@ -513,7 +468,19 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs nopass() {
-        this.nopass = true;
+        this.arguments.add(new NoPass());
+        return this;
+    }
+
+    /**
+     * Flushes the list of allowed passwords and removes the "no password" status. After resetting
+     * the password there is no way to authenticate as the user without adding some password (or
+     * setting it as {@link #nopass()} later).
+     *
+     * @return {@code this}
+     */
+    public AclSetuserArgs resetpass() {
+        this.arguments.add(new ResetPass());
         return this;
     }
 
@@ -524,10 +491,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs addPassword(String password) {
-        if (this.addPasswords == null) {
-            this.addPasswords = new ArrayList<>();
-        }
-        this.addPasswords.add(password);
+        this.arguments.add(new AddPassword(password));
         return this;
     }
 
@@ -538,10 +502,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs addHashedPassword(String hashedPassword) {
-        if (this.addHashedPasswords == null) {
-            this.addHashedPasswords = new ArrayList<>();
-        }
-        this.addHashedPasswords.add(hashedPassword);
+        this.arguments.add(new AddHashedPassword(hashedPassword));
         return this;
     }
 
@@ -552,10 +513,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs removePassword(String password) {
-        if (this.removePasswords == null) {
-            this.removePasswords = new ArrayList<>();
-        }
-        this.removePasswords.add(password);
+        this.arguments.add(new RemovePassword(password));
         return this;
     }
 
@@ -566,10 +524,7 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs removeHashedPassword(String hashedPassword) {
-        if (this.removeHashedPasswords == null) {
-            this.removeHashedPasswords = new ArrayList<>();
-        }
-        this.removeHashedPasswords.add(hashedPassword);
+        this.arguments.add(new RemoveHashedPassword(hashedPassword));
         return this;
     }
 
@@ -579,118 +534,13 @@ public class AclSetuserArgs implements CompositeArgument {
      * @return {@code this}
      */
     public AclSetuserArgs reset() {
-        this.reset = true;
+        this.arguments.add(new Reset());
         return this;
     }
 
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
-        if (reset) {
-            args.add(RESET);
-            return;
-        }
-
-        if (active) {
-            args.add(ON);
-        } else {
-            args.add(OFF);
-        }
-
-        if (allKeys) {
-            args.add(ALLKEYS);
-        }
-
-        if (resetKeys) {
-            args.add(RESETKEYS);
-        }
-
-        if (keyPatterns != null) {
-            for (String glob : keyPatterns) {
-                args.add("~" + glob);
-            }
-        }
-
-        if (allChannels) {
-            args.add(ALLCHANNELS);
-        }
-
-        if (resetChannels) {
-            args.add(RESETCHANNELS);
-        }
-
-        if (channelPatterns != null) {
-            for (String glob : channelPatterns) {
-                args.add("&" + glob);
-            }
-        }
-
-        if (allCommands) {
-            args.add(ALLCOMMANDS);
-        }
-
-        if (addCommands != null) {
-            for (CommandSubcommandPair command : addCommands) {
-                if (command.getSubCommand() == null) {
-                    args.add("+" + command.getCommand().name());
-                } else {
-                    args.add("+" + command.getCommand().name() + "|" + command.getSubCommand().name());
-                }
-            }
-        }
-
-        if (noCommands) {
-            args.add(NOCOMMANDS);
-        }
-
-        if (removeCommands != null) {
-            for (CommandSubcommandPair command : removeCommands) {
-                if (command.getSubCommand() == null) {
-                    args.add("-" + command.getCommand().name());
-                } else {
-                    args.add("-" + command.getCommand().name() + "|" + command.getSubCommand().name());
-                }
-            }
-        }
-
-        if (addCategories != null) {
-            for (AclCategory category : addCategories) {
-                args.add("+@" + category.name());
-            }
-        }
-
-        if (removeCategories != null) {
-            for (AclCategory category : removeCategories) {
-                args.add("-@" + category.name());
-            }
-        }
-
-        if (nopass) {
-            args.add(NOPASS);
-        }
-
-        if (addPasswords != null) {
-            for (String password : addPasswords) {
-                args.add(">" + password);
-            }
-        }
-
-        if (addHashedPasswords != null) {
-            for (String password : addHashedPasswords) {
-                args.add("#" + password);
-            }
-        }
-
-        if (removePasswords != null) {
-            for (String password : removePasswords) {
-                args.add("<" + password);
-            }
-        }
-
-        if (removeHashedPasswords != null) {
-            for (String password : removeHashedPasswords) {
-                args.add("!" + password);
-            }
-        }
+        this.arguments.forEach(setuserArg -> setuserArg.build(args));
     }
 
     private static class CommandSubcommandPair {
@@ -709,6 +559,251 @@ public class AclSetuserArgs implements CompositeArgument {
 
         public ProtocolKeyword getSubCommand() {
             return subCommand;
+        }
+    }
+
+    /**
+     * Internal interface that is the base for all ACL SETUSER arguments.
+     */
+    private interface SetuserArg {
+        <K, V> void build(CommandArgs<K, V> args);
+    }
+
+    private static class Active implements SetuserArg {
+
+        private final boolean active;
+
+        Active(boolean active) {
+            this.active = active;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            if (active) {
+                args.add(ON);
+            } else {
+                args.add(OFF);
+            }
+        }
+    }
+
+    private static class Reset implements SetuserArg {
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(RESET);
+        }
+    }
+
+    private static class AllKeys implements SetuserArg {
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(ALLKEYS);
+        }
+    }
+
+    private static class ResetKeys implements SetuserArg {
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(RESETKEYS);
+        }
+    }
+
+    private static class KeyPattern implements SetuserArg {
+
+        private final String keyPattern;
+
+        KeyPattern(String keyPattern) {
+            this.keyPattern = keyPattern;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add("~" + keyPattern);
+        }
+    }
+
+    private static class ChannelPattern implements SetuserArg {
+
+        private final String channelPattern;
+
+        ChannelPattern(String channelPattern) {
+            this.channelPattern = channelPattern;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add("&" + channelPattern);
+        }
+    }
+
+    private static class AllChannels implements SetuserArg {
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(ALLCHANNELS);
+        }
+    }
+
+    private static class ResetChannels implements SetuserArg {
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(RESETCHANNELS);
+        }
+    }
+
+    private static class AllCommands implements SetuserArg {
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(ALLCOMMANDS);
+        }
+    }
+
+    private static class AddCommand implements SetuserArg {
+
+        private final CommandSubcommandPair command;
+
+        AddCommand(CommandSubcommandPair command) {
+            this.command = command;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            if (command.getSubCommand() == null) {
+                args.add("+" + command.getCommand().name());
+            } else {
+                args.add("+" + command.getCommand().name() + "|" + command.getSubCommand().name());
+            }
+        }
+    }
+
+    private static class RemoveCommand implements SetuserArg {
+
+        private final CommandSubcommandPair command;
+
+        RemoveCommand(CommandSubcommandPair command) {
+            this.command = command;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            if (command.getSubCommand() == null) {
+                args.add("-" + command.getCommand().name());
+            } else {
+                args.add("-" + command.getCommand().name() + "|" + command.getSubCommand().name());
+            }
+        }
+    }
+
+    private static class NoCommands implements SetuserArg {
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(NOCOMMANDS);
+        }
+    }
+
+    private static class AddCategory implements SetuserArg {
+
+        private final AclCategory category;
+
+        AddCategory(AclCategory category) {
+            this.category = category;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add("+@" + category.name());
+        }
+    }
+
+    private static class RemoveCategory implements SetuserArg {
+
+        private final AclCategory category;
+
+        RemoveCategory(AclCategory category) {
+            this.category = category;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add("-@" + category.name());
+        }
+    }
+
+    private static class NoPass implements SetuserArg {
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(NOPASS);
+        }
+    }
+
+    private static class ResetPass implements SetuserArg {
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(RESETPASS);
+        }
+    }
+
+    private static class AddPassword implements SetuserArg {
+
+        private final String password;
+
+        AddPassword(String password) {
+            this.password = password;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(">" + password);
+        }
+    }
+
+    private static class AddHashedPassword implements SetuserArg {
+
+        private final String password;
+
+        AddHashedPassword(String password) {
+            this.password = password;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add("#" + password);
+        }
+    }
+
+    private static class RemovePassword implements SetuserArg {
+
+        private final String password;
+
+        RemovePassword(String password) {
+            this.password = password;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add("<" + password);
+        }
+    }
+
+    private static class RemoveHashedPassword implements SetuserArg {
+
+        private final String password;
+
+        RemoveHashedPassword(String password) {
+            this.password = password;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add("!" + password);
         }
     }
 }
