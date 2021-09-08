@@ -26,6 +26,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * Unit tests for {@link AclSetuserArgs}.
  *
  * @author Mark Paluch
+ * @author Rohan Nagar
  */
 class AclSetuserArgsUnitTests {
 
