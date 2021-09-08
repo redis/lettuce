@@ -30,6 +30,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * {@link AclSetuserArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Mikhael Sokolov
+ * @Rohan Nagar
  * @since 6.1
  */
 public class AclSetuserArgs implements CompositeArgument {
