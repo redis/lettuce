@@ -34,10 +34,8 @@ class AclSetuserArgsUnitTests {
     @Test
     void shouldMaintainCommandOrder() {
 
-        AclSetuserArgs args = AclSetuserArgs.Builder.off()
-            .addCommand(CommandType.HELLO)
-            .removeCommand(CommandType.ACL)
-            .addCommand(CommandType.PING);
+        AclSetuserArgs args = AclSetuserArgs.Builder.off().addCommand(CommandType.HELLO).removeCommand(CommandType.ACL)
+                .addCommand(CommandType.PING);
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         args.build(commandArgs);
 
