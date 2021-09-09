@@ -35,7 +35,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  */
 public class AclSetuserArgs implements CompositeArgument {
 
-    private final List<SetuserArg> arguments = new ArrayList<>();
+    private final List<Argument> arguments = new ArrayList<>();
 
     /**
      * Builder entry points for {@link AclSetuserArgs}.
@@ -90,9 +90,11 @@ public class AclSetuserArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link AclSetuserArgs} and removes all the key patterns from the list of key patterns the user can access.
+         * Creates new {@link AclSetuserArgs} and removes all the key patterns from the list of key patterns the user can
+         * access.
          *
-         * @return new {@link AclSetuserArgs} and removes all the key patterns from the list of key patterns the user can access.
+         * @return new {@link AclSetuserArgs} and removes all the key patterns from the list of key patterns the user can
+         *         access.
          * @see AclSetuserArgs#resetKeys()
          */
         public static AclSetuserArgs resetKeys() {
@@ -121,9 +123,11 @@ public class AclSetuserArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link AclSetuserArgs} and removes all channel patterns from the list of Pub/Sub channel patterns the user can access.
+         * Creates new {@link AclSetuserArgs} and removes all channel patterns from the list of Pub/Sub channel patterns the
+         * user can access.
          *
-         * @return new {@link AclSetuserArgs} and removes all channel patterns from the list of Pub/Sub channel patterns the user can access.
+         * @return new {@link AclSetuserArgs} and removes all channel patterns from the list of Pub/Sub channel patterns the
+         *         user can access.
          * @see AclSetuserArgs#resetChannels()
          */
         public static AclSetuserArgs resetChannels() {
@@ -175,11 +179,13 @@ public class AclSetuserArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link AclSetuserArgs} and removes the specified command to the list of the commands the user can execute.
+         * Creates new {@link AclSetuserArgs} and removes the specified command to the list of the commands the user can
+         * execute.
          *
          * @param command inaccessible command
          * @param subCommand inaccessible subcommand
-         * @return new {@link AclSetuserArgs} and removes the specified command to the list of the commands the user can execute.
+         * @return new {@link AclSetuserArgs} and removes the specified command to the list of the commands the user can
+         *         execute.
          * @see AclSetuserArgs#removeCommand(CommandType, ProtocolKeyword)
          */
         public static AclSetuserArgs removeCommand(CommandType command, ProtocolKeyword subCommand) {
@@ -197,10 +203,12 @@ public class AclSetuserArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link AclSetuserArgs} and adds all the commands in the specified category to the list of commands the user is able to execute.
+         * Creates new {@link AclSetuserArgs} and adds all the commands in the specified category to the list of commands the
+         * user is able to execute.
          *
          * @param category specified category
-         * @return new {@link AclSetuserArgs} and adds all the commands in the specified category to the list of commands the user is able to execute.
+         * @return new {@link AclSetuserArgs} and adds all the commands in the specified category to the list of commands the
+         *         user is able to execute.
          * @see AclSetuserArgs#addCategory(AclCategory)
          */
         public static AclSetuserArgs addCategory(AclCategory category) {
@@ -208,10 +216,12 @@ public class AclSetuserArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link AclSetuserArgs} and removes all the commands in the specified category to the list of commands the user is able to execute.
+         * Creates new {@link AclSetuserArgs} and removes all the commands in the specified category to the list of commands the
+         * user is able to execute.
          *
          * @param category specified category
-         * @return new {@link AclSetuserArgs} and removes all the commands in the specified category to the list of commands the user is able to execute.
+         * @return new {@link AclSetuserArgs} and removes all the commands in the specified category to the list of commands the
+         *         user is able to execute.
          * @see AclSetuserArgs#removeCategory(AclCategory)
          */
         public static AclSetuserArgs removeCategory(AclCategory category) {
@@ -239,10 +249,12 @@ public class AclSetuserArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link AclSetuserArgs} and adds the specified clear text password as an hashed password in the list of the users passwords.
+         * Creates new {@link AclSetuserArgs} and adds the specified clear text password as an hashed password in the list of
+         * the users passwords.
          *
          * @param password clear text password
-         * @return new {@link AclSetuserArgs} and adds the specified clear text password as an hashed password in the list of the users passwords.
+         * @return new {@link AclSetuserArgs} and adds the specified clear text password as an hashed password in the list of
+         *         the users passwords.
          * @see AclSetuserArgs#addPassword(String)
          */
         public static AclSetuserArgs addPassword(String password) {
@@ -262,10 +274,12 @@ public class AclSetuserArgs implements CompositeArgument {
         }
 
         /**
-         * Creates new {@link AclSetuserArgs} and removes the specified clear text password as an hashed password in the list of the users passwords.
+         * Creates new {@link AclSetuserArgs} and removes the specified clear text password as an hashed password in the list of
+         * the users passwords.
          *
          * @param password clear text password
-         * @return new {@link AclSetuserArgs} and removes the specified clear text password as an hashed password in the list of the users passwords.
+         * @return new {@link AclSetuserArgs} and removes the specified clear text password as an hashed password in the list of
+         *         the users passwords.
          * @see AclSetuserArgs#removePassword(String)
          */
         public static AclSetuserArgs removePassword(String password) {
@@ -294,6 +308,7 @@ public class AclSetuserArgs implements CompositeArgument {
         public static AclSetuserArgs reset() {
             return new AclSetuserArgs().reset();
         }
+
     }
 
     /**
@@ -473,9 +488,8 @@ public class AclSetuserArgs implements CompositeArgument {
     }
 
     /**
-     * Flushes the list of allowed passwords and removes the "no password" status. After resetting
-     * the password there is no way to authenticate as the user without adding some password (or
-     * setting it as {@link #nopass()} later).
+     * Flushes the list of allowed passwords and removes the "no password" status. After resetting the password there is no way
+     * to authenticate as the user without adding some password (or setting it as {@link #nopass()} later).
      *
      * @return {@code this}
      */
@@ -546,6 +560,7 @@ public class AclSetuserArgs implements CompositeArgument {
     private static class CommandSubcommandPair {
 
         private final CommandType command;
+
         private final ProtocolKeyword subCommand;
 
         private CommandSubcommandPair(CommandType command, ProtocolKeyword subCommand) {
@@ -560,110 +575,131 @@ public class AclSetuserArgs implements CompositeArgument {
         public ProtocolKeyword getSubCommand() {
             return subCommand;
         }
+
     }
 
     /**
      * Internal interface that is the base for all ACL SETUSER arguments.
      */
-    private interface SetuserArg {
+    private interface Argument {
+
         <K, V> void build(CommandArgs<K, V> args);
+
     }
 
-    private static class Active implements SetuserArg {
+    static class KeywordArgument implements Argument {
 
-        private final boolean active;
+        private final ProtocolKeyword value;
+
+        public KeywordArgument(ProtocolKeyword value) {
+            this.value = value;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(value);
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + ": " + value.name();
+        }
+
+    }
+
+    static class StringArgument implements Argument {
+
+        private final String value;
+
+        public StringArgument(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(value);
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getSimpleName() + ": " + value;
+        }
+
+    }
+
+    private static class Active extends KeywordArgument {
 
         Active(boolean active) {
-            this.active = active;
+            super(active ? ON : OFF);
         }
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            if (active) {
-                args.add(ON);
-            } else {
-                args.add(OFF);
-            }
-        }
     }
 
-    private static class Reset implements SetuserArg {
+    private static class Reset extends KeywordArgument {
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(RESET);
+        public Reset() {
+            super(RESET);
         }
+
     }
 
-    private static class AllKeys implements SetuserArg {
+    private static class AllKeys extends KeywordArgument {
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(ALLKEYS);
+        public AllKeys() {
+            super(ALLKEYS);
         }
+
     }
 
-    private static class ResetKeys implements SetuserArg {
+    private static class ResetKeys extends KeywordArgument {
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(RESETKEYS);
+        public ResetKeys() {
+            super(RESETKEYS);
         }
+
     }
 
-    private static class KeyPattern implements SetuserArg {
-
-        private final String keyPattern;
+    private static class KeyPattern extends StringArgument {
 
         KeyPattern(String keyPattern) {
-            this.keyPattern = keyPattern;
+            super("~" + keyPattern);
         }
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add("~" + keyPattern);
-        }
     }
 
-    private static class ChannelPattern implements SetuserArg {
-
-        private final String channelPattern;
+    private static class ChannelPattern extends StringArgument {
 
         ChannelPattern(String channelPattern) {
-            this.channelPattern = channelPattern;
+            super("&" + channelPattern);
         }
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add("&" + channelPattern);
-        }
     }
 
-    private static class AllChannels implements SetuserArg {
+    private static class AllChannels extends KeywordArgument {
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(ALLCHANNELS);
+        public AllChannels() {
+            super(ALLCHANNELS);
         }
+
     }
 
-    private static class ResetChannels implements SetuserArg {
+    private static class ResetChannels extends KeywordArgument {
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(RESETCHANNELS);
+        public ResetChannels() {
+            super(RESETCHANNELS);
         }
+
     }
 
-    private static class AllCommands implements SetuserArg {
+    private static class AllCommands extends KeywordArgument {
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(ALLCOMMANDS);
+        public AllCommands() {
+            super(ALLCOMMANDS);
         }
+
     }
 
-    private static class AddCommand implements SetuserArg {
+    private static class AddCommand implements Argument {
 
         private final CommandSubcommandPair command;
 
@@ -679,9 +715,10 @@ public class AclSetuserArgs implements CompositeArgument {
                 args.add("+" + command.getCommand().name() + "|" + command.getSubCommand().name());
             }
         }
+
     }
 
-    private static class RemoveCommand implements SetuserArg {
+    private static class RemoveCommand implements Argument {
 
         private final CommandSubcommandPair command;
 
@@ -697,113 +734,89 @@ public class AclSetuserArgs implements CompositeArgument {
                 args.add("-" + command.getCommand().name() + "|" + command.getSubCommand().name());
             }
         }
+
     }
 
-    private static class NoCommands implements SetuserArg {
+    private static class NoCommands extends KeywordArgument {
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(NOCOMMANDS);
+        public NoCommands() {
+            super(NOCOMMANDS);
         }
+
     }
 
-    private static class AddCategory implements SetuserArg {
-
-        private final AclCategory category;
+    private static class AddCategory extends StringArgument {
 
         AddCategory(AclCategory category) {
-            this.category = category;
+            super("+@" + category.name());
         }
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add("+@" + category.name());
-        }
     }
 
-    private static class RemoveCategory implements SetuserArg {
-
-        private final AclCategory category;
+    private static class RemoveCategory extends StringArgument {
 
         RemoveCategory(AclCategory category) {
-            this.category = category;
+            super("-@" + category.name());
         }
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add("-@" + category.name());
-        }
     }
 
-    private static class NoPass implements SetuserArg {
+    private static class NoPass extends KeywordArgument {
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(NOPASS);
+        public NoPass() {
+            super(NOPASS);
         }
+
     }
 
-    private static class ResetPass implements SetuserArg {
+    private static class ResetPass extends KeywordArgument {
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(RESETPASS);
+        public ResetPass() {
+            super(RESETPASS);
         }
+
     }
 
-    private static class AddPassword implements SetuserArg {
-
-        private final String password;
+    private static class AddPassword extends StringArgument {
 
         AddPassword(String password) {
-            this.password = password;
+            super(">" + password);
         }
 
         @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add(">" + password);
+        public String toString() {
+            return getClass().getSimpleName();
         }
+
     }
 
-    private static class AddHashedPassword implements SetuserArg {
-
-        private final String password;
+    private static class AddHashedPassword extends StringArgument {
 
         AddHashedPassword(String password) {
-            this.password = password;
+            super("#" + password);
         }
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add("#" + password);
-        }
     }
 
-    private static class RemovePassword implements SetuserArg {
-
-        private final String password;
+    private static class RemovePassword extends StringArgument {
 
         RemovePassword(String password) {
-            this.password = password;
+            super("<" + password);
         }
 
         @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add("<" + password);
+        public String toString() {
+            return getClass().getSimpleName();
         }
+
     }
 
-    private static class RemoveHashedPassword implements SetuserArg {
-
-        private final String password;
+    private static class RemoveHashedPassword extends StringArgument {
 
         RemoveHashedPassword(String password) {
-            this.password = password;
+            super("!" + password);
         }
 
-        @Override
-        public <K, V> void build(CommandArgs<K, V> args) {
-            args.add("!" + password);
-        }
     }
+
 }
