@@ -79,4 +79,52 @@ public class ConnectionEvents {
 
     }
 
+    static ConnectionEvents of(ConnectionEvents... delegates) {
+        return delegates.length == 1 ? delegates[0] : new MergedConnectionEvents(delegates);
+    }
+
+    static class MergedConnectionEvents extends ConnectionEvents {
+
+        private final ConnectionEvents[] delegates;
+
+        MergedConnectionEvents(ConnectionEvents[] delegates) {
+            this.delegates = delegates;
+        }
+
+        @Override
+        void fireEventRedisConnected(RedisChannelHandler<?, ?> connection, SocketAddress socketAddress) {
+
+            for (ConnectionEvents delegate : delegates) {
+                delegate.fireEventRedisConnected(connection, socketAddress);
+            }
+        }
+
+        @Override
+        void fireEventRedisDisconnected(RedisChannelHandler<?, ?> connection) {
+
+            for (ConnectionEvents delegate : delegates) {
+                delegate.fireEventRedisDisconnected(connection);
+            }
+        }
+
+        @Override
+        void fireEventRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
+
+            for (ConnectionEvents delegate : delegates) {
+                delegate.fireEventRedisExceptionCaught(connection, cause);
+            }
+        }
+
+        @Override
+        public void addListener(RedisConnectionStateListener listener) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void removeListener(RedisConnectionStateListener listener) {
+            throw new UnsupportedOperationException();
+        }
+
+    }
+
 }

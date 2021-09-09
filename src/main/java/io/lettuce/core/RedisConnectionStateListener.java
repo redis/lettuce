@@ -51,7 +51,8 @@ public interface RedisConnectionStateListener {
      *
      * @param connection Source connection.
      */
-    void onRedisDisconnected(RedisChannelHandler<?, ?> connection);
+    default void onRedisDisconnected(RedisChannelHandler<?, ?> connection) {
+    }
 
     /**
      *
@@ -61,6 +62,8 @@ public interface RedisConnectionStateListener {
      *
      * @param cause Caught exception.
      */
-    void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause);
+    default void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
+
+    }
 
 }

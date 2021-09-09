@@ -15,11 +15,11 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
+import java.net.SocketAddress;
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.enterprise.inject.New;
 import javax.inject.Inject;
@@ -103,6 +103,38 @@ class ClientIntegrationTests extends TestSupport {
         redis.quit();
         Delay.delay(Duration.ofMillis(100));
         assertThat(redis.get(key)).isEqualTo(value);
+    }
+
+    @Test
+    void reconnectNotifiesListener() {
+
+        class MyListener implements RedisConnectionStateListener {
+
+            final AtomicInteger connect = new AtomicInteger();
+
+            final AtomicInteger disconnect = new AtomicInteger();
+
+            @Override
+            public void onRedisConnected(RedisChannelHandler<?, ?> connection, SocketAddress socketAddress) {
+                connect.incrementAndGet();
+            }
+
+            @Override
+            public void onRedisDisconnected(RedisChannelHandler<?, ?> connection) {
+                disconnect.incrementAndGet();
+            }
+
+        }
+
+        MyListener listener = new MyListener();
+
+        redis.getStatefulConnection().addListener(listener);
+        redis.quit();
+
+        Wait.untilTrue(redis::isOpen).waitOrTimeout();
+
+        assertThat(listener.connect).hasValueGreaterThan(0);
+        assertThat(listener.disconnect).hasValueGreaterThan(0);
     }
 
     @Test

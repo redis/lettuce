@@ -60,6 +60,8 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
     private Duration timeout;
 
+    private final ConnectionEvents connectionEvents = new ConnectionEvents();
+
     private CloseEvents closeEvents = new CloseEvents();
 
     private final RedisChannelWriter channelWriter;
@@ -92,6 +94,31 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
 
         writer.setConnectionFacade(this);
         setTimeout(timeout);
+    }
+
+    /**
+     * Add a listener for the {@link RedisConnectionStateListener}. The listener is notified every time a connect/disconnect/IO
+     * exception happens. The listener is called on the event loop thread so code within the listener methods must not block.
+     *
+     * @param listener must not be {@code null}.
+     * @since 6.2
+     */
+    public void addListener(RedisConnectionStateListener listener) {
+
+        LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
+        this.connectionEvents.addListener(listener);
+    }
+
+    /**
+     * Removes a listener.
+     *
+     * @param listener must not be {@code null}.
+     * @since 6.2
+     */
+    public void removeListener(RedisConnectionStateListener listener) {
+
+        LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
+        this.connectionEvents.removeListener(listener);
     }
 
     /**
@@ -297,6 +324,10 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
     @Override
     public void reset() {
         channelWriter.reset();
+    }
+
+    public ConnectionEvents getConnectionEvents() {
+        return connectionEvents;
     }
 
     public ClientOptions getOptions() {

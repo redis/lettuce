@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 class CloseEvents {
 
-    private Set<CloseListener> listeners = ConcurrentHashMap.newKeySet();
+    private final Set<CloseListener> listeners = ConcurrentHashMap.newKeySet();
 
     public void fireEventClosed(Object resource) {
         for (CloseListener listener : listeners) {

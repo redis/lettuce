@@ -211,9 +211,10 @@ public abstract class AbstractRedisClient {
      * connection, the listener will be notified. The corresponding netty channel handler (async connection) is passed on the
      * event.
      *
-     * @param listener must not be {@code null}
+     * @param listener must not be {@code null}.
      */
     public void addListener(RedisConnectionStateListener listener) {
+
         LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
         connectionEvents.addListener(listener);
     }
@@ -221,7 +222,7 @@ public abstract class AbstractRedisClient {
     /**
      * Removes a listener.
      *
-     * @param listener must not be {@code null}
+     * @param listener must not be {@code null}.
      */
     public void removeListener(RedisConnectionStateListener listener) {
 
@@ -232,10 +233,11 @@ public abstract class AbstractRedisClient {
     /**
      * Add a listener for Redis Command events. The listener is notified on each command start/success/failure.
      *
-     * @param listener must not be {@code null}
+     * @param listener must not be {@code null}.
      * @since 6.1
      */
     public void addListener(CommandListener listener) {
+
         LettuceAssert.notNull(listener, "CommandListener must not be null");
         commandListeners.add(listener);
     }
@@ -243,7 +245,7 @@ public abstract class AbstractRedisClient {
     /**
      * Removes a listener.
      *
-     * @param listener must not be {@code null}
+     * @param listener must not be {@code null}.
      * @since 6.1
      */
     public void removeListener(CommandListener listener) {
@@ -265,6 +267,20 @@ public abstract class AbstractRedisClient {
      */
     protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
             RedisURI redisURI) {
+        connectionBuilder(socketAddressSupplier, connectionBuilder, connectionEvents, redisURI);
+    }
+
+    /**
+     * Populate connection builder with necessary resources.
+     *
+     * @param socketAddressSupplier address supplier for initial connect and re-connect
+     * @param connectionBuilder connection builder to configure the connection
+     * @param connectionEvents connection events dispatcher
+     * @param redisURI URI of the Redis instance
+     * @since 6.2
+     */
+    protected void connectionBuilder(Mono<SocketAddress> socketAddressSupplier, ConnectionBuilder connectionBuilder,
+            ConnectionEvents connectionEvents, RedisURI redisURI) {
 
         Bootstrap redisBootstrap = new Bootstrap();
         redisBootstrap.option(ChannelOption.ALLOCATOR, ByteBufAllocator.DEFAULT);
@@ -272,7 +288,8 @@ public abstract class AbstractRedisClient {
         connectionBuilder.bootstrap(redisBootstrap);
         connectionBuilder.apply(redisURI);
         connectionBuilder.configureBootstrap(!LettuceStrings.isEmpty(redisURI.getSocket()), this::getEventLoopGroup);
-        connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents);
+        connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents == this.connectionEvents ? connectionEvents
+                : ConnectionEvents.of(this.connectionEvents, connectionEvents));
         connectionBuilder.socketAddressSupplier(socketAddressSupplier);
     }
 

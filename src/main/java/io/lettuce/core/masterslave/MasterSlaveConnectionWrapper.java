@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -71,6 +72,16 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     @Override
     public RedisReactiveCommands<K, V> reactive() {
         return delegate.reactive();
+    }
+
+    @Override
+    public void addListener(RedisConnectionStateListener listener) {
+        this.delegate.addListener(listener);
+    }
+
+    @Override
+    public void removeListener(RedisConnectionStateListener listener) {
+        this.delegate.removeListener(listener);
     }
 
     @Override

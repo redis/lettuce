@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -33,6 +34,23 @@ import io.lettuce.core.resource.ClientResources;
  * @since 4.0
  */
 public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable {
+
+    /**
+     * Add a listener for the {@link RedisConnectionStateListener}. The listener is notified every time a connect/disconnect/IO
+     * exception happens. The listener is called on the event loop thread so code within the listener methods must not block.
+     *
+     * @param listener must not be {@code null}.
+     * @since 6.2
+     */
+    void addListener(RedisConnectionStateListener listener);
+
+    /**
+     * Removes a listener.
+     *
+     * @param listener must not be {@code null}.
+     * @since 6.2
+     */
+    void removeListener(RedisConnectionStateListener listener);
 
     /**
      * Set the default command timeout for this connection. A zero timeout value indicates to not time out.

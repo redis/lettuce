@@ -34,7 +34,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import io.lettuce.core.protocol.PushHandler;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -61,6 +60,7 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -838,7 +838,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.clientResources(getResources());
         connectionBuilder.endpoint(endpoint);
         connectionBuilder.commandHandler(commandHandlerSupplier);
-        connectionBuilder(socketAddressSupplier, connectionBuilder, connectionSettings);
+        connectionBuilder(socketAddressSupplier, connectionBuilder, connection.getConnectionEvents(), connectionSettings);
 
         return connectionBuilder;
     }
