@@ -88,8 +88,11 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
                 zadd(key, 1001.0, "value-$it")
             }
 
-            assertThat(ScanFlow.zscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
+            assertThat(
+                ScanFlow.zscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()
+            ).hasSize(250)
             assertThat(ScanFlow.zscan(this, key).count()).isEqualTo(iterations)
         }
     }
+
 }
