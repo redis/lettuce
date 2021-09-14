@@ -542,7 +542,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     }
 
                     subscription.potentiallyReadMore();
-                    onDataAvailable(subscription);
+                    subscription.state().onDataAvailable(subscription);
                 } else {
                     onError(subscription, Exceptions.nullOrNegativeRequestException(n));
                 }
