@@ -6,29 +6,29 @@ language: java
 
 jobs:
   include:
-    - jdk: openjdk15
+    - jdk: openjdk17
       env:
-        - JDK='OpenJDK 15'
+        - JDK='OpenJDK 17'
         - REDIS=unstable
-    - jdk: openjdk15
+    - jdk: openjdk17
       env:
-        - JDK='OpenJDK 15'
+        - JDK='OpenJDK 17'
         - PROFILE=jmh
-    - jdk: openjdk15
+    - jdk: openjdk17
       env:
-        - JDK='OpenJDK 15'
+        - JDK='OpenJDK 17'
         - REDIS=6.0
-    - jdk: openjdk15
+    - jdk: openjdk17
       env:
-        - JDK='OpenJDK 15'
+        - JDK='OpenJDK 17'
         - REDIS=5.0
-    - jdk: openjdk15
+    - jdk: openjdk17
       env:
-        - JDK='OpenJDK 15'
+        - JDK='OpenJDK 17'
         - REDIS=4.0
-    - jdk: openjdk15
+    - jdk: openjdk17
       env:
-        - JDK='OpenJDK 15'
+        - JDK='OpenJDK 17'
         - REDIS=3.2
     - env: JDK='OpenJDK EA'
       before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh
@@ -36,10 +36,10 @@ jobs:
     - env: JDK='OpenJDK EA'
 
 install:
-  - if [[ ! -f downloads/stunnel-5.56.tar.gz ]]; then wget -O downloads/stunnel-5.56.tar.gz ftp://ftp.stunnel.org/stunnel/archive/5.x/stunnel-5.56.tar.gz; fi
-  - if [[ ! -f ./stunnel-5.56/configure ]]; then tar -xzf downloads/stunnel-5.56.tar.gz; fi
-  - if [[ ! -f ./stunnel-5.56/src/stunnel ]]; then cd ./stunnel-5.56; ./configure; make; cd ..; fi
-  - export PATH="$PATH:$(pwd)/stunnel-5.56/src"
+  - if [[ ! -f downloads/stunnel-5.60.tar.gz ]]; then wget -O downloads/stunnel-5.60.tar.gz https://www.stunnel.org/downloads/stunnel-5.60.tar.gz; fi
+  - if [[ ! -f ./stunnel-5.60/configure ]]; then tar -xzf downloads/stunnel-5.60.tar.gz; fi
+  - if [[ ! -f ./stunnel-5.60/src/stunnel ]]; then cd ./stunnel-5.60; ./configure; make; cd ..; fi
+  - export PATH="$PATH:$(pwd)/stunnel-5.60/src"
   - make prepare ssl-keys
 
 script: make test-coverage PROFILE=${PROFILE:-ci}
@@ -51,7 +51,7 @@ cache:
   directories:
     - '$HOME/.m2/repository'
     - 'downloads'
-    - 'stunnel-5.56'
+    - 'stunnel-5.60'
 
 notifications:
   webhooks:
