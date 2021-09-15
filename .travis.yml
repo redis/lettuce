@@ -6,29 +6,29 @@ language: java
 
 jobs:
   include:
-    - jdk: openjdk17
+    - jdk: openjdk15
       env:
-        - JDK='OpenJDK 17'
+        - JDK='OpenJDK 15'
         - REDIS=unstable
-    - jdk: openjdk17
+    - jdk: openjdk15
       env:
-        - JDK='OpenJDK 17'
+        - JDK='OpenJDK 15'
         - PROFILE=jmh
-    - jdk: openjdk17
+    - jdk: openjdk15
       env:
-        - JDK='OpenJDK 17'
+        - JDK='OpenJDK 15'
         - REDIS=6.0
-    - jdk: openjdk17
+    - jdk: openjdk15
       env:
-        - JDK='OpenJDK 17'
+        - JDK='OpenJDK 15'
         - REDIS=5.0
-    - jdk: openjdk17
+    - jdk: openjdk15
       env:
-        - JDK='OpenJDK 17'
+        - JDK='OpenJDK 15'
         - REDIS=4.0
-    - jdk: openjdk17
+    - jdk: openjdk15
       env:
-        - JDK='OpenJDK 17'
+        - JDK='OpenJDK 15'
         - REDIS=3.2
     - env: JDK='OpenJDK EA'
       before_install: wget https://github.com/sormuras/bach/raw/master/install-jdk.sh && . ./install-jdk.sh
