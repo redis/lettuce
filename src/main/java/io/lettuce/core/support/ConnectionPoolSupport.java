@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import io.lettuce.core.RedisConnectionException;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.PooledObject;
@@ -33,6 +32,7 @@ import org.apache.commons.pool2.impl.SoftReferenceObjectPool;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.support.ConnectionWrapping.Origin;
 
 /**
