@@ -21,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
+import io.lettuce.core.RedisConnectionException;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.ObjectPool;
 import org.apache.commons.pool2.PooledObject;
@@ -133,6 +134,13 @@ public abstract class ConnectionPoolSupport {
             }
 
         };
+
+        //prepare during initialization
+        try {
+            pool.preparePool();
+        } catch (Exception e) {
+            throw new RedisConnectionException("prepare connection pool failed",e);
+        }
 
         poolRef.set(new ObjectPoolWrapper<>(pool));
 
