@@ -65,6 +65,7 @@
         <latencyutils.version>2.0.3</latencyutils.version>
         <log4j2-version>2.14.1</log4j2-version>
         <micrometer.version>1.7.3</micrometer.version>
+        <dropwizard.version>4.1.25</dropwizard.version>
         <mockito.version>3.12.4</mockito.version>
         <netty.version>4.1.68.Final</netty.version>
         <openwebbeans.version>2.0.23</openwebbeans.version>
@@ -268,6 +269,12 @@
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
             <version>${micrometer.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${dropwizard.version}</version>
             <optional>true</optional>
         </dependency>
 
