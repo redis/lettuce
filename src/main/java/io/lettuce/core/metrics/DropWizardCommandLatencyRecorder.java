@@ -50,7 +50,8 @@ public class DropWizardCommandLatencyRecorder implements CommandLatencyRecorder 
     private final Map<CommandLatencyId, Timer> firstResponseTimers = new ConcurrentHashMap<>();
 
     /**
-     * Create a new {@link DropWizardCommandLatencyRecorder} instance given {@link MetricRegistry} and {@link DropWizardOptions}.
+     * Create a new {@link DropWizardCommandLatencyRecorder} instance given {@link MetricRegistry} and
+     * {@link DropWizardOptions}.
      *
      * @param metricRegistry
      * @param options
@@ -103,8 +104,8 @@ public class DropWizardCommandLatencyRecorder implements CommandLatencyRecorder 
     }
 
     protected String newTimerName(String baseName, CommandLatencyId commandLatencyId) {
-        final String name =  MetricRegistry.name(baseName, LABEL_COMMAND,
-                commandLatencyId.commandType().name());
+        final String name = MetricRegistry.name(baseName, LABEL_COMMAND, commandLatencyId.commandType().name());
         return options.isIncludeAddress() ? MetricRegistry.name(name, commandLatencyId.remoteAddress().toString()) : name;
     }
+
 }

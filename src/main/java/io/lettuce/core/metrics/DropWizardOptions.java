@@ -32,6 +32,7 @@ import io.micrometer.core.instrument.Tags;
 public class DropWizardOptions {
 
     public static final boolean DEFAULT_ENABLED = true;
+
     public static final boolean DEFAULT_INCLUDE_ADDRESS = false;
 
     public static final boolean DEFAULT_LOCAL_DISTINCTION = false;
@@ -150,9 +151,10 @@ public class DropWizardOptions {
             this.includeAddress = true;
             return this;
         }
+
         /**
-         * Set the reservoir for the histogram. Different choices incur different performance footprints
-         * The default is {@link ExponentiallyDecayingReservoir}.
+         * Set the reservoir for the histogram. Different choices incur different performance footprints The default is
+         * {@link ExponentiallyDecayingReservoir}.
          *
          * @param reservoir Reservoir for histogram
          * @return this {@link Builder}.
