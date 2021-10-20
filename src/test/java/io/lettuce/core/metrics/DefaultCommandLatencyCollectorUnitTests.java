@@ -18,17 +18,21 @@ package io.lettuce.core.metrics;
 import static java.util.concurrent.TimeUnit.MICROSECONDS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector.PauseDetectorWrapper;
 import io.lettuce.core.protocol.CommandType;
 import io.netty.channel.local.LocalAddress;
+import org.testng.annotations.Ignore;
 
 /**
  * @author Mark Paluch
@@ -136,6 +140,27 @@ class DefaultCommandLatencyCollectorUnitTests {
         assertThat(sut.retrieveMetrics()).hasSize(1);
 
         sut.shutdown();
+    }
+
+    @Ignore
+    @Test
+    void verifyGracefulShutdownDuringShutdown() {
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
+
+        // Mock shutdown hook behavior during shutdown:
+        // Runtime.getRuntime().addShutdownHook(...) will throw IllegalStateException: Shutdown in progress
+        try (MockedStatic<Runtime> staticRuntimeMock = mockStatic(Runtime.class)) {
+             Runtime runtimeMock = mock(Runtime.class);
+             staticRuntimeMock.when(Runtime::getRuntime).thenReturn(runtimeMock);
+             doThrow(new IllegalStateException("Shutdown in progress")).when(runtimeMock).addShutdownHook(any());
+
+            sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, CommandType.BGSAVE, MILLISECONDS.toNanos(100),
+                MILLISECONDS.toNanos(1000));
+
+            // No exception thrown
+            verify(runtimeMock).addShutdownHook(any());
+        }
     }
 
     private void setupData() {
