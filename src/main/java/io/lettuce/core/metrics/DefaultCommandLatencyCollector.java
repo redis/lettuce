@@ -416,7 +416,16 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                     };
 
                     this.pauseDetector = pauseDetector;
-                    Runtime.getRuntime().addShutdownHook(shutdownHook);
+                    try {
+                        Runtime.getRuntime().addShutdownHook(shutdownHook);
+                    } catch (IllegalStateException ignored) {
+                        // Do not interfere with ongoing shutdown
+                        // java.lang.IllegalStateException: Shutdown in progress
+                        InternalLogger instance = InternalLoggerFactory.getInstance(getClass());
+                        instance.warn("Initialized PauseDetectorWrapper during shutdown; pause detector was shutdown immediately.");
+                        // The JVM invokes shutdown hooks in non-deterministic order, so an existing pauseDetector might already be shutdown anyway
+                        pauseDetector.shutdown();
+                    }
                 } finally {
                     lock.unlock();
                 }
@@ -441,7 +450,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
                     try {
                         Runtime.getRuntime().removeShutdownHook(shutdownHook);
-                    } catch (IllegalStateException e) {
+                    } catch (IllegalStateException ignored) {
                         // Do not prevent shutdown
                         // java.lang.IllegalStateException: Shutdown in progress
                     }
