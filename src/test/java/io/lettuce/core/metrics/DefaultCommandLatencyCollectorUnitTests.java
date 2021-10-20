@@ -32,7 +32,6 @@ import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector.PauseDetectorWrapper;
 import io.lettuce.core.protocol.CommandType;
 import io.netty.channel.local.LocalAddress;
-import org.testng.annotations.Ignore;
 
 /**
  * @author Mark Paluch
@@ -142,7 +141,6 @@ class DefaultCommandLatencyCollectorUnitTests {
         sut.shutdown();
     }
 
-    @Ignore
     @Test
     void verifyGracefulShutdownDuringShutdown() {
 
