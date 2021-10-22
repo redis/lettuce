@@ -81,7 +81,7 @@ public interface Tracing {
      * @return the {@link TraceContextProvider}.
      */
     static Mono<TraceContextProvider> getContext() {
-        return Mono.subscriberContext().filter(c -> c.hasKey(TraceContextProvider.class))
+        return Mono.deferContextual(Mono::justOrEmpty).filter(c -> c.hasKey(TraceContextProvider.class))
                 .map(c -> c.get(TraceContextProvider.class));
     }
 

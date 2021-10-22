@@ -483,7 +483,7 @@ public class BraveTracing implements Tracing {
         @Override
         public Mono<TraceContext> getTraceContextLater() {
 
-            return Mono.subscriberContext()
+            return Mono.deferContextual(Mono::justOrEmpty)
                     .filter(it -> it.hasKey(Span.class) || it.hasKey(brave.propagation.TraceContext.class)).map(it -> {
 
                         if (it.hasKey(Span.class)) {
