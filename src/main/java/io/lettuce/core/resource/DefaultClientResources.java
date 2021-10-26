@@ -209,7 +209,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         if (builder.eventBus == null) {
-            eventBus = new DefaultEventBus(Schedulers.fromExecutor(eventExecutorGroup));
+            eventBus = new DefaultEventBus(Schedulers.fromExecutorService(eventExecutorGroup, "lettuce-event-bus"));
         } else {
             eventBus = builder.eventBus;
         }
