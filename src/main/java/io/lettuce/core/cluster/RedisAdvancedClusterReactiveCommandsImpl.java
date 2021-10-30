@@ -35,6 +35,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.AbstractRedisReactiveCommands;
+import io.lettuce.core.FlushMode;
 import io.lettuce.core.GeoArgs;
 import io.lettuce.core.GeoWithin;
 import io.lettuce.core.KeyScanCursor;
@@ -210,6 +211,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Mono<String> flushall(FlushMode flushMode) {
+
+        Map<String, Publisher<String>> publishers = executeOnUpstream(it -> it.flushall(flushMode));
+        return Flux.merge(publishers.values()).last();
+    }
+
+    @Override
     public Mono<String> flushallAsync() {
 
         Map<String, Publisher<String>> publishers = executeOnUpstream(RedisServerReactiveCommands::flushallAsync);
@@ -220,6 +228,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Mono<String> flushdb() {
 
         Map<String, Publisher<String>> publishers = executeOnUpstream(RedisServerReactiveCommands::flushdb);
+        return Flux.merge(publishers.values()).last();
+    }
+
+    @Override
+    public Mono<String> flushdb(FlushMode flushMode) {
+
+        Map<String, Publisher<String>> publishers = executeOnUpstream(it -> it.flushdb(flushMode));
         return Flux.merge(publishers.values()).last();
     }
 
