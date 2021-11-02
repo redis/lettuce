@@ -57,6 +57,20 @@ class RedisClusterNodeUnitTests {
     }
 
     @Test
+    void testEqualityWithSameNodeIdDifferentHost() {
+
+        RedisClusterNode nodeOne = new RedisClusterNode();
+        nodeOne.setNodeId("123");
+        nodeOne.setUri(RedisURI.builder().withHost("127.0.0.1").build());
+
+        RedisClusterNode nodeTwo = new RedisClusterNode();
+        nodeOne.setNodeId("123");
+        nodeOne.setUri(RedisURI.builder().withHost("127.0.0.2").build());
+
+        assertThat(nodeOne).isNotEqualTo(nodeTwo);
+    }
+
+    @Test
     void testToString() {
 
         RedisClusterNode node = new RedisClusterNode();

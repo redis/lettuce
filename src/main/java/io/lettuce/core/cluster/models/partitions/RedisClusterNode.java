@@ -21,6 +21,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntConsumer;
 
@@ -420,6 +421,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         RedisClusterNode that = (RedisClusterNode) o;
 
         if (nodeId != null ? !nodeId.equals(that.nodeId) : that.nodeId != null) {
+            return false;
+        }
+
+        if (uri != null ? !uri.equals(that.uri) : that.uri != null) {
             return false;
         }
 
