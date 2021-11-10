@@ -18,6 +18,7 @@ package io.lettuce.core.cluster;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.BiFunction;
 
 /**
  * Circular element provider. This class allows infinite scrolling over a collection with the possibility to provide an initial
@@ -31,6 +32,16 @@ class RoundRobin<V> {
 
     protected volatile V offset;
 
+    private final BiFunction<V, V, Boolean> hasElementChanged;
+
+    public RoundRobin() {
+        this((a, b) -> false);
+    }
+
+    public RoundRobin(BiFunction<V, V, Boolean> hasElementChanged) {
+        this.hasElementChanged = hasElementChanged;
+    }
+
     /**
      * Return whether this {@link RoundRobin} is still consistent and contains all items from the leader {@link Collection} and
      * vice versa.
@@ -42,7 +53,19 @@ class RoundRobin<V> {
 
         Collection<? extends V> collection = this.collection;
 
-        return collection.containsAll(leader) && leader.containsAll(collection);
+        for (V currentElement : collection) {
+            boolean found = false;
+            for (V searchedElement : leader) {
+                if (searchedElement.equals(currentElement) && !hasElementChanged.apply(currentElement, searchedElement)) {
+                    found = true;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+
+        return collection.size() == leader.size();
     }
 
     /**

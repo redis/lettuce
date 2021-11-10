@@ -52,7 +52,7 @@ class RoundRobinSocketAddressSupplier implements Supplier<SocketAddress> {
         LettuceAssert.notNull(sortFunction, "Sort-Function must not be null");
 
         this.partitions = partitions;
-        this.roundRobin = new RoundRobin<>();
+        this.roundRobin = new RoundRobin<>((a, b) -> !a.getUri().equals(b.getUri()));
         this.sortFunction = (Function) sortFunction;
         this.clientResources = clientResources;
         resetRoundRobin(partitions.get());
