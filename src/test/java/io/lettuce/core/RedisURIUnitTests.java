@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
@@ -312,5 +313,52 @@ class RedisURIUnitTests {
 
         assertThat(target.getUsername()).isNull();
         assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
+
+        Supplier<Credentials> supplier = () -> new Credentials("suppliedUsername", "suppliedPassword".toCharArray());
+
+        RedisURI sourceCp = new RedisURI();
+        sourceCp.setCredentialsSupplier(supplier);
+
+        RedisURI targetCp = new RedisURI();
+        targetCp.applyAuthentication(sourceCp);
+
+        assertThat(targetCp.getUsername()).isEqualTo("suppliedUsername");
+        assertThat(targetCp.getPassword()).isEqualTo("suppliedPassword".toCharArray());
+        assertThat(sourceCp.getCredentialsSupplier()).isEqualTo(targetCp.getCredentialsSupplier());
     }
+
+    @Test
+    void credentialsSupplierIllegalStateTest() {
+
+        String expectedCommon = "A username and/or password has been set in addition to a Supplier<Credentials>";
+        String expectedRemoveUsernameAndPasss = "Remove username/password in order to set a Supplier<Credentials>";
+        
+        Supplier<Credentials> supplier = () -> new Credentials("foo", "bar".toCharArray());
+        
+        RedisURI uriUsername = new RedisURI();
+        uriUsername.setUsername("username");
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> uriUsername.setCredentialsSupplier(supplier))
+                .withMessageContaining(expectedCommon)
+                .withMessageContaining(expectedRemoveUsernameAndPasss);
+
+        RedisURI uriPassword = new RedisURI();
+        uriPassword.setPassword("password");
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> uriPassword.setCredentialsSupplier(supplier))
+                .withMessageContaining(expectedCommon)
+                .withMessageContaining(expectedRemoveUsernameAndPasss);
+
+        RedisURI uriCredsSupplierWithUsername = new RedisURI();
+        uriCredsSupplierWithUsername.setCredentialsSupplier(supplier);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> uriCredsSupplierWithUsername.setUsername("foo"))
+                .withMessageContaining(expectedCommon)
+                .withMessageContaining("Remove the Supplier<Credentials> in order to set a username");
+        
+        RedisURI uriCredsSupplierWithPassword = new RedisURI();
+        uriCredsSupplierWithPassword.setCredentialsSupplier(supplier);
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> uriCredsSupplierWithPassword.setPassword("bar"))
+                .withMessageContaining(expectedCommon)
+                .withMessageContaining("Remove the Supplier<Credentials> in order to set a password");
+
+    }
+
 }

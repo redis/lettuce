@@ -270,7 +270,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        logger.debug("Trying to get a Redis connection for: " + redisURI);
+        logger.debug("Trying to get a Redis connection for: {}", redisURI);
 
         DefaultEndpoint endpoint = new DefaultEndpoint(getOptions(), getResources());
         RedisChannelWriter writer = endpoint;

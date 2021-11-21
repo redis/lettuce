@@ -16,6 +16,7 @@
 package io.lettuce.core;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import io.lettuce.core.protocol.ProtocolVersion;
 
@@ -24,15 +25,14 @@ import io.lettuce.core.protocol.ProtocolVersion;
  * and connection state restoration. This class is part of the internal API.
  *
  * @author Mark Paluch
+ * @author Jon Iantosca
  * @since 6.0
  */
 public class ConnectionState {
 
     private volatile HandshakeResponse handshakeResponse;
 
-    private volatile String username;
-
-    private volatile char[] password;
+    private volatile Supplier<Credentials> credentialsSupplier;
 
     private volatile int db;
 
@@ -48,8 +48,7 @@ public class ConnectionState {
     public void apply(RedisURI redisURI) {
 
         setClientName(redisURI.getClientName());
-        setUsername(redisURI.getUsername());
-        setPassword(redisURI.getPassword());
+        setCredentialsSupplier(redisURI.getCredentialsSupplier());
     }
 
     /**
@@ -113,36 +112,18 @@ public class ConnectionState {
         }
 
         if (args.size() > 1) {
-            setUsername(new String(args.get(0)));
-            setPassword(args.get(1));
+            this.credentialsSupplier = new DefaultCredentialsSupplier(new String(args.get(0)), args.get(1));
         } else {
-            setUsername(null);
-            setPassword(args.get(0));
+            this.credentialsSupplier = new DefaultCredentialsSupplier(args.get(0));
         }
     }
 
-    protected void setUsername(String username) {
-        this.username = username;
+    Credentials getCredentials() {
+        return this.credentialsSupplier.get();
     }
 
-    String getUsername() {
-        return username;
-    }
-
-    protected void setPassword(char[] password) {
-        this.password = password;
-    }
-
-    char[] getPassword() {
-        return password;
-    }
-
-    boolean hasPassword() {
-        return this.password != null && this.password.length > 0;
-    }
-
-    boolean hasUsername() {
-        return this.username != null && !this.username.isEmpty();
+    protected void setCredentialsSupplier(Supplier<Credentials> credentialsSupplier) {
+        this.credentialsSupplier = credentialsSupplier;
     }
 
     protected void setDb(int db) {

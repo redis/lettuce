@@ -390,10 +390,12 @@ public abstract class AbstractRedisClient {
         CompletableFuture<SocketAddress> socketAddressFuture = new CompletableFuture<>();
         CompletableFuture<Channel> channelReadyFuture = new CompletableFuture<>();
 
+        String uriString = connectionBuilder.getRedisURI().toString();
+
         EventRecorder.getInstance().record(
-                new ConnectionCreatedEvent(connectionBuilder.getRedisURI().toString(), connectionBuilder.endpoint().getId()));
+                new ConnectionCreatedEvent(uriString, connectionBuilder.endpoint().getId()));
         EventRecorder.RecordableEvent event = EventRecorder.getInstance()
-                .start(new ConnectEvent(connectionBuilder.getRedisURI().toString(), connectionBuilder.endpoint().getId()));
+                .start(new ConnectEvent(uriString, connectionBuilder.endpoint().getId()));
 
         channelReadyFuture.whenComplete((channel, throwable) -> {
             event.record();
