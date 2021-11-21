@@ -359,22 +359,4 @@ class RedisURIBuilderUnitTests {
         assertThat(target.getSocket()).isEqualTo(source.getSocket());
     }
 
-    @Test
-    void credentialProviderIllegalStateTest() {
-
-        String expected = "A username and/or password has been set in addition to a Supplier<Credentials>";
-
-        Supplier<Credentials> supplier = () -> new Credentials("suppliedUsername", "suppliedPassword".toCharArray());
-
-        assertThatExceptionOfType(IllegalStateException.class)
-                .isThrownBy(
-                        () -> RedisURI.builder().withHost("localhost").withAuthentication(supplier).withPassword("foo").build())
-                .withMessageContaining(expected);
-
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> RedisURI.builder().withHost("localhost")
-                .withAuthentication(supplier).withAuthentication("foo", "bar".toCharArray()).build())
-                .withMessageContaining(expected);
-
-    }
-
 }

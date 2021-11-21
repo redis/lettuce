@@ -327,38 +327,4 @@ class RedisURIUnitTests {
         assertThat(sourceCp.getCredentialsSupplier()).isEqualTo(targetCp.getCredentialsSupplier());
     }
 
-    @Test
-    void credentialsSupplierIllegalStateTest() {
-
-        String expectedCommon = "A username and/or password has been set in addition to a Supplier<Credentials>";
-        String expectedRemoveUsernameAndPasss = "Remove username/password in order to set a Supplier<Credentials>";
-        
-        Supplier<Credentials> supplier = () -> new Credentials("foo", "bar".toCharArray());
-        
-        RedisURI uriUsername = new RedisURI();
-        uriUsername.setUsername("username");
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> uriUsername.setCredentialsSupplier(supplier))
-                .withMessageContaining(expectedCommon)
-                .withMessageContaining(expectedRemoveUsernameAndPasss);
-
-        RedisURI uriPassword = new RedisURI();
-        uriPassword.setPassword("password");
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> uriPassword.setCredentialsSupplier(supplier))
-                .withMessageContaining(expectedCommon)
-                .withMessageContaining(expectedRemoveUsernameAndPasss);
-
-        RedisURI uriCredsSupplierWithUsername = new RedisURI();
-        uriCredsSupplierWithUsername.setCredentialsSupplier(supplier);
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> uriCredsSupplierWithUsername.setUsername("foo"))
-                .withMessageContaining(expectedCommon)
-                .withMessageContaining("Remove the Supplier<Credentials> in order to set a username");
-        
-        RedisURI uriCredsSupplierWithPassword = new RedisURI();
-        uriCredsSupplierWithPassword.setCredentialsSupplier(supplier);
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> uriCredsSupplierWithPassword.setPassword("bar"))
-                .withMessageContaining(expectedCommon)
-                .withMessageContaining("Remove the Supplier<Credentials> in order to set a password");
-
-    }
-
 }

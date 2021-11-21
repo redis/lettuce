@@ -438,10 +438,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @since 6.0
      */
     public void setUsername(String username) {
-        if (defaultCredentialsSupplier.hasDelegate()) {
-            throw new IllegalStateException(
-                    "A username and/or password has been set in addition to a Supplier<Credentials>. Remove the Supplier<Credentials> in order to set a username.");
-        }
         defaultCredentialsSupplier.setUsername(username);
     }
 
@@ -489,11 +485,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @since 4.4
      */
     public void setPassword(char[] password) {
-        if (defaultCredentialsSupplier.hasDelegate()) {
-            throw new IllegalStateException(
-                    "A username and/or password has been set in addition to a Supplier<Credentials>. Remove the Supplier<Credentials> in order to set a password.");
-        }
-
         defaultCredentialsSupplier.setPassword(password == null ? null : Arrays.copyOf(password, password.length));
     }
 
@@ -515,11 +506,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @since 6.2
      */
     public void setCredentialsSupplier(Supplier<Credentials> credentialsSupplier) {
-        if (defaultCredentialsSupplier.get().getUsername() != null || defaultCredentialsSupplier.get().getPassword() != null) {
-            throw new IllegalStateException(
-                    "A username and/or password has been set in addition to a Supplier<Credentials>. Remove username/password in order to set a Supplier<Credentials>.");
-        }
-
         defaultCredentialsSupplier.setDelegate(credentialsSupplier);
     }
 
