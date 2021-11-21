@@ -156,10 +156,12 @@ class RedisHandshake implements ConnectionInitializer {
      */
     private CompletableFuture<?> initiateHandshakeResp2(Channel channel) {
 
-        if (connectionState.hasUsername()) {
-            return dispatch(channel, this.commandBuilder.auth(connectionState.getUsername(), connectionState.getPassword()));
-        } else if (connectionState.hasPassword()) {
-            return dispatch(channel, this.commandBuilder.auth(connectionState.getPassword()));
+    	Credentials credentials = connectionState.getCredentials();
+
+        if (credentials.hasUsername()) {
+            return dispatch(channel, this.commandBuilder.auth(credentials.getUsername(), credentials.getPassword()));
+        } else if (credentials.hasPassword()) {
+            return dispatch(channel, this.commandBuilder.auth(credentials.getPassword()));
         } else if (this.pingOnConnect) {
             return dispatch(channel, this.commandBuilder.ping());
         }
@@ -175,11 +177,13 @@ class RedisHandshake implements ConnectionInitializer {
      */
     private AsyncCommand<String, String, Map<String, Object>> initiateHandshakeResp3(Channel channel) {
 
-        if (connectionState.hasPassword()) {
+        Credentials credentials = connectionState.getCredentials();
+
+        if (credentials.hasPassword()) {
 
             return dispatch(channel, this.commandBuilder.hello(3,
-                    LettuceStrings.isNotEmpty(connectionState.getUsername()) ? connectionState.getUsername() : "default",
-                    connectionState.getPassword(), connectionState.getClientName()));
+                    LettuceStrings.isNotEmpty(credentials.getUsername()) ? credentials.getUsername() : "default",
+                    credentials.getPassword(), connectionState.getClientName()));
         }
 
         return dispatch(channel, this.commandBuilder.hello(3, null, null, connectionState.getClientName()));

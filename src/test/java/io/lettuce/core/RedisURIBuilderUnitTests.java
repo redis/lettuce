@@ -16,11 +16,13 @@
 package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
@@ -301,6 +303,17 @@ class RedisURIBuilderUnitTests {
 
         assertThat(target.getUsername()).isEqualTo("foo");
         assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
+
+        Supplier<Credentials> supplier = () -> new Credentials("suppliedUsername", "suppliedPassword".toCharArray());
+
+        RedisURI sourceCp = new RedisURI();
+        sourceCp.setCredentialsSupplier(supplier);
+
+        RedisURI targetCp = RedisURI.builder().withHost("localhost").withAuthentication(sourceCp).build();
+
+        assertThat(targetCp.getUsername()).isEqualTo("suppliedUsername");
+        assertThat(targetCp.getPassword()).isEqualTo("suppliedPassword".toCharArray());
+        assertThat(sourceCp.getCredentialsSupplier()).isEqualTo(targetCp.getCredentialsSupplier());
     }
 
     @Test
@@ -345,4 +358,5 @@ class RedisURIBuilderUnitTests {
 
         assertThat(target.getSocket()).isEqualTo(source.getSocket());
     }
+
 }

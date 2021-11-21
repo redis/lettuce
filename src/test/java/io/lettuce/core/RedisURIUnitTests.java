@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
@@ -312,5 +313,18 @@ class RedisURIUnitTests {
 
         assertThat(target.getUsername()).isNull();
         assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
+
+        Supplier<Credentials> supplier = () -> new Credentials("suppliedUsername", "suppliedPassword".toCharArray());
+
+        RedisURI sourceCp = new RedisURI();
+        sourceCp.setCredentialsSupplier(supplier);
+
+        RedisURI targetCp = new RedisURI();
+        targetCp.applyAuthentication(sourceCp);
+
+        assertThat(targetCp.getUsername()).isEqualTo("suppliedUsername");
+        assertThat(targetCp.getPassword()).isEqualTo("suppliedPassword".toCharArray());
+        assertThat(sourceCp.getCredentialsSupplier()).isEqualTo(targetCp.getCredentialsSupplier());
     }
+
 }

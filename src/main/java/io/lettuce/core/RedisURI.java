@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.function.LongFunction;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -135,6 +136,7 @@ import io.lettuce.core.internal.LettuceStrings;
  * @author Mark Paluch
  * @author Guy Korland
  * @author Johnny Lim
+ * @author Jon Iantosca
  * @since 3.0
  */
 @SuppressWarnings("serial")
@@ -211,9 +213,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     private String clientName;
 
-    private String username;
-
-    private char[] password;
+    private final DefaultCredentialsSupplier defaultCredentialsSupplier = new DefaultCredentialsSupplier();
 
     private boolean ssl = false;
 
@@ -399,10 +399,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     /**
      * Apply authentication from another {@link RedisURI}. The authentication settings of the {@code source} URI will be applied
-     * to this URI. That is in particular username and password. If the source has authentication credentials configured, then
-     * this URI will use the same credentials. If this URI has authentication configured and the {@code source} URI has no
-     * authentication, then this URI's authentication credentials will be reset.
-     *
+     * to this URI. That is in particular username and password, or {@code Supplier<Credentials>}. If the source has a
+     * {@code Supplier<Credentials>} configured, then this URI will use the same {@code Supplier<Credentials>}. If there is no
+     * {@code Supplier<Credentials>} and the source has a username and/or password configured, then this URI will use the same
+     * username/password. If this URI has a username and password configured and the {@code source} URI has no authentication,
+     * then this URI's authentication credentials will be reset.
+     * 
      * @param source must not be {@code null}.
      * @since 6.0
      */
@@ -410,8 +412,12 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
-        setUsername(source.getUsername());
-        setPassword(source.getPassword());
+        if (source.hasCredentialsSupplierDelegate()) {
+            setCredentialsSupplier(source.getCredentialsSupplier());
+        } else {
+            setUsername(source.getUsername());
+            setPassword(source.getPassword());
+        }
     }
 
     /**
@@ -421,7 +427,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @since 6.0
      */
     public String getUsername() {
-        return username;
+        return defaultCredentialsSupplier.get().getUsername();
     }
 
     /**
@@ -431,7 +437,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @since 6.0
      */
     public void setUsername(String username) {
-        this.username = username;
+        defaultCredentialsSupplier.setUsername(username);
     }
 
     /**
@@ -440,7 +446,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @return the password
      */
     public char[] getPassword() {
-        return password;
+        return defaultCredentialsSupplier.get().getPassword();
     }
 
     /**
@@ -467,7 +473,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public void setPassword(CharSequence password) {
 
         LettuceAssert.notNull(password, "Password must not be null");
-        this.password = password.toString().toCharArray();
+        setPassword(password.toString().toCharArray());
     }
 
     /**
@@ -477,10 +483,38 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * @since 4.4
      */
     public void setPassword(char[] password) {
-
-        this.password = password == null ? null : Arrays.copyOf(password, password.length);
+        defaultCredentialsSupplier.setPassword(password == null ? null : Arrays.copyOf(password, password.length));
     }
 
+    /**
+     * Get the {@code Supplier<Credentials>}
+     *
+     * @return the {@code Supplier<Credentials>}
+     * @since 6.2
+     */
+    public Supplier<Credentials> getCredentialsSupplier() {
+        return defaultCredentialsSupplier.getCredentialsSupplier();
+    }
+
+    /**
+     * Sets the {@code Supplier<Credentials>}
+     *
+     * @param Supplier<Credentials> function to supply a {@code Credentials}.
+     * @since 6.2
+     */
+    public void setCredentialsSupplier(Supplier<Credentials> credentialsSupplier) {
+        defaultCredentialsSupplier.setDelegate(credentialsSupplier);
+    }
+
+    /**
+     * Checks to see if a {@code Supplier<Credentials>} has been set on this URI.
+     * 
+     * @return true when a {@code Supplier<Credentials>} has been set on this URI.
+     */
+    private boolean hasCredentialsSupplierDelegate() {
+        return defaultCredentialsSupplier.hasDelegate();
+    }
+    
     /**
      * Returns the command timeout for synchronous command execution.
      *
@@ -792,6 +826,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 authority += "/" + database;
             }
         }
+
+        Credentials creds = defaultCredentialsSupplier.get();
+        String username = creds.getUsername();
+        char[] password = creds.getPassword();
 
         if (password != null && password.length != 0) {
             authority = urlEncode(
@@ -1140,6 +1178,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private String username;
 
         private char[] password;
+
+        private Supplier<Credentials> credentialsSupplier;
 
         private char[] sentinelPassword;
 
@@ -1496,6 +1536,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
+            if (source.hasCredentialsSupplierDelegate()) {
+                return withAuthentication(source.getCredentialsSupplier());
+            }
+
             this.username = source.getUsername();
             withPassword(source.getPassword());
 
@@ -1517,6 +1561,20 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             this.username = username;
             return withPassword(password);
+        }
+
+        /**
+         * Configures authentication.
+         *
+         * @param credentialsSupplier must not be {@code null}.
+         * @since 6.2
+         */
+        public Builder withAuthentication(Supplier<Credentials> credentialsSupplier) {
+
+            LettuceAssert.notNull(credentialsSupplier, "Supplier<Credentials> must not be null");
+
+            this.credentialsSupplier = credentialsSupplier;
+            return this;
         }
 
         /**
@@ -1620,6 +1678,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             if (password != null) {
                 redisURI.setPassword(password);
+            }
+
+            if (credentialsSupplier != null) {
+                redisURI.setCredentialsSupplier(credentialsSupplier);
             }
 
             redisURI.setDatabase(database);
