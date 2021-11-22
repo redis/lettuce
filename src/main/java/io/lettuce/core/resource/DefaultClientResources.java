@@ -161,6 +161,8 @@ public class DefaultClientResources implements ClientResources {
 
     private volatile boolean shutdownCalled = false;
 
+    private volatile boolean shutdownCheck = true;
+
     protected DefaultClientResources(Builder builder) {
 
         addressResolverGroup = builder.addressResolverGroup;
@@ -327,7 +329,23 @@ public class DefaultClientResources implements ClientResources {
 
         private AddressResolverGroup<?> addressResolverGroup = DEFAULT_ADDRESS_RESOLVER_GROUP;
 
+        private Runnable afterBuild;
+
         private Builder() {
+        }
+
+        Builder afterBuild(Runnable runnable) {
+            if (this.afterBuild == null) {
+                this.afterBuild = runnable;
+            } else {
+                Runnable previous = this.afterBuild;
+                this.afterBuild = () -> {
+                    previous.run();
+                    runnable.run();
+                };
+            }
+
+            return this;
         }
 
         /**
@@ -636,7 +654,14 @@ public class DefaultClientResources implements ClientResources {
          */
         @Override
         public DefaultClientResources build() {
-            return new DefaultClientResources(this);
+
+            DefaultClientResources resources = new DefaultClientResources(this);
+
+            if (this.afterBuild != null) {
+                this.afterBuild.run();
+            }
+
+            return resources;
         }
 
     }
@@ -661,7 +686,7 @@ public class DefaultClientResources implements ClientResources {
 
         Builder builder = new Builder();
 
-        builder.commandLatencyRecorder(commandLatencyRecorder())
+        builder.afterBuild(() -> this.shutdownCheck = false).commandLatencyRecorder(commandLatencyRecorder())
                 .commandLatencyPublisherOptions(commandLatencyPublisherOptions()).dnsResolver(dnsResolver())
                 .eventBus(eventBus()).eventExecutorGroup(eventExecutorGroup()).reconnectDelay(reconnectDelay)
                 .socketAddressResolver(socketAddressResolver()).nettyCustomizer(nettyCustomizer())
@@ -678,7 +703,7 @@ public class DefaultClientResources implements ClientResources {
 
     @Override
     protected void finalize() throws Throwable {
-        if (!shutdownCalled) {
+        if (shutdownCheck && !shutdownCalled) {
             logger.warn(getClass().getName()
                     + " was not shut down properly, shutdown() was not called before it's garbage-collected. Call shutdown() or shutdown(long,long,TimeUnit) ");
         }

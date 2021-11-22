@@ -22,7 +22,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.lettuce.test.Wait;
 import org.junit.jupiter.api.Test;
 
 import reactor.test.StepVerifier;
@@ -31,6 +30,7 @@ import io.lettuce.core.event.EventBus;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.test.TestFutures;
+import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.resolver.AddressResolverGroup;
@@ -163,6 +163,8 @@ class DefaultClientResourcesUnitTests {
         assertThat(sut.addressResolverGroup()).isSameAs(addressResolverGroupMock);
 
         assertThat(TestFutures.getOrTimeout(sut.shutdown())).isTrue();
+        assertThat(sut).hasFieldOrPropertyWithValue("shutdownCheck", false);
+        assertThat(copy).hasFieldOrPropertyWithValue("shutdownCheck", true);
 
         verifyZeroInteractions(executorMock);
         verifyZeroInteractions(groupProviderMock);
