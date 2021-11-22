@@ -130,9 +130,9 @@ class DefaultClientResourcesUnitTests {
 
         assertThat(TestFutures.getOrTimeout(sut.shutdown())).isTrue();
 
-        verifyZeroInteractions(executorMock);
-        verifyZeroInteractions(groupProviderMock);
-        verifyZeroInteractions(timerMock);
+        verifyNoMoreInteractions(executorMock);
+        verifyNoMoreInteractions(groupProviderMock);
+        verifyNoMoreInteractions(timerMock);
         verify(latencyCollectorMock).isEnabled();
         verifyNoMoreInteractions(latencyCollectorMock);
     }
@@ -166,9 +166,9 @@ class DefaultClientResourcesUnitTests {
         assertThat(sut).hasFieldOrPropertyWithValue("shutdownCheck", false);
         assertThat(copy).hasFieldOrPropertyWithValue("shutdownCheck", true);
 
-        verifyZeroInteractions(executorMock);
-        verifyZeroInteractions(groupProviderMock);
-        verifyZeroInteractions(timerMock);
+        verifyNoMoreInteractions(executorMock);
+        verifyNoMoreInteractions(groupProviderMock);
+        verifyNoMoreInteractions(timerMock);
     }
 
     @Test
