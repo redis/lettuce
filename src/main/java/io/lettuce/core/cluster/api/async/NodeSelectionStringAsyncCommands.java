@@ -296,7 +296,7 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
     /**
      * Set multiple keys to multiple values.
      *
-     * @param map the null.
+     * @param map the map.
      * @return String simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
     AsyncExecutions<String> mset(Map<K, V> map);
@@ -304,7 +304,7 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
     /**
      * Set multiple keys to multiple values, only if none of the keys exist.
      *
-     * @param map the null.
+     * @param map the map.
      * @return Boolean integer-reply specifically:
      *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).

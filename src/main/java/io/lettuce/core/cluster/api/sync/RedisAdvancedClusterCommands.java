@@ -19,7 +19,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import io.lettuce.core.*;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.sync.RedisKeyCommands;
 import io.lettuce.core.api.sync.RedisScriptingCommands;
 import io.lettuce.core.api.sync.RedisServerCommands;
@@ -219,7 +223,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Set multiple keys to multiple values, only if none of the keys exist with pipelining. Cross-slot keys will result in
      * multiple calls to the particular cluster nodes.
      *
-     * @param map the null
+     * @param map the map
      * @return Boolean integer-reply specifically:
      *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).

@@ -1034,7 +1034,7 @@ public interface NodeSelectionSortedSetAsyncCommands<K, V> {
      * @param max max score.
      * @param min min score.
      * @param offset the withscores.
-     * @param count the null.
+     * @param count the number of items.
      * @return List&lt;V&gt; array-reply list of elements in the specified score range.
      * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range, Limit)}.
      */
