@@ -433,7 +433,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the username.
      *
-     * @throws {@code IllegalStateException} when a {@code Supplier<Credentials>} is already set on this URI.
      * @param username the username, must not be {@code null}.
      * @since 6.0
      */
@@ -480,7 +479,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the password. Use empty char array to skip authentication.
      *
-     * @throws {@code IllegalStateException} when a {@code Supplier<Credentials>} is already set on this URI.
      * @param password the password, can be {@code null}.
      * @since 4.4
      */
@@ -501,7 +499,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Sets the {@code Supplier<Credentials>}
      *
-     * @throws {@code IllegalStateException} if a username or password is already set on this URI.
      * @param Supplier<Credentials> function to supply a {@code Credentials}.
      * @since 6.2
      */

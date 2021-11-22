@@ -28,7 +28,6 @@ class DefaultCredentialsSupplier implements Supplier<Credentials> {
         this.password = password;
     }
 
-
     @Override
     public Credentials get() {
         return hasDelegate() ? delegate.get() : new Credentials(this.username, this.password);
