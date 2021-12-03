@@ -18,13 +18,14 @@ package io.lettuce.core.cluster;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 
 /**
  * Circular element provider. This class allows infinite scrolling over a collection with the possibility to provide an initial
  * offset.
  *
  * @author Mark Paluch
+ * @author Christian Lang
  */
 class RoundRobin<V> {
 
@@ -32,14 +33,14 @@ class RoundRobin<V> {
 
     protected volatile V offset;
 
-    private final BiFunction<V, V, Boolean> hasElementChanged;
+    private final BiPredicate<V, V> isEqual;
 
     public RoundRobin() {
-        this((a, b) -> false);
+        this((a, b) -> true);
     }
 
-    public RoundRobin(BiFunction<V, V, Boolean> hasElementChanged) {
-        this.hasElementChanged = hasElementChanged;
+    public RoundRobin(BiPredicate<V, V> hasElementChanged) {
+        this.isEqual = hasElementChanged;
     }
 
     /**
@@ -53,19 +54,31 @@ class RoundRobin<V> {
 
         Collection<? extends V> collection = this.collection;
 
+        if (collection.size() != leader.size()) {
+            return false;
+        }
+
         for (V currentElement : collection) {
-            boolean found = false;
-            for (V searchedElement : leader) {
-                if (searchedElement.equals(currentElement) && !hasElementChanged.apply(currentElement, searchedElement)) {
-                    found = true;
-                }
-            }
+
+            boolean found = find(leader, currentElement);
+
             if (!found) {
                 return false;
             }
         }
 
-        return collection.size() == leader.size();
+        return true;
+    }
+
+    private boolean find(Collection<? extends V> hayStack, V needle) {
+
+        for (V searchedElement : hayStack) {
+            if (searchedElement.equals(needle)) {
+                return isEqual.test(needle, searchedElement);
+            }
+        }
+
+        return false;
     }
 
     /**
