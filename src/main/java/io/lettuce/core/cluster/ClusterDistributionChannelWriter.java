@@ -46,6 +46,7 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionFacade;
@@ -76,7 +77,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
     private volatile Partitions partitions;
 
-    ClusterDistributionChannelWriter(ClientOptions clientOptions, RedisChannelWriter defaultWriter,
+    ClusterDistributionChannelWriter(RedisChannelWriter defaultWriter, ClientOptions clientOptions,
             ClusterEventListener clusterEventListener) {
 
         if (clientOptions instanceof ClusterClientOptions) {
@@ -426,16 +427,29 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     }
 
     public void disconnectDefaultEndpoint() {
+        unwrapDefaultEndpoint().disconnect();
+    }
 
-        DefaultEndpoint defaultEndpoint;
+    private DefaultEndpoint unwrapDefaultEndpoint() {
 
-        if (defaultWriter instanceof CommandListenerWriter) {
-            defaultEndpoint = (DefaultEndpoint) ((CommandListenerWriter) defaultWriter).getDelegate();
-        } else {
-            defaultEndpoint = ((DefaultEndpoint) defaultWriter);
+        RedisChannelWriter writer = this.defaultWriter;
+
+        while (!(writer instanceof DefaultEndpoint)) {
+
+            if (writer instanceof CommandListenerWriter) {
+                writer = ((CommandListenerWriter) writer).getDelegate();
+                continue;
+            }
+
+            if (writer instanceof CommandExpiryWriter) {
+                writer = ((CommandExpiryWriter) writer).getDelegate();
+                continue;
+            }
+
+            throw new IllegalStateException(String.format("Cannot unwrap defaultWriter %s into DefaultEndpoint", writer));
         }
 
-        defaultEndpoint.disconnect();
+        return (DefaultEndpoint) writer;
     }
 
     @Override

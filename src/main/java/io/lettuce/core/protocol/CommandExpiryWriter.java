@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.TimeoutOptions.TimeoutSource;
+import static io.lettuce.core.TimeoutOptions.*;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -25,9 +25,9 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.TimeoutOptions;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
 
@@ -41,7 +41,7 @@ import io.lettuce.core.resource.ClientResources;
  */
 public class CommandExpiryWriter implements RedisChannelWriter {
 
-    private final RedisChannelWriter writer;
+    private final RedisChannelWriter delegate;
 
     private final TimeoutSource source;
 
@@ -56,18 +56,18 @@ public class CommandExpiryWriter implements RedisChannelWriter {
     /**
      * Create a new {@link CommandExpiryWriter}.
      *
-     * @param writer must not be {@code null}.
+     * @param delegate must not be {@code null}.
      * @param clientOptions must not be {@code null}.
      * @param clientResources must not be {@code null}.
      */
-    public CommandExpiryWriter(RedisChannelWriter writer, ClientOptions clientOptions, ClientResources clientResources) {
+    public CommandExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions, ClientResources clientResources) {
 
-        LettuceAssert.notNull(writer, "RedisChannelWriter must not be null");
+        LettuceAssert.notNull(delegate, "RedisChannelWriter must not be null");
         LettuceAssert.isTrue(isSupported(clientOptions), "Command timeout not enabled");
         LettuceAssert.notNull(clientResources, "ClientResources must not be null");
 
         TimeoutOptions timeoutOptions = clientOptions.getTimeoutOptions();
-        this.writer = writer;
+        this.delegate = delegate;
         this.source = timeoutOptions.getSource();
         this.applyConnectionTimeout = timeoutOptions.isApplyConnectionTimeout();
         this.timeUnit = source.getTimeUnit();
@@ -96,24 +96,24 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     @Override
     public void setConnectionFacade(ConnectionFacade connectionFacade) {
-        writer.setConnectionFacade(connectionFacade);
+        delegate.setConnectionFacade(connectionFacade);
     }
 
     @Override
     public ClientResources getClientResources() {
-        return writer.getClientResources();
+        return delegate.getClientResources();
     }
 
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
-        writer.setAutoFlushCommands(autoFlush);
+        delegate.setAutoFlushCommands(autoFlush);
     }
 
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
 
         potentiallyExpire(command, getExecutorService());
-        return writer.write(command);
+        return delegate.write(command);
     }
 
     @Override
@@ -125,31 +125,35 @@ public class CommandExpiryWriter implements RedisChannelWriter {
             potentiallyExpire(command, executorService);
         }
 
-        return writer.write(redisCommands);
+        return delegate.write(redisCommands);
     }
 
     @Override
     public void flushCommands() {
-        writer.flushCommands();
+        delegate.flushCommands();
     }
 
     @Override
     public void close() {
-        writer.close();
+        delegate.close();
     }
 
     @Override
     public CompletableFuture<Void> closeAsync() {
-        return writer.closeAsync();
+        return delegate.closeAsync();
     }
 
     @Override
     public void reset() {
-        writer.reset();
+        delegate.reset();
     }
 
     public void setTimeout(Duration timeout) {
         this.timeout = timeUnit.convert(timeout.toNanos(), TimeUnit.NANOSECONDS);
+    }
+
+    public RedisChannelWriter getDelegate() {
+        return delegate;
     }
 
     private ScheduledExecutorService getExecutorService() {
