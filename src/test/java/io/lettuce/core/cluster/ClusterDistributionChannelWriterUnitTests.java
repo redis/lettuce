@@ -33,8 +33,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.CommandListenerWriter;
 import io.lettuce.core.StatefulRedisConnectionImpl;
+import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.codec.StringCodec;
@@ -44,7 +46,9 @@ import io.lettuce.core.output.ValueOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 
@@ -59,7 +63,7 @@ import io.lettuce.core.resource.ClientResources;
 class ClusterDistributionChannelWriterUnitTests {
 
     @Mock
-    private RedisChannelWriter defaultWriter;
+    private DefaultEndpoint defaultWriter;
 
     @Mock
     private EventBus eventBus;
@@ -169,6 +173,21 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldWriteCommandListWhenAsking() {
         verifyWriteCommandCountWhenRedirecting(false);
+    }
+
+    @Test
+    void shouldDisconnectWrappedEndpoint() {
+
+        CommandListenerWriter listenerWriter = new CommandListenerWriter(defaultWriter, Collections.emptyList());
+        CommandExpiryWriter expiryWriter = new CommandExpiryWriter(listenerWriter,
+                ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build(), clientResources);
+
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(expiryWriter, ClientOptions.create(),
+                clusterEventListener);
+
+        writer.disconnectDefaultEndpoint();
+
+        verify(defaultWriter).disconnect();
     }
 
     @Test
