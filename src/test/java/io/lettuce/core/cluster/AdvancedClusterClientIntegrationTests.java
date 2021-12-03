@@ -15,11 +15,16 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.test.LettuceExtension.Connection;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static io.lettuce.test.LettuceExtension.*;
+import static org.assertj.core.api.Assertions.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.enterprise.inject.New;
@@ -42,7 +47,11 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.Base16;
-import io.lettuce.test.*;
+import io.lettuce.test.KeysAndValues;
+import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.TestFutures;
+import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
@@ -337,6 +346,17 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
+    void flushallSync() {
+
+        writeKeysToTwoNodes();
+
+        assertThat(sync.flushall(FlushMode.SYNC)).isEqualTo("OK");
+
+        Long dbsize = sync.dbsize();
+        assertThat(dbsize).isEqualTo(0);
+    }
+
+    @Test
     void flushallAsync() {
 
         writeKeysToTwoNodes();
@@ -356,6 +376,17 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
         writeKeysToTwoNodes();
 
         assertThat(sync.flushdb()).isEqualTo("OK");
+
+        Long dbsize = sync.dbsize();
+        assertThat(dbsize).isEqualTo(0);
+    }
+
+    @Test
+    void flushdbSync() {
+
+        writeKeysToTwoNodes();
+
+        assertThat(sync.flushdb(FlushMode.SYNC)).isEqualTo("OK");
 
         Long dbsize = sync.dbsize();
         assertThat(dbsize).isEqualTo(0);
