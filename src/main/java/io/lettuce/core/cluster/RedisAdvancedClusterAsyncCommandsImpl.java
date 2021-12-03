@@ -33,22 +33,12 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import io.lettuce.core.AbstractRedisAsyncCommands;
-import io.lettuce.core.GeoArgs;
-import io.lettuce.core.GeoWithin;
-import io.lettuce.core.KeyScanCursor;
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisFuture;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.ScanArgs;
-import io.lettuce.core.ScanCursor;
-import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.async.RedisKeyAsyncCommands;
 import io.lettuce.core.api.async.RedisScriptingAsyncCommands;
 import io.lettuce.core.api.async.RedisServerAsyncCommands;
-import io.lettuce.core.cluster.ClusterScanSupport.*;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.AsyncNodeSelection;
@@ -223,6 +213,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
+    public RedisFuture<String> flushall(FlushMode flushMode) {
+        return MultiNodeExecution.firstOfAsync(
+                executeOnUpstream(kvRedisClusterAsyncCommands -> kvRedisClusterAsyncCommands.flushall(flushMode)));
+    }
+
+    @Override
     public RedisFuture<String> flushallAsync() {
         return MultiNodeExecution.firstOfAsync(executeOnUpstream(RedisServerAsyncCommands::flushallAsync));
     }
@@ -230,6 +226,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<String> flushdb() {
         return MultiNodeExecution.firstOfAsync(executeOnUpstream(RedisServerAsyncCommands::flushdb));
+    }
+
+    @Override
+    public RedisFuture<String> flushdb(FlushMode flushMode) {
+        return MultiNodeExecution
+                .firstOfAsync(executeOnUpstream(kvRedisClusterAsyncCommands -> kvRedisClusterAsyncCommands.flushdb(flushMode)));
     }
 
     @Override
