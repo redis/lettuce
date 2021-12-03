@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.metrics;
 
-import static io.lettuce.core.internal.LettuceClassUtils.isPresent;
+import static io.lettuce.core.internal.LettuceClassUtils.*;
 
 import java.net.SocketAddress;
 import java.util.Collections;
@@ -47,6 +47,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Default implementation of a {@link CommandLatencyCollector} for command latencies.
  *
  * @author Mark Paluch
+ * @author Bryce J. Fisher
  */
 public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
@@ -415,7 +416,18 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                     };
 
                     this.pauseDetector = pauseDetector;
-                    Runtime.getRuntime().addShutdownHook(shutdownHook);
+                    try {
+                        Runtime.getRuntime().addShutdownHook(shutdownHook);
+                    } catch (IllegalStateException ignored) {
+                        // Do not interfere with ongoing shutdown
+                        // java.lang.IllegalStateException: Shutdown in progress
+                        InternalLogger instance = InternalLoggerFactory.getInstance(getClass());
+                        instance.warn(
+                                "Initialized PauseDetectorWrapper during shutdown; pause detector was shutdown immediately.");
+                        // The JVM invokes shutdown hooks in non-deterministic order, so an existing pauseDetector might already
+                        // be shutdown anyway
+                        pauseDetector.shutdown();
+                    }
                 } finally {
                     lock.unlock();
                 }
@@ -440,7 +452,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
                     try {
                         Runtime.getRuntime().removeShutdownHook(shutdownHook);
-                    } catch (IllegalStateException e) {
+                    } catch (IllegalStateException ignored) {
                         // Do not prevent shutdown
                         // java.lang.IllegalStateException: Shutdown in progress
                     }
