@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.cluster.models.partitions;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Arrays;
 
@@ -25,6 +25,8 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.SlotHash;
 
 /**
+ * Unit tests for {@link RedisClusterNode}.
+ *
  * @author Mark Paluch
  */
 class RedisClusterNodeUnitTests {
@@ -44,16 +46,20 @@ class RedisClusterNodeUnitTests {
         assertThat(copy.getAliases()).contains(RedisURI.create("foo", 6379));
     }
 
-    @Test
+    @Test // considers nodeId only
     void testEquality() {
 
-        RedisClusterNode node = new RedisClusterNode();
+        RedisClusterNode node = RedisClusterNode.of("1");
 
-        assertThat(node).isEqualTo(new RedisClusterNode());
-        assertThat(node.hashCode()).isEqualTo(new RedisClusterNode().hashCode());
+        assertThat(node).isEqualTo(RedisClusterNode.of("1"));
+        assertThat(node).hasSameHashCodeAs(RedisClusterNode.of("1"));
 
-        node.setUri(new RedisURI());
-        assertThat(node.hashCode()).isNotEqualTo(new RedisClusterNode());
+        node.setUri(RedisURI.create("127.0.0.1", 1));
+        assertThat(node).hasSameHashCodeAs(RedisClusterNode.of("1"));
+        assertThat(node).isEqualTo(RedisClusterNode.of("1"));
+
+        assertThat(node).doesNotHaveSameHashCodeAs(RedisClusterNode.of("2"));
+        assertThat(node).isNotEqualTo(RedisClusterNode.of("2"));
     }
 
     @Test

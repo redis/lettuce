@@ -15,8 +15,8 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -37,7 +37,10 @@ import io.lettuce.core.resource.DnsResolvers;
 import io.lettuce.core.resource.SocketAddressResolver;
 
 /**
+ * Unit tests for {@link RoundRobinSocketAddressSupplier}.
+ *
  * @author Mark Paluch
+ * @author Christian Lang
  */
 @ExtendWith(MockitoExtension.class)
 class RoundRobinSocketAddressSupplierUnitTests {
