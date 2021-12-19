@@ -1,0 +1,57 @@
+#
+# Copyright 2010-2021 the original author or authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+name: Compatibility with Spring 6/Spring Batch 5
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        java: [17, 18-ea]
+        distribution: ['zulu']
+      fail-fast: false
+      max-parallel: 2
+    name: Test JDK ${{ matrix.java }}, ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: ${{ matrix.distribution }}
+      - name: Git config
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+      - name: Checkout to local
+        run: git checkout -b compatibility-check-spring6-head
+      - name: Checkout compatibility check brach
+        run: git checkout compatibility-check-spring6
+      - name: Merge to compatibility check brach
+        run: git merge --no-edit compatibility-check-spring6-head
+      - name: Test with Spring 6 / Spring Batch 5 support
+        run: ./mvnw -U test -D"license.skip=true" -D"animal.sniffer.skip=true" -D"spring.version=6.0.0-SNAPSHOT" -D"spring-batch.version=5.0.0-SNAPSHOT"
