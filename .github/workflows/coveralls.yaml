@@ -16,7 +16,11 @@
 
 name: Coveralls
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore:
+      - 'compatibility-check-spring6'
+  pull_request:
 
 jobs:
   build:
