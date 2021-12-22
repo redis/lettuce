@@ -134,6 +134,10 @@ public abstract class ExceptionFactory {
                 return cause != null ? new RedisLoadingException(message, cause) : new RedisLoadingException(message);
             }
 
+            if (message.startsWith("READONLY")) {
+                return cause != null ? new RedisReadOnlyException(message, cause) : new RedisReadOnlyException(message);
+            }
+
             return cause != null ? new RedisCommandExecutionException(message, cause)
                     : new RedisCommandExecutionException(message);
         }
