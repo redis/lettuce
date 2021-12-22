@@ -71,6 +71,16 @@ class ExceptionFactoryUnitTests {
     }
 
     @Test
+    void shouldCreateReadOnlyException() {
+
+        assertThat(ExceptionFactory.createExecutionException("READONLY foo bar")).isInstanceOf(RedisReadOnlyException.class)
+                .hasMessage("READONLY foo bar").hasNoCause();
+        assertThat(ExceptionFactory.createExecutionException("READONLY foo bar", new IllegalStateException()))
+                .isInstanceOf(RedisReadOnlyException.class).hasMessage("READONLY foo bar")
+                .hasRootCauseInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void shouldFormatExactUnits() {
 
         assertThat(ExceptionFactory.formatTimeout(Duration.ofMinutes(2))).isEqualTo("2 minute(s)");
