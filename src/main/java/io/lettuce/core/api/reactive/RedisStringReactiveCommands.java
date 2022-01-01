@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,12 @@ import java.util.Map;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import io.lettuce.core.*;
+import io.lettuce.core.BitFieldArgs;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.SetArgs;
+import io.lettuce.core.StrAlgoArgs;
+import io.lettuce.core.StringMatchResult;
+import io.lettuce.core.Value;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 
 /**
