@@ -186,16 +186,25 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     }
 
     @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void onComplete(Consumer<? super T> action) {
-        addOnComplete(action);
+        if (command instanceof CompleteableCommand) {
+            ((CompleteableCommand) command).onComplete(action);
+        } else {
+            addOnComplete(action);
+        }
     }
 
     @Override
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void onComplete(BiConsumer<? super T, Throwable> action) {
-        addOnComplete(action);
+        if (command instanceof CompleteableCommand) {
+            ((CompleteableCommand) command).onComplete(action);
+        } else {
+            addOnComplete(action);
+        }
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void addOnComplete(Object action) {
 
         for (;;) {

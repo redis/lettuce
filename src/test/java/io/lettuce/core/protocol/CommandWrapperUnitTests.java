@@ -112,4 +112,21 @@ class CommandWrapperUnitTests {
 
         assertThat(counter).hasValue(1);
     }
+
+    @Test
+    void shouldPropagateCallbacksToDelegate() {
+
+        AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(sut);
+        CommandWrapper<String, String, String> commandWrapper = new CommandWrapper<>(asyncCommand);
+
+        AtomicInteger counter = new AtomicInteger();
+
+        commandWrapper.onComplete((s, throwable) -> {
+            counter.incrementAndGet();
+        });
+
+        asyncCommand.cancel();
+
+        assertThat(counter).hasValue(1);
+    }
 }
