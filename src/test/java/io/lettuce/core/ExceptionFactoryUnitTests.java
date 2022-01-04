@@ -15,16 +15,19 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.internal.ExceptionFactory;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.internal.ExceptionFactory;
+
 /**
+ * Unit tests for {@link ExceptionFactory}.
+ *
  * @author Mark Paluch
+ * @author Tobias Nehrlich
  */
 class ExceptionFactoryUnitTests {
 
