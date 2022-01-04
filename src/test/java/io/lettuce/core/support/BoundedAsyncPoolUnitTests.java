@@ -153,6 +153,17 @@ class BoundedAsyncPoolUnitTests {
     }
 
     @Test
+    void shouldCreateUnboundedPool() {
+
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY,
+                BoundedPoolConfig.builder().maxTotal(-1).build());
+
+        TestFutures.awaitOrTimeout(pool.acquire());
+
+        assertThat(pool.getObjectCount()).isEqualTo(1);
+    }
+
+    @Test
     void shouldReturnObject() {
 
         BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(STRING_OBJECT_FACTORY, BoundedPoolConfig.create());
