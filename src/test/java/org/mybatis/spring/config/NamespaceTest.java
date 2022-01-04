@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.mapper.AnnotatedMapper;
 import org.mybatis.spring.mapper.MapperInterface;
+import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.mybatis.spring.mapper.MapperSubinterface;
 import org.mybatis.spring.mapper.ScopedProxyMapper;
 import org.mybatis.spring.mapper.child.MapperChildInterface;
@@ -94,6 +95,11 @@ class NamespaceTest {
     applicationContext.getBean("mapperSubinterface");
     applicationContext.getBean("mapperChildInterface");
     applicationContext.getBean("annotatedMapper");
+
+    assertThat(applicationContext.getBeanFactory()
+        .getBeanDefinition(applicationContext.getBeanNamesForType(MapperScannerConfigurer.class)[0]).getRole())
+            .isEqualTo(BeanDefinition.ROLE_INFRASTRUCTURE);
+
   }
 
   @Test

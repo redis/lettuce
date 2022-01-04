@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.mybatis.spring.annotation.mapper.ds2.Ds2Mapper;
 import org.mybatis.spring.mapper.AnnotatedMapper;
 import org.mybatis.spring.mapper.AppConfigWithDefaultPackageScan;
 import org.mybatis.spring.mapper.MapperInterface;
+import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.mybatis.spring.mapper.MapperSubinterface;
 import org.mybatis.spring.mapper.child.MapperChildInterface;
 import org.mybatis.spring.type.DummyMapperFactoryBean;
@@ -112,6 +113,10 @@ class MapperScanTest {
     applicationContext.getBean("mapperSubinterface");
     applicationContext.getBean("mapperChildInterface");
     applicationContext.getBean("annotatedMapper");
+
+    assertThat(applicationContext
+        .getBeanDefinition(applicationContext.getBeanNamesForType(MapperScannerConfigurer.class)[0]).getRole())
+            .isEqualTo(BeanDefinition.ROLE_INFRASTRUCTURE);
   }
 
   @Test
