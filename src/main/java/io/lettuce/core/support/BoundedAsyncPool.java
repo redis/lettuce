@@ -158,8 +158,8 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
             return (CompletableFuture) COMPLETED_FUTURE;
         }
 
-        int totalLimit = getAvailableCapacity();
-        int toCreate = Math.min(Math.max(0, totalLimit), potentialIdle);
+        long totalLimit = getAvailableCapacity();
+        int toCreate = Math.toIntExact(Math.min(Math.max(0, totalLimit), potentialIdle));
 
         CompletableFuture[] futures = new CompletableFuture[toCreate];
         for (int i = 0; i < toCreate; i++) {
@@ -188,8 +188,8 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
         return CompletableFuture.allOf(futures);
     }
 
-    private int getAvailableCapacity() {
-        return getMaxTotal() - (getCreationInProgress() + getObjectCount());
+    private long getAvailableCapacity() {
+        return getActualMaxTotal() - (getCreationInProgress() + getObjectCount());
     }
 
     @Override
@@ -243,7 +243,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
 
         long objects = (long) (getObjectCount() + getCreationInProgress());
 
-        if ((long) getMaxTotal() >= (objects + 1)) {
+        if ((long) getActualMaxTotal() >= (objects + 1)) {
             makeObject0(res);
             return;
         }
@@ -256,7 +256,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
         long total = getObjectCount();
         long creations = objectsInCreationCount.incrementAndGet();
 
-        if (((long) getMaxTotal()) < total + creations) {
+        if (((long) getActualMaxTotal()) < total + creations) {
 
             res.completeExceptionally(POOL_EXHAUSTED);
             objectsInCreationCount.decrementAndGet();
@@ -349,7 +349,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
             return Futures.failed(NOT_PART_OF_POOL);
         }
 
-        if (idleCount.get() >= getMaxIdle()) {
+        if (idleCount.get() >= getActualMaxIdle()) {
             return destroy0(object);
         }
 
@@ -377,7 +377,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
 
         int idleCount = this.idleCount.incrementAndGet();
 
-        if (idleCount > getMaxIdle()) {
+        if (idleCount > getActualMaxIdle()) {
 
             this.idleCount.decrementAndGet();
             return destroy0(object);
@@ -451,25 +451,35 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
      * checkout) at a given time. When negative, there is no limit to the number of objects that can be managed by the pool at
      * one time.
      *
-     * @return the cap on the total number of object instances managed by the pool.
+     * @return the cap on the total number of object instances managed by the pool. Unlimited max objects are capped at
+     *         {@link Integer#MAX_VALUE Integer#MAX_VALUE}.
      * @see BoundedPoolConfig#getMaxTotal()
      */
     public int getMaxTotal() {
         return maxTotal;
     }
 
+    private int getActualMaxTotal() {
+        return maxOrActual(maxTotal);
+    }
+
     /**
      * Returns the cap on the number of "idle" instances in the pool. If {@code maxIdle} is set too low on heavily loaded
      * systems it is possible you will see objects being destroyed and almost immediately new objects being created. This is a
-     * result of the active threads momentarily returning objects faster than they are requesting them them, causing the number
-     * of idle objects to rise above maxIdle. The best value for maxIdle for heavily loaded system will vary but the default is
-     * a good starting point.
+     * result of the active threads momentarily returning objects faster than they are requesting them, causing the number of
+     * idle objects to rise above maxIdle. The best value for maxIdle for heavily loaded system will vary but the default is a
+     * good starting point.
      *
-     * @return the maximum number of "idle" instances that can be held in the pool.
+     * @return the maximum number of "idle" instances that can be held in the pool. Unlimited idle objects are capped at
+     *         {@link Integer#MAX_VALUE Integer#MAX_VALUE}.
      * @see BoundedPoolConfig#getMaxIdle()
      */
     public int getMaxIdle() {
         return maxIdle;
+    }
+
+    private int getActualMaxIdle() {
+        return maxOrActual(maxIdle);
     }
 
     /**
@@ -484,7 +494,7 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
      */
     public int getMinIdle() {
 
-        int maxIdleSave = getMaxIdle();
+        int maxIdleSave = getActualMaxIdle();
         if (this.minIdle > maxIdleSave) {
             return maxIdleSave;
         } else {
@@ -506,6 +516,10 @@ public class BoundedAsyncPool<T> extends BasePool implements AsyncPool<T> {
 
     private boolean isPoolActive() {
         return this.state == State.ACTIVE;
+    }
+
+    private static int maxOrActual(int count) {
+        return count > -1 ? count : Integer.MAX_VALUE;
     }
 
     enum State {
