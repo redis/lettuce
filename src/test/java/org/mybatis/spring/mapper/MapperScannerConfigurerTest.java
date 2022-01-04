@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,16 @@ class MapperScannerConfigurerTest {
 
     assertThat(Stream.of(applicationContext.getBeanDefinitionNames()).filter(x -> x.startsWith("scopedTarget")))
         .hasSize(1);
-
+    assertThat(applicationContext.getBeanDefinition("mapperInterface").getPropertyValues().get("mapperInterface"))
+        .isEqualTo(MapperInterface.class);
+    assertThat(applicationContext.getBeanDefinition("mapperSubinterface").getPropertyValues().get("mapperInterface"))
+        .isEqualTo(MapperSubinterface.class);
+    assertThat(applicationContext.getBeanDefinition("mapperChildInterface").getPropertyValues().get("mapperInterface"))
+        .isEqualTo(MapperChildInterface.class);
+    assertThat(applicationContext.getBeanDefinition("annotatedMapper").getPropertyValues().get("mapperInterface"))
+        .isEqualTo(AnnotatedMapper.class);
+    assertThat(applicationContext.getBeanDefinition("scopedTarget.scopedProxyMapper").getPropertyValues()
+        .get("mapperInterface")).isEqualTo(ScopedProxyMapper.class);
   }
 
   @Test
