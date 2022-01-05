@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -348,51 +347,6 @@ public class ServerCommandIntegrationTests extends TestSupport {
         assertThat(redis.dbsize()).isEqualTo(0);
         redis.set(key, value);
         assertThat(redis.dbsize()).isEqualTo(1);
-    }
-
-    @Test
-    @Disabled("Causes instabilities")
-    void debugCrashAndRecover() {
-        try {
-            assertThat(redis.debugCrashAndRecover(1L)).isNotNull();
-        } catch (Exception e) {
-            assertThat(e).hasMessageContaining("ERR failed to restart the server");
-        }
-    }
-
-    @Test
-    void debugHtstats() {
-        redis.set(key, value);
-        String result = redis.debugHtstats(0);
-        assertThat(result).contains("Dictionary");
-    }
-
-    @Test
-    void debugObject() {
-        redis.set(key, value);
-        redis.debugObject(key);
-    }
-
-    @Test
-    void debugReload() {
-        assertThat(redis.debugReload()).isEqualTo("OK");
-    }
-
-    @Test
-    @Disabled("Causes instabilities")
-    void debugRestart() {
-        try {
-            assertThat(redis.debugRestart(1L)).isNotNull();
-        } catch (Exception e) {
-            assertThat(e).hasMessageContaining("ERR failed to restart the server");
-        }
-    }
-
-    @Test
-    void debugSdslen() {
-        redis.set(key, value);
-        String result = redis.debugSdslen(key);
-        assertThat(result).contains("key_sds_len");
     }
 
     @Test
