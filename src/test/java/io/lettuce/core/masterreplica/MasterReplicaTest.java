@@ -84,11 +84,11 @@ class MasterReplicaTest extends AbstractRedisClientTest {
 
         WithPassword.enableAuthentication(this.connection1);
         this.connection1.auth(passwd);
-        this.connection1.configSet("masterauth", passwd);
+        this.connection1.configSet("masterauth", passwd.toString());
 
         WithPassword.enableAuthentication(this.connection2);
         this.connection2.auth(passwd);
-        this.connection2.configSet("masterauth", passwd);
+        this.connection2.configSet("masterauth", passwd.toString());
 
         connection = MasterReplica.connect(client, StringCodec.UTF8, masterURI);
         connection.setReadFrom(ReadFrom.REPLICA);

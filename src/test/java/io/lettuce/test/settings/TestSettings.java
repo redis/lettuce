@@ -89,7 +89,7 @@ public class TestSettings {
      * @return password of your redis instance. Defaults to {@literal passwd}. Can be overridden with
      *         {@code -Dpassword=YourPassword}
      */
-    public static String password() {
+    public static CharSequence password() {
         return System.getProperty("password", "foobared");
     }
 
@@ -107,7 +107,7 @@ public class TestSettings {
      * @return password of a second user of your redis instance. Defaults to {@literal lettuceTestPasswd}. Can be overridden
      *         with {@code -Dacl.password=SamplePassword}
      */
-    public static String aclPassword() {
+    public static CharSequence aclPassword() {
         return System.getProperty("acl.password", "lettuceTestPasswd");
     }
 

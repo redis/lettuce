@@ -56,7 +56,6 @@ public class AclCommandIntegrationTests extends TestSupport {
         redis.flushall();
         redis.aclUsers().stream().filter(o -> !"default".equals(o)).forEach(redis::aclDeluser);
         redis.aclLogReset();
-
     }
 
     @Test
