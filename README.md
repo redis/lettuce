@@ -40,7 +40,7 @@ Documentation
 
 * [Reference documentation](https://lettuce.io/docs/)
 * [Wiki](https://github.com/lettuce-io/lettuce-core/wiki)
-* [Javadoc](http://redis.paluch.biz/docs/api/releases/latest/)
+* [Javadoc](https://lettuce.io/core/release/api/)
 
 
 Binaries/Download
