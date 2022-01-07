@@ -17,11 +17,13 @@ package io.lettuce.core.cluster;
 
 import java.nio.charset.Charset;
 import java.time.Duration;
+import java.util.function.Predicate;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.SslOptions;
 import io.lettuce.core.TimeoutOptions;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.ProtocolVersion;
@@ -46,18 +48,19 @@ public class ClusterClientOptions extends ClientOptions {
 
     public static final boolean DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP = true;
 
+    public static final Predicate<RedisClusterNode> DEFAULT_NODE_FILTER = node -> true;
+
     private final int maxRedirects;
 
     private final ClusterTopologyRefreshOptions topologyRefreshOptions;
 
     private final boolean validateClusterNodeMembership;
 
+    private final Predicate<RedisClusterNode> nodeFilter;
+
     protected ClusterClientOptions(Builder builder) {
 
         super(builder);
-
-        this.validateClusterNodeMembership = builder.validateClusterNodeMembership;
-        this.maxRedirects = builder.maxRedirects;
 
         ClusterTopologyRefreshOptions refreshOptions = builder.topologyRefreshOptions;
 
@@ -70,15 +73,19 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         this.topologyRefreshOptions = refreshOptions;
+        this.maxRedirects = builder.maxRedirects;
+        this.validateClusterNodeMembership = builder.validateClusterNodeMembership;
+        this.nodeFilter = builder.nodeFilter;
     }
 
     protected ClusterClientOptions(ClusterClientOptions original) {
 
         super(original);
 
-        this.validateClusterNodeMembership = original.validateClusterNodeMembership;
         this.maxRedirects = original.maxRedirects;
         this.topologyRefreshOptions = original.topologyRefreshOptions;
+        this.validateClusterNodeMembership = original.validateClusterNodeMembership;
+        this.nodeFilter = original.nodeFilter;
     }
 
     /**
@@ -147,9 +154,11 @@ public class ClusterClientOptions extends ClientOptions {
 
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
 
+        private int maxRedirects = DEFAULT_MAX_REDIRECTS;
+
         private boolean validateClusterNodeMembership = DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP;
 
-        private int maxRedirects = DEFAULT_MAX_REDIRECTS;
+        private Predicate<RedisClusterNode> nodeFilter = DEFAULT_NODE_FILTER;
 
         private ClusterTopologyRefreshOptions topologyRefreshOptions = null;
 
@@ -283,6 +292,21 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         /**
+         * Provide a {@link Predicate node filter} to filter cluster nodes from
+         * {@link io.lettuce.core.cluster.models.partitions.Partitions}.
+         *
+         * @param nodeFilter must not be {@code null}.
+         * @return {@code this}
+         * @since 6.1.6
+         */
+        public Builder nodeFilter(Predicate<RedisClusterNode> nodeFilter) {
+
+            LettuceAssert.notNull(nodeFilter, "NodeFilter must not be null");
+            this.nodeFilter = nodeFilter;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link ClusterClientOptions}
          *
          * @return new instance of {@link ClusterClientOptions}
@@ -315,7 +339,7 @@ public class ClusterClientOptions extends ClientOptions {
                 .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
                 .topologyRefreshOptions(getTopologyRefreshOptions())
-                .validateClusterNodeMembership(isValidateClusterNodeMembership());
+                .validateClusterNodeMembership(isValidateClusterNodeMembership()).nodeFilter(getNodeFilter());
 
         return builder;
     }
@@ -379,6 +403,18 @@ public class ClusterClientOptions extends ClientOptions {
      */
     public boolean isValidateClusterNodeMembership() {
         return validateClusterNodeMembership;
+    }
+
+    /**
+     * The {@link Predicate node filter} to filter Redis Cluster nodes from
+     * {@link io.lettuce.core.cluster.models.partitions.Partitions}.
+     *
+     * @return the {@link Predicate node filter} to filter Redis Cluster nodes from
+     *         {@link io.lettuce.core.cluster.models.partitions.Partitions}.
+     * @since 6.1.6
+     */
+    public Predicate<RedisClusterNode> getNodeFilter() {
+        return nodeFilter;
     }
 
 }

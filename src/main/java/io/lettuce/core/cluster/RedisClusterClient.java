@@ -34,7 +34,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import io.lettuce.core.protocol.PushHandler;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -61,6 +60,7 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
@@ -983,6 +983,23 @@ public class RedisClusterClient extends AbstractRedisClient {
                 future.completeExceptionally(Exceptions.unwrap(throwable));
             }
         });
+
+        Predicate<RedisClusterNode> nodeFilter = getClusterClientOptions().getNodeFilter();
+
+        if (nodeFilter != ClusterClientOptions.DEFAULT_NODE_FILTER) {
+            return future.thenApply(partitions -> {
+
+                List<RedisClusterNode> toRemove = new ArrayList<>();
+                for (RedisClusterNode partition : partitions) {
+                    if (!nodeFilter.test(partition)) {
+                        toRemove.add(partition);
+                    }
+                }
+
+                partitions.removeAll(toRemove);
+                return partitions;
+            });
+        }
 
         return future;
     }
