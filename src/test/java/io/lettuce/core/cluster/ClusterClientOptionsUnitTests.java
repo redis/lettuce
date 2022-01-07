@@ -15,13 +15,15 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
@@ -34,9 +36,10 @@ class ClusterClientOptionsUnitTests {
     @Test
     void testCopy() {
 
+        Predicate<RedisClusterNode> nodeFilter = it -> true;
         ClusterClientOptions options = ClusterClientOptions.builder().autoReconnect(false).requestQueueSize(100)
                 .suspendReconnectOnProtocolFailure(true).maxRedirects(1234).validateClusterNodeMembership(false)
-                .protocolVersion(ProtocolVersion.RESP2).build();
+                .protocolVersion(ProtocolVersion.RESP2).nodeFilter(nodeFilter).build();
 
         ClusterClientOptions copy = ClusterClientOptions.copyOf(options);
 
@@ -51,6 +54,7 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
         assertThat(copy.getScriptCharset()).isEqualTo(StandardCharsets.UTF_8);
+        assertThat(copy.getNodeFilter()).isEqualTo(nodeFilter);
     }
 
     @Test

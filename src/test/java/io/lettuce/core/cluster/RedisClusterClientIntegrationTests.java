@@ -474,6 +474,22 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
+    void appliesNodeFilter() {
+
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(host, ClusterTestSettings.port1).build());
+        try {
+
+            clusterClient.setOptions(
+                    ClusterClientOptions.builder().nodeFilter(it -> it.is(RedisClusterNode.NodeFlag.UPSTREAM)).build());
+            Partitions partitions = clusterClient.getPartitions();
+            assertThat(partitions).hasSize(2).allMatch(it -> it.is(RedisClusterNode.NodeFlag.UPSTREAM));
+        } finally {
+            FastShutdown.shutdown(clusterClient);
+        }
+    }
+
+    @Test
     void noClusterNodeAvailable() {
 
         RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),

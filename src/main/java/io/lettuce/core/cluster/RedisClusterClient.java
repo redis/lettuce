@@ -984,6 +984,23 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
         });
 
+        Predicate<RedisClusterNode> nodeFilter = getClusterClientOptions().getNodeFilter();
+
+        if (nodeFilter != ClusterClientOptions.DEFAULT_NODE_FILTER) {
+            return future.thenApply(partitions -> {
+
+                List<RedisClusterNode> toRemove = new ArrayList<>();
+                for (RedisClusterNode partition : partitions) {
+                    if (!nodeFilter.test(partition)) {
+                        toRemove.add(partition);
+                    }
+                }
+
+                partitions.removeAll(toRemove);
+                return partitions;
+            });
+        }
+
         return future;
     }
 
