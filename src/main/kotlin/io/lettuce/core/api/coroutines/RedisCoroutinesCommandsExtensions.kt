@@ -25,6 +25,7 @@ import io.lettuce.core.TransactionResult
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
+@Deprecated("Using transactions in imperative coroutine coding style is potentially dangerous and may cause dead locks (see issue #1954)")
 suspend inline fun <K : Any, V : Any> RedisCoroutinesCommands<K, V>.multi(action: RedisCoroutinesCommands<K, V>.() -> Unit): TransactionResult? = try {
     multi()
     action.invoke(this)
