@@ -15,16 +15,21 @@
  */
 package io.lettuce.core.cluster.topology;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyLong;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -270,7 +275,7 @@ class ClusterTopologyRefreshUnitTests {
     }
 
     @Test
-    void getNodeSpecificViewsNode2IsFasterThanNode1() throws Exception {
+    void getNodeSpecificViewsNode2IsFasterThanNode1() {
 
         Requests clusterNodesRequests = createClusterNodesRequests(5, NODE_1_VIEW);
         clusterNodesRequests = createClusterNodesRequests(1, NODE_2_VIEW).mergeWith(clusterNodesRequests);

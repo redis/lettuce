@@ -60,6 +60,8 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
 
     private long configEpoch;
 
+    private long replOffset;
+
     private BitSet slots;
 
     private final Set<NodeFlag> flags = EnumSet.noneOf(NodeFlag.class);
@@ -79,6 +81,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.pingSentTimestamp = pingSentTimestamp;
         this.pongReceivedTimestamp = pongReceivedTimestamp;
         this.configEpoch = configEpoch;
+        this.replOffset = -1;
 
         setSlotBits(slots);
         setFlags(flags);
@@ -94,6 +97,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.pingSentTimestamp = pingSentTimestamp;
         this.pongReceivedTimestamp = pongReceivedTimestamp;
         this.configEpoch = configEpoch;
+        this.replOffset = -1;
 
         this.slots = new BitSet(slots.length());
         this.slots.or(slots);
@@ -112,6 +116,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.pingSentTimestamp = redisClusterNode.pingSentTimestamp;
         this.pongReceivedTimestamp = redisClusterNode.pongReceivedTimestamp;
         this.configEpoch = redisClusterNode.configEpoch;
+        this.replOffset = redisClusterNode.replOffset;
         this.aliases.addAll(redisClusterNode.aliases);
 
         if (redisClusterNode.slots != null && !redisClusterNode.slots.isEmpty()) {
@@ -148,6 +153,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         return new RedisClusterNode(this);
     }
 
+    @Override
     public RedisURI getUri() {
         return uri;
     }
@@ -241,6 +247,20 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
      */
     public void setConfigEpoch(long configEpoch) {
         this.configEpoch = configEpoch;
+    }
+
+    public long getReplOffset() {
+        return replOffset;
+    }
+
+    /**
+     * Sets the {@code replOffset}. Typically, obtained from {@code INFO REPLICATION master_repl_offset}. Can be {@code -1} in
+     * case it was not obtained from Redis or set in the data model.
+     *
+     * @param replOffset the {@code replOffset}
+     */
+    public void setReplOffset(long replOffset) {
+        this.replOffset = replOffset;
     }
 
     /**
@@ -442,6 +462,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         sb.append(", pingSentTimestamp=").append(pingSentTimestamp);
         sb.append(", pongReceivedTimestamp=").append(pongReceivedTimestamp);
         sb.append(", configEpoch=").append(configEpoch);
+        sb.append(", replOffset=").append(replOffset);
         sb.append(", flags=").append(flags);
         sb.append(", aliases=").append(aliases);
         if (slots != null) {

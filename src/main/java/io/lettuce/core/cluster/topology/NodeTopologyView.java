@@ -15,8 +15,9 @@
  */
 package io.lettuce.core.cluster.topology;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Properties;
 
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
@@ -30,8 +31,6 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
  */
 class NodeTopologyView {
 
-    private static final Pattern NUMBER = Pattern.compile("(\\d+)");
-
     private final boolean available;
 
     private final RedisURI redisURI;
@@ -40,11 +39,13 @@ class NodeTopologyView {
 
     private final int connectedClients;
 
+    private final long replicationOffset;
+
     private final long latency;
 
     private final String clusterNodes;
 
-    private final String clientList;
+    private final String info;
 
     private NodeTopologyView(RedisURI redisURI) {
 
@@ -52,30 +53,41 @@ class NodeTopologyView {
         this.redisURI = redisURI;
         this.partitions = new Partitions();
         this.connectedClients = 0;
+        this.replicationOffset = -1;
         this.clusterNodes = null;
-        this.clientList = null;
+        this.info = null;
         this.latency = 0;
     }
 
-    NodeTopologyView(RedisURI redisURI, String clusterNodes, String clientList, long latency) {
+    NodeTopologyView(RedisURI redisURI, String clusterNodes, String info, long latency) {
 
         this.available = true;
         this.redisURI = redisURI;
 
+        Properties properties = parseInfo(info);
         this.partitions = ClusterPartitionParser.parse(clusterNodes);
-        this.connectedClients = clientList != null ? getClients(clientList) : 0;
+        this.connectedClients = getClientCount(properties);
+        this.replicationOffset = getReplicationOffset(properties);
         this.clusterNodes = clusterNodes;
-        this.clientList = clientList;
+        this.info = info;
         this.latency = latency;
     }
 
-    static NodeTopologyView from(RedisURI redisURI, Requests clusterNodesRequests, Requests clientListRequests) {
+    private int getClientCount(Properties properties) {
+        return Integer.parseInt(properties.getProperty("connected_clients", "0"));
+    }
+
+    private long getReplicationOffset(Properties properties) {
+        return Long.parseLong(properties.getProperty("master_repl_offset", "-1"));
+    }
+
+    static NodeTopologyView from(RedisURI redisURI, Requests clusterNodesRequests, Requests infoRequests) {
 
         TimedAsyncCommand<String, String, String> nodes = clusterNodesRequests.getRequest(redisURI);
-        TimedAsyncCommand<String, String, String> clients = clientListRequests.getRequest(redisURI);
+        TimedAsyncCommand<String, String, String> info = infoRequests.getRequest(redisURI);
 
-        if (resultAvailable(nodes) && resultAvailable(clients)) {
-            return new NodeTopologyView(redisURI, nodes.join(), optionallyGet(clients), nodes.duration());
+        if (resultAvailable(nodes) && resultAvailable(info)) {
+            return new NodeTopologyView(redisURI, nodes.join(), optionallyGet(info), nodes.duration());
         }
         return new NodeTopologyView(redisURI);
     }
@@ -97,16 +109,67 @@ class NodeTopologyView {
         return false;
     }
 
-    private int getClients(String rawClientsOutput) {
-        String[] rows = rawClientsOutput.trim().split("\\n");
-        for (String row : rows) {
+    private static Properties parseInfo(String info) {
 
-            Matcher matcher = NUMBER.matcher(row);
-            if (matcher.find()) {
-                return Integer.parseInt(matcher.group(1));
+        Properties properties = new Properties();
+        try {
+            properties.load(new StringReader(info));
+        } catch (IOException e) {
+            // wtf?
+        }
+
+        return properties;
+    }
+
+    String getNodeId() {
+        return getOwnPartition().getNodeId();
+    }
+
+    RedisURI getRedisURI() {
+
+        if (partitions.isEmpty()) {
+            return redisURI;
+        }
+
+        return getOwnPartition().getUri();
+    }
+
+    RedisClusterNode getOwnPartition() {
+        RedisClusterNode own = findOwnPartition();
+
+        if (own != null) {
+            return own;
+        }
+
+        throw new IllegalStateException("Cannot determine own partition");
+    }
+
+    private RedisClusterNode findOwnPartition() {
+        for (RedisClusterNode partition : partitions) {
+            if (partition.is(RedisClusterNode.NodeFlag.MYSELF)) {
+                return partition;
             }
         }
-        return 0;
+
+        return null;
+    }
+
+    void postProcessPartitions() {
+
+        TopologyComparators.SortAction sortAction = TopologyComparators.SortAction.getSortAction();
+
+        sortAction.sort(getPartitions());
+        getPartitions().updateCache();
+    }
+
+    public boolean canContribute() {
+
+        RedisClusterNode ownPartition = findOwnPartition();
+
+        if (ownPartition == null) {
+            return false;
+        }
+        return true;
     }
 
     long getLatency() {
@@ -125,31 +188,12 @@ class NodeTopologyView {
         return connectedClients;
     }
 
-    String getNodeId() {
-        return getOwnPartition().getNodeId();
+    long getReplicationOffset() {
+        return replicationOffset;
     }
 
-    RedisURI getRedisURI() {
-
-        if (partitions.isEmpty()) {
-            return redisURI;
-        }
-
-        return getOwnPartition().getUri();
-    }
-
-    RedisClusterNode getOwnPartition() {
-        for (RedisClusterNode partition : partitions) {
-            if (partition.is(RedisClusterNode.NodeFlag.MYSELF)) {
-                return partition;
-            }
-        }
-
-        throw new IllegalStateException("Cannot determine own partition");
-    }
-
-    String getClientList() {
-        return clientList;
+    String getInfo() {
+        return info;
     }
 
     String getClusterNodes() {

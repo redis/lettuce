@@ -15,9 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
@@ -38,7 +36,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -145,7 +149,7 @@ class PooledClusterConnectionProviderUnitTests {
     }
 
     @Test
-    void shouldObtainConnectionReadFromSlave() {
+    void shouldObtainConnectionReadFromReplica() {
 
         when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:2"), any(), any()))
                 .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
@@ -163,6 +167,23 @@ class PooledClusterConnectionProviderUnitTests {
         verify(connection).async();
         verify(asyncCommandsMock).readOnly();
         verify(connection).setAutoFlushCommands(true);
+    }
+
+    @Test
+    void shouldAvoidReplicaWithReplOffsetZero() {
+
+        for (RedisClusterNode partition : partitions) {
+            partition.setReplOffset(0);
+        }
+
+        AsyncCommand<String, String, String> async = new AsyncCommand<>(new Command<>(CommandType.READONLY, null, null));
+        async.complete();
+
+        when(asyncCommandsMock.readOnly()).thenReturn(async);
+
+        sut.setReadFrom(ReadFrom.REPLICA);
+
+        assertThatExceptionOfType(PartitionSelectorException.class).isThrownBy(() -> sut.getConnection(Intent.READ, 1));
     }
 
     @Test
