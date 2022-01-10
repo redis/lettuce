@@ -15,10 +15,9 @@
  */
 package io.lettuce.core.cluster.topology;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +52,7 @@ class RequestsUnitTests {
         assertThat(nodeTopologyView.getConnectedClients()).isEqualTo(100);
         assertThat(nodeTopologyView.getPartitions()).hasSize(1);
         assertThat(nodeTopologyView.getClusterNodes()).isEqualTo(clusterNodesOutput);
-        assertThat(nodeTopologyView.getClientList()).isEqualTo(infoClientOutput);
+        assertThat(nodeTopologyView.getInfo()).isEqualTo(infoClientOutput);
     }
 
     @Test

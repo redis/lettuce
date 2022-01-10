@@ -15,10 +15,9 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.test.settings.TestSettings.host;
-import static io.lettuce.test.settings.TestSettings.hostAddr;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static io.lettuce.test.settings.TestSettings.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,7 +26,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.*;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.sync.Executions;
@@ -42,7 +45,8 @@ import io.lettuce.test.resource.TestClientResources;
 class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
     private static final int CLUSTER_PORT_SSL_1 = 7443;
-    private static final int CLUSTER_PORT_SSL_2 = 7444;
+
+    private static final int CLUSTER_PORT_SSL_2 = 7444; // replica cannot replicate properly with upstream
     private static final int CLUSTER_PORT_SSL_3 = 7445;
 
     private static final String SLOT_1_KEY = "8HMdi";
@@ -84,7 +88,7 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
                 .collect(Collectors.toList());
         connection.close();
 
-        assertThat(ports).contains(CLUSTER_PORT_SSL_1, CLUSTER_PORT_SSL_2, CLUSTER_PORT_SSL_3);
+        assertThat(ports).contains(CLUSTER_PORT_SSL_1, CLUSTER_PORT_SSL_3);
     }
 
     @Test
@@ -107,8 +111,8 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
         StatefulRedisClusterConnection<String, String> connection = redisClient.connect();
 
-        // replica
-        StatefulRedisConnection<String, String> node2Connection = connection.getConnection(hostAddr(), 7444);
+        // master 2
+        StatefulRedisConnection<String, String> node2Connection = connection.getConnection(hostAddr(), 7445);
 
         try {
             node2Connection.sync().get(SLOT_1_KEY);

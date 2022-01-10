@@ -113,15 +113,15 @@ class Connections {
     }
 
     /*
-     * Initiate {@code INFO CLIENTS} on all connections and return the {@link Requests}.
+     * Initiate {@code INFO} on all connections and return the {@link Requests}.
      * @return the {@link Requests}.
      */
-    public Requests requestClients(long timeout, TimeUnit timeUnit) {
+    public Requests requestInfo(long timeout, TimeUnit timeUnit) {
 
         return doRequest(() -> {
 
             Command<String, String, String> command = new Command<>(CommandType.INFO, new StatusOutput<>(StringCodec.UTF8),
-                    new CommandArgs<>(StringCodec.UTF8).add("CLIENTS"));
+                    new CommandArgs<>(StringCodec.UTF8));
             return new TimedAsyncCommand<>(command);
         }, timeout, timeUnit);
     }

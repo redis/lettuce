@@ -15,7 +15,11 @@
  */
 package io.lettuce.core.cluster;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -23,7 +27,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.OrderingReadFromAccessor;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.push.PushMessage;
@@ -32,7 +43,11 @@ import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.*;
+import io.lettuce.core.internal.AsyncConnectionProvider;
+import io.lettuce.core.internal.Exceptions;
+import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.HostAndPort;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -368,8 +383,18 @@ class PooledClusterConnectionProvider<K, V>
                 .collect(Collectors.toList());
     }
 
-    private boolean isReadCandidate(RedisClusterNode upstream, RedisClusterNode partition) {
-        return upstream.getNodeId().equals(partition.getNodeId()) || upstream.getNodeId().equals(partition.getSlaveOf());
+    private static boolean isReadCandidate(RedisClusterNode upstream, RedisClusterNode partition) {
+
+        if (upstream.getNodeId().equals(partition.getNodeId())) {
+            return true;
+        }
+
+        // consider only replicas contain data from replication
+        if (upstream.getNodeId().equals(partition.getSlaveOf()) && partition.getReplOffset() != 0) {
+            return true;
+        }
+
+        return false;
     }
 
     @Override
