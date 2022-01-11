@@ -23,6 +23,7 @@ import io.lettuce.core.TransactionResult
  *
  * @author Mikhael Sokolov
  * @since 6.0
+ * @deprecated since 6.1.6
  */
 @ExperimentalLettuceCoroutinesApi
 suspend inline fun <K : Any, V : Any> RedisCoroutinesCommands<K, V>.multi(action: RedisCoroutinesCommands<K, V>.() -> Unit): TransactionResult? = try {
