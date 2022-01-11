@@ -15,9 +15,7 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -55,7 +53,7 @@ class ConnectionsUnitTests {
         Connections connections = new Connections(5, Collections.emptyList());
         connections.closeAsync();
 
-        verifyZeroInteractions(connection1);
+        verifyNoInteractions(connection1);
 
         connections.onAccept(Tuples.of(RedisURI.create("localhost", 6379), connection1));
 
