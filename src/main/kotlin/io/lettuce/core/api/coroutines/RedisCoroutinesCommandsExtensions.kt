@@ -23,6 +23,7 @@ import io.lettuce.core.TransactionResult
  *
  * @author Mikhael Sokolov
  * @since 6.0
+ * @deprecated since 6.1.6
  */
 @ExperimentalLettuceCoroutinesApi
 @Deprecated("Using transactions in imperative coroutine coding style is potentially dangerous and may cause dead locks (see issue #1954)")
