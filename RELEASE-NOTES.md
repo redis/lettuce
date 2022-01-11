@@ -1,12 +1,12 @@
-Lettuce 6.0.8 RELEASE NOTES
+Lettuce 6.0.9 RELEASE NOTES
 ==============================
 
-The Lettuce team is pleased to announce the Lettuce 6.0.8 service release!
+The Lettuce team is pleased to announce the Lettuce 6.0.9 service release!
 This release ships with bugfixes and dependency upgrades.
 
 Find the full changelog at the end of this document.
 
-Thanks to all contributors who made Lettuce 6.0.8.RELEASE possible. Lettuce 6 supports
+Thanks to all contributors who made Lettuce 6.0.9.RELEASE possible. Lettuce 6 supports
 Redis 2.6+ up to Redis 6.x. In terms of Java runtime, Lettuce requires at least Java 8 and works with Java 17. It is tested continuously against the latest Redis source-build.
 
 If you need any support, meet Lettuce at
@@ -16,17 +16,21 @@ If you need any support, meet Lettuce at
 * Join the chat at https://gitter.im/lettuce-io/Lobby for general discussion
 * GitHub Issues (Bug reports, feature
   requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/6.0.8.RELEASE/reference/
-* Javadoc: https://lettuce.io/core/6.0.8.RELEASE/api/
+* Documentation: https://lettuce.io/core/6.0.9.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/6.0.9.RELEASE/api/
 
 Fixes
 -----
-* SSL CN name checked failed after Redis Sentinel failover #1812
-* `ClassCastException` when no `LATENCY_UTILS_AVAILABLE` or `HDR_UTILS_AVAILABLE` #1829
-* Static command interface methods are erroneously verified against command names #1833
-* Coroutine commands that result in a `Flow` can hang #1837
+*  Attempting to execute commands during a JVM shutdown will cause a RedisConnectionFailureException / IllegalStateException: Shutdown in progress #1883
+* Tracing incorrect when command execute timeout #1901
+* `RoundRobinSocketAddressSupplier` is not refreshing when `RedisURI` changes #1909
+* `BoundedPoolConfig` with `-1`  as `maxTotal` does not work as unlimited pool #1953
 
 Other
 -----
-* Upgrade dependencies #1853
 * Upgrade build to Java 17 #1854
+* A question about the letuce CI project view #1914
+* Bump log4j-core to 2.15.0 #1934
+* Upgrade log4j to 2.17 to address CVE-2021-45105 #1941
+* Upgrade to Netty 4.1.72.Final #1950
+* Extend copyright license years to 2022 #1952
