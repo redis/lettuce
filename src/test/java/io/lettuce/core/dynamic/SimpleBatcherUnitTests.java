@@ -15,9 +15,8 @@
  */
 package io.lettuce.core.dynamic;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
 
@@ -53,14 +52,14 @@ class SimpleBatcherUnitTests {
         SimpleBatcher batcher = new SimpleBatcher(connection, 2);
 
         assertThat(batcher.batch(c1, null)).isEqualTo(BatchTasks.EMPTY);
-        verifyZeroInteractions(connection);
+        verifyNoInteractions(connection);
 
         BatchTasks batch = batcher.batch(c2, null);
         verify(connection).dispatch(Arrays.asList(c1, c2));
         assertThat(batch).contains(c1, c2);
 
         batcher.batch(c3, null);
-        verifyZeroInteractions(connection);
+        verifyNoMoreInteractions(connection);
 
         batcher.batch(c4, null);
         verify(connection).dispatch(Arrays.asList(c3, c4));
@@ -95,7 +94,7 @@ class SimpleBatcherUnitTests {
 
         batcher.batch(c1, CommandBatching.queue());
         batcher.batch(c2, CommandBatching.queue());
-        verifyZeroInteractions(connection);
+        verifyNoInteractions(connection);
 
         batcher.batch(c3, null);
 
@@ -117,7 +116,7 @@ class SimpleBatcherUnitTests {
         batcher.batch(c2, CommandBatching.queue());
         batcher.batch(c3, CommandBatching.queue());
         batcher.batch(c4, CommandBatching.queue());
-        verifyZeroInteractions(connection);
+        verifyNoInteractions(connection);
 
         batcher.batch(c5, null);
 

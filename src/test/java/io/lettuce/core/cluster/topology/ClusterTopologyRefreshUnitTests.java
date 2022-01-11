@@ -212,7 +212,7 @@ class ClusterTopologyRefreshUnitTests {
 
         sut.loadViews(seed, Duration.ofSeconds(1), true);
 
-        verifyZeroInteractions(nodeConnectionFactory);
+        verifyNoInteractions(nodeConnectionFactory);
     }
 
     @Test

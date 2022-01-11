@@ -210,7 +210,7 @@ class CommandHandlerUnitTests {
         sut.setState(CommandHandler.LifecycleState.CLOSED);
 
         sut.exceptionCaught(context, new Exception());
-        verifyZeroInteractions(context);
+        verifyNoInteractions(context);
     }
 
     @Test
@@ -282,7 +282,7 @@ class CommandHandlerUnitTests {
         command.cancel();
         sut.write(context, command, promise);
 
-        verifyZeroInteractions(context);
+        verifyNoInteractions(context);
         assertThat(stack).isEmpty();
 
         verify(promise).trySuccess();
@@ -294,7 +294,7 @@ class CommandHandlerUnitTests {
         command.cancel();
         sut.write(context, Collections.singleton(command), promise);
 
-        verifyZeroInteractions(context);
+        verifyNoInteractions(context);
         assertThat(stack).isEmpty();
 
         verify(promise).trySuccess();
@@ -369,7 +369,7 @@ class CommandHandlerUnitTests {
         command.cancel();
         sut.write(context, Arrays.asList(command), promise);
 
-        verifyZeroInteractions(context);
+        verifyNoInteractions(context);
         assertThat((Collection) ReflectionTestUtils.getField(sut, "stack")).isEmpty();
     }
 
