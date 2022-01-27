@@ -1661,6 +1661,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<Long> sintercard(K... keys) {
+        return createMono(() -> commandBuilder.sintercard(keys));
+    }
+
+    @Override
+    public Mono<Long> sintercard(int limit, K... keys) {
+        return createMono(() -> commandBuilder.sintercard(limit, keys));
+    }
+
+    @Override
     public Mono<Long> sinterstore(K destination, K... keys) {
         return createMono(() -> commandBuilder.sinterstore(destination, keys));
     }

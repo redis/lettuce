@@ -50,6 +50,10 @@ internal class RedisSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override fun sinter(vararg keys: K): Flow<V> = ops.sinter(*keys).asFlow()
 
+    override suspend fun sintercard(vararg keys: K): Long? = ops.sintercard(*keys).awaitFirstOrNull()
+
+    override suspend fun sintercard(limit: Int, vararg keys: K): Long? = ops.sintercard(limit, *keys).awaitFirstOrNull()
+
     override suspend fun sinterstore(destination: K, vararg keys: K): Long? = ops.sinterstore(destination, *keys).awaitFirstOrNull()
 
     override suspend fun sismember(key: K, member: V): Boolean? = ops.sismember(key, member).awaitFirstOrNull()

@@ -1586,6 +1586,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> sintercard(K... keys) {
+        return dispatch(commandBuilder.sintercard(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> sintercard(int limit, K... keys) {
+        return dispatch(commandBuilder.sintercard(limit, keys));
+    }
+
+    @Override
     public RedisFuture<Long> sinterstore(K destination, K... keys) {
         return dispatch(commandBuilder.sinterstore(destination, keys));
     }
