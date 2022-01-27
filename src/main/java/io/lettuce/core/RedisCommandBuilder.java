@@ -2205,6 +2205,20 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SINTER, new ValueStreamingOutput<>(codec, channel), args);
     }
 
+    Command<K, V, Long> sintercard(K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys);
+        return createCommand(SINTERCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sintercard(int limit, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys).add(LIMIT).add(limit);
+        return createCommand(SINTERCARD, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Long> sinterstore(K destination, K... keys) {
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
         notEmpty(keys);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,26 @@ public interface NodeSelectionSetAsyncCommands<K, V> {
      * @return Long count of members of the resulting set.
      */
     AsyncExecutions<Long> sinter(ValueStreamingChannel<V> channel, K... keys);
+
+    /**
+     * This command works exactly like sinter but instead of returning the result set, it returns just the cardinality of the
+     * result.
+     *
+     * @param keys the key.
+     * @return The cardinality of the set which would result from the intersection of all the given sets.
+     */
+    AsyncExecutions<Long> sintercard(K... keys);
+
+    /**
+     * This command works exactly like sinter but instead of returning the result set, it returns just the cardinality of the
+     * result.
+     *
+     * @param limit If the intersection cardinality reaches limit partway through the computation, the algorithm will exit and
+     *        yield limit as the cardinality.
+     * @param keys the key.
+     * @return The cardinality of the set which would result from the intersection of all the given sets.
+     */
+    AsyncExecutions<Long> sintercard(int limit, K... keys);
 
     /**
      * Intersect multiple sets and store the resulting set in a key.

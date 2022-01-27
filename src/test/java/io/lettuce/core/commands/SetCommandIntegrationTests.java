@@ -106,6 +106,14 @@ public class SetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("SINTERCARD") // Redis 7.0
+    void sintercard() {
+        setupSet();
+        assertThat(redis.sintercard("key1", "key3")).isEqualTo(2);
+        assertThat(redis.sintercard(1, "key1", "key3")).isEqualTo(1);
+    }
+
+    @Test
     void sinterStreaming() {
         setupSet();
 
