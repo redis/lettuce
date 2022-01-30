@@ -2136,6 +2136,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> zintercard(K... keys) {
+        return dispatch(commandBuilder.zintercard(keys));
+    }
+
+    @Override
+    public RedisFuture<Long> zintercard(int limit, K... keys) {
+        return dispatch(commandBuilder.zintercard(limit, keys));
+    }
+
+    @Override
     public RedisFuture<List<ScoredValue<V>>> zinterWithScores(K... keys) {
         return dispatch(commandBuilder.zinterWithScores(keys));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -277,6 +277,24 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @since 6.1
      */
     Executions<List<V>> zinter(ZAggregateArgs aggregateArgs, K... keys);
+
+    /**
+     * This command is similar to ZINTER, but instead of returning the result set, it returns just the cardinality of the result.
+     *
+     * @param keys the keys.
+     * @return Long Integer reply the number of elements in the resulting intersection.
+     */
+    Executions<Long> zintercard(K... keys);
+
+    /**
+     * This command is similar to ZINTER, but instead of returning the result set, it returns just the cardinality of the result.
+     *
+     * @param limit If the intersection cardinality reaches limit partway through the computation, the algorithm will exit and
+     *        yield limit as the cardinality
+     * @param keys the keys.
+     * @return Long Integer reply the number of elements in the resulting intersection.
+     */
+    Executions<Long> zintercard(int limit, K... keys);
 
     /**
      * Intersect multiple sorted sets and returns the resulting sorted.

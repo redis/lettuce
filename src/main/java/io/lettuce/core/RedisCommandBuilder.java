@@ -3091,6 +3091,20 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZINTER, new ValueListOutput<>(codec), args);
     }
 
+    Command<K, V, Long> zintercard(K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys);
+        return createCommand(ZINTERCARD, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> zintercard(int limit, K... keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys).add(LIMIT).add(limit);
+        return createCommand(ZINTERCARD, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, List<ScoredValue<V>>> zinterWithScores(K... keys) {
         notEmpty(keys);
 
