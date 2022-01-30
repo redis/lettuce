@@ -253,6 +253,15 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("ZINTERCARD")
+    void zintercard() {
+        redis.zadd("zset1", 1.0, "a", 2.0, "b");
+        redis.zadd("zset2", 2.0, "a", 1.0, "b");
+        assertThat(redis.zintercard("zset1", "zset2")).isEqualTo(2);
+        assertThat(redis.zintercard(1, "zset1", "zset2")).isEqualTo(1);
+    }
+
+    @Test
     @SuppressWarnings({ "unchecked" })
     void zinterstore() {
         redis.zadd("zset1", 1.0, "a", 2.0, "b");

@@ -2183,6 +2183,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<Long> zintercard(K... keys) {
+        return createMono(() -> commandBuilder.zintercard(keys));
+    }
+
+    @Override
+    public Mono<Long> zintercard(int limit, K... keys) {
+        return createMono(() -> commandBuilder.zintercard(limit, keys));
+    }
+
+    @Override
     public Flux<ScoredValue<V>> zinterWithScores(K... keys) {
         return createDissolvingFlux(() -> commandBuilder.zinterWithScores(keys));
     }

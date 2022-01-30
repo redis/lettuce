@@ -279,6 +279,24 @@ public interface RedisSortedSetCommands<K, V> {
     List<V> zinter(ZAggregateArgs aggregateArgs, K... keys);
 
     /**
+     * This command is similar to ZINTER, but instead of returning the result set, it returns just the cardinality of the result.
+     *
+     * @param keys the keys.
+     * @return Long Integer reply the number of elements in the resulting intersection.
+     */
+    Long zintercard(K... keys);
+
+    /**
+     * This command is similar to ZINTER, but instead of returning the result set, it returns just the cardinality of the result.
+     *
+     * @param limit If the intersection cardinality reaches limit partway through the computation, the algorithm will exit and
+     *        yield limit as the cardinality
+     * @param keys the keys.
+     * @return Long Integer reply the number of elements in the resulting intersection.
+     */
+    Long zintercard(int limit, K... keys);
+
+    /**
      * Intersect multiple sorted sets and returns the resulting sorted.
      *
      * @param aggregateArgs arguments to define aggregation and weights.

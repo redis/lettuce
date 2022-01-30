@@ -101,6 +101,10 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override fun zinter(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V> = ops.zinter(aggregateArgs, *keys).asFlow()
 
+    override suspend fun zintercard(vararg keys: K): Long? = ops.zintercard(*keys).awaitFirstOrNull()
+
+    override suspend fun zintercard(limit: Int, vararg keys: K): Long? = ops.zintercard(limit, *keys).awaitFirstOrNull()
+
     override fun zinterWithScores(vararg keys: K): Flow<ScoredValue<V>> = ops.zinterWithScores(*keys).asFlow()
 
     override fun zinterWithScores(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<ScoredValue<V>> = ops.zinterWithScores(aggregateArgs, *keys).asFlow()
