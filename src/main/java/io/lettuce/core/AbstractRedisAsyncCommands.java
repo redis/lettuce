@@ -352,6 +352,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> clusterAddSlotsRange(Range<Integer>... ranges) {
+        return dispatch(commandBuilder.clusterAddSlotsRange(ranges));
+    }
+
+    @Override
     public RedisFuture<String> clusterBumpepoch() {
         return dispatch(commandBuilder.clusterBumpepoch());
     }
@@ -369,6 +374,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> clusterDelSlots(int... slots) {
         return dispatch(commandBuilder.clusterDelslots(slots));
+    }
+
+    @Override
+    public RedisFuture<String> clusterDelSlotsRange(Range<Integer>... ranges) {
+        return dispatch(commandBuilder.clusterDelSlotsRange(ranges));
     }
 
     @Override

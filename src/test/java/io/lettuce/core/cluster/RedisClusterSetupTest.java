@@ -158,6 +158,16 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
+    public void clusterDelSlotsRange() {
+
+        ClusterSetup.setup2Masters(clusterHelper);
+
+        redis1.clusterDelSlotsRange(Range.create(1, 4), Range.create(5, 6));
+
+        Wait.untilEquals(11994, () -> getOwnPartition(redis1).getSlots().size()).waitOrTimeout();
+    }
+
+    @Test
     public void clusterSetSlots() {
 
         ClusterSetup.setup2Masters(clusterHelper);

@@ -18,6 +18,7 @@ package io.lettuce.core.cluster.api.reactive;
 import java.time.Duration;
 import java.util.Map;
 
+import io.lettuce.core.Range;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KeyValue;
@@ -108,12 +109,28 @@ public interface RedisClusterReactiveCommands<K, V>
     Mono<Long> clusterCountKeysInSlot(int slot);
 
     /**
+     * Takes a list of slot ranges (specified by start and end slots) to assign to the node.
+     *
+     * @param ranges a list of slot ranges (specified by start and end slots)
+     * @return String simple-string-reply
+     */
+    Mono<String> clusterAddSlotsRange(Range<Integer>... ranges);
+
+    /**
      * Removes slots from the cluster node.
      *
      * @param slots one or more slots from {@literal 0} to {@literal 16384}
      * @return String simple-string-reply
      */
     Mono<String> clusterDelSlots(int... slots);
+
+    /**
+     * Takes a list of slot ranges (specified by start and end slots) to remove to the node.
+     *
+     * @param ranges a list of slot ranges (specified by start and end slots)
+     * @return String simple-string-reply
+     */
+    Mono<String> clusterDelSlotsRange(Range<Integer>... ranges);
 
     /**
      * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.

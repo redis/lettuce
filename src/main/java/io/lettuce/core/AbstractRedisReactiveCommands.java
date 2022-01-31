@@ -372,6 +372,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<String> clusterAddSlotsRange(Range<Integer>... ranges) {
+        return createMono(() -> commandBuilder.clusterAddSlotsRange(ranges));
+    }
+
+    @Override
     public Mono<String> clusterBumpepoch() {
         return createMono(() -> commandBuilder.clusterBumpepoch());
     }
@@ -389,6 +394,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<String> clusterDelSlots(int... slots) {
         return createMono(() -> commandBuilder.clusterDelslots(slots));
+    }
+
+    @Override
+    public Mono<String> clusterDelSlotsRange(Range<Integer>... ranges) {
+        return createMono(() -> commandBuilder.clusterDelSlotsRange(ranges));
     }
 
     @Override

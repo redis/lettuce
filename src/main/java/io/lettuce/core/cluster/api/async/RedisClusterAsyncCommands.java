@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.Range;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.async.*;
 
@@ -106,12 +107,28 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
     RedisFuture<Long> clusterCountKeysInSlot(int slot);
 
     /**
+     * Takes a list of slot ranges (specified by start and end slots) to assign to the node.
+     *
+     * @param ranges a list of slot ranges (specified by start and end slots)
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> clusterAddSlotsRange(Range<Integer>... ranges);
+
+    /**
      * Removes slots from the cluster node.
      *
      * @param slots one or more slots from {@literal 0} to {@literal 16384}
      * @return String simple-string-reply
      */
     RedisFuture<String> clusterDelSlots(int... slots);
+
+    /**
+     * Takes a list of slot ranges (specified by start and end slots) to remove to the node.
+     *
+     * @param ranges a list of slot ranges (specified by start and end slots)
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> clusterDelSlotsRange(Range<Integer>... ranges);
 
     /**
      * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
