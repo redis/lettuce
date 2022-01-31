@@ -478,6 +478,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, String> clusterAddSlotsRange(Range<Integer>... ranges) {
+        notEmptyRanges(ranges);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(ADDSLOTSRANGE);
+
+        for (Range<Integer> range : ranges) {
+            args.add(range.getLower().getValue());
+            args.add(range.getUpper().getValue());
+        }
+        return createCommand(CLUSTER, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, String> clusterBumpepoch() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(BUMPEPOCH);
         return createCommand(CLUSTER, new StatusOutput<>(codec), args);
@@ -502,6 +514,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         for (int slot : slots) {
             args.add(slot);
+        }
+        return createCommand(CLUSTER, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> clusterDelSlotsRange(Range<Integer>... ranges) {
+        notEmptyRanges(ranges);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(DELSLOTSRANGE);
+
+        for (Range<Integer> range : ranges) {
+            args.add(range.getLower().getValue());
+            args.add(range.getUpper().getValue());
         }
         return createCommand(CLUSTER, new StatusOutput<>(codec), args);
     }
@@ -3934,4 +3958,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
     }
 
+    private static void notEmptyRanges(Range<?>[] ranges) {
+        LettuceAssert.notEmpty(ranges, "Ranges " + MUST_NOT_BE_NULL);
+    }
 }
