@@ -48,7 +48,7 @@ import io.lettuce.core.internal.LettuceSets;
 public class CreateReactiveApi {
 
     public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
-    public static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "dispatch");
+    public static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "evalReadonly", "evalshaReadonly", "dispatch");
     public static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield");
 
     private static final Map<String, String> RESULT_SPEC;

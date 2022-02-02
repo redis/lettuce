@@ -82,6 +82,19 @@ public interface RedisScriptingAsyncCommands<K, V> {
     <T> RedisFuture<T> eval(byte[] script, ScriptOutputType type, K[] keys, V... values);
 
     /**
+     * This is a read-only variant of the EVAL command that cannot execute commands that modify data.
+     *
+     * @param script Lua 5.1 script.
+     * @param type the type.
+     * @param keys the keys.
+     * @param values the values.
+     * @param <T> expected return type.
+     * @return script result.
+     * @since 7.0
+     */
+    <T> RedisFuture<T> evalReadonly(byte[] script, ScriptOutputType type, K[] keys, V... values);
+
+    /**
      * Evaluates a script cached on the server side by its SHA1 digest.
      *
      * @param digest SHA1 of the script.
@@ -103,6 +116,19 @@ public interface RedisScriptingAsyncCommands<K, V> {
      * @return script result.
      */
     <T> RedisFuture<T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values);
+
+    /**
+     * This is a read-only variant of the EVALSHA command that cannot execute commands that modify data.
+     *
+     * @param digest SHA1 of the script.
+     * @param type the type.
+     * @param keys the keys.
+     * @param values the values.
+     * @param <T> expected return type.
+     * @return script result.
+     * @since 7.0
+     */
+    <T> RedisFuture<T> evalshaReadonly(String digest, ScriptOutputType type, K[] keys, V... values);
 
     /**
      * Check existence of scripts in the script cache.

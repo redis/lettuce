@@ -82,7 +82,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // Scripting
 
-    EVAL, EVALSHA, SCRIPT,
+    EVAL, EVAL_RO, EVALSHA, EVALSHA_RO, SCRIPT,
 
     // Bits
 

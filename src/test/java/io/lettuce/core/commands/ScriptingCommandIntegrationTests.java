@@ -117,6 +117,13 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
+    void evalReadonly() {
+        String[] keys = new String[] { "key1" };
+        assertThat((String) redis.evalReadonly("return KEYS[1]".getBytes(), STATUS, keys, "a")).isEqualTo("key1");
+    }
+
+    @Test
     void evalsha() {
         redis.scriptFlush();
         String script = "return 1 + 1";
@@ -150,6 +157,16 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
         String digest = redis.scriptLoad("return {ARGV[1], ARGV[2]}");
         String[] keys = new String[0];
         assertThat((Object) redis.evalsha(digest, MULTI, keys, "a", "b")).isEqualTo(list("a", "b"));
+    }
+
+    @Test
+    @EnabledOnCommand("EVALSHA_RO") // Redis 7.0
+    void evalshaReadonly() {
+        redis.scriptFlush();
+        redis.set("foo", "bar");
+        String digest = redis.scriptLoad("return redis.call('get','foo')");
+        String[] keys = new String[0];
+        assertThat((String) redis.evalshaReadonly(digest, STATUS, keys)).isEqualTo("bar");
     }
 
     @Test
