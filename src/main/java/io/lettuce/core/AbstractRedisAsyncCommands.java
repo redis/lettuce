@@ -1602,6 +1602,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public void shutdown(ShutdownArgs args) {
+        dispatch(commandBuilder.shutdown(args));
+    }
+
+    @Override
     public RedisFuture<Set<V>> sinter(K... keys) {
         return dispatch(commandBuilder.sinter(keys));
     }

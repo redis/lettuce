@@ -131,6 +131,9 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun shutdown(save: Boolean) =
         ops.shutdown(save).awaitFirstOrNull().let { Unit }
 
+    override suspend fun shutdown(args: ShutdownArgs) =
+        ops.shutdown(args).awaitFirstOrNull().let { Unit }
+
     override suspend fun slaveof(host: String, port: Int): String? =
         ops.slaveof(host, port).awaitFirstOrNull()
 
@@ -138,7 +141,8 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun slowlogGet(): List<Any> = ops.slowlogGet().asFlow().toList()
 
-    override suspend fun slowlogGet(count: Int): List<Any> = ops.slowlogGet(count).asFlow().toList()
+    override suspend fun slowlogGet(count: Int): List<Any> =
+        ops.slowlogGet(count).asFlow().toList()
 
     override suspend fun slowlogLen(): Long? = ops.slowlogLen().awaitFirstOrNull()
 

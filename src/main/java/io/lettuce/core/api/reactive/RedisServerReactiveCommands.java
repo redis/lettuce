@@ -18,6 +18,7 @@ package io.lettuce.core.api.reactive;
 import java.util.Date;
 import java.util.Map;
 
+import io.lettuce.core.ShutdownArgs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.FlushMode;
@@ -385,6 +386,13 @@ public interface RedisServerReactiveCommands<K, V> {
      * @param save {@code true} force save operation.
      */
     Mono<Void> shutdown(boolean save);
+
+    /**
+     * Synchronously save the dataset to disk and then shutdown the server.
+     *
+     * @param args
+     */
+    Mono<Void> shutdown(ShutdownArgs args);
 
     /**
      * Make the server a replica of another instance.
