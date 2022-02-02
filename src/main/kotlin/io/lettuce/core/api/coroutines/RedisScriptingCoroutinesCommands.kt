@@ -82,6 +82,19 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
     suspend fun <T> eval(script: ByteArray, type: ScriptOutputType, keys: Array<K>, vararg values: V): T?
 
     /**
+     * This is a read-only variant of the EVAL command that cannot execute commands that modify data.
+     *
+     * @param script Lua 5.1 script.
+     * @param type the type.
+     * @param keys the keys.
+     * @param values the values.
+     * @param <T> expected return type.
+     * @return script result.
+     * @since 7.0
+     */
+    suspend fun <T> evalReadonly(script: ByteArray, type: ScriptOutputType, keys: Array<K>, vararg values: V): T?
+
+    /**
      * Evaluates a script cached on the server side by its SHA1 digest.
      *
      * @param digest SHA1 of the script.
@@ -103,6 +116,19 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * @return script result.
      */
     suspend fun <T> evalsha(digest: String, type: ScriptOutputType, keys: Array<K>, vararg values: V): T?
+
+    /**
+     * This is a read-only variant of the EVALSHA command that cannot execute commands that modify data.
+     *
+     * @param digest SHA1 of the script.
+     * @param type the type.
+     * @param keys the keys.
+     * @param values the values.
+     * @param <T> expected return type.
+     * @return script result.
+     * @since 7.0
+     */
+    suspend fun <T> evalshaReadonly(digest: String, type: ScriptOutputType, keys: Array<K>, vararg values: V): T?
 
     /**
      * Check existence of scripts in the script cache.

@@ -791,6 +791,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     <T> Command<K, V, T> eval(byte[] script, ScriptOutputType type, K[] keys, V... values) {
+        return eval(script, type, false, keys, values);
+    }
+
+    <T> Command<K, V, T> eval(byte[] script, ScriptOutputType type, boolean readonly, K[] keys, V... values) {
         LettuceAssert.notNull(script, "Script " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
@@ -799,6 +803,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.add(script).add(keys.length).addKeys(keys).addValues(values);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
+        if (readonly) {
+            return createCommand(EVAL_RO, output, args);
+        }
         return createCommand(EVAL, output, args);
     }
 
@@ -815,6 +822,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     <T> Command<K, V, T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
+        return evalsha(digest, type, false, keys, values);
+    }
+
+    <T> Command<K, V, T> evalsha(String digest, ScriptOutputType type, boolean readonly, K[] keys, V... values) {
         LettuceAssert.notNull(digest, "Digest " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(digest, "Digest " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
@@ -824,6 +835,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.add(digest).add(keys.length).addKeys(keys).addValues(values);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
+        if (readonly) {
+            return createCommand(EVALSHA_RO, output, args);
+        }
         return createCommand(EVALSHA, output, args);
     }
 
