@@ -1651,6 +1651,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<Void> shutdown(ShutdownArgs args) {
+        return createMono(() -> commandBuilder.shutdown(args)).then();
+    }
+
+    @Override
     public Flux<V> sinter(K... keys) {
         return createDissolvingFlux(() -> commandBuilder.sinter(keys));
     }

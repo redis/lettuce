@@ -27,7 +27,9 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.ShutdownArgs;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -501,6 +503,12 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
         redis.select(2);
         assertThat(redis.get(key)).isEqualTo("value1");
+    }
+
+    @Test
+    @Disabled("Run me manually")  // Redis 7.0
+    void shutdown() {
+        redis.shutdown(new ShutdownArgs().save(true).now());
     }
 
     private boolean noSaveInProgress() {

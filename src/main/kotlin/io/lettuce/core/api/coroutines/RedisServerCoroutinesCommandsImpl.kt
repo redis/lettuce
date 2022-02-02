@@ -19,6 +19,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.FlushMode
 import io.lettuce.core.KillArgs
+import io.lettuce.core.ShutdownArgs
 import io.lettuce.core.TrackingArgs
 import io.lettuce.core.UnblockType
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands
@@ -125,6 +126,8 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun save(): String? = ops.save().awaitFirstOrNull()
 
     override suspend fun shutdown(save: Boolean) = ops.shutdown(save).awaitFirstOrNull().let { Unit }
+
+    override suspend fun shutdown(args: ShutdownArgs) = ops.shutdown(args).awaitFirstOrNull().let { Unit }
 
     override suspend fun slaveof(host: String, port: Int): String? = ops.slaveof(host, port).awaitFirstOrNull()
 

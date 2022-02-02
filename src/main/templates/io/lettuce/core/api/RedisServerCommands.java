@@ -367,6 +367,13 @@ public interface RedisServerCommands<K, V> {
     void shutdown(boolean save);
 
     /**
+     * Synchronously save the dataset to disk and then shutdown the server.
+     *
+     * @param args
+     */
+    void shutdown(ShutdownArgs args);
+
+    /**
      * Make the server a replica of another instance, or promote it as master.
      *
      * @param host the host type: string.

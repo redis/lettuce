@@ -364,6 +364,13 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     suspend fun shutdown(save: Boolean)
 
     /**
+     * Synchronously save the dataset to disk and then shutdown the server.
+     *
+     * @param args
+     */
+    suspend fun shutdown(args: ShutdownArgs)
+
+    /**
      * Make the server a replica of another instance, or promote it as master.
      *
      * @param host the host type: string.

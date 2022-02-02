@@ -22,6 +22,7 @@ import java.util.Map;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.ShutdownArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
@@ -367,6 +368,13 @@ public interface RedisServerAsyncCommands<K, V> {
      * @param save {@code true} force save operation.
      */
     void shutdown(boolean save);
+
+    /**
+     * Synchronously save the dataset to disk and then shutdown the server.
+     *
+     * @param args
+     */
+    void shutdown(ShutdownArgs args);
 
     /**
      * Make the server a replica of another instance, or promote it as master.

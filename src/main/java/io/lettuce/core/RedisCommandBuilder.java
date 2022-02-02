@@ -2170,6 +2170,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SHUTDOWN, new StatusOutput<>(codec), save ? args.add(SAVE) : args.add(NOSAVE));
     }
 
+    Command<K, V, String> shutdown(ShutdownArgs shutdownArgs) {
+        LettuceAssert.notNull(shutdownArgs, "shutdownArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        shutdownArgs.build(args);
+        return createCommand(SHUTDOWN, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, Set<V>> sinter(K... keys) {
         notEmpty(keys);
 
