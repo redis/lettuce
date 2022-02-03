@@ -47,6 +47,8 @@ internal class RedisAclCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun aclDeluser(vararg usernames: String): Long? = ops.aclDeluser(*usernames).awaitFirstOrNull()
 
+    override suspend fun aclDryRun(username: String, command: String, vararg args: V): String? = ops.aclDryRun(username, command, *args).awaitFirstOrNull()
+
     override suspend fun aclGenpass(): String? = ops.aclGenpass().awaitFirstOrNull()
 
     override suspend fun aclGenpass(bits: Int): String? = ops.aclGenpass(bits).awaitFirstOrNull()

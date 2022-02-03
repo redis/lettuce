@@ -57,6 +57,17 @@ public interface RedisAclAsyncCommands<K, V> {
     RedisFuture<Long> aclDeluser(String... usernames);
 
     /**
+     * Simulate the execution of a given command by a given user.
+     *
+     * @param username the specified username
+     * @param command the specified command
+     * @param args the specified args of command
+     * @return String reply: OK on success.
+     * @since 6.2
+     */
+    RedisFuture<String> aclDryRun(String username, String command, V... args);
+
+    /**
      * The command generates a password.
      *
      * @return String bulk-string-reply 64 bytes string password representing 256 bits of pseudorandom data.

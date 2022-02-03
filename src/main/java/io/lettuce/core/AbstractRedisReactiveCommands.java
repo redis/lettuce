@@ -128,6 +128,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<String> aclDryRun(String username, String command, V... args) {
+        return createMono(() -> commandBuilder.aclDryRun(username, command, args));
+    }
+
+    @Override
     public Mono<String> aclGenpass() {
         return createMono(commandBuilder::aclGenpass);
     }
