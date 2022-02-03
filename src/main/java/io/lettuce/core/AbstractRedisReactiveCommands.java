@@ -338,6 +338,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<String> clientNoEvict(boolean on) {
+        return createMono(() -> commandBuilder.clientNoEvict(on));
+    }
+
+    @Override
     public Mono<Long> clientId() {
         return createMono(commandBuilder::clientId);
     }

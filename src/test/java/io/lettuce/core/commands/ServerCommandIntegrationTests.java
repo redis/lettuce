@@ -197,6 +197,13 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("EVAL_RO")   // Redis 7.0
+    void clientNoEvict() {
+        assertThat(redis.clientNoEvict(true)).isEqualTo("OK");
+        assertThat(redis.clientNoEvict(false)).isEqualTo("OK");
+    }
+
+    @Test
     @EnabledOnCommand("ACL")
     void clientTracking() {
 

@@ -104,6 +104,15 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     suspend fun clientList(): String?
 
     /**
+     * Sets the client eviction mode for the current connection.
+     *
+     * @param on @code true} will turn eviction mode on, and `false` will turn it off.
+     * @return String simple-string-reply `OK`.
+     * @since 7.0
+     */
+    suspend fun clientNoEvict(on: Boolean): String?
+
+    /**
      * Stop processing commands from clients for some time.
      *
      * @param timeout the timeout value in milliseconds.

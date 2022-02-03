@@ -322,6 +322,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> clientNoEvict(boolean on) {
+        return dispatch(commandBuilder.clientNoEvict(on));
+    }
+
+    @Override
     public RedisFuture<Long> clientId() {
         return dispatch(commandBuilder.clientId());
     }

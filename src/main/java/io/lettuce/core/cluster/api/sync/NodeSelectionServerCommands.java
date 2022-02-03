@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,6 +106,15 @@ public interface NodeSelectionServerCommands<K, V> {
      *         each line is composed of a succession of property=value fields separated by a space character.
      */
     Executions<String> clientList();
+
+    /**
+     * Sets the client eviction mode for the current connection.
+     *
+     * @param on {@code true} will turn eviction mode on, and {@code false} will turn it off.
+     * @return String simple-string-reply {@code OK}.
+     * @since 7.0
+     */
+    Executions<String> clientNoEvict(boolean on);
 
     /**
      * Stop processing commands from clients for some time.
