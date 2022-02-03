@@ -70,6 +70,14 @@ public class AclCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("EVAL_RO")    // Redis 7.0
+    void aclDryRun() {
+        assertThatThrownBy(() -> redis.aclDryRun("non-existing", "GET", "foo", "bar"))
+                .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR User 'non-existing' not found");
+        assertThat(redis.aclDryRun("default", "GET", "foo", "bar")).isEqualTo("OK");
+    }
+
+    @Test
     void aclGenpass() {
         assertThat(redis.aclGenpass()).hasSize(64);
         assertThat(redis.aclGenpass(128)).hasSize(32);

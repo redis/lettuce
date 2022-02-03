@@ -56,6 +56,17 @@ interface RedisAclCoroutinesCommands<K : Any, V : Any> {
     suspend fun aclDeluser(vararg usernames: String): Long?
 
     /**
+     * Simulate the execution of a given command by a given user.
+     *
+     * @param username the specified username
+     * @param command the specified command
+     * @param args the specified args of command
+     * @return String reply: OK on success.
+     * @since 7.0
+     */
+    suspend fun aclDryRun(username: String, command: String, vararg args: V): String?
+
+    /**
      * The command generates a password.
      *
      * @return String bulk-string-reply 64 bytes string password representing 256 bits of pseudorandom data.

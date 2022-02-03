@@ -15,10 +15,9 @@
  */
 package io.lettuce.core.sentinel.api.async;
 
-import java.net.SocketAddress;
-import java.util.List;
 import java.util.Map;
-
+import java.util.List;
+import java.net.SocketAddress;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.output.CommandOutput;
