@@ -435,6 +435,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, String> clientNoEvict(boolean on) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add("NO-EVICT").add(on ? ON : OFF);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, Long> clientId() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(ID);
         return createCommand(CLIENT, new IntegerOutput<>(codec), args);
