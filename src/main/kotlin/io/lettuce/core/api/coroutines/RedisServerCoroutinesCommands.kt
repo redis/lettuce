@@ -178,6 +178,15 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     suspend fun configGet(parameter: String): Map<String, String>?
 
     /**
+     * Get the value of multiple pattern parameters.
+     *
+     * @param parameters patterns names of Redis server's configuration.
+     * @return Map<String, String> bulk-string-reply.
+     * @since 7.0
+     */
+    suspend fun configGet(vararg parameters: String): Map<String, String>?
+
+    /**
      * Reset the stats returned by INFO.
      *
      * @return String simple-string-reply always `OK`.
@@ -200,6 +209,15 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply: `OK` when the configuration was set properly. Otherwise an error is returned.
      */
     suspend fun configSet(parameter: String, value: String): String?
+
+    /**
+     * Set multiple parameters to the given value.
+     *
+     * @param kvs the parameter name and value.
+     * @return String simple-string-reply: `OK` when the configuration was set properly. Otherwise an error is returned.
+     * @since 7.0
+     */
+    suspend fun configSet(kvs: Map<String, String>): String?
 
     /**
      * Return the number of keys in the selected database.

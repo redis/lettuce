@@ -74,11 +74,15 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun configGet(parameter: String): Map<String, String>? = ops.configGet(parameter).awaitFirstOrNull()
 
+    override suspend fun configGet(vararg parameters: String): Map<String, String>? = ops.configGet(*parameters).awaitFirstOrNull()
+
     override suspend fun configResetstat(): String? = ops.configResetstat().awaitFirstOrNull()
 
     override suspend fun configRewrite(): String? = ops.configRewrite().awaitFirstOrNull()
 
     override suspend fun configSet(parameter: String, value: String): String? = ops.configSet(parameter, value).awaitFirstOrNull()
+
+    override suspend fun configSet(kvs: Map<String, String>): String? = ops.configSet(kvs).awaitFirstOrNull()
 
     override suspend fun dbsize(): Long? = ops.dbsize().awaitFirstOrNull()
 

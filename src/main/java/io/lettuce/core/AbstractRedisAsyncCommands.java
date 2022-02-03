@@ -512,6 +512,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Map<String, String>> configGet(String... parameters) {
+        return dispatch(commandBuilder.configGet(parameters));
+    }
+
+    @Override
     public RedisFuture<String> configResetstat() {
         return dispatch(commandBuilder.configResetstat());
     }
@@ -524,6 +529,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> configSet(String parameter, String value) {
         return dispatch(commandBuilder.configSet(parameter, value));
+    }
+
+    @Override
+    public RedisFuture<String> configSet(Map<String, String> kvs) {
+        return dispatch(commandBuilder.configSet(kvs));
     }
 
     @Override

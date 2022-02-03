@@ -695,6 +695,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CONFIG, new MapOutput<>((RedisCodec) StringCodec.UTF8), args);
     }
 
+    Command<K, V, Map<String, String>> configGet(String... parameters) {
+        LettuceAssert.notNull(parameters, "Parameters " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(parameters, "Parameters " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>((RedisCodec) StringCodec.UTF8).add(GET);
+        for (String parameter : parameters) {
+            args.add(parameter);
+        }
+        return createCommand(CONFIG, new MapOutput<>((RedisCodec) StringCodec.UTF8), args);
+    }
+
     Command<K, V, String> configResetstat() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(RESETSTAT);
         return createCommand(CONFIG, new StatusOutput<>(codec), args);
@@ -711,6 +722,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(value, "Value " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(SET).add(parameter).add(value);
+        return createCommand(CONFIG, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> configSet(Map<String, String> configValues) {
+        LettuceAssert.notNull(configValues, "ConfigValues " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!configValues.isEmpty(), "ConfigValues " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SET);
+        configValues.forEach((parameter, value) -> {
+            args.add(parameter);
+            args.add(value);
+        });
         return createCommand(CONFIG, new StatusOutput<>(codec), args);
     }
 
