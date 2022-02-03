@@ -183,6 +183,15 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<Map<String, String>> configGet(String parameter);
 
     /**
+     * Get the value of multiple pattern parameters.
+     *
+     * @param parameters patterns names of Redis server's configuration.
+     * @return Map&lt;String, String&gt; bulk-string-reply.
+     * @since 7.0
+     */
+    Mono<Map<String, String>> configGet(String... parameters);
+
+    /**
      * Reset the stats returned by INFO.
      *
      * @return String simple-string-reply always {@code OK}.
@@ -205,6 +214,15 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
      */
     Mono<String> configSet(String parameter, String value);
+
+    /**
+     * Set multiple parameters to the given value.
+     *
+     * @param kvs the parameter name and value.
+     * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
+     * @since 7.0
+     */
+    Mono<String> configSet(Map<String, String> kvs);
 
     /**
      * Return the number of keys in the selected database.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,6 +182,15 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<Map<String, String>> configGet(String parameter);
 
     /**
+     * Get the value of multiple pattern parameters.
+     *
+     * @param parameters patterns names of Redis server's configuration.
+     * @return Map&lt;String, String&gt; bulk-string-reply.
+     * @since 7.0
+     */
+    Executions<Map<String, String>> configGet(String... parameters);
+
+    /**
      * Reset the stats returned by INFO.
      *
      * @return String simple-string-reply always {@code OK}.
@@ -204,6 +213,15 @@ public interface NodeSelectionServerCommands<K, V> {
      * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
      */
     Executions<String> configSet(String parameter, String value);
+
+    /**
+     * Set multiple parameters to the given value.
+     *
+     * @param kvs the parameter name and value.
+     * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
+     * @since 7.0
+     */
+    Executions<String> configSet(Map<String, String> kvs);
 
     /**
      * Return the number of keys in the selected database.

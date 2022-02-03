@@ -19,7 +19,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -320,6 +322,13 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("EVAL_RO")    // Redis 7.0
+    void configGetMultipleParameters() {
+        assertThat(redis.configGet("maxmemory", "*max-*-entries*")).containsEntry("maxmemory", "0")
+                .containsEntry("hash-max-listpack-entries", "512");
+    }
+
+    @Test
     void configResetstat() {
         redis.get(key);
         redis.get(key);
@@ -333,6 +342,19 @@ public class ServerCommandIntegrationTests extends TestSupport {
         assertThat(redis.configSet("maxmemory", "1024")).isEqualTo("OK");
         assertThat(redis.configGet("maxmemory")).containsEntry("maxmemory", "1024");
         redis.configSet("maxmemory", maxmemory);
+    }
+
+    @Test
+    @EnabledOnCommand("EVAL_RO")    // Redis 7.0
+    void configSetMultipleParameters() {
+        Map<String, String> original = redis.configGet("maxmemory", "hash-max-listpack-entries");
+        Map<String, String> config = new HashMap<>();
+        config.put("maxmemory", "1024");
+        config.put("hash-max-listpack-entries", "1024");
+        assertThat(redis.configSet(config)).isEqualTo("OK");
+        assertThat(redis.configGet("maxmemory", "hash-max-listpack-entries")).containsAllEntriesOf(config);
+        // recover
+        redis.configSet(original);
     }
 
     @Test

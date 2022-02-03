@@ -517,6 +517,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<Map<String, String>> configGet(String... parameters) {
+        return createMono(() -> commandBuilder.configGet(parameters));
+    }
+
+    @Override
     public Mono<String> configResetstat() {
         return createMono(commandBuilder::configResetstat);
     }
@@ -529,6 +534,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<String> configSet(String parameter, String value) {
         return createMono(() -> commandBuilder.configSet(parameter, value));
+    }
+
+    @Override
+    public Mono<String> configSet(Map<String, String> kvs) {
+        return createMono(() -> commandBuilder.configSet(kvs));
     }
 
     @SuppressWarnings("unchecked")
