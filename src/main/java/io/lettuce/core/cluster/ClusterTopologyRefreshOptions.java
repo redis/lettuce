@@ -422,7 +422,7 @@ public class ClusterTopologyRefreshOptions {
      * a refresh if the reconnect process tries at least {@code refreshTriggersReconnectAttempts}. See
      * {@link #DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS}.
      *
-     * @return umber of reconnect attempts for a connection before a n adaptive topology refresh is triggered
+     * @return umber of reconnect attempts for a connection before an adaptive topology refresh is triggered
      */
     public int getRefreshTriggersReconnectAttempts() {
         return refreshTriggersReconnectAttempts;
