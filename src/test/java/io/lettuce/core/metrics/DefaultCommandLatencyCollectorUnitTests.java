@@ -20,6 +20,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -93,7 +96,8 @@ class DefaultCommandLatencyCollectorUnitTests {
     @Test
     void verifyMetrics() {
 
-        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.create());
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions
+                .builder().usePauseDetector().build());
 
         setupData();
 
@@ -128,6 +132,7 @@ class DefaultCommandLatencyCollectorUnitTests {
     void verifyCummulativeMetrics() {
 
         sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.builder()
+                .usePauseDetector()
                 .resetLatenciesAfterEvent(false).build());
 
         setupData();
@@ -145,5 +150,66 @@ class DefaultCommandLatencyCollectorUnitTests {
                 MILLISECONDS.toNanos(1000));
         sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, CommandType.BGSAVE, MILLISECONDS.toNanos(300),
                 MILLISECONDS.toNanos(1000));
+    }
+
+    @Test
+    void verifyNoPauseDetector() {
+        int loop = 100000;
+
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions
+                .builder()
+                // PauseDetection will not work as expected
+                // .usePauseDetector()
+                .build()
+        );
+
+        setupLoopData(loop);
+
+        Map<CommandLatencyId, CommandMetrics> latencies = sut.retrieveMetrics();
+        assertThat(latencies).hasSize(1);
+
+        Map.Entry<CommandLatencyId, CommandMetrics> entry = latencies.entrySet().iterator().next();
+
+        assertThat(entry.getKey().commandType()).isSameAs(CommandType.BGSAVE);
+
+        CommandMetrics metrics = entry.getValue();
+
+        assertThat(metrics.getCount()).isEqualTo(loop);
+        assertThat(metrics.getCompletion().getMin()).isBetween(990000L, 1100000L);
+        assertThat(metrics.getCompletion().getMax()).isBetween(990000L, 1100000L);
+        assertThat(metrics.getCompletion().getPercentiles()).hasSize(5);
+
+        assertThat(metrics.getFirstResponse().getMin()).isBetween(90000L, 110000L);
+        assertThat(metrics.getFirstResponse().getMax()).isBetween(90000L, 110000L);
+        assertThat(metrics.getCompletion().getPercentiles()).containsKey(50.0d);
+
+        assertThat(metrics.getFirstResponse().getPercentiles().get(50d)).isLessThanOrEqualTo(
+                metrics.getCompletion().getPercentiles().get(50d));
+
+        assertThat(metrics.getTimeUnit()).isEqualTo(MICROSECONDS);
+
+        assertThat(sut.retrieveMetrics()).isEmpty();
+
+        sut.shutdown();
+    }
+
+    private void setupLoopData(int loop) {
+        final ExecutorService executorService = Executors.newSingleThreadExecutor();
+        final Runner runner = new Runner();
+
+        for (int ndx = 0; ndx < loop; ndx++) executorService.submit(runner);
+        try {
+            executorService.shutdown();
+            executorService.awaitTermination(30, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+        }
+    }
+
+    class Runner implements Runnable {
+        @Override
+        public void run() {
+            sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, CommandType.BGSAVE, MILLISECONDS.toNanos(100),
+                    MILLISECONDS.toNanos(1000));
+        }
     }
 }
