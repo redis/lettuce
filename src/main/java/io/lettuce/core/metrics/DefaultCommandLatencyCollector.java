@@ -33,6 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.HdrHistogram.Histogram;
 import org.LatencyUtils.LatencyStats;
 import org.LatencyUtils.PauseDetector;
+import org.LatencyUtils.PauseDetectorListener;
 import org.LatencyUtils.SimplePauseDetector;
 
 import io.lettuce.core.internal.LettuceAssert;
@@ -58,7 +59,9 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     private static final boolean HDR_UTILS_AVAILABLE = isPresent("org.HdrHistogram.Histogram");
 
-    private static final PauseDetectorWrapper GLOBAL_PAUSE_DETECTOR = PauseDetectorWrapper.create();
+    private static final PauseDetectorWrapper GLOBAL_PAUSE_DETECTOR = PauseDetectorWrapper.create(true);
+
+    private static final PauseDetectorWrapper GLOBAL_NO_PAUSE_DETECTOR = PauseDetectorWrapper.create(false);
 
     private static final long MIN_LATENCY = 1000;
 
@@ -102,16 +105,13 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
         do {
             if (PAUSE_DETECTOR_UPDATER.get(this) == null) {
-                if (PAUSE_DETECTOR_UPDATER.compareAndSet(this, null, GLOBAL_PAUSE_DETECTOR)) {
+                if (PAUSE_DETECTOR_UPDATER.compareAndSet(this, null,
+                        options.usePauseDetector() ? GLOBAL_PAUSE_DETECTOR : GLOBAL_NO_PAUSE_DETECTOR)) {
                     PAUSE_DETECTOR_UPDATER.get(this).retain();
                 }
             }
             PauseDetectorWrapper pauseDetectorWrapper = PAUSE_DETECTOR_UPDATER.get(this);
-            if (pauseDetectorWrapper instanceof DefaultPauseDetectorWrapper) {
-                pauseDetector = ((DefaultPauseDetectorWrapper) pauseDetectorWrapper).getPauseDetector();
-            } else {
-                return;
-            }
+            pauseDetector = pauseDetectorWrapper.getPauseDetector();
         } while (pauseDetector == null);
 
         PauseDetector pauseDetectorToUse = pauseDetector;
@@ -323,6 +323,34 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     }
 
     /**
+     * No-operation {@link PauseDetector} implementation.
+     */
+    static class NoPauseDetector extends PauseDetector {
+        protected NoPauseDetector() {
+        }
+
+        @Override
+        protected synchronized void notifyListeners(long pauseLengthNsec, long pauseEndTimeNsec) {
+        }
+
+        @Override
+        public synchronized void addListener(PauseDetectorListener listener) {
+        }
+
+        @Override
+        public synchronized void addListener(PauseDetectorListener listener, boolean isHighPriority) {
+        }
+
+        @Override
+        public synchronized void removeListener(PauseDetectorListener listener) {
+        }
+
+        @Override
+        public void shutdown() {
+        }
+    }
+
+    /**
      * Wrapper for initialization of {@link PauseDetector}. Encapsulates absence of LatencyUtils.
      */
     interface PauseDetectorWrapper {
@@ -331,6 +359,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          * No-operation {@link PauseDetectorWrapper} implementation.
          */
         PauseDetectorWrapper NO_OP = new PauseDetectorWrapper() {
+            private final PauseDetector pauseDetector = new NoPauseDetector();
 
             @Override
             public void release() {
@@ -340,11 +369,16 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             public void retain() {
             }
 
+            @Override
+            public PauseDetector getPauseDetector() {
+                return pauseDetector;
+            }
+
         };
 
-        static PauseDetectorWrapper create() {
+        static PauseDetectorWrapper create(boolean usePauseDetector) {
 
-            if (HDR_UTILS_AVAILABLE && LATENCY_UTILS_AVAILABLE) {
+            if (HDR_UTILS_AVAILABLE && LATENCY_UTILS_AVAILABLE && usePauseDetector) {
                 return new DefaultPauseDetectorWrapper();
             }
 
@@ -361,6 +395,10 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          */
         void release();
 
+        /**
+         * Obtain the current {@link PauseDetector}. Requires a call to {@link #retain()} first.
+         */
+        PauseDetector getPauseDetector();
     }
 
     /**
