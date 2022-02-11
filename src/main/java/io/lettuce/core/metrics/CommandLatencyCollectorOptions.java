@@ -104,6 +104,13 @@ public interface CommandLatencyCollectorOptions {
     boolean isEnabled();
 
     /**
+     * Returns whether PauseDetector is enabled.
+     *
+     * @return {@code true} if the PauseDetector is enabled
+     */
+    boolean usePauseDetector();
+
+    /**
      * Builder for {@link CommandLatencyCollectorOptions}.
      *
      * @since 5.1
@@ -123,6 +130,21 @@ public interface CommandLatencyCollectorOptions {
          * @return this {@link DefaultCommandLatencyCollectorOptions.Builder}.
          */
         Builder enable();
+
+        /**
+         * Use LatencyUtils.SimplePauseDetector to detects pauses.
+         * See {@link org.LatencyUtils.SimplePauseDetector}
+         *
+         * @return this {@link DefaultCommandLatencyCollectorOptions.Builder}.
+         */
+        Builder usePauseDetector();
+
+        /**
+         * Do not detects pauses.
+         *
+         * @return this {@link DefaultCommandLatencyCollectorOptions.Builder}.
+         */
+        Builder useNoPauseDetector();
 
         /**
          * Enables per connection metrics tracking insead of per host/port. If {@code true}, multiple connections to the same

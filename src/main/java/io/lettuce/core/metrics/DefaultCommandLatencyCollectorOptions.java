@@ -36,6 +36,8 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
     public static final boolean DEFAULT_ENABLED = true;
 
+    public static final boolean DEFAULT_USE_NO_PAUSE_DETECTOR = false;
+
     private static final DefaultCommandLatencyCollectorOptions DISABLED = builder().disable().build();
 
     private final TimeUnit targetUnit;
@@ -50,12 +52,15 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
     private final Builder builder;
 
+    private boolean usePauseDetector;
+
     protected DefaultCommandLatencyCollectorOptions(Builder builder) {
         this.targetUnit = builder.targetUnit;
         this.targetPercentiles = builder.targetPercentiles;
         this.resetLatenciesAfterEvent = builder.resetLatenciesAfterEvent;
         this.localDistinction = builder.localDistinction;
         this.enabled = builder.enabled;
+        this.usePauseDetector = builder.usePauseDetector;
         this.builder = builder;
     }
 
@@ -117,6 +122,8 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
         private boolean enabled = DEFAULT_ENABLED;
 
+        private boolean usePauseDetector = DEFAULT_USE_NO_PAUSE_DETECTOR;
+
         private Builder() {
         }
 
@@ -140,6 +147,31 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         @Override
         public Builder enable() {
             this.enabled = true;
+            return this;
+        }
+
+        /**
+         * Use LatencyUtils.SimplePauseDetector to detects pauses.
+         * See {@link org.LatencyUtils.SimplePauseDetector}.
+         * Defaults to useNoPauseDetector.See {@link DefaultCommandLatencyCollectorOptions#DEFAULT_USE_NO_PAUSE_DETECTOR}.
+         *
+         * @return this {@link Builder}.
+         */
+        @Override
+        public Builder usePauseDetector() {
+            this.usePauseDetector = true;
+            return this;
+        }
+
+        /**
+         * Do not detects pauses.
+         * Defaults to useNoPauseDetector.See {@link DefaultCommandLatencyCollectorOptions#DEFAULT_USE_NO_PAUSE_DETECTOR}.
+         *
+         * @return this {@link Builder}.
+         */
+        @Override
+        public Builder useNoPauseDetector() {
+            this.usePauseDetector = false;
             return this;
         }
 
@@ -238,4 +270,8 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         return enabled;
     }
 
+    @Override
+    public boolean usePauseDetector() {
+        return usePauseDetector;
+    }
 }
