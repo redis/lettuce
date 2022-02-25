@@ -47,6 +47,14 @@ public interface RedisClusterReactiveCommands<K, V>
     void setTimeout(Duration timeout);
 
     /**
+     * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to
+     * actually send the command to the target instance. See the Redis Cluster specification for more information.
+     *
+     * @return String simple-string-reply
+     */
+    Mono<String> asking();
+
+    /**
      * Authenticate to the server.
      *
      * @param password the password
@@ -65,6 +73,14 @@ public interface RedisClusterReactiveCommands<K, V>
     Mono<String> auth(String username, CharSequence password);
 
     /**
+     * Adds slots to the cluster node. The current node will become the master for the specified slots.
+     *
+     * @param slots one or more slots from {@literal 0} to {@literal 16384}
+     * @return String simple-string-reply
+     */
+    Mono<String> clusterAddSlots(int... slots);
+
+    /**
      * Generate a new config epoch, incrementing the current epoch, assign the new epoch to this node, WITHOUT any consensus and
      * persist the configuration on disk before sending packets with the new configuration.
      *
@@ -74,30 +90,22 @@ public interface RedisClusterReactiveCommands<K, V>
     Mono<String> clusterBumpepoch();
 
     /**
-     * Meet another cluster node to include the node into the cluster. The command starts the cluster handshake and returns with
-     * {@literal OK} when the node was added to the cluster.
+     * Returns the number of failure reports for the specified node. Failure reports are the way Redis Cluster uses in order to
+     * promote a {@literal PFAIL} state, that means a node is not reachable, to a {@literal FAIL} state, that means that the
+     * majority of masters in the cluster agreed within a window of time that the node is not reachable.
      *
-     * @param ip IP address of the host
-     * @param port port number.
-     * @return String simple-string-reply
+     * @param nodeId the node id
+     * @return Integer reply: The number of active failure reports for the node.
      */
-    Mono<String> clusterMeet(String ip, int port);
+    Mono<Long> clusterCountFailureReports(String nodeId);
 
     /**
-     * Disallow connections and remove the cluster node from the cluster.
+     * Returns the number of keys in the specified Redis Cluster hash {@code slot}.
      *
-     * @param nodeId the node Id
-     * @return String simple-string-reply
+     * @param slot the slot
+     * @return Integer reply: The number of keys in the specified hash slot, or an error if the hash slot is invalid.
      */
-    Mono<String> clusterForget(String nodeId);
-
-    /**
-     * Adds slots to the cluster node. The current node will become the master for the specified slots.
-     *
-     * @param slots one or more slots from {@literal 0} to {@literal 16384}
-     * @return String simple-string-reply
-     */
-    Mono<String> clusterAddSlots(int... slots);
+    Mono<Long> clusterCountKeysInSlot(int slot);
 
     /**
      * Removes slots from the cluster node.
@@ -108,41 +116,36 @@ public interface RedisClusterReactiveCommands<K, V>
     Mono<String> clusterDelSlots(int... slots);
 
     /**
-     * Assign a slot to a node. The command migrates the specified slot from the current node to the specified node in
-     * {@code nodeId}
+     * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
      *
-     * @param slot the slot
-     * @param nodeId the id of the node that will become the master for the slot
+     * @param force do not coordinate with master if {@code true}
      * @return String simple-string-reply
      */
-    Mono<String> clusterSetSlotNode(int slot, String nodeId);
+    Mono<String> clusterFailover(boolean force);
 
     /**
-     * Clears migrating / importing state from the slot.
+     * Delete all the slots associated with the specified node. The number of deleted slots is returned.
      *
-     * @param slot the slot
      * @return String simple-string-reply
      */
-    Mono<String> clusterSetSlotStable(int slot);
+    Mono<String> clusterFlushslots();
 
     /**
-     * Flag a slot as {@literal MIGRATING} (outgoing) towards the node specified in {@code nodeId}. The slot must be handled by
-     * the current node in order to be migrated.
+     * Disallow connections and remove the cluster node from the cluster.
      *
-     * @param slot the slot
-     * @param nodeId the id of the node is targeted to become the master for the slot
+     * @param nodeId the node Id
      * @return String simple-string-reply
      */
-    Mono<String> clusterSetSlotMigrating(int slot, String nodeId);
+    Mono<String> clusterForget(String nodeId);
 
     /**
-     * Flag a slot as {@literal IMPORTING} (incoming) from the node specified in {@code nodeId}.
+     * Retrieve the list of keys within the {@code slot}.
      *
      * @param slot the slot
-     * @param nodeId the id of the node is the master of the slot
-     * @return String simple-string-reply
+     * @param count maximal number of keys
+     * @return List&lt;K&gt; array-reply list of keys
      */
-    Mono<String> clusterSetSlotImporting(int slot, String nodeId);
+    Flux<K> clusterGetKeysInSlot(int slot, int count);
 
     /**
      * Get information and statistics about the cluster viewed by the current node.
@@ -150,6 +153,26 @@ public interface RedisClusterReactiveCommands<K, V>
      * @return String bulk-string-reply as a collection of text lines.
      */
     Mono<String> clusterInfo();
+
+    /**
+     * Returns an integer identifying the hash slot the specified key hashes to. This command is mainly useful for debugging and
+     * testing, since it exposes via an API the underlying Redis implementation of the hashing algorithm. Basically the same as
+     * {@link io.lettuce.core.cluster.SlotHash#getSlot(byte[])}. If not, call Houston and report that we've got a problem.
+     *
+     * @param key the key.
+     * @return Integer reply: The hash slot number.
+     */
+    Mono<Long> clusterKeyslot(K key);
+
+    /**
+     * Meet another cluster node to include the node into the cluster. The command starts the cluster handshake and returns with
+     * {@literal OK} when the node was added to the cluster.
+     *
+     * @param ip IP address of the host
+     * @param port port number.
+     * @return String simple-string-reply
+     */
+    Mono<String> clusterMeet(String ip, int port);
 
     /**
      * Obtain the nodeId for the currently connected node.
@@ -167,51 +190,40 @@ public interface RedisClusterReactiveCommands<K, V>
     Mono<String> clusterNodes();
 
     /**
+     * Turn this node into a replica of the node with the id {@code nodeId}.
+     *
+     * @param nodeId master node id
+     * @return String simple-string-reply
+     */
+    Mono<String> clusterReplicate(String nodeId);
+
+    /**
      * List replicas for a certain node identified by its {@code nodeId}. Can be parsed using
      * {@link io.lettuce.core.cluster.models.partitions.ClusterPartitionParser#parse}
      *
      * @param nodeId node id of the master node
      * @return List&lt;String&gt; array-reply list of replicas. The command returns data in the same format as
      *         {@link #clusterNodes()} but one line per replica.
+     * @since 6.1.7
      */
-    Flux<String> clusterSlaves(String nodeId);
+    Flux<String> clusterReplicas(String nodeId);
 
     /**
-     * Retrieve the list of keys within the {@code slot}.
+     * Reset a node performing a soft or hard reset:
+     * <ul>
+     * <li>All other nodes are forgotten</li>
+     * <li>All the assigned / open slots are released</li>
+     * <li>If the node is a replica, it turns into a master</li>
+     * <li>Only for hard reset: a new Node ID is generated</li>
+     * <li>Only for hard reset: currentEpoch and configEpoch are set to 0</li>
+     * <li>The new configuration is saved and the cluster state updated</li>
+     * <li>If the node was a replica, the whole data set is flushed away</li>
+     * </ul>
      *
-     * @param slot the slot
-     * @param count maximal number of keys
-     * @return List&lt;K&gt; array-reply list of keys
+     * @param hard {@code true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
+     * @return String simple-string-reply
      */
-    Flux<K> clusterGetKeysInSlot(int slot, int count);
-
-    /**
-     * Returns the number of keys in the specified Redis Cluster hash {@code slot}.
-     *
-     * @param slot the slot
-     * @return Integer reply: The number of keys in the specified hash slot, or an error if the hash slot is invalid.
-     */
-    Mono<Long> clusterCountKeysInSlot(int slot);
-
-    /**
-     * Returns the number of failure reports for the specified node. Failure reports are the way Redis Cluster uses in order to
-     * promote a {@literal PFAIL} state, that means a node is not reachable, to a {@literal FAIL} state, that means that the
-     * majority of masters in the cluster agreed within a window of time that the node is not reachable.
-     *
-     * @param nodeId the node id
-     * @return Integer reply: The number of active failure reports for the node.
-     */
-    Mono<Long> clusterCountFailureReports(String nodeId);
-
-    /**
-     * Returns an integer identifying the hash slot the specified key hashes to. This command is mainly useful for debugging and
-     * testing, since it exposes via an API the underlying Redis implementation of the hashing algorithm. Basically the same as
-     * {@link io.lettuce.core.cluster.SlotHash#getSlot(byte[])}. If not, call Houston and report that we've got a problem.
-     *
-     * @param key the key.
-     * @return Integer reply: The hash slot number.
-     */
-    Mono<Long> clusterKeyslot(K key);
+    Mono<String> clusterReset(boolean hard);
 
     /**
      * Forces a node to save the nodes.conf configuration on disk.
@@ -233,74 +245,60 @@ public interface RedisClusterReactiveCommands<K, V>
     Mono<String> clusterSetConfigEpoch(long configEpoch);
 
     /**
+     * Flag a slot as {@literal IMPORTING} (incoming) from the node specified in {@code nodeId}.
+     *
+     * @param slot the slot
+     * @param nodeId the id of the node is the master of the slot
+     * @return String simple-string-reply
+     */
+    Mono<String> clusterSetSlotImporting(int slot, String nodeId);
+
+    /**
+     * Flag a slot as {@literal MIGRATING} (outgoing) towards the node specified in {@code nodeId}. The slot must be handled by
+     * the current node in order to be migrated.
+     *
+     * @param slot the slot
+     * @param nodeId the id of the node is targeted to become the master for the slot
+     * @return String simple-string-reply
+     */
+    Mono<String> clusterSetSlotMigrating(int slot, String nodeId);
+
+    /**
+     * Assign a slot to a node. The command migrates the specified slot from the current node to the specified node in
+     * {@code nodeId}
+     *
+     * @param slot the slot
+     * @param nodeId the id of the node that will become the master for the slot
+     * @return String simple-string-reply
+     */
+    Mono<String> clusterSetSlotNode(int slot, String nodeId);
+
+    /**
+     * Clears migrating / importing state from the slot.
+     *
+     * @param slot the slot
+     * @return String simple-string-reply
+     */
+    Mono<String> clusterSetSlotStable(int slot);
+
+    /**
+     * List replicas for a certain node identified by its {@code nodeId}. Can be parsed using
+     * {@link io.lettuce.core.cluster.models.partitions.ClusterPartitionParser#parse}
+     *
+     * @param nodeId node id of the master node
+     * @return List&lt;String&gt; array-reply list of replicas. The command returns data in the same format as
+     *         {@link #clusterNodes()} but one line per replica.
+     * @deprecated since 6.1.7, use {@link #clusterReplicas(String)} instead.
+     */
+    @Deprecated
+    Flux<String> clusterSlaves(String nodeId);
+
+    /**
      * Get array of cluster slots to node mappings.
      *
      * @return List&lt;Object&gt; array-reply nested list of slot ranges with IP/Port mappings.
      */
     Flux<Object> clusterSlots();
-
-    /**
-     * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to
-     * actually send the command to the target instance. See the Redis Cluster specification for more information.
-     *
-     * @return String simple-string-reply
-     */
-    Mono<String> asking();
-
-    /**
-     * Turn this node into a replica of the node with the id {@code nodeId}.
-     *
-     * @param nodeId master node id
-     * @return String simple-string-reply
-     */
-    Mono<String> clusterReplicate(String nodeId);
-
-    /**
-     * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
-     *
-     * @param force do not coordinate with master if {@code true}
-     * @return String simple-string-reply
-     */
-    Mono<String> clusterFailover(boolean force);
-
-    /**
-     * Reset a node performing a soft or hard reset:
-     * <ul>
-     * <li>All other nodes are forgotten</li>
-     * <li>All the assigned / open slots are released</li>
-     * <li>If the node is a replica, it turns into a master</li>
-     * <li>Only for hard reset: a new Node ID is generated</li>
-     * <li>Only for hard reset: currentEpoch and configEpoch are set to 0</li>
-     * <li>The new configuration is saved and the cluster state updated</li>
-     * <li>If the node was a replica, the whole data set is flushed away</li>
-     * </ul>
-     *
-     * @param hard {@code true} for hard reset. Generates a new nodeId and currentEpoch/configEpoch are set to 0
-     * @return String simple-string-reply
-     */
-    Mono<String> clusterReset(boolean hard);
-
-    /**
-     * Delete all the slots associated with the specified node. The number of deleted slots is returned.
-     *
-     * @return String simple-string-reply
-     */
-    Mono<String> clusterFlushslots();
-
-    /**
-     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running
-     * write queries.
-     *
-     * @return String simple-string-reply
-     */
-    Mono<String> readOnly();
-
-    /**
-     * Resets readOnly flag.
-     *
-     * @return String simple-string-reply
-     */
-    Mono<String> readWrite();
 
     /**
      * Delete a key with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
@@ -338,5 +336,20 @@ public interface RedisClusterReactiveCommands<K, V>
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
     Mono<Boolean> msetnx(Map<K, V> map);
+
+    /**
+     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running
+     * write queries.
+     *
+     * @return String simple-string-reply
+     */
+    Mono<String> readOnly();
+
+    /**
+     * Resets readOnly flag.
+     *
+     * @return String simple-string-reply
+     */
+    Mono<String> readWrite();
 
 }

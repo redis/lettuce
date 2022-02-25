@@ -422,6 +422,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<String>> clusterReplicas(String nodeId) {
+        return dispatch(commandBuilder.clusterReplicas(nodeId));
+    }
+
+    @Override
     public RedisFuture<String> clusterReset(boolean hard) {
         return dispatch(commandBuilder.clusterReset(hard));
     }
@@ -1373,6 +1378,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> replicaof(String host, int port) {
+        return dispatch(commandBuilder.replicaof(host, port));
+    }
+
+    @Override
+    public RedisFuture<String> replicaofNoOne() {
+        return dispatch(commandBuilder.replicaofNoOne());
+    }
+
+    @Override
     public void reset() {
         getConnection().reset();
     }
@@ -1546,6 +1561,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         connection.setAutoFlushCommands(autoFlush);
     }
 
+    @Override
     public void setTimeout(Duration timeout) {
         connection.setTimeout(timeout);
     }

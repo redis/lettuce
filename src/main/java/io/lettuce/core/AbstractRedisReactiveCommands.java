@@ -442,6 +442,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Flux<String> clusterReplicas(String nodeId) {
+        return createDissolvingFlux(() -> commandBuilder.clusterSlaves(nodeId));
+    }
+
+    @Override
     public Mono<String> clusterReset(boolean hard) {
         return createMono(() -> commandBuilder.clusterReset(hard));
     }
@@ -1448,6 +1453,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<String> replicaof(String host, int port) {
+        return createMono(() -> commandBuilder.replicaof(host, port));
+    }
+
+    @Override
+    public Mono<String> replicaofNoOne() {
+        return createMono(() -> commandBuilder.replicaofNoOne());
+    }
+
+    @Override
     public void reset() {
         getConnection().reset();
     }
@@ -1621,6 +1636,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         connection.setAutoFlushCommands(autoFlush);
     }
 
+    @Override
     public void setTimeout(Duration timeout) {
         connection.setTimeout(timeout);
     }

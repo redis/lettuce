@@ -354,6 +354,24 @@ public interface RedisServerCommands<K, V> {
     Long memoryUsage(K key);
 
     /**
+     * Make the server a replica of another instance.
+     *
+     * @param host the host type: string.
+     * @param port the port type: string.
+     * @return String simple-string-reply.
+     * @since 6.1.7
+     */
+    String replicaof(String host, int port);
+
+    /**
+     * Promote server as master.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1.7
+     */
+    String replicaofNoOne();
+
+    /**
      * Synchronously save the dataset to disk.
      *
      * @return String simple-string-reply The commands returns OK on success.
@@ -368,11 +386,12 @@ public interface RedisServerCommands<K, V> {
     void shutdown(boolean save);
 
     /**
-     * Make the server a replica of another instance, or promote it as master.
+     * Make the server a replica of another instance.
      *
      * @param host the host type: string.
      * @param port the port type: string.
      * @return String simple-string-reply.
+     * @deprecated since 6.1.7, use {@link #replicaof(String, int)} instead.
      */
     String slaveof(String host, int port);
 
@@ -380,6 +399,7 @@ public interface RedisServerCommands<K, V> {
      * Promote server as master.
      *
      * @return String simple-string-reply.
+     * @deprecated since 6.1.7, use {@link #replicaofNoOne()} instead.
      */
     String slaveofNoOne();
 

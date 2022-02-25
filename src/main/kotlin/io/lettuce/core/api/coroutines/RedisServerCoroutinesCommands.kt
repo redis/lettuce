@@ -339,43 +339,63 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      *
      * @return Date integer-reply an UNIX time stamp.
      */
-    suspend fun lastsave(): Date?
+	suspend fun lastsave(): Date?
 
-    /**
-     * Reports the number of bytes that a key and its value require to be stored in RAM.
-     *
-     * @return memory usage in bytes.
-     * @since 5.2
-     */
-    suspend fun memoryUsage(key: K): Long?
+	/**
+	 * Reports the number of bytes that a key and its value require to be stored in RAM.
+	 *
+	 * @return memory usage in bytes.
+	 * @since 5.2
+	 */
+	suspend fun memoryUsage(key: K): Long?
 
-    /**
-     * Synchronously save the dataset to disk.
-     *
-     * @return String simple-string-reply The commands returns OK on success.
-     */
-    suspend fun save(): String?
+	/**
+	 * Make the server a replica of another instance.
+	 *
+	 * @param host the host type: string.
+	 * @param port the port type: string.
+	 * @return String simple-string-reply.
+	 * @since 6.1.7
+	 */
+	suspend fun replicaof(host: String, port: Int): String?
 
-    /**
-     * Synchronously save the dataset to disk and then shut down the server.
+	/**
+	 * Promote server as master.
+	 *
+	 * @return String simple-string-reply.
+	 * @since 6.1.7
+	 */
+	suspend fun replicaofNoOne(): String?
+
+	/**
+	 * Synchronously save the dataset to disk.
+	 *
+	 * @return String simple-string-reply The commands returns OK on success.
+	 */
+	suspend fun save(): String?
+
+	/**
+	 * Synchronously save the dataset to disk and then shut down the server.
      *
      * @param save @code true} force save operation.
      */
     suspend fun shutdown(save: Boolean)
 
     /**
-     * Make the server a replica of another instance, or promote it as master.
-     *
-     * @param host the host type: string.
-     * @param port the port type: string.
-     * @return String simple-string-reply.
+	 * Make the server a replica of another instance.
+	 *
+	 * @param host the host type: string.
+	 * @param port the port type: string.
+	 * @return String simple-string-reply.
+	 * @deprecated since 6.1.7, use [replicaof(String, Integer)] instead.
      */
     suspend fun slaveof(host: String, port: Int): String?
 
     /**
-     * Promote server as master.
-     *
-     * @return String simple-string-reply.
+	 * Promote server as master.
+	 *
+	 * @return String simple-string-reply.
+	 * @deprecated since 6.1.7, use [replicaofNoOne] instead.
      */
     suspend fun slaveofNoOne(): String?
 

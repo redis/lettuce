@@ -15,8 +15,8 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterTestUtil.getNodeId;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.lettuce.core.cluster.ClusterTestUtil.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.List;
@@ -39,8 +39,8 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.cluster.models.slots.ClusterSlotRange;
 import io.lettuce.core.cluster.models.slots.ClusterSlotsParser;
 import io.lettuce.test.Delay;
-import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 
 /**
@@ -240,6 +240,15 @@ class ClusterCommandIntegrationTests extends TestSupport {
 
         String nodeId = getNodeId(sync);
         List<String> result = sync.clusterSlaves(nodeId);
+
+        assertThat(result.size()).isGreaterThan(0);
+    }
+
+    @Test
+    void clusterReplicas() {
+
+        String nodeId = getNodeId(sync);
+        List<String> result = sync.clusterReplicas(nodeId);
 
         assertThat(result.size()).isGreaterThan(0);
     }

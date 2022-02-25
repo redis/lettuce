@@ -571,6 +571,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, List<String>> clusterReplicas(String nodeId) {
+        assertNodeId(nodeId);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(REPLICAS).add(nodeId);
+        return createCommand(CLUSTER, new StringListOutput<>(codec), args);
+    }
+
     Command<K, V, String> clusterReset(boolean hard) {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(RESET);
@@ -1911,6 +1918,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(newKey);
         return createCommand(RENAMENX, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, String> replicaof(String host, int port) {
+        LettuceAssert.notNull(host, "Host " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(host, "Host " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(host).add(port);
+        return createCommand(REPLICAOF, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> replicaofNoOne() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(NO).add(ONE);
+        return createCommand(REPLICAOF, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, String> restore(K key, byte[] value, RestoreArgs restoreArgs) {
