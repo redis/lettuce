@@ -50,9 +50,10 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
     private final boolean enabled;
 
+    private final boolean usePauseDetector;
+
     private final Builder builder;
 
-    private boolean usePauseDetector;
 
     protected DefaultCommandLatencyCollectorOptions(Builder builder) {
         this.targetUnit = builder.targetUnit;
@@ -151,11 +152,11 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         }
 
         /**
-         * Use LatencyUtils.SimplePauseDetector to detects pauses.
-         * See {@link org.LatencyUtils.SimplePauseDetector}.
-         * Defaults to useNoPauseDetector.See {@link DefaultCommandLatencyCollectorOptions#DEFAULT_USE_NO_PAUSE_DETECTOR}.
+         * Use {@code LatencyUtils.SimplePauseDetector} to detect pauses. Defaults to no pause detector.
          *
-         * @return this {@link Builder}.
+         * @return this {@link DefaultCommandLatencyCollectorOptions.Builder}.
+         * @since 6.1.7
+         * @see org.LatencyUtils.SimplePauseDetector
          */
         @Override
         public Builder usePauseDetector() {
@@ -164,10 +165,10 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         }
 
         /**
-         * Do not detects pauses.
-         * Defaults to useNoPauseDetector.See {@link DefaultCommandLatencyCollectorOptions#DEFAULT_USE_NO_PAUSE_DETECTOR}.
+         * Do not detect pauses. Defaults to no pause detector.
          *
-         * @return this {@link Builder}.
+         * @return this {@link DefaultCommandLatencyCollectorOptions.Builder}.
+         * @since 6.1.7
          */
         @Override
         public Builder useNoPauseDetector() {

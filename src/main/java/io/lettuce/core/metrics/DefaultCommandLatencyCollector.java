@@ -59,9 +59,9 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
     private static final boolean HDR_UTILS_AVAILABLE = isPresent("org.HdrHistogram.Histogram");
 
-    private static final PauseDetectorWrapper GLOBAL_PAUSE_DETECTOR = PauseDetectorWrapper.create(true);
+    private static final PauseDetectorWrapper GLOBAL_PAUSE_DETECTOR = PauseDetectorWrapper.create();
 
-    private static final PauseDetectorWrapper GLOBAL_NO_PAUSE_DETECTOR = PauseDetectorWrapper.create(false);
+    private static final PauseDetectorWrapper GLOBAL_NO_PAUSE_DETECTOR = PauseDetectorWrapper.noop();
 
     private static final long MIN_LATENCY = 1000;
 
@@ -326,7 +326,12 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
      * No-operation {@link PauseDetector} implementation.
      */
     static class NoPauseDetector extends PauseDetector {
-        protected NoPauseDetector() {
+
+        protected static final NoPauseDetector INSTANCE = new NoPauseDetector();
+
+        private NoPauseDetector() {
+            super();
+            super.shutdown();
         }
 
         @Override
@@ -359,7 +364,6 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          * No-operation {@link PauseDetectorWrapper} implementation.
          */
         PauseDetectorWrapper NO_OP = new PauseDetectorWrapper() {
-            private final PauseDetector pauseDetector = new NoPauseDetector();
 
             @Override
             public void release() {
@@ -371,17 +375,21 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
 
             @Override
             public PauseDetector getPauseDetector() {
-                return pauseDetector;
+                return NoPauseDetector.INSTANCE;
             }
 
         };
 
-        static PauseDetectorWrapper create(boolean usePauseDetector) {
+        static PauseDetectorWrapper create() {
 
-            if (HDR_UTILS_AVAILABLE && LATENCY_UTILS_AVAILABLE && usePauseDetector) {
+            if (HDR_UTILS_AVAILABLE && LATENCY_UTILS_AVAILABLE) {
                 return new DefaultPauseDetectorWrapper();
             }
 
+            return NO_OP;
+        }
+
+        static PauseDetectorWrapper noop() {
             return NO_OP;
         }
 
@@ -421,6 +429,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          *
          * @return
          */
+        @Override
         public PauseDetector getPauseDetector() {
             return pauseDetector;
         }
@@ -429,6 +438,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
          * Creates or initializes a {@link PauseDetector} instance after incrementing the usage counter to one. Should be
          * {@link #release() released} once it is no longer in use.
          */
+        @Override
         public void retain() {
 
             if (counter.incrementAndGet() == 1) {
@@ -476,6 +486,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         /**
          * Decrements the usage counter. When reaching {@code 0}, the {@link PauseDetector} instance is released.
          */
+        @Override
         public void release() {
 
             if (counter.decrementAndGet() == 0) {
