@@ -15,15 +15,13 @@
  */
 package io.lettuce.core.cluster.topology;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 import javax.inject.Inject;
@@ -32,7 +30,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.category.SlowTests;
 import io.lettuce.core.RedisClient;
@@ -55,7 +52,6 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
-import io.netty.util.concurrent.ScheduledFuture;
 
 /**
  * Test for topology refreshing.
@@ -276,10 +272,11 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots()).hasSize(0);
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node2.getNodeId()).getSlots()).hasSize(16384);
 
-        clusterConnection.set("b", value); // slot 3300
+        Future<String> b = connection.reactive().set("b", value).toFuture();// slot 3300
 
         Wait.untilEquals(12000, () -> clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots().size())
                 .waitOrTimeout();
+        System.out.println(b);
 
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots()).hasSize(12000);
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node2.getNodeId()).getSlots()).hasSize(4384);
