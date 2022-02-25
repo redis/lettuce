@@ -16,11 +16,7 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.FlushMode
-import io.lettuce.core.KillArgs
-import io.lettuce.core.TrackingArgs
-import io.lettuce.core.UnblockType
+import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands
 import io.lettuce.core.protocol.CommandType
 import kotlinx.coroutines.flow.toList
@@ -116,17 +112,27 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun info(): String? = ops.info().awaitFirstOrNull()
 
-    override suspend fun info(section: String): String? = ops.info(section).awaitFirstOrNull()
+    override suspend fun info(section: String): String? =
+        ops.info(section).awaitFirstOrNull()
 
     override suspend fun lastsave(): Date? = ops.lastsave().awaitFirstOrNull()
 
-    override suspend fun memoryUsage(key: K): Long? = ops.memoryUsage(key).awaitFirstOrNull()
+    override suspend fun memoryUsage(key: K): Long? =
+        ops.memoryUsage(key).awaitFirstOrNull()
+
+    override suspend fun replicaof(host: String, port: Int): String? =
+        ops.replicaof(host, port).awaitFirstOrNull()
+
+    override suspend fun replicaofNoOne(): String? =
+        ops.replicaofNoOne().awaitFirstOrNull()
 
     override suspend fun save(): String? = ops.save().awaitFirstOrNull()
 
-    override suspend fun shutdown(save: Boolean) = ops.shutdown(save).awaitFirstOrNull().let { Unit }
+    override suspend fun shutdown(save: Boolean) =
+        ops.shutdown(save).awaitFirstOrNull().let { Unit }
 
-    override suspend fun slaveof(host: String, port: Int): String? = ops.slaveof(host, port).awaitFirstOrNull()
+    override suspend fun slaveof(host: String, port: Int): String? =
+        ops.slaveof(host, port).awaitFirstOrNull()
 
     override suspend fun slaveofNoOne(): String? = ops.slaveofNoOne().awaitFirstOrNull()
 

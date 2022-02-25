@@ -468,6 +468,18 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void replicaof() {
+
+        assertThat(redis.replicaof(TestSettings.host(), 0)).isEqualTo("OK");
+        redis.replicaofNoOne();
+    }
+
+    @Test
+    void replicaofNoOne() {
+        assertThat(redis.replicaofNoOne()).isEqualTo("OK");
+    }
+
+    @Test
     void save() {
 
         Wait.untilTrue(this::noSaveInProgress).waitOrTimeout();
