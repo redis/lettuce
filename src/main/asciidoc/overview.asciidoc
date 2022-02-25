@@ -1,11 +1,11 @@
 [[overview]]
 == Overview
 
-This document is the reference guide for Lettuce.It explains how to use Lettuce, its concepts, semantics, and the syntax.
+This document is the reference guide for Lettuce. It explains how to use Lettuce, its concepts, semantics, and the syntax.
 
 You can read this reference guide in a linear fashion, or you can skip sections if something does not interest you.
 
-This section provides some basic introduction to Redis.The rest of the document refers only to Lettuce features and assumes the user is familiar with Redis concepts.
+This section provides some basic introduction to Redis. The rest of the document refers only to Lettuce features and assumes the user is familiar with Redis concepts.
 
 [[overview.redis]]
 === Knowing Redis
@@ -13,7 +13,7 @@ This section provides some basic introduction to Redis.The rest of the document 
 NoSQL stores have taken the storage world by storm.
 It is a vast domain with a plethora of solutions, terms and patterns (to make things worse even the term itself has multiple http://www.google.com/search?q=nosql+acronym[meanings]).
 While some of the principles are common, it is crucial that the user is familiar to some degree with Redis.
-The best way to get acquainted to this solutions is to read their documentation and follow their documentation - it usually doesn't take more then 5-10 minutes to go through them and if you are coming from an RDMBS-only background many times these exercises can be an eye opener.
+The best way to get acquainted to these solutions is to read and follow their documentation - it usually doesn't take more than 5-10 minutes to go through them and if you are coming from an RDMBS-only background many times these exercises can be an eye-opener.
 
 The jumping off ground for learning about Redis is http://www.redis.io/[redis.io].
 Here is a list of other useful resources:
@@ -44,7 +44,7 @@ In terms of http://redis.io/[Redis], at least 2.6.
 
 === Additional Help Resources
 
-Learning a new framework is not always straight forward.In this section, we try to provide what we think is an easy to follow guide for starting with Lettuce.However, if you encounter issues or you are just looking for an advice, feel free to use one of the links below:
+Learning a new framework is not always straight forward.In this section, we try to provide what we think is an easy-to-follow guide for starting with Lettuce. However, if you encounter issues or you are just looking for an advice, feel free to use one of the links below:
 
 [[overview.support]]
 ==== Support
@@ -54,7 +54,7 @@ There are a few support options available:
 * Lettuce on Stackoverflow http://stackoverflow.com/questions/tagged/lettuce[Stackoverflow] is a tag for all Lettuce users to share information and help each other.Note that registration is needed *only* for posting.
 * Get in touch with the community on https://gitter.im/lettuce-io/Lobby[Gitter].
 * GitHub Discussions: https://github.com/lettuce-io/lettuce-core/discussions
-* Report bugs (or ask questions) in Github issues https://github.com/lettuce-io/lettuce-core/issues.
+* Report bugs (or ask questions) in GitHub issues https://github.com/lettuce-io/lettuce-core/issues.
 
 [[overview.development]]
 ==== Following Development
