@@ -88,9 +88,24 @@ public abstract class ReadFrom {
     public static final ReadFrom SLAVE = REPLICA;
 
     /**
-     * Setting to read from the nearest node.
+     * Setting to read from the node with the lowest latency during topology discovery. Note that latency measurements are
+     * momentary snapshots that can change in rapid succession. Requires dynamic refresh sources to obtain topologies and
+     * latencies from all nodes in the cluster.
+     *
+     * @since 6.1.7
      */
-    public static final ReadFrom NEAREST = new ReadFromImpl.ReadFromNearest();
+    public static final ReadFrom LOWEST_LATENCY = new ReadFromImpl.ReadFromLowestCommandLatency();
+
+    /**
+     * Setting to read from the node with the lowest latency during topology discovery. Note that latency measurements are
+     * momentary snapshots that can change in rapid succession. Requires dynamic refresh sources to obtain topologies and
+     * latencies from all nodes in the cluster.
+     *
+     * @deprecated since 6.1.7 as we're renaming this setting to {@link #LOWEST_LATENCY} for more clarity what this setting
+     *             actually represents.
+     */
+    @Deprecated
+    public static final ReadFrom NEAREST = LOWEST_LATENCY;
 
     /**
      * Setting to read from any node.
@@ -198,8 +213,8 @@ public abstract class ReadFrom {
             return REPLICA_PREFERRED;
         }
 
-        if (name.equalsIgnoreCase("nearest")) {
-            return NEAREST;
+        if (name.equalsIgnoreCase("nearest") || name.equalsIgnoreCase("lowestLatency")) {
+            return LOWEST_LATENCY;
         }
 
         if (name.equalsIgnoreCase("any")) {
