@@ -22,11 +22,11 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.codec.ToByteBufEncoder;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceStrings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
 
@@ -497,7 +497,7 @@ public class CommandArgs<K, V> {
                 return IntegerCache.cache[(int) val];
             }
 
-            if (val < 0 && -val < IntegerCache.cache.length) {
+            if (val < 0 && val > Integer.MIN_VALUE && -val < IntegerCache.cache.length) {
                 return IntegerCache.negativeCache[(int) -val];
             }
 

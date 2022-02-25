@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +29,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
 /**
+ * Unit tests for {@link CommandArgs}.
+ *
  * @author Mark Paluch
  */
 class CommandArgsUnitTests {
@@ -56,6 +58,25 @@ class CommandArgsUnitTests {
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(-1L).add(-127).add(-128).add(-129);
 
         assertThat(CommandArgsAccessor.getFirstInteger(args)).isEqualTo(-1L);
+    }
+
+    @Test
+    void getFirstIntegerShouldReturnFirstPositiveLong() {
+
+        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(Long.MAX_VALUE);
+
+        assertThat(CommandArgsAccessor.getFirstInteger(args)).isEqualTo(Long.MAX_VALUE);
+    }
+
+    @Test
+    void getFirstIntegerShouldReturnFirstNegativeLong() {
+
+        assertThat(CommandArgsAccessor.getFirstInteger(new CommandArgs<>(StringCodec.UTF8).add(Long.MIN_VALUE)))
+                .isEqualTo(Long.MIN_VALUE);
+        assertThat(CommandArgsAccessor.getFirstInteger(new CommandArgs<>(StringCodec.UTF8).add(Long.MIN_VALUE + 2)))
+                .isEqualTo(Long.MIN_VALUE + 2);
+        assertThat(CommandArgsAccessor.getFirstInteger(new CommandArgs<>(StringCodec.UTF8).add(Integer.MIN_VALUE)))
+                .isEqualTo(Integer.MIN_VALUE);
     }
 
     @Test
