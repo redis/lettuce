@@ -104,9 +104,10 @@ public interface CommandLatencyCollectorOptions {
     boolean isEnabled();
 
     /**
-     * Returns whether PauseDetector is enabled.
+     * Returns whether PauseDetector is enabled. Defaults to no pause detector.
      *
      * @return {@code true} if the PauseDetector is enabled
+     * @since 6.1.7
      */
     boolean usePauseDetector();
 
@@ -132,22 +133,24 @@ public interface CommandLatencyCollectorOptions {
         Builder enable();
 
         /**
-         * Use LatencyUtils.SimplePauseDetector to detects pauses.
-         * See {@link org.LatencyUtils.SimplePauseDetector}
+         * Use {@code LatencyUtils.SimplePauseDetector} to detect pauses. Defaults to no pause detector.
          *
          * @return this {@link DefaultCommandLatencyCollectorOptions.Builder}.
+         * @since 6.1.7
+         * @see org.LatencyUtils.SimplePauseDetector
          */
         Builder usePauseDetector();
 
         /**
-         * Do not detects pauses.
+         * Do not detect pauses. Defaults to no pause detector.
          *
          * @return this {@link DefaultCommandLatencyCollectorOptions.Builder}.
+         * @since 6.1.7
          */
         Builder useNoPauseDetector();
 
         /**
-         * Enables per connection metrics tracking insead of per host/port. If {@code true}, multiple connections to the same
+         * Enables per connection metrics tracking instead of per host/port. If {@code true}, multiple connections to the same
          * host/connection point will be recorded separately which allows to inspect every connection individually. If
          * {@code false}, multiple connections to the same host/connection point will be recorded together. This allows a
          * consolidated view on one particular service. Defaults to {@code false}. See
