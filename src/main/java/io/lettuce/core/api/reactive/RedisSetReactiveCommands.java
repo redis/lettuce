@@ -101,24 +101,26 @@ public interface RedisSetReactiveCommands<K, V> {
     Mono<Long> sinter(ValueStreamingChannel<V> channel, K... keys);
 
     /**
-     * This command works exactly like sinter but instead of returning the result set, it returns just the cardinality of the
-     * result.
+     * This command works exactly like {@link #sinter(java.lang.Object[])} but instead of returning the result set, it returns
+     * just the cardinality of the result.
      *
-     * @param keys the key.
+     * @param keys the keys.
      * @return The cardinality of the set which would result from the intersection of all the given sets.
+     * @since 6.2
      */
     Mono<Long> sintercard(K... keys);
 
     /**
-     * This command works exactly like sinter but instead of returning the result set, it returns just the cardinality of the
-     * result.
+     * This command works exactly like {@link #sinter(java.lang.Object[])} but instead of returning the result set, it returns
+     * just the cardinality of the result.
      *
      * @param limit If the intersection cardinality reaches limit partway through the computation, the algorithm will exit and
      *        yield limit as the cardinality.
-     * @param keys the key.
+     * @param keys the keys.
      * @return The cardinality of the set which would result from the intersection of all the given sets.
+     * @since 6.2
      */
-    Mono<Long> sintercard(int limit, K... keys);
+    Mono<Long> sintercard(long limit, K... keys);
 
     /**
      * Intersect multiple sets and store the resulting set in a key.

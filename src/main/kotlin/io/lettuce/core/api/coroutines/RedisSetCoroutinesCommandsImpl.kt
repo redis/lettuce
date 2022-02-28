@@ -52,7 +52,8 @@ internal class RedisSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun sintercard(vararg keys: K): Long? = ops.sintercard(*keys).awaitFirstOrNull()
 
-    override suspend fun sintercard(limit: Int, vararg keys: K): Long? = ops.sintercard(limit, *keys).awaitFirstOrNull()
+    override suspend fun sintercard(limit: Long, vararg keys: K): Long? =
+        ops.sintercard(limit, *keys).awaitFirstOrNull()
 
     override suspend fun sinterstore(destination: K, vararg keys: K): Long? = ops.sinterstore(destination, *keys).awaitFirstOrNull()
 

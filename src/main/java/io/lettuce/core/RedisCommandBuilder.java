@@ -2212,7 +2212,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SINTERCARD, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, Long> sintercard(int limit, K... keys) {
+    Command<K, V, Long> sintercard(long limit, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys).add(LIMIT).add(limit);
