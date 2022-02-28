@@ -204,7 +204,7 @@ public class SslOptions {
 
         /**
          * Use the OpenSSL provider for SSL connections. The OpenSSL provider requires the
-         * <a href="http://netty.io/wiki/forked-tomcat-native.html">{@code netty-tcnative}</a> dependency with the OpenSSL JNI
+         * <a href="https://netty.io/wiki/forked-tomcat-native.html">{@code netty-tcnative}</a> dependency with the OpenSSL JNI
          * binary.
          *
          * @return {@code this}

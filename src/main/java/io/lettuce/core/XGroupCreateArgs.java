@@ -18,7 +18,7 @@ package io.lettuce.core;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
- * Argument list builder for the Redis <a href="http://redis.io/commands/xgroup">XGROUP</a> CREATE command. Static import the
+ * Argument list builder for the Redis <a href="https://redis.io/commands/xgroup">XGROUP</a> CREATE command. Static import the
  * methods from {@link Builder} and call the methods: {@code mkstream(…)} .
  * <p/>
  * {@link XGroupCreateArgs} is a mutable object and instances should be used only once to avoid shared mutable state.

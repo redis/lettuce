@@ -53,7 +53,7 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * A scalable and thread-safe <a href="http://redis.io/">Redis</a> client supporting synchronous, asynchronous and reactive
+ * A scalable and thread-safe <a href="https://redis.io/">Redis</a> client supporting synchronous, asynchronous and reactive
  * execution models. Multiple threads may share one connection if they avoid blocking and transactional operations such as BLPOP
  * and MULTI/EXEC.
  * <p>

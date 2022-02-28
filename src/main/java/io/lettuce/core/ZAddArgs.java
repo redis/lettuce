@@ -20,7 +20,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
- * Argument list builder for the improved Redis <a href="http://redis.io/commands/zadd">ZADD</a> command starting from Redis
+ * Argument list builder for the improved Redis <a href="https://redis.io/commands/zadd">ZADD</a> command starting from Redis
  * 3.0.2. Static import the methods from {@link Builder} and call the methods: {@code xx()} or {@code nx()} .
  * <p>
  * {@link ZAddArgs} is a mutable object and instances should be used only once to avoid shared mutable state.

@@ -70,7 +70,7 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * A scalable and thread-safe <a href="http://redis.io/">Redis</a> cluster client supporting synchronous, asynchronous and
+ * A scalable and thread-safe <a href="https://redis.io/">Redis</a> cluster client supporting synchronous, asynchronous and
  * reactive execution models. Multiple threads may share one connection. The cluster client handles command routing based on the
  * first key of the command and maintains a view of the cluster that is available when calling the {@link #getPartitions()}
  * method.
@@ -92,7 +92,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </p>
  *
  * <p>
- * <a href="http://redis.io/topics/cluster-spec#multiple-keys-operations">Multiple keys operations</a> have to operate on a key
+ * <a href="https://redis.io/topics/cluster-spec#multiple-keys-operations">Multiple keys operations</a> have to operate on a key
  * that hashes to the same slot. Following commands do not need to follow that rule since they are pipelined according to its
  * hash value to multiple nodes in parallel on the sync, async and, reactive API:
  * </p>
