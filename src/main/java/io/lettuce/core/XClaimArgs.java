@@ -25,7 +25,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 
 /**
- * Argument list builder for the Redis <a href="http://redis.io/commands/xclaim">XCLAIM</a> command. Static import the methods
+ * Argument list builder for the Redis <a href="https://redis.io/commands/xclaim">XCLAIM</a> command. Static import the methods
  * from {@link XClaimArgs.Builder} and call the methods: {@code minIdleTime(…)} .
  * <p>
  * {@link XClaimArgs} is a mutable object and instances should be used only once to avoid shared mutable state.

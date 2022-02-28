@@ -15,14 +15,22 @@
  */
 package io.lettuce.core.models.command;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import io.lettuce.core.AclCategory;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Parser for Redis
- * <a href="http://redis.io/commands/command">COMMAND</a>/<a href="http://redis.io/commands/command-info">COMMAND INFO</a>
+ * <a href="https://redis.io/commands/command">COMMAND</a>/<a href="https://redis.io/commands/command-info">COMMAND INFO</a>
  * output.
  *
  * @author Mark Paluch

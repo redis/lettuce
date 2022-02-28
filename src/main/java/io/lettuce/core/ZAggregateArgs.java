@@ -24,9 +24,9 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
- * Argument list builder for the Redis <a href="http://redis.io/commands/zunion">ZUNION</a>,
- * <a href="http://redis.io/commands/zunionstore">ZUNIONSTORE</a>, <a href="http://redis.io/commands/zinter">ZINTER</a> and
- * <a href="http://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the methods from {@link Builder} and
+ * Argument list builder for the Redis <a href="https://redis.io/commands/zunion">ZUNION</a>,
+ * <a href="https://redis.io/commands/zunionstore">ZUNIONSTORE</a>, <a href="https://redis.io/commands/zinter">ZINTER</a> and
+ * <a href="https://redis.io/commands/zinterstore">ZINTERSTORE</a> commands. Static import the methods from {@link Builder} and
  * chain the method calls: {@code weights(1, 2).max()}.
  *
  * @author Will Glozer

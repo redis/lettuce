@@ -107,7 +107,7 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     }
 
     /**
-     * Encode and write this command to the supplied buffer using the new <a href="http://redis.io/topics/protocol">Unified
+     * Encode and write this command to the supplied buffer using the new <a href="https://redis.io/topics/protocol">Unified
      * Request Protocol</a>.
      *
      * @param buf Buffer to write to.

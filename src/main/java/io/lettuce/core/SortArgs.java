@@ -16,7 +16,7 @@
 package io.lettuce.core;
 
 import static io.lettuce.core.protocol.CommandKeyword.*;
-import static io.lettuce.core.protocol.CommandType.GET;
+import static io.lettuce.core.protocol.CommandType.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * Argument list builder for the Redis <a href="http://redis.io/commands/sort">SORT</a> command. Static import the methods from
+ * Argument list builder for the Redis <a href="https://redis.io/commands/sort">SORT</a> command. Static import the methods from
  * {@link Builder} and chain the method calls: {@code by("weight_*").desc().limit(0, 2)}.
  * <p>
  * {@link ScanArgs} is a mutable object and instances should be used only once to avoid shared mutable state.

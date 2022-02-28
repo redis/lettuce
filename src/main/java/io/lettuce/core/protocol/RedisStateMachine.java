@@ -32,7 +32,7 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * State machine that decodes redis server responses encoded according to the <a href="http://redis.io/topics/protocol">Unified
+ * State machine that decodes redis server responses encoded according to the <a href="https://redis.io/topics/protocol">Unified
  * Request Protocol (RESP)</a>. Supports RESP2 and RESP3. Initialized with protocol discovery.
  *
  * @author Will Glozer

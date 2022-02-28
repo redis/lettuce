@@ -24,7 +24,7 @@ import io.lettuce.core.protocol.CommandKeyword;
 
 /**
  *
- * Argument list builder for the Redis <a href="http://redis.io/commands/client-tracking">CLIENT TRACKING</a> command. Static
+ * Argument list builder for the Redis <a href="https://redis.io/commands/client-tracking">CLIENT TRACKING</a> command. Static
  * import the methods from {@link Builder} and chain the method calls: {@code enabled().bcast()}.
  * <p>
  * {@link TrackingArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
