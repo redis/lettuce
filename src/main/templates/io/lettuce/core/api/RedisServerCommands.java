@@ -392,6 +392,7 @@ public interface RedisServerCommands<K, V> {
      * @return String simple-string-reply.
      * @deprecated since 6.1.7, use {@link #replicaof(String, int)} instead.
      */
+    @Deprecated
     String slaveof(String host, int port);
 
     /**
@@ -400,6 +401,7 @@ public interface RedisServerCommands<K, V> {
      * @return String simple-string-reply.
      * @deprecated since 6.1.7, use {@link #replicaofNoOne()} instead.
      */
+    @Deprecated
     String slaveofNoOne();
 
     /**

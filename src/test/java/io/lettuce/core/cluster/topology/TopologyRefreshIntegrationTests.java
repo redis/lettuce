@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
@@ -64,10 +63,13 @@ import io.lettuce.test.settings.TestSettings;
 class TopologyRefreshIntegrationTests extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();
+
     private final RedisClient client;
 
     private RedisClusterClient clusterClient;
+
     private RedisCommands<String, String> redis1;
+
     private RedisCommands<String, String> redis2;
 
     @Inject
@@ -77,8 +79,8 @@ class TopologyRefreshIntegrationTests extends TestSupport {
 
     @BeforeEach
     void openConnection() {
-        clusterClient = RedisClusterClient.create(client.getResources(), RedisURI.Builder
-                .redis(host, ClusterTestSettings.port1).build());
+        clusterClient = RedisClusterClient.create(client.getResources(),
+                RedisURI.Builder.redis(host, ClusterTestSettings.port1).build());
         redis1 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1).build()).sync();
         redis2 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port2).build()).sync();
     }
@@ -272,11 +274,10 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots()).hasSize(0);
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node2.getNodeId()).getSlots()).hasSize(16384);
 
-        Future<String> b = connection.reactive().set("b", value).toFuture();// slot 3300
+        connection.reactive().set("b", value).toFuture();// slot 3300
 
         Wait.untilEquals(12000, () -> clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots().size())
                 .waitOrTimeout();
-        System.out.println(b);
 
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots()).hasSize(12000);
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node2.getNodeId()).getSlots()).hasSize(4384);
@@ -308,4 +309,5 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         }
         clusterConnection.getStatefulConnection().close();
     }
+
 }
