@@ -254,22 +254,26 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     fun zinter(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<V>
 
     /**
-     * This command is similar to ZINTER, but instead of returning the result set, it returns just the cardinality of the result.
+     * This command is similar to {@link #zinter(Any[])}, but instead of returning the result set, it returns just
+     * the cardinality of the result.
      *
      * @param keys the keys.
      * @return Long Integer reply the number of elements in the resulting intersection.
+     * @since 6.2
      */
     suspend fun zintercard(vararg keys: K): Long?
 
     /**
-     * This command is similar to ZINTER, but instead of returning the result set, it returns just the cardinality of the result.
+     * This command is similar to {@link #zinter(Any[])}, but instead of returning the result set, it returns just
+     * the cardinality of the result.
      *
      * @param limit If the intersection cardinality reaches limit partway through the computation, the algorithm will exit and
      *        yield limit as the cardinality
      * @param keys the keys.
      * @return Long Integer reply the number of elements in the resulting intersection.
+     * @since 6.2
      */
-    suspend fun zintercard(limit: Int, vararg keys: K): Long?
+    suspend fun zintercard(limit: Long, vararg keys: K): Long?
 
     /**
      * Intersect multiple sorted sets and returns the resulting sorted.

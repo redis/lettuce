@@ -3098,7 +3098,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZINTERCARD, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, Long> zintercard(int limit, K... keys) {
+    Command<K, V, Long> zintercard(long limit, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys).add(LIMIT).add(limit);

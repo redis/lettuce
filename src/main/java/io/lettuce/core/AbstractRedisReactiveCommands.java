@@ -2214,7 +2214,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<Long> zintercard(int limit, K... keys) {
+    public Mono<Long> zintercard(long limit, K... keys) {
         return createMono(() -> commandBuilder.zintercard(limit, keys));
     }
 
