@@ -18,10 +18,10 @@ package io.lettuce.core.cluster.api.reactive;
 import java.time.Duration;
 import java.util.Map;
 
-import io.lettuce.core.Range;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.Range;
 import io.lettuce.core.api.reactive.*;
 
 /**
@@ -30,6 +30,7 @@ import io.lettuce.core.api.reactive.*;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author dengliming
  * @since 5.0
  */
 public interface RedisClusterReactiveCommands<K, V>
@@ -113,6 +114,7 @@ public interface RedisClusterReactiveCommands<K, V>
      *
      * @param ranges a list of slot ranges (specified by start and end slots)
      * @return String simple-string-reply
+     * @since 6.2
      */
     Mono<String> clusterAddSlotsRange(Range<Integer>... ranges);
 
@@ -129,6 +131,7 @@ public interface RedisClusterReactiveCommands<K, V>
      *
      * @param ranges a list of slot ranges (specified by start and end slots)
      * @return String simple-string-reply
+     * @since 6.2
      */
     Mono<String> clusterDelSlotsRange(Range<Integer>... ranges);
 

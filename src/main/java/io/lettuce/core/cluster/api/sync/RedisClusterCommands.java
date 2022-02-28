@@ -27,6 +27,7 @@ import io.lettuce.core.api.sync.*;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author dengliming
  * @since 4.0
  */
 public interface RedisClusterCommands<K, V>
@@ -110,6 +111,7 @@ public interface RedisClusterCommands<K, V>
      *
      * @param ranges a list of slot ranges (specified by start and end slots)
      * @return String simple-string-reply
+     * @since 6.2
      */
     String clusterAddSlotsRange(Range<Integer>... ranges);
 
@@ -126,6 +128,7 @@ public interface RedisClusterCommands<K, V>
      *
      * @param ranges a list of slot ranges (specified by start and end slots)
      * @return String simple-string-reply
+     * @since 6.2
      */
     String clusterDelSlotsRange(Range<Integer>... ranges);
 

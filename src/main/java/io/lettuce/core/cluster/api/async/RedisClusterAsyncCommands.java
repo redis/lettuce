@@ -30,6 +30,7 @@ import io.lettuce.core.api.async.*;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author dengliming
  * @since 4.0
  */
 public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K,V>, RedisGeoAsyncCommands<K, V>,
@@ -111,6 +112,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *
      * @param ranges a list of slot ranges (specified by start and end slots)
      * @return String simple-string-reply
+     * @since 6.2
      */
     RedisFuture<String> clusterAddSlotsRange(Range<Integer>... ranges);
 
@@ -127,6 +129,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *
      * @param ranges a list of slot ranges (specified by start and end slots)
      * @return String simple-string-reply
+     * @since 6.2
      */
     RedisFuture<String> clusterDelSlotsRange(Range<Integer>... ranges);
 

@@ -15,12 +15,9 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterTestSettings.createSlots;
-import static io.lettuce.core.cluster.ClusterTestSettings.port5;
-import static io.lettuce.core.cluster.ClusterTestUtil.getNodeId;
-import static io.lettuce.core.cluster.ClusterTestUtil.getOwnPartition;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static io.lettuce.core.cluster.ClusterTestSettings.*;
+import static io.lettuce.core.cluster.ClusterTestUtil.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -30,10 +27,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.category.SlowTests;
-import io.lettuce.core.*;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.Range;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -47,6 +56,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.test.ConnectionTestUtil;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.resource.DefaultRedisClient;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
@@ -56,6 +66,7 @@ import io.lettuce.test.settings.TestSettings;
  * Test for mutable cluster setup scenarios.
  *
  * @author Mark Paluch
+ * @author dengliming
  * @since 3.0
  */
 @SuppressWarnings({ "unchecked" })
@@ -158,6 +169,7 @@ public class RedisClusterSetupTest extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("SINTERCARD") // Redis 7
     public void clusterDelSlotsRange() {
 
         ClusterSetup.setup2Masters(clusterHelper);
