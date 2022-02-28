@@ -182,7 +182,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      *
      * @param parameters patterns names of Redis server's configuration.
      * @return Map<String, String> bulk-string-reply.
-     * @since 7.0
+     * @since 6.2
      */
     suspend fun configGet(vararg parameters: String): Map<String, String>?
 
@@ -215,7 +215,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      *
      * @param kvs the parameter name and value.
      * @return String simple-string-reply: `OK` when the configuration was set properly. Otherwise an error is returned.
-     * @since 7.0
+     * @since 6.2
      */
     suspend fun configSet(kvs: Map<String, String>): String?
 

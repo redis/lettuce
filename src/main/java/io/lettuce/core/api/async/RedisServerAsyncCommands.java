@@ -188,7 +188,7 @@ public interface RedisServerAsyncCommands<K, V> {
      *
      * @param parameters patterns names of Redis server's configuration.
      * @return Map&lt;String, String&gt; bulk-string-reply.
-     * @since 7.0
+     * @since 6.2
      */
     RedisFuture<Map<String, String>> configGet(String... parameters);
 
@@ -221,7 +221,7 @@ public interface RedisServerAsyncCommands<K, V> {
      *
      * @param kvs the parameter name and value.
      * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
-     * @since 7.0
+     * @since 6.2
      */
     RedisFuture<String> configSet(Map<String, String> kvs);
 

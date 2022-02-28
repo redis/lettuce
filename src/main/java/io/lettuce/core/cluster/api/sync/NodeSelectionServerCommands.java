@@ -186,7 +186,7 @@ public interface NodeSelectionServerCommands<K, V> {
      *
      * @param parameters patterns names of Redis server's configuration.
      * @return Map&lt;String, String&gt; bulk-string-reply.
-     * @since 7.0
+     * @since 6.2
      */
     Executions<Map<String, String>> configGet(String... parameters);
 
@@ -219,7 +219,7 @@ public interface NodeSelectionServerCommands<K, V> {
      *
      * @param kvs the parameter name and value.
      * @return String simple-string-reply: {@code OK} when the configuration was set properly. Otherwise an error is returned.
-     * @since 7.0
+     * @since 6.2
      */
     Executions<String> configSet(Map<String, String> kvs);
 
