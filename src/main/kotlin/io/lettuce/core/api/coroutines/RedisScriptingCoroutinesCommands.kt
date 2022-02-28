@@ -90,7 +90,7 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
-     * @since 7.0
+     * @since 6.2
      */
     suspend fun <T> evalReadonly(script: ByteArray, type: ScriptOutputType, keys: Array<K>, vararg values: V): T?
 
@@ -126,7 +126,7 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
-     * @since 7.0
+     * @since 6.2
      */
     suspend fun <T> evalshaReadonly(digest: String, type: ScriptOutputType, keys: Array<K>, vararg values: V): T?
 

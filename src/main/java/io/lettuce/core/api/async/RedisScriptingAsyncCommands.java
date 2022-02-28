@@ -90,7 +90,7 @@ public interface RedisScriptingAsyncCommands<K, V> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
-     * @since 7.0
+     * @since 6.2
      */
     <T> RedisFuture<T> evalReadonly(byte[] script, ScriptOutputType type, K[] keys, V... values);
 
@@ -126,7 +126,7 @@ public interface RedisScriptingAsyncCommands<K, V> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
-     * @since 7.0
+     * @since 6.2
      */
     <T> RedisFuture<T> evalshaReadonly(String digest, ScriptOutputType type, K[] keys, V... values);
 

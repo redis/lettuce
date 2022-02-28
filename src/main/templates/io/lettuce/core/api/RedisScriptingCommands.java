@@ -88,7 +88,7 @@ public interface RedisScriptingCommands<K, V> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
-     * @since 7.0
+     * @since 6.2
      */
     <T> T evalReadonly(byte[] script, ScriptOutputType type, K[] keys, V... values);
 
@@ -124,7 +124,7 @@ public interface RedisScriptingCommands<K, V> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
-     * @since 7.0
+     * @since 6.2
      */
     <T> T evalshaReadonly(String digest, ScriptOutputType type, K[] keys, V... values);
 

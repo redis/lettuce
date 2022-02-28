@@ -810,17 +810,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ECHO, new ValueOutput<>(codec), args);
     }
 
-    <T> Command<K, V, T> eval(byte[] script, ScriptOutputType type, K... keys) {
-        LettuceAssert.notNull(script, "Script " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(script).add(keys.length).addKeys(keys);
-        CommandOutput<K, V, T> output = newScriptOutput(codec, type);
-        return createCommand(EVAL, output, args);
-    }
-
     <T> Command<K, V, T> eval(byte[] script, ScriptOutputType type, K[] keys, V... values) {
         return eval(script, type, false, keys, values);
     }
@@ -834,22 +823,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.add(script).add(keys.length).addKeys(keys).addValues(values);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
-        if (readonly) {
-            return createCommand(EVAL_RO, output, args);
-        }
-        return createCommand(EVAL, output, args);
-    }
 
-    <T> Command<K, V, T> evalsha(String digest, ScriptOutputType type, K... keys) {
-        LettuceAssert.notNull(digest, "Digest " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(digest, "Digest " + MUST_NOT_BE_EMPTY);
-        LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(digest).add(keys.length).addKeys(keys);
-        CommandOutput<K, V, T> output = newScriptOutput(codec, type);
-        return createCommand(EVALSHA, output, args);
+        return createCommand(readonly ? EVAL_RO : EVAL, output, args);
     }
 
     <T> Command<K, V, T> evalsha(String digest, ScriptOutputType type, K[] keys, V... values) {
@@ -866,10 +841,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         args.add(digest).add(keys.length).addKeys(keys).addValues(values);
         CommandOutput<K, V, T> output = newScriptOutput(codec, type);
-        if (readonly) {
-            return createCommand(EVALSHA_RO, output, args);
-        }
-        return createCommand(EVALSHA, output, args);
+
+        return createCommand(readonly ? EVALSHA_RO : EVALSHA, output, args);
     }
 
     Command<K, V, Boolean> exists(K key) {
