@@ -81,6 +81,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@code EXEC} and {@code DISCARD} have no key and cannot be assigned to a particular node. A cluster connection uses a default
  * connection to run non-keyed commands.
  * </p>
+ *
  * <p>
  * The Redis cluster client provides a {@link RedisAdvancedClusterCommands sync}, {@link RedisAdvancedClusterAsyncCommands
  * async} and {@link io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands reactive} API.
@@ -131,7 +132,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Collection&lt;RedisClusterNode&gt; nodes = ping.nodes();
  * nodes.stream().forEach(redisClusterNode -&gt; ping.get(redisClusterNode));
  * </pre>
- *
+ * </p>
+ * <p>
+ * Connection timeouts are initialized from the first provided {@link RedisURI}.
  * </p>
  *
  * {@link RedisClusterClient} is an expensive resource. Reuse this instance or share external {@link ClientResources} as much as
@@ -545,7 +548,8 @@ public class RedisClusterClient extends AbstractRedisClient {
             writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, getDefaultTimeout());
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
+                getFirstUri().getTimeout());
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
@@ -609,7 +613,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
-                getDefaultTimeout());
+                getFirstUri().getTimeout());
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
@@ -659,7 +663,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
 
         StatefulRedisClusterConnectionImpl<K, V> connection = newStatefulRedisClusterConnection(clusterWriter,
-                pooledClusterConnectionProvider, codec, getDefaultTimeout());
+                pooledClusterConnectionProvider, codec, getFirstUri().getTimeout());
 
         connection.setReadFrom(ReadFrom.UPSTREAM);
         connection.setPartitions(partitions);
@@ -755,7 +759,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 clusterWriter, codec, endpoint.getUpstreamListener(), topologyRefreshScheduler);
 
         StatefulRedisClusterPubSubConnectionImpl<K, V> connection = new StatefulRedisClusterPubSubConnectionImpl<>(endpoint,
-                pooledClusterConnectionProvider, clusterWriter, codec, getDefaultTimeout());
+                pooledClusterConnectionProvider, clusterWriter, codec, getFirstUri().getTimeout());
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
         connection.setPartitions(partitions);

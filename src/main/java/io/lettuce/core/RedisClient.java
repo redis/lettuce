@@ -333,7 +333,7 @@ public class RedisClient extends AbstractRedisClient {
      * @return A new stateful pub/sub connection
      */
     public StatefulRedisPubSubConnection<String, String> connectPubSub() {
-        return getConnection(connectPubSubAsync(newStringStringCodec(), redisURI, getDefaultTimeout()));
+        return getConnection(connectPubSubAsync(newStringStringCodec(), this.redisURI, getDefaultTimeout()));
     }
 
     /**
@@ -360,7 +360,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> StatefulRedisPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
         checkForRedisURI();
-        return getConnection(connectPubSubAsync(codec, redisURI, getDefaultTimeout()));
+        return getConnection(connectPubSubAsync(codec, this.redisURI, getDefaultTimeout()));
     }
 
     /**
@@ -447,7 +447,7 @@ public class RedisClient extends AbstractRedisClient {
      */
     public <K, V> StatefulRedisSentinelConnection<K, V> connectSentinel(RedisCodec<K, V> codec) {
         checkForRedisURI();
-        return getConnection(connectSentinelAsync(codec, redisURI, getDefaultTimeout()));
+        return getConnection(connectSentinelAsync(codec, this.redisURI, getDefaultTimeout()));
     }
 
     /**
@@ -738,7 +738,7 @@ public class RedisClient extends AbstractRedisClient {
 
     private Mono<SocketAddress> lookupRedis(RedisURI sentinelUri) {
 
-        Duration timeout = getDefaultTimeout();
+        Duration timeout = sentinelUri.getTimeout();
 
         return Mono.usingWhen(
                 Mono.fromCompletionStage(() -> connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout)), c -> {

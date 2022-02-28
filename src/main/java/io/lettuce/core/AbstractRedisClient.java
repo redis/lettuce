@@ -136,7 +136,9 @@ public abstract class AbstractRedisClient {
      * Returns the default {@link Duration timeout} for commands.
      *
      * @return the default {@link Duration timeout} for commands.
+     * @deprecated since 6.2, use {@link RedisURI#getTimeout()} to control timeouts.
      */
+    @Deprecated
     public Duration getDefaultTimeout() {
         return defaultTimeout;
     }
@@ -147,7 +149,9 @@ public abstract class AbstractRedisClient {
      *
      * @param timeout default connection timeout, must not be {@code null}.
      * @since 5.0
+     * @deprecated since 6.2, use {@link RedisURI#getTimeout()} to control timeouts.
      */
+    @Deprecated
     public void setDefaultTimeout(Duration timeout) {
 
         LettuceAssert.notNull(timeout, "Timeout duration must not be null");
@@ -162,7 +166,7 @@ public abstract class AbstractRedisClient {
      *
      * @param timeout Default connection timeout.
      * @param unit Unit of time for the timeout.
-     * @deprecated since 5.0, use {@link #setDefaultTimeout(Duration)}.
+     * @deprecated since 6.2, use {@link RedisURI#getTimeout()} to control timeouts.
      */
     @Deprecated
     public void setDefaultTimeout(long timeout, TimeUnit unit) {
