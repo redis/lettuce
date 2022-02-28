@@ -43,6 +43,10 @@ public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> im
 
     @Override
     public void set(ByteBuffer bytes) {
+        if (!initialized) {
+            multi(1);
+        }
+
         subscriber.onNext(output, bytes == null ? null : decodeAscii(bytes));
     }
 

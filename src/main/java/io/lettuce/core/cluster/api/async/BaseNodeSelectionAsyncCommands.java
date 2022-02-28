@@ -17,6 +17,7 @@ package io.lettuce.core.cluster.api.async;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandArgs;
@@ -120,8 +121,22 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
      * @param output the command output, must not be {@code null}.
      * @param <T> response type.
      * @return the command response.
+     * @deprecated since 6.2, as {@link CommandOutput} is being reused for all responses of all nodes and that leads to unwanted
+     *             behavior. Use {@link #dispatch(ProtocolKeyword, Supplier)} instead.
      */
+    @Deprecated
     <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@code null}.
+     * @param outputSupplier the command output supplier, must not be {@code null}.
+     * @param <T> response type.
+     * @return the command response.
+     * @since 6.2
+     */
+    <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, Supplier<CommandOutput<K, V, T>> outputSupplier);
 
     /**
      * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
@@ -131,6 +146,22 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
      * @param args the command arguments, must not be {@code null}.
      * @param <T> response type.
      * @return the command response.
+     * @deprecated since 6.2, as {@link CommandOutput} is being reused for all responses of all nodes and that leads to unwanted
+     *             behavior. Use {@link #dispatch(ProtocolKeyword, Supplier, CommandArgs)} instead.
      */
+    @Deprecated
     <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
+
+    /**
+     * Dispatch a command to the Redis Server. Please note the command output type must fit to the command response.
+     *
+     * @param type the command, must not be {@code null}.
+     * @param outputSupplier the command output supplier, must not be {@code null}.
+     * @param args the command arguments, must not be {@code null}.
+     * @param <T> response type.
+     * @return the command response.
+     * @since 6.2
+     */
+    <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, Supplier<CommandOutput<K, V, T>> outputSupplier,
+            CommandArgs<K, V> args);
 }

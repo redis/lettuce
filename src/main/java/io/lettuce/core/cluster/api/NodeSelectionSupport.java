@@ -24,7 +24,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
  * execution of commands on the selected cluster nodes.
  *
  * @param <API> API type.
- * @param <CMD> Command command interface type to invoke multi-node operations.
+ * @param <CMD> Command interface type to invoke multi-node operations.
  * @author Mark Paluch
  * @since 4.0
  */

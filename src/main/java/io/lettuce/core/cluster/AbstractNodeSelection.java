@@ -60,7 +60,7 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
         return nodes().get(index);
     }
 
-    // This method is never called, the value is supplied by AOP magic.
+    // This method is never called, the value is supplied by AOP magic, see NodeSelectionInvocationHandler
     @Override
     public CMD commands() {
         return null;
@@ -72,7 +72,6 @@ abstract class AbstractNodeSelection<API, CMD, K, V> implements NodeSelectionSup
     }
 
     /**
-     *
      * @return {@link Map} between a {@link RedisClusterNode} to its actual {@link StatefulRedisConnection}.
      */
     protected Map<RedisClusterNode, CompletableFuture<? extends StatefulRedisConnection<K, V>>> statefulMap() {

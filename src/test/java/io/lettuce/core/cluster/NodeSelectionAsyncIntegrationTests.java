@@ -15,15 +15,20 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.ScriptOutputType.STATUS;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.lettuce.core.ScriptOutputType.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -39,10 +44,14 @@ import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceSets;
+import io.lettuce.core.output.StringListOutput;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.Delay;
-import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 
 /**
@@ -186,6 +195,36 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         CompletionStage<String> completionStage = ping.get(onlyMe.node(0));
 
         assertThat(TestFutures.getOrTimeout(completionStage)).isEqualTo("PONG");
+    }
+
+    @Test
+    void testDispatch() {
+
+        AsyncNodeSelection<String, String> all = commands.all();
+
+        AsyncExecutions<List<String>> dispatched = all.commands().dispatch(CommandType.PING,
+                () -> new StringListOutput<>(StringCodec.UTF8));
+
+        List<List<String>> joined = dispatched.thenCollect(Collectors.toList()).toCompletableFuture().join();
+
+        for (List<String> strings : joined) {
+            assertThat(strings).hasSize(1).contains("PONG");
+        }
+    }
+
+    @Test
+    void testDispatchWithArgs() {
+
+        AsyncNodeSelection<String, String> all = commands.all();
+
+        AsyncExecutions<List<String>> dispatched = all.commands().dispatch(CommandType.ECHO,
+                () -> new StringListOutput<>(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).add("HELLO"));
+
+        List<List<String>> joined = dispatched.thenCollect(Collectors.toList()).toCompletableFuture().join();
+
+        for (List<String> strings : joined) {
+            assertThat(strings).hasSize(1).contains("HELLO");
+        }
     }
 
     @Test

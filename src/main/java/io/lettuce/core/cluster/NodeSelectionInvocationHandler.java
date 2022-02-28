@@ -18,9 +18,19 @@ package io.lettuce.core.cluster;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
@@ -32,9 +42,10 @@ import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.ExceptionFactory;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.TimeoutProvider;
+import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
@@ -127,8 +138,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
                     try {
 
-                        Object resultValue = targetMethod
-                                .invoke(executionModel == ExecutionModel.REACTIVE ? it.reactive() : it.async(), args);
+                        Object resultValue = doInvoke(args, targetMethod, it);
 
                         if (timeoutProvider != null && resultValue instanceof RedisCommand && timeout.get() == 0) {
                             timeout.set(timeoutProvider.getTimeoutNs((RedisCommand) resultValue));
@@ -159,6 +169,22 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
         } catch (InvocationTargetException e) {
             throw e.getTargetException();
         }
+    }
+
+    private Object doInvoke(Object[] args, Method targetMethod, StatefulRedisConnection<?, ?> it)
+            throws IllegalAccessException, InvocationTargetException {
+
+        Object[] argsToUse = args;
+
+        // dispatch method bridge with a Supplier
+        if (targetMethod.getName().equals("dispatch") && args.length > 1 && args[1] instanceof Supplier) {
+
+            argsToUse = new Object[args.length];
+            System.arraycopy(args, 0, argsToUse, 0, args.length);
+            argsToUse[1] = ((Supplier) args[1]).get();
+        }
+
+        return targetMethod.invoke(executionModel == ExecutionModel.REACTIVE ? it.reactive() : it.async(), argsToUse);
     }
 
     @SuppressWarnings("unchecked")
@@ -276,9 +302,15 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
             return result;
         }
 
+        Class<?>[] parameterTypes = method.getParameterTypes();
+
+        if (method.getName().equals("dispatch")) { // re-route lookup with Supplier to a method accepting CommandOutput
+            parameterTypes[1] = CommandOutput.class;
+        }
+
         for (Method typeMethod : type.getMethods()) {
             if (!typeMethod.getName().equals(method.getName())
-                    || !Arrays.equals(typeMethod.getParameterTypes(), method.getParameterTypes())) {
+                    || !Arrays.equals(typeMethod.getParameterTypes(), parameterTypes)) {
                 continue;
             }
 
