@@ -23,7 +23,7 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
- * Options for command timeouts. This options configure how and whether commands time out once they were dispatched. Command
+ * Options for command timeouts. These options configure how and whether commands time out once they were dispatched. Command
  * timeout begins:
  * <ul>
  * <li>When the command is sent successfully to the transport</li>
