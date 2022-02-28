@@ -20,8 +20,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.internal.ExceptionFactory;
+import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -43,6 +44,8 @@ public class RedisHandshakeHandler extends ChannelInboundHandlerAdapter {
 
     private final CompletableFuture<Void> handshakeFuture = new CompletableFuture<>();
 
+    private volatile boolean timedOut = false;
+
     public RedisHandshakeHandler(ConnectionInitializer connectionInitializer, ClientResources clientResources,
             Duration initializeTimeout) {
         this.connectionInitializer = connectionInitializer;
@@ -55,11 +58,13 @@ public class RedisHandshakeHandler extends ChannelInboundHandlerAdapter {
 
         Runnable timeoutGuard = () -> {
 
+            timedOut = true;
             if (handshakeFuture.isDone()) {
                 return;
             }
 
-            fail(ctx, ExceptionFactory.createTimeoutException("Connection initialization timed out", initializeTimeout));
+            fail(ctx, new RedisCommandTimeoutException(
+                    "Connection initialization timed out after " + ExceptionFactory.formatTimeout(initializeTimeout)));
         };
 
         Timeout timeoutHandle = clientResources.timer().newTimeout(t -> {
@@ -82,7 +87,7 @@ public class RedisHandshakeHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 
-        if (!handshakeFuture.isDone()) {
+        if (shouldFail()) {
             fail(ctx, new RedisConnectionException("Connection closed prematurely"));
         }
 
@@ -97,7 +102,10 @@ public class RedisHandshakeHandler extends ChannelInboundHandlerAdapter {
         future.whenComplete((ignore, throwable) -> {
 
             if (throwable != null) {
-                fail(ctx, throwable);
+
+                if (shouldFail()) {
+                    fail(ctx, throwable);
+                }
             } else {
                 ctx.fireChannelActive();
                 succeed();
@@ -108,7 +116,7 @@ public class RedisHandshakeHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 
-        if (!handshakeFuture.isDone()) {
+        if (shouldFail()) {
             fail(ctx, cause);
         }
 
@@ -137,6 +145,10 @@ public class RedisHandshakeHandler extends ChannelInboundHandlerAdapter {
      */
     public CompletionStage<Void> channelInitialized() {
         return handshakeFuture;
+    }
+
+    private boolean shouldFail() {
+        return !handshakeFuture.isDone() && !timedOut;
     }
 
 }

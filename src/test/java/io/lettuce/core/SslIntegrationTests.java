@@ -30,6 +30,7 @@ import java.util.stream.IntStream;
 
 import javax.inject.Inject;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,6 +39,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.masterslave.MasterSlave;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import io.lettuce.test.CanConnect;
 import io.lettuce.test.Delay;
@@ -63,6 +65,11 @@ class SslIntegrationTests extends TestSupport {
 
     private static final RedisURI URI_VERIFY = sslURIBuilder(0) //
             .withVerifyPeer(true) //
+            .build();
+
+    private static final RedisURI URI_VERIFY_IMPOSSIBLE_TIMEOUT = sslURIBuilder(0) //
+            .withVerifyPeer(true) //
+            .withTimeout(Duration.ZERO)
             .build();
 
     private static final RedisURI URI_NO_VERIFY = sslURIBuilder(1) //
@@ -139,8 +146,26 @@ class SslIntegrationTests extends TestSupport {
                 .trustManager(CA_CERT_FILE) //
                 .build();
         setOptions(sslOptions);
-
         verifyConnection(URI_VERIFY);
+    }
+
+    @Test
+    void standaloneWithPemCertAndImpossibleTimeout() {
+
+        Assertions.setMaxStackTraceElementsDisplayed(30);
+        SslOptions sslOptions = SslOptions.builder() //
+                .trustManager(CA_CERT_FILE) //
+                .build();
+        setOptions(sslOptions);
+        redisClient.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).sslOptions(sslOptions).build());
+
+        try {
+            redisClient.connect(URI_VERIFY_IMPOSSIBLE_TIMEOUT).close();
+        } catch (Exception e) {
+
+            assertThat(e).isInstanceOf(RedisConnectionException.class)
+                    .hasRootCauseInstanceOf(RedisCommandTimeoutException.class);
+        }
     }
 
     @Test

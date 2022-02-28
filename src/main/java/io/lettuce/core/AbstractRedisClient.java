@@ -27,7 +27,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -462,17 +461,7 @@ public abstract class AbstractRedisClient {
 
                 logger.debug("Connecting to Redis at {}, initialization: {}", redisAddress, throwable);
                 connectionBuilder.endpoint().initialState();
-                Throwable failure;
-
-                if (throwable instanceof RedisConnectionException) {
-                    failure = throwable;
-                } else if (throwable instanceof TimeoutException) {
-                    failure = new RedisConnectionException(
-                            "Could not initialize channel within " + connectionBuilder.getTimeout(), throwable);
-                } else {
-                    failure = throwable;
-                }
-                channelReadyFuture.completeExceptionally(failure);
+                channelReadyFuture.completeExceptionally(throwable);
             });
         });
     }
