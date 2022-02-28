@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
-import io.lettuce.core.ShutdownArgs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -40,6 +39,7 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.core.ShutdownArgs;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
@@ -70,6 +70,7 @@ import io.lettuce.test.settings.TestSettings;
 public class ServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -518,7 +519,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @Disabled("Run me manually")  // Redis 7.0
+    @Disabled("Run me manually") // Redis 7.0
     void shutdown() {
         redis.shutdown(new ShutdownArgs().save(true).now());
     }
@@ -529,4 +530,5 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
         return !info.contains("aof_rewrite_in_progress:1") && !info.contains("rdb_bgsave_in_progress:1");
     }
+
 }

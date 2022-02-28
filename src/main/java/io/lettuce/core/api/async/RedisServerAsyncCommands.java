@@ -391,6 +391,7 @@ public interface RedisServerAsyncCommands<K, V> {
      * Synchronously save the dataset to disk and then shutdown the server.
      *
      * @param args
+     * @since 6.2
      */
     void shutdown(ShutdownArgs args);
 

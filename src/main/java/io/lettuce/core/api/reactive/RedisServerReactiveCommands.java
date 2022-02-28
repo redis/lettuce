@@ -18,11 +18,11 @@ package io.lettuce.core.api.reactive;
 import java.util.Date;
 import java.util.Map;
 
-import io.lettuce.core.ShutdownArgs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
+import io.lettuce.core.ShutdownArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
@@ -391,6 +391,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * Synchronously save the dataset to disk and then shutdown the server.
      *
      * @param args
+     * @since 6.2
      */
     Mono<Void> shutdown(ShutdownArgs args);
 

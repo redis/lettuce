@@ -19,13 +19,13 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * Argument list builder for the Redis <a href="http://redis.io/commands/shutdown">SHUTDOWN</a> command. Static import the methods from
- * {@link Builder} and call the methods: {@code now(…)} .
+ * Argument list builder for the Redis <a href="https://redis.io/commands/shutdown">SHUTDOWN</a> command. Static import the
+ * methods from {@link Builder} and call the methods: {@code now(…)} .
  * <p>
  * {@link ShutdownArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author dengliming
- * @since 7.0
+ * @since 6.2
  */
 public class ShutdownArgs implements CompositeArgument {
 
@@ -112,7 +112,7 @@ public class ShutdownArgs implements CompositeArgument {
     }
 
     /**
-     * Ignores any errors that would normally prevent the server from exiting. For details, see the following section.
+     * Ignores any errors that would normally prevent the server from exiting.
      *
      * @return {@code this}
      */
@@ -146,7 +146,7 @@ public class ShutdownArgs implements CompositeArgument {
             args.add("NOW");
         }
         if (force) {
-            args.add("FORCE");
+            args.add(CommandKeyword.FORCE);
         }
         if (abort) {
             args.add("ABORT");
