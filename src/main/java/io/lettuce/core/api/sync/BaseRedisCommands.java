@@ -150,12 +150,19 @@ public interface BaseRedisCommands<K, V> {
 
     /**
      * @return {@code true} if the connection is open (connected and not closed).
+     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#isOpen()} method on the
+     *             connection interface. To be removed with Lettuce 7.0.
      */
+    @Deprecated
     boolean isOpen();
 
     /**
      * Reset the command state. Queued commands will be canceled and the internal state will be reset. This is useful when the
      * internal state machine gets out of sync with the connection.
+     *
+     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#reset()} method on the
+     *             connection interface. To be removed with Lettuce 7.0.
      */
+    @Deprecated
     void reset();
 }

@@ -66,7 +66,9 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
 
     /**
      * @return the underlying connection.
+     * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
      */
+    @Deprecated
     StatefulRedisClusterConnection<K, V> getStatefulConnection();
 
     /**

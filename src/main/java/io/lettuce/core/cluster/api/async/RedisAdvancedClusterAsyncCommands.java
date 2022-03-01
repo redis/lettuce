@@ -69,7 +69,9 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
 
     /**
      * @return the underlying connection.
+     * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
      */
+    @Deprecated
     StatefulRedisClusterConnection<K, V> getStatefulConnection();
 
     /**

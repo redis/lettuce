@@ -43,7 +43,10 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *
      * @param timeout the timeout value
      * @since 5.0
+     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#setTimeout(Duration)} method
+     *             on the connection interface. To be removed with Lettuce 7.0.
      */
+    @Deprecated
     void setTimeout(Duration timeout);
 
     /**

@@ -34,7 +34,9 @@ public interface RedisClusterPubSubReactiveCommands<K, V> extends RedisPubSubRea
 
     /**
      * @return the underlying connection.
+     * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
      */
+    @Deprecated
     StatefulRedisClusterPubSubConnection<K, V> getStatefulConnection();
 
     /**
