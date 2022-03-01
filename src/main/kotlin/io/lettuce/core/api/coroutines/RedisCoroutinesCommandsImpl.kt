@@ -37,6 +37,7 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
 ) : RedisCoroutinesCommands<K, V>, RedisClusterCoroutinesCommands<K, V>,
     BaseRedisCoroutinesCommands<K, V> by BaseRedisCoroutinesCommandsImpl(ops),
     RedisAclCoroutinesCommands<K, V> by RedisAclCoroutinesCommandsImpl(ops),
+    RedisConnectionCoroutinesCommands<K, V> by RedisConnectionCoroutinesCommandsImpl(ops),
     RedisGeoCoroutinesCommands<K, V> by RedisGeoCoroutinesCommandsImpl(ops),
     RedisHashCoroutinesCommands<K, V> by RedisHashCoroutinesCommandsImpl(ops),
     RedisHLLCoroutinesCommands<K, V> by RedisHLLCoroutinesCommandsImpl(ops),
@@ -49,24 +50,6 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
     RedisStreamCoroutinesCommands<K, V> by RedisStreamCoroutinesCommandsImpl(ops),
     RedisStringCoroutinesCommands<K, V> by RedisStringCoroutinesCommandsImpl(ops),
     RedisTransactionalCoroutinesCommands<K, V> by RedisTransactionalCoroutinesCommandsImpl(ops) {
-
-    /**
-     * Authenticate to the server.
-     *
-     * @param password the password
-     * @return String simple-string-reply
-     */
-    override suspend fun auth(password: CharSequence): String? = ops.auth(password).awaitFirstOrNull()
-
-    /**
-     * Authenticate to the server with username and password. Requires Redis 6 or newer.
-     *
-     * @param username the username
-     * @param password the password
-     * @return String simple-string-reply
-     * @since 6.0
-     */
-    override suspend fun auth(username: String, password: CharSequence): String? = ops.auth(username, password).awaitFirstOrNull()
 
     /**
      * Change the selected database for the current connection.

@@ -72,52 +72,6 @@ public interface BaseRedisCommands<K, V> {
     Long pubsubNumpat();
 
     /**
-     * Echo the given string.
-     *
-     * @param msg the message type: value.
-     * @return V bulk-string-reply.
-     */
-    V echo(V msg);
-
-    /**
-     * Return the role of the instance in the context of replication.
-     *
-     * @return List&lt;Object&gt; array-reply where the first element is one of master, slave, sentinel and the additional
-     *         elements are role-specific.
-     */
-    List<Object> role();
-
-    /**
-     * Ping the server.
-     *
-     * @return String simple-string-reply.
-     */
-    String ping();
-
-    /**
-     * Switch connection to Read-Only mode when connecting to a cluster.
-     *
-     * @return String simple-string-reply.
-     */
-    String readOnly();
-
-    /**
-     * Switch connection to Read-Write mode (default) when connecting to a cluster.
-     *
-     * @return String simple-string-reply.
-     */
-    String readWrite();
-
-    /**
-     * Instructs Redis to disconnect the connection. Note that if auto-reconnect is enabled then Lettuce will auto-reconnect if
-     * the connection was disconnected. Use {@link io.lettuce.core.api.StatefulConnection#close} to close connections and
-     * release resources.
-     *
-     * @return String simple-string-reply always OK.
-     */
-    String quit();
-
-    /**
      * Wait for replication.
      *
      * @param replicas minimum number of replicas.

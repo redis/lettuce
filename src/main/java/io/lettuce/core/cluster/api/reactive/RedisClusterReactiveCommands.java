@@ -33,11 +33,11 @@ import io.lettuce.core.api.reactive.*;
  * @since 5.0
  */
 public interface RedisClusterReactiveCommands<K, V>
-        extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
-        RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
-        RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
-        RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
-        RedisStringReactiveCommands<K, V> {
+        extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>, RedisConnectionReactiveCommands<K, V>,
+        RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
+        RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>,
+        RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
+        RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V> {
 
     /**
      * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to
@@ -46,24 +46,6 @@ public interface RedisClusterReactiveCommands<K, V>
      * @return String simple-string-reply
      */
     Mono<String> asking();
-
-    /**
-     * Authenticate to the server.
-     *
-     * @param password the password
-     * @return String simple-string-reply
-     */
-    Mono<String> auth(CharSequence password);
-
-    /**
-     * Authenticate to the server with username and password. Requires Redis 6 or newer.
-     *
-     * @param username the username
-     * @param password the password
-     * @return String simple-string-reply
-     * @since 6.0
-     */
-    Mono<String> auth(String username, CharSequence password);
 
     /**
      * Adds slots to the cluster node. The current node will become the master for the specified slots.

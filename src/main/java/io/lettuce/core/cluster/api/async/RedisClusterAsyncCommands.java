@@ -32,8 +32,9 @@ import io.lettuce.core.api.async.*;
  * @author dengliming
  * @since 4.0
  */
-public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K,V>, RedisGeoAsyncCommands<K, V>,
-        RedisHashAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
+public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K, V>,
+        RedisConnectionAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
+        RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
         RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V> {
 

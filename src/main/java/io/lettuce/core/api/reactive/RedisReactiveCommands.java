@@ -26,29 +26,12 @@ import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
  * @author Mark Paluch
  * @since 5.0
  */
-public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>,
+public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K, V>, RedisAclReactiveCommands<K, V>,
+        RedisClusterReactiveCommands<K, V>, RedisConnectionReactiveCommands<K, V>,
         RedisGeoReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
         RedisKeyReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>,
         RedisServerReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
         RedisStreamReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V> {
-
-    /**
-     * Authenticate to the server.
-     *
-     * @param password the password
-     * @return String simple-string-reply
-     */
-    Mono<String> auth(CharSequence password);
-
-    /**
-     * Authenticate to the server with username and password. Requires Redis 6 or newer.
-     *
-     * @param username the username
-     * @param password the password
-     * @return String simple-string-reply
-     * @since 6.0
-     */
-    Mono<String> auth(String username, CharSequence password);
 
     /**
      * Change the selected database for the current connection.

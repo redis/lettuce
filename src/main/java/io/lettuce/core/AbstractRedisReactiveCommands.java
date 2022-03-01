@@ -66,7 +66,8 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
  * @author Andrey Shlykov
  * @since 4.0
  */
-public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
+public abstract class AbstractRedisReactiveCommands<K, V>
+        implements RedisAclReactiveCommands<K, V>, RedisConnectionReactiveCommands<K, V>,
         RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
         RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
         RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,

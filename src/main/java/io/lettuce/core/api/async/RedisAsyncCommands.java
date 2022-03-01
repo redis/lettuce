@@ -33,24 +33,6 @@ public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, 
         RedisStringAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V> {
 
     /**
-     * Authenticate to the server.
-     *
-     * @param password the password
-     * @return String simple-string-reply
-     */
-    RedisFuture<String> auth(CharSequence password);
-
-    /**
-     * Authenticate to the server with username and password. Requires Redis 6 or newer.
-     *
-     * @param username the username
-     * @param password the password
-     * @return String simple-string-reply
-     * @since 6.0
-     */
-    RedisFuture<String> auth(String username, CharSequence password);
-
-    /**
      * Change the selected database for the current connection.
      *
      * @param db the database number

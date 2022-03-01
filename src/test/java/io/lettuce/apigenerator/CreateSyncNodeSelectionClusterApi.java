@@ -44,7 +44,9 @@ import io.lettuce.core.internal.LettuceSets;
 public class CreateSyncNodeSelectionClusterApi {
 
     private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands", "RedisTransactionalCommands");
-    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
+
+    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("auth", "shutdown", "debugOom",
+            "debugSegfault", "digest",
             "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch", "setAutoFlushCommands", "flushCommands");
 
     /**

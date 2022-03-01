@@ -29,12 +29,10 @@ import io.lettuce.core.api.sync.*;
  * @author dengliming
  * @since 4.0
  */
-public interface RedisClusterCommands<K, V>
-        extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>, RedisGeoCommands<K, V>,
-        RedisHashCommands<K, V>, RedisHLLCommands<K, V>, RedisKeyCommands<K, V>,
-        RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
-        RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>,
-        RedisStringCommands<K, V> {
+public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>,
+        RedisConnectionCommands<K, V>, RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>,
+        RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
+        RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V> {
 
     /**
      * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to
@@ -43,24 +41,6 @@ public interface RedisClusterCommands<K, V>
      * @return String simple-string-reply
      */
     String asking();
-
-    /**
-     * Authenticate to the server.
-     *
-     * @param password the password
-     * @return String simple-string-reply
-     */
-    String auth(CharSequence password);
-
-    /**
-     * Authenticate to the server with username and password. Requires Redis 6 or newer.
-     *
-     * @param username the username
-     * @param password the password
-     * @return String simple-string-reply
-     * @since 6.0
-     */
-    String auth(String username, CharSequence password);
 
     /**
      * Adds slots to the cluster node. The current node will become the master for the specified slots.

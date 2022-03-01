@@ -58,7 +58,8 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Andrey Shlykov
  */
 @SuppressWarnings("unchecked")
-public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K,V>,
+public abstract class AbstractRedisAsyncCommands<K, V>
+        implements RedisAclAsyncCommands<K, V>, RedisConnectionAsyncCommands<K, V>,
         RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
         RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>,
         RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>,

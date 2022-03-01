@@ -25,6 +25,7 @@ class Constants {
     public static final String[] TEMPLATE_NAMES = {
             "BaseRedisCommands",
             "RedisAclCommands",
+            "RedisConnectionCommands",
             "RedisGeoCommands",
             "RedisHashCommands",
             "RedisHLLCommands",

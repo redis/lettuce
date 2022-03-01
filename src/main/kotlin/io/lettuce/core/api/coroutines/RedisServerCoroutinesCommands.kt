@@ -16,7 +16,9 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.*
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.FlushMode
+import io.lettuce.core.ShutdownArgs
 import io.lettuce.core.protocol.CommandType
 import java.util.*
 
@@ -45,99 +47,6 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      */
     suspend fun bgsave(): String?
-
-    /**
-     * Control tracking of keys in the context of server-assisted client cache invalidation.
-     *
-     * @param enabled @code true} to enable key tracking.
-     * @return String simple-string-reply `OK`.
-     * @since 6.0
-     */
-    suspend fun clientCaching(enabled: Boolean): String?
-
-    /**
-     * Get the current connection name.
-     *
-     * @return K bulk-string-reply The connection name, or a null bulk reply if no name is set.
-     */
-    suspend fun clientGetname(): K?
-
-    /**
-     * Returns the client ID we are redirecting our tracking notifications to.
-     *
-     * @return the ID of the client we are redirecting the notifications to. The command returns -1 if client tracking is not
-     *         enabled, or 0 if client tracking is enabled but we are not redirecting the notifications to any client.
-     * @since 6.0
-     */
-    suspend fun clientGetredir(): Long?
-
-    /**
-     * Get the id of the current connection.
-     *
-     * @return Long The command just returns the ID of the current connection.
-     * @since 5.3
-     */
-    suspend fun clientId(): Long?
-
-    /**
-     * Kill the connection of a client identified by ip:port.
-     *
-     * @param addr ip:port.
-     * @return String simple-string-reply `OK` if the connection exists and has been closed.
-     */
-    suspend fun clientKill(addr: String): String?
-
-    /**
-     * Kill connections of clients which are filtered by `killArgs`.
-     *
-     * @param killArgs args for the kill operation.
-     * @return Long integer-reply number of killed connections.
-     */
-    suspend fun clientKill(killArgs: KillArgs): Long?
-
-    /**
-     * Get the list of client connections.
-     *
-     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
-     *         each line is composed of a succession of property=value fields separated by a space character.
-     */
-    suspend fun clientList(): String?
-
-    /**
-     * Stop processing commands from clients for some time.
-     *
-     * @param timeout the timeout value in milliseconds.
-     * @return String simple-string-reply The command returns OK or an error if the timeout is invalid.
-     */
-    suspend fun clientPause(timeout: Long): String?
-
-    /**
-     * Set the current connection name.
-     *
-     * @param name the client name.
-     * @return simple-string-reply `OK` if the connection name was successfully set.
-     */
-    suspend fun clientSetname(name: K): String?
-
-    /**
-     * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
-     * are either available when using the RESP3 protocol or through Pub/Sub notification when using RESP2.
-     *
-     * @param args for the CLIENT TRACKING operation.
-     * @return String simple-string-reply `OK`.
-     * @since 6.0
-     */
-    suspend fun clientTracking(args: TrackingArgs): String?
-
-    /**
-     * Unblock the specified blocked client.
-     *
-     * @param id the client id.
-     * @param type unblock type.
-     * @return Long integer-reply number of unblocked connections.
-     * @since 5.1
-     */
-    suspend fun clientUnblock(id: Long, type: UnblockType): Long?
 
     /**
      * Returns an array reply of details about all Redis commands.
@@ -394,17 +303,18 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
 
 	/**
 	 * Synchronously save the dataset to disk and then shut down the server.
-     *
-     * @param save @code true} force save operation.
-     */
-    suspend fun shutdown(save: Boolean)
+	 *
+	 * @param save @code true} force save operation.
+	 */
+	suspend fun shutdown(save: Boolean)
 
-    /**
-     * Synchronously save the dataset to disk and then shutdown the server.
-     *
-     * @param args
-     */
-    suspend fun shutdown(args: ShutdownArgs)
+	/**
+	 * Synchronously save the dataset to disk and then shutdown the server.
+	 *
+	 * @param args
+	 * @since 6.2
+	 */
+	suspend fun shutdown(args: ShutdownArgs)
 
     /**
 	 * Make the server a replica of another instance.
@@ -414,6 +324,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
 	 * @return String simple-string-reply.
 	 * @deprecated since 6.1.7, use [replicaof(String, Integer)] instead.
      */
+	@Deprecated(message = "since 6.1.7", replaceWith = ReplaceWith("replicaof(host, port)"))
     suspend fun slaveof(host: String, port: Int): String?
 
     /**
@@ -422,6 +333,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
 	 * @return String simple-string-reply.
 	 * @deprecated since 6.1.7, use [replicaofNoOne] instead.
      */
+	@Deprecated(message = "since 6.1.7", replaceWith = ReplaceWith("replicaofNoOne()"))
     suspend fun slaveofNoOne(): String?
 
     /**
@@ -431,15 +343,15 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      */
     suspend fun slowlogGet(): List<Any>
 
-    /**
-     * Read the slow log.
-     *
-     * @param count the count.
-     * @return List<Any> deeply nested multi bulk replies.
-     */
-    suspend fun slowlogGet(count: Int): List<Any>
+	/**
+	 * Read the slow log.
+	 *
+	 * @param count the count.
+	 * @return List<Any> deeply nested multi bulk replies.
+	 */
+	suspend fun slowlogGet(count: Int): List<Any>
 
-    /**
+	/**
      * Obtaining the current length of the slow log.
      *
      * @return Long length of the slow log.

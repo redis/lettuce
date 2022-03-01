@@ -74,52 +74,6 @@ interface BaseRedisCoroutinesCommands<K : Any, V : Any> {
     suspend fun pubsubNumpat(): Long
 
     /**
-     * Echo the given string.
-     *
-     * @param msg the message type: value.
-     * @return V bulk-string-reply.
-     */
-    suspend fun echo(msg: V): V
-
-    /**
-     * Return the role of the instance in the context of replication.
-     *
-     * @return List<Any> array-reply where the first element is one of master, slave, sentinel and the additional
-     *         elements are role-specific.
-     */
-    suspend fun role(): List<Any>
-
-    /**
-     * Ping the server.
-     *
-     * @return String simple-string-reply.
-     */
-    suspend fun ping(): String
-
-    /**
-     * Switch connection to Read-Only mode when connecting to a cluster.
-     *
-     * @return String simple-string-reply.
-     */
-    suspend fun readOnly(): String
-
-    /**
-     * Switch connection to Read-Write mode (default) when connecting to a cluster.
-     *
-     * @return String simple-string-reply.
-     */
-    suspend fun readWrite(): String
-
-    /**
-     * Instructs Redis to disconnect the connection. Note that if auto-reconnect is enabled then Lettuce will auto-reconnect if
-     * the connection was disconnected. Use [io.lettuce.core.api.StatefulConnection#close] to close connections and
-     * release resources.
-     *
-     * @return String simple-string-reply always OK.
-     */
-    suspend fun quit(): String?
-
-    /**
      * Wait for replication.
      *
      * @param replicas minimum number of replicas.

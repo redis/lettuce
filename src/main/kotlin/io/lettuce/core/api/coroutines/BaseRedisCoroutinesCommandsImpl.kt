@@ -34,6 +34,7 @@ import kotlinx.coroutines.reactive.awaitSingle
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mikhael Sokolov
+ * @author Mark Paluch
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
@@ -48,18 +49,6 @@ internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun pubsubNumsub(vararg channels: K): Map<K, Long> = ops.pubsubNumsub(*channels).awaitSingle()
 
     override suspend fun pubsubNumpat(): Long = ops.pubsubNumpat().awaitSingle()
-
-    override suspend fun echo(msg: V): V = ops.echo(msg).awaitSingle()
-
-    override suspend fun role(): List<Any> = ops.role().asFlow().toList()
-
-    override suspend fun ping(): String = ops.ping().awaitSingle()
-
-    override suspend fun readOnly(): String = ops.readOnly().awaitSingle()
-
-    override suspend fun readWrite(): String = ops.readWrite().awaitSingle()
-
-    override suspend fun quit(): String? = ops.quit().awaitFirstOrNull()
 
     override suspend fun waitForReplication(replicas: Int, timeout: Long): Long? = ops.waitForReplication(replicas, timeout).awaitFirstOrNull()
 

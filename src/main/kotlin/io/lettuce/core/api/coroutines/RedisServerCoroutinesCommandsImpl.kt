@@ -16,7 +16,9 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.*
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.FlushMode
+import io.lettuce.core.ShutdownArgs
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands
 import io.lettuce.core.protocol.CommandType
 import kotlinx.coroutines.flow.toList
@@ -41,28 +43,6 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun bgrewriteaof(): String? = ops.bgrewriteaof().awaitFirstOrNull()
 
     override suspend fun bgsave(): String? = ops.bgsave().awaitFirstOrNull()
-
-    override suspend fun clientCaching(enabled: Boolean): String? = ops.clientCaching(enabled).awaitFirstOrNull()
-
-    override suspend fun clientGetname(): K? = ops.clientGetname().awaitFirstOrNull()
-
-    override suspend fun clientGetredir(): Long? = ops.clientGetredir().awaitFirstOrNull()
-
-    override suspend fun clientId(): Long? = ops.clientId().awaitFirstOrNull()
-
-    override suspend fun clientKill(addr: String): String? = ops.clientKill(addr).awaitFirstOrNull()
-
-    override suspend fun clientKill(killArgs: KillArgs): Long? = ops.clientKill(killArgs).awaitFirstOrNull()
-
-    override suspend fun clientList(): String? = ops.clientList().awaitFirstOrNull()
-
-    override suspend fun clientPause(timeout: Long): String? = ops.clientPause(timeout).awaitFirstOrNull()
-
-    override suspend fun clientSetname(name: K): String? = ops.clientSetname(name).awaitFirstOrNull()
-
-    override suspend fun clientTracking(args: TrackingArgs): String? = ops.clientTracking(args).awaitFirstOrNull()
-
-    override suspend fun clientUnblock(id: Long, type: UnblockType): Long? = ops.clientUnblock(id, type).awaitFirstOrNull()
 
     override suspend fun command(): List<Any> = ops.command().asFlow().toList()
 

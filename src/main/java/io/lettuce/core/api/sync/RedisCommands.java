@@ -26,28 +26,11 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
  * @author Mark Paluch
  * @since 3.0
  */
-public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>, RedisClusterCommands<K, V>, RedisGeoCommands<K, V>,
-        RedisHashCommands<K, V>, RedisHLLCommands<K, V>, RedisKeyCommands<K, V>, RedisListCommands<K, V>,
-        RedisScriptingCommands<K, V>, RedisServerCommands<K, V>, RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>,
-        RedisStreamCommands<K, V>, RedisStringCommands<K, V>, RedisTransactionalCommands<K, V> {
-
-    /**
-     * Authenticate to the server.
-     *
-     * @param password the password
-     * @return String simple-string-reply
-     */
-    String auth(CharSequence password);
-
-    /**
-     * Authenticate to the server with username and password. Requires Redis 6 or newer.
-     *
-     * @param username the username
-     * @param password the password
-     * @return String simple-string-reply
-     * @since 6.0
-     */
-    String auth(String username, CharSequence password);
+public interface RedisCommands<K, V>
+        extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>, RedisClusterCommands<K, V>, RedisConnectionCommands<K, V>,
+        RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>, RedisKeyCommands<K, V>,
+        RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>, RedisSetCommands<K, V>,
+        RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V>, RedisTransactionalCommands<K, V> {
 
     /**
      * Change the selected database for the current Commands.
