@@ -15,12 +15,9 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.Closeable;
 import java.lang.reflect.Field;
@@ -32,7 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import io.lettuce.core.internal.AsyncCloseable;
+import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.ReflectionTestUtils;
 import io.netty.util.concurrent.ImmediateEventExecutor;

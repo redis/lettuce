@@ -16,7 +16,6 @@
 package io.lettuce.core.pubsub.api.sync;
 
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
 /**
  * Synchronous and thread-safe Redis PubSub API.
@@ -55,10 +54,5 @@ public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
      * @param channels the channels
      */
     void unsubscribe(K... channels);
-
-    /**
-     * @return the underlying connection.
-     */
-    StatefulRedisPubSubConnection<K, V> getStatefulConnection();
 
 }

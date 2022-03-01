@@ -21,8 +21,8 @@ import io.lettuce.core.KillArgs
 import io.lettuce.core.output.CommandOutput
 import io.lettuce.core.protocol.CommandArgs
 import io.lettuce.core.protocol.ProtocolKeyword
-import java.net.SocketAddress
 import kotlinx.coroutines.flow.Flow
+import java.net.SocketAddress
 
 /**
  * Coroutine executed commands for Redis Sentinel.
@@ -203,12 +203,6 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * @since 6.0.2
      */
     fun <T : Any> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): Flow<T>
-
-    /**
-     *
-     * @return @code true} if the connection is open (connected and not closed).
-     */
-    fun isOpen(): Boolean
 
 }
 

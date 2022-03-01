@@ -806,11 +806,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public void flushCommands() {
-        connection.flushCommands();
-    }
-
-    @Override
     public Mono<String> flushall() {
         return createMono(commandBuilder::flushall);
     }
@@ -1172,7 +1167,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         return createMono(() -> commandBuilder.info(section));
     }
 
-    @Override
     public boolean isOpen() {
         return connection.isOpen();
     }
@@ -1493,11 +1487,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public void reset() {
-        getConnection().reset();
-    }
-
-    @Override
     public Mono<String> restore(K key, long ttl, byte[] value) {
         return createMono(() -> commandBuilder.restore(key, value, RestoreArgs.Builder.ttl(ttl)));
     }
@@ -1659,16 +1648,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<V> setGet(K key, V value, SetArgs setArgs) {
         return createMono(() -> commandBuilder.setGet(key, value, setArgs));
-    }
-
-    @Override
-    public void setAutoFlushCommands(boolean autoFlush) {
-        connection.setAutoFlushCommands(autoFlush);
-    }
-
-    @Override
-    public void setTimeout(Duration timeout) {
-        connection.setTimeout(timeout);
     }
 
     @Override

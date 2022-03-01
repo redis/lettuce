@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.dynamic;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -38,15 +38,18 @@ class RedisCommandsAsyncIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     @Inject
     RedisCommandsAsyncIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
+        this.connection = connection;
     }
 
     @Test
     void async() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 

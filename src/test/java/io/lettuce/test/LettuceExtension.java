@@ -23,14 +23,28 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import javax.enterprise.inject.New;
 import javax.inject.Inject;
 
-import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.Extension;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.ParameterContext;
+import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.api.extension.ParameterResolver;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
@@ -103,7 +117,8 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
 
     private final ExtensionContext.Namespace LETTUCE = ExtensionContext.Namespace.create("lettuce.parameters");
 
-    private static final Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
+    private static final Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(Arrays.asList(StatefulConnection.class,
+            StatefulRedisConnection.class,
             StatefulRedisPubSubConnection.class, RedisCommands.class, RedisClient.class, ClientResources.class,
             StatefulRedisClusterConnection.class, RedisClusterClient.class));
 

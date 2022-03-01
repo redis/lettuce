@@ -18,7 +18,12 @@ package biz.paluch.redis.extensibility;
 import java.util.List;
 import java.util.Set;
 
-import io.lettuce.core.*;
+import io.lettuce.core.GeoArgs;
+import io.lettuce.core.GeoCoordinates;
+import io.lettuce.core.GeoWithin;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 
 public class LettuceGeoDemo {
@@ -26,7 +31,8 @@ public class LettuceGeoDemo {
     public static void main(String[] args) {
 
         RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis("localhost", 6379).build());
-        RedisCommands<String, String> redis = redisClient.connect().sync();
+        StatefulRedisConnection<String, String> connection = redisClient.connect();
+        RedisCommands<String, String> redis = connection.sync();
         String key = "my-geo-set";
 
         redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "Office tower", 8.665351, 49.553302,
@@ -59,7 +65,7 @@ public class LettuceGeoDemo {
         GeoCoordinates weinheimGeopos = geopos.get(0);
         System.out.println("Coordinates: " + weinheimGeopos.getX() + "/" + weinheimGeopos.getY());
 
-        redis.getStatefulConnection().close();
+        connection.close();
         redisClient.shutdown();
     }
 }

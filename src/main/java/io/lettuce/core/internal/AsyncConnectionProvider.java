@@ -28,6 +28,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.lettuce.core.api.AsyncCloseable;
+
 /**
  * Non-blocking provider for connection objects. This connection provider is typed with a connection type and connection key
  * type.

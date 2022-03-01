@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.sentinel;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
@@ -37,7 +41,6 @@ import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
-import io.lettuce.test.Wait;
 import io.lettuce.test.settings.TestSettings;
 
 /**
@@ -99,66 +102,25 @@ public class SentinelConnectionIntegrationTests extends TestSupport {
         assertThat(state.get()).isTrue();
     }
 
-    @Test
-    void testStatefulConnection() {
 
-        StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        assertThat(statefulConnection).isSameAs(statefulConnection.async().getStatefulConnection());
-    }
-
-    @Test
-    void testSyncConnection() {
-
-        StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        RedisSentinelCommands<String, String> sync = statefulConnection.sync();
-        assertThat(sync.ping()).isEqualTo("PONG");
-    }
-
-    @Test
-    void testSyncAsyncConversion() {
-
-        StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        assertThat(statefulConnection.sync().getStatefulConnection()).isSameAs(statefulConnection);
-        assertThat(statefulConnection.sync().getStatefulConnection().sync()).isSameAs(statefulConnection.sync());
-    }
-
-    @Test
-    void testSyncClose() {
-
-        StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        statefulConnection.sync().getStatefulConnection().close();
-
-        Wait.untilTrue(() -> !sentinel.isOpen()).waitOrTimeout();
-
-        assertThat(sentinel.isOpen()).isFalse();
-        assertThat(statefulConnection.isOpen()).isFalse();
-    }
-
-    @Test
-    void testAsyncClose() {
-        StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        statefulConnection.async().getStatefulConnection().close();
-
-        Wait.untilTrue(() -> !sentinel.isOpen()).waitOrTimeout();
-
-        assertThat(sentinel.isOpen()).isFalse();
-        assertThat(statefulConnection.isOpen()).isFalse();
-    }
 
     @Test
     void connectToOneNode() {
-        RedisSentinelCommands<String, String> connection = redisClient.connectSentinel(SentinelTestSettings.SENTINEL_URI)
+        StatefulRedisSentinelConnection<String, String> connection = redisClient
+                .connectSentinel(SentinelTestSettings.SENTINEL_URI);
+        RedisSentinelCommands<String, String> sync = connection
                 .sync();
-        assertThat(connection.ping()).isEqualTo("PONG");
-        connection.getStatefulConnection().close();
+        assertThat(sync.ping()).isEqualTo("PONG");
+        connection.close();
     }
 
     @Test
     void connectWithByteCodec() {
-        RedisSentinelCommands<byte[], byte[]> connection = redisClient.connectSentinel(new ByteArrayCodec(),
-                SentinelTestSettings.SENTINEL_URI).sync();
-        assertThat(connection.master(SentinelTestSettings.MASTER_ID.getBytes())).isNotNull();
-        connection.getStatefulConnection().close();
+        StatefulRedisSentinelConnection<byte[], byte[]> connection = redisClient.connectSentinel(new ByteArrayCodec(),
+                SentinelTestSettings.SENTINEL_URI);
+        RedisSentinelCommands<byte[], byte[]> sync = connection.sync();
+        assertThat(sync.master(SentinelTestSettings.MASTER_ID.getBytes())).isNotNull();
+        connection.close();
     }
 
     @Test

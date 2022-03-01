@@ -31,6 +31,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.TestSupport;
+import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
@@ -51,8 +52,11 @@ public class ListCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    private final StatefulConnection<String, String> connection;
+
     @Inject
-    protected ListCommandIntegrationTests(RedisCommands<String, String> redis) {
+    protected ListCommandIntegrationTests(StatefulConnection<String, String> connection, RedisCommands<String, String> redis) {
+        this.connection = connection;
         this.redis = redis;
     }
 
@@ -76,7 +80,7 @@ public class ListCommandIntegrationTests extends TestSupport {
 
     @Test
     void blpopTimeout() {
-        redis.setTimeout(Duration.ofSeconds(10));
+        connection.setTimeout(Duration.ofSeconds(10));
         assertThat(redis.blpop(1, key)).isNull();
     }
 

@@ -38,9 +38,12 @@ class RedisCommandsReactiveIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     @Inject
     RedisCommandsReactiveIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
+        this.connection = connection;
     }
 
     @BeforeEach
@@ -51,7 +54,7 @@ class RedisCommandsReactiveIntegrationTests extends TestSupport {
     @Test
     void reactive() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
@@ -61,7 +64,7 @@ class RedisCommandsReactiveIntegrationTests extends TestSupport {
     @Test
     void shouldHandlePresentValue() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
@@ -72,7 +75,7 @@ class RedisCommandsReactiveIntegrationTests extends TestSupport {
     @Test
     void shouldHandleAbsentValue() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
@@ -82,7 +85,7 @@ class RedisCommandsReactiveIntegrationTests extends TestSupport {
     @Test
     void shouldHandlePresentValueRxJava() throws InterruptedException {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
@@ -93,7 +96,7 @@ class RedisCommandsReactiveIntegrationTests extends TestSupport {
     @Test
     void shouldHandleAbsentValueRxJava() throws InterruptedException {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 

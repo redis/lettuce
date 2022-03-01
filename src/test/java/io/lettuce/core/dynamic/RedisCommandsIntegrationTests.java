@@ -15,10 +15,8 @@
  */
 package io.lettuce.core.dynamic;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import javax.inject.Inject;
 
@@ -51,16 +49,19 @@ class RedisCommandsIntegrationTests extends TestSupport {
     private final RedisClient client;
     private final RedisCommands<String, String> redis;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     @Inject
     RedisCommandsIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         this.client = client;
         this.redis = connection.sync();
+        this.connection = connection;
     }
 
     @Test
     void verifierShouldCatchMisspelledDeclarations() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         assertThat(factory).hasFieldOrPropertyWithValue("verifyCommandMethods", true);
         try {
@@ -74,7 +75,7 @@ class RedisCommandsIntegrationTests extends TestSupport {
     @Test
     void disabledVerifierDoesNotReportTypo() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
         factory.setVerifyCommandMethods(false);
 
         assertThat(factory.getCommands(WithTypo.class)).isNotNull();
@@ -97,7 +98,7 @@ class RedisCommandsIntegrationTests extends TestSupport {
     @Test
     void verifierShouldCatchTooFewParametersDeclarations() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         try {
             factory.getCommands(TooFewParameters.class);

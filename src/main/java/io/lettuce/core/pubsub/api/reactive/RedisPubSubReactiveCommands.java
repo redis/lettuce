@@ -19,7 +19,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
 /**
  * Asynchronous and thread-safe Redis PubSub API.
@@ -111,10 +110,5 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
      * @return Mono&lt;Void&gt; Mono for {@code unsubscribe} command.
      */
     Mono<Void> unsubscribe(K... channels);
-
-    /**
-     * @return the underlying connection.
-     */
-    StatefulRedisPubSubConnection<K, V> getStatefulConnection();
 
 }

@@ -15,7 +15,6 @@
  */
 package io.lettuce.core.cluster.api.reactive;
 
-import java.time.Duration;
 import java.util.Map;
 
 import reactor.core.publisher.Flux;
@@ -39,14 +38,6 @@ public interface RedisClusterReactiveCommands<K, V>
         RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
         RedisStringReactiveCommands<K, V> {
-
-    /**
-     * Set the default timeout for operations. A zero timeout value indicates to not time out.
-     *
-     * @param timeout the timeout value
-     * @since 5.0
-     */
-    void setTimeout(Duration timeout);
 
     /**
      * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to

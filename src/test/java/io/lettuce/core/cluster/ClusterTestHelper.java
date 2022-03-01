@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.async.RedisServerAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -41,14 +42,19 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 class ClusterTestHelper {
 
     private final RedisClusterClient clusterClient;
-    private final Map<Integer, RedisAsyncCommands<String, String>> connectionCache = new HashMap<>();
+
+    private final Map<Integer, StatefulRedisConnection<String, String>> connectionCache = new HashMap<>();
+
+    private final Map<Integer, RedisAsyncCommands<String, String>> commandsCache = new HashMap<>();
 
     public ClusterTestHelper(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
 
         for (int port : ports) {
-            RedisAsyncCommands<String, String> connection = clusterClient.connectToNode(new InetSocketAddress("localhost", port)).async();
+            StatefulRedisConnection<String, String> connection = clusterClient
+                    .connectToNode(new InetSocketAddress("localhost", port));
             connectionCache.put(port, connection);
+            commandsCache.put(port, connection.async());
         }
     }
 
@@ -58,9 +64,9 @@ class ClusterTestHelper {
      */
     public boolean isStable() {
 
-        for (RedisAsyncCommands<String, String> commands : connectionCache.values()) {
+        for (StatefulRedisConnection<String, String> connection : connectionCache.values()) {
             try {
-                RedisCommands<String, String> sync = commands.getStatefulConnection().sync();
+                RedisCommands<String, String> sync = connection.sync();
                 String info = sync.clusterInfo();
                 if (info != null && info.contains("cluster_state:ok")) {
 
@@ -125,7 +131,7 @@ class ClusterTestHelper {
             boolean ignoreExecutionException) {
 
         List<Future<?>> futures = new ArrayList<>();
-        for (RedisClusterAsyncCommands<?, ?> connection : connectionCache.values()) {
+        for (RedisClusterAsyncCommands<?, ?> connection : commandsCache.values()) {
             futures.add(function.apply(connection));
         }
 

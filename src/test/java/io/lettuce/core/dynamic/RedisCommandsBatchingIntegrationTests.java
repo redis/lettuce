@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.dynamic;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Fail.fail;
 
 import java.util.concurrent.TimeUnit;
@@ -48,9 +48,12 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     @Inject
     RedisCommandsBatchingIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
+        this.connection = connection;
     }
 
     @BeforeEach
@@ -61,7 +64,7 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
     @Test
     void selectiveBatching() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         SelectiveBatching api = factory.getCommands(SelectiveBatching.class);
 
@@ -83,7 +86,7 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
     @Test
     void selectiveBatchingShouldHandleErrors() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         SelectiveBatching api = factory.getCommands(SelectiveBatching.class);
 
@@ -102,7 +105,7 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
     @Test
     void shouldExecuteBatchingSynchronously() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         Batching api = factory.getCommands(Batching.class);
 
@@ -120,7 +123,7 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
     @Test
     void shouldHandleSynchronousBatchErrors() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         Batching api = factory.getCommands(Batching.class);
 
@@ -148,7 +151,7 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
     @Test
     void shouldExecuteBatchingAynchronously() {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         Batching api = factory.getCommands(Batching.class);
 
@@ -166,7 +169,7 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
     @Test
     void shouldHandleAsynchronousBatchErrors() throws Exception {
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         Batching api = factory.getCommands(Batching.class);
 

@@ -47,7 +47,8 @@ class ClusterSetup {
         clusterHelper.meet(ClusterTestSettings.host, ClusterTestSettings.port5);
         clusterHelper.meet(ClusterTestSettings.host, ClusterTestSettings.port6);
 
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterHelper.getClusterClient().connect().async();
+        StatefulRedisClusterConnection<String, String> connection = clusterHelper.getClusterClient().connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
         Wait.untilTrue(() -> {
 
             clusterHelper.getClusterClient().reloadPartitions();
@@ -59,7 +60,7 @@ class ClusterSetup {
         for (RedisClusterNode partition : partitions) {
 
             if (!partition.getSlots().isEmpty()) {
-                RedisClusterAsyncCommands<String, String> nodeConnection = connection.getConnection(partition.getNodeId());
+                RedisClusterAsyncCommands<String, String> nodeConnection = async.getConnection(partition.getNodeId());
 
                 for (Integer slot : partition.getSlots()) {
                     nodeConnection.clusterDelSlots(slot);
@@ -67,11 +68,11 @@ class ClusterSetup {
             }
         }
 
-        RedisClusterAsyncCommands<String, String> node1 = connection.getConnection(ClusterTestSettings.host,
+        RedisClusterAsyncCommands<String, String> node1 = async.getConnection(ClusterTestSettings.host,
                 ClusterTestSettings.port5);
         node1.clusterAddSlots(ClusterTestSettings.createSlots(0, 12000));
 
-        RedisClusterAsyncCommands<String, String> node2 = connection.getConnection(ClusterTestSettings.host,
+        RedisClusterAsyncCommands<String, String> node2 = async.getConnection(ClusterTestSettings.host,
                 ClusterTestSettings.port6);
         node2.clusterAddSlots(ClusterTestSettings.createSlots(12000, 16384));
 
@@ -84,7 +85,7 @@ class ClusterSetup {
                     .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM)).count();
         }).waitOrTimeout();
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     /**
@@ -98,21 +99,22 @@ class ClusterSetup {
         clusterHelper.meet(ClusterTestSettings.host, ClusterTestSettings.port5);
         clusterHelper.meet(ClusterTestSettings.host, ClusterTestSettings.port6);
 
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterHelper.getClusterClient().connect().async();
-        StatefulRedisClusterConnection<String, String> statefulConnection = connection.getStatefulConnection();
+        StatefulRedisClusterConnection<String, String> connection = clusterHelper.getClusterClient().connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
 
         Wait.untilEquals(2, () -> {
             clusterHelper.getClusterClient().reloadPartitions();
             return clusterHelper.getClusterClient().getPartitions().size();
         }).waitOrTimeout();
 
-        RedisClusterCommands<String, String> node1 = statefulConnection
+        RedisClusterCommands<String, String> node1 = connection
                 .getConnection(TestSettings.hostAddr(), ClusterTestSettings.port5).sync();
         node1.clusterAddSlots(ClusterTestSettings.createSlots(0, 16384));
 
         Wait.untilTrue(clusterHelper::isStable).waitOrTimeout();
 
-        TestFutures.awaitOrTimeout(connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port6)
+        TestFutures.awaitOrTimeout(
+                async.getConnection(ClusterTestSettings.host, ClusterTestSettings.port6)
                 .clusterReplicate(
                 node1.clusterMyId()));
 
@@ -131,7 +133,7 @@ class ClusterSetup {
                     .count();
         }).waitOrTimeout();
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     private static Stream<RedisClusterNode> partitionStream(ClusterTestHelper clusterHelper) {

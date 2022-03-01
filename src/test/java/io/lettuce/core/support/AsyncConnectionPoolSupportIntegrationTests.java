@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.support;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.lang.reflect.Proxy;
 import java.util.Set;
@@ -27,7 +26,14 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisAsyncCommandsImpl;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisReactiveCommandsImpl;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -75,8 +81,8 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
         borrowAndClose(pool);
         borrowAndCloseAsync(pool);
 
-        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire()).sync().getStatefulConnection()));
-        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire()).async().getStatefulConnection()));
+        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire())));
+        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire())));
 
         assertThat(channels).hasSize(1);
 
@@ -97,8 +103,8 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
         borrowAndClose(pool);
         borrowAndCloseAsync(pool);
 
-        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire()).sync().getStatefulConnection()));
-        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire()).async().getStatefulConnection()));
+        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire())));
+        TestFutures.awaitOrTimeout(pool.release(TestFutures.getOrTimeout(pool.acquire())));
 
         assertThat(channels).hasSize(1);
 
@@ -187,8 +193,6 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
         assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class).isNotInstanceOf(
                 RedisReactiveCommandsImpl.class);
-        assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
-                .isNotInstanceOf(StatefulRedisConnectionImpl.class).isSameAs(connection);
 
         connection.close();
         pool.close();

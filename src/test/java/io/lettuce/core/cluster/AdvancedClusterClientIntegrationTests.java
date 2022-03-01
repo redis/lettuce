@@ -114,7 +114,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void partitions() {
 
-        Partitions partitions = async.getStatefulConnection().getPartitions();
+        Partitions partitions = clusterConnection.getPartitions();
         assertThat(partitions).hasSize(4);
     }
 
@@ -129,7 +129,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
 
-        StatefulRedisClusterConnection<String, String> statefulConnection = async.getStatefulConnection();
+        StatefulRedisClusterConnection<String, String> statefulConnection = clusterConnection;
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
 
             StatefulRedisConnection<String, String> nodeId = statefulConnection.getConnection(redisClusterNode.getNodeId());
@@ -304,7 +304,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
         sync.clientSetname(name);
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterCommands<String, String> nodeConnection = async.getStatefulConnection().sync()
+            RedisClusterCommands<String, String> nodeConnection = clusterConnection.sync()
                     .getConnection(redisClusterNode.getNodeId());
             assertThat(nodeConnection.clientList()).contains(name);
         }
@@ -453,15 +453,13 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void testSync() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.set(key, value);
         assertThat(sync.get(key)).isEqualTo(value);
 
         RedisClusterCommands<String, String> node2Connection = sync.getConnection(ClusterTestSettings.host,
                 ClusterTestSettings.port2);
         assertThat(node2Connection.get(key)).isEqualTo(value);
-
-        assertThat(sync.getStatefulConnection()).isSameAs(async.getStatefulConnection());
     }
 
     @Test
@@ -544,7 +542,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
         TestFutures.awaitOrTimeout(async.get(key(0)));
 
         int iterations = 1000;
-        async.setAutoFlushCommands(false);
+        connectionUnderTest.setAutoFlushCommands(false);
         List<RedisFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < iterations; i++) {
             futures.add(async.set(key(i), value(i)));
@@ -554,7 +552,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
             assertThat(this.sync.get(key(i))).as("Key " + key(i) + " must be null").isNull();
         }
 
-        async.flushCommands();
+        connectionUnderTest.flushCommands();
 
         boolean result = TestFutures.awaitOrTimeout(futures);
         assertThat(result).isTrue();
@@ -567,7 +565,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScan() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
@@ -589,7 +587,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScanWithArgs() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
@@ -612,7 +610,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScanStreaming() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
@@ -634,7 +632,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScanStreamingWithArgs() {
 
-        RedisAdvancedClusterCommands<String, String> sync = async.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();

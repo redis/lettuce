@@ -29,7 +29,6 @@ import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
-import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.output.KeyStreamingChannel;
 
 /**
@@ -62,11 +61,6 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return a connection to the requested cluster node
      */
     RedisClusterReactiveCommands<K, V> getConnection(String host, int port);
-
-    /**
-     * @return the underlying connection.
-     */
-    StatefulRedisClusterConnection<K, V> getStatefulConnection();
 
     /**
      * Delete one or more keys with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.

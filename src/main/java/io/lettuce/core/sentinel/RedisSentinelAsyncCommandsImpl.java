@@ -25,7 +25,11 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.CommandOutput;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 
@@ -171,12 +175,10 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
         connection.close();
     }
 
-    @Override
     public boolean isOpen() {
         return connection.isOpen();
     }
 
-    @Override
     public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
         return (StatefulRedisSentinelConnection<K, V>) connection;
     }

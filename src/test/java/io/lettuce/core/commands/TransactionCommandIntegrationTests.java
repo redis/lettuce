@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
@@ -25,7 +24,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.TestSupport;
+import io.lettuce.core.TransactionResult;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 
@@ -71,9 +75,10 @@ public class TransactionCommandIntegrationTests extends TestSupport {
     void watch() {
         assertThat(redis.watch(key)).isEqualTo("OK");
 
-        RedisCommands<String, String> redis2 = client.connect().sync();
-        redis2.set(key, value + "X");
-        redis2.getStatefulConnection().close();
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> sync = connection.sync();
+        sync.set(key, value + "X");
+        connection.close();
 
         redis.multi();
         redis.append(key, "foo");

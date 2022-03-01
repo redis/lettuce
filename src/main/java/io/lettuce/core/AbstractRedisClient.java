@@ -31,11 +31,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import reactor.core.publisher.Mono;
+import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
 import io.lettuce.core.event.connection.ConnectionCreatedEvent;
 import io.lettuce.core.event.jfr.EventRecorder;
-import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;

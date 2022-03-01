@@ -75,10 +75,17 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     @Inject
-    protected ServerCommandIntegrationTests(RedisClient client, RedisCommands<String, String> redis) {
+    protected ServerCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         this.client = client;
-        this.redis = redis;
+        this.connection = connection;
+        this.redis = getCommands(connection);
+    }
+
+    protected RedisCommands<String, String> getCommands(StatefulRedisConnection<String, String> connection) {
+        return connection.sync();
     }
 
     @BeforeEach
@@ -162,8 +169,9 @@ public class ServerCommandIntegrationTests extends TestSupport {
     @Test
     void clientKillExtended() {
 
-        RedisCommands<String, String> connection2 = client.connect().sync();
-        connection2.clientSetname("killme");
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> sync = connection.sync();
+        sync.clientSetname("killme");
 
         Pattern p = Pattern.compile("^.*[^l]addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);
         String clients = redis.clientList();
@@ -178,7 +186,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
         assertThat(redis.clientKill(KillArgs.Builder.typeNormal().id(4234))).isEqualTo(0);
         assertThat(redis.clientKill(KillArgs.Builder.typePubsub().id(4234))).isEqualTo(0);
 
-        connection2.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -206,11 +214,11 @@ public class ServerCommandIntegrationTests extends TestSupport {
     void clientTracking() {
 
         redis.clientTracking(TrackingArgs.Builder.enabled(false));
-
         redis.clientTracking(TrackingArgs.Builder.enabled());
+
         List<PushMessage> pushMessages = new CopyOnWriteArrayList<>();
 
-        redis.getStatefulConnection().addListener(pushMessages::add);
+        connection.addListener(pushMessages::add);
 
         redis.set(key, value);
         assertThat(pushMessages.isEmpty());
@@ -232,11 +240,11 @@ public class ServerCommandIntegrationTests extends TestSupport {
     void clientTrackingPrefixes() {
 
         redis.clientTracking(TrackingArgs.Builder.enabled(false));
-
         redis.clientTracking(TrackingArgs.Builder.enabled().bcast().prefixes("foo", "bar"));
+
         List<PushMessage> pushMessages = new CopyOnWriteArrayList<>();
 
-        redis.getStatefulConnection().addListener(pushMessages::add);
+        connection.addListener(pushMessages::add);
 
         redis.get(key);
         redis.set(key, value);

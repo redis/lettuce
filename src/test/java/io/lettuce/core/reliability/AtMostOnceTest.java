@@ -66,10 +66,11 @@ class AtMostOnceTest extends AbstractRedisClientTest {
         // needs to be increased on slow systems...perhaps...
         client.setDefaultTimeout(3, TimeUnit.SECONDS);
 
-        RedisCommands<String, String> connection = client.connect().sync();
-        connection.flushall();
-        connection.flushdb();
-        connection.getStatefulConnection().close();
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> sync = connection.sync();
+        sync.flushall();
+        sync.flushdb();
+        connection.close();
     }
 
     @Test
@@ -95,12 +96,13 @@ class AtMostOnceTest extends AbstractRedisClientTest {
     @Test
     void basicOperations() {
 
-        RedisCommands<String, String> connection = client.connect().sync();
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> sync = connection.sync();
 
-        connection.set(key, "1");
-        assertThat(connection.get("key")).isEqualTo("1");
+        sync.set(key, "1");
+        assertThat(sync.get("key")).isEqualTo("1");
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -293,7 +295,7 @@ class AtMostOnceTest extends AbstractRedisClientTest {
         try {
 
             RedisAsyncCommands<String, String> async = connection.async();
-            async.setAutoFlushCommands(false);
+            connection.setAutoFlushCommands(false);
             async.quit();
 
             RedisFuture<Long> incr = async.incr(key);

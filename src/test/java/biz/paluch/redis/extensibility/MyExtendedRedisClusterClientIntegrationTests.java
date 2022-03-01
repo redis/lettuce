@@ -65,7 +65,7 @@ class MyExtendedRedisClusterClientIntegrationTests {
         RedisAdvancedClusterAsyncCommands<String, String> commands = connection.async();
 
         assertThat(commands).isInstanceOf(RedisAdvancedClusterAsyncCommandsImpl.class);
-        assertThat(commands.getStatefulConnection()).isInstanceOf(MyRedisClusterConnection.class);
+        assertThat(connection).isInstanceOf(MyRedisClusterConnection.class);
 
         commands.set("key", "value").get();
 

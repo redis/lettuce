@@ -25,8 +25,8 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
+import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandWrapper;

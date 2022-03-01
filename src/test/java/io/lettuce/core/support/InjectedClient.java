@@ -20,6 +20,7 @@ import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 
@@ -43,21 +44,24 @@ public class InjectedClient {
     @PersonDB
     public RedisClusterClient qualifiedRedisClusterClient;
 
-    private RedisCommands<String, String> connection;
+    private StatefulRedisConnection<String, String> connection;
+
+    private RedisCommands<String, String> commands;
 
     @PostConstruct
     public void postConstruct() {
-        connection = redisClient.connect().sync();
+        connection = redisClient.connect();
+        commands = connection.sync();
     }
 
     public void pingRedis() {
-        connection.ping();
+        commands.ping();
     }
 
     @PreDestroy
     public void preDestroy() {
         if (connection != null) {
-            connection.getStatefulConnection().close();
+            connection.close();
         }
     }
 }

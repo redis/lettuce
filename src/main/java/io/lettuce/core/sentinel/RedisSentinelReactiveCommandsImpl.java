@@ -171,7 +171,6 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
         return getStatefulConnection().isOpen();
     }
 
-    @Override
     public StatefulRedisSentinelConnection<K, V> getStatefulConnection() {
         return (StatefulRedisSentinelConnection<K, V>) super.getConnection();
     }

@@ -15,7 +15,6 @@
  */
 package io.lettuce.core.api.sync;
 
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 
 /**
@@ -67,10 +66,5 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCo
      * @return String simple-string-reply
      */
     String swapdb(int db1, int db2);
-
-    /**
-     * @return the underlying connection.
-     */
-    StatefulRedisConnection<K, V> getStatefulConnection();
 
 }

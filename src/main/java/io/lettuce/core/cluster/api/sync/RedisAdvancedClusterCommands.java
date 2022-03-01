@@ -30,7 +30,6 @@ import io.lettuce.core.api.sync.RedisServerCommands;
 import io.lettuce.core.api.sync.RedisStringCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
-import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.output.KeyStreamingChannel;
 
@@ -63,11 +62,6 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @return a connection to the requested cluster node
      */
     RedisClusterCommands<K, V> getConnection(String host, int port);
-
-    /**
-     * @return the underlying connection.
-     */
-    StatefulRedisClusterConnection<K, V> getStatefulConnection();
 
     /**
      * Select all upstream nodes.

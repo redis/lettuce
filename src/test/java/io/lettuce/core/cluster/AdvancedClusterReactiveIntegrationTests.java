@@ -74,6 +74,8 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     private static final String KEY_ON_NODE_2 = "b";
 
     private final RedisClusterClient clusterClient;
+
+    private final StatefulRedisClusterConnection<String, String> clusterConnection;
     private final RedisAdvancedClusterReactiveCommands<String, String> commands;
     private final RedisAdvancedClusterCommands<String, String> syncCommands;
 
@@ -81,6 +83,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     AdvancedClusterReactiveIntegrationTests(RedisClusterClient clusterClient,
             StatefulRedisClusterConnection<String, String> connection) {
         this.clusterClient = clusterClient;
+        this.clusterConnection = connection;
         this.commands = connection.reactive();
         this.syncCommands = connection.sync();
     }
@@ -193,7 +196,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
         StepVerifier.create(commands.clientSetname(name)).expectNext("OK").verifyComplete();
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
-            RedisClusterCommands<String, String> nodeConnection = commands.getStatefulConnection().sync()
+            RedisClusterCommands<String, String> nodeConnection = clusterConnection.sync()
                     .getConnection(redisClusterNode.getNodeId());
             assertThat(nodeConnection.clientList()).contains(name);
         }
@@ -302,7 +305,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     void keysDoesNotRunIntoRaceConditions() {
 
         List<RedisFuture<?>> futures = new ArrayList<>();
-        RedisClusterAsyncCommands<String, String> async = commands.getStatefulConnection().async();
+        RedisClusterAsyncCommands<String, String> async = clusterConnection.async();
         TestFutures.awaitOrTimeout(async.flushall());
 
         for (int i = 0; i < 1000; i++) {
@@ -377,7 +380,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
         connection.readOnly().subscribe();
         commands.set(key, value).subscribe();
 
-        NodeSelectionAsyncIntegrationTests.waitForReplication(commands.getStatefulConnection().async(), ClusterTestSettings.key,
+        NodeSelectionAsyncIntegrationTests.waitForReplication(clusterConnection.async(), ClusterTestSettings.key,
                 ClusterTestSettings.port4);
 
         AtomicBoolean error = new AtomicBoolean();
@@ -393,7 +396,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     @Test
     void clusterScan() {
 
-        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
@@ -416,7 +419,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     @Test
     void clusterScanWithArgs() {
 
-        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         Set<String> allKeys = new HashSet<>();
@@ -440,7 +443,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     @Test
     void clusterScanStreaming() {
 
-        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
@@ -462,7 +465,7 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     @Test
     void clusterScanStreamingWithArgs() {
 
-        RedisAdvancedClusterCommands<String, String> sync = commands.getStatefulConnection().sync();
+        RedisAdvancedClusterCommands<String, String> sync = clusterConnection.sync();
         sync.mset(KeysAndValues.MAP);
 
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();

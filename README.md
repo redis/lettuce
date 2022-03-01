@@ -87,7 +87,7 @@ Basic Usage
 ```java
 RedisClient client = RedisClient.create("redis://localhost");
 StatefulRedisConnection<String, String> connection = client.connect();
-RedisStringCommands sync = connection.sync();
+RedisStringCommands<String, String> sync = connection.sync();
 String value = sync.get("key");
 ```
 
@@ -135,9 +135,9 @@ Pub/Sub
 -------
 
 ```java
-RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
-connection.getStatefulConnection().addListener(new RedisPubSubListener<String, String>() { ... })
-connection.subscribe("channel")
+StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub();
+connection.addListener(new RedisPubSubListener<String, String>() { ... })
+connection.sync().subscribe("channel")
 ```
 
 Cloud Provider Compatibility

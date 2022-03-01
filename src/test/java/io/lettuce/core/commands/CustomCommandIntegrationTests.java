@@ -16,7 +16,6 @@
 package io.lettuce.core.commands;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.Arrays;
 
@@ -55,9 +54,12 @@ public class CustomCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     @Inject
     CustomCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
+        this.connection = connection;
     }
 
     @BeforeEach
@@ -191,9 +193,7 @@ public class CustomCommandIntegrationTests extends TestSupport {
     }
 
     private StatefulRedisConnection<String, String> getStandaloneConnection() {
-
-        assumeTrue(redis.getStatefulConnection() instanceof StatefulRedisConnection);
-        return redis.getStatefulConnection();
+        return connection;
     }
 
     public enum MyCommands implements ProtocolKeyword {

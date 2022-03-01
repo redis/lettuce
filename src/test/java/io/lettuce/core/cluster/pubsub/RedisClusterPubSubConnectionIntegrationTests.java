@@ -15,14 +15,10 @@
  */
 package io.lettuce.core.cluster.pubsub;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.inject.Inject;
@@ -34,7 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
-import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -49,8 +44,6 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.support.PubSubTestListener;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
-import io.lettuce.test.Wait;
-import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Mark Paluch
@@ -224,6 +217,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         RedisURI uri = partition.getUri();
         StatefulRedisPubSubConnection<String, String> node = pubSubConnection.getConnection(uri.getHost(), uri.getPort());
         node.sync().subscribe("channel");
+        Thread.sleep(100);
 
         pubSubConnection2.sync().publish("channel", "message");
 

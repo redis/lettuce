@@ -15,7 +15,6 @@
  */
 package io.lettuce.core.cluster.api.async;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -37,14 +36,6 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
         RedisHashAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
         RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V> {
-
-    /**
-     * Set the default timeout for operations. A zero timeout value indicates to not time out.
-     *
-     * @param timeout the timeout value
-     * @since 5.0
-     */
-    void setTimeout(Duration timeout);
 
     /**
      * The asking command is required after a {@code -ASK} redirection. The client should issue {@code ASKING} before to

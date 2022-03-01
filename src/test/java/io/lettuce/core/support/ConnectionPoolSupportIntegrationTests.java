@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.support;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.lang.reflect.Proxy;
 import java.util.Set;
@@ -28,9 +27,15 @@ import org.apache.commons.pool2.impl.SoftReferenceObjectPool;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import io.lettuce.test.ReflectionTestUtils;
 
-import io.lettuce.core.*;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisAsyncCommandsImpl;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisReactiveCommandsImpl;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
@@ -46,6 +51,7 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.masterreplica.MasterReplica;
 import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
@@ -83,8 +89,8 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
         borrowAndClose(pool);
         borrowAndCloseTryWithResources(pool);
 
-        pool.returnObject(pool.borrowObject().sync().getStatefulConnection());
-        pool.returnObject(pool.borrowObject().async().getStatefulConnection());
+        pool.returnObject(pool.borrowObject());
+        pool.returnObject(pool.borrowObject());
 
         assertThat(channels).hasSize(1);
 
@@ -196,8 +202,6 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
         assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class).isNotInstanceOf(
                 RedisReactiveCommandsImpl.class);
-        assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
-                .isNotInstanceOf(StatefulRedisConnectionImpl.class).isSameAs(connection);
 
         connection.close();
         pool.close();
@@ -220,8 +224,6 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
         assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class).isNotInstanceOf(
                 RedisReactiveCommandsImpl.class);
-        assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
-                .isNotInstanceOf(StatefulRedisConnectionImpl.class).isSameAs(connection);
 
         connection.close();
         pool.close();
@@ -248,8 +250,6 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
                 RedisAdvancedClusterAsyncCommandsImpl.class);
         assertThat(connection.reactive()).isInstanceOf(RedisAdvancedClusterReactiveCommands.class).isNotInstanceOf(
                 RedisAdvancedClusterReactiveCommandsImpl.class);
-        assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisClusterConnection.class)
-                .isNotInstanceOf(StatefulRedisClusterConnectionImpl.class).isSameAs(connection);
 
         connection.close();
         pool.close();
@@ -274,8 +274,6 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isInstanceOf(RedisAsyncCommandsImpl.class);
         assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class).isInstanceOf(
                 RedisReactiveCommandsImpl.class);
-        assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class).isInstanceOf(
-                StatefulRedisConnectionImpl.class);
 
         pool.returnObject(connection);
         pool.close();

@@ -41,9 +41,12 @@ class CustomReactiveCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     @Inject
     CustomReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         this.redis = connection.sync();
+        this.connection = connection;
         this.redis.flushdb();
     }
 
@@ -51,7 +54,7 @@ class CustomReactiveCommandIntegrationTests extends TestSupport {
     void dispatchGetAndSet() {
 
         redis.set(key, value);
-        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
+        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         Flux<String> flux = reactive.dispatch(CommandType.GET, new ValueOutput<>(StringCodec.UTF8), new CommandArgs<>(
                 StringCodec.UTF8).addKey(key));
@@ -63,7 +66,7 @@ class CustomReactiveCommandIntegrationTests extends TestSupport {
     void dispatchList() {
 
         redis.rpush(key, "a", "b", "c");
-        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
+        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         Flux<String> flux = reactive.dispatch(CommandType.LRANGE, new ValueListOutput<>(StringCodec.UTF8), new CommandArgs<>(
                 StringCodec.UTF8).addKey(key).add(0).add(-1));

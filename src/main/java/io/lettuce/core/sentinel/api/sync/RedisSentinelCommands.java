@@ -23,7 +23,6 @@ import io.lettuce.core.KillArgs;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
-import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 
 /**
  * Synchronous executed commands for Redis Sentinel.
@@ -204,13 +203,4 @@ public interface RedisSentinelCommands<K, V> {
      */
     <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
-    /**
-     * @return {@code true} if the connection is open (connected and not closed).
-     */
-    boolean isOpen();
-
-    /**
-     * @return the underlying connection.
-     */
-    StatefulRedisSentinelConnection<K, V> getStatefulConnection();
 }

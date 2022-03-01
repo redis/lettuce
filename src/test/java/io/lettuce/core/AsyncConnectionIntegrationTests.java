@@ -15,7 +15,7 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -98,12 +98,13 @@ class AsyncConnectionIntegrationTests extends TestSupport {
 
         TestFutures.awaitOrTimeout(futures);
 
-        RedisAsyncCommands<String, String> connection = client.connect().async();
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisAsyncCommands<String, String> async = connection.async();
 
-        Long len = TestFutures.getOrTimeout(connection.llen(key));
+        Long len = TestFutures.getOrTimeout(async.llen(key));
         assertThat(len.intValue()).isEqualTo(1000);
 
-        RedisFuture<List<String>> sort = connection.sort(key);
+        RedisFuture<List<String>> sort = async.sort(key);
         assertThat(sort.isCancelled()).isFalse();
 
         sort.thenRun(listener);
@@ -113,7 +114,7 @@ class AsyncConnectionIntegrationTests extends TestSupport {
 
         assertThat(run).hasSize(1);
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -128,16 +129,17 @@ class AsyncConnectionIntegrationTests extends TestSupport {
             }
         };
 
-        RedisAsyncCommands<String, String> connection = client.connect().async();
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisAsyncCommands<String, String> async = connection.async();
 
-        RedisFuture<String> set = connection.set(key, value);
+        RedisFuture<String> set = async.set(key, value);
         TestFutures.awaitOrTimeout(set);
 
         set.thenRun(listener);
 
         assertThat(run).hasSize(1);
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test

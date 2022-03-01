@@ -15,9 +15,9 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.ClientOptions.DisconnectedBehavior.REJECT_COMMANDS;
+import static io.lettuce.core.ClientOptions.DisconnectedBehavior.*;
 import static io.lettuce.core.ScriptOutputType.INTEGER;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -93,12 +93,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
 
     @Test
     void isOpen() {
-        assertThat(reactive.isOpen()).isTrue();
-    }
-
-    @Test
-    void getStatefulConnection() {
-        assertThat(reactive.getStatefulConnection()).isSameAs(connection);
+        assertThat(connection.isOpen()).isTrue();
     }
 
     @Test
@@ -113,7 +108,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         reactive.set(key, value).subscribe(new CompletionSubscriber(result));
         Delay.delay(Duration.ofMillis(50));
 
-        reactive.reset();
+        connection.reset();
         assertThat(result).isEmpty();
     }
 
@@ -138,7 +133,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         set.subscribe(new CompletionSubscriber(result));
         Delay.delay(Duration.ofMillis(50));
 
-        reactive.reset();
+        connection.reset();
         assertThat(result).isEmpty();
     }
 
@@ -158,7 +153,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         set.subscribe(new CompletionSubscriber(result));
         Delay.delay(Duration.ofMillis(100));
 
-        reactive.reset();
+        connection.reset();
         assertThat(result).isEmpty();
     }
 
@@ -185,7 +180,8 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
 
         final CountDownLatch sync = new CountDownLatch(1);
 
-        RedisReactiveCommands<String, String> reactive = client.connect().reactive();
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         reactive.multi().subscribe(multiResponse -> {
             reactive.set(key, "1").subscribe();
@@ -200,7 +196,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         String result = redis.get(key);
         assertThat(result).isEqualTo("2");
 
-        reactive.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -270,7 +266,8 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
 
         client.setOptions(ClientOptions.builder().publishOnScheduler(true).build());
 
-        RedisReactiveCommands<String, String> reactive = client.connect().reactive();
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         int counter = 0;
         for (int i = 0; i < 1000; i++) {
@@ -281,7 +278,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
 
         assertThat(counter).isZero();
 
-        reactive.getStatefulConnection().close();
+        connection.close();
     }
 
     private static Subscriber<String> createSubscriberWithExceptionOnComplete() {

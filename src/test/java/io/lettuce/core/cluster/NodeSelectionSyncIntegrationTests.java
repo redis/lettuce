@@ -15,12 +15,17 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.ScriptOutputType.STATUS;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.lettuce.core.ScriptOutputType.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Fail.fail;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Vector;
 
 import javax.inject.Inject;
 
@@ -48,6 +53,8 @@ import io.lettuce.test.Wait;
 class NodeSelectionSyncIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
+
+    private final StatefulRedisClusterConnection<String, String> connection;
     private final RedisAdvancedClusterCommands<String, String> commands;
 
     @Inject
@@ -56,6 +63,7 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
 
         this.clusterClient = clusterClient;
         this.commands = connection.sync();
+        this.connection = connection;
         connection.sync().flushall();
     }
 
@@ -112,7 +120,7 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
     @Test
     void testDynamicNodeSelection() {
 
-        Partitions partitions = commands.getStatefulConnection().getPartitions();
+        Partitions partitions = connection.getPartitions();
         partitions.forEach(
                 redisClusterNode -> redisClusterNode.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.UPSTREAM)));
 
@@ -153,7 +161,7 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
 
         assertThat(selection.asMap()).hasSize(1);
 
-        commands.getStatefulConnection().getPartitions().getPartition(2)
+        connection.getPartitions().getPartition(2)
                 .setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MYSELF));
 
         assertThat(selection.asMap()).hasSize(1);
@@ -164,10 +172,11 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
     @Test
     void testAsynchronicityOfMultiNodeExecution() {
 
-        RedisAdvancedClusterCommands<String, String> connection2 = clusterClient.connect().sync();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterCommands<String, String> sync = connection.sync();
 
-        connection2.setTimeout(Duration.ofSeconds(1));
-        NodeSelection<String, String> masters = connection2.masters();
+        connection.setTimeout(Duration.ofSeconds(1));
+        NodeSelection<String, String> masters = sync.masters();
         masters.commands().configSet("lua-time-limit", "10");
 
         Executions<Object> eval = null;

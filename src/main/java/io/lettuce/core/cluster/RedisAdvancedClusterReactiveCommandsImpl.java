@@ -34,17 +34,7 @@ import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import io.lettuce.core.AbstractRedisReactiveCommands;
-import io.lettuce.core.FlushMode;
-import io.lettuce.core.GeoArgs;
-import io.lettuce.core.GeoWithin;
-import io.lettuce.core.KeyScanCursor;
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisException;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.ScanArgs;
-import io.lettuce.core.ScanCursor;
-import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
@@ -113,22 +103,14 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             Mono<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
 
             publishers.add(byNodeId.flatMap(conn -> {
-
-                if (conn.isOpen()) {
-                    return conn.clientSetname(name);
-                }
-                return Mono.empty();
+                return conn.clientSetname(name);
             }));
 
             Mono<RedisClusterReactiveCommands<K, V>> byHost = getConnectionReactive(redisClusterNode.getUri().getHost(),
                     redisClusterNode.getUri().getPort());
 
             publishers.add(byHost.flatMap(conn -> {
-
-                if (conn.isOpen()) {
-                    return conn.clientSetname(name);
-                }
-                return Mono.empty();
+                return conn.clientSetname(name);
             }));
         }
 
@@ -459,7 +441,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
                 .map(StatefulRedisConnection::reactive);
     }
 
-    @Override
     public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
         return (StatefulRedisClusterConnection<K, V>) super.getConnection();
     }

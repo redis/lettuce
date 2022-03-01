@@ -128,24 +128,10 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         connection.close();
         redis1.close();
 
-        redissync1.getStatefulConnection().close();
-        redissync2.getStatefulConnection().close();
-        redissync3.getStatefulConnection().close();
-        redissync4.getStatefulConnection().close();
-    }
-
-    @Test
-    void statefulConnectionFromSync() {
-        RedisAdvancedClusterCommands<String, String> sync = clusterClient.connect().sync();
-        assertThat(sync.getStatefulConnection().sync()).isSameAs(sync);
-        connection.close();
-    }
-
-    @Test
-    void statefulConnectionFromAsync() {
-        RedisAdvancedClusterAsyncCommands<String, String> async = clusterClient.connect().async();
-        assertThat(async.getStatefulConnection().async()).isSameAs(async);
-        connection.close();
+        redis1.close();
+        redis2.close();
+        redis3.close();
+        redis4.close();
     }
 
     @Test
@@ -234,13 +220,14 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(resultMoved)).hasMessageContaining("MOVED 15495");
 
         clusterClient.reloadPartitions();
-        RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterCommands<String, String> sync = connection.sync();
 
-        assertThat(connection.set(ClusterTestSettings.KEY_A, value)).isEqualTo("OK");
-        assertThat(connection.set(ClusterTestSettings.KEY_B, "myValue2")).isEqualTo("OK");
-        assertThat(connection.set(ClusterTestSettings.KEY_D, "myValue2")).isEqualTo("OK");
+        assertThat(sync.set(ClusterTestSettings.KEY_A, value)).isEqualTo("OK");
+        assertThat(sync.set(ClusterTestSettings.KEY_B, "myValue2")).isEqualTo("OK");
+        assertThat(sync.set(ClusterTestSettings.KEY_D, "myValue2")).isEqualTo("OK");
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -266,14 +253,15 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         try {
 
             clusterClient.addListener(listener);
-            RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
+            StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+            RedisAdvancedClusterCommands<String, String> sync = connection.sync();
 
             // Command on node within the default connection
-            assertThat(connection.set(ClusterTestSettings.KEY_B, value)).isEqualTo("OK");
+            assertThat(sync.set(ClusterTestSettings.KEY_B, value)).isEqualTo("OK");
 
             // gets routing to node 3
-            assertThat(connection.set(ClusterTestSettings.KEY_A, value)).isEqualTo("OK");
-            connection.getStatefulConnection().close();
+            assertThat(sync.set(ClusterTestSettings.KEY_A, value)).isEqualTo("OK");
+            connection.close();
         } finally {
             client.removeListener(listener);
         }
@@ -291,7 +279,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         try {
 
             clusterClient.addListener(listener);
-            RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
+            StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+            RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
             Partitions partitions = clusterClient.getPartitions();
 
             for (RedisClusterNode partition : partitions) {
@@ -303,7 +292,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
             partitions.updateCache();
 
             // appropriate cluster node
-            RedisFuture<String> setB = connection.set(ClusterTestSettings.KEY_B, value);
+            RedisFuture<String> setB = async.set(ClusterTestSettings.KEY_B, value);
 
             assertThat(setB.toCompletableFuture()).isInstanceOf(AsyncCommand.class);
 
@@ -312,7 +301,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
             assertThat(TestFutures.getOrTimeout(setB)).isEqualTo("OK");
 
             // gets redirection to node 3
-            RedisFuture<String> setA = connection.set(ClusterTestSettings.KEY_A, value);
+            RedisFuture<String> setA = async.set(ClusterTestSettings.KEY_A, value);
 
             assertThat((CompletionStage) setA).isInstanceOf(AsyncCommand.class);
 
@@ -320,7 +309,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
             assertThat(setA.getError()).isNull();
             assertThat(TestFutures.getOrTimeout(setA)).isEqualTo("OK");
 
-            connection.getStatefulConnection().close();
+            connection.close();
         } finally {
             clusterClient.removeListener(listener);
         }
@@ -334,7 +323,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     void testClusterRedirectionLimit() throws Exception {
 
         clusterClient.setOptions(ClusterClientOptions.builder().maxRedirects(0).build());
-        RedisAdvancedClusterAsyncCommands<String, String> connection = clusterClient.connect().async();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
         Partitions partitions = clusterClient.getPartitions();
 
         for (RedisClusterNode partition : partitions) {
@@ -349,27 +339,28 @@ class RedisClusterClientIntegrationTests extends TestSupport {
         partitions.updateCache();
 
         // gets redirection to node 3
-        RedisFuture<String> setA = connection.set(ClusterTestSettings.KEY_A, value);
+        RedisFuture<String> setA = async.set(ClusterTestSettings.KEY_A, value);
 
         assertThat(setA instanceof AsyncCommand).isTrue();
 
         setA.await(10, TimeUnit.SECONDS);
         assertThat(setA.getError()).isEqualTo("MOVED 15495 127.0.0.1:7380");
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
     void closeConnection() {
 
-        RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterCommands<String, String> sync = connection.sync();
 
-        List<String> time = connection.time();
+        List<String> time = sync.time();
         assertThat(time).hasSize(2);
 
-        connection.getStatefulConnection().close();
+        connection.close();
 
-        assertThatThrownBy(connection::time).isInstanceOf(RedisException.class);
+        assertThatThrownBy(sync::time).isInstanceOf(RedisException.class);
     }
 
     @Test
@@ -647,18 +638,19 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     @Test
     void testPfmerge() {
 
-        RedisAdvancedClusterCommands<String, String> connection = clusterClient.connect().sync();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterCommands<String, String> sync = connection.sync();
 
         assertThat(SlotHash.getSlot("key2660")).isEqualTo(SlotHash.getSlot("key7112")).isEqualTo(SlotHash.getSlot("key8885"));
 
-        connection.pfadd("key2660", "rand", "mat");
-        connection.pfadd("key7112", "mat", "perrin");
+        sync.pfadd("key2660", "rand", "mat");
+        sync.pfadd("key7112", "mat", "perrin");
 
-        connection.pfmerge("key8885", "key2660", "key7112");
+        sync.pfmerge("key8885", "key2660", "key7112");
 
-        assertThat(connection.pfcount("key8885")).isEqualTo(3);
+        assertThat(sync.pfcount("key8885")).isEqualTo(3);
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     static class TestCommandListener implements CommandListener {

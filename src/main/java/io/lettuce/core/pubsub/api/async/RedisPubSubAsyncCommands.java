@@ -17,7 +17,6 @@ package io.lettuce.core.pubsub.api.async;
 
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.async.RedisAsyncCommands;
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 
 /**
  * Asynchronous and thread-safe Redis PubSub API.
@@ -60,10 +59,5 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
      */
     RedisFuture<Void> unsubscribe(K... channels);
-
-    /**
-     * @return the underlying connection.
-     */
-    StatefulRedisPubSubConnection<K, V> getStatefulConnection();
 
 }

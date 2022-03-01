@@ -18,7 +18,7 @@ package io.lettuce.core.support;
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
 
-import io.lettuce.core.internal.AsyncCloseable;
+import io.lettuce.core.api.AsyncCloseable;
 
 /**
  * Interface declaring non-blocking object pool methods allowing to {@link #acquire()} and {@link #release(Object)} objects. All

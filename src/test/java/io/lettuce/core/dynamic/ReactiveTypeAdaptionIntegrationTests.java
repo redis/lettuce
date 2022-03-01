@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.dynamic;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
@@ -48,7 +48,7 @@ class ReactiveTypeAdaptionIntegrationTests extends TestSupport {
 
         this.redis = connection.sync();
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
         this.rxjava1 = factory.getCommands(RxJava1Types.class);
         this.rxjava2 = factory.getCommands(RxJava2Types.class);
         this.rxjava3 = factory.getCommands(RxJava3Types.class);

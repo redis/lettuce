@@ -47,10 +47,13 @@ class RedisCommandsSyncIntegrationTests extends TestSupport {
     private final RedisClient client;
     private final RedisCommands<String, String> redis;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     @Inject
     RedisCommandsSyncIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         this.client = client;
         this.redis = connection.sync();
+        this.connection = connection;
     }
 
     @Test
@@ -88,7 +91,7 @@ class RedisCommandsSyncIntegrationTests extends TestSupport {
 
         redis.set(key, value);
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 
@@ -103,7 +106,7 @@ class RedisCommandsSyncIntegrationTests extends TestSupport {
 
         redis.set(key, value);
 
-        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+        RedisCommandFactory factory = new RedisCommandFactory(connection);
 
         MultipleExecutionModels api = factory.getCommands(MultipleExecutionModels.class);
 

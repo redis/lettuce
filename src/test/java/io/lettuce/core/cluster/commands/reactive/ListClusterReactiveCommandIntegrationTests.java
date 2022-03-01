@@ -36,7 +36,7 @@ class ListClusterReactiveCommandIntegrationTests extends ListCommandIntegrationT
 
     @Inject
     ListClusterReactiveCommandIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
-        super(ReactiveSyncInvocationHandler.sync(connection));
+        super(connection, ReactiveSyncInvocationHandler.sync(connection));
         this.redis = ReactiveSyncInvocationHandler.sync(connection);
     }
 

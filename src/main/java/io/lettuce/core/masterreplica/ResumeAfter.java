@@ -18,7 +18,7 @@ package io.lettuce.core.masterreplica;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 import reactor.core.publisher.Mono;
-import io.lettuce.core.internal.AsyncCloseable;
+import io.lettuce.core.api.AsyncCloseable;
 
 /**
  * Utility to resume a {@link org.reactivestreams.Publisher} after termination.

@@ -15,10 +15,9 @@
  */
 package io.lettuce.core.commands;
 
-import static io.lettuce.test.settings.TestSettings.host;
-import static io.lettuce.test.settings.TestSettings.port;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static io.lettuce.test.settings.TestSettings.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.Arrays;
 
@@ -67,15 +66,16 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
 
         assumeTrue(CanConnect.to(host(), port(1)));
 
-        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(1)).build())
+        StatefulRedisConnection<String, String> connection = client.connect(RedisURI.Builder.redis(host(), port(1)).build());
+        RedisAsyncCommands<String, String> async = connection
                 .async();
         try {
-            commands.debugSegfault();
+            async.debugSegfault();
 
-            Wait.untilTrue(() -> !commands.getStatefulConnection().isOpen()).waitOrTimeout();
-            assertThat(commands.getStatefulConnection().isOpen()).isFalse();
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+            assertThat(connection.isOpen()).isFalse();
         } finally {
-            commands.getStatefulConnection().close();
+            connection.close();
         }
     }
 
@@ -122,18 +122,19 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
 
         assumeTrue(CanConnect.to(host(), port(2)));
 
-        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(2)).build())
+        StatefulRedisConnection<String, String> connection = client.connect(RedisURI.Builder.redis(host(), port(2)).build());
+        RedisAsyncCommands<String, String> async = connection
                 .async();
         try {
 
-            commands.shutdown(true);
-            commands.shutdown(false);
-            Wait.untilTrue(() -> !commands.getStatefulConnection().isOpen()).waitOrTimeout();
+            async.shutdown(true);
+            async.shutdown(false);
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
-            assertThat(commands.getStatefulConnection().isOpen()).isFalse();
+            assertThat(connection.isOpen()).isFalse();
 
         } finally {
-            commands.getStatefulConnection().close();
+            connection.close();
         }
     }
 }

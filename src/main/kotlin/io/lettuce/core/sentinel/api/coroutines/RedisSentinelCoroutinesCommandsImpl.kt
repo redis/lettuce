@@ -80,7 +80,5 @@ internal class RedisSentinelCoroutinesCommandsImpl<K : Any, V : Any>(internal va
 
     override fun <T : Any> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): Flow<T> = ops.dispatch<T>(type, output, args).asFlow()
 
-    override fun isOpen(): Boolean = ops.isOpen
-
 }
 

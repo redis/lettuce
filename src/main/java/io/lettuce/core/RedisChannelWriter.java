@@ -19,7 +19,7 @@ import java.io.Closeable;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
-import io.lettuce.core.internal.AsyncCloseable;
+import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;

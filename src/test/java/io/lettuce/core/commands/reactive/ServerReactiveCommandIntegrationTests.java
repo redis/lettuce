@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.commands.reactive;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 
@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.commands.ServerCommandIntegrationTests;
 import io.lettuce.core.models.command.CommandDetail;
 import io.lettuce.core.models.command.CommandDetailParser;
@@ -41,10 +42,17 @@ class ServerReactiveCommandIntegrationTests extends ServerCommandIntegrationTest
 
     private RedisReactiveCommands<String, String> reactive;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     @Inject
     ServerReactiveCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
-        super(client, ReactiveSyncInvocationHandler.sync(connection));
+        super(client, connection);
         this.reactive = connection.reactive();
+        this.connection = connection;
+    }
+
+    protected RedisCommands<String, String> getCommands(StatefulRedisConnection<String, String> connection) {
+        return ReactiveSyncInvocationHandler.sync(connection);
     }
 
     /**
@@ -53,31 +61,31 @@ class ServerReactiveCommandIntegrationTests extends ServerCommandIntegrationTest
     @Test
     void shutdown() {
         reactive.shutdown(true);
-        assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
+        assertThat(connection.isOpen()).isTrue();
     }
 
     @Test
     void debugOom() {
         reactive.debugOom();
-        assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
+        assertThat(connection.isOpen()).isTrue();
     }
 
     @Test
     void debugSegfault() {
         reactive.debugSegfault();
-        assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
+        assertThat(connection.isOpen()).isTrue();
     }
 
     @Test
     void debugRestart() {
         reactive.debugRestart(1L);
-        assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
+        assertThat(connection.isOpen()).isTrue();
     }
 
     @Test
     void migrate() {
         reactive.migrate("host", 1234, "key", 1, 10);
-        assertThat(reactive.getStatefulConnection().isOpen()).isTrue();
+        assertThat(connection.isOpen()).isTrue();
     }
 
     @Test

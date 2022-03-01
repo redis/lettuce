@@ -34,6 +34,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
@@ -110,19 +111,21 @@ public class SentinelCommandIntegrationTests extends TestSupport {
         RedisURI uri = RedisURI.Builder.sentinel(TestSettings.host(), 1234, SentinelTestSettings.MASTER_ID)
                 .withSentinel(TestSettings.host()).build();
 
-        RedisSentinelCommands<String, String> sentinelConnection = this.redisClient.connectSentinel(uri).sync();
-        assertThat(sentinelConnection.ping()).isEqualTo("PONG");
+        StatefulRedisSentinelConnection<String, String> sentinelConnection = this.redisClient.connectSentinel(uri);
+        RedisSentinelCommands<String, String> sync = sentinelConnection.sync();
+        assertThat(sync.ping()).isEqualTo("PONG");
 
-        sentinelConnection.getStatefulConnection().close();
+        sentinelConnection.close();
 
-        RedisCommands<String, String> connection2 = this.redisClient.connect(uri).sync();
-        assertThat(connection2.ping()).isEqualTo("PONG");
-        connection2.quit();
+        StatefulRedisConnection<String, String> connection = this.redisClient.connect(uri);
+        RedisCommands<String, String> commands = connection.sync();
+        assertThat(commands.ping()).isEqualTo("PONG");
+        commands.quit();
 
-        Wait.untilTrue(() -> connection2.getStatefulConnection().isOpen()).waitOrTimeout();
+        Wait.untilTrue(() -> connection.isOpen()).waitOrTimeout();
 
-        assertThat(connection2.ping()).isEqualTo("PONG");
-        connection2.getStatefulConnection().close();
+        assertThat(commands.ping()).isEqualTo("PONG");
+        connection.close();
     }
 
     @Test
@@ -145,17 +148,16 @@ public class SentinelCommandIntegrationTests extends TestSupport {
     @Test
     void role() {
 
-        RedisCommands<String, String> connection = redisClient.connect(RedisURI.Builder.redis(host, 26380).build()).sync();
-        try {
+        try (StatefulRedisConnection<String, String> connection = redisClient
+                .connect(RedisURI.Builder.redis(host, 26380).build())) {
+            RedisCommands<String, String> sync = connection.sync();
 
-            List<Object> objects = connection.role();
+            List<Object> objects = sync.role();
 
             assertThat(objects).hasSize(2);
 
-            assertThat(objects.get(0)).isEqualTo("sentinel");
-            assertThat(objects.get(1).toString()).isEqualTo("[" + SentinelTestSettings.MASTER_ID + "]");
-        } finally {
-            connection.getStatefulConnection().close();
+                assertThat(objects.get(0)).isEqualTo("sentinel");
+                assertThat(objects.get(1).toString()).isEqualTo("[" + SentinelTestSettings.MASTER_ID + "]");
         }
     }
 

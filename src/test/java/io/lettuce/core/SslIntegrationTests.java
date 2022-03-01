@@ -39,7 +39,9 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.masterslave.MasterSlave;
+import io.lettuce.core.masterslave.StatefulRedisMasterSlaveConnection;
 import io.lettuce.core.protocol.ProtocolVersion;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import io.lettuce.test.CanConnect;
 import io.lettuce.test.Delay;
@@ -109,10 +111,11 @@ class SslIntegrationTests extends TestSupport {
     @Test
     void standaloneWithSsl() {
 
-        RedisCommands<String, String> connection = redisClient.connect(URI_NO_VERIFY).sync();
-        connection.set("key", "value");
-        assertThat(connection.get("key")).isEqualTo("value");
-        connection.getStatefulConnection().close();
+        try (StatefulRedisConnection<String, String> connection = redisClient.connect(URI_NO_VERIFY)) {
+            RedisCommands<String, String> sync = connection.sync();
+            sync.set("key", "value");
+            assertThat(sync.get("key")).isEqualTo("value");
+        }
     }
 
     @Test
@@ -258,11 +261,12 @@ class SslIntegrationTests extends TestSupport {
     @Test
     void regularSslWithReconnect() {
 
-        RedisCommands<String, String> connection = redisClient.connect(URI_NO_VERIFY).sync();
-        connection.quit();
-        Delay.delay(Duration.ofMillis(200));
-        assertThat(connection.ping()).isEqualTo("PONG");
-        connection.getStatefulConnection().close();
+        try (StatefulRedisConnection<String, String> connection = redisClient.connect(URI_NO_VERIFY)) {
+            RedisCommands<String, String> sync = connection.sync();
+            sync.quit();
+            Delay.delay(Duration.ofMillis(200));
+            assertThat(sync.ping()).isEqualTo("PONG");
+        }
     }
 
     @Test
@@ -276,11 +280,12 @@ class SslIntegrationTests extends TestSupport {
     @Test
     void masterSlaveWithSsl() {
 
-        RedisCommands<String, String> connection = MasterSlave
-                .connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_NO_VERIFY).sync();
-        connection.set("key", "value");
-        assertThat(connection.get("key")).isEqualTo("value");
-        connection.getStatefulConnection().close();
+        try (StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
+                MASTER_SLAVE_URIS_NO_VERIFY)) {
+            RedisCommands<String, String> sync = connection.sync();
+            sync.set("key", "value");
+            assertThat(sync.get("key")).isEqualTo("value");
+        }
     }
 
     @Test
@@ -334,12 +339,13 @@ class SslIntegrationTests extends TestSupport {
 
     @Test
     void masterSlaveSslWithReconnect() {
-        RedisCommands<String, String> connection = MasterSlave
-                .connect(redisClient, StringCodec.UTF8, MASTER_SLAVE_URIS_NO_VERIFY).sync();
-        connection.quit();
-        Delay.delay(Duration.ofMillis(200));
-        assertThat(connection.ping()).isEqualTo("PONG");
-        connection.getStatefulConnection().close();
+        try (StatefulRedisMasterSlaveConnection<String, String> connection = MasterSlave.connect(redisClient, StringCodec.UTF8,
+                MASTER_SLAVE_URIS_NO_VERIFY)) {
+            RedisCommands<String, String> sync = connection.sync();
+            sync.quit();
+            Delay.delay(Duration.ofMillis(200));
+            assertThat(sync.ping()).isEqualTo("PONG");
+        }
     }
 
     @Test
@@ -376,23 +382,25 @@ class SslIntegrationTests extends TestSupport {
     @Test
     void pubSubSsl() {
 
-        RedisPubSubCommands<String, String> connection = redisClient.connectPubSub(URI_NO_VERIFY).sync();
-        connection.subscribe("c1");
-        connection.subscribe("c2");
+        StatefulRedisPubSubConnection<String, String> connection1 = redisClient.connectPubSub(URI_NO_VERIFY);
+        RedisPubSubCommands<String, String> sync1 = connection1.sync();
+        sync1.subscribe("c1");
+        sync1.subscribe("c2");
         Delay.delay(Duration.ofMillis(200));
 
-        RedisPubSubCommands<String, String> connection2 = redisClient.connectPubSub(URI_NO_VERIFY).sync();
+        StatefulRedisPubSubConnection<String, String> connection2 = redisClient.connectPubSub(URI_NO_VERIFY);
+        RedisPubSubCommands<String, String> sync2 = connection2.sync();
 
-        assertThat(connection2.pubsubChannels()).contains("c1", "c2");
-        connection.quit();
+        assertThat(sync2.pubsubChannels()).contains("c1", "c2");
+        sync1.quit();
         Delay.delay(Duration.ofMillis(200));
-        Wait.untilTrue(connection::isOpen).waitOrTimeout();
-        Wait.untilEquals(2, () -> connection2.pubsubChannels().size()).waitOrTimeout();
+        Wait.untilTrue(connection1::isOpen).waitOrTimeout();
+        Wait.untilEquals(2, () -> sync2.pubsubChannels().size()).waitOrTimeout();
 
-        assertThat(connection2.pubsubChannels()).contains("c1", "c2");
+        assertThat(sync2.pubsubChannels()).contains("c1", "c2");
 
-        connection.getStatefulConnection().close();
-        connection2.getStatefulConnection().close();
+        connection1.close();
+        connection2.close();
     }
 
     private static RedisURI.Builder sslURIBuilder(int portOffset) {

@@ -15,13 +15,10 @@
  */
 package io.lettuce.core.commands;
 
+import static io.lettuce.core.BitFieldArgs.*;
 import static io.lettuce.core.BitFieldArgs.offset;
-import static io.lettuce.core.BitFieldArgs.signed;
-import static io.lettuce.core.BitFieldArgs.typeWidthBasedOffset;
-import static io.lettuce.core.BitFieldArgs.unsigned;
-import static io.lettuce.core.BitFieldArgs.OverflowType.WRAP;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static io.lettuce.core.BitFieldArgs.OverflowType.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 
@@ -36,6 +33,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.TestSupport;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -51,6 +49,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     private final RedisClient client;
     private final RedisCommands<String, String> redis;
 
+    private StatefulRedisConnection<String, String> bitConnection;
     protected RedisCommands<String, String> bitstring;
 
     @Inject
@@ -62,12 +61,13 @@ public class BitCommandIntegrationTests extends TestSupport {
     @BeforeEach
     void setUp() {
         this.redis.flushall();
-        this.bitstring = client.connect(new BitStringCodec()).sync();
+        bitConnection = client.connect(new BitStringCodec());
+        this.bitstring = bitConnection.sync();
     }
 
     @AfterEach
     void tearDown() {
-        this.bitstring.getStatefulConnection().close();
+        this.bitConnection.close();
     }
 
     @Test

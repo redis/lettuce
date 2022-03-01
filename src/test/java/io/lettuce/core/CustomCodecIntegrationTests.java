@@ -15,9 +15,14 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -34,7 +39,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import reactor.test.StepVerifier;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.codec.*;
+import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.CipherCodec;
+import io.lettuce.core.codec.CompressionCodec;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.test.LettuceExtension;
 
 /**
@@ -96,67 +105,73 @@ class CustomCodecIntegrationTests extends TestSupport {
 
     @Test
     void testDeflateCompressedJavaSerializer() {
-        RedisCommands<String, Object> connection = client
+        StatefulRedisConnection<String, Object> connection = client
                 .connect(
-                        CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.DEFLATE))
+                        CompressionCodec.valueCompressor(new SerializedObjectCodec(),
+                                CompressionCodec.CompressionType.DEFLATE));
+        RedisCommands<String, Object> sync = connection
                 .sync();
         List<String> list = list("one", "two");
-        connection.set(key, list);
-        assertThat(connection.get(key)).isEqualTo(list);
+        sync.set(key, list);
+        assertThat(sync.get(key)).isEqualTo(list);
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
     void testGzipompressedJavaSerializer() {
-        RedisCommands<String, Object> connection = client
-                .connect(CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP))
-                .sync();
+        StatefulRedisConnection<String, Object> connection = client
+                .connect(CompressionCodec.valueCompressor(new SerializedObjectCodec(), CompressionCodec.CompressionType.GZIP));
+        RedisCommands<String, Object> sync = connection.sync();
         List<String> list = list("one", "two");
-        connection.set(key, list);
-        assertThat(connection.get(key)).isEqualTo(list);
+        sync.set(key, list);
+        assertThat(sync.get(key)).isEqualTo(list);
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
     void testEncryptedCodec() {
 
-        RedisCommands<String, String> connection = client.connect(CipherCodec.forValues(StringCodec.UTF8, encrypt, decrypt))
+        StatefulRedisConnection<String, String> connection = client
+                .connect(CipherCodec.forValues(StringCodec.UTF8, encrypt, decrypt));
+        RedisCommands<String, String> sync = connection
                 .sync();
 
-        connection.set(key, "foobar");
-        assertThat(connection.get(key)).isEqualTo("foobar");
+        sync.set(key, "foobar");
+        assertThat(sync.get(key)).isEqualTo("foobar");
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
     void testByteCodec() {
-        RedisCommands<byte[], byte[]> connection = client.connect(new ByteArrayCodec()).sync();
+        StatefulRedisConnection<byte[], byte[]> connection = client.connect(new ByteArrayCodec());
+        RedisCommands<byte[], byte[]> sync = connection.sync();
         String value = "üöäü+#";
-        connection.set(key.getBytes(), value.getBytes());
-        assertThat(connection.get(key.getBytes())).isEqualTo(value.getBytes());
-        connection.set(key.getBytes(), null);
-        assertThat(connection.get(key.getBytes())).isEqualTo(new byte[0]);
+        sync.set(key.getBytes(), value.getBytes());
+        assertThat(sync.get(key.getBytes())).isEqualTo(value.getBytes());
+        sync.set(key.getBytes(), null);
+        assertThat(sync.get(key.getBytes())).isEqualTo(new byte[0]);
 
-        List<byte[]> keys = connection.keys(key.getBytes());
+        List<byte[]> keys = sync.keys(key.getBytes());
         assertThat(keys).contains(key.getBytes());
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
     void testByteBufferCodec() {
 
-        RedisCommands<ByteBuffer, ByteBuffer> connection = client.connect(new ByteBufferCodec()).sync();
+        StatefulRedisConnection<ByteBuffer, ByteBuffer> connection = client.connect(new ByteBufferCodec());
+        RedisCommands<ByteBuffer, ByteBuffer> sync = connection.sync();
         String value = "üöäü+#";
 
         ByteBuffer wrap = ByteBuffer.wrap(value.getBytes());
 
-        connection.set(wrap, wrap);
+        sync.set(wrap, wrap);
 
-        List<ByteBuffer> keys = connection.keys(wrap);
+        List<ByteBuffer> keys = sync.keys(wrap);
         assertThat(keys).hasSize(1);
         ByteBuffer byteBuffer = keys.get(0);
         byte[] bytes = new byte[byteBuffer.remaining()];
@@ -164,23 +179,24 @@ class CustomCodecIntegrationTests extends TestSupport {
 
         assertThat(bytes).isEqualTo(value.getBytes());
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
     void testComposedCodec() {
 
         RedisCodec<String, Object> composed = RedisCodec.of(StringCodec.ASCII, new SerializedObjectCodec());
-        RedisCommands<String, Object> connection = client.connect(composed).sync();
+        StatefulRedisConnection<String, Object> connection = client.connect(composed);
+        RedisCommands<String, Object> sync = connection.sync();
 
-        connection.set(key, new Person());
+        sync.set(key, new Person());
 
-        List<String> keys = connection.keys(key);
+        List<String> keys = sync.keys(key);
         assertThat(keys).hasSize(1);
 
-        assertThat(connection.get(key)).isInstanceOf(Person.class);
+        assertThat(sync.get(key)).isInstanceOf(Person.class);
 
-        connection.getStatefulConnection().close();
+        connection.close();
     }
 
     class SerializedObjectCodec implements RedisCodec<String, Object> {

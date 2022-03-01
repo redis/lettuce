@@ -41,7 +41,6 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
         super(connection, codec);
     }
 
-    @Override
     public StatefulRedisConnection<K, V> getStatefulConnection() {
         return (StatefulRedisConnection<K, V>) super.getConnection();
     }

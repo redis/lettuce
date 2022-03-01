@@ -61,6 +61,8 @@ import io.lettuce.test.Wait;
 class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
+
+    private final StatefulRedisClusterConnection<String, String> connection;
     private final RedisAdvancedClusterAsyncCommands<String, String> commands;
 
     @Inject
@@ -69,6 +71,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
         this.clusterClient = clusterClient;
         this.commands = connection.async();
+        this.connection = connection;
         connection.sync().flushall();
     }
 
@@ -163,7 +166,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
     @Test
     void testDynamicNodeSelection() {
 
-        Partitions partitions = commands.getStatefulConnection().getPartitions();
+        Partitions partitions = connection.getPartitions();
         partitions.forEach(redisClusterNode -> redisClusterNode.setFlags(Collections
                 .singleton(RedisClusterNode.NodeFlag.UPSTREAM)));
 
@@ -235,7 +238,7 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
 
         assertThat(selection.asMap()).hasSize(1);
 
-        commands.getStatefulConnection().getPartitions().getPartition(2)
+        connection.getPartitions().getPartition(2)
                 .setFlags(Collections.singleton(RedisClusterNode.NodeFlag.MYSELF));
 
         assertThat(selection.asMap()).hasSize(1);

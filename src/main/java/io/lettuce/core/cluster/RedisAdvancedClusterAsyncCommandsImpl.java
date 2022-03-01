@@ -110,21 +110,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             CompletableFuture<RedisClusterAsyncCommands<K, V>> byNodeId = getConnectionAsync(redisClusterNode.getNodeId());
 
             executions.put("NodeId: " + redisClusterNode.getNodeId(), byNodeId.thenCompose(c -> {
-
-                if (c.isOpen()) {
-                    return c.clientSetname(name);
-                }
-                return ok;
+                return c.clientSetname(name);
             }));
 
             CompletableFuture<RedisClusterAsyncCommands<K, V>> byHost = getConnectionAsync(uri.getHost(), uri.getPort());
 
             executions.put("HostAndPort: " + redisClusterNode.getNodeId(), byHost.thenCompose(c -> {
-
-                if (c.isOpen()) {
-                    return c.clientSetname(name);
-                }
-                return ok;
+                return c.clientSetname(name);
             }));
         }
 
@@ -508,7 +500,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
                 .thenApply(StatefulRedisConnection::async);
     }
 
-    @Override
     public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
         return (StatefulRedisClusterConnection<K, V>) super.getConnection();
     }

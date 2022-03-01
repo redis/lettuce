@@ -98,8 +98,9 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
     public void clientKillExtended() {
 
         RedisURI redisURI = RedisURI.Builder.sentinel(TestSettings.host(), SentinelTestSettings.MASTER_ID).build();
-        RedisSentinelCommands<String, String> connection2 = redisClient.connectSentinel(redisURI).sync();
-        connection2.clientSetname("killme");
+        StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel(redisURI);
+        RedisSentinelCommands<String, String> sync = connection.sync();
+        sync.clientSetname("killme");
 
         Pattern p = Pattern.compile("^.*[^l]addr=([^ ]+).*name=killme.*$", Pattern.MULTILINE | Pattern.DOTALL);
         String clients = sentinel.clientList();
@@ -114,7 +115,7 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
         assertThat(sentinel.clientKill(KillArgs.Builder.typeNormal().id(4234))).isEqualTo(0);
         assertThat(sentinel.clientKill(KillArgs.Builder.typePubsub().id(4234))).isEqualTo(0);
 
-        connection2.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test

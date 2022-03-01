@@ -65,7 +65,7 @@ class MyExtendedRedisClientIntegrationTests {
         StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub();
         RedisPubSubAsyncCommands<String, String> commands = connection.async();
         assertThat(commands).isInstanceOf(RedisPubSubAsyncCommandsImpl.class);
-        assertThat(commands.getStatefulConnection()).isInstanceOf(MyPubSubConnection.class);
+        assertThat(connection).isInstanceOf(MyPubSubConnection.class);
         commands.set("key", "value").get();
         connection.close();
     }

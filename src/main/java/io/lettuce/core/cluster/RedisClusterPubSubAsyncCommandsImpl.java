@@ -108,7 +108,7 @@ public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncC
         private final ClusterDistributionChannelWriter writer;
 
         @SuppressWarnings("unchecked")
-        public StaticPubSubAsyncNodeSelection(StatefulRedisClusterPubSubConnection<K, V> globalConnection,
+        public StaticPubSubAsyncNodeSelection(StatefulRedisClusterPubSubConnection<?, ?> globalConnection,
                 Predicate<RedisClusterNode> selector) {
 
             this.redisClusterNodes = globalConnection.getPartitions().stream().filter(selector).collect(Collectors.toList());

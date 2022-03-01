@@ -16,7 +16,6 @@
 package io.lettuce.core.api.reactive;
 
 import reactor.core.publisher.Mono;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 
 /**
@@ -68,10 +67,5 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      * @return String simple-string-reply
      */
     Mono<String> swapdb(int db1, int db2);
-
-    /**
-     * @return the underlying connection.
-     */
-    StatefulRedisConnection<K, V> getStatefulConnection();
 
 }

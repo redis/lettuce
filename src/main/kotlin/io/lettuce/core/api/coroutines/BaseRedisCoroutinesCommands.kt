@@ -149,26 +149,5 @@ interface BaseRedisCoroutinesCommands<K : Any, V : Any> {
      */
     fun <T : Any> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): Flow<T>
 
-    /**
-     *
-     * @return @code true} if the connection is open (connected and not closed).
-     */
-    fun isOpen(): Boolean
-
-    /**
-     * Disable or enable auto-flush behavior. Default is `true`. If autoFlushCommands is disabled, multiple commands can
-     * be issued without writing them actually to the transport. Commands are buffered until a [flushCommands] is
-     * issued. After calling [flushCommands] commands are sent to the transport and executed by Redis.
-     *
-     * @param autoFlush state of autoFlush.
-     */
-    fun setAutoFlushCommands(autoFlush: Boolean)
-
-    /**
-     * Flush pending commands. This commands forces a flush on the channel and can be used to buffer ("pipeline") commands to
-     * achieve batching. No-op if channel is not connected.
-     */
-    fun flushCommands()
-
 }
 

@@ -34,6 +34,7 @@ import io.lettuce.category.SlowTests;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.BaseRedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
@@ -43,7 +44,6 @@ import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
-import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.test.Delay;
@@ -68,7 +68,11 @@ class TopologyRefreshIntegrationTests extends TestSupport {
 
     private RedisClusterClient clusterClient;
 
+    private StatefulRedisConnection<String, String> connection1;
+
     private RedisCommands<String, String> redis1;
+
+    private StatefulRedisConnection<String, String> connection2;
 
     private RedisCommands<String, String> redis2;
 
@@ -81,14 +85,16 @@ class TopologyRefreshIntegrationTests extends TestSupport {
     void openConnection() {
         clusterClient = RedisClusterClient.create(client.getResources(),
                 RedisURI.Builder.redis(host, ClusterTestSettings.port1).build());
-        redis1 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1).build()).sync();
-        redis2 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port2).build()).sync();
+        connection1 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1).build());
+        redis1 = connection1.sync();
+        connection2 = client.connect(RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port2).build());
+        redis2 = connection2.sync();
     }
 
     @AfterEach
     void closeConnection() {
-        redis1.getStatefulConnection().close();
-        redis2.getStatefulConnection().close();
+        connection1.close();
+        connection2.close();
         FastShutdown.shutdown(clusterClient);
     }
 
@@ -100,7 +106,8 @@ class TopologyRefreshIntegrationTests extends TestSupport {
                 .refreshPeriod(1, TimeUnit.SECONDS)//
                 .build();
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
 
         clusterClient.getPartitions().clear();
 
@@ -108,7 +115,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
             return !clusterClient.getPartitions().isEmpty();
         }).waitOrTimeout();
 
-        clusterConnection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -116,7 +123,8 @@ class TopologyRefreshIntegrationTests extends TestSupport {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.create();
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
 
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
             assertThat(redisClusterNode).isInstanceOf(RedisClusterNodeSnapshot.class);
@@ -125,7 +133,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
             assertThat(snapshot.getConnectedClients()).isNotNull().isGreaterThanOrEqualTo(0);
         }
 
-        clusterConnection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -134,7 +142,8 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
                 .dynamicRefreshSources(false).build();
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
 
         Partitions partitions = clusterClient.getPartitions();
         RedisClusterNodeSnapshot node1 = (RedisClusterNodeSnapshot) partitions.getPartitionBySlot(0);
@@ -143,7 +152,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         RedisClusterNodeSnapshot node2 = (RedisClusterNodeSnapshot) partitions.getPartitionBySlot(15000);
         assertThat(node2.getConnectedClients()).isNull();
 
-        clusterConnection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -185,23 +194,24 @@ class TopologyRefreshIntegrationTests extends TestSupport {
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
 
         clusterClient.getPartitions().clear();
-        clusterConnection.quit();
+        async.quit();
 
         Wait.untilTrue(() -> {
             return !clusterClient.getPartitions().isEmpty();
         }).waitOrTimeout();
 
         clusterClient.getPartitions().clear();
-        clusterConnection.quit();
+        async.quit();
 
         Delay.delay(Duration.ofMillis(200));
 
         assertThat(clusterClient.getPartitions()).isEmpty();
 
-        clusterConnection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -213,9 +223,10 @@ class TopologyRefreshIntegrationTests extends TestSupport {
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
 
-        clusterConnection.quit();
+        async.quit();
         Delay.delay(Duration.ofMillis(700));
 
         Wait.untilTrue(() -> {
@@ -223,13 +234,13 @@ class TopologyRefreshIntegrationTests extends TestSupport {
         }).waitOrTimeout();
 
         clusterClient.getPartitions().clear();
-        clusterConnection.quit();
+        async.quit();
 
         Wait.untilTrue(() -> {
             return !clusterClient.getPartitions().isEmpty();
         }).waitOrTimeout();
 
-        clusterConnection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -239,15 +250,16 @@ class TopologyRefreshIntegrationTests extends TestSupport {
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
 
         clusterClient.getPartitions().clear();
 
-        clusterConnection.quit();
+        async.quit();
         Delay.delay(Duration.ofMillis(500));
 
         assertThat(clusterClient.getPartitions()).isEmpty();
-        clusterConnection.getStatefulConnection().close();
+        connection.close();
     }
 
     @Test
@@ -281,7 +293,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
 
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node1.getNodeId()).getSlots()).hasSize(12000);
         assertThat(clusterClient.getPartitions().getPartitionByNodeId(node2.getNodeId()).getSlots()).hasSize(4384);
-        clusterConnection.getStatefulConnection().close();
+        connection.close();
     }
 
     private void runReconnectTest(
@@ -292,10 +304,11 @@ class TopologyRefreshIntegrationTests extends TestSupport {
                 .enableAllAdaptiveRefreshTriggers()//
                 .build();
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
-        RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
+        StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
+        RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
 
         RedisClusterNode node = clusterClient.getPartitions().getPartition(0);
-        BaseRedisAsyncCommands closeable = function.apply(clusterConnection, node);
+        BaseRedisAsyncCommands closeable = function.apply(async, node);
         clusterClient.getPartitions().clear();
 
         closeable.quit();
@@ -304,10 +317,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
             return !clusterClient.getPartitions().isEmpty();
         }).waitOrTimeout();
 
-        if (closeable instanceof RedisAdvancedClusterCommands) {
-            ((RedisAdvancedClusterCommands) closeable).getStatefulConnection().close();
-        }
-        clusterConnection.getStatefulConnection().close();
+        connection.close();
     }
 
 }

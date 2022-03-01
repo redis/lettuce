@@ -15,9 +15,7 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Arrays;
 
@@ -28,12 +26,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.*;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
+import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.*;
+import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 
@@ -150,9 +157,7 @@ class CustomCommandIntegrationTests extends TestSupport {
     }
 
     private StatefulRedisConnection<String, String> getStandaloneConnection() {
-
-        assumeTrue(redis.getStatefulConnection() instanceof StatefulRedisConnection);
-        return redis.getStatefulConnection();
+        return connection;
     }
 
     public enum MyCommands implements ProtocolKeyword {

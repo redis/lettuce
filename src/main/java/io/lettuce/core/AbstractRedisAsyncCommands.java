@@ -748,11 +748,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public void flushCommands() {
-        connection.flushCommands();
-    }
-
-    @Override
     public RedisFuture<String> flushall() {
         return dispatch(commandBuilder.flushall());
     }
@@ -1112,11 +1107,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public boolean isOpen() {
-        return connection.isOpen();
-    }
-
-    @Override
     public RedisFuture<List<K>> keys(K pattern) {
         return dispatch(commandBuilder.keys(pattern));
     }
@@ -1418,11 +1408,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public void reset() {
-        getConnection().reset();
-    }
-
-    @Override
     public RedisFuture<String> restore(K key, long ttl, byte[] value) {
         return dispatch(commandBuilder.restore(key, value, RestoreArgs.Builder.ttl(ttl)));
     }
@@ -1586,12 +1571,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.setGet(key, value, setArgs));
     }
 
-    @Override
-    public void setAutoFlushCommands(boolean autoFlush) {
-        connection.setAutoFlushCommands(autoFlush);
-    }
-
-    @Override
     public void setTimeout(Duration timeout) {
         connection.setTimeout(timeout);
     }

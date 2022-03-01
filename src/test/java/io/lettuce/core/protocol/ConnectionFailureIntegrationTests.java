@@ -15,9 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
@@ -25,7 +23,11 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -34,18 +36,27 @@ import javax.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.commons.util.ReflectionUtils;
 
-import io.lettuce.test.ReflectionTestUtils;
-
-import io.lettuce.core.*;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionEvents;
+import io.lettuce.core.RedisAsyncCommandsImpl;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.event.connection.ReconnectFailedEvent;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.NettyCustomizer;
-import io.lettuce.test.*;
+import io.lettuce.test.ConnectionTestUtil;
+import io.lettuce.test.Delay;
+import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
+import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.server.RandomResponseServer;
 import io.lettuce.test.settings.TestSettings;
@@ -112,9 +123,11 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         redisUri.setTimeout(Duration.ofSeconds(5));
 
         try {
-            RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
+
+            StatefulRedisConnection<String, String> connection = client.connect(redisUri);
+            RedisAsyncCommands<String, String> async = connection.async();
             ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
-                    .getConnectionWatchdog(connection.getStatefulConnection());
+                    .getConnectionWatchdog(connection);
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
             assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
@@ -123,15 +136,15 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
             redisUri.setPort(TestSettings.nonexistentPort());
 
-            connection.quit();
+            async.quit();
             Wait.untilTrue(() -> connectionWatchdog.isReconnectSuspended()).waitOrTimeout();
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
 
-            assertThatThrownBy(() -> TestFutures.awaitOrTimeout(connection.info())).hasRootCauseInstanceOf(RedisException.class)
+            assertThatThrownBy(() -> TestFutures.awaitOrTimeout(async.info())).hasRootCauseInstanceOf(RedisException.class)
                     .hasMessageContaining("Invalid first byte");
 
-            connection.getStatefulConnection().close();
+            connection.close();
         } finally {
             ts.shutdown();
         }
@@ -158,9 +171,10 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         try {
             final BlockingQueue<ConnectionEvents.Reconnect> events = new LinkedBlockingDeque<>();
 
-            RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
+            StatefulRedisConnection<String, String> connection = client.connect(redisUri);
+            RedisAsyncCommands<String, String> async = connection.async();
             ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
-                    .getConnectionWatchdog(connection.getStatefulConnection());
+                    .getConnectionWatchdog(connection);
 
             ReconnectionListener reconnectionListener = events::offer;
 
@@ -170,16 +184,15 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
             redisUri.setPort(TestSettings.nonexistentPort());
 
-            connection.quit();
+            async.quit();
             Wait.untilTrue(() -> events.size() > 1).waitOrTimeout();
-            connection.getStatefulConnection().close();
+            connection.close();
 
             ConnectionEvents.Reconnect event1 = events.take();
             assertThat(event1.getAttempt()).isEqualTo(1);
 
             ConnectionEvents.Reconnect event2 = events.take();
             assertThat(event2.getAttempt()).isEqualTo(2);
-
         } finally {
             ts.shutdown();
         }
@@ -254,22 +267,22 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         client.setOptions(ClientOptions.builder().build());
 
         try {
-            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
-                    .connect(redisUri).async();
+            StatefulRedisConnection<String, String> connection = client.connect(redisUri);
+            RedisAsyncCommandsImpl<String, String> async = (RedisAsyncCommandsImpl<String, String>) connection.async();
             ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
-                    .getConnectionWatchdog(connection.getStatefulConnection());
+                    .getConnectionWatchdog(connection);
 
             redisUri.setPort(TestSettings.nonexistentPort());
 
             client.getResources().eventBus().get().subscribe(queue::add);
 
-            connection.quit();
-            Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
+            async.quit();
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
             connectionWatchdog.run(0);
             Delay.delay(Duration.ofMillis(500));
 
-            connection.getStatefulConnection().close();
+            connection.close();
 
             assertThat(queue).isNotEmpty();
 
