@@ -21,7 +21,7 @@ import java.util.concurrent.CompletableFuture;
  * A {@link AsyncCloseable} is a resource that can be closed. The {@link #closeAsync()} method is invoked to request resources
  * release that the object is holding (such as open files).
  *
- * @since 5.1
+ * @since 6.2
  * @author Mark Paluch
  */
 public interface AsyncCloseable {
