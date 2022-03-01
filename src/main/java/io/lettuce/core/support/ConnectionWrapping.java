@@ -23,9 +23,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.lettuce.core.RedisException;
+import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.AbstractInvocationHandler;
-import io.lettuce.core.internal.AsyncCloseable;
 
 /**
  * Utility to wrap pooled connections for return-on-close.

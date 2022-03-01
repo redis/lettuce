@@ -16,7 +16,12 @@
 package io.lettuce.core.masterreplica;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,9 +32,9 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.internal.AsyncCloseable;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.output.StatusOutput;
