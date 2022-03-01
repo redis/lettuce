@@ -316,6 +316,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      * @param keys the key
      * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
      */
+    @Override
     RedisFuture<Long> del(K... keys);
 
     /**
@@ -325,6 +326,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      * @param keys the key
      * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values at the specified keys.
      */
+    @Override
     RedisFuture<List<KeyValue<K, V>>> mget(K... keys);
 
     /**
@@ -334,6 +336,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      * @param map the map
      * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
+    @Override
     RedisFuture<String> mset(Map<K, V> map);
 
     /**
@@ -345,6 +348,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
+    @Override
     RedisFuture<Boolean> msetnx(Map<K, V> map);
 
     /**
@@ -353,6 +357,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *
      * @return String simple-string-reply
      */
+    @Override
     RedisFuture<String> readOnly();
 
     /**
@@ -360,6 +365,7 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *
      * @return String simple-string-reply
      */
+    @Override
     RedisFuture<String> readWrite();
 
 }

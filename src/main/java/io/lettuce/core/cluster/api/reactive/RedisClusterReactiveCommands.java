@@ -299,6 +299,7 @@ public interface RedisClusterReactiveCommands<K, V>
      * @param keys the key
      * @return Flux&lt;Long&gt; integer-reply The number of keys that were removed.
      */
+    @Override
     Mono<Long> del(K... keys);
 
     /**
@@ -308,6 +309,7 @@ public interface RedisClusterReactiveCommands<K, V>
      * @param keys the key
      * @return Flux&lt;List&lt;V&gt;&gt; array-reply list of values at the specified keys.
      */
+    @Override
     Flux<KeyValue<K, V>> mget(K... keys);
 
     /**
@@ -317,6 +319,7 @@ public interface RedisClusterReactiveCommands<K, V>
      * @param map the map
      * @return Flux&lt;String&gt; simple-string-reply always {@code OK} since {@code MSET} can't fail.
      */
+    @Override
     Mono<String> mset(Map<K, V> map);
 
     /**
@@ -328,6 +331,7 @@ public interface RedisClusterReactiveCommands<K, V>
      *
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
+    @Override
     Mono<Boolean> msetnx(Map<K, V> map);
 
     /**
@@ -336,6 +340,7 @@ public interface RedisClusterReactiveCommands<K, V>
      *
      * @return String simple-string-reply
      */
+    @Override
     Mono<String> readOnly();
 
     /**
@@ -343,6 +348,7 @@ public interface RedisClusterReactiveCommands<K, V>
      *
      * @return String simple-string-reply
      */
+    @Override
     Mono<String> readWrite();
 
 }

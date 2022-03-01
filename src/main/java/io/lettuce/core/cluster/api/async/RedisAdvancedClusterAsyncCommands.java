@@ -25,6 +25,7 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ScanCursor;
 import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.api.async.RedisConnectionAsyncCommands;
 import io.lettuce.core.api.async.RedisKeyAsyncCommands;
 import io.lettuce.core.api.async.RedisScriptingAsyncCommands;
 import io.lettuce.core.api.async.RedisServerAsyncCommands;
@@ -226,6 +227,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      * @see RedisStringAsyncCommands#msetnx(Map)
      */
+    @Override
     RedisFuture<Boolean> msetnx(Map<K, V> map);
 
     /**
@@ -233,8 +235,9 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      *
      * @param name the client name
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
-     * @see RedisServerAsyncCommands#clientSetname(Object)
+     * @see RedisConnectionAsyncCommands#clientSetname(Object)
      */
+    @Override
     RedisFuture<String> clientSetname(K name);
 
     /**
@@ -243,6 +246,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return String simple-string-reply
      * @see RedisServerAsyncCommands#flushall()
      */
+    @Override
     RedisFuture<String> flushall();
 
     /**
@@ -252,6 +256,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @see RedisServerAsyncCommands#flushallAsync()
      * @since 6.0
      */
+    @Override
     RedisFuture<String> flushallAsync();
 
     /**
@@ -260,6 +265,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return String simple-string-reply
      * @see RedisServerAsyncCommands#flushdb()
      */
+    @Override
     RedisFuture<String> flushdb();
 
     /**
@@ -268,6 +274,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return Long integer-reply
      * @see RedisServerAsyncCommands#dbsize()
      */
+    @Override
     RedisFuture<Long> dbsize();
 
     /**
@@ -277,6 +284,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
      * @see RedisKeyAsyncCommands#keys(Object)
      */
+    @Override
     RedisFuture<List<K>> keys(K pattern);
 
     /**
@@ -287,6 +295,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return Long array-reply list of keys matching {@code pattern}.
      * @see RedisKeyAsyncCommands#keys(KeyStreamingChannel, Object)
      */
+    @Override
     RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern);
 
     /**
@@ -295,6 +304,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return K bulk-string-reply the random key, or {@code null} when the database is empty.
      * @see RedisKeyAsyncCommands#randomkey()
      */
+    @Override
     RedisFuture<K> randomkey();
 
     /**
@@ -303,6 +313,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return String simple-string-reply
      * @see RedisScriptingAsyncCommands#scriptFlush()
      */
+    @Override
     RedisFuture<String> scriptFlush();
 
     /**
@@ -311,6 +322,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return String simple-string-reply, always {@literal OK}.
      * @see RedisScriptingAsyncCommands#scriptKill()
      */
+    @Override
     RedisFuture<String> scriptKill();
 
     /**
@@ -320,6 +332,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
      * @since 6.0
      */
+    @Override
     RedisFuture<String> scriptLoad(String script);
 
     /**
@@ -329,6 +342,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
      * @since 6.0
      */
+    @Override
     RedisFuture<String> scriptLoad(byte[] script);
 
     /**
@@ -337,6 +351,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @param save {@code true} force save operation
      * @see RedisServerAsyncCommands#shutdown(boolean)
      */
+    @Override
     void shutdown(boolean save);
 
     /**
@@ -345,6 +360,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyAsyncCommands#scan()
      */
+    @Override
     RedisFuture<KeyScanCursor<K>> scan();
 
     /**
@@ -354,6 +370,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyAsyncCommands#scan(ScanArgs)
      */
+    @Override
     RedisFuture<KeyScanCursor<K>> scan(ScanArgs scanArgs);
 
     /**
@@ -365,6 +382,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyAsyncCommands#scan(ScanCursor, ScanArgs)
      */
+    @Override
     RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
@@ -375,6 +393,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return KeyScanCursor&lt;K&gt; scan cursor.
      * @see RedisKeyAsyncCommands#scan(ScanCursor)
      */
+    @Override
     RedisFuture<KeyScanCursor<K>> scan(ScanCursor scanCursor);
 
     /**
@@ -384,6 +403,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyAsyncCommands#scan(KeyStreamingChannel)
      */
+    @Override
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
 
     /**
@@ -394,6 +414,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyAsyncCommands#scan(KeyStreamingChannel, ScanArgs)
      */
+    @Override
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
@@ -406,6 +427,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyAsyncCommands#scan(KeyStreamingChannel, ScanCursor, ScanArgs)
      */
+    @Override
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
@@ -417,6 +439,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return StreamScanCursor scan cursor.
      * @see RedisKeyAsyncCommands#scan(ScanCursor, ScanArgs)
      */
+    @Override
     RedisFuture<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 
     /**
@@ -426,6 +449,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @param keys the keys
      * @return Long integer-reply the number of found keys.
      */
+    @Override
     RedisFuture<Long> touch(K... keys);
 
 }
