@@ -288,21 +288,4 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
      */
     List<Object> clusterSlots();
 
-    /**
-     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running
-     * write queries.
-     *
-     * @return String simple-string-reply
-     */
-    @Override
-    String readOnly();
-
-    /**
-     * Resets readOnly flag.
-     *
-     * @return String simple-string-reply
-     */
-    @Override
-    String readWrite();
-
 }

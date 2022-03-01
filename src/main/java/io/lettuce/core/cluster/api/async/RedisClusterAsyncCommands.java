@@ -16,9 +16,7 @@
 package io.lettuce.core.cluster.api.async;
 
 import java.util.List;
-import java.util.Map;
 
-import io.lettuce.core.KeyValue;
 import io.lettuce.core.Range;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.async.*;
@@ -309,63 +307,5 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of slot ranges with IP/Port mappings.
      */
     RedisFuture<List<Object>> clusterSlots();
-
-    /**
-     * Delete a key with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
-     *
-     * @param keys the key
-     * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
-     */
-    @Override
-    RedisFuture<Long> del(K... keys);
-
-    /**
-     * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
-     * cluster nodes.
-     *
-     * @param keys the key
-     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values at the specified keys.
-     */
-    @Override
-    RedisFuture<List<KeyValue<K, V>>> mget(K... keys);
-
-    /**
-     * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular
-     * cluster nodes.
-     *
-     * @param map the map
-     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK} since {@code MSET} can't fail.
-     */
-    @Override
-    RedisFuture<String> mset(Map<K, V> map);
-
-    /**
-     * Set multiple keys to multiple values, only if none of the keys exist with pipelining. Cross-slot keys will result in
-     * multiple calls to the particular cluster nodes.
-     *
-     * @param map the map
-     * @return RedisFuture&lt;Boolean&gt; integer-reply specifically:
-     *
-     *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
-     */
-    @Override
-    RedisFuture<Boolean> msetnx(Map<K, V> map);
-
-    /**
-     * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running
-     * write queries.
-     *
-     * @return String simple-string-reply
-     */
-    @Override
-    RedisFuture<String> readOnly();
-
-    /**
-     * Resets readOnly flag.
-     *
-     * @return String simple-string-reply
-     */
-    @Override
-    RedisFuture<String> readWrite();
 
 }
