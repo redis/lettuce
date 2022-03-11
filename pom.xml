@@ -842,13 +842,28 @@
     <profiles>
 
         <profile>
+            <id>linux-aarch64-fedora</id>
             <activation>
                 <os>
+                    <name>linux</name>
                     <arch>aarch64</arch>
                 </os>
             </activation>
             <properties>
                 <os.detected.classifier>linux-aarch64-fedora</os.detected.classifier>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>apple-silicon</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <os.detected.classifier>osx-x86_64</os.detected.classifier>
             </properties>
         </profile>
 
