@@ -290,6 +290,16 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             return super.mget(keys);
         }
 
+        // For a given partition, maps the key to its index within the List<K> in partitioned for faster lookups below
+        Map<Integer, Map<K,Integer>> partitionedKeysToIndexes = new HashMap<>();
+        for (Integer partition : partitioned.keySet()) {
+            List<K> keysForPartition = partitioned.get(partition);
+            Map<K, Integer> keysToIndexes = new HashMap<>();
+            for (int i = 0; i < keysForPartition.size(); i++) {
+                keysToIndexes.put(keysForPartition.get(i), i);
+            }
+            partitionedKeysToIndexes.put(partition, keysToIndexes);
+        }
         Map<K, Integer> slots = SlotHash.getSlots(partitioned);
         Map<Integer, RedisFuture<List<KeyValue<K, V>>>> executions = new HashMap<>();
 
@@ -304,7 +314,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             for (K opKey : keys) {
                 int slot = slots.get(opKey);
 
-                int position = partitioned.get(slot).indexOf(opKey);
+                int position = partitionedKeysToIndexes.get(slot).get(opKey);
                 RedisFuture<List<KeyValue<K, V>>> listRedisFuture = executions.get(slot);
                 result.add(MultiNodeExecution.execute(() -> listRedisFuture.get().get(position)));
             }
