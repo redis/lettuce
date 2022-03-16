@@ -178,4 +178,28 @@ public class LettuceStrings {
         return sb.toString();
     }
 
+    /**
+     * Return a {@code char[]} from the give {@link CharSequence}.
+     *
+     * @param seq the sequence to read
+     * @return the character array
+     * @since 6.2
+     */
+    public static char[] toCharArray(CharSequence seq) {
+
+        LettuceAssert.notNull(seq, "CharSequence must not be null");
+
+        if (seq instanceof String) {
+            return ((String) seq).toCharArray();
+        }
+
+        char[] chars = new char[seq.length()];
+
+        for (int i = 0; i < chars.length; i++) {
+            chars[i] = seq.charAt(i);
+        }
+
+        return chars;
+    }
+
 }

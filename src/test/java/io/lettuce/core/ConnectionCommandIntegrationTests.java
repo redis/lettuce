@@ -18,7 +18,10 @@ package io.lettuce.core;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
 
@@ -30,9 +33,16 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.internal.LettuceStrings;
+import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.ProtocolVersion;
-import io.lettuce.test.*;
+import io.lettuce.test.CliParser;
+import io.lettuce.test.Delay;
+import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
+import io.lettuce.test.Wait;
+import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.settings.TestSettings;
 
 /**
  * @author Will Glozer
@@ -43,6 +53,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 class ConnectionCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -64,8 +75,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
                     ClientOptions.builder().pingBeforeActivateConnection(false).protocolVersion(ProtocolVersion.RESP2).build());
             RedisCommands<String, String> connection = client.connect().sync();
 
-            assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class)
-                    .hasMessageContaining("NOAUTH");
+            assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class).hasMessageContaining("NOAUTH");
 
             assertThat(connection.auth(passwd)).isEqualTo("OK");
             assertThat(connection.set(key, value)).isEqualTo("OK");
@@ -86,8 +96,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
                     ClientOptions.builder().pingBeforeActivateConnection(false).protocolVersion(ProtocolVersion.RESP2).build());
             RedisCommands<String, String> connection = client.connect().sync();
 
-            assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class)
-                    .hasMessageContaining("NOAUTH");
+            assertThatThrownBy(connection::ping).isInstanceOf(RedisException.class).hasMessageContaining("NOAUTH");
 
             assertThat(connection.auth(passwd)).isEqualTo("OK");
             assertThat(connection.set(key, value)).isEqualTo("OK");
@@ -106,6 +115,56 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             RedisCommands<String, String> authConnection = client.connect(redisURI).sync();
             authConnection.ping();
             authConnection.getStatefulConnection().close();
+        });
+    }
+
+    @Test
+    @EnabledOnCommand("ACL")
+    void changeAclPasswordWhileAuthenticated() {
+
+        WithPassword.run(client, () -> {
+            client.setOptions(
+                    ClientOptions.builder().pingBeforeActivateConnection(false).protocolVersion(ProtocolVersion.RESP2).build());
+
+            RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2)
+                    .withAuthentication(TestSettings.aclUsername(), TestSettings.aclPassword()).build();
+            StatefulRedisConnection<String, String> connection = client.connect(redisURI);
+
+            Command<String, String, List<Object>> command = CliParser.parse("ACL SETUSER " + TestSettings.aclUsername()
+                    + " on <" + TestSettings.aclPassword() + " >another-password ~cached:* +@all");
+            connection.sync().dispatch(command.getType(), command.getOutput(), command.getArgs());
+
+            connection.sync().ping();
+            connection.close();
+        });
+    }
+
+    @Test
+    @EnabledOnCommand("ACL")
+    void changeAclPasswordDuringDisconnect() {
+
+        WithPassword.run(client, () -> {
+            client.setOptions(
+                    ClientOptions.builder().pingBeforeActivateConnection(false).protocolVersion(ProtocolVersion.RESP2).build());
+
+            AtomicReference<CharSequence> passwd = new AtomicReference<>(TestSettings.aclPassword());
+
+            RedisCredentialsProvider.ImmediateRedisCredentialsProvider rcp = () -> RedisCredentials
+                    .just(TestSettings.aclUsername(), passwd.get());
+
+            RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withAuthentication(rcp).build();
+            StatefulRedisConnection<String, String> connection = client.connect(redisURI);
+
+            Command<String, String, List<Object>> command = CliParser.parse("ACL SETUSER " + TestSettings.aclUsername()
+                    + " on <" + TestSettings.aclPassword() + " >another-password ~cached:* +@all");
+            connection.sync().dispatch(command.getType(), command.getOutput(), command.getArgs());
+
+            connection.async().quit().await(100, TimeUnit.MILLISECONDS);
+
+            passwd.set("another-password");
+
+            connection.sync().ping();
+            connection.close();
         });
     }
 
@@ -234,7 +293,8 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             assertThat(e.getMessage()).startsWith("ERR").contains("AUTH");
             StatefulRedisConnectionImpl<String, String> statefulRedisCommands = (StatefulRedisConnectionImpl) async
                     .getStatefulConnection();
-            assertThat(statefulRedisCommands.getConnectionState().getCredentials().getPassword()).isNull();
+            assertThat(statefulRedisCommands.getConnectionState().getCredentialsProvider().resolveCredentials().block()
+                    .getPassword()).isNull();
         } finally {
             async.getStatefulConnection().close();
         }
@@ -299,4 +359,5 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         assertThat(LettuceStrings.string(Double.POSITIVE_INFINITY)).isEqualTo("+inf");
         assertThat(LettuceStrings.string(Double.NEGATIVE_INFINITY)).isEqualTo("-inf");
     }
+
 }

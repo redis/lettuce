@@ -16,7 +16,6 @@
 package io.lettuce.core;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 import io.lettuce.core.protocol.ProtocolVersion;
 
@@ -32,7 +31,7 @@ public class ConnectionState {
 
     private volatile HandshakeResponse handshakeResponse;
 
-    private volatile Supplier<Credentials> credentialsSupplier;
+    private volatile RedisCredentialsProvider credentialsProvider;
 
     private volatile int db;
 
@@ -48,7 +47,7 @@ public class ConnectionState {
     public void apply(RedisURI redisURI) {
 
         setClientName(redisURI.getClientName());
-        setCredentialsSupplier(redisURI.getCredentialsSupplier());
+        setCredentialsProvider(redisURI.getCredentialsProvider());
     }
 
     /**
@@ -112,18 +111,18 @@ public class ConnectionState {
         }
 
         if (args.size() > 1) {
-            this.credentialsSupplier = new DefaultCredentialsSupplier(new String(args.get(0)), args.get(1));
+            this.credentialsProvider = new StaticCredentialsProvider(new String(args.get(0)), args.get(1));
         } else {
-            this.credentialsSupplier = new DefaultCredentialsSupplier(args.get(0));
+            this.credentialsProvider = new StaticCredentialsProvider(null, args.get(0));
         }
     }
 
-    Credentials getCredentials() {
-        return this.credentialsSupplier.get();
+    protected void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
+        this.credentialsProvider = credentialsProvider;
     }
 
-    protected void setCredentialsSupplier(Supplier<Credentials> credentialsSupplier) {
-        this.credentialsSupplier = credentialsSupplier;
+    public RedisCredentialsProvider getCredentialsProvider() {
+        return credentialsProvider;
     }
 
     protected void setDb(int db) {

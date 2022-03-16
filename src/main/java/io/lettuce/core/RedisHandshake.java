@@ -74,7 +74,7 @@ class RedisHandshake implements ConnectionInitializer {
     @Override
     public CompletionStage<Void> initialize(Channel channel) {
 
-        CompletableFuture<?> handshake;
+        CompletionStage<?> handshake;
 
         if (this.requestedProtocolVersion == ProtocolVersion.RESP2) {
             handshake = initializeResp2(channel);
@@ -91,15 +91,15 @@ class RedisHandshake implements ConnectionInitializer {
         return handshake.thenCompose(ignore -> applyPostHandshake(channel, getNegotiatedProtocolVersion()));
     }
 
-    private CompletableFuture<?> tryHandshakeResp3(Channel channel) {
+    private CompletionStage<?> tryHandshakeResp3(Channel channel) {
 
         CompletableFuture<?> handshake = new CompletableFuture<>();
-        AsyncCommand<String, String, Map<String, Object>> hello = initiateHandshakeResp3(channel);
+        CompletionStage<Map<String, Object>> hello = initiateHandshakeResp3(channel, connectionState.getCredentialsProvider());
 
         hello.whenComplete((settings, throwable) -> {
 
             if (throwable != null) {
-                if (isUnknownCommand(hello.getError())) {
+                if (isUnknownCommand(throwable)) {
                     fallbackToResp2(channel, handshake);
                 } else {
                     handshake.completeExceptionally(throwable);
@@ -125,7 +125,8 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     private CompletableFuture<?> initializeResp2(Channel channel) {
-        return initiateHandshakeResp2(channel).thenRun(() -> {
+
+        return initiateHandshakeResp2(channel, connectionState.getCredentialsProvider()).thenRun(() -> {
             negotiatedProtocolVersion = ProtocolVersion.RESP2;
 
             connectionState.setHandshakeResponse(
@@ -133,8 +134,9 @@ class RedisHandshake implements ConnectionInitializer {
         });
     }
 
-    private CompletableFuture<Void> initializeResp3(Channel channel) {
-        return initiateHandshakeResp3(channel).thenAccept(response -> {
+    private CompletionStage<Void> initializeResp3(Channel channel) {
+
+        return initiateHandshakeResp3(channel, connectionState.getCredentialsProvider()).thenAccept(response -> {
 
             Long id = (Long) response.get("id");
             String mode = (String) response.get("mode");
@@ -152,11 +154,22 @@ class RedisHandshake implements ConnectionInitializer {
      * Perform a RESP2 Handshake: Issue a {@code PING} or {@code AUTH}.
      *
      * @param channel
+     * @param credentialsProvider
      * @return
      */
-    private CompletableFuture<?> initiateHandshakeResp2(Channel channel) {
+    private CompletableFuture<?> initiateHandshakeResp2(Channel channel, RedisCredentialsProvider credentialsProvider) {
 
-    	Credentials credentials = connectionState.getCredentials();
+        if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
+            return dispatchAuthOrPing(channel,
+                    ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
+        }
+
+        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+
+        return credentialsFuture.thenComposeAsync(credentials -> dispatchAuthOrPing(channel, credentials));
+    }
+
+    private CompletableFuture<String> dispatchAuthOrPing(Channel channel, RedisCredentials credentials) {
 
         if (credentials.hasUsername()) {
             return dispatch(channel, this.commandBuilder.auth(credentials.getUsername(), credentials.getPassword()));
@@ -173,17 +186,29 @@ class RedisHandshake implements ConnectionInitializer {
      * Perform a RESP3 Handshake: Issue a {@code HELLO}.
      *
      * @param channel
+     * @param credentialsProvider
      * @return
      */
-    private AsyncCommand<String, String, Map<String, Object>> initiateHandshakeResp3(Channel channel) {
+    private CompletionStage<Map<String, Object>> initiateHandshakeResp3(Channel channel,
+            RedisCredentialsProvider credentialsProvider) {
 
-        Credentials credentials = connectionState.getCredentials();
+        if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
+            return dispatchHello(channel,
+                    ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider).resolveCredentialsNow());
+        }
+
+        CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+
+        return credentialsFuture.thenComposeAsync(credentials -> dispatchHello(channel, credentials));
+    }
+
+    private AsyncCommand<String, String, Map<String, Object>> dispatchHello(Channel channel, RedisCredentials credentials) {
 
         if (credentials.hasPassword()) {
-
-            return dispatch(channel, this.commandBuilder.hello(3,
-                    LettuceStrings.isNotEmpty(credentials.getUsername()) ? credentials.getUsername() : "default",
-                    credentials.getPassword(), connectionState.getClientName()));
+            return dispatch(channel,
+                    this.commandBuilder.hello(3,
+                            LettuceStrings.isNotEmpty(credentials.getUsername()) ? credentials.getUsername() : "default",
+                            credentials.getPassword(), connectionState.getClientName()));
         }
 
         return dispatch(channel, this.commandBuilder.hello(3, null, null, connectionState.getClientName()));
@@ -232,8 +257,9 @@ class RedisHandshake implements ConnectionInitializer {
         return future;
     }
 
-    private static boolean isUnknownCommand(String error) {
-        return LettuceStrings.isNotEmpty(error) && error.startsWith("ERR unknown command");
+    private static boolean isUnknownCommand(Throwable error) {
+        return error instanceof RedisException && LettuceStrings.isNotEmpty(error.getMessage())
+                && ((error.getMessage().startsWith("ERR") && error.getMessage().contains("unknown")));
     }
 
 }

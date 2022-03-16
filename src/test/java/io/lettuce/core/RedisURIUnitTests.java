@@ -22,11 +22,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.internal.LettuceSets;
+import reactor.core.publisher.Mono;
 
 /**
  * Unit tests for {@link RedisURI}
@@ -314,17 +314,18 @@ class RedisURIUnitTests {
         assertThat(target.getUsername()).isNull();
         assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
 
-        Supplier<Credentials> supplier = () -> new Credentials("suppliedUsername", "suppliedPassword".toCharArray());
+        RedisCredentialsProvider provider = () -> Mono
+                .just(RedisCredentials.just("suppliedUsername", "suppliedPassword".toCharArray()));
 
         RedisURI sourceCp = new RedisURI();
-        sourceCp.setCredentialsSupplier(supplier);
+        sourceCp.setCredentialsProvider(provider);
 
         RedisURI targetCp = new RedisURI();
         targetCp.applyAuthentication(sourceCp);
 
-        assertThat(targetCp.getUsername()).isEqualTo("suppliedUsername");
-        assertThat(targetCp.getPassword()).isEqualTo("suppliedPassword".toCharArray());
-        assertThat(sourceCp.getCredentialsSupplier()).isEqualTo(targetCp.getCredentialsSupplier());
+        assertThat(targetCp.getUsername()).isNull();
+        assertThat(targetCp.getPassword()).isNull();
+        assertThat(sourceCp.getCredentialsProvider()).isEqualTo(targetCp.getCredentialsProvider());
     }
 
 }

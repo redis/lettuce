@@ -1,6 +1,11 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.6-2-0]]
+== What's new in Lettuce 6.2
+
+* <<redisuri.authentication,`RedisCredentialsProvider`>> abstraction to externalize credentials and credentials rotation.
+
 [[new-features.6-1-0]]
 == What's new in Lettuce 6.1
 

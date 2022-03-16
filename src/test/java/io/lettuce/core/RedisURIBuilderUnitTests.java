@@ -15,14 +15,11 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
@@ -45,8 +42,8 @@ class RedisURIBuilderUnitTests {
 
     @Test
     void sentinelWithHostShouldFail() {
-        assertThatThrownBy(() -> RedisURI.Builder.sentinel("localhost").withHost("localhost")).isInstanceOf(
-                IllegalStateException.class);
+        assertThatThrownBy(() -> RedisURI.Builder.sentinel("localhost").withHost("localhost"))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -94,8 +91,8 @@ class RedisURIBuilderUnitTests {
 
     @Test
     void redisWithInvalidPort() {
-        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withPort(65536)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withPort(65536))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -304,16 +301,17 @@ class RedisURIBuilderUnitTests {
         assertThat(target.getUsername()).isEqualTo("foo");
         assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
 
-        Supplier<Credentials> supplier = () -> new Credentials("suppliedUsername", "suppliedPassword".toCharArray());
+        RedisCredentialsProvider provider = RedisCredentialsProvider
+                .from(() -> RedisCredentials.just("suppliedUsername", "suppliedPassword".toCharArray()));
 
         RedisURI sourceCp = new RedisURI();
-        sourceCp.setCredentialsSupplier(supplier);
+        sourceCp.setCredentialsProvider(provider);
 
         RedisURI targetCp = RedisURI.builder().withHost("localhost").withAuthentication(sourceCp).build();
 
-        assertThat(targetCp.getUsername()).isEqualTo("suppliedUsername");
-        assertThat(targetCp.getPassword()).isEqualTo("suppliedPassword".toCharArray());
-        assertThat(sourceCp.getCredentialsSupplier()).isEqualTo(targetCp.getCredentialsSupplier());
+        assertThat(targetCp.getUsername()).isNull();
+        assertThat(targetCp.getPassword()).isNull();
+        assertThat(sourceCp.getCredentialsProvider()).isEqualTo(targetCp.getCredentialsProvider());
     }
 
     @Test
