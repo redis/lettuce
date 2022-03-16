@@ -105,10 +105,8 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
             Requests requestedTopology = connections.requestTopology(commandTimeoutNs, TimeUnit.NANOSECONDS);
             Requests requestedInfo = connections.requestInfo(commandTimeoutNs, TimeUnit.NANOSECONDS);
             return CompletableFuture.allOf(requestedTopology.allCompleted(), requestedInfo.allCompleted())
-                    .thenCompose(ignore -> {
-
-                        NodeTopologyViews views = getNodeSpecificViews(requestedTopology, requestedInfo);
-
+                    .thenCompose(ignore -> getNodeSpecificViewsAsync(requestedTopology, requestedInfo))
+                    .thenCompose(views -> {
                         if (discovery && isEventLoopActive()) {
 
                             Set<RedisURI> allKnownUris = views.getClusterNodes();
@@ -130,10 +128,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
                                         .requestInfo(commandTimeoutNs, TimeUnit.NANOSECONDS).mergeWith(requestedInfo);
                                 return CompletableFuture
                                         .allOf(additionalTopology.allCompleted(), additionalClients.allCompleted())
-                                        .thenApply(ignore2 -> {
-
-                                            return getNodeSpecificViews(additionalTopology, additionalClients);
-                                        });
+                                        .thenCompose(ignore2 -> getNodeSpecificViewsAsync(additionalTopology, additionalClients));
                             });
                         }
 
@@ -284,6 +279,13 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         }
 
         return new NodeTopologyViews(views);
+    }
+
+    private CompletableFuture<NodeTopologyViews> getNodeSpecificViewsAsync(Requests requestedTopology, Requests requestedInfo) {
+        // use computation thread pool
+        // ref: https://github.com/lettuce-io/lettuce-core/issues/2045
+        return CompletableFuture.supplyAsync(() -> getNodeSpecificViews(requestedTopology, requestedInfo),
+                clientResources.eventExecutorGroup());
     }
 
     private static boolean validNode(RedisClusterNode redisClusterNode) {
