@@ -64,7 +64,7 @@ class NodeTopologyView {
         this.available = true;
         this.redisURI = redisURI;
 
-        Properties properties = parseInfo(info);
+        Properties properties = info == null ? new Properties() : parseInfo(info);
         this.partitions = ClusterPartitionParser.parse(clusterNodes);
         this.connectedClients = getClientCount(properties);
         this.replicationOffset = getReplicationOffset(properties);
@@ -86,7 +86,7 @@ class NodeTopologyView {
         TimedAsyncCommand<String, String, String> nodes = clusterNodesRequests.getRequest(redisURI);
         TimedAsyncCommand<String, String, String> info = infoRequests.getRequest(redisURI);
 
-        if (resultAvailable(nodes) && resultAvailable(info)) {
+        if (resultAvailable(nodes) && !nodes.isCompletedExceptionally() && resultAvailable(info)) {
             return new NodeTopologyView(redisURI, nodes.join(), optionallyGet(info), nodes.duration());
         }
         return new NodeTopologyView(redisURI);
