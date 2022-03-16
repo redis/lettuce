@@ -291,17 +291,17 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         // For a given partition, maps the key to its index within the List<K> in partitioned for faster lookups below
-        Map<Integer, Map<K,Integer>> partitionedKeysToIndexes = new HashMap<>();
+        Map<Integer, Map<K, Integer>> partitionedKeysToIndexes = new HashMap<>(partitioned.size());
         for (Integer partition : partitioned.keySet()) {
             List<K> keysForPartition = partitioned.get(partition);
-            Map<K, Integer> keysToIndexes = new HashMap<>();
+            Map<K, Integer> keysToIndexes = new HashMap<>(keysForPartition.size());
             for (int i = 0; i < keysForPartition.size(); i++) {
                 keysToIndexes.put(keysForPartition.get(i), i);
             }
             partitionedKeysToIndexes.put(partition, keysToIndexes);
         }
         Map<K, Integer> slots = SlotHash.getSlots(partitioned);
-        Map<Integer, RedisFuture<List<KeyValue<K, V>>>> executions = new HashMap<>();
+        Map<Integer, RedisFuture<List<KeyValue<K, V>>>> executions = new HashMap<>(partitioned.size());
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             RedisFuture<List<KeyValue<K, V>>> mget = super.mget(entry.getValue());
@@ -310,7 +310,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         // restore order of key
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            List<KeyValue<K, V>> result = new ArrayList<>();
+            List<KeyValue<K, V>> result = new ArrayList<>(slots.size());
             for (K opKey : keys) {
                 int slot = slots.get(opKey);
 
