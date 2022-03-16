@@ -406,6 +406,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     public RedisFuture<K> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();
+
+        if (partitions.isEmpty()) {
+            return super.randomkey();
+        }
+
         int index = ThreadLocalRandom.current().nextInt(partitions.size());
         RedisClusterNode partition = partitions.getPartition(index);
 

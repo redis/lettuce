@@ -15,9 +15,15 @@
  */
 package io.lettuce.core.masterreplica;
 
-import static io.lettuce.core.masterreplica.ReplicaUtils.findNodeByHostAndPort;
+import static io.lettuce.core.masterreplica.ReplicaUtils.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +32,12 @@ import java.util.function.Function;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import io.lettuce.core.*;
+import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.OrderingReadFromAccessor;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -144,7 +155,7 @@ class MasterReplicaConnectionProvider<K, V> {
                     return connections.filter(StatefulConnection::isOpen).next().switchIfEmpty(connections.next()).toFuture();
                 }
 
-                return connections.filter(StatefulConnection::isOpen).collectList().map(it -> {
+                return connections.filter(StatefulConnection::isOpen).collectList().filter(it -> !it.isEmpty()).map(it -> {
                     int index = ThreadLocalRandom.current().nextInt(it.size());
                     return it.get(index);
                 }).switchIfEmpty(connections.next()).toFuture();
