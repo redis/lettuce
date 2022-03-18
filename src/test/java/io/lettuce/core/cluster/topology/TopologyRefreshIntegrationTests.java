@@ -205,7 +205,7 @@ class TopologyRefreshIntegrationTests extends TestSupport {
     }
 
     @Test
-    void adaptiveTopologyUpdatetUsesTimeout() {
+    void adaptiveTopologyUpdateUsesTimeout() {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()//
                 .adaptiveRefreshTriggersTimeout(500, TimeUnit.MILLISECONDS)//

@@ -105,7 +105,8 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
             Requests requestedTopology = connections.requestTopology(commandTimeoutNs, TimeUnit.NANOSECONDS);
             Requests requestedInfo = connections.requestInfo(commandTimeoutNs, TimeUnit.NANOSECONDS);
             return CompletableFuture.allOf(requestedTopology.allCompleted(), requestedInfo.allCompleted())
-                    .thenCompose(ignore -> getNodeSpecificViewsAsync(requestedTopology, requestedInfo))
+                    .thenApplyAsync(ignore -> getNodeSpecificViews(requestedTopology, requestedInfo),
+                            clientResources.eventExecutorGroup())
                     .thenCompose(views -> {
                         if (discovery && isEventLoopActive()) {
 
@@ -124,11 +125,12 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
 
                                 Requests additionalTopology = newConnections
                                         .requestTopology(commandTimeoutNs, TimeUnit.NANOSECONDS).mergeWith(requestedTopology);
-                                Requests additionalClients = newConnections
-                                        .requestInfo(commandTimeoutNs, TimeUnit.NANOSECONDS).mergeWith(requestedInfo);
+                                Requests additionalInfo = newConnections.requestInfo(commandTimeoutNs, TimeUnit.NANOSECONDS)
+                                        .mergeWith(requestedInfo);
                                 return CompletableFuture
-                                        .allOf(additionalTopology.allCompleted(), additionalClients.allCompleted())
-                                        .thenCompose(ignore2 -> getNodeSpecificViewsAsync(additionalTopology, additionalClients));
+                                        .allOf(additionalTopology.allCompleted(), additionalInfo.allCompleted())
+                                        .thenApplyAsync(ignore2 -> getNodeSpecificViews(additionalTopology, additionalInfo),
+                                                clientResources.eventExecutorGroup());
                             });
                         }
 
@@ -281,13 +283,6 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         return new NodeTopologyViews(views);
     }
 
-    private CompletableFuture<NodeTopologyViews> getNodeSpecificViewsAsync(Requests requestedTopology, Requests requestedInfo) {
-        // use computation thread pool
-        // ref: https://github.com/lettuce-io/lettuce-core/issues/2045
-        return CompletableFuture.supplyAsync(() -> getNodeSpecificViews(requestedTopology, requestedInfo),
-                clientResources.eventExecutorGroup());
-    }
-
     private static boolean validNode(RedisClusterNode redisClusterNode) {
 
         if (redisClusterNode.is(RedisClusterNode.NodeFlag.NOADDR)) {
@@ -376,7 +371,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
 
     private static Set<RedisURI> difference(Set<RedisURI> allKnown, Set<RedisURI> seed) {
 
-       Set<RedisURI> result = new TreeSet<>(TopologyComparators.RedisURIComparator.INSTANCE);
+        Set<RedisURI> result = new TreeSet<>(TopologyComparators.RedisURIComparator.INSTANCE);
 
         for (RedisURI e : allKnown) {
             if (!seed.contains(e)) {
