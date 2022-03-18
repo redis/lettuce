@@ -111,7 +111,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                 }
             }
             PauseDetectorWrapper pauseDetectorWrapper = PAUSE_DETECTOR_UPDATER.get(this);
-            pauseDetector = pauseDetectorWrapper.getPauseDetector();
+            pauseDetector = (PauseDetector) pauseDetectorWrapper.getPauseDetector();
         } while (pauseDetector == null);
 
         PauseDetector pauseDetectorToUse = pauseDetector;
@@ -353,6 +353,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         @Override
         public void shutdown() {
         }
+
     }
 
     /**
@@ -374,7 +375,7 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
             }
 
             @Override
-            public PauseDetector getPauseDetector() {
+            public Object getPauseDetector() {
                 return NoPauseDetector.INSTANCE;
             }
 
@@ -404,9 +405,11 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         void release();
 
         /**
-         * Obtain the current {@link PauseDetector}. Requires a call to {@link #retain()} first.
+         * Obtain the current {@link PauseDetector}. Requires a call to {@link #retain()} first. Using {@code Object} to avoid
+         * static code paths to optional libraries.
          */
-        PauseDetector getPauseDetector();
+        Object getPauseDetector();
+
     }
 
     /**
