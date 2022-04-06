@@ -21,8 +21,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.nio.CharBuffer;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -293,4 +295,32 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return state;
     }
 
+    public void reauthenticate()
+    {
+        RedisCredentialsProvider credentialsProvider = state.getCredentialsProvider();
+
+        if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
+            RedisCredentials redisCredentials = 
+                ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider)credentialsProvider).resolveCredentialsNow();
+            CharSequence passwd = CharBuffer.wrap(redisCredentials.getPassword());
+            if (redisCredentials.hasUsername()) {
+                async().auth(redisCredentials.getUsername(), passwd);
+            } else {
+                async().auth(passwd);
+            }
+        }
+        else {
+            CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+            credentialsFuture.thenAcceptAsync(redisCredentials -> {
+                CharSequence passwd = CharBuffer.wrap(redisCredentials.getPassword());
+                if (redisCredentials.hasUsername()) {
+                    async().auth(redisCredentials.getUsername(), passwd);
+                } else {
+                    async().auth(passwd);
+                }
+            });
+        }
+
+        
+    }
 }

@@ -18,6 +18,7 @@ package io.lettuce.core.cluster;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,8 @@ class ClusterClientOptionsUnitTests {
     void testCopy() {
 
         Predicate<RedisClusterNode> nodeFilter = it -> true;
-        ClusterClientOptions options = ClusterClientOptions.builder().autoReconnect(false).requestQueueSize(100)
+        ClusterClientOptions options = ClusterClientOptions.builder().autoReconnect(false)
+                .enablePeriodicReauthentication(Duration.ofSeconds(13)).requestQueueSize(100)
                 .suspendReconnectOnProtocolFailure(true).maxRedirects(1234).validateClusterNodeMembership(false)
                 .protocolVersion(ProtocolVersion.RESP2).nodeFilter(nodeFilter).build();
 
@@ -50,6 +52,8 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.isValidateClusterNodeMembership()).isEqualTo(options.isValidateClusterNodeMembership());
         assertThat(copy.getRequestQueueSize()).isEqualTo(options.getRequestQueueSize());
         assertThat(copy.isAutoReconnect()).isEqualTo(options.isAutoReconnect());
+        assertThat(copy.isPeriodicReauthenticate()).isEqualTo(options.isPeriodicReauthenticate());
+        assertThat(copy.getReauthenticationPeriod()).isEqualTo(options.getReauthenticationPeriod());
         assertThat(copy.isCancelCommandsOnReconnectFailure()).isEqualTo(options.isCancelCommandsOnReconnectFailure());
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
@@ -69,6 +73,7 @@ class ClusterClientOptionsUnitTests {
         assertThat(clusterClientOptions.getTimeoutOptions()).isEqualTo(clusterClientOptions.getTimeoutOptions());
         assertThat(clusterClientOptions.getRequestQueueSize()).isEqualTo(clusterClientOptions.getRequestQueueSize());
         assertThat(clusterClientOptions.isAutoReconnect()).isEqualTo(clusterClientOptions.isAutoReconnect());
+        assertThat(clusterClientOptions.isPeriodicReauthenticate()).isEqualTo(clusterClientOptions.isPeriodicReauthenticate());
         assertThat(clusterClientOptions.isCloseStaleConnections()).isEqualTo(clusterClientOptions.isCloseStaleConnections());
         assertThat(clusterClientOptions.isCancelCommandsOnReconnectFailure())
                 .isEqualTo(clusterClientOptions.isCancelCommandsOnReconnectFailure());
@@ -93,6 +98,7 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.isValidateClusterNodeMembership()).isEqualTo(options.isValidateClusterNodeMembership());
         assertThat(copy.getRequestQueueSize()).isEqualTo(options.getRequestQueueSize());
         assertThat(copy.isAutoReconnect()).isEqualTo(options.isAutoReconnect());
+        assertThat(copy.isPeriodicReauthenticate()).isEqualTo(options.isPeriodicReauthenticate());
         assertThat(copy.isCancelCommandsOnReconnectFailure()).isEqualTo(options.isCancelCommandsOnReconnectFailure());
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());

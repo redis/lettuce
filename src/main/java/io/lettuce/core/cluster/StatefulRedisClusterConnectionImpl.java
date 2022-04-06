@@ -19,6 +19,7 @@ import static io.lettuce.core.protocol.CommandType.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.nio.CharBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -33,6 +34,7 @@ import io.lettuce.core.ConnectionState;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -295,6 +297,19 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         return partitions;
     }
 
+    public void reauthenticate(RedisCredentials creds)
+    {
+        ClusterConnectionProvider provider = (ClusterConnectionProvider) getClusterDistributionChannelWriter()
+                .getClusterConnectionProvider();
+        CharSequence passwd = CharBuffer.wrap(creds.getPassword());
+        if (creds.hasUsername()) {
+            async().auth(creds.getUsername(), passwd);
+        } else {
+            async().auth(passwd);
+        }
+        provider.reauthenticate(creds);
+    }
+    
     @Override
     public void setReadFrom(ReadFrom readFrom) {
         LettuceAssert.notNull(readFrom, "ReadFrom must not be null");

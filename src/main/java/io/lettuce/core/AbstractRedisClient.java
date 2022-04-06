@@ -29,6 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
+import java.util.function.Consumer;
 
 import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
@@ -109,6 +111,8 @@ public abstract class AbstractRedisClient {
 
     private volatile Duration defaultTimeout = RedisURI.DEFAULT_TIMEOUT_DURATION;
 
+    protected RedisClientReauthScheduler reauthScheduler;
+
     /**
      * Create a new instance with client resources.
      *
@@ -126,6 +130,8 @@ public abstract class AbstractRedisClient {
         }
 
         this.channels = new DefaultChannelGroup(this.clientResources.eventExecutorGroup().next());
+
+        reauthScheduler = new RedisClientReauthScheduler(this::getOptions, getResources(), this);
     }
 
     protected int getChannelCount() {
@@ -259,6 +265,28 @@ public abstract class AbstractRedisClient {
 
     protected List<CommandListener> getCommandListeners() {
         return commandListeners;
+    }
+
+    /**
+     * Reauthenticate all existing connections.
+     *     
+     * @since 6.2
+     */
+    abstract public void reauthConnections();
+
+    /**
+     * Apply a {@link Consumer} of {@link Closeable} to all active connections.
+     *
+     * @param <T>
+     * @param function the {@link Consumer}.
+     */
+    @SuppressWarnings("unchecked")
+    protected <T extends Closeable> void forEachCloseable(Predicate<? super Closeable> selector, Consumer<T> function) {
+        for (Closeable c : closeableResources) {
+            if (selector.test(c)) {
+                function.accept((T) c);
+            }
+        }
     }
 
     /**
@@ -512,6 +540,8 @@ public abstract class AbstractRedisClient {
      */
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
+        reauthScheduler.shutdown();
+        
         try {
             shutdownAsync(quietPeriod, timeout, timeUnit).get();
         } catch (Exception e) {

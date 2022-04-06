@@ -18,6 +18,8 @@ package io.lettuce.core;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -36,6 +38,14 @@ import io.lettuce.core.resource.ClientResources;
 public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
+
+    public static final boolean DEFAULT_AUTO_REAUTHENTICATE = false;
+
+    public static final long DEFAULT_REAUTHENTICATE_PERIOD = 60;
+
+    public static final TimeUnit DEFAULT_REAUTHENTICATE_PERIOD_UNIT = TimeUnit.MINUTES;
+
+    public static final Duration DEFAULT_REAUTHENTICATION_PERIOD_DURATION = Duration.ofMinutes(DEFAULT_REAUTHENTICATE_PERIOD);
 
     public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
 
@@ -62,6 +72,10 @@ public class ClientOptions implements Serializable {
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
 
     private final boolean autoReconnect;
+
+    private final boolean shouldReauthenticatePeriodically;
+
+    private final Duration reauthenticationPeriod;
 
     private final boolean cancelCommandsOnReconnectFailure;
 
@@ -90,6 +104,8 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
+        this.shouldReauthenticatePeriodically = builder.shouldReauthenticatePeriodically;
+        this.reauthenticationPeriod = builder.reauthenticationPeriod;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.disconnectedBehavior = builder.disconnectedBehavior;
@@ -106,6 +122,8 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(ClientOptions original) {
         this.autoReconnect = original.isAutoReconnect();
+        this.shouldReauthenticatePeriodically = original.isPeriodicReauthenticate();
+        this.reauthenticationPeriod = original.getReauthenticationPeriod();
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
@@ -154,6 +172,10 @@ public class ClientOptions implements Serializable {
     public static class Builder {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
+        
+        private boolean shouldReauthenticatePeriodically = DEFAULT_AUTO_REAUTHENTICATE;
+
+        private Duration reauthenticationPeriod = DEFAULT_REAUTHENTICATION_PERIOD_DURATION;
 
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
 
@@ -191,6 +213,64 @@ public class ClientOptions implements Serializable {
          */
         public Builder autoReconnect(boolean autoReconnect) {
             this.autoReconnect = autoReconnect;
+            return this;
+        }
+
+        /**
+         * Enables or disables periodic reauthentication of active connections. Defaults to {@code false}. See
+         * {@link #DEFAULT_AUTO_REAUTHENTICATE}.
+         * Defaults period {@literal 60 MINUTES}. See {@link #DEFAULT_REAUTHENTICATE_PERIOD} and
+         * {@link #DEFAULT_REAUTHENTICATE_PERIOD_UNIT}.
+         *
+         * @param periodicReauthenticate true/false
+         * @return {@code this}
+         * @since 6.2
+         */
+        public Builder enablePeriodicReauthentication(boolean periodicReauthentication) {
+            this.shouldReauthenticatePeriodically = periodicReauthentication;
+            return this;
+        }
+
+        /**
+         * Enables periodic reauthentication of active connections. Defaults to {@code false}. See
+         * {@link #DEFAULT_AUTO_REAUTHENTICATE}.
+         * Defaults period {@literal 60 MINUTES}. See {@link #DEFAULT_REAUTHENTICATE_PERIOD} and
+         * {@link #DEFAULT_REAUTHENTICATE_PERIOD_UNIT}.
+         *
+         * @return {@code this}
+         * @since 6.2
+         */
+        public Builder enablePeriodicReauthentication() {
+            return enablePeriodicReauthentication(true);
+        }
+
+        /**
+         * Enables periodic reauthentication and sets the reauthentication period. Defaults to {@literal 60 MINUTES}. See
+         * {@link #DEFAULT_REAUTHENTICATE_PERIOD} and {@link #DEFAULT_REAUTHENTICATE_PERIOD_UNIT}. This method is a shortcut for
+         * {@link #reauthenticationPeriod(Duration)} and {@link #enablePeriodicReauthentication()}.
+         *
+         * @param reauthenticationPeriod period for triggering reauthentication, must be greater {@literal 0}
+         * @return {@code this}
+         * @since 6.2
+         */
+        public Builder enablePeriodicReauthentication(Duration reauthenticationPeriod) {
+            return reauthenticationPeriod(reauthenticationPeriod).enablePeriodicReauthentication();
+        }
+
+        /**
+         * Set the reauthentication period. Defaults to {@literal 60 MINUTES}. See {@link #DEFAULT_REAUTHENTICATE_PERIOD} and
+         * {@link #DEFAULT_REAUTHENTICATE_PERIOD_UNIT}.
+         *
+         * @param reauthenticationPeriod period for triggering reauthentication, must be greater {@literal 0}
+         * @return {@code this}
+         * @since 6.2
+         */
+        public Builder reauthenticationPeriod(Duration reauthenticationPeriod) {
+
+            LettuceAssert.notNull(reauthenticationPeriod, "reauthenticationPeriod duration must not be null");
+            LettuceAssert.isTrue(reauthenticationPeriod.toNanos() > 0, "reauthenticationPeriod must be greater 0");
+
+            this.reauthenticationPeriod = reauthenticationPeriod;
             return this;
         }
 
@@ -413,6 +493,8 @@ public class ClientOptions implements Serializable {
         Builder builder = new Builder();
 
         builder.autoReconnect(isAutoReconnect())
+                .enablePeriodicReauthentication(isPeriodicReauthenticate())
+                .reauthenticationPeriod(getReauthenticationPeriod())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
                 .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
@@ -435,6 +517,28 @@ public class ClientOptions implements Serializable {
     public boolean isAutoReconnect() {
         return autoReconnect;
     }
+
+    /**
+     * Controls periodic reauthenticate behavior on connections. If periodic reauthenticate is {@code true}, it is enabled. 
+     * In case of rotating password authentication, the client will try to reauth all it's active connections with the 
+     * credentials from the credentials supplier.
+     *
+     * @return {@code true} if periodic reauthenticate is enabled.
+     */
+    public boolean isPeriodicReauthenticate() {
+        return shouldReauthenticatePeriodically;
+    }
+
+    /**
+     * Timeout between connections reauthentication. Defaults to {@literal 60 MINUTES}. See
+     * {@link #DEFAULT_REAUTHENTICATE_PERIOD} and {@link #DEFAULT_REAUTHENTICATE_PERIOD_UNI T}.
+     *
+     * @return the period between the connection reauthentication.
+     */
+    public Duration getReauthenticationPeriod() {
+        return reauthenticationPeriod;
+    }
+
 
     /**
      * If this flag is {@code true} any queued commands will be canceled when a reconnect fails within the activation sequence.

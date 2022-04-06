@@ -17,6 +17,7 @@ package io.lettuce.core.cluster;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.nio.CharBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
@@ -190,6 +192,19 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         }
 
         getClusterDistributionChannelWriter().setPartitions(partitions);
+    }
+
+    public void reauthenticate(RedisCredentials creds)
+    {
+        ClusterConnectionProvider provider = (ClusterConnectionProvider) getClusterDistributionChannelWriter()
+                .getClusterConnectionProvider();
+        CharSequence passwd = CharBuffer.wrap(creds.getPassword());        
+        if (creds.hasUsername()) {
+            async().auth(creds.getUsername(), passwd);
+        } else {
+            async().auth(passwd);
+        }
+        provider.reauthenticate(creds);        
     }
 
     private String getNodeId() {

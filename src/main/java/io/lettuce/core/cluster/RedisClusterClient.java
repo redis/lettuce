@@ -641,6 +641,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         topologyRefreshScheduler.activateTopologyRefreshIfNeeded();
+        reauthScheduler.activateReauthIfNeeded();
 
         logger.debug("connectCluster(" + initialUris + ")");
 
@@ -738,6 +739,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         topologyRefreshScheduler.activateTopologyRefreshIfNeeded();
+        reauthScheduler.activateReauthIfNeeded();
 
         logger.debug("connectClusterPubSub(" + initialUris + ")");
 
@@ -934,6 +936,31 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     protected Partitions loadPartitions() {
         return get(loadPartitionsAsync(), Function.identity());
+    }
+
+    public void reauthenticateAllConnections(RedisCredentials creds) {
+        forEachClusterConnection(input -> {
+            input.reauthenticate(creds);
+        });
+
+        forEachClusterPubSubConnection(input -> {
+            input.reauthenticate(creds);
+        });
+    }
+    
+    public void reauthConnections() {
+        RedisCredentialsProvider credentialsProvider = getFirstUri().getCredentialsProvider();
+        if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
+            RedisCredentials redisCredentials =
+                ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider)credentialsProvider).resolveCredentialsNow();
+            reauthenticateAllConnections(redisCredentials);
+        }
+        else {
+            CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
+            credentialsFuture.thenAcceptAsync(redisCredentials -> {
+                reauthenticateAllConnections(redisCredentials);
+            });
+        }
     }
 
     private static <T> T get(CompletableFuture<T> future, Function<RedisException, RedisException> mapper) {
@@ -1148,21 +1175,6 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     protected void forEachClusterPubSubConnection(Consumer<StatefulRedisClusterPubSubConnectionImpl<?, ?>> function) {
         forEachCloseable(input -> input instanceof StatefulRedisClusterPubSubConnectionImpl, function);
-    }
-
-    /**
-     * Apply a {@link Consumer} of {@link Closeable} to all active connections.
-     *
-     * @param <T>
-     * @param function the {@link Consumer}.
-     */
-    @SuppressWarnings("unchecked")
-    protected <T extends Closeable> void forEachCloseable(Predicate<? super Closeable> selector, Consumer<T> function) {
-        for (Closeable c : closeableResources) {
-            if (selector.test(c)) {
-                function.accept((T) c);
-            }
-        }
     }
 
     /**
