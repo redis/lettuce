@@ -21,20 +21,21 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class RedisClientReauthScheduler implements Runnable {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClientReauthScheduler.class);
+
     private final AtomicBoolean clientReauthActivated = new AtomicBoolean(false);
+
     private final AtomicReference<ScheduledFuture<?>> clientReauthFuture = new AtomicReference<>();
 
     private final Supplier<ClientOptions> clientOptions;
+
     private final ClientResources clientResources;
+
     private final EventExecutorGroup genericWorkerPool;
 
     private final AbstractRedisClient clientToReauth;
 
-    public RedisClientReauthScheduler(
-        Supplier<ClientOptions> clientOptions,
-        ClientResources clientResources,
-        AbstractRedisClient clientToReauth)
-    {
+    public RedisClientReauthScheduler(Supplier<ClientOptions> clientOptions, ClientResources clientResources,
+            AbstractRedisClient clientToReauth) {
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
         this.genericWorkerPool = this.clientResources.eventExecutorGroup();
@@ -43,7 +44,7 @@ public class RedisClientReauthScheduler implements Runnable {
 
     public void activateReauthIfNeeded() {
 
-        ClientOptions options = clientOptions.get();        
+        ClientOptions options = clientOptions.get();
 
         if (false == options.isPeriodicReauthenticate()) {
             return;
@@ -51,7 +52,8 @@ public class RedisClientReauthScheduler implements Runnable {
 
         if (clientReauthActivated.compareAndSet(false, true)) {
             ScheduledFuture<?> scheduledFuture = genericWorkerPool.scheduleAtFixedRate(this,
-                options.getReauthenticationPeriod().toNanos(), options.getReauthenticationPeriod().toNanos(), TimeUnit.NANOSECONDS);
+                    options.getReauthenticationPeriod().toNanos(), options.getReauthenticationPeriod().toNanos(),
+                    TimeUnit.NANOSECONDS);
             clientReauthFuture.set(scheduledFuture);
         }
     }
@@ -81,5 +83,6 @@ public class RedisClientReauthScheduler implements Runnable {
         } catch (Exception e) {
             logger.error("Reauthenticate connections failed with: ", e);
         }
-    }    
+    }
+
 }

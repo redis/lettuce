@@ -116,8 +116,8 @@ public abstract class AbstractRedisClient {
     /**
      * Create a new instance with client resources.
      *
-     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of
-     *        client resources and keep track of them.
+     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of client
+     *        resources and keep track of them.
      */
     protected AbstractRedisClient(ClientResources clientResources) {
 
@@ -269,7 +269,7 @@ public abstract class AbstractRedisClient {
 
     /**
      * Reauthenticate all existing connections.
-     *     
+     * 
      * @since 6.2
      */
     abstract public void reauthConnections();
@@ -423,8 +423,7 @@ public abstract class AbstractRedisClient {
 
         String uriString = connectionBuilder.getRedisURI().toString();
 
-        EventRecorder.getInstance().record(
-                new ConnectionCreatedEvent(uriString, connectionBuilder.endpoint().getId()));
+        EventRecorder.getInstance().record(new ConnectionCreatedEvent(uriString, connectionBuilder.endpoint().getId()));
         EventRecorder.RecordableEvent event = EventRecorder.getInstance()
                 .start(new ConnectEvent(uriString, connectionBuilder.endpoint().getId()));
 
@@ -541,7 +540,7 @@ public abstract class AbstractRedisClient {
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         reauthScheduler.shutdown();
-        
+
         try {
             shutdownAsync(quietPeriod, timeout, timeUnit).get();
         } catch (Exception e) {

@@ -194,17 +194,16 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         getClusterDistributionChannelWriter().setPartitions(partitions);
     }
 
-    public void reauthenticate(RedisCredentials creds)
-    {
+    public void reauthenticate(RedisCredentials creds) {
         ClusterConnectionProvider provider = (ClusterConnectionProvider) getClusterDistributionChannelWriter()
                 .getClusterConnectionProvider();
-        CharSequence passwd = CharBuffer.wrap(creds.getPassword());        
+        CharSequence passwd = CharBuffer.wrap(creds.getPassword());
         if (creds.hasUsername()) {
             async().auth(creds.getUsername(), passwd);
         } else {
             async().auth(passwd);
         }
-        provider.reauthenticate(creds);        
+        provider.reauthenticate(creds);
     }
 
     private String getNodeId() {

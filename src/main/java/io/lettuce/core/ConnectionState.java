@@ -112,8 +112,9 @@ public class ConnectionState {
 
         // We cannot safely overwrite credentialsProvider if it isn't StaticCredentialsProvider,
         // since we don't know what logic it runs, for example whether it dynamically creates the credentials,
-        // or runs some side effect when providing credentials. Since this function might be called periodically automatically, e.g. reauth,
-        // we don't know whether the user intended to overwrite credentialsProvider, so we shouldn't make the decision for them.
+        // or runs some side effect when providing credentials. Since this function might be called periodically automatically,
+        // e.g. reauth, we don't know whether the user intended to overwrite credentialsProvider,
+        // so we shouldn't make the decision for them.
         if (!(this.credentialsProvider instanceof StaticCredentialsProvider)) {
             return;
         }

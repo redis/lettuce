@@ -177,8 +177,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      * cluster. If any uri is successful for connection, the others are not tried anymore. The initial uri is needed to discover
      * the cluster structure for distributing the requests.
      *
-     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of
-     *        client resources and keep track of them.
+     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of client
+     *        resources and keep track of them.
      * @param redisURIs iterable of initial {@link RedisURI cluster URIs}. Must not be {@code null} and not empty.
      */
     protected RedisClusterClient(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
@@ -681,7 +681,8 @@ public class RedisClusterClient extends AbstractRedisClient {
                     .onErrorResume(t -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
         }
 
-        return connectionMono.doOnNext(
+        return connectionMono
+                .doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterConnection<K, V>) it).toFuture();
     }
@@ -947,15 +948,14 @@ public class RedisClusterClient extends AbstractRedisClient {
             input.reauthenticate(creds);
         });
     }
-    
+
     public void reauthConnections() {
         RedisCredentialsProvider credentialsProvider = getFirstUri().getCredentialsProvider();
         if (credentialsProvider instanceof RedisCredentialsProvider.ImmediateRedisCredentialsProvider) {
-            RedisCredentials redisCredentials =
-                ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider)credentialsProvider).resolveCredentialsNow();
+            RedisCredentials redisCredentials = ((RedisCredentialsProvider.ImmediateRedisCredentialsProvider) credentialsProvider)
+                    .resolveCredentialsNow();
             reauthenticateAllConnections(redisCredentials);
-        }
-        else {
+        } else {
             CompletableFuture<RedisCredentials> credentialsFuture = credentialsProvider.resolveCredentials().toFuture();
             credentialsFuture.thenAcceptAsync(redisCredentials -> {
                 reauthenticateAllConnections(redisCredentials);

@@ -105,4 +105,5 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.getScriptCharset()).isEqualTo(options.getScriptCharset());
         assertThat(options.mutate()).isNotSameAs(copy.mutate());
     }
+
 }

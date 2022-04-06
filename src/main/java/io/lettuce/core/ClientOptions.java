@@ -101,7 +101,6 @@ public class ClientOptions implements Serializable {
 
     private final TimeoutOptions timeoutOptions;
 
-
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
         this.shouldReauthenticatePeriodically = builder.shouldReauthenticatePeriodically;
@@ -172,7 +171,7 @@ public class ClientOptions implements Serializable {
     public static class Builder {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
-        
+
         private boolean shouldReauthenticatePeriodically = DEFAULT_AUTO_REAUTHENTICATE;
 
         private Duration reauthenticationPeriod = DEFAULT_REAUTHENTICATION_PERIOD_DURATION;
@@ -218,9 +217,8 @@ public class ClientOptions implements Serializable {
 
         /**
          * Enables or disables periodic reauthentication of active connections. Defaults to {@code false}. See
-         * {@link #DEFAULT_AUTO_REAUTHENTICATE}.
-         * Defaults period {@literal 60 MINUTES}. See {@link #DEFAULT_REAUTHENTICATE_PERIOD} and
-         * {@link #DEFAULT_REAUTHENTICATE_PERIOD_UNIT}.
+         * {@link #DEFAULT_AUTO_REAUTHENTICATE}. Defaults period {@literal 60 MINUTES}. See
+         * {@link #DEFAULT_REAUTHENTICATE_PERIOD} and {@link #DEFAULT_REAUTHENTICATE_PERIOD_UNIT}.
          *
          * @param periodicReauthenticate true/false
          * @return {@code this}
@@ -233,9 +231,8 @@ public class ClientOptions implements Serializable {
 
         /**
          * Enables periodic reauthentication of active connections. Defaults to {@code false}. See
-         * {@link #DEFAULT_AUTO_REAUTHENTICATE}.
-         * Defaults period {@literal 60 MINUTES}. See {@link #DEFAULT_REAUTHENTICATE_PERIOD} and
-         * {@link #DEFAULT_REAUTHENTICATE_PERIOD_UNIT}.
+         * {@link #DEFAULT_AUTO_REAUTHENTICATE}. Defaults period {@literal 60 MINUTES}. See
+         * {@link #DEFAULT_REAUTHENTICATE_PERIOD} and {@link #DEFAULT_REAUTHENTICATE_PERIOD_UNIT}.
          *
          * @return {@code this}
          * @since 6.2
@@ -371,8 +368,8 @@ public class ClientOptions implements Serializable {
          * <p>
          * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
          * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
-         * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false}
-         * , see {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
+         * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false} ,
+         * see {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
          *
          * @param publishOnScheduler true/false
          * @return {@code this}
@@ -399,7 +396,6 @@ public class ClientOptions implements Serializable {
             this.requestQueueSize = requestQueueSize;
             return this;
         }
-
 
         /**
          * Sets the Lua script {@link Charset} to use to encode {@link String scripts} to {@code byte[]}. Defaults to
@@ -492,8 +488,7 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect())
-                .enablePeriodicReauthentication(isPeriodicReauthenticate())
+        builder.autoReconnect(isAutoReconnect()).enablePeriodicReauthentication(isPeriodicReauthenticate())
                 .reauthenticationPeriod(getReauthenticationPeriod())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
@@ -506,9 +501,9 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Controls auto-reconnect behavior on connections. If auto-reconnect is {@code true} (default), it is enabled. As soon
-     * as a connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any
-     * queued commands.
+     * Controls auto-reconnect behavior on connections. If auto-reconnect is {@code true} (default), it is enabled. As soon as a
+     * connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any queued
+     * commands.
      *
      * This flag has also the effect that disconnected connections will refuse commands and cancel these with an exception.
      *
@@ -519,9 +514,9 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Controls periodic reauthenticate behavior on connections. If periodic reauthenticate is {@code true}, it is enabled. 
-     * In case of rotating password authentication, the client will try to reauth all it's active connections with the 
-     * credentials from the credentials supplier.
+     * Controls periodic reauthenticate behavior on connections. If periodic reauthenticate is {@code true}, it is enabled. In
+     * case of rotating password authentication, the client will try to reauth all it's active connections with the credentials
+     * from the credentials supplier.
      *
      * @return {@code true} if periodic reauthenticate is enabled.
      */
@@ -538,7 +533,6 @@ public class ClientOptions implements Serializable {
     public Duration getReauthenticationPeriod() {
         return reauthenticationPeriod;
     }
-
 
     /**
      * If this flag is {@code true} any queued commands will be canceled when a reconnect fails within the activation sequence.
@@ -637,8 +631,8 @@ public class ClientOptions implements Serializable {
      * <p>
      * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
      * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
-     * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false} ,
-     * see {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
+     * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false} , see
+     * {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
      *
      * @return {@code true} to use a dedicated {@link reactor.core.scheduler.Scheduler}
      * @since 5.2
@@ -646,7 +640,6 @@ public class ClientOptions implements Serializable {
     public boolean isPublishOnScheduler() {
         return publishOnScheduler;
     }
-
 
     /**
      * If this flag is {@code true} the reconnect will be suspended on protocol errors. Protocol errors are errors while SSL
