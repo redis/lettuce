@@ -28,6 +28,7 @@ import org.mybatis.spring.mapper.MapperScannerConfigurer;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.AliasFor;
 
 /**
  * Use this annotation to register MyBatis mapper interfaces when using Java Config. It performs when same work as
@@ -68,7 +69,7 @@ import org.springframework.context.annotation.Import;
  *
  * @author Michael Lanyon
  * @author Eduardo Macarron
- *
+ * @author Qimiao Chen
  * @since 1.2.0
  * @see MapperScannerRegistrar
  * @see MapperFactoryBean
@@ -86,6 +87,7 @@ public @interface MapperScan {
    *
    * @return base package names
    */
+  @AliasFor("basePackages")
   String[] value() default {};
 
   /**
@@ -94,6 +96,7 @@ public @interface MapperScan {
    *
    * @return base package names for scanning mapper interface
    */
+  @AliasFor("value")
   String[] basePackages() default {};
 
   /**
