@@ -20,9 +20,10 @@ This document does not attempt to provide background information or basic setup 
 MyBatis-Spring requires following versions:
 
 | MyBatis-Spring | MyBatis | Spring Framework | Spring Batch | Java |
-| --- | --- | --- | --- | --- |
-| **2.0** | 3.5+ | 5.0+ | 4.0+ | Java 8+ |
-| **1.3** | 3.4+ | 3.2.2+ | 2.1+ | Java 6+ |
+|----------------| --- |------------------|--------------| --- |
+| **2.1**        | 3.5+ | 5.0+             | 4.0+         | Java 8+ |
+| **2.0**        | 3.5+ | 5.x              | 4.x          | Java 8+ |
+| **1.3**        | 3.4+ | 3.2.2+           | 2.1+         | Java 6+ |
 
 ## Acknowledgements
 
