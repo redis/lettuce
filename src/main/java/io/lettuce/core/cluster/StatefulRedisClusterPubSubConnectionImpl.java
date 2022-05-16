@@ -133,7 +133,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         }
 
         return (StatefulRedisPubSubConnection<K, V>) getClusterDistributionChannelWriter().getClusterConnectionProvider()
-                .getConnection(ClusterConnectionProvider.Intent.WRITE, nodeId);
+                .getConnection(ConnectionIntent.WRITE, nodeId);
     }
 
     @Override
@@ -148,7 +148,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
 
         AsyncClusterConnectionProvider provider = (AsyncClusterConnectionProvider) getClusterDistributionChannelWriter()
                 .getClusterConnectionProvider();
-        return (CompletableFuture) provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, nodeId);
+        return (CompletableFuture) provider.getConnectionAsync(ConnectionIntent.WRITE, nodeId);
 
     }
 
@@ -156,7 +156,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
     public StatefulRedisPubSubConnection<K, V> getConnection(String host, int port) {
 
         return (StatefulRedisPubSubConnection<K, V>) getClusterDistributionChannelWriter().getClusterConnectionProvider()
-                .getConnection(ClusterConnectionProvider.Intent.WRITE, host, port);
+                .getConnection(ConnectionIntent.WRITE, host, port);
     }
 
     @Override
@@ -165,7 +165,7 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
         AsyncClusterConnectionProvider provider = (AsyncClusterConnectionProvider) getClusterDistributionChannelWriter()
                 .getClusterConnectionProvider();
 
-        return (CompletableFuture) provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port);
+        return (CompletableFuture) provider.getConnectionAsync(ConnectionIntent.WRITE, host, port);
     }
 
     @Override

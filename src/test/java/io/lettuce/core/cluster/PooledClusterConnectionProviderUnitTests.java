@@ -46,7 +46,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.StringCodec;
@@ -122,7 +121,7 @@ class PooledClusterConnectionProviderUnitTests {
                 .thenReturn(
                 ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
 
-        StatefulRedisConnection<String, String> connection = sut.getConnection(Intent.READ, 1);
+        StatefulRedisConnection<String, String> connection = sut.getConnection(ConnectionIntent.READ, 1);
 
         assertThat(connection).isSameAs(nodeConnectionMock);
         verify(connection).setAutoFlushCommands(true);
@@ -139,7 +138,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         sut.setReadFrom(ReadFrom.UPSTREAM);
 
-        StatefulRedisConnection<String, String> connection = sut.getConnection(Intent.READ, 1);
+        StatefulRedisConnection<String, String> connection = sut.getConnection(ConnectionIntent.READ, 1);
 
         assertThat(connection).isSameAs(nodeConnectionMock);
         verify(connection).setAutoFlushCommands(true);
@@ -160,7 +159,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         sut.setReadFrom(ReadFrom.REPLICA);
 
-        StatefulRedisConnection<String, String> connection = sut.getConnection(Intent.READ, 1);
+        StatefulRedisConnection<String, String> connection = sut.getConnection(ConnectionIntent.READ, 1);
 
         assertThat(connection).isSameAs(nodeConnectionMock);
         verify(connection).async();
@@ -182,7 +181,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         sut.setReadFrom(ReadFrom.REPLICA);
 
-        assertThatExceptionOfType(PartitionSelectorException.class).isThrownBy(() -> sut.getConnection(Intent.READ, 1));
+        assertThatExceptionOfType(PartitionSelectorException.class).isThrownBy(() -> sut.getConnection(ConnectionIntent.READ, 1));
     }
 
     @Test
@@ -209,7 +208,7 @@ class PooledClusterConnectionProviderUnitTests {
         List<StatefulRedisConnection<String, String>> readCandidates = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
-            readCandidates.add(sut.getConnection(Intent.READ, 1));
+            readCandidates.add(sut.getConnection(ConnectionIntent.READ, 1));
         }
 
         assertThat(readCandidates).contains(nodeConnectionMock, nodeConnectionMock2);
@@ -239,7 +238,7 @@ class PooledClusterConnectionProviderUnitTests {
         List<StatefulRedisConnection<String, String>> readCandidates = new ArrayList<>();
 
         for (int i = 0; i < 10; i++) {
-            readCandidates.add(sut.getConnection(Intent.READ, 1));
+            readCandidates.add(sut.getConnection(ConnectionIntent.READ, 1));
         }
 
         assertThat(readCandidates).contains(nodeConnectionMock2).doesNotContain(nodeConnectionMock);
@@ -259,7 +258,7 @@ class PooledClusterConnectionProviderUnitTests {
         sut.setReadFrom(ReadFrom.REPLICA);
 
         try {
-            sut.getConnection(Intent.READ, 1);
+            sut.getConnection(ConnectionIntent.READ, 1);
             fail("Missing RedisException");
         } catch (RedisException e) {
             assertThat(e).hasRootCauseInstanceOf(RuntimeException.class);
@@ -283,7 +282,7 @@ class PooledClusterConnectionProviderUnitTests {
         sut.setReadFrom(ReadFrom.REPLICA);
 
         try {
-            sut.getConnection(Intent.READ, 1);
+            sut.getConnection(ConnectionIntent.READ, 1);
             fail("Missing RedisException");
         } catch (RedisException e) {
             assertThat(e).hasRootCauseInstanceOf(RuntimeException.class);
@@ -295,7 +294,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         when(asyncCommandsMock.readOnly()).thenReturn(async);
 
-        sut.getConnection(Intent.READ, 1);
+        sut.getConnection(ConnectionIntent.READ, 1);
 
         verify(clientMock, times(2)).connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:2"), any(), any());
     }
@@ -319,10 +318,10 @@ class PooledClusterConnectionProviderUnitTests {
 
         sut.setReadFrom(ReadFrom.UPSTREAM_PREFERRED);
 
-        assertThat(sut.getConnection(Intent.READ, 1)).isNotNull().isSameAs(nodeConnectionMock);
+        assertThat(sut.getConnection(ConnectionIntent.READ, 1)).isNotNull().isSameAs(nodeConnectionMock);
 
         // cache access
-        assertThat(sut.getConnection(Intent.READ, 1)).isNotNull().isSameAs(nodeConnectionMock);
+        assertThat(sut.getConnection(ConnectionIntent.READ, 1)).isNotNull().isSameAs(nodeConnectionMock);
 
         verify(clientMock).connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any());
         verify(clientMock).connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:2"), any(), any());
@@ -349,7 +348,7 @@ class PooledClusterConnectionProviderUnitTests {
         sut.setReadFrom(ReadFrom.UPSTREAM_PREFERRED);
 
         try {
-            sut.getConnection(Intent.READ, 1);
+            sut.getConnection(ConnectionIntent.READ, 1);
             fail("Missing RedisException");
         } catch (RedisException e) {
             assertThat(e).isInstanceOf(RedisConnectionException.class)
@@ -365,7 +364,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         partitions.clear();
 
-        sut.getConnectionAsync(Intent.WRITE, 2);
+        sut.getConnectionAsync(ConnectionIntent.WRITE, 2);
 
         verify(clusterEventListener).onUncoveredSlot(2);
     }
@@ -375,7 +374,7 @@ class PooledClusterConnectionProviderUnitTests {
 
         partitions.clear();
 
-        sut.getConnectionAsync(Intent.WRITE, 2);
+        sut.getConnectionAsync(ConnectionIntent.WRITE, 2);
 
         verify(clusterEventListener).onUncoveredSlot(2);
     }
@@ -390,7 +389,7 @@ class PooledClusterConnectionProviderUnitTests {
             }
         });
 
-        sut.getConnectionAsync(Intent.READ, 2);
+        sut.getConnectionAsync(ConnectionIntent.READ, 2);
 
         verify(clusterEventListener).onUncoveredSlot(2);
     }
@@ -403,7 +402,7 @@ class PooledClusterConnectionProviderUnitTests {
         when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any()))
                 .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
 
-        StatefulRedisConnection<String, String> connection = sut.getConnection(Intent.READ, 1);
+        StatefulRedisConnection<String, String> connection = sut.getConnection(ConnectionIntent.READ, 1);
         assertThat(connection).isNotNull();
 
         sut.close();
@@ -414,7 +413,7 @@ class PooledClusterConnectionProviderUnitTests {
     @Test
     void shouldRejectConnectionsToUnknownNodeId() {
 
-        assertThatThrownBy(() -> sut.getConnection(Intent.READ, "foobar")).isInstanceOf(UnknownPartitionException.class);
+        assertThatThrownBy(() -> sut.getConnection(ConnectionIntent.READ, "foobar")).isInstanceOf(UnknownPartitionException.class);
 
         verify(clusterEventListener).onUnknownNode();
     }
@@ -422,7 +421,7 @@ class PooledClusterConnectionProviderUnitTests {
     @Test
     void shouldRejectConnectionsToUnknownNodeHostAndPort() {
 
-        assertThatThrownBy(() -> sut.getConnection(Intent.READ, "localhost", 1234))
+        assertThatThrownBy(() -> sut.getConnection(ConnectionIntent.READ, "localhost", 1234))
                 .isInstanceOf(UnknownPartitionException.class);
 
         verify(clusterEventListener).onUnknownNode();

@@ -99,7 +99,7 @@ class AsyncConnectionProviderIntegrationTests {
     @Test
     void shouldCloseConnectionByKey() throws IOException {
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
+        ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, TestSettings.host(),
                 TestSettings.port());
 
         sut.getConnection(connectionKey);
@@ -114,7 +114,7 @@ class AsyncConnectionProviderIntegrationTests {
     @Test
     void shouldCloseConnections() throws IOException {
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, TestSettings.host(),
+        ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, TestSettings.host(),
                 TestSettings.port());
 
         sut.getConnection(connectionKey);
@@ -136,7 +136,7 @@ class AsyncConnectionProviderIntegrationTests {
 
         client.setOptions(clientOptions);
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "8.8.8.8", TestSettings.port());
+        ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, "8.8.8.8", TestSettings.port());
 
         StopWatch stopWatch = new StopWatch();
 
@@ -169,7 +169,7 @@ class AsyncConnectionProviderIntegrationTests {
 
         client.setOptions(clientOptions);
 
-        ConnectionKey connectionKey = new ConnectionKey(ClusterConnectionProvider.Intent.READ, "8.8.8.8", TestSettings.port());
+        ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, "8.8.8.8", TestSettings.port());
 
         Thread t1 = new Thread(() -> {
             try {

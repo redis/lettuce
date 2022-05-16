@@ -23,6 +23,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.ConnectionIntent;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.api.push.RedisClusterPushListener;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
@@ -71,6 +72,8 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
      * validated against the current topology view in {@link io.lettuce.core.cluster.models.partitions.Partitions}.
      *
+     * Calling this method is equivalent to calling {@link #getConnection(String, ConnectionIntent)} with the connectionIntent 
+     * parameter set to {@link ConnectionIntent#WRITE}
      *
      * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
@@ -81,6 +84,27 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
     StatefulRedisConnection<K, V> getConnection(String nodeId);
 
     /**
+     * Retrieve a connection to the specified cluster node using the nodeId. Host and port are looked up in the node list. This
+     * connection is bound to the node id. Once the cluster topology view is updated, the connection will try to reconnect the
+     * to the node with the specified {@code nodeId}, that behavior can also lead to a closed connection once the node with the
+     * specified {@code nodeId} is no longer part of the cluster.
+     *
+     * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
+     * validated against the current topology view in {@link io.lettuce.core.cluster.models.partitions.Partitions}.
+     *
+     * This method is intended to be used for cases where the caller requires a specific connection type (READ or WRITE) to a 
+     * given node in a cluster.
+     *
+     * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
+     *
+     * @param nodeId the node Id
+     * @param connectionIntent the intent for usage of the connection.
+     * @return a connection to the requested cluster node
+     * @throws RedisException if the requested node identified by {@code nodeId} is not part of the cluster
+     */
+    StatefulRedisConnection<K, V> getConnection(String nodeId, ConnectionIntent connectionIntent);
+
+    /**
      * Retrieve asynchronously a connection to the specified cluster node using the nodeId. Host and port are looked up in the
      * node list. This connection is bound to the node id. Once the cluster topology view is updated, the connection will try to
      * reconnect the to the node with the specified {@code nodeId}, that behavior can also lead to a closed connection once the
@@ -89,6 +113,8 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
      * validated against the current topology view in {@link io.lettuce.core.cluster.models.partitions.Partitions}.
      *
+     * Calling this method is equivalent to calling {@link #getConnectionAsync(String, ConnectionIntent)} with the connectionIntent 
+     * parameter set to {@link ConnectionIntent#WRITE}
      *
      * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
      *
@@ -98,6 +124,49 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      * @since 5.0
      */
     CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String nodeId);
+
+    /**
+     * Retrieve asynchronously a connection to the specified cluster node using the nodeId. Host and port are looked up in the
+     * node list. This connection is bound to the node id. Once the cluster topology view is updated, the connection will try to
+     * reconnect the to the node with the specified {@code nodeId}, that behavior can also lead to a closed connection once the
+     * node with the specified {@code nodeId} is no longer part of the cluster.
+     *
+     * Do not close the connections. Otherwise, unpredictable behavior will occur. The nodeId must be part of the cluster and is
+     * validated against the current topology view in {@link io.lettuce.core.cluster.models.partitions.Partitions}.
+     *
+     * This method is intended to be used for cases where the caller requires a specific connection type (READ or WRITE) to a 
+     * given node in a cluster.
+     *
+     * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
+     *
+     * @param nodeId the node Id
+     * @param connectionIntent the intent for usage of the connection.
+     * @return {@link CompletableFuture} to indicate success or failure to connect to the requested cluster node.
+     * @throws RedisException if the requested node identified by {@code nodeId} is not part of the cluster
+     * @since 5.0
+     */
+    CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String nodeId, ConnectionIntent connectionIntent);
+
+    /**
+     * Retrieve a connection to the specified cluster node using host and port. This connection is bound to a host and port.
+     * Updates to the cluster topology view can close the connection once the host, identified by {@code host} and {@code port},
+     * are no longer part of the cluster.
+     * <p>
+     * Do not close the connections. Otherwise, unpredictable behavior will occur. Host and port connections are verified by
+     * default for cluster membership, see {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
+     * <p>
+     *
+     * Calling this method is equivalent to calling {@link #getConnection(String, int, ConnectionIntent)} with the connectionIntent
+     * parameter set to {@link ConnectionIntent#WRITE}
+     *
+     * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
+     *
+     * @param host the host
+     * @param port the port
+     * @return a connection to the requested cluster node
+     * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
+     */
+    StatefulRedisConnection<K, V> getConnection(String host, int port);
 
     /**
      * Retrieve a connection to the specified cluster node using host and port. This connection is bound to a host and port.
@@ -111,10 +180,33 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      *
      * @param host the host
      * @param port the port
+     * @param connectionIntent the intent of the connection see {@link #getConnection(String, ConnectionIntent)}
      * @return a connection to the requested cluster node
      * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
      */
-    StatefulRedisConnection<K, V> getConnection(String host, int port);
+    StatefulRedisConnection<K, V> getConnection(String host, int port, ConnectionIntent connectionIntent);    
+
+    /**
+     * Retrieve asynchronously a connection to the specified cluster node using host and port. This connection is bound to a
+     * host and port. Updates to the cluster topology view can close the connection once the host, identified by {@code host}
+     * and {@code port}, are no longer part of the cluster.
+     * <p>
+     * Do not close the connections. Otherwise, unpredictable behavior will occur. Host and port connections are verified by
+     * default for cluster membership, see {@link ClusterClientOptions#isValidateClusterNodeMembership()}.
+     * <p>
+     *
+     * Calling this method is equivalent to calling {@link #getConnectionAsync(String, int, ConnectionIntent)} with the connectionIntent
+     * parameter set to {@link ConnectionIntent#WRITE}
+     *
+     * In contrast to the {@link StatefulRedisClusterConnection}, node-connections do not route commands to other cluster nodes.
+     *
+     * @param host the host
+     * @param port the port
+     * @return {@link CompletableFuture} to indicate success or failure to connect to the requested cluster node.
+     * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
+     * @since 5.0
+     */
+    CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String host, int port);
 
     /**
      * Retrieve asynchronously a connection to the specified cluster node using host and port. This connection is bound to a
@@ -128,11 +220,12 @@ public interface StatefulRedisClusterConnection<K, V> extends StatefulConnection
      *
      * @param host the host
      * @param port the port
+     * @param connectionIntent the intent of the connection see {@link #getConnection(String, ConnectionIntent)}
      * @return {@link CompletableFuture} to indicate success or failure to connect to the requested cluster node.
      * @throws RedisException if the requested node identified by {@code host} and {@code port} is not part of the cluster
      * @since 5.0
      */
-    CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String host, int port);
+    CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String host, int port, ConnectionIntent connectionIntent);
 
     /**
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the

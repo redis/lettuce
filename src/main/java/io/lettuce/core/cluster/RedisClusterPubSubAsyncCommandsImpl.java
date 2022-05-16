@@ -130,7 +130,7 @@ public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncC
             RedisURI uri = redisClusterNode.getUri();
             AsyncClusterConnectionProvider async = (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
 
-            return async.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort())
+            return async.getConnectionAsync(ConnectionIntent.WRITE, uri.getHost(), uri.getPort())
                     .thenApply(it -> (StatefulRedisPubSubConnection<K, V>) it);
         }
 
