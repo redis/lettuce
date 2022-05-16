@@ -133,7 +133,7 @@ public class RedisClusterStressScenariosTest extends TestSupport {
         ClusterDistributionChannelWriter writer = (ClusterDistributionChannelWriter) statefulConnection.getChannelWriter();
 
         StatefulRedisConnectionImpl<Object, Object> statefulSlotConnection = (StatefulRedisConnectionImpl) writer
-                .getClusterConnectionProvider().getConnection(ClusterConnectionProvider.Intent.WRITE, 3300);
+                .getClusterConnectionProvider().getConnection(ConnectionIntent.WRITE, 3300);
 
         final RedisAsyncCommands<Object, Object> slotConnection = statefulSlotConnection.async();
 

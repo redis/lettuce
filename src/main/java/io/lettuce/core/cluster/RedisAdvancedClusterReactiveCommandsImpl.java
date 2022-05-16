@@ -39,7 +39,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
 import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
-import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.reactive.RedisAdvancedClusterReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
@@ -440,7 +439,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String nodeId) {
-        return getMono(getConnectionProvider().<K, V> getConnectionAsync(Intent.WRITE, nodeId))
+        return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, nodeId))
                 .map(StatefulRedisConnection::reactive);
     }
 
@@ -450,7 +449,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String host, int port) {
-        return getMono(getConnectionProvider().<K, V> getConnectionAsync(Intent.WRITE, host, port))
+        return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, host, port))
                 .map(StatefulRedisConnection::reactive);
     }
 
@@ -600,7 +599,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         String currentNodeId = ClusterScanSupport.getCurrentNodeId(cursor, nodeIds);
         ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
 
-        Mono<T> scanCursor = getMono(connectionProvider.<K, V> getConnectionAsync(Intent.WRITE, currentNodeId))
+        Mono<T> scanCursor = getMono(connectionProvider.<K, V> getConnectionAsync(ConnectionIntent.WRITE, currentNodeId))
                 .flatMap(conn -> scanFunction.apply(conn.reactive(), continuationCursor));
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }

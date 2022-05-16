@@ -38,7 +38,6 @@ import io.lettuce.core.CommandListenerWriter;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.internal.HostAndPort;
@@ -137,15 +136,15 @@ class ClusterDistributionChannelWriterUnitTests {
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mset = new Command<>(CommandType.MSET, null);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(set, mset))).isEqualTo(Intent.WRITE);
+        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(set, mset))).isEqualTo(ConnectionIntent.WRITE);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(Intent.WRITE);
+        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
     void shouldReturnDefaultIntentForNoCommands() {
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.emptyList())).isEqualTo(Intent.WRITE);
+        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.emptyList())).isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
@@ -154,9 +153,9 @@ class ClusterDistributionChannelWriterUnitTests {
         RedisCommand<String, String, String> get = new Command<>(CommandType.GET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(get, mget))).isEqualTo(Intent.READ);
+        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(get, mget))).isEqualTo(ConnectionIntent.READ);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(get))).isEqualTo(Intent.READ);
+        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(get))).isEqualTo(ConnectionIntent.READ);
     }
 
     @Test
@@ -165,9 +164,9 @@ class ClusterDistributionChannelWriterUnitTests {
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(set, mget))).isEqualTo(Intent.WRITE);
+        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(set, mget))).isEqualTo(ConnectionIntent.WRITE);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(Intent.WRITE);
+        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
@@ -210,7 +209,7 @@ class ClusterDistributionChannelWriterUnitTests {
         when(connectFuture.isDone()).thenReturn(true);
         when(connectFuture.isCompletedExceptionally()).thenReturn(false);
         when(connectFuture.join()).thenReturn(connection);
-        when(pooledClusterConnectionProvider.getConnectionAsync(any(Intent.class), anyString(), anyInt()))
+        when(pooledClusterConnectionProvider.getConnectionAsync(any(ConnectionIntent.class), anyString(), anyInt()))
                 .thenReturn(connectFuture);
         when(connection.getChannelWriter()).thenReturn(clusterNodeEndpoint);
 

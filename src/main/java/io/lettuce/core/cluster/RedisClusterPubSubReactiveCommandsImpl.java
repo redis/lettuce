@@ -129,7 +129,7 @@ public class RedisClusterPubSubReactiveCommandsImpl<K, V> extends RedisPubSubRea
 
             AsyncClusterConnectionProvider async = (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
 
-            return async.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort())
+            return async.getConnectionAsync(ConnectionIntent.WRITE, uri.getHost(), uri.getPort())
                     .thenApply(it -> (StatefulRedisPubSubConnection<K, V>) it);
         }
 

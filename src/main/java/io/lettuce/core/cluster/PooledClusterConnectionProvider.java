@@ -125,23 +125,23 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     @Override
-    public StatefulRedisConnection<K, V> getConnection(Intent intent, int slot) {
+    public StatefulRedisConnection<K, V> getConnection(ConnectionIntent connectionIntent, int slot) {
 
         try {
-            return getConnectionAsync(intent, slot).get();
+            return getConnectionAsync(connectionIntent, slot).get();
         } catch (Exception e) {
             throw Exceptions.bubble(e);
         }
     }
 
     @Override
-    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(Intent intent, int slot) {
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent, int slot) {
 
         if (debugEnabled) {
-            logger.debug("getConnection(" + intent + ", " + slot + ")");
+            logger.debug("getConnection(" + connectionIntent + ", " + slot + ")");
         }
 
-        if (intent == Intent.READ && readFrom != null && readFrom != ReadFrom.UPSTREAM) {
+        if (connectionIntent == ConnectionIntent.READ && readFrom != null && readFrom != ReadFrom.UPSTREAM) {
             return getReadConnection(slot);
         }
 
@@ -166,7 +166,7 @@ class PooledClusterConnectionProvider<K, V>
             // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
             // host because the nodeId can be handled by a different host.
             RedisURI uri = partition.getUri();
-            ConnectionKey key = new ConnectionKey(Intent.WRITE, uri.getHost(), uri.getPort());
+            ConnectionKey key = new ConnectionKey(ConnectionIntent.WRITE, uri.getHost(), uri.getPort());
 
             ConnectionFuture<StatefulRedisConnection<K, V>> future = getConnectionAsync(key);
 
@@ -367,7 +367,7 @@ class PooledClusterConnectionProvider<K, V>
             RedisNodeDescription redisClusterNode = selection.get(i);
 
             RedisURI uri = redisClusterNode.getUri();
-            ConnectionKey key = new ConnectionKey(redisClusterNode.getRole().isUpstream() ? Intent.WRITE : Intent.READ,
+            ConnectionKey key = new ConnectionKey(redisClusterNode.getRole().isUpstream() ? ConnectionIntent.WRITE : ConnectionIntent.READ,
                     uri.getHost(), uri.getPort());
 
             readerCandidates[i] = getConnectionAsync(key).toCompletableFuture();
@@ -398,23 +398,23 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     @Override
-    public StatefulRedisConnection<K, V> getConnection(Intent intent, String nodeId) {
+    public StatefulRedisConnection<K, V> getConnection(ConnectionIntent connectionIntent, String nodeId) {
 
         if (debugEnabled) {
-            logger.debug("getConnection(" + intent + ", " + nodeId + ")");
+            logger.debug("getConnection(" + connectionIntent + ", " + nodeId + ")");
         }
 
-        return getConnection(new ConnectionKey(intent, nodeId));
+        return getConnection(new ConnectionKey(connectionIntent, nodeId));
     }
 
     @Override
-    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(Intent intent, String nodeId) {
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent, String nodeId) {
 
         if (debugEnabled) {
-            logger.debug("getConnection(" + intent + ", " + nodeId + ")");
+            logger.debug("getConnection(" + connectionIntent + ", " + nodeId + ")");
         }
 
-        return getConnectionAsync(new ConnectionKey(intent, nodeId)).toCompletableFuture();
+        return getConnectionAsync(new ConnectionKey(connectionIntent, nodeId)).toCompletableFuture();
     }
 
     protected ConnectionFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionKey key) {
@@ -440,12 +440,12 @@ class PooledClusterConnectionProvider<K, V>
 
     @Override
     @SuppressWarnings({ "unchecked", "hiding", "rawtypes" })
-    public StatefulRedisConnection<K, V> getConnection(Intent intent, String host, int port) {
+    public StatefulRedisConnection<K, V> getConnection(ConnectionIntent connectionIntent, String host, int port) {
 
         try {
-            beforeGetConnection(intent, host, port);
+            beforeGetConnection(connectionIntent, host, port);
 
-            return getConnection(new ConnectionKey(intent, host, port));
+            return getConnection(new ConnectionKey(connectionIntent, host, port));
         } catch (RedisException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -465,12 +465,12 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     @Override
-    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(Intent intent, String host, int port) {
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent, String host, int port) {
 
         try {
-            beforeGetConnection(intent, host, port);
+            beforeGetConnection(connectionIntent, host, port);
 
-            return connectionProvider.getConnection(new ConnectionKey(intent, host, port)).toCompletableFuture();
+            return connectionProvider.getConnection(new ConnectionKey(connectionIntent, host, port)).toCompletableFuture();
         } catch (RedisException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -478,10 +478,10 @@ class PooledClusterConnectionProvider<K, V>
         }
     }
 
-    private void beforeGetConnection(Intent intent, String host, int port) {
+    private void beforeGetConnection(ConnectionIntent connectionIntent, String host, int port) {
 
         if (debugEnabled) {
-            logger.debug("getConnection(" + intent + ", " + host + ", " + port + ")");
+            logger.debug("getConnection(" + connectionIntent + ", " + host + ", " + port + ")");
         }
 
         RedisClusterNode redisClusterNode = partitions.getPartition(host, port);
@@ -696,7 +696,7 @@ class PooledClusterConnectionProvider<K, V>
 
             LettuceAssert.notNull(connection, "Connection is null. Check ConnectionKey because host and nodeId are null.");
 
-            if (key.intent == Intent.READ) {
+            if (key.connectionIntent == ConnectionIntent.READ) {
 
                 connection = connection.thenCompose(c -> {
 
