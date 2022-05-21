@@ -1,5 +1,5 @@
 #
-# Copyright 2010-2020 the original author or authors.
+# Copyright 2010-2022 the original author or authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macOS-latest, windows-latest]
-        java: [8, 11, 16, 17-ea]
-        distribution: ['adopt']
+        java: [8, 11, 17, 18, 19-ea]
+        distribution: ['zulu']
       fail-fast: false
       max-parallel: 4
     name: Test JDK ${{ matrix.java }}, ${{ matrix.os }}
