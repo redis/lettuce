@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -360,7 +360,7 @@ class SqlSessionFactoryBeanTest {
 
     TypeAliasRegistry typeAliasRegistry = factoryBean.getObject().getConfiguration().getTypeAliasRegistry();
     System.out.println(typeAliasRegistry.getTypeAliases().keySet());
-    assertThat(typeAliasRegistry.getTypeAliases().size()).isEqualTo(81);
+    assertThat(typeAliasRegistry.getTypeAliases().size()).isEqualTo(89);
     typeAliasRegistry.resolveAlias("testAlias");
     typeAliasRegistry.resolveAlias("testAlias2");
     typeAliasRegistry.resolveAlias("dummyTypeHandler");
