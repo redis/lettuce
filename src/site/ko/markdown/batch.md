@@ -1,8 +1,8 @@
 <a name="Spring_Batch"></a>
 # Spring Batch
 
-마이바티스 스프링 연동모듈의 1.1.0버전에서는 스프링 배치 애플리케이션을 만들기 위해 두개의 빈을 제공한다.
-두개의 빈은 `MyBatisPagingItemReader` 와 `MyBatisCursorItemReader` 와 <code>MyBatisBatchItemWriter</code>이다.
+마이바티스 스프링 연동모듈의 1.1.0버전에서는 스프링 배치 애플리케이션을 만들기 위해 세개의 빈을 제공한다.
+세개의 빈은 `MyBatisPagingItemReader` 와 `MyBatisCursorItemReader` 와 <code>MyBatisBatchItemWriter</code>이다.
 
 또한 2.0.0 버전에서는 Java Configuration 을 지원하는 다음의 세 가지 Builder class 를 제공한다.
 `MyBatisPagingItemReaderBuilder`, `MyBatisCursorItemReaderBuilder` 그리고 `MyBatisBatchItemWriterBuilder` 이다.
@@ -23,7 +23,7 @@ reader는 몇가지의 표준적인 쿼리 파라미터를 제공하고 명명�
 
 * `_page`: 읽을 페이지 수(0부터 시작)
 * `_pagesize`: 페이지의 크기, 이를테면 리턴하는 로우 수
-* `_skiprows`: `_page` 와 `_pagesize`의 결과
+* `_skiprows`: `_page` 와 `_pagesize`를 곱한 결과
 
 각각의 파라미터는 selet구문에서 다음처럼 매핑될 수 있다.
 
