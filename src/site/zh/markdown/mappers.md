@@ -78,21 +78,21 @@ public class MyBatisConfig {
 
 `<mybatis:scan/>` 和 `@MapperScan` 都在 MyBatis-Spring 1.2.0 中被引入。`@MapperScan` 需要你使用 Spring 3.1+。
 
-Since 2.0.2, mapper scanning feature support a option (`lazy-initialization`) that control lazy initialization enabled/disabled of mapper bean.
-The motivation for adding this option is supporting a lazy initialization control feature supported by Spring Boot 2.2. The default of this option is `false` (= not use lazy initialization).
-If developer want to use lazy initialization for mapper bean, it should be set to the `true` expressly.
+从 2.0.2 版本开始，mapper 扫描机制支持控制 mapper bean 的懒加载 (`lazy-initialization`) ，这个选项是可选的。
+添加这个选项是为了支持 Spring Boot 2.2 中的懒加载特性。 默认的选项值为 `false`  （即不开启懒加载）。
+如果开发者想使用懒加载的特性，需要显式地将其设置为 `true`.
 
 <span class="label important">IMPORTANT</span>
-If use the lazy initialization feature, the developer need to understand following limitations.
-If any of following conditions are matches, usually the lazy initialization feature cannot use on your application.
+如果开发者想使用懒加载的特性，需要首先知道其局限性。
+如果有下列情况，懒加载将在你的应用中不起作用：
 
-* When refers to the statement of **other mapper** using `<association>`(`@One`) and `<collection>`(`@Many`)
-* When includes to the fragment of **other mapper** using `<include>`
-* When refers to the cache of **other mapper** using `<cache-ref>`(`@CacheNamespaceRef`)
-* When refers to the result mapping of **other mapper** using `<select resultMap="...">`(`@ResultMap`)
+- 当使用 `<association>`(`@One`) 与 `<collection>`(`@Many`) 指向**其它的 mapper** 时
+- 当使用 `<include>` 将**其它的 mapper** 的一部分包含进来时
+- 当使用 `<cache-ref>`(`@CacheNamespaceRef`) 指向**其它的 mapper** 的缓存时
+- 当使用 `<select resultMap="...">`(`@ResultMap`) 指向**其它的 mapper** 的结果集时
 
 <span class="label important">NOTE</span>
-However, It become possible to use it by simultaneously initializing dependent beans using `@DependsOn`(Spring's feature) as follow:
+然而，通过使用 `@DependsOn`（Spring 的特性）在初始化依赖 bean 的同时，可以使用懒加载，如下所示：
 
 ```java
 @DependsOn("vendorMapper")
@@ -101,9 +101,9 @@ public interface GoodsMapper {
 }
 ```
 
-Since 2.0.6, the develop become can specified scope of mapper using mapper scanning feature option(`default-scope`) and scope annotation(`@Scope`, `@RefreshScope`, etc ...).
-The motivation for adding this option is supporting the `refresh` scope provided by the Spring Cloud. The default of this option is empty (= equiv to specify the `singleton` scope).
-The `default-scope` apply to the mapper bean(`MapperFactoryBean`) when scope of scanned bean definition is `singleton`(default scope) and create a scoped proxy bean for scanned mapper when final scope is not `singleton`.
+2.0.6 起，开发者可以通过 mapper 扫描的特性，使用(`default-scope` 的)选项和作用域注解来指定扫描的 bean 的作用域(`@Scope`、 `@RefreshScope` 等)。
+添加这个可选项是为了支持 Spring Cloud 的 `refresh` 作用域的特性。可选项默认为空（ 相当于指定 `singleton` 作用域）。
+当被扫描的 bean 定义在 `singleton` 作用域（默认作用域），且若最终的作用域不是 `singleton` 时，为其创建一个基于作用域的代理 bean ，`default-scope` 作用于 mapper bean(`MapperFactoryBean`).
 
 ### \<mybatis:scan\>
 
@@ -160,7 +160,7 @@ public class AppConfig {
 通过配置 `sqlSessionFactory` 和 `sqlSessionTemplate` 属性，你还能指定一个 `SqlSessionFactory` 或 `SqlSessionTemplate`。
 
 <span class="label important">NOTE</span>
-Since 2.0.4, If `basePackageClasses` or `basePackages` are not defined, scanning will occur from the package of the class that declares this annotation.
+从 2.0.4 起，如果 `basePackageClasses` 或 `basePackages` 没有定义， 扫描将基于声明这个注解的类所在的包。
 
 ### MapperScannerConfigurer
 
