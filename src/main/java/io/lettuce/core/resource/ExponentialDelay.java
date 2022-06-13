@@ -91,8 +91,8 @@ class ExponentialDelay extends Delay {
 
         if (attempt <= 0) { // safeguard against underflow
             return 0L;
-        } else if (attempt >= 64) { // safeguard against overflow in the bitshift operation
-            return Long.MAX_VALUE;
+        } else if (attempt >= 63) { // safeguard against overflow in the bitshift operation
+            return Long.MAX_VALUE - 1;
         } else {
             return 1L << (attempt - 1);
         }

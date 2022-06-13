@@ -325,7 +325,7 @@ public abstract class Delay {
      * @see ThreadLocalRandom#nextLong(long, long)
      */
     protected static long randomBetween(long min, long max) {
-        if (min == max) {
+        if (min >= max) {
             return min;
         }
         return ThreadLocalRandom.current().nextLong(min, max);

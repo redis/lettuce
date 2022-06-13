@@ -63,7 +63,7 @@ class DecorrelatedJitterDelay extends Delay implements StatefulDelay {
     public Duration createDelay(long attempt) {
         long value = randomBetween(base, Math.max(base, prevDelay * 3));
         Duration delay = applyBounds(Duration.ofNanos(targetTimeUnit.toNanos(value)), lower, upper);
-        prevDelay = delay.toNanos();
+        prevDelay = targetTimeUnit.convert(delay.toNanos(), TimeUnit.NANOSECONDS);
         return delay;
     }
 
