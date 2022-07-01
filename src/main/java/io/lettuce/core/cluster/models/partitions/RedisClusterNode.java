@@ -300,7 +300,8 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
             return;
         }
 
-        for (int i = 0; i < this.slots.length(); i++) {
+        int length = this.slots.length();
+        for (int i = 0; i < length; i++) {
 
             if (this.slots.get(i)) {
                 consumer.accept(i);
