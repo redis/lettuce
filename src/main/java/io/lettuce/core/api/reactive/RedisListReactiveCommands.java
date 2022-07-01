@@ -15,9 +15,12 @@
  */
 package io.lettuce.core.api.reactive;
 
+import java.util.List;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.LMPopArgs;
 import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.output.ValueStreamingChannel;
@@ -34,11 +37,10 @@ import io.lettuce.core.output.ValueStreamingChannel;
 public interface RedisListReactiveCommands<K, V> {
 
     /**
-     * Atomically returns and removes the first/last element (head/tail depending on the
-     * wherefrom argument) of the list stored at source, and pushes the element at the
-     * first/last element (head/tail depending on the whereto argument) of the list stored at destination.
-     * When source is empty, Redis will block the connection until another client pushes to it
-     * or until timeout is reached.
+     * Atomically returns and removes the first/last element (head/tail depending on the where from argument) of the list stored
+     * at source, and pushes the element at the first/last element (head/tail depending on the whereto argument) of the list
+     * stored at destination. When source is empty, Redis will block the connection until another client pushes to it or until
+     * timeout is reached.
      *
      * @param source the source key.
      * @param destination the destination type: key.
@@ -50,7 +52,7 @@ public interface RedisListReactiveCommands<K, V> {
     Mono<V> blmove(K source, K destination, LMoveArgs args, long timeout);
 
     /**
-     * Atomically returns and removes the first/last element (head/tail depending on the wherefrom argument) of the list stored
+     * Atomically returns and removes the first/last element (head/tail depending on the where from argument) of the list stored
      * at source, and pushes the element at the first/last element (head/tail depending on the whereto argument) of the list
      * stored at destination. When source is empty, Redis will block the connection until another client pushes to it or until
      * timeout is reached.
@@ -63,6 +65,30 @@ public interface RedisListReactiveCommands<K, V> {
      * @since 6.1.3
      */
     Mono<V> blmove(K source, K destination, LMoveArgs args, double timeout);
+
+    /**
+     * Remove and get the first/last elements in a list, or block until one is available.
+     *
+     * @param timeout the timeout in seconds.
+     * @param args the additional command arguments.
+     * @param keys the keys.
+     * @return KeyValue&lt;K,V&gt; array-reply specifically. {@code null} when {@code key} does not exist or the timeout was
+     *         exceeded.
+     * @since 6.2
+     */
+    Mono<KeyValue<K, List<V>>> blmpop(long timeout, LMPopArgs args, K... keys);
+
+    /**
+     * Remove and get the first/last elements in a list, or block until one is available.
+     *
+     * @param timeout the timeout in seconds.
+     * @param args the additional command arguments.
+     * @param keys the keys.
+     * @return KeyValue&lt;K,V&gt; array-reply specifically. {@code null} when {@code key} does not exist or the timeout was
+     *         exceeded.
+     * @since 6.2
+     */
+    Mono<KeyValue<K, List<V>>> blmpop(double timeout, LMPopArgs args, K... keys);
 
     /**
      * Remove and get the first element in a list, or block until one is available.
@@ -171,9 +197,9 @@ public interface RedisListReactiveCommands<K, V> {
     Mono<Long> llen(K key);
 
     /**
-     * Atomically returns and removes the first/last element (head/tail depending on the
-     * wherefrom argument) of the list stored at source, and pushes the element at the
-     * first/last element (head/tail depending on the whereto argument) of the list stored at destination.
+     * Atomically returns and removes the first/last element (head/tail depending on the where from argument) of the list stored
+     * at source, and pushes the element at the first/last element (head/tail depending on the whereto argument) of the list
+     * stored at destination.
      *
      * @param source the source key.
      * @param destination the destination type: key.
@@ -182,6 +208,16 @@ public interface RedisListReactiveCommands<K, V> {
      * @since 6.1
      */
     Mono<V> lmove(K source, K destination, LMoveArgs args);
+
+    /**
+     * Remove and get the first/last elements in a list.
+     *
+     * @param args the additional command arguments.
+     * @param keys the keys.
+     * @return KeyValue&lt;K,V&gt; array-reply specifically. {@code null} when {@code key} does not exist.
+     * @since 6.2
+     */
+    Mono<KeyValue<K, List<V>>> lmpop(LMPopArgs args, K... keys);
 
     /**
      * Remove and get the first element in a list.
@@ -295,7 +331,8 @@ public interface RedisListReactiveCommands<K, V> {
      * @param start the start type: long.
      * @param stop the stop type: long.
      * @return Long count of elements in the specified range.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #lrange}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #lrange}.
      */
     @Deprecated
     Mono<Long> lrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
@@ -374,4 +411,5 @@ public interface RedisListReactiveCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      */
     Mono<Long> rpushx(K key, V... values);
+
 }

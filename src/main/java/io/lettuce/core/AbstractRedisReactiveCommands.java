@@ -288,6 +288,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<KeyValue<K, List<V>>> blmpop(long timeout, LMPopArgs args, K... keys) {
+        return createMono(() -> commandBuilder.blmpop(timeout, args, keys));
+    }
+
+    @Override
+    public Mono<KeyValue<K, List<V>>> blmpop(double timeout, LMPopArgs args, K... keys) {
+        return createMono(() -> commandBuilder.blmpop(timeout, args, keys));
+    }
+
+    @Override
     public Mono<KeyValue<K, V>> blpop(long timeout, K... keys) {
         return createMono(() -> commandBuilder.blpop(timeout, keys));
     }
@@ -1225,6 +1235,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<V> lmove(K source, K destination, LMoveArgs args) {
         return createMono(() -> commandBuilder.lmove(source, destination, args));
+    }
+
+    @Override
+    public Mono<KeyValue<K, List<V>>> lmpop(LMPopArgs args, K... keys) {
+        return createMono(() -> commandBuilder.lmpop(args, keys));
     }
 
     @Override

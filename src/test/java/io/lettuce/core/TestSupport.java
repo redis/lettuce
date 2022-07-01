@@ -53,7 +53,7 @@ public abstract class TestSupport {
         return Arrays.asList(args);
     }
 
-    protected static KeyValue<String, String> kv(String key, String value) {
+    protected static <K, V> KeyValue<K, V> kv(K key, V value) {
         return KeyValue.fromNullable(key, value);
     }
 

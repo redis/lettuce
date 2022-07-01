@@ -272,6 +272,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<KeyValue<K, List<V>>> blmpop(long timeout, LMPopArgs args, K... keys) {
+        return dispatch(commandBuilder.blmpop(timeout, args, keys));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, List<V>>> blmpop(double timeout, LMPopArgs args, K... keys) {
+        return dispatch(commandBuilder.blmpop(timeout, args, keys));
+    }
+
+    @Override
     public RedisFuture<KeyValue<K, V>> blpop(long timeout, K... keys) {
         return dispatch(commandBuilder.blpop(timeout, keys));
     }
@@ -1174,6 +1184,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<V>> lpop(K key, long count) {
         return dispatch(commandBuilder.lpop(key, count));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, List<V>>> lmpop(LMPopArgs args, K... keys) {
+        return dispatch(commandBuilder.lmpop(args, keys));
     }
 
     @Override

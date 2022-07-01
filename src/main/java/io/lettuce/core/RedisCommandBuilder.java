@@ -376,6 +376,26 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BLMOVE, new ValueOutput<>(codec), args);
     }
 
+    Command<K, V, KeyValue<K, List<V>>> blmpop(long timeout, LMPopArgs lmPopArgs, K... keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lmPopArgs, "LMPopArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(timeout).add(keys.length).addKeys(keys);
+        lmPopArgs.build(args);
+
+        return createCommand(BLMPOP, new KeyValueValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, KeyValue<K, List<V>>> blmpop(double timeout, LMPopArgs lmPopArgs, K... keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lmPopArgs, "LMPopArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(timeout).add(keys.length).addKeys(keys);
+        lmPopArgs.build(args);
+
+        return createCommand(BLMPOP, new KeyValueValueListOutput<>(codec), args);
+    }
+
     Command<K, V, KeyValue<K, V>> blpop(long timeout, K... keys) {
         notEmpty(keys);
 
@@ -1582,6 +1602,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.addKey(source).addKey(destination);
         lMoveArgs.build(args);
         return createCommand(LMOVE, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, KeyValue<K, List<V>>> lmpop(LMPopArgs lmPopArgs, K... keys) {
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(lmPopArgs, "LMPopArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys);
+        lmPopArgs.build(args);
+
+        return createCommand(LMPOP, new KeyValueValueListOutput<>(codec), args);
     }
 
     Command<K, V, V> lpop(K key) {
@@ -3114,7 +3144,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZCOUNT, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<V> > zdiff(K... keys) {
+    Command<K, V, List<V>> zdiff(K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
@@ -4055,4 +4085,5 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     private static void notEmptyRanges(Range<?>[] ranges) {
         LettuceAssert.notEmpty(ranges, "Ranges " + MUST_NOT_BE_NULL);
     }
+
 }

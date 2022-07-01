@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 the original author or authors.
+ * Copyright 2017-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package io.lettuce.core.cluster.api.async;
 import java.util.List;
 
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.LMPopArgs;
 import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.output.ValueStreamingChannel;
@@ -62,6 +63,30 @@ public interface NodeSelectionListAsyncCommands<K, V> {
      * @since 6.1.3
      */
     AsyncExecutions<V> blmove(K source, K destination, LMoveArgs args, double timeout);
+
+    /**
+     * Remove and get the first/last elements in a list, or block until one is available.
+     *
+     * @param timeout the timeout in seconds.
+     * @param args the additional command arguments.
+     * @param keys the keys.
+     * @return KeyValue&lt;K,V&gt; array-reply specifically. {@code null} when {@code key} does not exist or the timeout was
+     *         exceeded.
+     * @since 6.2
+     */
+    AsyncExecutions<KeyValue<K, List<V>>> blmpop(long timeout, LMPopArgs args, K... keys);
+
+    /**
+     * Remove and get the first/last elements in a list, or block until one is available.
+     *
+     * @param timeout the timeout in seconds.
+     * @param args the additional command arguments.
+     * @param keys the keys.
+     * @return KeyValue&lt;K,V&gt; array-reply specifically. {@code null} when {@code key} does not exist or the timeout was
+     *         exceeded.
+     * @since 6.2
+     */
+    AsyncExecutions<KeyValue<K, List<V>>> blmpop(double timeout, LMPopArgs args, K... keys);
 
     /**
      * Remove and get the first element in a list, or block until one is available.
@@ -181,6 +206,16 @@ public interface NodeSelectionListAsyncCommands<K, V> {
      * @since 6.1
      */
     AsyncExecutions<V> lmove(K source, K destination, LMoveArgs args);
+
+    /**
+     * Remove and get the first/last elements in a list.
+     *
+     * @param args the additional command arguments.
+     * @param keys the keys.
+     * @return KeyValue&lt;K,V&gt; array-reply specifically. {@code null} when {@code key} does not exist.
+     * @since 6.2
+     */
+    AsyncExecutions<KeyValue<K, List<V>>> lmpop(LMPopArgs args, K... keys);
 
     /**
      * Remove and get the first element in a list.
@@ -373,4 +408,5 @@ public interface NodeSelectionListAsyncCommands<K, V> {
      * @return Long integer-reply the length of the list after the push operation.
      */
     AsyncExecutions<Long> rpushx(K key, V... values);
+
 }
