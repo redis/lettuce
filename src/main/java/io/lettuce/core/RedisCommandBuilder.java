@@ -93,12 +93,26 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ACL, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, String> aclDryRun(String username, String command, V... commandArgs) {
+    Command<K, V, String> aclDryRun(String username, String command, String... commandArgs) {
         LettuceAssert.notNull(username, "username " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(command, "command " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.add(DRYRUN).add(username).add(command).addValues(commandArgs);
+        args.add(DRYRUN).add(username).add(command);
+
+        for (String commandArg : commandArgs) {
+            args.add(commandArg);
+        }
+        return createCommand(ACL, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> aclDryRun(String username, RedisCommand<K, V, ?> command) {
+        LettuceAssert.notNull(username, "username " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(command, "command " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(DRYRUN).add(username).add(command.getType()).addAll(command.getArgs());
+
         return createCommand(ACL, new StatusOutput<>(codec), args);
     }
 

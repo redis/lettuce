@@ -96,8 +96,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> aclDryRun(String username, String command, V... args) {
+    public RedisFuture<String> aclDryRun(String username, String command, String... args) {
         return dispatch(commandBuilder.aclDryRun(username, command, args));
+    }
+
+    @Override
+    public RedisFuture<String> aclDryRun(String username, RedisCommand<K, V, ?> command) {
+        return dispatch(commandBuilder.aclDryRun(username, command));
     }
 
     @Override

@@ -29,6 +29,10 @@ import io.lettuce.core.AclSetuserArgs;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -70,11 +74,26 @@ public class AclCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @EnabledOnCommand("EVAL_RO")    // Redis 7.0
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
     void aclDryRun() {
         assertThatThrownBy(() -> redis.aclDryRun("non-existing", "GET", "foo", "bar"))
                 .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR User 'non-existing' not found");
         assertThat(redis.aclDryRun("default", "GET", "foo", "bar")).isEqualTo("OK");
+
+        AclSetuserArgs args = AclSetuserArgs.Builder.on().addCommand(CommandType.GET).keyPattern("objects:*")
+                .addPassword("foobared");
+        assertThat(redis.aclSetuser("foo", args)).isEqualTo("OK");
+
+        assertThat(redis.aclDryRun("foo", "GET", "objects:foo")).isEqualTo("OK");
+        assertThat(redis.aclDryRun("foo", "GET", "baz")).contains("no permissions");
+
+        Command<String, String, String> getFoo = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).add("objects:foo"));
+        Command<String, String, String> getBaz = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).add("baz"));
+
+        assertThat(redis.aclDryRun("foo", getFoo)).isEqualTo("OK");
+        assertThat(redis.aclDryRun("foo", getBaz)).contains("no permissions");
     }
 
     @Test
@@ -90,7 +109,8 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @Test
     void aclLoad() {
-        assertThatThrownBy(redis::aclLoad).isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR This Redis instance is not configured to use an ACL file.");
+        assertThatThrownBy(redis::aclLoad).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR This Redis instance is not configured to use an ACL file.");
     }
 
     @Test
@@ -111,13 +131,15 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @Test
     void aclSave() {
-        assertThatThrownBy(redis::aclSave).isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR This Redis instance is not configured to use an ACL file.");
+        assertThatThrownBy(redis::aclSave).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR This Redis instance is not configured to use an ACL file.");
     }
 
     @Test
     void aclSetuser() {
         assertThat(redis.aclDeluser("foo")).isNotNull();
-        AclSetuserArgs args = AclSetuserArgs.Builder.on().addCommand(CommandType.GET).keyPattern("objects:*").addPassword("foobared");
+        AclSetuserArgs args = AclSetuserArgs.Builder.on().addCommand(CommandType.GET).keyPattern("objects:*")
+                .addPassword("foobared");
         assertThat(redis.aclSetuser("foo", args)).isEqualTo("OK");
         assertThat(redis.aclGetuser("foo")).contains("commands").contains("passwords").contains("keys");
         assertThat(redis.aclDeluser("foo")).isNotNull();
@@ -141,4 +163,5 @@ public class AclCommandIntegrationTests extends TestSupport {
     void aclWhoami() {
         assertThat(redis.aclWhoami()).isEqualTo("default");
     }
+
 }

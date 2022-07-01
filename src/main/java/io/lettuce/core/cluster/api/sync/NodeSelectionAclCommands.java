@@ -22,6 +22,7 @@ import java.util.Set;
 import io.lettuce.core.AclCategory;
 import io.lettuce.core.AclSetuserArgs;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * Synchronous executed commands on a node selection for the ACL-API.
@@ -64,7 +65,17 @@ public interface NodeSelectionAclCommands<K, V> {
      * @return String reply: OK on success.
      * @since 6.2
      */
-    Executions<String> aclDryRun(String username, String command, V... args);
+    Executions<String> aclDryRun(String username, String command, String... args);
+
+    /**
+     * Simulate the execution of a given command by a given user.
+     *
+     * @param username the specified username
+     * @param command the specified command to inspect
+     * @return String reply: OK on success.
+     * @since 6.2
+     */
+    Executions<String> aclDryRun(String username, RedisCommand<K, V, ?> command);
 
     /**
      * The command generates a password.
