@@ -42,7 +42,7 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.dao.support.PersistenceExceptionTranslator;
 
 /**
- * Thread safe, Spring managed, {@code SqlSession} that works with Spring transaction management to ensure that that the
+ * Thread safe, Spring managed, {@code SqlSession} that works with Spring transaction management to ensure that the
  * actual SqlSession used is the one associated with the current Spring transaction. In addition, it manages the session
  * life-cycle, including closing, committing or rolling back the session as necessary based on the Spring transaction
  * configuration.
