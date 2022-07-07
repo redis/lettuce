@@ -24,6 +24,8 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.commands.GeoCommandIntegrationTests;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisGeoCommands} using Redis Cluster.
+ *
  * @author Mark Paluch
  */
 class GeoClusterCommandIntegrationTests extends GeoCommandIntegrationTests {
@@ -72,4 +74,5 @@ class GeoClusterCommandIntegrationTests extends GeoCommandIntegrationTests {
     @Override
     public void geohashInTransaction() {
     }
+
 }

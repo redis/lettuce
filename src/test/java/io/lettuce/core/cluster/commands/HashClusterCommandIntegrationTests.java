@@ -22,6 +22,8 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.commands.HashCommandIntegrationTests;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisHashCommands} using Redis Cluster.
+ *
  * @author Mark Paluch
  */
 public class HashClusterCommandIntegrationTests extends HashCommandIntegrationTests {
@@ -30,4 +32,5 @@ public class HashClusterCommandIntegrationTests extends HashCommandIntegrationTe
     public HashClusterCommandIntegrationTests(StatefulRedisClusterConnection<String, String> connection) {
         super(ClusterTestUtil.redisCommandsOverCluster(connection));
     }
+
 }

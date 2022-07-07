@@ -28,6 +28,8 @@ import io.lettuce.core.commands.ListCommandIntegrationTests;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisListCommands} using Redis Cluster.
+ *
  * @author Mark Paluch
  */
 class ListClusterCommandIntegrationTests extends ListCommandIntegrationTests {
