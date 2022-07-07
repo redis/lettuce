@@ -2996,14 +2996,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<StreamMessage<K, V>>> xreadgroup(Consumer<K> consumer, XReadArgs xReadArgs,
-            StreamOffset<K>[] streams) {
+            StreamOffset<K>... streams) {
         LettuceAssert.notNull(streams, "Streams " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(streams.length > 0, "Streams " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(consumer, "Consumer " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
 
-        args.add("GROUP").addKeys(consumer.group).addKeys(consumer.name);
+        args.add("GROUP").add(encode(consumer.group)).add(encode(consumer.name));
 
         if (xReadArgs != null) {
             xReadArgs.build(args);
@@ -3020,6 +3020,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(XREADGROUP, new StreamReadOutput<>(codec), args);
+    }
+
+    private byte[] encode(K k) {
+
+        ByteBuffer byteBuffer = codec.encodeKey(k);
+
+        byte[] result = new byte[byteBuffer.remaining()];
+        byteBuffer.get(result);
+
+        return result;
     }
 
     Command<K, V, KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
