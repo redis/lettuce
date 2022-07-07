@@ -54,6 +54,7 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.

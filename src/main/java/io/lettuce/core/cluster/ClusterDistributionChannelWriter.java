@@ -49,6 +49,7 @@ import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionFacade;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;

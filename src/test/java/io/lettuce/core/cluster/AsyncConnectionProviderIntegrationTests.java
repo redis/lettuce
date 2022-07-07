@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -42,6 +41,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.ClusterNodeConnectionFactory.ConnectionKey;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.LettuceExtension;

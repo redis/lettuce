@@ -21,6 +21,7 @@ import java.util.function.Function;
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * Specialized {@link Function} to obtain connections for Redis Cluster nodes. Connecting to a node returns a

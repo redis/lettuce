@@ -53,6 +53,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.resource.ClientResources;
 
 /**

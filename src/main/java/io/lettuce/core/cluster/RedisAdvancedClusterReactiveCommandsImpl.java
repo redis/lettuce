@@ -48,6 +48,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.

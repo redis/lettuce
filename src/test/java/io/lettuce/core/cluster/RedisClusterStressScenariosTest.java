@@ -15,21 +15,33 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.cluster.ClusterTestUtil.getOwnPartition;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.lettuce.core.cluster.ClusterTestUtil.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import io.lettuce.category.SlowTests;
-import io.lettuce.core.*;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.StatefulRedisConnectionImpl;
+import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;

@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * Static selection of nodes.

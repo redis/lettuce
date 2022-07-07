@@ -34,6 +34,7 @@ import io.lettuce.core.cluster.pubsub.api.reactive.NodeSelectionPubSubReactiveCo
 import io.lettuce.core.cluster.pubsub.api.reactive.PubSubReactiveNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.reactive.RedisClusterPubSubReactiveCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.pubsub.RedisPubSubReactiveCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;

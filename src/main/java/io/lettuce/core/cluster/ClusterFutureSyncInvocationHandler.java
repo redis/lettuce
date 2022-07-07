@@ -36,6 +36,7 @@ import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.DefaultMethods;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.TimeoutProvider;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
