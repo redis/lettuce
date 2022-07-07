@@ -498,18 +498,39 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         redis.xreadgroup(Consumer.from("group", "consumer1"), StreamOffset.lastConsumed(key));
 
-        List<PendingMessage> pendingEntries = redis.xpending(key, XPendingArgs.Builder
-                .xpending(Consumer.from("group", "consumer1"), Range.unbounded(), Limit.from(10)));
+        List<PendingMessage> pendingEntries = redis.xpending(key,
+                XPendingArgs.Builder.xpending(Consumer.from("group", "consumer1"), Range.unbounded(), Limit.from(10)));
 
         PendingMessage message = pendingEntries.get(0);
         assertThat(message.getId()).isEqualTo(id);
         assertThat(message.getConsumer()).isEqualTo("consumer1");
         assertThat(message.getRedeliveryCount()).isEqualTo(1);
 
-        pendingEntries = redis.xpending(key, XPendingArgs.Builder
-                .xpending(Consumer.from("group", "consumer1"), Range.unbounded(), Limit.from(10)).idle(Duration.ofMinutes(1)));
+        pendingEntries = redis.xpending(key,
+                XPendingArgs.Builder.xpending("group", Range.unbounded(), Limit.from(10)).idle(Duration.ofMinutes(1)));
 
         assertThat(pendingEntries).isEmpty();
+
+        pendingEntries = redis.xpending(key,
+                XPendingArgs.Builder.xpending("group", Range.unbounded(), Limit.from(10)).idle(Duration.ZERO));
+
+        assertThat(pendingEntries).hasSize(1);
+        message = pendingEntries.get(0);
+        assertThat(message.getId()).isEqualTo(id);
+        assertThat(message.getConsumer()).isEqualTo("consumer1");
+        assertThat(message.getRedeliveryCount()).isEqualTo(1);
+    }
+
+    @Test
+    @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
+    void xpendingWithIdle() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
+        String id = redis.xadd(key, Collections.singletonMap("key", "value"));
+
+        redis.xpending(key,
+                XPendingArgs.Builder.xpending(Consumer.from("group", "consumer1"), Range.unbounded(), Limit.unlimited())
+                        .idle(Duration.ofMinutes(1)));
     }
 
     @Test

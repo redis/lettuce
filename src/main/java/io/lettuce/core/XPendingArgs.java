@@ -22,8 +22,8 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * Argument list builder for the Redis <a href="https://redis.io/commands/xpending">XPENDING</a> command.
- * Static import the methods from {@link XPendingArgs.Builder} and call the methods: {@code block(…)} .
+ * Argument list builder for the Redis <a href="https://redis.io/commands/xpending">XPENDING</a> command. Static import the
+ * methods from {@link XPendingArgs.Builder} and call the methods: {@code block(…)} .
  * <p>
  * {@link XPendingArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
@@ -32,7 +32,9 @@ import io.lettuce.core.protocol.CommandKeyword;
  */
 public class XPendingArgs<K> implements CompositeArgument {
 
-    private Consumer<K> consumer;
+    private K group;
+
+    private K consumer;
 
     private Range<String> range;
 
@@ -62,6 +64,20 @@ public class XPendingArgs<K> implements CompositeArgument {
         public static <K> XPendingArgs<K> xpending(Consumer<K> consumer, Range<String> range, Limit limit) {
             return new XPendingArgs<K>().consumer(consumer).range(range).limit(limit);
         }
+
+        /**
+         * Create a new {@link XPendingArgs} .
+         *
+         * @param group the group
+         * @param range the range of message Id's
+         * @param limit limit {@code COUNT}
+         * @return a new {@link XPendingArgs} with {@link Range} and {@link Limit} applied.
+         * @since 6.1.9
+         */
+        public static <K> XPendingArgs<K> xpending(K group, Range<String> range, Limit limit) {
+            return new XPendingArgs<K>().group(group).range(range).limit(limit);
+        }
+
     }
 
     public XPendingArgs<K> range(Range<String> range) {
@@ -76,7 +92,21 @@ public class XPendingArgs<K> implements CompositeArgument {
 
         LettuceAssert.notNull(consumer, "Consumer must not be null");
 
-        this.consumer = consumer;
+        this.consumer = consumer.getName();
+        return group(consumer.getGroup());
+    }
+
+    /**
+     *
+     * @param group
+     * @return
+     * @since 6.1.9
+     */
+    public XPendingArgs<K> group(K group) {
+
+        LettuceAssert.notNull(group, "Group must not be null");
+
+        this.group = group;
         return this;
     }
 
@@ -115,7 +145,7 @@ public class XPendingArgs<K> implements CompositeArgument {
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
-        args.addKey((K) consumer.group);
+        args.addKey((K) group);
 
         if (idle != null) {
             args.add(CommandKeyword.IDLE).add(idle);
@@ -134,6 +164,10 @@ public class XPendingArgs<K> implements CompositeArgument {
         }
 
         args.add(limit.isLimited() ? limit.getCount() : Long.MAX_VALUE);
-        args.addKey((K) consumer.name);
+
+        if (consumer != null) {
+            args.addKey((K) consumer);
+        }
     }
+
 }
