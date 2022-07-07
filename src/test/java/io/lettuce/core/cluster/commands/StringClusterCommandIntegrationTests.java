@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.cluster.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,6 +31,8 @@ import io.lettuce.core.commands.StringCommandIntegrationTests;
 import io.lettuce.test.KeyValueStreamingAdapter;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisStringCommands} using Redis Cluster.
+ *
  * @author Mark Paluch
  */
 class StringClusterCommandIntegrationTests extends StringCommandIntegrationTests {
@@ -67,4 +69,5 @@ class StringClusterCommandIntegrationTests extends StringCommandIntegrationTests
 
         assertThat(count.intValue()).isEqualTo(2);
     }
+
 }
