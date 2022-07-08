@@ -374,6 +374,17 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
+    void xgroupCreateEntriesRead() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.entriesRead(5).mkstream(true));
+
+        List<List<Object>> group = (List) redis.xinfoGroups("key");
+
+        assertThat(group.get(0)).containsSequence("entries-read", 5L, "lag");
+    }
+
+    @Test
     @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void xgroupCreateconsumer() {
 

@@ -30,6 +30,8 @@ public class XGroupCreateArgs {
 
     private boolean mkstream;
 
+    private Long entriesRead;
+
     /**
      * Builder entry points for {@link XGroupCreateArgs}.
      */
@@ -42,7 +44,7 @@ public class XGroupCreateArgs {
         }
 
         /**
-         * Creates new {@link XGroupCreateArgs} and setting {@literal MKSTREAM}.
+         * Creates new {@link XGroupCreateArgs} and set {@literal MKSTREAM}.
          *
          * @return new {@link XGroupCreateArgs} with {@literal MKSTREAM} set.
          * @see XGroupCreateArgs#mkstream(boolean)
@@ -52,7 +54,7 @@ public class XGroupCreateArgs {
         }
 
         /**
-         * Creates new {@link XGroupCreateArgs} and setting {@literal MKSTREAM}.
+         * Creates new {@link XGroupCreateArgs} and set {@literal MKSTREAM}.
          *
          * @param mkstream whether to apply {@literal MKSTREAM}.
          * @return new {@link XGroupCreateArgs} with {@literal MKSTREAM} set.
@@ -60,6 +62,18 @@ public class XGroupCreateArgs {
          */
         public static XGroupCreateArgs mkstream(boolean mkstream) {
             return new XGroupCreateArgs().mkstream(mkstream);
+        }
+
+        /**
+         * Creates new {@link XGroupCreateArgs} and set {@literal ENTRIESREAD}.
+         *
+         * @param entriesRead number of read entries for lag tracking.
+         * @return new {@link XGroupCreateArgs} with {@literal ENTRIESREAD} set.
+         * @see XGroupCreateArgs#entriesRead(long)
+         * @since 6.2
+         */
+        public static XGroupCreateArgs entriesRead(long entriesRead) {
+            return new XGroupCreateArgs().entriesRead(entriesRead);
         }
 
     }
@@ -76,10 +90,28 @@ public class XGroupCreateArgs {
         return this;
     }
 
+    /**
+     * Configure the {@literal ENTRIESREAD} argument.
+     *
+     * @param entriesRead number of read entries for lag tracking.
+     *
+     * @return {@code this}
+     * @since 6.2
+     */
+    public XGroupCreateArgs entriesRead(long entriesRead) {
+
+        this.entriesRead = entriesRead;
+        return this;
+    }
+
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (mkstream) {
             args.add("MKSTREAM");
+        }
+
+        if (entriesRead != null) {
+            args.add("ENTRIESREAD").add(entriesRead);
         }
     }
 
