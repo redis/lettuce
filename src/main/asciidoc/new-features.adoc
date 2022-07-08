@@ -6,6 +6,7 @@
 
 * <<redisuri.authentication,`RedisCredentialsProvider`>> abstraction to externalize credentials and credentials rotation.
 * Retrieval of Redis Cluster node connections using `ConnectionIntent` to obtain read-only connections.
+* Master/Replica now uses `SENTINEL REPLICAS` to discover replicas instead of `SENTINEL SLAVES`.
 
 [[new-features.6-1-0]]
 == What's new in Lettuce 6.1
