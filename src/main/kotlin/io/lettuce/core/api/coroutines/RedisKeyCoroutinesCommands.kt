@@ -377,6 +377,25 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * Sort the elements in a list, set or sorted set.
      *
      * @param key the key.
+     * @return List<V> array-reply list of sorted elements.
+     * @since 6.2
+     */
+    fun sortReadOnly(key: K): Flow<V>
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param key the key.
+     * @param sortArgs sort arguments.
+     * @return List<V> array-reply list of sorted elements.
+     * @since 6.2
+     */
+    fun sortReadOnly(key: K, sortArgs: SortArgs): Flow<V>
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param key the key.
      * @param sortArgs sort arguments.
      * @param destination the destination key to store sort results.
      * @return Long number of values.

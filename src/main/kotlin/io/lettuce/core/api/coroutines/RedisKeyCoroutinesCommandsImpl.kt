@@ -129,15 +129,24 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun restore(key: K, ttl: Long, value: ByteArray): String? =
         ops.restore(key, ttl, value).awaitFirstOrNull()
 
-    override suspend fun restore(key: K, value: ByteArray, args: RestoreArgs): String? = ops.restore(key, value, args).awaitFirstOrNull()
+    override suspend fun restore(key: K, value: ByteArray, args: RestoreArgs): String? =
+        ops.restore(key, value, args).awaitFirstOrNull()
 
     override fun sort(key: K): Flow<V> = ops.sort(key).asFlow()
 
-    override fun sort(key: K, sortArgs: SortArgs): Flow<V> = ops.sort(key, sortArgs).asFlow()
+    override fun sort(key: K, sortArgs: SortArgs): Flow<V> =
+        ops.sort(key, sortArgs).asFlow()
 
-    override suspend fun sortStore(key: K, sortArgs: SortArgs, destination: K): Long? = ops.sortStore(key, sortArgs, destination).awaitFirstOrNull()
+    override fun sortReadOnly(key: K): Flow<V> = ops.sortReadOnly(key).asFlow()
 
-    override suspend fun touch(vararg keys: K): Long? = ops.touch(*keys).awaitFirstOrNull()
+    override fun sortReadOnly(key: K, sortArgs: SortArgs): Flow<V> =
+        ops.sortReadOnly(key, sortArgs).asFlow()
+
+    override suspend fun sortStore(key: K, sortArgs: SortArgs, destination: K): Long? =
+        ops.sortStore(key, sortArgs, destination).awaitFirstOrNull()
+
+    override suspend fun touch(vararg keys: K): Long? =
+        ops.touch(*keys).awaitFirstOrNull()
 
     override suspend fun ttl(key: K): Long? = ops.ttl(key).awaitFirstOrNull()
 

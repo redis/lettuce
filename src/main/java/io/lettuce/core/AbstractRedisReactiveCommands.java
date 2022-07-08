@@ -1842,6 +1842,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Flux<V> sortReadOnly(K key) {
+        return createDissolvingFlux(() -> commandBuilder.sortReadOnly(key));
+    }
+
+    @Override
+    public Mono<Long> sortReadOnly(ValueStreamingChannel<V> channel, K key) {
+        return createMono(() -> commandBuilder.sortReadOnly(channel, key));
+    }
+
+    @Override
+    public Flux<V> sortReadOnly(K key, SortArgs sortArgs) {
+        return createDissolvingFlux(() -> commandBuilder.sortReadOnly(key, sortArgs));
+    }
+
+    @Override
+    public Mono<Long> sortReadOnly(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
+        return createMono(() -> commandBuilder.sortReadOnly(channel, key, sortArgs));
+    }
+
+    @Override
     public Mono<Long> sortStore(K key, SortArgs sortArgs, K destination) {
         return createMono(() -> commandBuilder.sortStore(key, sortArgs, destination));
     }

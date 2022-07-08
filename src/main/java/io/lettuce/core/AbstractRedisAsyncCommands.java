@@ -1763,7 +1763,27 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
-        return dispatch(commandBuilder.sort(channel, key, sortArgs));
+        return dispatch(commandBuilder.sortReadOnly(channel, key, sortArgs));
+    }
+
+    @Override
+    public RedisFuture<List<V>> sortReadOnly(K key) {
+        return dispatch(commandBuilder.sortReadOnly(key));
+    }
+
+    @Override
+    public RedisFuture<Long> sortReadOnly(ValueStreamingChannel<V> channel, K key) {
+        return dispatch(commandBuilder.sortReadOnly(channel, key));
+    }
+
+    @Override
+    public RedisFuture<List<V>> sortReadOnly(K key, SortArgs sortArgs) {
+        return dispatch(commandBuilder.sortReadOnly(key, sortArgs));
+    }
+
+    @Override
+    public RedisFuture<Long> sortReadOnly(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
+        return dispatch(commandBuilder.sortReadOnly(channel, key, sortArgs));
     }
 
     @Override

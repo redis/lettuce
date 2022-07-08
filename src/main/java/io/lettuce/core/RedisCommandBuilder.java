@@ -2440,6 +2440,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(SORT, new ValueStreamingOutput<>(codec, channel), args);
     }
 
+    Command<K, V, List<V>> sortReadOnly(K key) {
+        notNullKey(key);
+
+        return createCommand(SORT_RO, new ValueListOutput<>(codec), key);
+    }
+
+    Command<K, V, List<V>> sortReadOnly(K key, SortArgs sortArgs) {
+        notNullKey(key);
+        LettuceAssert.notNull(sortArgs, "SortArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        sortArgs.build(args, null);
+        return createCommand(SORT_RO, new ValueListOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> sortReadOnly(ValueStreamingChannel<V> channel, K key) {
+        notNullKey(key);
+        notNull(channel);
+
+        return createCommand(SORT_RO, new ValueStreamingOutput<>(codec, channel), key);
+    }
+
+    Command<K, V, Long> sortReadOnly(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs) {
+        notNullKey(key);
+        notNull(channel);
+        LettuceAssert.notNull(sortArgs, "SortArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        sortArgs.build(args, null);
+        return createCommand(SORT_RO, new ValueStreamingOutput<>(codec, channel), args);
+    }
+
     Command<K, V, Long> sortStore(K key, SortArgs sortArgs, K destination) {
         notNullKey(key);
         LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);

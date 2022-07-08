@@ -413,6 +413,46 @@ public interface NodeSelectionKeyCommands<K, V> {
      * Sort the elements in a list, set or sorted set.
      *
      * @param key the key.
+     * @return List&lt;V&gt; array-reply list of sorted elements.
+     * @since 6.2
+     */
+    Executions<List<V>> sortReadOnly(K key);
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
+     * @return Long number of values.
+     * @since 6.2
+     */
+    Executions<Long> sortReadOnly(ValueStreamingChannel<V> channel, K key);
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param key the key.
+     * @param sortArgs sort arguments.
+     * @return List&lt;V&gt; array-reply list of sorted elements.
+     * @since 6.2
+     */
+    Executions<List<V>> sortReadOnly(K key, SortArgs sortArgs);
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
+     * @param sortArgs sort arguments.
+     * @return Long number of values.
+     * @since 6.2
+     */
+    Executions<Long> sortReadOnly(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param key the key.
      * @param sortArgs sort arguments.
      * @param destination the destination key to store sort results.
      * @return Long number of values.
@@ -516,5 +556,4 @@ public interface NodeSelectionKeyCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     Executions<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
-
 }
