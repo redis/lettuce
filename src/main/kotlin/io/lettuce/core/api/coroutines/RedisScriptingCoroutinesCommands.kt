@@ -92,7 +92,12 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * @return script result.
      * @since 6.2
      */
-    suspend fun <T> evalReadonly(script: ByteArray, type: ScriptOutputType, keys: Array<K>, vararg values: V): T?
+    suspend fun <T> evalReadOnly(
+        script: ByteArray,
+        type: ScriptOutputType,
+        keys: Array<K>,
+        vararg values: V
+    ): T?
 
     /**
      * Evaluates a script cached on the server side by its SHA1 digest.
@@ -128,7 +133,12 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * @return script result.
      * @since 6.2
      */
-    suspend fun <T> evalshaReadonly(digest: String, type: ScriptOutputType, keys: Array<K>, vararg values: V): T?
+    suspend fun <T> evalshaReadOnly(
+        digest: String,
+        type: ScriptOutputType,
+        keys: Array<K>,
+        vararg values: V
+    ): T?
 
     /**
      * Check existence of scripts in the script cache.

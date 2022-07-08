@@ -16,8 +16,9 @@
 package io.lettuce.core.commands;
 
 import static io.lettuce.core.ScriptOutputType.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static io.lettuce.core.ScriptOutputType.BOOLEAN;
+import static io.lettuce.core.ScriptOutputType.INTEGER;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -25,14 +26,13 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import io.lettuce.core.FlushMode;
-import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.FlushMode;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisNoScriptException;
@@ -41,6 +41,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Will Glozer
@@ -118,9 +119,9 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("EVAL_RO") // Redis 7.0
-    void evalReadonly() {
+    void evalReadOnly() {
         String[] keys = new String[] { "key1" };
-        assertThat((String) redis.evalReadonly("return KEYS[1]".getBytes(), STATUS, keys, "a")).isEqualTo("key1");
+        assertThat((String) redis.evalReadOnly("return KEYS[1]".getBytes(), STATUS, keys, "a")).isEqualTo("key1");
     }
 
     @Test
@@ -161,12 +162,12 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("EVALSHA_RO") // Redis 7.0
-    void evalshaReadonly() {
+    void evalshaReadOnly() {
         redis.scriptFlush();
         redis.set("foo", "bar");
         String digest = redis.scriptLoad("return redis.call('get','foo')");
         String[] keys = new String[0];
-        assertThat((String) redis.evalshaReadonly(digest, STATUS, keys)).isEqualTo("bar");
+        assertThat((String) redis.evalshaReadOnly(digest, STATUS, keys)).isEqualTo("bar");
     }
 
     @Test

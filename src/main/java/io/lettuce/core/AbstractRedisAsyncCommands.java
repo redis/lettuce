@@ -709,7 +709,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public <T> RedisFuture<T> evalReadonly(byte[] script, ScriptOutputType type, K[] keys, V... values) {
+    public <T> RedisFuture<T> evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values) {
         return (RedisFuture<T>) dispatch(commandBuilder.eval(script, type, true, keys, values));
     }
 
@@ -726,7 +726,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public <T> RedisFuture<T> evalshaReadonly(String digest, ScriptOutputType type, K[] keys, V... values) {
+    public <T> RedisFuture<T> evalshaReadOnly(String digest, ScriptOutputType type, K[] keys, V... values) {
         return dispatch(commandBuilder.evalsha(digest, type, true, keys, values));
     }
 

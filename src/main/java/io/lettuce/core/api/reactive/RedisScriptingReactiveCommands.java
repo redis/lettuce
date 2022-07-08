@@ -91,7 +91,7 @@ public interface RedisScriptingReactiveCommands<K, V> {
      * @return script result.
      * @since 6.2
      */
-    <T> Flux<T> evalReadonly(byte[] script, ScriptOutputType type, K[] keys, V... values);
+    <T> Flux<T> evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values);
 
     /**
      * Evaluates a script cached on the server side by its SHA1 digest.
@@ -127,7 +127,7 @@ public interface RedisScriptingReactiveCommands<K, V> {
      * @return script result.
      * @since 6.2
      */
-    <T> Flux<T> evalshaReadonly(String digest, ScriptOutputType type, K[] keys, V... values);
+    <T> Flux<T> evalshaReadOnly(String digest, ScriptOutputType type, K[] keys, V... values);
 
     /**
      * Check existence of scripts in the script cache.

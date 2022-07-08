@@ -763,7 +763,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public <T> Flux<T> evalReadonly(byte[] script, ScriptOutputType type, K[] keys, V... values) {
+    public <T> Flux<T> evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values) {
         return createFlux(() -> commandBuilder.eval(script, type, true, keys, values));
     }
 
@@ -780,7 +780,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public <T> Flux<T> evalshaReadonly(String digest, ScriptOutputType type, K[] keys, V... values) {
+    public <T> Flux<T> evalshaReadOnly(String digest, ScriptOutputType type, K[] keys, V... values) {
         return createFlux(() -> commandBuilder.evalsha(digest, type, true, keys, values));
     }
 
