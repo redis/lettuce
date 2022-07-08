@@ -948,6 +948,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXPIREAT, new BooleanOutput<>(codec), args);
     }
 
+    Command<K, V, Long> expiretime(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(EXPIRETIME, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, String> flushall() {
         return createCommand(FLUSHALL, new StatusOutput<>(codec));
     }
@@ -1870,6 +1877,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
         return createCommand(PEXPIREAT, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> pexpiretime(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(PEXPIRETIME, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, Long> pfadd(K key, V value, V... moreValues) {

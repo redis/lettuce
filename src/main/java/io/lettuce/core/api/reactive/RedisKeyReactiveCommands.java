@@ -102,8 +102,8 @@ public interface RedisKeyReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param seconds the seconds type: long.
-     * @return Boolean integer-reply specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
      */
     Mono<Boolean> expire(K key, long seconds);
 
@@ -150,6 +150,16 @@ public interface RedisKeyReactiveCommands<K, V> {
     Mono<Boolean> expireat(K key, Instant timestamp);
 
     /**
+     * Get the time to live for a key in as unix timestamp in seconds.
+     *
+     * @param key the key.
+     * @return Long integer-reply in seconds, or a negative value in order to signal an error. The command returns {@code -1} if
+     *         the key exists but has no associated expiration time. The command returns {@code -2} if the key does not exist.
+     * @since 6.2
+     */
+    Mono<Long> expiretime(K key);
+
+    /**
      * Find all keys matching the given pattern.
      *
      * @param pattern the pattern type: patternkey (pattern).
@@ -163,7 +173,8 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel the channel.
      * @param pattern the pattern.
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #keys}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #keys}.
      */
     @Deprecated
     Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern);
@@ -251,8 +262,8 @@ public interface RedisKeyReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
-     * @return integer-reply, specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
      */
     Mono<Boolean> pexpire(K key, long milliseconds);
 
@@ -292,18 +303,29 @@ public interface RedisKeyReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     Mono<Boolean> pexpireat(K key, Instant timestamp);
+
+    /**
+     * Get the time to live for a key in as unix timestamp in milliseconds.
+     *
+     * @param key the key.
+     * @return Long integer-reply in milliseconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
+     * @since 6.2
+     */
+    Mono<Long> pexpiretime(K key);
 
     /**
      * Get the time to live for a key in milliseconds.
      *
      * @param key the key.
-     * @return Long integer-reply TTL in milliseconds, or a negative value in order to signal an error (see the description
-     *         above).
+     * @return Long integer-reply in milliseconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
      */
     Mono<Long> pttl(K key);
 
@@ -369,7 +391,8 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every value.
      * @param key the key.
      * @return Long number of values.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #sort}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sort}.
      */
     @Deprecated
     Mono<Long> sort(ValueStreamingChannel<V> channel, K key);
@@ -390,7 +413,8 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param key the key.
      * @param sortArgs sort arguments.
      * @return Long number of values.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #sort}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sort}.
      */
     @Deprecated
     Mono<Long> sort(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
@@ -417,7 +441,9 @@ public interface RedisKeyReactiveCommands<K, V> {
      * Get the time to live for a key.
      *
      * @param key the key.
-     * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error (see the description above).
+     * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
      */
     Mono<Long> ttl(K key);
 
@@ -468,7 +494,8 @@ public interface RedisKeyReactiveCommands<K, V> {
      *
      * @param channel streaming channel that receives a call for every key.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #scan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
     @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel);
@@ -506,8 +533,10 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #scan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #scan}.
      */
     @Deprecated
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
+
 }

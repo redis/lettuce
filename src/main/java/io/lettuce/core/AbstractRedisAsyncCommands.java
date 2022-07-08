@@ -773,6 +773,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> expiretime(K key) {
+        return dispatch(commandBuilder.expiretime(key));
+    }
+
+    @Override
     public void flushCommands() {
         connection.flushCommands();
     }
@@ -1350,6 +1355,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Boolean> pexpireat(K key, long timestamp) {
         return dispatch(commandBuilder.pexpireat(key, timestamp));
+    }
+
+    @Override
+    public RedisFuture<Long> pexpiretime(K key) {
+        return dispatch(commandBuilder.pexpiretime(key));
     }
 
     @Override

@@ -102,8 +102,8 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param seconds the seconds type: long.
-     * @return Boolean integer-reply specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
      */
     RedisFuture<Boolean> expire(K key, long seconds);
 
@@ -148,6 +148,16 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @since 6.1
      */
     RedisFuture<Boolean> expireat(K key, Instant timestamp);
+
+    /**
+     * Get the time to live for a key in as unix timestamp in seconds.
+     *
+     * @param key the key.
+     * @return Long integer-reply in seconds, or a negative value in order to signal an error. The command returns {@code -1} if
+     *         the key exists but has no associated expiration time. The command returns {@code -2} if the key does not exist.
+     * @since 6.2
+     */
+    RedisFuture<Long> expiretime(K key);
 
     /**
      * Find all keys matching the given pattern.
@@ -249,8 +259,8 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
-     * @return integer-reply, specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
      */
     RedisFuture<Boolean> pexpire(K key, long milliseconds);
 
@@ -290,18 +300,29 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     RedisFuture<Boolean> pexpireat(K key, Instant timestamp);
+
+    /**
+     * Get the time to live for a key in as unix timestamp in milliseconds.
+     *
+     * @param key the key.
+     * @return Long integer-reply in milliseconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
+     * @since 6.2
+     */
+    RedisFuture<Long> pexpiretime(K key);
 
     /**
      * Get the time to live for a key in milliseconds.
      *
      * @param key the key.
-     * @return Long integer-reply TTL in milliseconds, or a negative value in order to signal an error (see the description
-     *         above).
+     * @return Long integer-reply in milliseconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
      */
     RedisFuture<Long> pttl(K key);
 
@@ -411,7 +432,9 @@ public interface RedisKeyAsyncCommands<K, V> {
      * Get the time to live for a key.
      *
      * @param key the key.
-     * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error (see the description above).
+     * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
      */
     RedisFuture<Long> ttl(K key);
 

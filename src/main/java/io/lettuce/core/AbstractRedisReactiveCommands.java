@@ -831,6 +831,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<Long> expiretime(K key) {
+        return createMono(() -> commandBuilder.expiretime(key));
+    }
+
+    @Override
     public void flushCommands() {
         connection.flushCommands();
     }
@@ -1413,6 +1418,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<Boolean> pexpireat(K key, Instant timestamp) {
         return pexpireat(key, timestamp.toEpochMilli());
+    }
+
+    @Override
+    public Mono<Long> pexpiretime(K key) {
+        return createMono(() -> commandBuilder.pexpiretime(key));
     }
 
     @Override

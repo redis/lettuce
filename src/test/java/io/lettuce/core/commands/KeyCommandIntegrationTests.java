@@ -47,6 +47,8 @@ import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for {@link io.lettuce.core.api.sync.RedisKeyCommands}.
+ *
  * @author Will Glozer
  * @author Mark Paluch
  * @author dengliming
@@ -161,6 +163,16 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("EXPIRETIME")
+    void expiretime() {
+        Date expiration = new Date(System.currentTimeMillis() + 10000);
+        redis.set(key, value);
+        redis.expireat(key, expiration);
+
+        assertThat(redis.expiretime(key)).isEqualTo(expiration.getTime() / 1000);
+    }
+
+    @Test
     void keys() {
         assertThat(redis.keys("*")).isEqualTo(list());
         Map<String, String> map = new LinkedHashMap<>();
@@ -267,6 +279,16 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("PEXPIRETIME")
+    void pexpiretime() {
+        Date expiration = new Date(System.currentTimeMillis() + 10000);
+        redis.set(key, value);
+        redis.pexpireat(key, expiration);
+
+        assertThat(redis.pexpiretime(key)).isEqualTo(expiration.getTime());
+    }
+
+    @Test
     void pttl() {
         assertThat((long) redis.pttl(key)).isEqualTo(-2);
         redis.set(key, value);
@@ -356,12 +378,14 @@ public class KeyCommandIntegrationTests extends TestSupport {
         byte[] bytes = redis.dump(key);
         redis.set(key, "foo");
 
-        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(Duration.ofSeconds(1)).idleTime(111).replace())).isEqualTo("OK");
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(Duration.ofSeconds(1)).idleTime(111).replace()))
+                .isEqualTo("OK");
         assertThat(redis.objectIdletime(key)).isEqualTo(111);
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.pttl(key)).isGreaterThan(0).isLessThanOrEqualTo(1000);
 
-        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(Duration.ofSeconds(1)).frequency(111).replace())).isEqualTo("OK");
+        assertThat(redis.restore(key, bytes, RestoreArgs.Builder.ttl(Duration.ofSeconds(1)).frequency(111).replace()))
+                .isEqualTo("OK");
     }
 
     @Test

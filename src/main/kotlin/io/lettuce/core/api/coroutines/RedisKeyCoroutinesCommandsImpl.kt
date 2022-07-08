@@ -48,25 +48,47 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun exists(vararg keys: K): Long? = ops.exists(*keys).awaitFirstOrNull()
 
-    override suspend fun expire(key: K, seconds: Long): Boolean? = ops.expire(key, seconds).awaitFirstOrNull()
+    override suspend fun expire(key: K, seconds: Long): Boolean? =
+        ops.expire(key, seconds).awaitFirstOrNull()
 
-    override suspend fun expire(key: K, seconds: Duration): Boolean? = ops.expire(key, seconds).awaitFirstOrNull()
+    override suspend fun expire(key: K, seconds: Duration): Boolean? =
+        ops.expire(key, seconds).awaitFirstOrNull()
 
-    override suspend fun expireat(key: K, timestamp: Date): Boolean? = ops.expireat(key, timestamp).awaitFirstOrNull()
+    override suspend fun expireat(key: K, timestamp: Date): Boolean? =
+        ops.expireat(key, timestamp).awaitFirstOrNull()
 
-    override suspend fun expireat(key: K, timestamp: Instant): Boolean? = ops.expireat(key, timestamp).awaitFirstOrNull()
+    override suspend fun expireat(key: K, timestamp: Instant): Boolean? =
+        ops.expireat(key, timestamp).awaitFirstOrNull()
 
-    override suspend fun expireat(key: K, timestamp: Long): Boolean? = ops.expireat(key, timestamp).awaitFirstOrNull()
+    override suspend fun expireat(key: K, timestamp: Long): Boolean? =
+        ops.expireat(key, timestamp).awaitFirstOrNull()
+
+    override suspend fun expiretime(key: K): Long? =
+        ops.expiretime(key).awaitFirstOrNull()
 
     override fun keys(pattern: K): Flow<K> = ops.keys(pattern).asFlow()
 
-    override suspend fun migrate(host: String, port: Int, key: K, db: Int, timeout: Long): String? = ops.migrate(host, port, key, db, timeout).awaitFirstOrNull()
+    override suspend fun migrate(
+        host: String,
+        port: Int,
+        key: K,
+        db: Int,
+        timeout: Long
+    ): String? = ops.migrate(host, port, key, db, timeout).awaitFirstOrNull()
 
-    override suspend fun migrate(host: String, port: Int, db: Int, timeout: Long, migrateArgs: MigrateArgs<K>): String? = ops.migrate(host, port, db, timeout, migrateArgs).awaitFirstOrNull()
+    override suspend fun migrate(
+        host: String,
+        port: Int,
+        db: Int,
+        timeout: Long,
+        migrateArgs: MigrateArgs<K>
+    ): String? = ops.migrate(host, port, db, timeout, migrateArgs).awaitFirstOrNull()
 
-    override suspend fun move(key: K, db: Int): Boolean? = ops.move(key, db).awaitFirstOrNull()
+    override suspend fun move(key: K, db: Int): Boolean? =
+        ops.move(key, db).awaitFirstOrNull()
 
-    override suspend fun objectEncoding(key: K): String? = ops.objectEncoding(key).awaitFirstOrNull()
+    override suspend fun objectEncoding(key: K): String? =
+        ops.objectEncoding(key).awaitFirstOrNull()
 
     override suspend fun objectFreq(key: K): Long? = ops.objectFreq(key).awaitFirstOrNull()
 
@@ -76,25 +98,36 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
 
     override suspend fun persist(key: K): Boolean? = ops.persist(key).awaitFirstOrNull()
 
-    override suspend fun pexpire(key: K, milliseconds: Long): Boolean? = ops.pexpire(key, milliseconds).awaitFirstOrNull()
+    override suspend fun pexpire(key: K, milliseconds: Long): Boolean? =
+        ops.pexpire(key, milliseconds).awaitFirstOrNull()
 
-    override suspend fun pexpire(key: K, milliseconds: Duration): Boolean? = ops.pexpire(key, milliseconds).awaitFirstOrNull()
+    override suspend fun pexpire(key: K, milliseconds: Duration): Boolean? =
+        ops.pexpire(key, milliseconds).awaitFirstOrNull()
 
-    override suspend fun pexpireat(key: K, timestamp: Long): Boolean? = ops.pexpireat(key, timestamp).awaitFirstOrNull()
+    override suspend fun pexpireat(key: K, timestamp: Long): Boolean? =
+        ops.pexpireat(key, timestamp).awaitFirstOrNull()
 
-    override suspend fun pexpireat(key: K, timestamp: Date): Boolean? = ops.pexpireat(key, timestamp).awaitFirstOrNull()
+    override suspend fun pexpireat(key: K, timestamp: Date): Boolean? =
+        ops.pexpireat(key, timestamp).awaitFirstOrNull()
 
-    override suspend fun pexpireat(key: K, timestamp: Instant): Boolean? = ops.pexpireat(key, timestamp).awaitFirstOrNull()
+    override suspend fun pexpireat(key: K, timestamp: Instant): Boolean? =
+        ops.pexpireat(key, timestamp).awaitFirstOrNull()
+
+    override suspend fun pexpiretime(key: K): Long? =
+        ops.pexpiretime(key).awaitFirstOrNull()
 
     override suspend fun pttl(key: K): Long? = ops.pttl(key).awaitFirstOrNull()
 
     override suspend fun randomkey(): K? = ops.randomkey().awaitFirstOrNull()
 
-    override suspend fun rename(key: K, newKey: K): String? = ops.rename(key, newKey).awaitFirstOrNull()
+    override suspend fun rename(key: K, newKey: K): String? =
+        ops.rename(key, newKey).awaitFirstOrNull()
 
-    override suspend fun renamenx(key: K, newKey: K): Boolean? = ops.renamenx(key, newKey).awaitFirstOrNull()
+    override suspend fun renamenx(key: K, newKey: K): Boolean? =
+        ops.renamenx(key, newKey).awaitFirstOrNull()
 
-    override suspend fun restore(key: K, ttl: Long, value: ByteArray): String? = ops.restore(key, ttl, value).awaitFirstOrNull()
+    override suspend fun restore(key: K, ttl: Long, value: ByteArray): String? =
+        ops.restore(key, ttl, value).awaitFirstOrNull()
 
     override suspend fun restore(key: K, value: ByteArray, args: RestoreArgs): String? = ops.restore(key, value, args).awaitFirstOrNull()
 
