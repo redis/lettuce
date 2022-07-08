@@ -15,15 +15,15 @@
  */
 package io.lettuce.core.commands;
 
-import static io.lettuce.test.settings.TestSettings.host;
-import static io.lettuce.test.settings.TestSettings.port;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static io.lettuce.test.settings.TestSettings.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.Arrays;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -63,6 +63,7 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
      * redis.
      */
     @Test
+    @Disabled
     void debugSegfault() {
 
         assumeTrue(CanConnect.to(host(), port(1)));

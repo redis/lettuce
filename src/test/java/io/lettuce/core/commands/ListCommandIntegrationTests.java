@@ -82,11 +82,11 @@ public class ListCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("BLMPOP") // Redis 7.0
     void blmpop() {
-        redis.rpush("two", "1", "2", "3");
+        redis.rpush("{0}two", "1", "2", "3");
         LMPopArgs args = LMPopArgs.Builder.left().count(2);
-        assertThat(redis.blmpop(0.1, args, "one", "two")).isEqualTo(kv("two", Arrays.asList("1", "2")));
-        assertThat(redis.blmpop(0.1, args, "one", "two")).isEqualTo(kv("two", Collections.singletonList("3")));
-        assertThat(redis.blmpop(0.1, args, "one", "two")).isNull();
+        assertThat(redis.blmpop(0.1, args, "{0}one", "{0}two")).isEqualTo(kv("{0}two", Arrays.asList("1", "2")));
+        assertThat(redis.blmpop(0.1, args, "{0}one", "{0}two")).isEqualTo(kv("{0}two", Collections.singletonList("3")));
+        assertThat(redis.blmpop(0.1, args, "{0}one", "{0}two")).isNull();
     }
 
     @Test
@@ -153,13 +153,14 @@ public class ListCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("LMPOP") // Redis 7.0
     void lmpop() {
-        redis.rpush("two", "1", "2", "3", "4");
-        redis.rpush("one", "1");
-        assertThat(redis.lmpop(LMPopArgs.Builder.left().count(2), "two")).isEqualTo(kv("two", Arrays.asList("1", "2")));
-        assertThat(redis.lmpop(LMPopArgs.Builder.right().count(1), "two")).isEqualTo(kv("two", Collections.singletonList("4")));
-        assertThat(redis.lmpop(LMPopArgs.Builder.right().count(2), "two", "one"))
-                .isEqualTo(kv("two", Collections.singletonList("3")));
-        assertThat(redis.lmpop(LMPopArgs.Builder.right().count(1), "two")).isNull();
+        redis.rpush("{0}two", "1", "2", "3", "4");
+        redis.rpush("{0}one", "1");
+        assertThat(redis.lmpop(LMPopArgs.Builder.left().count(2), "{0}two")).isEqualTo(kv("{0}two", Arrays.asList("1", "2")));
+        assertThat(redis.lmpop(LMPopArgs.Builder.right().count(1), "{0}two"))
+                .isEqualTo(kv("{0}two", Collections.singletonList("4")));
+        assertThat(redis.lmpop(LMPopArgs.Builder.right().count(2), "{0}two", "{0}one"))
+                .isEqualTo(kv("{0}two", Collections.singletonList("3")));
+        assertThat(redis.lmpop(LMPopArgs.Builder.right().count(1), "{0}two")).isNull();
     }
 
     @Test

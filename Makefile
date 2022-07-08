@@ -88,6 +88,7 @@ work/redis-6483.conf:
 	@echo client-output-buffer-limit pubsub 256k 128k 5 >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-6483 >> $@
 	@echo unixsocketperm 777 >> $@
+	@echo enable-debug-command yes >> $@
 ifeq ($(REDIS),unstable)
 	@echo slaveof localhost 6482 >> $@
 	@echo replica-announce-ip localhost >> $@
@@ -108,6 +109,7 @@ work/redis-%.conf:
 	@echo client-output-buffer-limit pubsub 256k 128k 5 >> $@
 	@echo unixsocket $(ROOT_DIR)/work/socket-$* >> $@
 	@echo unixsocketperm 777 >> $@
+	@echo enable-debug-command yes >> $@
 ifeq ($(REDIS),unstable)
 	@echo replica-announce-ip localhost >> $@
 endif
