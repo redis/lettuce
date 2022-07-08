@@ -934,17 +934,27 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXISTS, new IntegerOutput<>(codec), new CommandArgs<>(codec).addKeys(keys));
     }
 
-    Command<K, V, Boolean> expire(K key, long seconds) {
+    Command<K, V, Boolean> expire(K key, long seconds, ExpireArgs expireArgs) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
         return createCommand(EXPIRE, new BooleanOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> expireat(K key, long timestamp) {
+    Command<K, V, Boolean> expireat(K key, long timestamp, ExpireArgs expireArgs) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
         return createCommand(EXPIREAT, new BooleanOutput<>(codec), args);
     }
 
@@ -1865,17 +1875,27 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PERSIST, new BooleanOutput<>(codec), key);
     }
 
-    Command<K, V, Boolean> pexpire(K key, long milliseconds) {
+    Command<K, V, Boolean> pexpire(K key, long milliseconds, ExpireArgs expireArgs) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(milliseconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
         return createCommand(PEXPIRE, new BooleanOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> pexpireat(K key, long timestamp) {
+    Command<K, V, Boolean> pexpireat(K key, long timestamp, ExpireArgs expireArgs) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
         return createCommand(PEXPIREAT, new BooleanOutput<>(codec), args);
     }
 

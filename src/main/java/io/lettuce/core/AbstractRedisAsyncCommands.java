@@ -58,12 +58,11 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Andrey Shlykov
  */
 @SuppressWarnings("unchecked")
-public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K,V>,
-        RedisHashAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
-        RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>, RedisSortedSetAsyncCommands<K, V>,
-        RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>,
-        BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>, RedisGeoAsyncCommands<K, V>,
-        RedisClusterAsyncCommands<K, V> {
+public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
+        RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
+        RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
+        RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
+        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -746,30 +745,55 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Boolean> expire(K key, long seconds) {
-        return dispatch(commandBuilder.expire(key, seconds));
+        return expire(key, seconds, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> expire(K key, long seconds, ExpireArgs expireArgs) {
+        return dispatch(commandBuilder.expire(key, seconds, expireArgs));
     }
 
     @Override
     public RedisFuture<Boolean> expire(K key, Duration seconds) {
+        return expire(key, seconds, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> expire(K key, Duration seconds, ExpireArgs expireArgs) {
         LettuceAssert.notNull(seconds, "Timeout must not be null");
-        return expire(key, seconds.toMillis() / 1000);
+        return expire(key, seconds.toMillis() / 1000, expireArgs);
     }
 
     @Override
     public RedisFuture<Boolean> expireat(K key, long timestamp) {
-        return dispatch(commandBuilder.expireat(key, timestamp));
+        return expireat(key, timestamp, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> expireat(K key, long timestamp, ExpireArgs expireArgs) {
+        return dispatch(commandBuilder.expireat(key, timestamp, expireArgs));
     }
 
     @Override
     public RedisFuture<Boolean> expireat(K key, Date timestamp) {
+        return expireat(key, timestamp, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> expireat(K key, Date timestamp, ExpireArgs expireArgs) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
-        return expireat(key, timestamp.getTime() / 1000);
+        return expireat(key, timestamp.getTime() / 1000, expireArgs);
     }
 
     @Override
     public RedisFuture<Boolean> expireat(K key, Instant timestamp) {
+        return expireat(key, timestamp, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> expireat(K key, Instant timestamp, ExpireArgs expireArgs) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
-        return expireat(key, timestamp.toEpochMilli() / 1000);
+        return expireat(key, timestamp.toEpochMilli() / 1000, expireArgs);
     }
 
     @Override
@@ -1331,30 +1355,55 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Boolean> pexpire(K key, long milliseconds) {
-        return dispatch(commandBuilder.pexpire(key, milliseconds));
+        return pexpire(key, milliseconds, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> pexpire(K key, long milliseconds, ExpireArgs expireArgs) {
+        return dispatch(commandBuilder.pexpire(key, milliseconds, expireArgs));
     }
 
     @Override
     public RedisFuture<Boolean> pexpire(K key, Duration milliseconds) {
+        return pexpire(key, milliseconds, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> pexpire(K key, Duration milliseconds, ExpireArgs expireArgs) {
         LettuceAssert.notNull(milliseconds, "Timeout must not be null");
-        return pexpire(key, milliseconds.toMillis());
+        return pexpire(key, milliseconds.toMillis(), expireArgs);
     }
 
     @Override
     public RedisFuture<Boolean> pexpireat(K key, Date timestamp) {
+        return pexpireat(key, timestamp, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> pexpireat(K key, Date timestamp, ExpireArgs expireArgs) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
-        return pexpireat(key, timestamp.getTime());
+        return pexpireat(key, timestamp.getTime(), expireArgs);
     }
 
     @Override
     public RedisFuture<Boolean> pexpireat(K key, Instant timestamp) {
+        return pexpireat(key, timestamp, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> pexpireat(K key, Instant timestamp, ExpireArgs expireArgs) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
-        return pexpireat(key, timestamp.toEpochMilli());
+        return pexpireat(key, timestamp.toEpochMilli(), expireArgs);
     }
 
     @Override
     public RedisFuture<Boolean> pexpireat(K key, long timestamp) {
-        return dispatch(commandBuilder.pexpireat(key, timestamp));
+        return pexpireat(key, timestamp, null);
+    }
+
+    @Override
+    public RedisFuture<Boolean> pexpireat(K key, long timestamp, ExpireArgs expireArgs) {
+        return dispatch(commandBuilder.pexpireat(key, timestamp, expireArgs));
     }
 
     @Override

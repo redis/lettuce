@@ -101,12 +101,36 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * Set a key's time to live in seconds.
      *
      * @param key the key.
+     * @param seconds the seconds type: long.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set.
+     * @since 6.2
+     */
+    suspend fun expire(key: K, seconds: Long, expireArgs: ExpireArgs): Boolean?
+
+    /**
+     * Set a key's time to live in seconds.
+     *
+     * @param key the key.
      * @param seconds the seconds.
      * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
      *         exist or the timeout could not be set.
      * @since 6.1
      */
     suspend fun expire(key: K, seconds: Duration): Boolean?
+
+    /**
+     * Set a key's time to live in seconds.
+     *
+     * @param key the key.
+     * @param seconds the seconds.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set.
+     * @since 6.2
+     */
+    suspend fun expire(key: K, seconds: Duration, expireArgs: ExpireArgs): Boolean?
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
@@ -123,10 +147,34 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 6.2
+     */
+    suspend fun expireat(key: K, timestamp: Long, expireArgs: ExpireArgs): Boolean?
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
      * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
      *         exist or the timeout could not be set (see: `EXPIRE`).
      */
     suspend fun expireat(key: K, timestamp: Date): Boolean?
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 6.2
+     */
+    suspend fun expireat(key: K, timestamp: Date, expireArgs: ExpireArgs): Boolean?
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
@@ -140,12 +188,23 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
     suspend fun expireat(key: K, timestamp: Instant): Boolean?
 
     /**
+     * Set the expiration for a key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 6.2
+     */
+    suspend fun expireat(key: K, timestamp: Instant, expireArgs: ExpireArgs): Boolean?
+
+    /**
      * Get the time to live for a key in as unix timestamp in seconds.
      *
      * @param key the key.
-     * @return Long integer-reply in seconds, or a negative value in order to signal an error. The command returns
-     *         `-1` if the key exists but has no associated expiration time. The command returns `-2` if the key
-     *         does not exist.
+     * @return Long integer-reply in seconds, or a negative value in order to signal an error. The command returns `-1` if
+     *         the key exists but has no associated expiration time. The command returns `-2` if the key does not exist.
      * @since 6.2
      */
     suspend fun expiretime(key: K): Long?
@@ -180,7 +239,13 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param migrateArgs migrate args that allow to configure further options.
      * @return String simple-string-reply The command returns OK on success.
      */
-    suspend fun migrate(host: String, port: Int, db: Int, timeout: Long, migrateArgs: MigrateArgs<K>): String?
+    suspend fun migrate(
+        host: String,
+        port: Int,
+        db: Int,
+        timeout: Long,
+        migrateArgs: MigrateArgs<K>
+    ): String?
 
     /**
      * Move a key to another database.
@@ -250,12 +315,36 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * Set a key's time to live in milliseconds.
      *
      * @param key the key.
+     * @param milliseconds the milliseconds type: long.
+     * @param expireArgs the expire arguments.
+     * @return integer-reply, specifically: `true` if the timeout was set. `false` if `key` does not exist or
+     *         the timeout could not be set.
+     * @since 6.2
+     */
+    suspend fun pexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs): Boolean?
+
+    /**
+     * Set a key's time to live in milliseconds.
+     *
+     * @param key the key.
      * @param milliseconds the milliseconds.
      * @return integer-reply, specifically: `true` if the timeout was set. `false` if `key` does not exist or
      *         the timeout could not be set.
      * @since 6.1
      */
     suspend fun pexpire(key: K, milliseconds: Duration): Boolean?
+
+    /**
+     * Set a key's time to live in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @param expireArgs the expire arguments.
+     * @return integer-reply, specifically: `true` if the timeout was set. `false` if `key` does not exist or
+     *         the timeout could not be set.
+     * @since 6.2
+     */
+    suspend fun pexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs): Boolean?
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
@@ -272,6 +361,18 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 6.2
+     */
+    suspend fun pexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs): Boolean?
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
      * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
      *         exist or the timeout could not be set (see: `EXPIRE`).
      */
@@ -282,10 +383,34 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 6.2
+     */
+    suspend fun pexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs): Boolean?
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
      * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
      *         exist or the timeout could not be set (see: `EXPIRE`).
      */
     suspend fun pexpireat(key: K, timestamp: Instant): Boolean?
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 6.2
+     */
+    suspend fun pexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs): Boolean?
 
     /**
      * Get the time to live for a key in as unix timestamp in milliseconds.
