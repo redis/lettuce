@@ -71,6 +71,11 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
     }
 
     @Override
+    public Flux<Map<K, V>> replicas(K key) {
+        return createDissolvingFlux(() -> commandBuilder.replicas(key));
+    }
+
+    @Override
     public Mono<Long> reset(K key) {
         return createMono(() -> commandBuilder.reset(key));
     }

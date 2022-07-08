@@ -15,9 +15,10 @@
  */
 package io.lettuce.core.sentinel.api.async;
 
-import java.util.Map;
-import java.util.List;
 import java.net.SocketAddress;
+import java.util.List;
+import java.util.Map;
+
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.output.CommandOutput;
@@ -64,7 +65,9 @@ public interface RedisSentinelAsyncCommands<K, V> {
      *
      * @param key the key.
      * @return List&lt;Map&lt;K, V&gt;&gt;.
+     * @deprecated since 6.2, use #replicas(Object) instead.
      */
+    @Deprecated
     RedisFuture<List<Map<K, V>>> slaves(K key);
 
     /**
@@ -74,6 +77,15 @@ public interface RedisSentinelAsyncCommands<K, V> {
      * @return Long.
      */
     RedisFuture<Long> reset(K key);
+
+    /**
+     * Provides a list of replicas for the master with the specified name.
+     *
+     * @param key the key.
+     * @return List&lt;Map&lt;K, V&gt;&gt;.
+     * @since 6.2
+     */
+    RedisFuture<List<Map<K, V>>> replicas(K key);
 
     /**
      * Perform a failover.

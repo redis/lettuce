@@ -15,15 +15,16 @@
  */
 package io.lettuce.core.sentinel.api.reactive;
 
-import java.util.Map;
 import java.net.SocketAddress;
+import java.util.Map;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * Reactive executed commands for Redis Sentinel.
@@ -64,7 +65,9 @@ public interface RedisSentinelReactiveCommands<K, V> {
      *
      * @param key the key.
      * @return Map&lt;K, V&gt;.
+     * @deprecated since 6.2, use #replicas(Object) instead.
      */
+    @Deprecated
     Flux<Map<K, V>> slaves(K key);
 
     /**
@@ -74,6 +77,15 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @return Long.
      */
     Mono<Long> reset(K key);
+
+    /**
+     * Provides a list of replicas for the master with the specified name.
+     *
+     * @param key the key.
+     * @return Map&lt;K, V&gt;.
+     * @since 6.2
+     */
+    Flux<Map<K, V>> replicas(K key);
 
     /**
      * Perform a failover.
