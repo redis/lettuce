@@ -479,7 +479,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     @Override
     public Flux<String> clusterReplicas(String nodeId) {
-        return createDissolvingFlux(() -> commandBuilder.clusterSlaves(nodeId));
+        return createDissolvingFlux(() -> commandBuilder.clusterReplicas(nodeId));
     }
 
     @Override
@@ -515,6 +515,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> clusterSetSlotStable(int slot) {
         return createMono(() -> commandBuilder.clusterSetSlotStable(slot));
+    }
+
+    @Override
+    public Mono<List<Object>> clusterShards() {
+        return createMono(() -> commandBuilder.clusterShards());
     }
 
     @Override

@@ -698,6 +698,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, List<Object>> clusterShards() {
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SHARDS);
+        return createCommand(CLUSTER, new ArrayOutput<>(codec), args);
+    }
+
     Command<K, V, List<String>> clusterSlaves(String nodeId) {
         assertNodeId(nodeId);
 

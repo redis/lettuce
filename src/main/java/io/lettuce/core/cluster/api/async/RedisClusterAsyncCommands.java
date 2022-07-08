@@ -19,7 +19,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.KeyValue;
 import io.lettuce.core.Range;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.async.*;
@@ -303,6 +302,14 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
     RedisFuture<String> clusterSetSlotStable(int slot);
 
     /**
+     * Get array of cluster shards
+     *
+     * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of the shards response.
+     * @since 6.2
+     */
+    RedisFuture<List<Object>> clusterShards();
+
+    /**
      * List replicas for a certain node identified by its {@code nodeId}. Can be parsed using
      * {@link io.lettuce.core.cluster.models.partitions.ClusterPartitionParser#parse}
      *
@@ -320,32 +327,6 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of slot ranges with IP/Port mappings.
      */
     RedisFuture<List<Object>> clusterSlots();
-
-    /**
-     * Delete a key with pipelining. Cross-slot keys will result in multiple calls to the particular cluster nodes.
-     *
-     * @param keys the key
-     * @return RedisFuture&lt;Long&gt; integer-reply The number of keys that were removed.
-     */
-    RedisFuture<Long> del(K... keys);
-
-    /**
-     * Get the values of all the given keys with pipelining. Cross-slot keys will result in multiple calls to the particular
-     * cluster nodes.
-     *
-     * @param keys the key
-     * @return RedisFuture&lt;List&lt;V&gt;&gt; array-reply list of values at the specified keys.
-     */
-    RedisFuture<List<KeyValue<K, V>>> mget(K... keys);
-
-    /**
-     * Set multiple keys to multiple values with pipelining. Cross-slot keys will result in multiple calls to the particular
-     * cluster nodes.
-     *
-     * @param map the map
-     * @return RedisFuture&lt;String&gt; simple-string-reply always {@code OK} since {@code MSET} can't fail.
-     */
-    RedisFuture<String> mset(Map<K, V> map);
 
     /**
      * Set multiple keys to multiple values, only if none of the keys exist with pipelining. Cross-slot keys will result in

@@ -323,6 +323,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         setSlotBits(slots);
     }
 
+    void setSlots(BitSet slots) {
+        this.slots = slots;
+    }
+
     private void setSlotBits(List<Integer> slots) {
 
         if (slots.isEmpty() && this.slots == null) {
@@ -492,7 +496,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
          */
         @Deprecated
         MASTER, UPSTREAM, //
-        EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
+        EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR, LOADING, ONLINE;
     }
 
 }
