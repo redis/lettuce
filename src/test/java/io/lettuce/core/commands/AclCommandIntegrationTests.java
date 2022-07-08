@@ -78,7 +78,7 @@ public class AclCommandIntegrationTests extends TestSupport {
     void aclDryRun() {
         assertThatThrownBy(() -> redis.aclDryRun("non-existing", "GET", "foo", "bar"))
                 .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("ERR User 'non-existing' not found");
-        assertThat(redis.aclDryRun("default", "GET", "foo", "bar")).isEqualTo("OK");
+        assertThat(redis.aclDryRun("default", "GET", "foo")).isEqualTo("OK");
 
         AclSetuserArgs args = AclSetuserArgs.Builder.on().addCommand(CommandType.GET).keyPattern("objects:*")
                 .addPassword("foobared");
