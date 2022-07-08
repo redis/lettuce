@@ -374,6 +374,17 @@ public class StreamCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
+    void xgroupCreateEntriesRead() {
+
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.entriesRead(5).mkstream(true));
+
+        List<List<Object>> group = (List) redis.xinfoGroups("key");
+
+        assertThat(group.get(0)).containsSequence("entries-read", 5L, "lag");
+    }
+
+    @Test
     @EnabledOnCommand("XAUTOCLAIM") // Redis 6.2
     void xgroupCreateconsumer() {
 
@@ -405,14 +416,12 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xreadgroup(Consumer.from("del-group", "consumer1"), StreamOffset.lastConsumed(key));
 
         redis.xadd(key, XAddArgs.Builder.maxlen(1), Collections.singletonMap("key", "value2"));
-        System.out.println("---------------------");
 
         List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("del-group", "consumer1"),
                 StreamOffset.from(key, "0-0"));
 
         assertThat(messages).hasSize(1);
         assertThat(messages.get(0).getBody()).isEmpty();
-        System.out.println("---------------------");
     }
 
     @Test

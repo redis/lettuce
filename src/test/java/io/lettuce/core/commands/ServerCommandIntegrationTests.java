@@ -471,7 +471,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     void replicaof() {
 
         assertThat(redis.replicaof(TestSettings.host(), 0)).isEqualTo("OK");
-        redis.replicaofNoOne();
+        assertThat(redis.replicaofNoOne()).isEqualTo("OK");
     }
 
     @Test
@@ -491,7 +491,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     void slaveof() {
 
         assertThat(redis.slaveof(TestSettings.host(), 0)).isEqualTo("OK");
-        redis.slaveofNoOne();
+        assertThat(redis.slaveofNoOne()).isEqualTo("OK");
     }
 
     @Test
