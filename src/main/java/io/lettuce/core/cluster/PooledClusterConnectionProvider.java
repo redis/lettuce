@@ -157,8 +157,8 @@ class PooledClusterConnectionProvider<K, V>
         }
 
         if (writer == null) {
-            RedisClusterNode partition = partitions.getPartitionBySlot(slot);
-            if (partition == null) {
+            RedisClusterNode master = partitions.getMasterBySlot(slot);
+            if (master == null) {
                 clusterEventListener.onUncoveredSlot(slot);
                 return Futures.failed(new PartitionSelectorException("Cannot determine a partition for slot " + slot + ".",
                         partitions.clone()));
@@ -166,7 +166,7 @@ class PooledClusterConnectionProvider<K, V>
 
             // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
             // host because the nodeId can be handled by a different host.
-            RedisURI uri = partition.getUri();
+            RedisURI uri = master.getUri();
             ConnectionKey key = new ConnectionKey(ConnectionIntent.WRITE, uri.getHost(), uri.getPort());
 
             ConnectionFuture<StatefulRedisConnection<K, V>> future = getConnectionAsync(key);
@@ -198,14 +198,14 @@ class PooledClusterConnectionProvider<K, V>
 
         if (readerCandidates == null) {
 
-            RedisClusterNode upstream = partitions.getPartitionBySlot(slot);
-            if (upstream == null) {
+            RedisClusterNode master = partitions.getMasterBySlot(slot);
+            if (master == null) {
                 clusterEventListener.onUncoveredSlot(slot);
                 return Futures.failed(new PartitionSelectorException(
                         String.format("Cannot determine a partition to read for slot %d.", slot), partitions.clone()));
             }
 
-            List<RedisNodeDescription> candidates = getReadCandidates(upstream);
+            List<RedisNodeDescription> candidates = getReadCandidates(master);
             List<RedisNodeDescription> selection = readFrom.select(new ReadFrom.Nodes() {
 
                 @Override
@@ -368,8 +368,9 @@ class PooledClusterConnectionProvider<K, V>
             RedisNodeDescription redisClusterNode = selection.get(i);
 
             RedisURI uri = redisClusterNode.getUri();
-            ConnectionKey key = new ConnectionKey(redisClusterNode.getRole().isUpstream() ? ConnectionIntent.WRITE : ConnectionIntent.READ,
-                    uri.getHost(), uri.getPort());
+            ConnectionKey key = new ConnectionKey(
+                    redisClusterNode.getRole().isUpstream() ? ConnectionIntent.WRITE : ConnectionIntent.READ, uri.getHost(),
+                    uri.getPort());
 
             readerCandidates[i] = getConnectionAsync(key).toCompletableFuture();
         }
@@ -409,7 +410,8 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     @Override
-    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent, String nodeId) {
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent,
+            String nodeId) {
 
         if (debugEnabled) {
             logger.debug("getConnection(" + connectionIntent + ", " + nodeId + ")");
@@ -466,7 +468,8 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     @Override
-    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent, String host, int port) {
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent, String host,
+            int port) {
 
         try {
             beforeGetConnection(connectionIntent, host, port);
