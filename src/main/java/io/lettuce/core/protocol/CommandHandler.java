@@ -520,7 +520,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             // number of maintenance commands (AUTH, CLIENT SETNAME, SELECT, READONLY) should be allowed on top
             // of number of user commands to ensure the driver recovers properly from a disconnect
             int maxMaintenanceCommands = 5;
-            int allowedRequestQueueSize = clientOptions.getRequestQueueSize() + maxMaintenanceCommands;
+            int allowedRequestQueueSize = clientOptions.getRequestQueueSize() >= Integer.MAX_VALUE - maxMaintenanceCommands
+                    ? Integer.MAX_VALUE
+                    : clientOptions.getRequestQueueSize() + maxMaintenanceCommands;
             if (stack.size() + commands > allowedRequestQueueSize)
 
                 throw new RedisException("Internal stack size exceeded: " + clientOptions.getRequestQueueSize()
@@ -905,8 +907,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
 
-        if (withLatency != null && latencyMetricsEnabled && channel != null
-                && remote() != null) {
+        if (withLatency != null && latencyMetricsEnabled && channel != null && remote() != null) {
 
             long firstResponseLatency = withLatency.getFirstResponse() - withLatency.getSent();
             long completionLatency = nanoTime() - withLatency.getSent();
