@@ -370,7 +370,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private boolean isEventLoopGroupActive() {
 
-        if (!isEventLoopGroupActive(bootstrap.group()) || !isEventLoopGroupActive(reconnectWorkers)) {
+        if (!isEventLoopGroupActive(bootstrap.config().group()) || !isEventLoopGroupActive(reconnectWorkers)) {
             return false;
         }
 

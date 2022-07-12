@@ -177,7 +177,7 @@ public class Partitions implements Collection<RedisClusterNode> {
             for (RedisClusterNode partition : partitions) {
 
                 readView.add(partition);
-                if (partition.is(RedisClusterNode.NodeFlag.UPSTREAM) || partition.is(RedisClusterNode.NodeFlag.MASTER)) {
+                if (partition.is(RedisClusterNode.NodeFlag.UPSTREAM)) {
                     partition.forEachSlot(i -> masterCache[i] = partition);
                 }
 
