@@ -364,6 +364,49 @@ class CommandHandlerUnitTests {
     }
 
     @Test
+    void shouldConsiderQueueLimits() throws Exception {
+
+        sut = new CommandHandler(ClientOptions.builder().requestQueueSize(1).build(), clientResources, endpoint);
+        stack = (Queue) ReflectionTestUtils.getField(sut, "stack");
+
+        when(promise.isVoid()).thenReturn(true);
+
+        Command<String, String, String> command1 = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8),
+                null);
+
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8),
+                null);
+
+        sut.write(context, command1, promise);
+        assertThatThrownBy(() -> sut.write(context, command2, promise)).isInstanceOf(RedisException.class);
+
+        verify(context).write(command1, promise);
+        verify(context, never()).write(command2, promise);
+    }
+
+    @Test
+    void shouldConsiderMaxQueueLimits() throws Exception {
+
+        sut = new CommandHandler(ClientOptions.builder().requestQueueSize(Integer.MAX_VALUE - 1).build(), clientResources,
+                endpoint);
+        stack = (Queue) ReflectionTestUtils.getField(sut, "stack");
+
+        when(promise.isVoid()).thenReturn(true);
+
+        Command<String, String, String> command1 = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8),
+                null);
+
+        Command<String, String, String> command2 = new Command<>(CommandType.APPEND, new StatusOutput<>(StringCodec.UTF8),
+                null);
+
+        sut.write(context, command1, promise);
+        sut.write(context, command2, promise);
+
+        verify(context).write(command1, promise);
+        verify(context).write(command2, promise);
+    }
+
+    @Test
     void shouldNotWriteCancelledCommandBatch() throws Exception {
 
         command.cancel();
