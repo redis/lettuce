@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.commands.reactive;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
@@ -36,7 +36,9 @@ import io.lettuce.test.ReactiveSyncInvocationHandler;
 public class TransactionReactiveCommandIntegrationTests extends TransactionCommandIntegrationTests {
 
     private final RedisClient client;
+
     private final RedisReactiveCommands<String, String> commands;
+
     private final StatefulRedisConnection<String, String> connection;
 
     @Inject
@@ -75,7 +77,7 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
         StepVerifier.create(commands.exec()).consumeNextWith(actual -> {
             assertThat(actual).isNotNull();
             assertThat(actual.wasDiscarded()).isTrue();
-        });
+        }).verifyComplete();
 
         otherConnection.close();
     }
@@ -94,7 +96,7 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
     @Test
     void errorInMulti() {
 
-        commands.multi().toProcessor();
+        StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
         commands.set(key, value).toProcessor();
         commands.lpop(key).toProcessor();
         commands.get(key).toProcessor();
@@ -110,7 +112,7 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
     @Test
     void resultOfMultiIsContainedInCommandFlux() {
 
-        commands.multi().toProcessor();
+        StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
         StepVerifier.Step<String> set1 = StepVerifier.create(commands.set("key1", "value1")).expectNext("OK").thenAwait();
         StepVerifier.Step<String> set2 = StepVerifier.create(commands.set("key2", "value2")).expectNext("OK").thenAwait();
@@ -131,7 +133,8 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
     @Test
     void resultOfMultiIsContainedInExecObservable() {
 
-        commands.multi().toProcessor();
+        StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
+
         commands.set("key1", "value1").toProcessor();
         commands.set("key2", "value2").toProcessor();
         commands.mget("key1", "key2").collectList().toProcessor();
@@ -143,4 +146,5 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
 
         }).verifyComplete();
     }
+
 }
