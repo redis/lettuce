@@ -28,11 +28,6 @@
         </license>
     </licenses>
 
-    <ciManagement>
-        <system>Travis CI</system>
-        <url>https://travis-ci.com/lettuce-io/lettuce-core</url>
-    </ciManagement>
-
     <issueManagement>
         <system>Github</system>
         <url>https://github.com/lettuce-io/lettuce-core/issues</url>
