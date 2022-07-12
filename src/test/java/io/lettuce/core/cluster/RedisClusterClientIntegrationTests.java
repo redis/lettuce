@@ -297,6 +297,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
             for (RedisClusterNode partition : partitions) {
                 partition.setSlots(Collections.emptyList());
                 if (partition.getFlags().contains(RedisClusterNode.NodeFlag.MYSELF)) {
+                    partition.getFlags().add(RedisClusterNode.NodeFlag.UPSTREAM);
                     partition.setSlots(IntStream.range(0, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList()));
                 }
             }
