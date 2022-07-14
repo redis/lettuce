@@ -15,15 +15,15 @@
  */
 package io.lettuce.core.cluster.topology;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.Properties;
-
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Mark Paluch
@@ -47,6 +47,9 @@ class NodeTopologyView {
 
     private final String info;
 
+    private static final Pattern CONNECTED_CLIENTS_PATTERN = makePatternForProperty("connected_clients");
+    private static final Pattern MASTER_REPL_OFFSET_PATTERN = makePatternForProperty("master_repl_offset");
+
     private NodeTopologyView(RedisURI redisURI) {
 
         this.available = false;
@@ -64,21 +67,33 @@ class NodeTopologyView {
         this.available = true;
         this.redisURI = redisURI;
 
-        Properties properties = info == null ? new Properties() : parseInfo(info);
         this.partitions = ClusterPartitionParser.parse(clusterNodes);
-        this.connectedClients = getClientCount(properties);
-        this.replicationOffset = getReplicationOffset(properties);
+        this.connectedClients = getClientCount(info);
+        this.replicationOffset = getReplicationOffset(info);
         this.clusterNodes = clusterNodes;
         this.info = info;
         this.latency = latency;
     }
 
-    private int getClientCount(Properties properties) {
-        return Integer.parseInt(properties.getProperty("connected_clients", "0"));
+    private static Pattern makePatternForProperty(String propertyName) {
+        return Pattern.compile("^" + Pattern.quote(propertyName) + ":(.*)$", Pattern.MULTILINE);
     }
 
-    private long getReplicationOffset(Properties properties) {
-        return Long.parseLong(properties.getProperty("master_repl_offset", "-1"));
+    private static <T> T matchOrDefault(String info, Pattern pattern, T defaultValue, Function<String, T> converterIfFound) {
+        Matcher matcher = pattern.matcher(info);
+        if(!matcher.find()) {
+            return defaultValue;
+        }
+        String foundValue = matcher.group(1);
+        return foundValue == null ? defaultValue : converterIfFound.apply(foundValue);
+    }
+
+    private int getClientCount(String info) {
+        return matchOrDefault(info, CONNECTED_CLIENTS_PATTERN, 0, Integer::parseInt);
+    }
+
+    private long getReplicationOffset(String info) {
+        return matchOrDefault(info, MASTER_REPL_OFFSET_PATTERN, -1L, Long::parseLong);
     }
 
     static NodeTopologyView from(RedisURI redisURI, Requests clusterNodesRequests, Requests infoRequests) {
@@ -107,18 +122,6 @@ class NodeTopologyView {
         }
 
         return false;
-    }
-
-    private static Properties parseInfo(String info) {
-
-        Properties properties = new Properties();
-        try {
-            properties.load(new StringReader(info));
-        } catch (IOException e) {
-            // wtf?
-        }
-
-        return properties;
     }
 
     String getNodeId() {
