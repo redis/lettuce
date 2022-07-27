@@ -110,7 +110,7 @@
     <spring-batch.version>4.3.6</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
 
-    <junit.version>5.8.2</junit.version>
+    <junit.version>5.9.0</junit.version>
     <project.build.outputTimestamp>1645112687</project.build.outputTimestamp>
   </properties>
 
