@@ -67,7 +67,7 @@ class StateMachineUnitTests {
     @BeforeEach
     final void createStateMachine() {
         output = new StatusOutput<>(codec);
-        rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
+        rsm = new RedisStateMachine();
     }
 
     @AfterEach

@@ -231,8 +231,6 @@ public class RedisStateMachine {
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
-    private final ByteBuf responseElementBuffer;
-
     private final AtomicBoolean closed = new AtomicBoolean();
 
     private final Resp2LongProcessor longProcessor = new Resp2LongProcessor();
@@ -244,8 +242,8 @@ public class RedisStateMachine {
     /**
      * Initialize a new instance.
      */
-    public RedisStateMachine(ByteBufAllocator alloc) {
-        this.responseElementBuffer = alloc.buffer(1024);
+    public RedisStateMachine() {
+
     }
 
     public boolean isDiscoverProtocol() {
@@ -591,7 +589,7 @@ public class RedisStateMachine {
      */
     public void close() {
         if (closed.compareAndSet(false, true)) {
-            responseElementBuffer.release();
+            // free resources if any
         }
     }
 
@@ -673,18 +671,11 @@ public class RedisStateMachine {
     }
 
     private ByteBuffer readBytes0(ByteBuf buffer, int count) {
+        final ByteBuffer byteBuffer = buffer.internalNioBuffer(buffer.readerIndex(), count);
 
-        ByteBuffer bytes;
-        responseElementBuffer.clear();
-
-        if (responseElementBuffer.capacity() < count) {
-            responseElementBuffer.capacity(count);
-        }
-
-        buffer.readBytes(responseElementBuffer, count);
-        bytes = responseElementBuffer.internalNioBuffer(0, count);
-
-        return bytes;
+        // advance reader index
+        buffer.readerIndex(buffer.readerIndex() + count);
+        return byteBuffer;
     }
 
     /**
