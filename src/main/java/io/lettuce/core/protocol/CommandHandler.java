@@ -213,7 +213,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         setState(LifecycleState.REGISTERED);
 
         buffer = ctx.alloc().buffer(8192 * 8);
-        rsm = new RedisStateMachine(ctx.alloc());
+        rsm = new RedisStateMachine();
         ctx.fireChannelRegistered();
     }
 
