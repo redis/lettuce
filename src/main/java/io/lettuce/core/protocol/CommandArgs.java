@@ -17,7 +17,10 @@ package io.lettuce.core.protocol;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
