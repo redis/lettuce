@@ -164,9 +164,8 @@ public class Partitions implements Collection<RedisClusterNode> {
 
         synchronized (partitions) {
 
-            invalidateCache();
-
             if (partitions.isEmpty()) {
+                invalidateCache();
                 return;
             }
 
