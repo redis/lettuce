@@ -17,10 +17,7 @@ package io.lettuce.core.protocol;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
@@ -29,6 +26,8 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceStrings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Redis command arguments. {@link CommandArgs} is a container for multiple singular arguments. Key and Value arguments are
@@ -49,6 +48,8 @@ import io.netty.buffer.UnpooledByteBufAllocator;
 public class CommandArgs<K, V> {
 
     static final byte[] CRLF = "\r\n".getBytes(StandardCharsets.US_ASCII);
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandArgs.class);
 
     protected final RedisCodec<K, V> codec;
 
@@ -739,7 +740,15 @@ public class CommandArgs<K, V> {
                 return;
             }
 
-            ByteBufferArgument.writeByteBuffer(target, codec.encodeValue(val));
+            ByteBuffer encodedValue = codec.encodeValue(val);
+            if (Objects.nonNull(encodedValue)) {
+                ByteBufferArgument.writeByteBuffer(target, encodedValue);
+            } else {
+                ByteBufferArgument.writeByteBuffer(target, ByteBuffer.wrap(new byte[]{}));
+                logger.warn("{} encodeValue returned null. Consider returning ByteBuffer with empty byte array",
+                        codec.getClass());
+            }
+
         }
 
         @Override
