@@ -65,7 +65,7 @@ public interface RedisCredentials {
      * @return the static {@link RedisCredentials} object from {@code username} and {@code password}
      */
     static RedisCredentials just(String username, CharSequence password) {
-        return new StaticRedisCredentials(username, password == null ? new char[0] : LettuceStrings.toCharArray(password));
+        return new StaticRedisCredentials(username, password == null ? null : LettuceStrings.toCharArray(password));
     }
 
     /**
