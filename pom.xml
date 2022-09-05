@@ -87,8 +87,8 @@
     <url>https://github.com/mybatis/spring/issues</url>
   </issueManagement>
   <ciManagement>
-    <system>Travis CI</system>
-    <url>https://travis-ci.org/mybatis/spring</url>
+    <system>GitHub Actions</system>
+    <url>https://github.com/mybatis/spring/actions</url>
   </ciManagement>
   <distributionManagement>
     <site>
