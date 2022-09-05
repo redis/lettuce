@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -60,7 +60,9 @@ public final class SqlSessionUtils {
    *
    * @param sessionFactory
    *          a MyBatis {@code SqlSessionFactory} to create new sessions
+   *
    * @return a MyBatis {@code SqlSession}
+   *
    * @throws TransientDataAccessResourceException
    *           if a transaction is active and the {@code SqlSessionFactory} is not using a
    *           {@code SpringManagedTransactionFactory}
@@ -82,10 +84,13 @@ public final class SqlSessionUtils {
    *          The executor type of the SqlSession to create
    * @param exceptionTranslator
    *          Optional. Translates SqlSession.commit() exceptions to Spring exceptions.
+   *
    * @return an SqlSession managed by Spring Transaction Manager
+   *
    * @throws TransientDataAccessResourceException
    *           if a transaction is active and the {@code SqlSessionFactory} is not using a
    *           {@code SpringManagedTransactionFactory}
+   *
    * @see SpringManagedTransactionFactory
    */
   public static SqlSession getSqlSession(SqlSessionFactory sessionFactory, ExecutorType executorType,
@@ -111,7 +116,7 @@ public final class SqlSessionUtils {
 
   /**
    * Register session holder if synchronization is active (i.e. a Spring TX is active).
-   *
+   * <p>
    * Note: The DataSource used by the Environment should be synchronized with the transaction either through
    * DataSourceTxMgr or another tx synchronization. Further assume that if an exception is thrown, whatever started the
    * transaction will handle closing / rolling back the Connection associated with the SqlSession.
@@ -203,6 +208,7 @@ public final class SqlSessionUtils {
    *          a MyBatis SqlSession to check
    * @param sessionFactory
    *          the SqlSessionFactory which the SqlSession was built with
+   *
    * @return true if session is transactional, otherwise false
    */
   public static boolean isSqlSessionTransactional(SqlSession session, SqlSessionFactory sessionFactory) {

@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,9 @@ import org.springframework.core.convert.converter.Converter;
  * A builder for the {@link MyBatisBatchItemWriter}.
  *
  * @author Kazuki Shimizu
+ *
  * @since 2.0.0
+ *
  * @see MyBatisBatchItemWriter
  */
 public class MyBatisBatchItemWriterBuilder<T> {
@@ -42,7 +44,9 @@ public class MyBatisBatchItemWriterBuilder<T> {
    *
    * @param sqlSessionTemplate
    *          the {@link SqlSessionTemplate} to be used by writer for database access
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisBatchItemWriter#setSqlSessionTemplate(SqlSessionTemplate)
    */
   public MyBatisBatchItemWriterBuilder<T> sqlSessionTemplate(SqlSessionTemplate sqlSessionTemplate) {
@@ -55,7 +59,9 @@ public class MyBatisBatchItemWriterBuilder<T> {
    *
    * @param sqlSessionFactory
    *          the {@link SqlSessionFactory} to be used by writer for database access
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisBatchItemWriter#setSqlSessionFactory(SqlSessionFactory)
    */
   public MyBatisBatchItemWriterBuilder<T> sqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
@@ -68,7 +74,9 @@ public class MyBatisBatchItemWriterBuilder<T> {
    *
    * @param statementId
    *          the id for the statement
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisBatchItemWriter#setStatementId(String)
    */
   public MyBatisBatchItemWriterBuilder<T> statementId(String statementId) {
@@ -81,7 +89,9 @@ public class MyBatisBatchItemWriterBuilder<T> {
    *
    * @param assertUpdates
    *          the flag to set. Defaults to true
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisBatchItemWriter#setAssertUpdates(boolean)
    */
   public MyBatisBatchItemWriterBuilder<T> assertUpdates(boolean assertUpdates) {
@@ -94,7 +104,9 @@ public class MyBatisBatchItemWriterBuilder<T> {
    *
    * @param itemToParameterConverter
    *          a converter that converting item to parameter object
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisBatchItemWriter#setItemToParameterConverter(Converter)
    */
   public MyBatisBatchItemWriterBuilder<T> itemToParameterConverter(Converter<T, ?> itemToParameterConverter) {

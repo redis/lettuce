@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -140,6 +140,7 @@ public class MapperScannerConfigurer
    *
    * @param addToConfig
    *          a flag that whether add mapper to MyBatis or not
+   *
    * @see MapperFactoryBean#setAddToConfig(boolean)
    */
   public void setAddToConfig(boolean addToConfig) {
@@ -154,6 +155,7 @@ public class MapperScannerConfigurer
    *
    * @param lazyInitialization
    *          Set the @{code true} to enable
+   *
    * @since 2.0.2
    */
   public void setLazyInitialization(String lazyInitialization) {
@@ -270,6 +272,7 @@ public class MapperScannerConfigurer
    *
    * @param mapperFactoryBeanClass
    *          The class of the MapperFactoryBean
+   *
    * @since 2.0.1
    */
   public void setMapperFactoryBeanClass(Class<? extends MapperFactoryBean> mapperFactoryBeanClass) {
@@ -296,6 +299,7 @@ public class MapperScannerConfigurer
    * Gets beanNameGenerator to be used while running the scanner.
    *
    * @return the beanNameGenerator BeanNameGenerator that has been configured
+   *
    * @since 1.2.0
    */
   public BeanNameGenerator getNameGenerator() {
@@ -307,6 +311,7 @@ public class MapperScannerConfigurer
    *
    * @param nameGenerator
    *          the beanNameGenerator to set
+   *
    * @since 1.2.0
    */
   public void setNameGenerator(BeanNameGenerator nameGenerator) {
@@ -321,6 +326,7 @@ public class MapperScannerConfigurer
    *
    * @param defaultScope
    *          the default scope
+   *
    * @since 2.0.6
    */
   public void setDefaultScope(String defaultScope) {

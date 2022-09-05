@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,12 +33,10 @@ import org.springframework.core.annotation.AliasFor;
 /**
  * Use this annotation to register MyBatis mapper interfaces when using Java Config. It performs when same work as
  * {@link MapperScannerConfigurer} via {@link MapperScannerRegistrar}.
- *
  * <p>
  * Either {@link #basePackageClasses} or {@link #basePackages} (or its alias {@link #value}) may be specified to define
  * specific packages to scan. Since 2.0.4, If specific packages are not defined, scanning will occur from the package of
  * the class that declares this annotation.
- *
  * <p>
  * Configuration example:
  * </p>
@@ -70,7 +68,9 @@ import org.springframework.core.annotation.AliasFor;
  * @author Michael Lanyon
  * @author Eduardo Macarron
  * @author Qimiao Chen
+ *
  * @since 1.2.0
+ *
  * @see MapperScannerRegistrar
  * @see MapperFactoryBean
  */
@@ -165,19 +165,18 @@ public @interface MapperScan {
 
   /**
    * Whether enable lazy initialization of mapper bean.
-   *
    * <p>
    * Default is {@code false}.
    * </p>
    *
    * @return set {@code true} to enable lazy initialization
+   *
    * @since 2.0.2
    */
   String lazyInitialization() default "";
 
   /**
    * Specifies the default scope of scanned mappers.
-   *
    * <p>
    * Default is {@code ""} (equiv to singleton).
    * </p>
