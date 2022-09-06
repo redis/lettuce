@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -52,6 +52,7 @@ import org.springframework.util.StringUtils;
  * @author Eduardo Macarron
  *
  * @see MapperFactoryBean
+ *
  * @since 1.2.0
  */
 public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
@@ -101,6 +102,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
    *
    * @param lazyInitialization
    *          Set the @{code true} to enable
+   *
    * @since 2.0.2
    */
   public void setLazyInitialization(boolean lazyInitialization) {
@@ -140,6 +142,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
    *
    * @param mapperFactoryBeanClass
    *          the {@code MapperFactoryBean} class
+   *
    * @since 2.0.1
    */
   public void setMapperFactoryBeanClass(Class<? extends MapperFactoryBean> mapperFactoryBeanClass) {
@@ -154,6 +157,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
    *
    * @param defaultScope
    *          the scope
+   *
    * @since 2.0.6
    */
   public void setDefaultScope(String defaultScope) {

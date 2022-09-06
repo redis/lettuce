@@ -1,11 +1,11 @@
 /*
- * Copyright 2010-2021 the original author or authors.
+ * Copyright 2010-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,7 +25,9 @@ import org.mybatis.spring.batch.MyBatisPagingItemReader;
  * A builder for the {@link MyBatisPagingItemReader}.
  *
  * @author Kazuki Shimizu
+ *
  * @since 2.0.0
+ *
  * @see MyBatisPagingItemReader
  */
 public class MyBatisPagingItemReaderBuilder<T> {
@@ -42,7 +44,9 @@ public class MyBatisPagingItemReaderBuilder<T> {
    *
    * @param sqlSessionFactory
    *          the {@link SqlSessionFactory} to be used by writer for database access
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisPagingItemReader#setSqlSessionFactory(SqlSessionFactory)
    */
   public MyBatisPagingItemReaderBuilder<T> sqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
@@ -55,7 +59,9 @@ public class MyBatisPagingItemReaderBuilder<T> {
    *
    * @param queryId
    *          the id for the query
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisPagingItemReader#setQueryId(String)
    */
   public MyBatisPagingItemReaderBuilder<T> queryId(String queryId) {
@@ -68,7 +74,9 @@ public class MyBatisPagingItemReaderBuilder<T> {
    *
    * @param parameterValues
    *          the parameter values to be used for the query execution
+   *
    * @return this instance for method chaining
+   *
    * @see MyBatisPagingItemReader#setParameterValues(Map)
    */
   public MyBatisPagingItemReaderBuilder<T> parameterValues(Map<String, Object> parameterValues) {
@@ -81,7 +89,9 @@ public class MyBatisPagingItemReaderBuilder<T> {
    *
    * @param pageSize
    *          number of items
+   *
    * @return this instance for method chaining
+   *
    * @see org.springframework.batch.item.database.AbstractPagingItemReader#setPageSize(int)
    */
   public MyBatisPagingItemReaderBuilder<T> pageSize(int pageSize) {
@@ -95,7 +105,9 @@ public class MyBatisPagingItemReaderBuilder<T> {
    *
    * @param saveState
    *          defaults to true
+   *
    * @return The current instance of the builder.
+   *
    * @see org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader#setSaveState(boolean)
    */
   public MyBatisPagingItemReaderBuilder<T> saveState(boolean saveState) {
@@ -108,7 +120,9 @@ public class MyBatisPagingItemReaderBuilder<T> {
    *
    * @param maxItemCount
    *          the max items to be read
+   *
    * @return The current instance of the builder.
+   *
    * @see org.springframework.batch.item.support.AbstractItemCountingItemStreamItemReader#setMaxItemCount(int)
    */
   public MyBatisPagingItemReaderBuilder<T> maxItemCount(int maxItemCount) {
