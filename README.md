@@ -7,7 +7,7 @@ MyBatis Spring Adapter
 [![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/https/oss.sonatype.org/org.mybatis/mybatis-spring.svg)](https://oss.sonatype.org/content/repositories/snapshots/org/mybatis/mybatis-spring/)
 [![License](https://img.shields.io/:license-apache-brightgreen.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
-![mybatis-spring](http://mybatis.github.io/images/mybatis-logo.png)
+![mybatis-spring](https://mybatis.org/images/mybatis-logo.png)
 
 MyBatis-Spring adapter is an easy-to-use Spring bridge for MyBatis sql mapping framework.
 
@@ -21,5 +21,5 @@ Supported Versions
 Essentials
 ----------
 
-* [See the published docs](http://mybatis.github.io/spring/)
+* [See the published docs](https://mybatis.org/spring/)
 * [See the snapshot docs](src/site/markdown) (Note: may contain explanation of unreleased features)
