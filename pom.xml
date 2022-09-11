@@ -112,6 +112,7 @@
 
     <junit.version>5.9.0</junit.version>
     <project.build.outputTimestamp>1645112687</project.build.outputTimestamp>
+
   </properties>
 
   <dependencies>
