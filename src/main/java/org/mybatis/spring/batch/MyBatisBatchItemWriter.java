@@ -27,6 +27,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.logging.Logger;
 import org.mybatis.logging.LoggerFactory;
 import org.mybatis.spring.SqlSessionTemplate;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.convert.converter.Converter;
@@ -136,7 +137,7 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
    * {@inheritDoc}
    */
   @Override
-  public void write(final List<? extends T> items) {
+  public void write(final Chunk<? extends T> items) {
 
     if (!items.isEmpty()) {
       LOGGER.debug(() -> "Executing batch with " + items.size() + " items.");
@@ -158,8 +159,8 @@ public class MyBatisBatchItemWriter<T> implements ItemWriter<T>, InitializingBea
         for (int i = 0; i < updateCounts.length; i++) {
           int value = updateCounts[i];
           if (value == 0) {
-            throw new EmptyResultDataAccessException(
-                "Item " + i + " of " + updateCounts.length + " did not update any rows: [" + items.get(i) + "]", 1);
+            throw new EmptyResultDataAccessException("Item " + i + " of " + updateCounts.length
+                + " did not update any rows: [" + items.getItems().get(i) + "]", 1);
           }
         }
       }

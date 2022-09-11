@@ -22,6 +22,7 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,8 +98,10 @@ abstract class AbstractSampleJobTest {
   @Configuration
   static class LocalContext {
     @Bean
-    JobLauncherTestUtils jobLauncherTestUtils() {
-      return new JobLauncherTestUtils();
+    JobLauncherTestUtils jobLauncherTestUtils(Job job) {
+      JobLauncherTestUtils utils = new JobLauncherTestUtils();
+      utils.setJob(job);
+      return utils;
     }
 
     @Bean

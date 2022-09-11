@@ -133,11 +133,11 @@ public class SampleJobConfig {
   public Step step1() throws Exception {
     // @formatter:off
     return stepBuilderFactory.get("step1")
-        .transactionManager(transactionalManager())
         .<User, Person>chunk(10)
         .reader(reader())
         .processor(processor())
         .writer(writer())
+        .transactionManager(transactionalManager())
         .build();
     // @formatter:on
   }
