@@ -37,6 +37,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.batch.MyBatisBatchItemWriter;
+import org.springframework.batch.item.Chunk;
 
 /**
  * Tests for {@link MyBatisBatchItemWriterBuilder}.
@@ -84,13 +85,13 @@ class MyBatisBatchItemWriterBuilderTest {
     // @formatter:on
     itemWriter.afterPropertiesSet();
 
-    List<Foo> foos = getFoos();
+    Chunk<Foo> foos = getFoos();
 
     itemWriter.write(foos);
 
-    Mockito.verify(this.sqlSession).update("updateFoo", foos.get(0));
-    Mockito.verify(this.sqlSession).update("updateFoo", foos.get(1));
-    Mockito.verify(this.sqlSession).update("updateFoo", foos.get(2));
+    Mockito.verify(this.sqlSession).update("updateFoo", foos.getItems().get(0));
+    Mockito.verify(this.sqlSession).update("updateFoo", foos.getItems().get(1));
+    Mockito.verify(this.sqlSession).update("updateFoo", foos.getItems().get(2));
 
   }
 
@@ -105,13 +106,13 @@ class MyBatisBatchItemWriterBuilderTest {
     // @formatter:on
     itemWriter.afterPropertiesSet();
 
-    List<Foo> foos = getFoos();
+    Chunk<Foo> foos = getFoos();
 
     itemWriter.write(foos);
 
-    Mockito.verify(this.sqlSession).update("updateFoo", foos.get(0));
-    Mockito.verify(this.sqlSession).update("updateFoo", foos.get(1));
-    Mockito.verify(this.sqlSession).update("updateFoo", foos.get(2));
+    Mockito.verify(this.sqlSession).update("updateFoo", foos.getItems().get(0));
+    Mockito.verify(this.sqlSession).update("updateFoo", foos.getItems().get(1));
+    Mockito.verify(this.sqlSession).update("updateFoo", foos.getItems().get(2));
 
   }
 
@@ -129,13 +130,13 @@ class MyBatisBatchItemWriterBuilderTest {
     // @formatter:on
     itemWriter.afterPropertiesSet();
 
-    List<Foo> foos = getFoos();
+    Chunk<Foo> foos = getFoos();
 
     itemWriter.write(foos);
 
-    Mockito.verify(this.sqlSession).update("updateFoo", foos.get(0));
-    Mockito.verify(this.sqlSession).update("updateFoo", foos.get(1));
-    Mockito.verify(this.sqlSession).update("updateFoo", foos.get(2));
+    Mockito.verify(this.sqlSession).update("updateFoo", foos.getItems().get(0));
+    Mockito.verify(this.sqlSession).update("updateFoo", foos.getItems().get(1));
+    Mockito.verify(this.sqlSession).update("updateFoo", foos.getItems().get(2));
 
   }
 
@@ -156,22 +157,22 @@ class MyBatisBatchItemWriterBuilderTest {
     // @formatter:on
     itemWriter.afterPropertiesSet();
 
-    List<Foo> foos = getFoos();
+    Chunk<Foo> foos = getFoos();
 
     itemWriter.write(foos);
 
     Map<String, Object> parameter = new HashMap<>();
     parameter.put("now", LocalDateTime.now(Clock.fixed(Instant.ofEpochMilli(0), ZoneId.systemDefault())));
-    parameter.put("item", foos.get(0));
+    parameter.put("item", foos.getItems().get(0));
     Mockito.verify(this.sqlSession).update("updateFoo", parameter);
-    parameter.put("item", foos.get(1));
+    parameter.put("item", foos.getItems().get(1));
     Mockito.verify(this.sqlSession).update("updateFoo", parameter);
-    parameter.put("item", foos.get(2));
+    parameter.put("item", foos.getItems().get(2));
     Mockito.verify(this.sqlSession).update("updateFoo", parameter);
   }
 
-  private List<Foo> getFoos() {
-    return Arrays.asList(new Foo("foo1"), new Foo("foo2"), new Foo("foo3"));
+  private Chunk<Foo> getFoos() {
+    return Chunk.of(new Foo("foo1"), new Foo("foo2"), new Foo("foo3"));
   }
 
   private static class Foo {

@@ -22,7 +22,6 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,6 @@ import java.util.Map;
 
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.ExecutorType;
-import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -39,6 +37,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.mybatis.spring.batch.domain.Employee;
+import org.springframework.batch.item.Chunk;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 
@@ -60,8 +59,8 @@ class MyBatisBatchItemWriterTest {
 
   @Test
   void testZeroBatchResultShouldThrowException() {
-    List<Employee> employees = Arrays.asList(new Employee(), new Employee());
-    List<BatchResult> batchResults = Lists.emptyList();
+    Chunk<Employee> employees = Chunk.of(new Employee(), new Employee());
+    List<BatchResult> batchResults = Collections.emptyList();
 
     given(mockSqlSessionTemplate.flushStatements()).willReturn(batchResults);
 
@@ -70,7 +69,7 @@ class MyBatisBatchItemWriterTest {
 
   @Test
   void testZeroUpdateCountShouldThrowException() {
-    List<Employee> employees = Arrays.asList(new Employee(), new Employee());
+    Chunk<Employee> employees = Chunk.of(new Employee(), new Employee());
 
     BatchResult batchResult = new BatchResult(null, null);
     batchResult.setUpdateCounts(new int[] { 1, 0 });
@@ -87,7 +86,7 @@ class MyBatisBatchItemWriterTest {
     this.writer.setStatementId("updateEmployee");
 
     Employee employee = new Employee();
-    List<Employee> employees = Collections.singletonList(employee);
+    Chunk<Employee> employees = Chunk.of(employee);
     writer.write(employees);
 
     Mockito.verify(this.mockSqlSessionTemplate).update("updateEmployee", employee);
@@ -105,7 +104,7 @@ class MyBatisBatchItemWriterTest {
     });
 
     Employee employee = new Employee();
-    List<Employee> employees = Collections.singletonList(employee);
+    Chunk<Employee> employees = Chunk.of(employee);
     writer.write(employees);
 
     Map<String, Object> parameter = new HashMap<>();

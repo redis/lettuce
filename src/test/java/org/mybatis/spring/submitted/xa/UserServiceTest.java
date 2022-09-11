@@ -17,14 +17,16 @@ package org.mybatis.spring.submitted.xa;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import javax.transaction.UserTransaction;
-
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
+import jakarta.transaction.UserTransaction;
+
+@Disabled("Yet not found OSS implementation that supported Jakarta EE 9+ APIs")
 @ExtendWith(SpringExtension.class)
 @SpringJUnitConfig(locations = "classpath:org/mybatis/spring/submitted/xa/applicationContext.xml")
 class UserServiceTest {
