@@ -111,7 +111,9 @@
     <module.name>org.mybatis.spring</module.name>
 
     <junit.version>5.9.0</junit.version>
-    <project.build.outputTimestamp>1645112687</project.build.outputTimestamp>
+
+    <!-- Reproducible Builds -->
+    <project.build.outputTimestamp>1757561022</project.build.outputTimestamp>
   </properties>
 
   <dependencies>
