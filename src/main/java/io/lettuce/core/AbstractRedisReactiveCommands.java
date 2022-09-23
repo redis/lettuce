@@ -2610,6 +2610,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> zrangestore(K dstKey, K srcKey, Range<Long> range) {
+        return createMono(() -> commandBuilder.zrangestore(dstKey, srcKey, range, false));
+    }
+
+    @Override
     public Mono<Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit) {
         return createMono(() -> commandBuilder.zrangestorebylex(dstKey, srcKey, range, limit, false));
     }
@@ -2812,6 +2817,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     public Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
             Limit limit) {
         return createMono(() -> commandBuilder.zrevrangebyscoreWithScores(channel, key, range, limit));
+    }
+
+    @Override
+    public Mono<Long> zrevrangestore(K dstKey, K srcKey, Range<Long> range) {
+        return createMono(() -> commandBuilder.zrangestore(dstKey, srcKey, range, true));
     }
 
     @Override

@@ -2537,6 +2537,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> zrangestore(K dstKey, K srcKey, Range<Long> range) {
+        return dispatch(commandBuilder.zrangestore(dstKey, srcKey, range, false));
+    }
+
+    @Override
     public RedisFuture<Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit) {
         return dispatch(commandBuilder.zrangestorebylex(dstKey, srcKey, range, limit, false));
     }
@@ -2604,6 +2609,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop) {
         return dispatch(commandBuilder.zrevrangeWithScores(channel, key, start, stop));
+    }
+
+    @Override
+    public RedisFuture<Long> zrevrangestore(K dstKey, K srcKey, Range<Long> range) {
+        return dispatch(commandBuilder.zrangestore(dstKey, srcKey, range, true));
     }
 
     @Override

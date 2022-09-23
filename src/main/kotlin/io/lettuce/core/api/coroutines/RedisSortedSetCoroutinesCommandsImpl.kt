@@ -158,21 +158,45 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override fun zrangebyscore(key: K, range: Range<out Number>): Flow<V> =
         ops.zrangebyscore(key, range).asFlow()
 
-    override fun zrangebyscore(key: K, range: Range<out Number>, limit: Limit): Flow<V> = ops.zrangebyscore(key, range, limit).asFlow()
+    override fun zrangebyscore(key: K, range: Range<out Number>, limit: Limit): Flow<V> =
+        ops.zrangebyscore(key, range, limit).asFlow()
 
-    override fun zrangebyscoreWithScores(key: K, range: Range<out Number>): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range).asFlow()
+    override fun zrangebyscoreWithScores(
+        key: K,
+        range: Range<out Number>
+    ): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range).asFlow()
 
-    override fun zrangebyscoreWithScores(key: K, range: Range<out Number>, limit: Limit): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range, limit).asFlow()
+    override fun zrangebyscoreWithScores(
+        key: K,
+        range: Range<out Number>,
+        limit: Limit
+    ): Flow<ScoredValue<V>> = ops.zrangebyscoreWithScores(key, range, limit).asFlow()
 
-    override suspend fun zrangestorebylex(dstKey: K, srcKey: K, range: Range<out V>, limit: Limit): Long? = ops.zrangestorebylex(dstKey, srcKey, range, limit).awaitFirstOrNull()
+    override suspend fun zrangestore(dstKey: K, srcKey: K, range: Range<Long>): Long? =
+        ops.zrangestore(dstKey, srcKey, range).awaitFirstOrNull()
 
-    override suspend fun zrangestorebyscore(dstKey: K, srcKey: K, range: Range<out Number>, limit: Limit): Long? = ops.zrangestorebyscore(dstKey, srcKey, range, limit).awaitFirstOrNull()
+    override suspend fun zrangestorebylex(
+        dstKey: K,
+        srcKey: K,
+        range: Range<out V>,
+        limit: Limit
+    ): Long? = ops.zrangestorebylex(dstKey, srcKey, range, limit).awaitFirstOrNull()
 
-    override suspend fun zrank(key: K, member: V): Long? = ops.zrank(key, member).awaitFirstOrNull()
+    override suspend fun zrangestorebyscore(
+        dstKey: K,
+        srcKey: K,
+        range: Range<out Number>,
+        limit: Limit
+    ): Long? = ops.zrangestorebyscore(dstKey, srcKey, range, limit).awaitFirstOrNull()
 
-    override suspend fun zrem(key: K, vararg members: V): Long? = ops.zrem(key, *members).awaitFirstOrNull()
+    override suspend fun zrank(key: K, member: V): Long? =
+        ops.zrank(key, member).awaitFirstOrNull()
 
-    override suspend fun zremrangebylex(key: K, range: Range<out V>): Long? = ops.zremrangebylex(key, range).awaitFirstOrNull()
+    override suspend fun zrem(key: K, vararg members: V): Long? =
+        ops.zrem(key, *members).awaitFirstOrNull()
+
+    override suspend fun zremrangebylex(key: K, range: Range<out V>): Long? =
+        ops.zremrangebylex(key, range).awaitFirstOrNull()
 
     override suspend fun zremrangebyrank(key: K, start: Long, stop: Long): Long? = ops.zremrangebyrank(key, start, stop).awaitFirstOrNull()
 
@@ -184,25 +208,54 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override fun zrevrangebylex(key: K, range: Range<out V>): Flow<V> = ops.zrevrangebylex(key, range).asFlow()
 
-    override fun zrevrangebylex(key: K, range: Range<out V>, limit: Limit): Flow<V> = ops.zrevrangebylex(key, range, limit).asFlow()
+    override fun zrevrangebylex(key: K, range: Range<out V>, limit: Limit): Flow<V> =
+        ops.zrevrangebylex(key, range, limit).asFlow()
 
-    override fun zrevrangebyscore(key: K, range: Range<out Number>): Flow<V> = ops.zrevrangebyscore(key, range).asFlow()
+    override fun zrevrangebyscore(key: K, range: Range<out Number>): Flow<V> =
+        ops.zrevrangebyscore(key, range).asFlow()
 
-    override fun zrevrangebyscore(key: K, range: Range<out Number>, limit: Limit): Flow<V> = ops.zrevrangebyscore(key, range, limit).asFlow()
+    override fun zrevrangebyscore(
+        key: K,
+        range: Range<out Number>,
+        limit: Limit
+    ): Flow<V> = ops.zrevrangebyscore(key, range, limit).asFlow()
 
-    override fun zrevrangebyscoreWithScores(key: K, range: Range<out Number>): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range).asFlow()
+    override fun zrevrangebyscoreWithScores(
+        key: K,
+        range: Range<out Number>
+    ): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range).asFlow()
 
-    override fun zrevrangebyscoreWithScores(key: K, range: Range<out Number>, limit: Limit): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range, limit).asFlow()
+    override fun zrevrangebyscoreWithScores(
+        key: K,
+        range: Range<out Number>,
+        limit: Limit
+    ): Flow<ScoredValue<V>> = ops.zrevrangebyscoreWithScores(key, range, limit).asFlow()
 
-    override suspend fun zrevrangestorebylex(dstKey: K, srcKey: K, range: Range<out V>, limit: Limit): Long? = ops.zrevrangestorebylex(dstKey, srcKey, range, limit).awaitFirstOrNull()
+    override suspend fun zrevrangestore(dstKey: K, srcKey: K, range: Range<Long>): Long? =
+        ops.zrevrangestore(dstKey, srcKey, range).awaitFirstOrNull()
 
-    override suspend fun zrevrangestorebyscore(dstKey: K, srcKey: K, range: Range<out Number>, limit: Limit): Long? = ops.zrevrangestorebyscore(dstKey, srcKey, range, limit).awaitFirstOrNull()
+    override suspend fun zrevrangestorebylex(
+        dstKey: K,
+        srcKey: K,
+        range: Range<out V>,
+        limit: Limit
+    ): Long? = ops.zrevrangestorebylex(dstKey, srcKey, range, limit).awaitFirstOrNull()
 
-    override suspend fun zrevrank(key: K, member: V): Long? = ops.zrevrank(key, member).awaitFirstOrNull()
+    override suspend fun zrevrangestorebyscore(
+        dstKey: K,
+        srcKey: K,
+        range: Range<out Number>,
+        limit: Limit
+    ): Long? = ops.zrevrangestorebyscore(dstKey, srcKey, range, limit).awaitFirstOrNull()
 
-    override suspend fun zscan(key: K): ScoredValueScanCursor<V>? = ops.zscan(key).awaitFirstOrNull()
+    override suspend fun zrevrank(key: K, member: V): Long? =
+        ops.zrevrank(key, member).awaitFirstOrNull()
 
-    override suspend fun zscan(key: K, scanArgs: ScanArgs): ScoredValueScanCursor<V>? = ops.zscan(key, scanArgs).awaitFirstOrNull()
+    override suspend fun zscan(key: K): ScoredValueScanCursor<V>? =
+        ops.zscan(key).awaitFirstOrNull()
+
+    override suspend fun zscan(key: K, scanArgs: ScanArgs): ScoredValueScanCursor<V>? =
+        ops.zscan(key, scanArgs).awaitFirstOrNull()
 
     override suspend fun zscan(key: K, scanCursor: ScanCursor, scanArgs: ScanArgs): ScoredValueScanCursor<V>? = ops.zscan(key, scanCursor, scanArgs).awaitFirstOrNull()
 

@@ -869,8 +869,21 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
+     * @param range the rank.
+     * @return the number of elements in the resulting sorted set.
+     * @since 6.2.1
+     */
+    Mono<Long> zrangestore(K dstKey, K srcKey, Range<Long> range);
+
+    /**
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
+     * {@code dstKey} destination key.
+     *
+     * @param dstKey the dst key.
+     * @param srcKey the src key.
      * @param range the lexicographical range.
-     * @return The number of elements in the resulting sorted set.
+     * @param limit the limit to apply.
+     * @return the number of elements in the resulting sorted set.
      * @since 6.1
      */
     Mono<Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
@@ -882,7 +895,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param dstKey the dst key.
      * @param srcKey the src key.
      * @param range the score range.
-     * @return The number of elements in the resulting sorted set.
+     * @param limit the limit to apply.
+     * @return the number of elements in the resulting sorted set.
      * @since 6.1
      */
     Mono<Long> zrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit);
@@ -1361,13 +1375,26 @@ public interface RedisSortedSetReactiveCommands<K, V> {
     Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
+     * Get the specified range of elements ordered from high to low in the sorted set stored at {@code srcKey} and stores the
+     * result in the {@code dstKey} destination key.
+     *
+     * @param dstKey the dst key.
+     * @param srcKey the src key.
+     * @param range the rank.
+     * @return the number of elements in the resulting sorted set.
+     * @since 6.2.1
+     */
+    Mono<Long> zrevrangestore(K dstKey, K srcKey, Range<Long> range);
+
+    /**
      * Get the lexicographical range ordered from high to low of elements in the sorted set stored at {@code srcKey} and stores
      * the result in the {@code dstKey} destination key.
      *
      * @param dstKey the src key.
      * @param srcKey the dst key.
      * @param range the lexicographical range.
-     * @return The number of elements in the resulting sorted set.
+     * @param limit the limit to apply.
+     * @return the number of elements in the resulting sorted set.
      * @since 6.1
      */
     Mono<Long> zrevrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
@@ -1380,7 +1407,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      *
      * @param srcKey the dst key.
      * @param range the score range.
-     * @return The number of elements in the resulting sorted set.
+     * @param limit the limit to apply.
+     * @return the number of elements in the resulting sorted set.
      * @since 6.1
      */
     Mono<Long> zrevrangestorebyscore(K dstKey, K srcKey, Range<? extends Number> range, Limit limit);
