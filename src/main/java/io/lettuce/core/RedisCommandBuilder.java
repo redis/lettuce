@@ -3427,7 +3427,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullLimit(limit);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.addKeys(dstKey, srcKey).add(minValue(range)).add(maxValue(range)).add(BYLEX);
+        args.addKeys(dstKey, srcKey);
+
+        if (rev) {
+            args.add(maxValue(range)).add(minValue(range));
+        } else {
+            args.add(minValue(range)).add(maxValue(range));
+        }
+
+        args.add(BYLEX);
+
         if (rev) {
             args.add(REV);
         }
@@ -3442,7 +3451,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullLimit(limit);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
-        args.addKeys(dstKey, srcKey).add(min(range)).add(max(range)).add(BYSCORE);
+        args.addKeys(dstKey, srcKey);
+
+        if (rev) {
+            args.add(max(range)).add(min(range));
+        } else {
+            args.add(min(range)).add(max(range));
+        }
+
+        args.add(BYSCORE);
         if (rev) {
             args.add(REV);
         }
