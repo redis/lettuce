@@ -105,14 +105,15 @@
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
     <osgi.dynamicImport>*</osgi.dynamicImport>
 
-    <mybatis.version>3.5.10</mybatis.version>
+    <mybatis.version>3.5.11</mybatis.version>
     <spring.version>6.0.0-SNAPSHOT</spring.version>
     <spring-batch.version>5.0.0-SNAPSHOT</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
 
-    <junit.version>5.9.0</junit.version>
-    <project.build.outputTimestamp>1645112687</project.build.outputTimestamp>
+    <junit.version>5.9.1</junit.version>
 
+    <!-- Reproducible Builds -->
+    <project.build.outputTimestamp>1757561022</project.build.outputTimestamp>
   </properties>
 
   <dependencies>
@@ -218,7 +219,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>2.0.0</version>
+      <version>2.0.2</version>
       <scope>test</scope>
     </dependency>
 
