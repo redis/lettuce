@@ -67,6 +67,7 @@ class MyBatisPagingItemReaderBuilderTest {
     Mockito.when(this.sqlSessionFactory.openSession(ExecutorType.BATCH)).thenReturn(this.sqlSession);
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("id", 1);
+    parameters.put("name", "Doe");
     parameters.put("_page", 0);
     parameters.put("_pagesize", 10);
     parameters.put("_skiprows", 0);
@@ -80,6 +81,7 @@ class MyBatisPagingItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
+            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
             .build();
     // @formatter:on
     itemReader.afterPropertiesSet();
@@ -105,6 +107,7 @@ class MyBatisPagingItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
+            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
             .saveState(false)
             .build();
     // @formatter:on
@@ -128,6 +131,7 @@ class MyBatisPagingItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
+            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
             .maxItemCount(2)
             .build();
     // @formatter:on
@@ -152,6 +156,7 @@ class MyBatisPagingItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
+            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
             .pageSize(2)
             .build();
     // @formatter:on
@@ -160,6 +165,7 @@ class MyBatisPagingItemReaderBuilderTest {
     Map<String, Object> parameters = new HashMap<>();
     parameters.put("id", 1);
     parameters.put("_page", 0);
+    parameters.put("name", "Doe");
     parameters.put("_pagesize", 2);
     parameters.put("_skiprows", 0);
     Mockito.when(this.sqlSession.selectList("selectFoo", parameters)).thenReturn(getFoos());

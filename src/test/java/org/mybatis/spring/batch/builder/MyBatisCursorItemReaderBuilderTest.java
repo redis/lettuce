@@ -17,7 +17,9 @@ package org.mybatis.spring.batch.builder;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.ExecutorType;
@@ -56,7 +58,10 @@ class MyBatisCursorItemReaderBuilderTest {
 
     Mockito.when(this.sqlSessionFactory.openSession(ExecutorType.SIMPLE)).thenReturn(this.sqlSession);
     Mockito.when(this.cursor.iterator()).thenReturn(getFoos().iterator());
-    Mockito.when(this.sqlSession.selectCursor("selectFoo", Collections.singletonMap("id", 1))).thenReturn(this.cursor);
+    Map<String, Object> parameters = new HashMap<>();
+    parameters.put("id", 1);
+    parameters.put("name", "Doe");
+    Mockito.when(this.sqlSession.selectCursor("selectFoo", parameters)).thenReturn(this.cursor);
   }
 
   @Test
@@ -67,6 +72,7 @@ class MyBatisCursorItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
+            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
             .build();
     // @formatter:on
     itemReader.afterPropertiesSet();
@@ -93,6 +99,7 @@ class MyBatisCursorItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
+            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
             .saveState(false)
             .build();
     // @formatter:on
@@ -118,6 +125,7 @@ class MyBatisCursorItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
+            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
             .maxItemCount(2)
             .build();
     // @formatter:on

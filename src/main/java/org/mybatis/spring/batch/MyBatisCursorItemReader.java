@@ -21,6 +21,7 @@ import static org.springframework.util.ClassUtils.getShortName;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.session.ExecutorType;
@@ -41,6 +42,7 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
   private SqlSession sqlSession;
 
   private Map<String, Object> parameterValues;
+  private Supplier<Map<String, Object>> parameterSupplier;
 
   private Cursor<T> cursor;
   private Iterator<T> cursorIterator;
@@ -63,6 +65,11 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
     Map<String, Object> parameters = new HashMap<>();
     if (parameterValues != null) {
       parameters.putAll(parameterValues);
+    }
+
+    Map<String, Object> dynamicParameters;
+    if (parameterSupplier != null && (dynamicParameters = parameterSupplier.get()) != null) {
+      parameters.putAll(dynamicParameters);
     }
 
     sqlSession = sqlSessionFactory.openSession(ExecutorType.SIMPLE);
@@ -120,5 +127,15 @@ public class MyBatisCursorItemReader<T> extends AbstractItemCountingItemStreamIt
    */
   public void setParameterValues(Map<String, Object> parameterValues) {
     this.parameterValues = parameterValues;
+  }
+
+  /**
+   * The parameter supplier used to get parameter values for the query execution.
+   *
+   * @param parameterSupplier
+   *          the supplier used to get values keyed by the parameter named used in the query string.
+   */
+  public void setParameterSupplier(Supplier<Map<String, Object>> parameterSupplier) {
+    this.parameterSupplier = parameterSupplier;
   }
 }

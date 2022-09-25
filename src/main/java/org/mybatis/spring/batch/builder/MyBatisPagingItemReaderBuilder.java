@@ -17,6 +17,7 @@ package org.mybatis.spring.batch.builder;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.batch.MyBatisPagingItemReader;
@@ -35,6 +36,7 @@ public class MyBatisPagingItemReaderBuilder<T> {
   private SqlSessionFactory sqlSessionFactory;
   private String queryId;
   private Map<String, Object> parameterValues;
+  private Supplier<Map<String, Object>> parameterSupplier;
   private Integer pageSize;
   private Boolean saveState;
   private Integer maxItemCount;
@@ -81,6 +83,21 @@ public class MyBatisPagingItemReaderBuilder<T> {
    */
   public MyBatisPagingItemReaderBuilder<T> parameterValues(Map<String, Object> parameterValues) {
     this.parameterValues = parameterValues;
+    return this;
+  }
+
+  /**
+   * Set the parameter supplier to be used to get parameters for the query execution.
+   *
+   * @param parameterSupplier
+   *          the parameter supplier to be used to get parameters for the query execution
+   *
+   * @return this instance for method chaining
+   *
+   * @see MyBatisPagingItemReader#setParameterSupplier(Supplier)
+   */
+  public MyBatisPagingItemReaderBuilder<T> parameterSupplier(Supplier<Map<String, Object>> parameterSupplier) {
+    this.parameterSupplier = parameterSupplier;
     return this;
   }
 
@@ -140,6 +157,7 @@ public class MyBatisPagingItemReaderBuilder<T> {
     reader.setSqlSessionFactory(this.sqlSessionFactory);
     reader.setQueryId(this.queryId);
     reader.setParameterValues(this.parameterValues);
+    reader.setParameterSupplier(this.parameterSupplier);
     Optional.ofNullable(this.pageSize).ifPresent(reader::setPageSize);
     Optional.ofNullable(this.saveState).ifPresent(reader::setSaveState);
     Optional.ofNullable(this.maxItemCount).ifPresent(reader::setMaxItemCount);

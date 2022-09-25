@@ -21,6 +21,7 @@ import static org.springframework.util.ClassUtils.getShortName;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
@@ -46,6 +47,8 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   private SqlSessionTemplate sqlSessionTemplate;
 
   private Map<String, Object> parameterValues;
+
+  private Supplier<Map<String, Object>> parameterSupplier;
 
   public MyBatisPagingItemReader() {
     setName(getShortName(MyBatisPagingItemReader.class));
@@ -82,6 +85,16 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   }
 
   /**
+   * The parameter supplier used to get parameter values for the query execution.
+   *
+   * @param parameterSupplier
+   *          the supplier used to get values keyed by the parameter named used in the query string.
+   */
+  public void setParameterSupplier(Supplier<Map<String, Object>> parameterSupplier) {
+    this.parameterSupplier = parameterSupplier;
+  }
+
+  /**
    * Check mandatory properties.
    *
    * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
@@ -101,6 +114,10 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
     Map<String, Object> parameters = new HashMap<>();
     if (parameterValues != null) {
       parameters.putAll(parameterValues);
+    }
+    Map<String, Object> dynamicParameters;
+    if (parameterSupplier != null && (dynamicParameters = parameterSupplier.get()) != null) {
+      parameters.putAll(dynamicParameters);
     }
     parameters.put("_page", getPage());
     parameters.put("_pagesize", getPageSize());
