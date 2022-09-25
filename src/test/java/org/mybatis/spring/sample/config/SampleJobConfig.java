@@ -34,9 +34,12 @@ import org.mybatis.spring.sample.domain.User;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -50,12 +53,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 @EnableBatchProcessing
 public class SampleJobConfig {
 
-  @Autowired
-  private JobBuilderFactory jobBuilderFactory;
-
-  @Autowired
-  private StepBuilderFactory stepBuilderFactory;
-
   @Bean
   public DataSource dataSource() {
     return new EmbeddedDatabaseBuilder().setType(EmbeddedDatabaseType.HSQL)
@@ -66,15 +63,15 @@ public class SampleJobConfig {
   }
 
   @Bean
-  public PlatformTransactionManager transactionalManager() {
-    return new DataSourceTransactionManager(dataSource());
+  public PlatformTransactionManager transactionManager(DataSource dataSource) {
+    return new DataSourceTransactionManager(dataSource);
   }
 
   @Bean
-  public SqlSessionFactory sqlSessionFactory() throws Exception {
+  public SqlSessionFactory sqlSessionFactory(DataSource dataSource) throws Exception {
     PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
     SqlSessionFactoryBean ss = new SqlSessionFactoryBean();
-    ss.setDataSource(dataSource());
+    ss.setDataSource(dataSource);
     ss.setMapperLocations(resourcePatternResolver.getResources("org/mybatis/spring/sample/mapper/*.xml"));
     org.apache.ibatis.session.Configuration configuration = new org.apache.ibatis.session.Configuration();
     configuration.setDefaultExecutorType(ExecutorType.BATCH);
@@ -83,10 +80,10 @@ public class SampleJobConfig {
   }
 
   @Bean
-  public MyBatisCursorItemReader<User> reader() throws Exception {
+  public MyBatisCursorItemReader<User> reader(SqlSessionFactory sqlSessionFactory) {
     // @formatter:off
     return new MyBatisCursorItemReaderBuilder<User>()
-        .sqlSessionFactory(sqlSessionFactory())
+        .sqlSessionFactory(sqlSessionFactory)
         .queryId("org.mybatis.spring.sample.mapper.UserMapper.getUsers")
         .build();
     // @formatter:on
@@ -98,10 +95,10 @@ public class SampleJobConfig {
   }
 
   @Bean
-  public MyBatisBatchItemWriter<Person> writer() throws Exception {
+  public MyBatisBatchItemWriter<Person> writer(SqlSessionFactory sqlSessionFactory) {
     // @formatter:off
     return new MyBatisBatchItemWriterBuilder<Person>()
-        .sqlSessionFactory(sqlSessionFactory())
+        .sqlSessionFactory(sqlSessionFactory)
         .statementId("org.mybatis.spring.sample.mapper.PersonMapper.createPerson")
         .itemToParameterConverter(createItemToParameterMapConverter("batch_java_config_user", LocalDateTime.now()))
         .build();
@@ -120,24 +117,24 @@ public class SampleJobConfig {
   }
 
   @Bean
-  public Job importUserJob() throws Exception {
+  public Job importUserJob(JobRepository jobRepository, Step step1) {
     // @formatter:off
-    return jobBuilderFactory.get("importUserJob")
-        .flow(step1())
+    return new JobBuilder("importUserJob", jobRepository)
+        .flow(step1)
         .end()
         .build();
     // @formatter:on
   }
 
   @Bean
-  public Step step1() throws Exception {
+  public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager, ItemReader<User> reader,
+      ItemProcessor<User, Person> processor, ItemWriter<Person> writer) {
     // @formatter:off
-    return stepBuilderFactory.get("step1")
-        .<User, Person>chunk(10)
-        .reader(reader())
-        .processor(processor())
-        .writer(writer())
-        .transactionManager(transactionalManager())
+    return new StepBuilder("step1", jobRepository)
+        .<User, Person>chunk(10, transactionManager)
+        .reader(reader)
+        .processor(processor)
+        .writer(writer)
         .build();
     // @formatter:on
   }
