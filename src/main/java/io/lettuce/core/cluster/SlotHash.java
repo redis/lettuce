@@ -16,7 +16,11 @@
 package io.lettuce.core.cluster;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import io.lettuce.core.codec.CRC16;
 import io.lettuce.core.codec.RedisCodec;
@@ -54,7 +58,7 @@ public class SlotHash {
      * @param key the key
      * @return slot
      */
-    public static final int getSlot(String key) {
+    public static int getSlot(String key) {
         return getSlot(key.getBytes());
     }
 
@@ -116,16 +120,16 @@ public class SlotHash {
     /**
      * Partition keys by slot-hash. The resulting map honors order of the keys.
      *
-     * @param codec codec to encode the key
-     * @param keys iterable of keys
+     * @param codec codec to encode the key.
+     * @param keys iterable of keys.
      * @param <K> Key type.
      * @param <V> Value type.
-     * @result map between slot-hash and an ordered list of keys.
-     *
+     * @return map between slot-hash and an ordered list of keys.
      */
-    static <K, V> Map<Integer, List<K>> partition(RedisCodec<K, V> codec, Iterable<K> keys) {
+    public static <K, V> Map<Integer, List<K>> partition(RedisCodec<K, V> codec, Iterable<K> keys) {
 
         Map<Integer, List<K>> partitioned = new HashMap<>();
+
         for (K key : keys) {
             int slot = getSlot(codec.encodeKey(key));
             if (!partitioned.containsKey(slot)) {
@@ -134,19 +138,23 @@ public class SlotHash {
             Collection<K> list = partitioned.get(slot);
             list.add(key);
         }
+
         return partitioned;
     }
 
     /**
      * Create mapping between the Key and hash slot.
      *
-     * @param partitioned map partitioned by slothash and keys
-     * @param <K>
+     * @param partitioned map partitioned by slot-hash and keys.
+     * @return map of keys to their slot-hash.
+     * @param <K> key type
+     * @param <S> slot-hash number type.
      */
-    static <K> Map<K, Integer> getSlots(Map<Integer, ? extends Iterable<K>> partitioned) {
+    public static <S extends Number, K> Map<K, S> getSlots(Map<S, ? extends Iterable<K>> partitioned) {
 
-        Map<K, Integer> result = new HashMap<>();
-        for (Map.Entry<Integer, ? extends Iterable<K>> entry : partitioned.entrySet()) {
+        Map<K, S> result = new HashMap<>();
+
+        for (Map.Entry<S, ? extends Iterable<K>> entry : partitioned.entrySet()) {
             for (K key : entry.getValue()) {
                 result.put(key, entry.getKey());
             }
