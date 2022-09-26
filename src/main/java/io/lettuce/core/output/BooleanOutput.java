@@ -16,6 +16,7 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.codec.RedisCodec;
 
@@ -41,7 +42,7 @@ public class BooleanOutput<K, V> extends CommandOutput<K, V, Boolean> {
 
     @Override
     public void set(ByteBuffer bytes) {
-        output = (bytes != null) ? Boolean.TRUE : Boolean.FALSE;
+        output = (bytes != null) ? Boolean.parseBoolean(StandardCharsets.UTF_8.decode(bytes).toString()) : Boolean.FALSE;
     }
 
     @Override

@@ -44,6 +44,8 @@ import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for scripting commands.
+ *
  * @author Will Glozer
  * @author Mark Paluch
  * @author dengliming
@@ -53,6 +55,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 public class ScriptingCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -77,13 +80,21 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
             }
             redis.ping();
         }).waitOrTimeout();
-
     }
 
     @Test
     void eval() {
+
+        redis.set(key, "true");
+        assertThat((Boolean) redis.eval("return 1 + 1 == 4", BOOLEAN)).isEqualTo(false);
+        assertThat((Boolean) redis.eval("return redis.call('GET', KEYS[1])", BOOLEAN, key)).isEqualTo(true);
+
+        redis.set(key, "1");
+
         assertThat((Boolean) redis.eval("return 1 + 1 == 4", BOOLEAN)).isEqualTo(false);
         assertThat((Number) redis.eval("return 1 + 1", INTEGER)).isEqualTo(2L);
+        assertThat((String) redis.eval("return redis.call('GET', KEYS[1])", VALUE, key)).isEqualTo("1");
+        assertThat((Long) redis.eval("return redis.call('GET', KEYS[1])", INTEGER, key)).isEqualTo(1L);
         assertThat((String) redis.eval("return {ok='status'}", STATUS)).isEqualTo("status");
         assertThat((String) redis.eval("return 'one'", VALUE)).isEqualTo("one");
         assertThat((List<?>) redis.eval("return {1, 'one', {2}}", MULTI)).isEqualTo(list(1L, "one", list(2L)));
@@ -132,8 +143,9 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
         assertThat((Number) redis.eval(script, INTEGER)).isEqualTo(2L);
         assertThat((Number) redis.evalsha(digest, INTEGER)).isEqualTo(2L);
 
-        assertThatThrownBy(() -> redis.evalsha(redis.digest("return 1 + 1 == 4"), INTEGER)).isInstanceOf(
-                RedisNoScriptException.class).hasMessageContaining("NOSCRIPT No matching script. Please use EVAL.");
+        assertThatThrownBy(() -> redis.evalsha(redis.digest("return 1 + 1 == 4"), INTEGER))
+                .isInstanceOf(RedisNoScriptException.class)
+                .hasMessageContaining("NOSCRIPT No matching script. Please use EVAL.");
     }
 
     @Test
@@ -141,8 +153,8 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
         redis.scriptFlush();
         String digest = redis.digest("return {1234, 5678}");
 
-        assertThatThrownBy(() -> redis.evalsha(digest, MULTI)).isInstanceOf(RedisNoScriptException.class).hasMessageContaining(
-                "NOSCRIPT No matching script. Please use EVAL.");
+        assertThatThrownBy(() -> redis.evalsha(digest, MULTI)).isInstanceOf(RedisNoScriptException.class)
+                .hasMessageContaining("NOSCRIPT No matching script. Please use EVAL.");
     }
 
     @Test
@@ -227,4 +239,5 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
         assertThat(redis.scriptFlush(FlushMode.SYNC)).isEqualTo("OK");
         assertThat(redis.scriptExists(digest1)).isEqualTo(list(false));
     }
+
 }

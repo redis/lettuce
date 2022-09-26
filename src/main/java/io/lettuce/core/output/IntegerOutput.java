@@ -16,6 +16,7 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.codec.RedisCodec;
 
@@ -40,7 +41,12 @@ public class IntegerOutput<K, V> extends CommandOutput<K, V, Long> {
 
     @Override
     public void set(ByteBuffer bytes) {
-        output = null;
+        if (bytes == null) {
+            output = null;
+        } else {
+            // fallback for long as ByteBuffer
+            output = Long.parseLong(StandardCharsets.UTF_8.decode(bytes).toString());
+        }
     }
 
 }
