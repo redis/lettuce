@@ -36,7 +36,7 @@ public class MyBatisCursorItemReaderBuilder<T> {
   private SqlSessionFactory sqlSessionFactory;
   private String queryId;
   private Map<String, Object> parameterValues;
-  private Supplier<Map<String, Object>> parameterSupplier;
+  private Supplier<Map<String, Object>> parameterValuesSupplier;
   private Boolean saveState;
   private Integer maxItemCount;
 
@@ -88,15 +88,18 @@ public class MyBatisCursorItemReaderBuilder<T> {
   /**
    * Set the parameter supplier to be used to get parameters for the query execution.
    *
-   * @param parameterSupplier
+   * @param parameterValuesSupplier
    *          the parameter supplier to be used to get parameters for the query execution
    *
    * @return this instance for method chaining
    *
-   * @see MyBatisCursorItemReader#setParameterSupplier(Supplier)
+   * @see MyBatisCursorItemReader#setParameterValuesSupplier(Supplier)
+   *
+   * @since 2.1.0
    */
-  public MyBatisCursorItemReaderBuilder<T> parameterSupplier(Supplier<Map<String, Object>> parameterSupplier) {
-    this.parameterSupplier = parameterSupplier;
+  public MyBatisCursorItemReaderBuilder<T> parameterValuesSupplier(
+      Supplier<Map<String, Object>> parameterValuesSupplier) {
+    this.parameterValuesSupplier = parameterValuesSupplier;
     return this;
   }
 
@@ -141,7 +144,7 @@ public class MyBatisCursorItemReaderBuilder<T> {
     reader.setSqlSessionFactory(this.sqlSessionFactory);
     reader.setQueryId(this.queryId);
     reader.setParameterValues(this.parameterValues);
-    reader.setParameterSupplier(this.parameterSupplier);
+    reader.setParameterValuesSupplier(this.parameterValuesSupplier);
     Optional.ofNullable(this.saveState).ifPresent(reader::setSaveState);
     Optional.ofNullable(this.maxItemCount).ifPresent(reader::setMaxItemCount);
     return reader;

@@ -81,7 +81,7 @@ class MyBatisPagingItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
-            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
+            .parameterValuesSupplier(() -> Collections.singletonMap("name", "Doe"))
             .build();
     // @formatter:on
     itemReader.afterPropertiesSet();
@@ -107,7 +107,7 @@ class MyBatisPagingItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
-            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
+            .parameterValuesSupplier(() -> Collections.singletonMap("name", "Doe"))
             .saveState(false)
             .build();
     // @formatter:on
@@ -131,7 +131,7 @@ class MyBatisPagingItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
-            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
+            .parameterValuesSupplier(() -> Collections.singletonMap("name", "Doe"))
             .maxItemCount(2)
             .build();
     // @formatter:on
@@ -156,7 +156,7 @@ class MyBatisPagingItemReaderBuilderTest {
             .sqlSessionFactory(this.sqlSessionFactory)
             .queryId("selectFoo")
             .parameterValues(Collections.singletonMap("id", 1))
-            .parameterSupplier(() -> Collections.singletonMap("name", "Doe"))
+            .parameterValuesSupplier(() -> Collections.singletonMap("name", "Doe"))
             .pageSize(2)
             .build();
     // @formatter:on
