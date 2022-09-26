@@ -136,6 +136,17 @@ class RedisURIBuilderUnitTests {
     }
 
     @Test
+    void redisWithSSLFromUri() {
+        RedisURI template = RedisURI.Builder.redis("localhost").withSsl(true).withVerifyPeer(SslVerifyMode.CA)
+                .withStartTls(true).build();
+        RedisURI result = RedisURI.builder().withHost("localhost").withSsl(template).build();
+
+        assertThat(result.isSsl()).isTrue();
+        assertThat(result.getVerifyMode()).isEqualTo(SslVerifyMode.CA);
+        assertThat(result.isStartTls()).isTrue();
+    }
+
+    @Test
     void redisSslFromUrl() {
         RedisURI result = RedisURI.create(RedisURI.URI_SCHEME_REDIS_SECURE + "://:password@localhost/1");
 
