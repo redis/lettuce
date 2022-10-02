@@ -20,7 +20,9 @@ import static org.springframework.util.ClassUtils.getShortName;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Supplier;
 
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
@@ -46,6 +48,8 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   private SqlSessionTemplate sqlSessionTemplate;
 
   private Map<String, Object> parameterValues;
+
+  private Supplier<Map<String, Object>> parameterValuesSupplier;
 
   public MyBatisPagingItemReader() {
     setName(getShortName(MyBatisPagingItemReader.class));
@@ -82,6 +86,18 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
   }
 
   /**
+   * The parameter supplier used to get parameter values for the query execution.
+   *
+   * @param parameterValuesSupplier
+   *          the supplier used to get values keyed by the parameter named used in the query string.
+   *
+   * @since 2.1.0
+   */
+  public void setParameterValuesSupplier(Supplier<Map<String, Object>> parameterValuesSupplier) {
+    this.parameterValuesSupplier = parameterValuesSupplier;
+  }
+
+  /**
    * Check mandatory properties.
    *
    * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
@@ -102,6 +118,7 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
     if (parameterValues != null) {
       parameters.putAll(parameterValues);
     }
+    Optional.ofNullable(parameterValuesSupplier).map(Supplier::get).ifPresent(parameters::putAll);
     parameters.put("_page", getPage());
     parameters.put("_pagesize", getPageSize());
     parameters.put("_skiprows", getPage() * getPageSize());
