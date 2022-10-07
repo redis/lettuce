@@ -57,7 +57,7 @@
         <commons-pool.version>2.9.0</commons-pool.version>
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
-        <junit5.version>5.8.2</junit5.version>
+        <junit5.version>5.9.1</junit5.version>
         <hamcrest-library.version>2.2</hamcrest-library.version>
         <hdr-histogram-version>2.1.12</hdr-histogram-version>
         <kotlin.version>1.4.32</kotlin.version>
@@ -65,8 +65,8 @@
         <latencyutils.version>2.0.3</latencyutils.version>
         <log4j2-version>2.17.2</log4j2-version>
         <micrometer.version>1.6.13</micrometer.version>
-        <mockito.version>4.6.1</mockito.version>
-        <netty.version>4.1.79.Final</netty.version>
+        <mockito.version>4.8.0</mockito.version>
+        <netty.version>4.1.82.Final</netty.version>
         <openwebbeans.version>2.0.27</openwebbeans.version>
         <reactor.version>3.3.22.RELEASE</reactor.version>
         <rxjava.version>1.3.8</rxjava.version>
@@ -87,8 +87,7 @@
         <connection>scm:git:https://github.com/lettuce-io/lettuce-core.git</connection>
         <developerConnection>scm:git:https://github.com/lettuce-io/lettuce-core.git</developerConnection>
         <url>http://github.com/lettuce-io/lettuce-core</url>
-      <tag>HEAD</tag>
-  </scm>
+    </scm>
 
     <distributionManagement>
         <snapshotRepository>
@@ -214,7 +213,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative</artifactId>
-            <version>2.0.53.Final</version>
+            <version>2.0.54.Final</version>
             <classifier>${os.detected.classifier}</classifier>
             <optional>true</optional>
         </dependency>
@@ -244,7 +243,7 @@
         <dependency>
             <groupId>io.netty.incubator</groupId>
             <artifactId>netty-incubator-transport-native-io_uring</artifactId>
-            <version>0.0.14.Final</version>
+            <version>0.0.15.Final</version>
             <classifier>linux-x86_64</classifier>
             <optional>true</optional>
         </dependency>
@@ -499,19 +498,19 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>flatten-maven-plugin</artifactId>
-                    <version>1.2.5</version>
+                    <version>1.3.0</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.4.2</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-antrun-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
 
                 <plugin>
@@ -523,25 +522,25 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.10.1</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.6</version>
+                    <version>3.0.1</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.4.1</version>
                 </plugin>
 
                 <plugin>
@@ -553,12 +552,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M5</version>
+                    <version>3.0.0-M7</version>
                     <dependencies>
                         <dependency>
                             <groupId>org.apache.maven.surefire</groupId>
                             <artifactId>surefire-junit-platform</artifactId>
-                            <version>3.0.0-M5</version>
+                            <version>3.0.0-M7</version>
                         </dependency>
                     </dependencies>
                 </plugin>
@@ -566,12 +565,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
-                    <version>3.0.0-M5</version>
+                    <version>3.0.0-M7</version>
                     <dependencies>
                         <dependency>
                             <groupId>org.apache.maven.surefire</groupId>
                             <artifactId>surefire-junit-platform</artifactId>
-                            <version>3.0.0-M5</version>
+                            <version>3.0.0-M7</version>
                         </dependency>
                     </dependencies>
                 </plugin>
@@ -585,25 +584,25 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.3.0</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>exec-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
 
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.7</version>
+                    <version>0.8.8</version>
                 </plugin>
 
                 <plugin>
                     <groupId>net.nicoulaj.maven.plugins</groupId>
                     <artifactId>checksum-maven-plugin</artifactId>
-                    <version>1.9</version>
+                    <version>1.11</version>
                 </plugin>
             </plugins>
         </pluginManagement>
