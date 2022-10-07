@@ -57,14 +57,14 @@ public abstract class ReadFrom {
     public static final ReadFrom UPSTREAM_PREFERRED = new ReadFromImpl.ReadFromUpstreamPreferred();
 
     /**
-     * Setting to read preferred from replica and fall back to upstream if no replica is not available.
+     * Setting to read preferred from replica and fall back to upstream if no replica is available.
      *
      * @since 5.2
      */
     public static final ReadFrom REPLICA_PREFERRED = new ReadFromImpl.ReadFromReplicaPreferred();
 
     /**
-     * Setting to read preferred from replicas and fall back to upstream if no replica is not available.
+     * Setting to read preferred from replicas and fall back to upstream if no replica is available.
      *
      * @since 4.4
      * @deprecated Renamed to {@link #REPLICA_PREFERRED}.
