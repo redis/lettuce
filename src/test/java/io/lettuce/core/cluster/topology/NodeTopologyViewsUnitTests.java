@@ -15,18 +15,18 @@
  */
 package io.lettuce.core.cluster.topology;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.Set;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
 
 /**
+ * Unit tests for {@link NodeTopologyViews}.
+ *
  * @author Mark Paluch
  */
 class NodeTopologyViewsUnitTests {
@@ -63,21 +63,24 @@ class NodeTopologyViewsUnitTests {
 
         String viewByLocalhost = "1 127.0.0.1:6479 master - 0 1401258245007 2 connected 8000-11999\n";
 
-        assertThatThrownBy(() -> new NodeTopologyView(localhost, viewByLocalhost, "", 0).getOwnPartition()).isInstanceOf(
-                IllegalStateException.class);
+        assertThatThrownBy(() -> new NodeTopologyView(localhost, viewByLocalhost, "", 0).getOwnPartition())
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void infoParsingShouldNotFailWithWindowsPaths() {
+
         RedisURI localhost = RedisURI.create("127.0.0.1", 6479);
         String viewByLocalhost = "1 127.0.0.1:6479 master - 0 1401258245007 2 connected 8000-11999\n";
-        String info = "executable:c:\\users\\user~1.after\\appdata\\local\\temp\\1657742252598-0\\redis-server-7.0.2.exe\n" +
-                "connected_clients:2\n" +
-                "config_file:C:\\Users\\user~1.after\\AppData\\Local\\Temp\\redis-server_496893189609231874520793.conf\n" +
-                "master_repl_offset:5\n";
+        String info = "executable:c:\\users\\user~1.after\\appdata\\local\\temp\\1657742252598-0\\redis-server-7.0.2.exe\n"
+                + "connected_clients:2\n"
+                + "config_file:C:\\Users\\user~1.after\\AppData\\Local\\Temp\\redis-server_496893189609231874520793.conf\n"
+                + "master_repl_offset:5\n";
+
         NodeTopologyView nodeTopologyView = new NodeTopologyView(localhost, viewByLocalhost, info, 0);
-        Assertions.assertEquals(2,  nodeTopologyView.getConnectedClients());
-        Assertions.assertEquals(5, nodeTopologyView.getReplicationOffset());
+
+        assertThat(nodeTopologyView.getConnectedClients()).isEqualTo(2);
+        assertThat(nodeTopologyView.getReplicationOffset()).isEqualTo(5);
     }
 
 }

@@ -15,15 +15,16 @@
  */
 package io.lettuce.core.cluster.topology;
 
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-
-import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import io.lettuce.core.internal.LettuceStrings;
 
 /**
  * @author Mark Paluch
@@ -47,8 +48,9 @@ class NodeTopologyView {
 
     private final String info;
 
-    private static final Pattern CONNECTED_CLIENTS_PATTERN = makePatternForProperty("connected_clients");
-    private static final Pattern MASTER_REPL_OFFSET_PATTERN = makePatternForProperty("master_repl_offset");
+    private static final Pattern CONNECTED_CLIENTS_PATTERN = patternFor("connected_clients");
+
+    private static final Pattern MASTER_REPL_OFFSET_PATTERN = patternFor("master_repl_offset");
 
     private NodeTopologyView(RedisURI redisURI) {
 
@@ -75,25 +77,27 @@ class NodeTopologyView {
         this.latency = latency;
     }
 
-    private static Pattern makePatternForProperty(String propertyName) {
-        return Pattern.compile("^" + Pattern.quote(propertyName) + ":(.*)$", Pattern.MULTILINE);
-    }
-
-    private static <T> T matchOrDefault(String info, Pattern pattern, T defaultValue, Function<String, T> converterIfFound) {
-        Matcher matcher = pattern.matcher(info);
-        if(!matcher.find()) {
-            return defaultValue;
-        }
-        String foundValue = matcher.group(1);
-        return foundValue == null ? defaultValue : converterIfFound.apply(foundValue);
+    private static Pattern patternFor(String propertyName) {
+        return Pattern.compile(String.format("^%s:(.*)$", Pattern.quote(propertyName)), Pattern.MULTILINE);
     }
 
     private int getClientCount(String info) {
-        return matchOrDefault(info, CONNECTED_CLIENTS_PATTERN, 0, Integer::parseInt);
+        return getMatchOrDefault(info, CONNECTED_CLIENTS_PATTERN, Integer::parseInt, 0);
     }
 
     private long getReplicationOffset(String info) {
-        return matchOrDefault(info, MASTER_REPL_OFFSET_PATTERN, -1L, Long::parseLong);
+        return getMatchOrDefault(info, MASTER_REPL_OFFSET_PATTERN, Long::parseLong, -1L);
+    }
+
+    private static <T> T getMatchOrDefault(String haystack, Pattern pattern, Function<String, T> converter, T defaultValue) {
+
+        Matcher matcher = pattern.matcher(haystack);
+
+        if (matcher.find() && LettuceStrings.isNotEmpty(matcher.group(1))) {
+            return converter.apply(matcher.group(1));
+        }
+
+        return defaultValue;
     }
 
     static NodeTopologyView from(RedisURI redisURI, Requests clusterNodesRequests, Requests infoRequests) {
