@@ -277,6 +277,20 @@ public class CommandArgs<K, V> {
         return this;
     }
 
+    /**
+     * Add all arguments from {@link CommandArgs}
+     *
+     * @param args the args, must not be {@code null}
+     * @return the command args.
+     * @since 6.2
+     */
+    public CommandArgs<K, V> addAll(CommandArgs<?, ?> args) {
+
+        LettuceAssert.notNull(args, "CommandArgs must not be null");
+        this.singularArguments.addAll(args.singularArguments);
+        return this;
+    }
+
     @Override
     public String toString() {
 

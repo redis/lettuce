@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * Dynamic selection of nodes.
@@ -40,15 +41,15 @@ class DynamicNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CM
 
     private final Predicate<RedisClusterNode> selector;
 
-    private final ClusterConnectionProvider.Intent intent;
+    private final ConnectionIntent connectionIntent;
 
     private final Function<StatefulRedisConnection<K, V>, API> apiExtractor;
 
     public DynamicNodeSelection(ClusterDistributionChannelWriter writer, Predicate<RedisClusterNode> selector,
-            ClusterConnectionProvider.Intent intent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
+                                ConnectionIntent connectionIntent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
 
         this.selector = selector;
-        this.intent = intent;
+        this.connectionIntent = connectionIntent;
         this.writer = writer;
         this.apiExtractor = apiExtractor;
     }
@@ -59,7 +60,7 @@ class DynamicNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CM
         RedisURI uri = redisClusterNode.getUri();
         AsyncClusterConnectionProvider async = (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
 
-        return async.getConnectionAsync(intent, uri.getHost(), uri.getPort());
+        return async.getConnectionAsync(connectionIntent, uri.getHost(), uri.getPort());
     }
 
     @Override

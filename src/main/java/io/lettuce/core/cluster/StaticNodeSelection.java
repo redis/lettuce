@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * Static selection of nodes.
@@ -38,17 +39,17 @@ class StaticNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD
 
     private final ClusterDistributionChannelWriter writer;
 
-    private final ClusterConnectionProvider.Intent intent;
+    private final ConnectionIntent connectionIntent;
 
     private final List<RedisClusterNode> redisClusterNodes;
 
     private final Function<StatefulRedisConnection<K, V>, API> apiExtractor;
 
     public StaticNodeSelection(ClusterDistributionChannelWriter writer, Predicate<RedisClusterNode> selector,
-            ClusterConnectionProvider.Intent intent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
+                               ConnectionIntent connectionIntent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
 
         this.writer = writer;
-        this.intent = intent;
+        this.connectionIntent = connectionIntent;
         this.apiExtractor = apiExtractor;
 
         this.redisClusterNodes = writer.getPartitions().stream().filter(selector).collect(Collectors.toList());
@@ -60,7 +61,7 @@ class StaticNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD
         RedisURI uri = redisClusterNode.getUri();
 
         AsyncClusterConnectionProvider async = (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
-        return async.getConnectionAsync(intent, uri.getHost(), uri.getPort());
+        return async.getConnectionAsync(connectionIntent, uri.getHost(), uri.getPort());
     }
 
     @Override

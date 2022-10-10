@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
+import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.KeyScanArgs;
 import io.lettuce.core.RestoreArgs;
 import io.lettuce.core.output.KeyStreamingChannel;
@@ -93,10 +94,22 @@ public interface RedisKeyCommands<K, V> {
      *
      * @param key the key.
      * @param seconds the seconds type: long.
-     * @return Boolean integer-reply specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
      */
     Boolean expire(K key, long seconds);
+
+    /**
+     * Set a key's time to live in seconds.
+     *
+     * @param key the key.
+     * @param seconds the seconds type: long.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 6.2
+     */
+    Boolean expire(K key, long seconds, ExpireArgs expireArgs);
 
     /**
      * Set a key's time to live in seconds.
@@ -110,13 +123,24 @@ public interface RedisKeyCommands<K, V> {
     Boolean expire(K key, Duration seconds);
 
     /**
+     * Set a key's time to live in seconds.
+     *
+     * @param key the key.
+     * @param seconds the seconds.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 6.2
+     */
+    Boolean expire(K key, Duration seconds, ExpireArgs expireArgs);
+
+    /**
      * Set the expiration for a key as a UNIX timestamp.
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     Boolean expireat(K key, long timestamp);
 
@@ -125,11 +149,34 @@ public interface RedisKeyCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 6.2
+     */
+    Boolean expireat(K key, long timestamp, ExpireArgs expireArgs);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     Boolean expireat(K key, Date timestamp);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 6.2
+     */
+    Boolean expireat(K key, Date timestamp, ExpireArgs expireArgs);
 
     /**
      * Set the expiration for a key as a UNIX timestamp.
@@ -141,6 +188,28 @@ public interface RedisKeyCommands<K, V> {
      * @since 6.1
      */
     Boolean expireat(K key, Instant timestamp);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 6.2
+     */
+    Boolean expireat(K key, Instant timestamp, ExpireArgs expireArgs);
+
+    /**
+     * Get the time to live for a key in as unix timestamp in seconds.
+     *
+     * @param key the key.
+     * @return Long integer-reply in seconds, or a negative value in order to signal an error. The command returns {@code -1} if
+     *         the key exists but has no associated expiration time. The command returns {@code -2} if the key does not exist.
+     * @since 6.2
+     */
+    Long expiretime(K key);
 
     /**
      * Find all keys matching the given pattern.
@@ -242,10 +311,22 @@ public interface RedisKeyCommands<K, V> {
      *
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
-     * @return integer-reply, specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
      */
     Boolean pexpire(K key, long milliseconds);
+
+    /**
+     * Set a key's time to live in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds type: long.
+     * @param expireArgs the expire arguments.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
+     * @since 6.2
+     */
+    Boolean pexpire(K key, long milliseconds, ExpireArgs expireArgs);
 
     /**
      * Set a key's time to live in milliseconds.
@@ -259,13 +340,24 @@ public interface RedisKeyCommands<K, V> {
     Boolean pexpire(K key, Duration milliseconds);
 
     /**
+     * Set a key's time to live in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @param expireArgs the expire arguments.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
+     * @since 6.2
+     */
+    Boolean pexpire(K key, Duration milliseconds, ExpireArgs expireArgs);
+
+    /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     Boolean pexpireat(K key, long timestamp);
 
@@ -274,11 +366,34 @@ public interface RedisKeyCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @return Boolean integer-reply specifically:
-     *         {@code true} if the timeout was set. {@code false} if {@code key} does not exist or the timeout could not be set
-     *         (see: {@code EXPIRE}).
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 6.2
+     */
+    Boolean pexpireat(K key, long timestamp, ExpireArgs expireArgs);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
      */
     Boolean pexpireat(K key, Date timestamp);
+
+    /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 6.2
+     */
+    Boolean pexpireat(K key, Date timestamp, ExpireArgs expireArgs);
 
     /**
      * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
@@ -291,11 +406,35 @@ public interface RedisKeyCommands<K, V> {
     Boolean pexpireat(K key, Instant timestamp);
 
     /**
+     * Set the expiration for a key as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 6.2
+     */
+    Boolean pexpireat(K key, Instant timestamp, ExpireArgs expireArgs);
+
+    /**
+     * Get the time to live for a key in as unix timestamp in milliseconds.
+     *
+     * @param key the key.
+     * @return Long integer-reply in milliseconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
+     * @since 6.2
+     */
+    Long pexpiretime(K key);
+
+    /**
      * Get the time to live for a key in milliseconds.
      *
      * @param key the key.
-     * @return Long integer-reply TTL in milliseconds, or a negative value in order to signal an error (see the description
-     *         above).
+     * @return Long integer-reply in milliseconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
      */
     Long pttl(K key);
 
@@ -387,6 +526,46 @@ public interface RedisKeyCommands<K, V> {
      * Sort the elements in a list, set or sorted set.
      *
      * @param key the key.
+     * @return List&lt;V&gt; array-reply list of sorted elements.
+     * @since 6.2
+     */
+    List<V> sortReadOnly(K key);
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
+     * @return Long number of values.
+     * @since 6.2
+     */
+    Long sortReadOnly(ValueStreamingChannel<V> channel, K key);
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param key the key.
+     * @param sortArgs sort arguments.
+     * @return List&lt;V&gt; array-reply list of sorted elements.
+     * @since 6.2
+     */
+    List<V> sortReadOnly(K key, SortArgs sortArgs);
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param channel streaming channel that receives a call for every value.
+     * @param key the key.
+     * @param sortArgs sort arguments.
+     * @return Long number of values.
+     * @since 6.2
+     */
+    Long sortReadOnly(ValueStreamingChannel<V> channel, K key, SortArgs sortArgs);
+
+    /**
+     * Sort the elements in a list, set or sorted set.
+     *
+     * @param key the key.
      * @param sortArgs sort arguments.
      * @param destination the destination key to store sort results.
      * @return Long number of values.
@@ -405,7 +584,9 @@ public interface RedisKeyCommands<K, V> {
      * Get the time to live for a key.
      *
      * @param key the key.
-     * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error (see the description above).
+     * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
      */
     Long ttl(K key);
 
@@ -425,8 +606,7 @@ public interface RedisKeyCommands<K, V> {
     KeyScanCursor<K> scan();
 
     /**
-     * Incrementally iterate the keys space.
-     * Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; scan cursor.
@@ -435,8 +615,7 @@ public interface RedisKeyCommands<K, V> {
     KeyScanCursor<K> scan(ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
-     * Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
@@ -462,8 +641,7 @@ public interface RedisKeyCommands<K, V> {
     StreamScanCursor scan(KeyStreamingChannel<K> channel);
 
     /**
-     * Incrementally iterate the keys space.
-     * Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanArgs scan arguments.
@@ -473,8 +651,7 @@ public interface RedisKeyCommands<K, V> {
     StreamScanCursor scan(KeyStreamingChannel<K> channel, ScanArgs scanArgs);
 
     /**
-     * Incrementally iterate the keys space.
-     * Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
+     * Incrementally iterate the keys space. Use {@link KeyScanArgs} to specify {@code SCAN}-specific arguments.
      *
      * @param channel streaming channel that receives a call for every key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.

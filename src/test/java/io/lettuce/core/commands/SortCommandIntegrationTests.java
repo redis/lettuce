@@ -16,7 +16,7 @@
 package io.lettuce.core.commands;
 
 import static io.lettuce.core.SortArgs.Builder.*;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
@@ -29,8 +29,11 @@ import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for {@code SORT} and {@code SORT_RO} commands.
+ *
  * @author Will Glozer
  * @author Mark Paluch
  */
@@ -114,4 +117,47 @@ public class SortCommandIntegrationTests extends TestSupport {
         assertThat(redis.sortStore("one", desc(), "two")).isEqualTo(3);
         assertThat(redis.lrange("two", 0, -1)).isEqualTo(list("3", "2", "1"));
     }
+
+    @Test
+    @EnabledOnCommand("SORT_RO")
+    void sortReadOnly() {
+        redis.rpush(key, "3", "2", "1");
+        assertThat(redis.sortReadOnly(key)).isEqualTo(list("1", "2", "3"));
+        assertThat(redis.sortReadOnly(key, asc())).isEqualTo(list("1", "2", "3"));
+    }
+
+    @Test
+    @EnabledOnCommand("SORT_RO")
+    void sortReadOnlyStreaming() {
+        redis.rpush(key, "3", "2", "1");
+
+        ListStreamingAdapter<String> streamingAdapter = new ListStreamingAdapter<>();
+        Long count = redis.sortReadOnly(streamingAdapter, key);
+
+        assertThat(count.longValue()).isEqualTo(3);
+        assertThat(streamingAdapter.getList()).isEqualTo(list("1", "2", "3"));
+        streamingAdapter.getList().clear();
+
+        count = redis.sortReadOnly(streamingAdapter, key, desc());
+        assertThat(count.longValue()).isEqualTo(3);
+        assertThat(streamingAdapter.getList()).isEqualTo(list("3", "2", "1"));
+    }
+
+    @Test
+    @EnabledOnCommand("SORT_RO")
+    void sortReadOnlyAlpha() {
+        redis.rpush(key, "A", "B", "C");
+        assertThat(redis.sortReadOnly(key, alpha().desc())).isEqualTo(list("C", "B", "A"));
+    }
+
+    @Test
+    @EnabledOnCommand("SORT_RO")
+    void sortReadOnlyBy() {
+        redis.rpush(key, "foo", "bar", "baz");
+        redis.set("weight_foo", "8");
+        redis.set("weight_bar", "4");
+        redis.set("weight_baz", "2");
+        assertThat(redis.sortReadOnly(key, by("weight_*"))).isEqualTo(list("baz", "bar", "foo"));
+    }
+
 }

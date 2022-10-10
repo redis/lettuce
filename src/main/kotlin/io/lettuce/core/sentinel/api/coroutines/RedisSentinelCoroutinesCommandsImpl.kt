@@ -40,21 +40,28 @@ import java.net.SocketAddress
 @ExperimentalLettuceCoroutinesApi
 internal class RedisSentinelCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisSentinelReactiveCommands<K, V>) : RedisSentinelCoroutinesCommands<K, V> {
 
-    override suspend fun getMasterAddrByName(key: K): SocketAddress = ops.getMasterAddrByName(key).awaitLast()
+    override suspend fun getMasterAddrByName(key: K): SocketAddress =
+        ops.getMasterAddrByName(key).awaitLast()
 
     override suspend fun masters(): List<Map<K, V>> = ops.masters().asFlow().toList()
 
     override suspend fun master(key: K): Map<K, V> = ops.master(key).awaitLast()
 
-    override suspend fun slaves(key: K): List<Map<K, V>> = ops.slaves(key).asFlow().toList()
+    override suspend fun slaves(key: K): List<Map<K, V>> =
+        ops.slaves(key).asFlow().toList()
+
+    override suspend fun replicas(key: K): List<Map<K, V>> =
+        ops.replicas(key).asFlow().toList()
 
     override suspend fun reset(key: K): Long = ops.reset(key).awaitLast()
 
     override suspend fun failover(key: K): String = ops.failover(key).awaitLast()
 
-    override suspend fun monitor(key: K, ip: String, port: Int, quorum: Int): String = ops.monitor(key, ip, port, quorum).awaitLast()
+    override suspend fun monitor(key: K, ip: String, port: Int, quorum: Int): String =
+        ops.monitor(key, ip, port, quorum).awaitLast()
 
-    override suspend fun set(key: K, option: String, value: V): String = ops.set(key, option, value).awaitLast()
+    override suspend fun set(key: K, option: String, value: V): String =
+        ops.set(key, option, value).awaitLast()
 
     override suspend fun remove(key: K): String = ops.remove(key).awaitLast()
 

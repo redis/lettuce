@@ -22,6 +22,7 @@ import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * Connection provider for cluster operations.
@@ -32,41 +33,41 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 interface ClusterConnectionProvider extends Closeable {
 
     /**
-     * Provide a connection for the intent and cluster slot. The underlying connection is bound to the nodeId. If the slot
-     * responsibility changes, the connection will not point to the updated nodeId.
+     * Provide a connection for the connectionIntent and cluster slot. The underlying connection is bound to the nodeId. If the
+     * slot responsibility changes, the connection will not point to the updated nodeId.
      *
-     * @param intent {@link Intent#READ} or {@link ClusterConnectionProvider.Intent#WRITE}. {@literal READ} connections will be
-     *        provided with {@literal READONLY} mode set.
+     * @param connectionIntent {@link ConnectionIntent#READ} or {@link ConnectionIntent#WRITE}. {@literal READ} connections will
+     *        be provided with {@literal READONLY} mode set.
      * @param slot the slot-hash of the key, see {@link SlotHash}.
      * @return a valid connection which handles the slot.
      * @throws RedisException if no know node can be found for the slot
      */
-    <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, int slot);
+    <K, V> StatefulRedisConnection<K, V> getConnection(ConnectionIntent connectionIntent, int slot);
 
     /**
-     * Provide a connection for the intent and host/port. The connection can survive cluster topology updates. The connection
-     * will be closed if the node identified by {@code host} and {@code port} is no longer part of the cluster.
+     * Provide a connection for the connectionIntent and host/port. The connection can survive cluster topology updates. The
+     * connection will be closed if the node identified by {@code host} and {@code port} is no longer part of the cluster.
      *
-     * @param intent {@link Intent#READ} or {@link Intent#WRITE}. {@literal READ} connections will be provided with
-     *        {@literal READONLY} mode set.
+     * @param connectionIntent {@link ConnectionIntent#READ} or {@link ConnectionIntent#WRITE}. {@literal READ} connections will
+     *        be provided with {@literal READONLY} mode set.
      * @param host host of the node.
      * @param port port of the node.
      * @return a valid connection to the given host.
      * @throws RedisException if the host is not part of the cluster
      */
-    <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, String host, int port);
+    <K, V> StatefulRedisConnection<K, V> getConnection(ConnectionIntent connectionIntent, String host, int port);
 
     /**
-     * Provide a connection for the intent and nodeId. The connection can survive cluster topology updates. The connection will
-     * be closed if the node identified by {@code nodeId} is no longer part of the cluster.
+     * Provide a connection for the connectionIntent and nodeId. The connection can survive cluster topology updates. The
+     * connection will be closed if the node identified by {@code nodeId} is no longer part of the cluster.
      *
-     * @param intent {@link Intent#READ} or {@link Intent#WRITE}. {@literal READ} connections will be provided with
-     *        {@literal READONLY} mode set.
+     * @param connectionIntent {@link ConnectionIntent#READ} or {@link ConnectionIntent#WRITE}. {@literal READ} connections will
+     *        be provided with {@literal READONLY} mode set.
      * @param nodeId the nodeId of the cluster node.
      * @return a valid connection to the given nodeId.
      * @throws RedisException if the {@code nodeId} is not part of the cluster
      */
-    <K, V> StatefulRedisConnection<K, V> getConnection(Intent intent, String nodeId);
+    <K, V> StatefulRedisConnection<K, V> getConnection(ConnectionIntent connectionIntent, String nodeId);
 
     /**
      * Close the connections and free all resources.
@@ -100,8 +101,8 @@ interface ClusterConnectionProvider extends Closeable {
     void setPartitions(Partitions partitions);
 
     /**
-     * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands
-     * can be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
+     * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands can
+     * be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
      *
      * @param autoFlush state of autoFlush.
@@ -128,9 +129,5 @@ interface ClusterConnectionProvider extends Closeable {
      * @return the read from setting
      */
     ReadFrom getReadFrom();
-
-    enum Intent {
-        READ, WRITE;
-    }
 
 }

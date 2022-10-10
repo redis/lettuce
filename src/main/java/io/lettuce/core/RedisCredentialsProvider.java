@@ -23,6 +23,9 @@ import io.lettuce.core.internal.LettuceAssert;
 /**
  * Interface for loading {@link RedisCredentials} that are used for authentication. A commonly-used implementation is
  * {@link StaticCredentialsProvider} for a fixed set of credentials.
+ * <p>
+ * Credentials are requested by the driver after connecting to the server. Therefore, credential retrieval is subject to
+ * complete within the connection creation timeout to avoid connection failures.
  *
  * @author Mark Paluch
  * @since 6.2

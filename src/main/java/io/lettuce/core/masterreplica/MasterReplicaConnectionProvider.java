@@ -45,6 +45,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.models.role.RedisNodeDescription;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -88,14 +89,14 @@ class MasterReplicaConnectionProvider<K, V> {
     }
 
     /**
-     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link MasterReplicaConnectionProvider.Intent#WRITE} intentions
-     * use the master connection, {@link MasterReplicaConnectionProvider.Intent#READ} intentions lookup one or more read
-     * candidates using the {@link ReadFrom} setting.
+     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link ConnectionIntent#WRITE} intentions use the master
+     * connection, {@link ConnectionIntent#READ} intentions lookup one or more read candidates using the {@link ReadFrom}
+     * setting.
      *
      * @param intent command intent
      * @return the connection.
      */
-    public StatefulRedisConnection<K, V> getConnection(Intent intent) {
+    public StatefulRedisConnection<K, V> getConnection(ConnectionIntent intent) {
 
         if (debugEnabled) {
             logger.debug("getConnection(" + intent + ")");
@@ -109,21 +110,21 @@ class MasterReplicaConnectionProvider<K, V> {
     }
 
     /**
-     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link MasterReplicaConnectionProvider.Intent#WRITE} intentions
-     * use the master connection, {@link MasterReplicaConnectionProvider.Intent#READ} intentions lookup one or more read
-     * candidates using the {@link ReadFrom} setting.
+     * Retrieve a {@link StatefulRedisConnection} by the intent. {@link ConnectionIntent#WRITE} intentions use the master
+     * connection, {@link ConnectionIntent#READ} intentions lookup one or more read candidates using the {@link ReadFrom}
+     * setting.
      *
      * @param intent command intent
      * @return the connection.
      * @throws RedisException if the host is not part of the cluster
      */
-    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(Intent intent) {
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent intent) {
 
         if (debugEnabled) {
             logger.debug("getConnectionAsync(" + intent + ")");
         }
 
-        if (readFrom != null && intent == Intent.READ) {
+        if (readFrom != null && intent == ConnectionIntent.READ) {
             List<RedisNodeDescription> selection = readFrom.select(new ReadFrom.Nodes() {
 
                 @Override
@@ -389,10 +390,6 @@ class MasterReplicaConnectionProvider<K, V> {
             return result;
         }
 
-    }
-
-    enum Intent {
-        READ, WRITE;
     }
 
 }

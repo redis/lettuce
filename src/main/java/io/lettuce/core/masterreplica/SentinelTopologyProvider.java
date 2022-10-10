@@ -102,7 +102,7 @@ class SentinelTopologyProvider implements TopologyProvider {
         RedisSentinelReactiveCommands<String, String> reactive = connection.reactive();
 
         Mono<Tuple2<Map<String, String>, List<Map<String, String>>>> masterAndReplicas = reactive.master(masterId)
-                .zipWith(reactive.slaves(masterId).collectList()).timeout(this.timeout).flatMap(tuple -> {
+                .zipWith(reactive.replicas(masterId).collectList()).timeout(this.timeout).flatMap(tuple -> {
                     return ResumeAfter.close(connection).thenEmit(tuple);
                 }).doOnError(e -> connection.closeAsync());
 

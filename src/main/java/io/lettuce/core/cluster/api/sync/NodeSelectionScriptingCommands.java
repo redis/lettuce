@@ -91,7 +91,7 @@ public interface NodeSelectionScriptingCommands<K, V> {
      * @return script result.
      * @since 6.2
      */
-    <T> Executions<T> evalReadonly(byte[] script, ScriptOutputType type, K[] keys, V... values);
+    <T> Executions<T> evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values);
 
     /**
      * Evaluates a script cached on the server side by its SHA1 digest.
@@ -127,7 +127,7 @@ public interface NodeSelectionScriptingCommands<K, V> {
      * @return script result.
      * @since 6.2
      */
-    <T> Executions<T> evalshaReadonly(String digest, ScriptOutputType type, K[] keys, V... values);
+    <T> Executions<T> evalshaReadOnly(String digest, ScriptOutputType type, K[] keys, V... values);
 
     /**
      * Check existence of scripts in the script cache.

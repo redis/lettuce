@@ -15,9 +15,8 @@
  */
 package io.lettuce.core.event;
 
-import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Scheduler;
 import io.lettuce.core.event.jfr.EventRecorder;
 
@@ -30,23 +29,20 @@ import io.lettuce.core.event.jfr.EventRecorder;
  */
 public class DefaultEventBus implements EventBus {
 
-    private final DirectProcessor<Event> bus;
-
-    private final FluxSink<Event> sink;
+    private final Sinks.Many<Event> bus;
 
     private final Scheduler scheduler;
 
     private final EventRecorder recorder = EventRecorder.getInstance();
 
     public DefaultEventBus(Scheduler scheduler) {
-        this.bus = DirectProcessor.create();
-        this.sink = bus.sink();
+        this.bus = Sinks.many().multicast().directBestEffort();
         this.scheduler = scheduler;
     }
 
     @Override
     public Flux<Event> get() {
-        return bus.onBackpressureDrop().publishOn(scheduler);
+        return bus.asFlux().onBackpressureDrop().publishOn(scheduler);
     }
 
     @Override
@@ -54,7 +50,15 @@ public class DefaultEventBus implements EventBus {
 
         recorder.record(event);
 
-        sink.next(event);
+        Sinks.EmitResult emitResult;
+
+        while ((emitResult = bus.tryEmitNext(event)) == Sinks.EmitResult.FAIL_NON_SERIALIZED) {
+            // busy-loop
+        }
+
+        if (emitResult != Sinks.EmitResult.FAIL_ZERO_SUBSCRIBER) {
+            emitResult.orThrow();
+        }
     }
 
 }

@@ -19,6 +19,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -28,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.LMPopArgs;
 import io.lettuce.core.LMoveArgs;
 import io.lettuce.core.LPosArgs;
 import io.lettuce.core.TestSupport;
@@ -71,7 +74,19 @@ public class ListCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("BLMOVE") // Redis 6.2
     void blpopDoubleTimeout() {
         redis.rpush("two", "2", "3");
-        assertThat(redis.blpop(0.5, "one", "two")).isEqualTo(kv("two", "2"));
+        assertThat(redis.blpop(0.1, "one", "two")).isEqualTo(kv("two", "2"));
+        assertThat(redis.blpop(0.1, "one", "two")).isEqualTo(kv("two", "3"));
+        assertThat(redis.blpop(0.1, "one", "two")).isNull();
+    }
+
+    @Test
+    @EnabledOnCommand("BLMPOP") // Redis 7.0
+    void blmpop() {
+        redis.rpush("{0}two", "1", "2", "3");
+        LMPopArgs args = LMPopArgs.Builder.left().count(2);
+        assertThat(redis.blmpop(0.1, args, "{0}one", "{0}two")).isEqualTo(kv("{0}two", Arrays.asList("1", "2")));
+        assertThat(redis.blmpop(0.1, args, "{0}one", "{0}two")).isEqualTo(kv("{0}two", Collections.singletonList("3")));
+        assertThat(redis.blmpop(0.1, args, "{0}one", "{0}two")).isNull();
     }
 
     @Test
@@ -133,6 +148,19 @@ public class ListCommandIntegrationTests extends TestSupport {
         assertThat((long) redis.llen(key)).isEqualTo(0);
         redis.lpush(key, "one");
         assertThat((long) redis.llen(key)).isEqualTo(1);
+    }
+
+    @Test
+    @EnabledOnCommand("LMPOP") // Redis 7.0
+    void lmpop() {
+        redis.rpush("{0}two", "1", "2", "3", "4");
+        redis.rpush("{0}one", "1");
+        assertThat(redis.lmpop(LMPopArgs.Builder.left().count(2), "{0}two")).isEqualTo(kv("{0}two", Arrays.asList("1", "2")));
+        assertThat(redis.lmpop(LMPopArgs.Builder.right().count(1), "{0}two"))
+                .isEqualTo(kv("{0}two", Collections.singletonList("4")));
+        assertThat(redis.lmpop(LMPopArgs.Builder.right().count(2), "{0}two", "{0}one"))
+                .isEqualTo(kv("{0}two", Collections.singletonList("3")));
+        assertThat(redis.lmpop(LMPopArgs.Builder.right().count(1), "{0}two")).isNull();
     }
 
     @Test
@@ -349,4 +377,5 @@ public class ListCommandIntegrationTests extends TestSupport {
         assertThat(redis.lrange(list1, 0, -1)).containsExactly("two", "three");
         assertThat(redis.lrange(list2, 0, -1)).containsOnly("one");
     }
+
 }

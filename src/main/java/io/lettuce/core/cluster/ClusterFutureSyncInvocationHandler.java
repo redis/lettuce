@@ -36,6 +36,7 @@ import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.DefaultMethods;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.TimeoutProvider;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.RedisCommand;
 
 /**
@@ -98,15 +99,15 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
             }
 
             if (method.getName().equals("readonly") && args.length == 1) {
-                return nodes((Predicate<RedisClusterNode>) args[0], ClusterConnectionProvider.Intent.READ, false);
+                return nodes((Predicate<RedisClusterNode>) args[0], ConnectionIntent.READ, false);
             }
 
             if (method.getName().equals("nodes") && args.length == 1) {
-                return nodes((Predicate<RedisClusterNode>) args[0], ClusterConnectionProvider.Intent.WRITE, false);
+                return nodes((Predicate<RedisClusterNode>) args[0], ConnectionIntent.WRITE, false);
             }
 
             if (method.getName().equals("nodes") && args.length == 2) {
-                return nodes((Predicate<RedisClusterNode>) args[0], ClusterConnectionProvider.Intent.WRITE, (Boolean) args[1]);
+                return nodes((Predicate<RedisClusterNode>) args[0], ConnectionIntent.WRITE, (Boolean) args[1]);
             }
 
             Method targetMethod = apiMethodCache.computeIfAbsent(method, key -> {
@@ -172,7 +173,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
         }
     }
 
-    protected Object nodes(Predicate<RedisClusterNode> predicate, ClusterConnectionProvider.Intent intent, boolean dynamic) {
+    protected Object nodes(Predicate<RedisClusterNode> predicate, ConnectionIntent connectionIntent, boolean dynamic) {
 
         NodeSelectionSupport<RedisCommands<K, V>, ?> selection = null;
 
@@ -182,11 +183,11 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
 
             if (dynamic) {
                 selection = new DynamicNodeSelection<RedisCommands<K, V>, Object, K, V>(
-                        impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::sync);
+                        impl.getClusterDistributionChannelWriter(), predicate, connectionIntent, StatefulRedisConnection::sync);
             } else {
 
                 selection = new StaticNodeSelection<RedisCommands<K, V>, Object, K, V>(
-                        impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::sync);
+                        impl.getClusterDistributionChannelWriter(), predicate, connectionIntent, StatefulRedisConnection::sync);
             }
         }
 
@@ -194,7 +195,7 @@ class ClusterFutureSyncInvocationHandler<K, V> extends AbstractInvocationHandler
 
             StatefulRedisClusterPubSubConnectionImpl<K, V> impl = (StatefulRedisClusterPubSubConnectionImpl<K, V>) connection;
             selection = new StaticNodeSelection<RedisCommands<K, V>, Object, K, V>(impl.getClusterDistributionChannelWriter(),
-                    predicate, intent, StatefulRedisConnection::sync);
+                    predicate, connectionIntent, StatefulRedisConnection::sync);
         }
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,

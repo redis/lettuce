@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.cluster.commands;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.Arrays;
 
@@ -33,17 +32,24 @@ import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.commands.CustomCommandIntegrationTests;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.*;
-import io.lettuce.test.TestFutures;
+import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.TestFutures;
 
 /**
+ * Integration tests custom command objects using Redis Cluster.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
 class CustomClusterCommandIntegrationTests extends TestSupport {
 
     private final StatefulRedisClusterConnection<String, String> connection;
+
     private RedisAdvancedClusterCommands<String, String> redis;
 
     @Inject
@@ -74,17 +80,15 @@ class CustomClusterCommandIntegrationTests extends TestSupport {
     void dispatchShouldFailForWrongDataType() {
 
         redis.hset(key, key, value);
-        assertThatThrownBy(
-                () -> redis.dispatch(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
-                        new CommandArgs<>(StringCodec.UTF8).addKey(key))).isInstanceOf(RedisCommandExecutionException.class);
+        assertThatThrownBy(() -> redis.dispatch(CommandType.GET, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).addKey(key))).isInstanceOf(RedisCommandExecutionException.class);
     }
 
     @Test
     void clusterAsyncPing() {
 
         RedisCommand<String, String, String> command = new Command<>(CustomCommandIntegrationTests.MyCommands.PING,
-                new StatusOutput<>(
-                StringCodec.UTF8), null);
+                new StatusOutput<>(StringCodec.UTF8), null);
 
         AsyncCommand<String, String, String> async = new AsyncCommand<>(command);
         connection.dispatch(async);
@@ -96,12 +100,10 @@ class CustomClusterCommandIntegrationTests extends TestSupport {
     void clusterAsyncBatchPing() {
 
         RedisCommand<String, String, String> command1 = new Command<>(CustomCommandIntegrationTests.MyCommands.PING,
-                new StatusOutput<>(
-                StringCodec.UTF8), null);
+                new StatusOutput<>(StringCodec.UTF8), null);
 
         RedisCommand<String, String, String> command2 = new Command<>(CustomCommandIntegrationTests.MyCommands.PING,
-                new StatusOutput<>(
-                StringCodec.UTF8), null);
+                new StatusOutput<>(StringCodec.UTF8), null);
 
         AsyncCommand<String, String, String> async1 = new AsyncCommand<>(command1);
         AsyncCommand<String, String, String> async2 = new AsyncCommand<>(command2);
@@ -137,10 +139,10 @@ class CustomClusterCommandIntegrationTests extends TestSupport {
     void clusterFireAndForget() {
 
         RedisCommand<String, String, String> command = new Command<>(CustomCommandIntegrationTests.MyCommands.PING,
-                new StatusOutput<>(
-                StringCodec.UTF8), null);
+                new StatusOutput<>(StringCodec.UTF8), null);
         connection.dispatch(command);
         assertThat(command.isCancelled()).isFalse();
 
     }
+
 }

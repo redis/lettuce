@@ -21,8 +21,8 @@ import io.lettuce.core.KillArgs
 import io.lettuce.core.output.CommandOutput
 import io.lettuce.core.protocol.CommandArgs
 import io.lettuce.core.protocol.ProtocolKeyword
-import java.net.SocketAddress
 import kotlinx.coroutines.flow.Flow
+import java.net.SocketAddress
 
 /**
  * Coroutine executed commands for Redis Sentinel.
@@ -65,7 +65,20 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @return List<Map<K, V>>.
      */
+    @Deprecated(
+        "Since 6.2, use #replicas(…) instead",
+        replaceWith = ReplaceWith("replicas(K)")
+    )
     suspend fun slaves(key: K): List<Map<K, V>>
+
+    /**
+     * Provides a list of replicas for the master with the specified name.
+     *
+     * @param key the key.
+     * @return List<Map<K, V>>.
+     * @since 6.2
+     */
+    suspend fun replicas(key: K): List<Map<K, V>>
 
     /**
      * This command will reset all the masters with matching name.

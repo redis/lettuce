@@ -50,6 +50,7 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgsAccessor;
 import io.lettuce.core.protocol.CompleteableCommand;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisCommand;
 
@@ -156,7 +157,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     @Override
-    public StatefulRedisConnection<K, V> getConnection(String nodeId) {
+    public StatefulRedisConnection<K, V> getConnection(String nodeId, ConnectionIntent connectionIntent) {
 
         RedisURI redisURI = lookup(nodeId);
 
@@ -164,12 +165,12 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             throw new RedisException("NodeId " + nodeId + " does not belong to the cluster");
         }
 
-        return getClusterDistributionChannelWriter().getClusterConnectionProvider()
-                .getConnection(ClusterConnectionProvider.Intent.WRITE, nodeId);
+        return getClusterDistributionChannelWriter().getClusterConnectionProvider().getConnection(connectionIntent, nodeId);
     }
 
     @Override
-    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String nodeId) {
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String nodeId,
+            ConnectionIntent connectionIntent) {
 
         RedisURI redisURI = lookup(nodeId);
 
@@ -180,23 +181,23 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         AsyncClusterConnectionProvider provider = (AsyncClusterConnectionProvider) getClusterDistributionChannelWriter()
                 .getClusterConnectionProvider();
 
-        return provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, nodeId);
+        return provider.getConnectionAsync(connectionIntent, nodeId);
     }
 
     @Override
-    public StatefulRedisConnection<K, V> getConnection(String host, int port) {
+    public StatefulRedisConnection<K, V> getConnection(String host, int port, ConnectionIntent connectionIntent) {
 
-        return getClusterDistributionChannelWriter().getClusterConnectionProvider()
-                .getConnection(ClusterConnectionProvider.Intent.WRITE, host, port);
+        return getClusterDistributionChannelWriter().getClusterConnectionProvider().getConnection(connectionIntent, host, port);
     }
 
     @Override
-    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String host, int port) {
+    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(String host, int port,
+            ConnectionIntent connectionIntent) {
 
         AsyncClusterConnectionProvider provider = (AsyncClusterConnectionProvider) getClusterDistributionChannelWriter()
                 .getClusterConnectionProvider();
 
-        return provider.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port);
+        return provider.getConnectionAsync(connectionIntent, host, port);
     }
 
     @Override

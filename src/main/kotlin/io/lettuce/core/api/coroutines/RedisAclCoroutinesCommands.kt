@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 the original author or authors.
+ * Copyright 2020-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import io.lettuce.core.AclCategory
 import io.lettuce.core.AclSetuserArgs
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.protocol.CommandType
+import io.lettuce.core.protocol.RedisCommand
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -54,6 +55,27 @@ interface RedisAclCoroutinesCommands<K : Any, V : Any> {
      * @return Long The number of users that were deleted
      */
     suspend fun aclDeluser(vararg usernames: String): Long?
+
+    /**
+     * Simulate the execution of a given command by a given user.
+     *
+     * @param username the specified username
+     * @param command the specified command
+     * @param args the specified args of command
+     * @return String reply: OK on success.
+     * @since 6.2
+     */
+    suspend fun aclDryRun(username: String, command: String, vararg args: String): String?
+
+    /**
+     * Simulate the execution of a given command by a given user.
+     *
+     * @param username the specified username
+     * @param command the specified command to inspect
+     * @return String reply: OK on success.
+     * @since 6.2
+     */
+    suspend fun aclDryRun(username: String, command: RedisCommand<K, V, *>): String?
 
     /**
      * The command generates a password.

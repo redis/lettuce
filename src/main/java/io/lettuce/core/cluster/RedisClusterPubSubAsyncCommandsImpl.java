@@ -35,6 +35,7 @@ import io.lettuce.core.cluster.pubsub.api.async.NodeSelectionPubSubAsyncCommands
 import io.lettuce.core.cluster.pubsub.api.async.PubSubAsyncNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
@@ -130,7 +131,7 @@ public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncC
             RedisURI uri = redisClusterNode.getUri();
             AsyncClusterConnectionProvider async = (AsyncClusterConnectionProvider) writer.getClusterConnectionProvider();
 
-            return async.getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, uri.getHost(), uri.getPort())
+            return async.getConnectionAsync(ConnectionIntent.WRITE, uri.getHost(), uri.getPort())
                     .thenApply(it -> (StatefulRedisPubSubConnection<K, V>) it);
         }
 

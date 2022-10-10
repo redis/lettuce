@@ -54,6 +54,7 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
@@ -514,12 +515,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     private CompletableFuture<RedisClusterAsyncCommands<K, V>> getConnectionAsync(String nodeId) {
-        return getConnectionProvider().<K, V> getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, nodeId)
+        return getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, nodeId)
                 .thenApply(StatefulRedisConnection::async);
     }
 
     private CompletableFuture<RedisClusterAsyncCommands<K, V>> getConnectionAsync(String host, int port) {
-        return getConnectionProvider().<K, V> getConnectionAsync(ClusterConnectionProvider.Intent.WRITE, host, port)
+        return getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, host, port)
                 .thenApply(StatefulRedisConnection::async);
     }
 
@@ -535,16 +536,16 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public AsyncNodeSelection<K, V> readonly(Predicate<RedisClusterNode> predicate) {
-        return nodes(predicate, ClusterConnectionProvider.Intent.READ, false);
+        return nodes(predicate, ConnectionIntent.READ, false);
     }
 
     @Override
     public AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, boolean dynamic) {
-        return nodes(predicate, ClusterConnectionProvider.Intent.WRITE, dynamic);
+        return nodes(predicate, ConnectionIntent.WRITE, dynamic);
     }
 
     @SuppressWarnings("unchecked")
-    protected AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, ClusterConnectionProvider.Intent intent,
+    protected AsyncNodeSelection<K, V> nodes(Predicate<RedisClusterNode> predicate, ConnectionIntent connectionIntent,
             boolean dynamic) {
 
         NodeSelectionSupport<RedisAsyncCommands<K, V>, ?> selection;
@@ -552,10 +553,10 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         StatefulRedisClusterConnectionImpl<K, V> impl = (StatefulRedisClusterConnectionImpl<K, V>) getConnection();
         if (dynamic) {
             selection = new DynamicNodeSelection<RedisAsyncCommands<K, V>, Object, K, V>(
-                    impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::async);
+                    impl.getClusterDistributionChannelWriter(), predicate, connectionIntent, StatefulRedisConnection::async);
         } else {
             selection = new StaticNodeSelection<RedisAsyncCommands<K, V>, Object, K, V>(
-                    impl.getClusterDistributionChannelWriter(), predicate, intent, StatefulRedisConnection::async);
+                    impl.getClusterDistributionChannelWriter(), predicate, connectionIntent, StatefulRedisConnection::async);
         }
 
         NodeSelectionInvocationHandler h = new NodeSelectionInvocationHandler((AbstractNodeSelection<?, ?, ?, ?>) selection,

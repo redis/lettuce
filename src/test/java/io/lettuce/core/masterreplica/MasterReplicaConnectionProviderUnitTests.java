@@ -39,6 +39,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.role.RedisInstance;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * @author Mark Paluch
@@ -78,11 +79,12 @@ class MasterReplicaConnectionProviderUnitTests {
         when(clientMock.connectAsync(eq(StringCodec.UTF8), any()))
                 .thenReturn(ConnectionFuture.completed(null, nodeConnectionMock));
 
-        StatefulRedisConnection<String, String> connection = sut.getConnection(MasterReplicaConnectionProvider.Intent.READ);
+        StatefulRedisConnection<String, String> connection = sut.getConnection(ConnectionIntent.READ);
         assertThat(connection).isNotNull();
 
         sut.close();
 
         verify(channelHandlerMock).closeAsync();
     }
+
 }

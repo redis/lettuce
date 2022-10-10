@@ -202,6 +202,13 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("EVAL_RO")   // Redis 7.0
+    void clientNoEvict() {
+        assertThat(redis.clientNoEvict(true)).isEqualTo("OK");
+        assertThat(redis.clientNoEvict(false)).isEqualTo("OK");
+    }
+
+    @Test
     @EnabledOnCommand("ACL")
     void clientTracking() {
 
@@ -450,7 +457,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     void replicaof() {
 
         assertThat(redis.replicaof(TestSettings.host(), 0)).isEqualTo("OK");
-        redis.replicaofNoOne();
+        assertThat(redis.replicaofNoOne()).isEqualTo("OK");
     }
 
     @Test
@@ -470,7 +477,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     void slaveof() {
 
         assertThat(redis.slaveof(TestSettings.host(), 0)).isEqualTo("OK");
-        redis.slaveofNoOne();
+        assertThat(redis.slaveofNoOne()).isEqualTo("OK");
     }
 
     @Test

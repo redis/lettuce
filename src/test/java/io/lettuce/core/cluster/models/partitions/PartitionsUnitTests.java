@@ -15,9 +15,10 @@
  */
 package io.lettuce.core.cluster.models.partitions;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 
@@ -26,12 +27,15 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.RedisURI;
 
 /**
+ * Unit tests for {@link Partitions}.
+ *
  * @author Mark Paluch
  */
 class PartitionsUnitTests {
 
     private RedisClusterNode node1 = new RedisClusterNode(RedisURI.create("localhost", 6379), "a", true, "", 0, 0, 0,
             Arrays.asList(1, 2, 3), new HashSet<>());
+
     private RedisClusterNode node2 = new RedisClusterNode(RedisURI.create("localhost", 6380), "b", true, "", 0, 0, 0,
             Arrays.asList(4, 5, 6), new HashSet<>());
 
@@ -116,6 +120,23 @@ class PartitionsUnitTests {
 
         partitions.add(node1);
         assertThat(partitions.getPartitionBySlot(1)).isEqualTo(node1);
+    }
+
+    @Test
+    void getMasterBySlot() {
+
+        Partitions partitions = new Partitions();
+
+        partitions.add(node1);
+        assertThat(partitions.getPartitionBySlot(1)).isEqualTo(node1);
+
+        RedisClusterNode node3 = new RedisClusterNode(RedisURI.create("localhost", 6380), "b", true, "", 0, 0, 0,
+                Arrays.asList(10, 11, 12), EnumSet.of(RedisClusterNode.NodeFlag.UPSTREAM));
+
+        partitions.add(node3);
+
+        assertThat(partitions.getMasterBySlot(1)).isNull();
+        assertThat(partitions.getMasterBySlot(10)).isEqualTo(node3);
     }
 
     @Test
@@ -344,4 +365,5 @@ class PartitionsUnitTests {
 
         assertThat(partitions.toString()).startsWith("Partitions [");
     }
+
 }

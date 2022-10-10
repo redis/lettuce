@@ -23,14 +23,14 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.masterreplica.MasterReplicaConnectionProvider.Intent;
 import io.lettuce.core.protocol.ConnectionFacade;
+import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 
 /**
- * Channel writer/dispatcher that dispatches commands based on the intent to different connections.
+ * Channel writer/dispatcher that dispatches commands based on the ConnectionIntent to different connections.
  *
  * @author Mark Paluch
  */
@@ -64,9 +64,9 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
             inTransaction = true;
         }
 
-        Intent intent = inTransaction ? Intent.WRITE : getIntent(command.getType());
+        ConnectionIntent connectionIntent = inTransaction ? ConnectionIntent.WRITE : getIntent(command.getType());
         CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterReplicaConnectionProvider
-                .getConnectionAsync(intent);
+                .getConnectionAsync(connectionIntent);
 
         if (isEndTransaction(command.getType())) {
             inTransaction = false;
@@ -114,12 +114,12 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
             }
         }
 
-        // TODO: Retain order or retain Intent preference?
+        // TODO: Retain order or retain ConnectionIntent preference?
         // Currently: Retain order
-        Intent intent = inTransaction ? Intent.WRITE : getIntent(commands);
+        ConnectionIntent connectionIntent = inTransaction ? ConnectionIntent.WRITE : getIntent(commands);
 
         CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterReplicaConnectionProvider
-                .getConnectionAsync(intent);
+                .getConnectionAsync(connectionIntent);
 
         for (RedisCommand<K, V, ?> command : commands) {
             if (isEndTransaction(command.getType())) {
@@ -156,39 +156,39 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
     /**
      * Optimization: Determine command intents and optimize for bulk execution preferring one node.
      * <p>
-     * If there is only one intent, then we take the intent derived from the commands. If there is more than one intent, then
-     * use {@link Intent#WRITE}.
+     * If there is only one ConnectionIntent, then we take the ConnectionIntent derived from the commands. If there is more than
+     * one ConnectionIntent, then use {@link ConnectionIntent#WRITE}.
      *
      * @param commands {@link Collection} of {@link RedisCommand commands}.
-     * @return the intent.
+     * @return the ConnectionIntent.
      */
-    static Intent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+    static ConnectionIntent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
 
         boolean w = false;
         boolean r = false;
-        Intent singleIntent = Intent.WRITE;
+        ConnectionIntent singleIntent = ConnectionIntent.WRITE;
 
         for (RedisCommand<?, ?, ?> command : commands) {
 
             singleIntent = getIntent(command.getType());
-            if (singleIntent == Intent.READ) {
+            if (singleIntent == ConnectionIntent.READ) {
                 r = true;
             }
 
-            if (singleIntent == Intent.WRITE) {
+            if (singleIntent == ConnectionIntent.WRITE) {
                 w = true;
             }
 
             if (r && w) {
-                return Intent.WRITE;
+                return ConnectionIntent.WRITE;
             }
         }
 
         return singleIntent;
     }
 
-    private static Intent getIntent(ProtocolKeyword type) {
-        return ReadOnlyCommands.isReadOnlyCommand(type) ? Intent.READ : Intent.WRITE;
+    private static ConnectionIntent getIntent(ProtocolKeyword type) {
+        return ReadOnlyCommands.isReadOnlyCommand(type) ? ConnectionIntent.READ : ConnectionIntent.WRITE;
     }
 
     @Override

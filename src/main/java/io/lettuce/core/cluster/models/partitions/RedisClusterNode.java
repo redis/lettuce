@@ -300,7 +300,8 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
             return;
         }
 
-        for (int i = 0; i < this.slots.length(); i++) {
+        int length = this.slots.length();
+        for (int i = 0; i < length; i++) {
 
             if (this.slots.get(i)) {
                 consumer.accept(i);
@@ -320,6 +321,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         LettuceAssert.notNull(slots, "Slots must not be null");
 
         setSlotBits(slots);
+    }
+
+    void setSlots(BitSet slots) {
+        this.slots = slots;
     }
 
     private void setSlotBits(List<Integer> slots) {
@@ -491,7 +496,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
          */
         @Deprecated
         MASTER, UPSTREAM, //
-        EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR;
+        EVENTUAL_FAIL, FAIL, HANDSHAKE, NOADDR, LOADING, ONLINE;
     }
 
 }

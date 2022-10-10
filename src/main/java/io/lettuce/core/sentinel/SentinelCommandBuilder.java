@@ -25,7 +25,12 @@ import java.util.Map;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.output.*;
+import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.output.KeyOutput;
+import io.lettuce.core.output.ListOfMapsOutput;
+import io.lettuce.core.output.MapOutput;
+import io.lettuce.core.output.SocketAddressOutput;
+import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -58,6 +63,11 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     public Command<K, V, List<Map<K, V>>> slaves(K key) {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(SLAVES).addKey(key);
+        return createCommand(SENTINEL, new ListOfMapsOutput<>(codec), args);
+    }
+
+    public Command<K, V, List<Map<K, V>>> replicas(K key) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(REPLICAS).addKey(key);
         return createCommand(SENTINEL, new ListOfMapsOutput<>(codec), args);
     }
 

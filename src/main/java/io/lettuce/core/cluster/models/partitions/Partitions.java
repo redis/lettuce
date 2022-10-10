@@ -15,7 +15,11 @@
  */
 package io.lettuce.core.cluster.models.partitions;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.SlotHash;
@@ -56,7 +60,9 @@ public class Partitions implements Collection<RedisClusterNode> {
 
     private final List<RedisClusterNode> partitions = new ArrayList<>();
 
-    private volatile RedisClusterNode slotCache[] = EMPTY;
+    private volatile RedisClusterNode[] slotCache = EMPTY;
+
+    private volatile RedisClusterNode[] masterCache = EMPTY;
 
     private volatile Collection<RedisClusterNode> nodeReadView = Collections.emptyList();
 
@@ -89,6 +95,17 @@ public class Partitions implements Collection<RedisClusterNode> {
      */
     public RedisClusterNode getPartitionBySlot(int slot) {
         return slotCache[slot];
+    }
+
+    /**
+     * Retrieve a {@link RedisClusterNode master node} by its slot number
+     *
+     * @param slot the slot hash.
+     * @return the {@link RedisClusterNode} or {@code null} if not found.
+     * @since 6.2
+     */
+    public RedisClusterNode getMasterBySlot(int slot) {
+        return masterCache[slot];
     }
 
     /**
@@ -148,23 +165,34 @@ public class Partitions implements Collection<RedisClusterNode> {
         synchronized (partitions) {
 
             if (partitions.isEmpty()) {
-                this.slotCache = EMPTY;
-                this.nodeReadView = Collections.emptyList();
+                invalidateCache();
                 return;
             }
 
             RedisClusterNode[] slotCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
+            RedisClusterNode[] masterCache = new RedisClusterNode[SlotHash.SLOT_COUNT];
             List<RedisClusterNode> readView = new ArrayList<>(partitions.size());
 
             for (RedisClusterNode partition : partitions) {
 
                 readView.add(partition);
+                if (partition.is(RedisClusterNode.NodeFlag.UPSTREAM)) {
+                    partition.forEachSlot(i -> masterCache[i] = partition);
+                }
+
                 partition.forEachSlot(i -> slotCache[i] = partition);
             }
 
             this.slotCache = slotCache;
+            this.masterCache = masterCache;
             this.nodeReadView = Collections.unmodifiableCollection(readView);
         }
+    }
+
+    private void invalidateCache() {
+        this.slotCache = EMPTY;
+        this.masterCache = EMPTY;
+        this.nodeReadView = Collections.emptyList();
     }
 
     /**
@@ -201,7 +229,7 @@ public class Partitions implements Collection<RedisClusterNode> {
         LettuceAssert.notNull(partition, "Partition must not be null");
 
         synchronized (partitions) {
-            slotCache = EMPTY;
+            invalidateCache();
             partitions.add(partition);
         }
     }
@@ -327,9 +355,9 @@ public class Partitions implements Collection<RedisClusterNode> {
     }
 
     /**
-     * Returns an array containing all of the elements in this {@link Partitions} using the read-view.
+     * Returns an array containing all the elements in this {@link Partitions} using the read-view.
      *
-     * @return an array containing all of the elements in this {@link Partitions} using the read-view.
+     * @return an array containing all the elements in this {@link Partitions} using the read-view.
      */
     @Override
     public Object[] toArray() {
@@ -337,12 +365,12 @@ public class Partitions implements Collection<RedisClusterNode> {
     }
 
     /**
-     * Returns an array containing all of the elements in this {@link Partitions} using the read-view.
+     * Returns an array containing all the elements in this {@link Partitions} using the read-view.
      *
      * @param a the array into which the elements of this collection are to be stored, if it is big enough; otherwise, a new
      *        array of the same runtime type is allocated for this purpose.
      * @param <T> type of the array to contain the collection
-     * @return an array containing all of the elements in this {@link Partitions} using the read-view.
+     * @return an array containing all the elements in this {@link Partitions} using the read-view.
      */
     @Override
     public <T> T[] toArray(T[] a) {

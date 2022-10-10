@@ -79,7 +79,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 3.0
  * @see ClientResources
  */
-public abstract class AbstractRedisClient {
+public abstract class AbstractRedisClient implements AutoCloseable {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractRedisClient.class);
 
@@ -482,6 +482,11 @@ public abstract class AbstractRedisClient {
      */
     public void shutdown() {
         shutdown(0, 2, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public void close() {
+        shutdown();
     }
 
     /**

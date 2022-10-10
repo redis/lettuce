@@ -110,6 +110,15 @@ public interface RedisServerReactiveCommands<K, V> {
     Mono<String> clientList();
 
     /**
+     * Sets the client eviction mode for the current connection.
+     *
+     * @param on {@code true} will turn eviction mode on, and {@code false} will turn it off.
+     * @return String simple-string-reply {@code OK}.
+     * @since 6.2
+     */
+    Mono<String> clientNoEvict(boolean on);
+
+    /**
      * Stop processing commands from clients for some time.
      *
      * @param timeout the timeout value in milliseconds.

@@ -47,13 +47,23 @@ internal class RedisScriptingCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun <T> eval(script: ByteArray, type: ScriptOutputType, keys: Array<K>, vararg values: V): T? = ops.eval<T>(script, type, keys, *values).awaitFirstOrNull()
 
-    override suspend fun <T> evalReadonly(script: ByteArray, type: ScriptOutputType, keys: Array<K>, vararg values: V): T? = ops.evalReadonly<T>(script, type, keys, *values).awaitFirstOrNull()
+    override suspend fun <T> evalReadOnly(
+        script: ByteArray,
+        type: ScriptOutputType,
+        keys: Array<K>,
+        vararg values: V
+    ): T? = ops.evalReadOnly<T>(script, type, keys, *values).awaitFirstOrNull()
 
     override suspend fun <T> evalsha(digest: String, type: ScriptOutputType, vararg keys: K): T? = ops.evalsha<T>(digest, type, *keys).awaitFirstOrNull()
 
     override suspend fun <T> evalsha(digest: String, type: ScriptOutputType, keys: Array<K>, vararg values: V): T? = ops.evalsha<T>(digest, type, keys, *values).awaitFirstOrNull()
 
-    override suspend fun <T> evalshaReadonly(digest: String, type: ScriptOutputType, keys: Array<K>, vararg values: V): T? = ops.evalshaReadonly<T>(digest, type, keys, *values).awaitFirstOrNull()
+    override suspend fun <T> evalshaReadOnly(
+        digest: String,
+        type: ScriptOutputType,
+        keys: Array<K>,
+        vararg values: V
+    ): T? = ops.evalshaReadOnly<T>(digest, type, keys, *values).awaitFirstOrNull()
 
     override suspend fun scriptExists(vararg digests: String): List<Boolean> = ops.scriptExists(*digests).asFlow().toList()
 

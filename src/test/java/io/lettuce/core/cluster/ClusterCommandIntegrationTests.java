@@ -36,12 +36,16 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.cluster.models.partitions.ClusterPartitionParser;
+import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.models.slots.ClusterSlotRange;
 import io.lettuce.core.cluster.models.slots.ClusterSlotsParser;
 import io.lettuce.test.Delay;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Mark Paluch
@@ -102,6 +106,32 @@ class ClusterCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("EXPIRETIME") // Redis 7.0
+    void testClusterShards() {
+
+        List<Object> result = sync.clusterShards();
+        assertThat(result).hasSize(2);
+
+        result = connection.reactive().clusterShards().block(Duration.ofSeconds(5));
+        assertThat(result).hasSize(2);
+    }
+
+    @Test
+    @EnabledOnCommand("EXPIRETIME") // Redis 7.0
+    void testClusterShardsParsing() {
+
+        List<Object> result = sync.clusterShards();
+
+        Partitions partitions = ClusterPartitionParser.parse(result);
+
+        assertThat(partitions).hasSize(4);
+        assertThat(partitions.getPartitionBySlot(1).getUri().getPort()).isIn(7379, 7381);
+        assertThat(partitions.getPartitionBySlot(12001).getUri().getPort()).isIn(7380, 7382);
+        assertThat(partitions.getPartition("127.0.0.1", 7382).is(RedisClusterNode.NodeFlag.REPLICA)).isTrue();
+        assertThat(partitions.getPartition("127.0.0.1", 7382).is(RedisClusterNode.NodeFlag.SLAVE)).isTrue();
+    }
+
+    @Test
     void testClusterNodesSync() {
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
@@ -144,7 +174,6 @@ class ClusterCommandIntegrationTests extends TestSupport {
         assertThat(setA.getError()).isNull();
 
         connection.close();
-
     }
 
     @Test

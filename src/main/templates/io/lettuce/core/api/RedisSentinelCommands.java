@@ -63,7 +63,9 @@ public interface RedisSentinelCommands<K, V> {
      *
      * @param key the key.
      * @return List&lt;Map&lt;K, V&gt;&gt;.
+     * @deprecated since 6.2, use #replicas(Object) instead.
      */
+    @Deprecated
     List<Map<K, V>> slaves(K key);
 
     /**
@@ -73,6 +75,15 @@ public interface RedisSentinelCommands<K, V> {
      * @return Long.
      */
     Long reset(K key);
+
+    /**
+     * Provides a list of replicas for the master with the specified name.
+     *
+     * @param key the key.
+     * @return List&lt;Map&lt;K, V&gt;&gt;.
+     * @since 6.2
+     */
+    List<Map<K, V>> replicas(K key);
 
     /**
      * Perform a failover.

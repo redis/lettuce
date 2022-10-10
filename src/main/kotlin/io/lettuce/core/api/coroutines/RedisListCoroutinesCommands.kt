@@ -16,10 +16,7 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.KeyValue
-import io.lettuce.core.LMoveArgs
-import io.lettuce.core.LPosArgs
+import io.lettuce.core.*
 
 /**
  * Coroutine executed commands for Lists.
@@ -64,6 +61,36 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @since 6.1.3
      */
     suspend fun blmove(source: K, destination: K, args: LMoveArgs, timeout: Double): V?
+
+    /**
+     * Remove and get the first/last elements in a list, or block until one is available.
+     *
+     * @param timeout the timeout in seconds.
+     * @param args the additional command arguments.
+     * @param keys the keys.
+     * @return KeyValue<K,V> array-reply specifically. `null` when `key` does not exist or the timeout was exceeded.
+     * @since 6.2
+     */
+    suspend fun blmpop(
+        timeout: Long,
+        args: LMPopArgs,
+        vararg keys: K
+    ): KeyValue<K, List<V>>?
+
+    /**
+     * Remove and get the first/last elements in a list, or block until one is available.
+     *
+     * @param timeout the timeout in seconds.
+     * @param args the additional command arguments.
+     * @param keys the keys.
+     * @return KeyValue<K,V> array-reply specifically. `null` when `key` does not exist or the timeout was exceeded.
+     * @since 6.2
+     */
+    suspend fun blmpop(
+        timeout: Double,
+        args: LMPopArgs,
+        vararg keys: K
+    ): KeyValue<K, List<V>>?
 
     /**
      * Remove and get the first element in a list, or block until one is available.
@@ -183,6 +210,16 @@ interface RedisListCoroutinesCommands<K : Any, V : Any> {
      * @since 6.1
      */
     suspend fun lmove(source: K, destination: K, args: LMoveArgs): V?
+
+    /**
+     * Remove and get the first/last elements in a list.
+     *
+     * @param args the additional command arguments.
+     * @param keys the keys.
+     * @return KeyValue<K,V> array-reply specifically. `null` when `key` does not exist.
+     * @since 6.2
+     */
+    suspend fun lmpop(args: LMPopArgs, vararg keys: K): KeyValue<K, List<V>>?
 
     /**
      * Remove and get the first element in a list.

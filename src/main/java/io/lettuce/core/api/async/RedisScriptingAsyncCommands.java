@@ -92,7 +92,7 @@ public interface RedisScriptingAsyncCommands<K, V> {
      * @return script result.
      * @since 6.2
      */
-    <T> RedisFuture<T> evalReadonly(byte[] script, ScriptOutputType type, K[] keys, V... values);
+    <T> RedisFuture<T> evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values);
 
     /**
      * Evaluates a script cached on the server side by its SHA1 digest.
@@ -128,7 +128,7 @@ public interface RedisScriptingAsyncCommands<K, V> {
      * @return script result.
      * @since 6.2
      */
-    <T> RedisFuture<T> evalshaReadonly(String digest, ScriptOutputType type, K[] keys, V... values);
+    <T> RedisFuture<T> evalshaReadOnly(String digest, ScriptOutputType type, K[] keys, V... values);
 
     /**
      * Check existence of scripts in the script cache.

@@ -20,8 +20,8 @@ import java.util.function.Function;
 
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.cluster.ClusterConnectionProvider.Intent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.protocol.ConnectionIntent;
 
 /**
  * Specialized {@link Function} to obtain connections for Redis Cluster nodes. Connecting to a node returns a
@@ -45,7 +45,7 @@ interface ClusterNodeConnectionFactory<K, V>
      */
     class ConnectionKey {
 
-        final Intent intent;
+        final ConnectionIntent connectionIntent;
 
         final String nodeId;
 
@@ -53,15 +53,15 @@ interface ClusterNodeConnectionFactory<K, V>
 
         final int port;
 
-        public ConnectionKey(Intent intent, String nodeId) {
-            this.intent = intent;
+        public ConnectionKey(ConnectionIntent connectionIntent, String nodeId) {
+            this.connectionIntent = connectionIntent;
             this.nodeId = nodeId;
             this.host = null;
             this.port = 0;
         }
 
-        public ConnectionKey(Intent intent, String host, int port) {
-            this.intent = intent;
+        public ConnectionKey(ConnectionIntent connectionIntent, String host, int port) {
+            this.connectionIntent = connectionIntent;
             this.host = host;
             this.port = port;
             this.nodeId = null;
@@ -79,7 +79,7 @@ interface ClusterNodeConnectionFactory<K, V>
 
             if (port != key.port)
                 return false;
-            if (intent != key.intent)
+            if (connectionIntent != key.connectionIntent)
                 return false;
             if (nodeId != null ? !nodeId.equals(key.nodeId) : key.nodeId != null)
                 return false;
@@ -89,7 +89,7 @@ interface ClusterNodeConnectionFactory<K, V>
         @Override
         public int hashCode() {
 
-            int result = intent != null ? intent.name().hashCode() : 0;
+            int result = connectionIntent != null ? connectionIntent.name().hashCode() : 0;
             result = 31 * result + (nodeId != null ? nodeId.hashCode() : 0);
             result = 31 * result + (host != null ? host.hashCode() : 0);
             result = 31 * result + port;
@@ -101,7 +101,7 @@ interface ClusterNodeConnectionFactory<K, V>
 
             StringBuffer sb = new StringBuffer();
             sb.append(getClass().getSimpleName());
-            sb.append(" [intent=").append(intent);
+            sb.append(" [connectionIntent=").append(connectionIntent);
             sb.append(", nodeId='").append(nodeId).append('\'');
             sb.append(", host='").append(host).append('\'');
             sb.append(", port=").append(port);

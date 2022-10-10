@@ -30,12 +30,10 @@ import io.lettuce.core.api.sync.*;
  * @author dengliming
  * @since 4.0
  */
-public interface RedisClusterCommands<K, V>
-        extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>, RedisGeoCommands<K, V>,
-        RedisHashCommands<K, V>, RedisHLLCommands<K, V>, RedisKeyCommands<K, V>,
-        RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
-        RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>,
-        RedisStringCommands<K, V> {
+public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCommands<K, V>, RedisGeoCommands<K, V>,
+        RedisHashCommands<K, V>, RedisHLLCommands<K, V>, RedisKeyCommands<K, V>, RedisListCommands<K, V>,
+        RedisScriptingCommands<K, V>, RedisServerCommands<K, V>, RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>,
+        RedisStreamCommands<K, V>, RedisStringCommands<K, V> {
 
     /**
      * Set the default timeout for operations. A zero timeout value indicates to not time out.
@@ -300,6 +298,14 @@ public interface RedisClusterCommands<K, V>
      * @return String simple-string-reply
      */
     String clusterSetSlotStable(int slot);
+
+    /**
+     * Get array of cluster shards
+     *
+     * @return RedisFuture&lt;List&lt;Object&gt;&gt; array-reply nested list of the shards response.
+     * @since 6.2
+     */
+    List<Object> clusterShards();
 
     /**
      * List replicas for a certain node identified by its {@code nodeId}. Can be parsed using

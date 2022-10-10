@@ -21,6 +21,7 @@ import io.lettuce.core.AclSetuserArgs
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RedisAclReactiveCommands
 import io.lettuce.core.protocol.CommandType
+import io.lettuce.core.protocol.RedisCommand
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
@@ -45,11 +46,24 @@ internal class RedisAclCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun aclCat(category: AclCategory): Set<CommandType> =
         ops.aclCat(category).awaitFirstOrElse { emptySet<CommandType>() }
 
-    override suspend fun aclDeluser(vararg usernames: String): Long? = ops.aclDeluser(*usernames).awaitFirstOrNull()
+    override suspend fun aclDeluser(vararg usernames: String): Long? =
+        ops.aclDeluser(*usernames).awaitFirstOrNull()
+
+    override suspend fun aclDryRun(
+        username: String,
+        command: String,
+        vararg args: String
+    ): String? = ops.aclDryRun(username, command, *args).awaitFirstOrNull()
+
+    override suspend fun aclDryRun(
+        username: String,
+        command: RedisCommand<K, V, *>
+    ): String? = ops.aclDryRun(username, command).awaitFirstOrNull()
 
     override suspend fun aclGenpass(): String? = ops.aclGenpass().awaitFirstOrNull()
 
-    override suspend fun aclGenpass(bits: Int): String? = ops.aclGenpass(bits).awaitFirstOrNull()
+    override suspend fun aclGenpass(bits: Int): String? =
+        ops.aclGenpass(bits).awaitFirstOrNull()
 
     override suspend fun aclGetuser(username: String): List<Any> =
         ops.aclGetuser(username).awaitFirst()
