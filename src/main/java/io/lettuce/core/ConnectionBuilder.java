@@ -87,6 +87,8 @@ public class ConnectionBuilder {
 
     private ConnectionWatchdog connectionWatchdog;
 
+    private PingConnectionHandler pingConnectionHandler;
+
     private RedisURI redisURI;
 
     public static ConnectionBuilder connectionBuilder() {
@@ -129,6 +131,10 @@ public class ConnectionBuilder {
             handlers.add(createConnectionWatchdog());
         }
 
+        if (clientOptions.getPingConnectionInterval() > 0) {
+            handlers.add(createPingConnectionHandler());
+        }
+
         return handlers;
     }
 
@@ -153,6 +159,17 @@ public class ConnectionBuilder {
 
         connectionWatchdog = watchdog;
         return watchdog;
+    }
+
+    protected PingConnectionHandler createPingConnectionHandler() {
+
+        if (pingConnectionHandler != null) {
+            return pingConnectionHandler;
+        }
+
+        PingConnectionHandler handler = new PingConnectionHandler(clientResources, clientOptions);
+        pingConnectionHandler = handler;
+        return handler;
     }
 
     public ChannelInitializer<Channel> build(SocketAddress socketAddress) {
