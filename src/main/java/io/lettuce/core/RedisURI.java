@@ -760,8 +760,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         String userInfo = uri.getUserInfo();
 
-        if (isEmpty(userInfo) && isNotEmpty(uri.getAuthority()) && uri.getAuthority().indexOf('@') > 0) {
-            userInfo = uri.getAuthority().substring(0, uri.getAuthority().indexOf('@'));
+        if (isEmpty(userInfo) && isNotEmpty(uri.getAuthority()) && uri.getAuthority().lastIndexOf('@') > 0) {
+            userInfo = uri.getAuthority().substring(0, uri.getAuthority().lastIndexOf('@'));
         }
 
         if (isNotEmpty(userInfo)) {
@@ -1121,7 +1121,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 if (isNotEmpty(uri.getAuthority())) {
                     String authority = uri.getAuthority();
                     if (authority.indexOf('@') > -1) {
-                        authority = authority.substring(authority.indexOf('@') + 1);
+                        authority = authority.substring(authority.lastIndexOf('@') + 1);
                     }
 
                     builder = Builder.redis(authority);
@@ -1158,7 +1158,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         if (builder == null && isNotEmpty(uri.getAuthority())) {
             String authority = uri.getAuthority();
             if (authority.indexOf('@') > -1) {
-                authority = authority.substring(authority.indexOf('@') + 1);
+                authority = authority.substring(authority.lastIndexOf('@') + 1);
             }
 
             String[] hosts = authority.split(",");
