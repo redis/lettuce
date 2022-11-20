@@ -17,6 +17,9 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -187,6 +190,24 @@ class RedisURIUnitTests {
         assertThat(redisURI.getDatabase()).isEqualTo(2);
         assertThat(redisURI.getSocket()).isEqualTo("/var/tmp/other-socket");
         assertThat(redisURI).hasToString("redis-socket:///var/tmp/other-socket?database=2");
+    }
+
+    @Test
+    void escapeCharacterParsingTest() throws UnsupportedEncodingException {
+        String password = "abc@#d";
+        String translatedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8.name());
+
+        // redis sentinel
+        String uri = "redis-sentinel://"+translatedPassword+"@h1:1234,h2:1234,h3:1234/0?sentinelMasterId=masterId";
+        RedisURI redisURI = RedisURI.create(uri);
+        assertThat(redisURI.getSentinels().get(0).getHost()).isEqualTo("h1");
+        assertThat(String.valueOf(redisURI.getCredentialsProvider().resolveCredentials().block().getPassword())).isEqualTo(password);
+
+        // redis standalone
+        uri = "redis://"+translatedPassword+"@h1:1234/0";
+        redisURI = RedisURI.create(uri);
+        assertThat(redisURI.getHost()).isEqualTo("h1");
+        assertThat(String.valueOf(redisURI.getCredentialsProvider().resolveCredentials().block().getPassword())).isEqualTo(password);
     }
 
     @Test
