@@ -82,7 +82,7 @@ public class XTrimArgs implements CompositeArgument {
      */
     public XTrimArgs maxlen(long maxlen) {
 
-        LettuceAssert.isTrue(maxlen > 0, "Maxlen must be greater 0");
+        LettuceAssert.isTrue(maxlen >= 0, "Maxlen must be greater or equal to 0");
 
         this.maxlen = maxlen;
         return this;
@@ -111,7 +111,7 @@ public class XTrimArgs implements CompositeArgument {
      */
     public XTrimArgs limit(long limit) {
 
-        LettuceAssert.isTrue(limit > 0, "Limit must be greater 0");
+        LettuceAssert.isTrue(limit >= 0, "Limit must be greater 0");
 
         this.limit = limit;
         return this;
