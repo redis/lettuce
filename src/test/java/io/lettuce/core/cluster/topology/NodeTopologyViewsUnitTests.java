@@ -57,6 +57,31 @@ class NodeTopologyViewsUnitTests {
     }
 
     @Test
+    void shouldNotFailOnNullInfo() {
+
+        RedisURI localhost = RedisURI.create("127.0.0.1", 6479);
+        RedisURI otherhost = RedisURI.create("127.0.0.2", 7000);
+
+        RedisURI host3 = RedisURI.create("127.0.0.3", 7000);
+
+        String viewByLocalhost = "1 127.0.0.1:6479 master,myself - 0 1401258245007 2 connected 8000-11999\n"
+                + "2 127.0.0.2:7000 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
+                + "3 127.0.0.3:7000 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
+
+        String viewByOtherhost = "1 127.0.0.2:6479 master - 0 1401258245007 2 connected 8000-11999\n"
+                + "2 127.0.0.2:7000 master,myself - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
+                + "3 127.0.0.3:7000 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n";
+
+        NodeTopologyView localhostView = new NodeTopologyView(localhost, viewByLocalhost, null, 0);
+        NodeTopologyView otherhostView = new NodeTopologyView(otherhost, viewByOtherhost, null, 0);
+
+        NodeTopologyViews nodeTopologyViews = new NodeTopologyViews(Arrays.asList(localhostView, otherhostView));
+
+        Set<RedisURI> clusterNodes = nodeTopologyViews.getClusterNodes();
+        assertThat(clusterNodes).contains(localhost, otherhost, host3);
+    }
+
+    @Test
     void shouldFailWithoutOwnPartition() {
 
         RedisURI localhost = RedisURI.create("127.0.0.1", 6479);
