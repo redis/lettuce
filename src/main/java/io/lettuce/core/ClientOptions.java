@@ -87,7 +87,6 @@ public class ClientOptions implements Serializable {
 
     private final TimeoutOptions timeoutOptions;
 
-
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
@@ -259,9 +258,15 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Sets the {@literal PING} before activate connection flag. Defaults to {@code true}. See
-         * {@link #DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION}. This option has no effect unless forcing to use the RESP 2 protocol
-         * version.
+         * Perform a lightweight {@literal PING} connection handshake when establishing a Redis connection. If {@code true}
+         * (default is {@code true}, {@link #DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION}), every connection and reconnect will
+         * issue a {@literal PING} command and await its response before the connection is activated and enabled for use. If the
+         * check fails, the connect/reconnect is treated as a failure. This option has no effect unless forced to use the RESP 2
+         * protocol version. RESP 3/protocol discovery performs a {@code HELLO} handshake.
+         * <p>
+         *
+         * The {@literal PING} handshake validates whether the other end of the connected socket is a service that behaves like
+         * a Redis server.
          *
          * @param pingBeforeActivateConnection true/false
          * @return {@code this}
@@ -291,8 +296,8 @@ public class ClientOptions implements Serializable {
          * <p>
          * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
          * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
-         * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false}
-         * , see {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
+         * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false} ,
+         * see {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
          *
          * @param publishOnScheduler true/false
          * @return {@code this}
@@ -319,7 +324,6 @@ public class ClientOptions implements Serializable {
             this.requestQueueSize = requestQueueSize;
             return this;
         }
-
 
         /**
          * Sets the Lua script {@link Charset} to use to encode {@link String scripts} to {@code byte[]}. Defaults to
@@ -412,8 +416,7 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect())
-                .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
+        builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
                 .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
                 .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
@@ -424,9 +427,9 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Controls auto-reconnect behavior on connections. If auto-reconnect is {@code true} (default), it is enabled. As soon
-     * as a connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any
-     * queued commands.
+     * Controls auto-reconnect behavior on connections. If auto-reconnect is {@code true} (default), it is enabled. As soon as a
+     * connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any queued
+     * commands.
      *
      * This flag has also the effect that disconnected connections will refuse commands and cancel these with an exception.
      *
@@ -495,12 +498,16 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Enables initial {@literal PING} barrier before any connection is usable. If {@code true} (default is {@code true} ),
-     * every connection and reconnect will issue a {@literal PING} command and awaits its response before the connection is
-     * activated and enabled for use. If the check fails, the connect/reconnect is treated as failure. This option has no effect
-     * unless forcing to use the RESP 2 protocol version.
+     * Perform a lightweight {@literal PING} connection handshake when establishing a Redis connection. If {@code true} (default
+     * is {@code true}), every connection and reconnect will issue a {@literal PING} command and await its response before the
+     * connection is activated and enabled for use. If the check fails, the connect/reconnect is treated as a failure. This
+     * option has no effect unless forced to use the RESP 2 protocol version. RESP 3/protocol discovery performs a {@code HELLO}
+     * handshake.
+     * <p>
+     * The {@literal PING} handshake validates whether the other end of the connected socket is a service that behaves like a
+     * Redis server.
      *
-     * @return {@code true} if {@literal PING} barrier is enabled.
+     * @return {@code true} if {@literal PING} handshake is enabled.
      */
     public boolean isPingBeforeActivateConnection() {
         return pingBeforeActivateConnection;
@@ -533,8 +540,8 @@ public class ClientOptions implements Serializable {
      * <p>
      * A single Redis connection operates on a single thread. Operations that require a significant amount of processing can
      * lead to a single-threaded-like behavior for all consumers of the Redis connection. When enabled, data signals will be
-     * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false} ,
-     * see {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
+     * emitted using a different thread served by {@link ClientResources#eventExecutorGroup()}. Defaults to {@code false} , see
+     * {@link #DEFAULT_PUBLISH_ON_SCHEDULER}.
      *
      * @return {@code true} to use a dedicated {@link reactor.core.scheduler.Scheduler}
      * @since 5.2
@@ -543,9 +550,8 @@ public class ClientOptions implements Serializable {
         return publishOnScheduler;
     }
 
-
     /**
-     * If this flag is {@code true} the reconnect will be suspended on protocol errors. Protocol errors are errors while SSL
+     * If this flag is {@code true}, the reconnect will be suspended on protocol errors. Protocol errors are errors while SSL
      * negotiation or when PING before connect fails.
      *
      * @return {@code true} if reconnect will be suspended on protocol errors.

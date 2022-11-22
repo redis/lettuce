@@ -141,7 +141,7 @@ public class ClusterClientOptions extends ClientOptions {
     /**
      * Create a new {@link ClusterClientOptions} using default settings.
      *
-     * @return a new instance of default cluster client client options.
+     * @return a new instance of default cluster client options.
      */
     public static ClusterClientOptions create() {
         return builder().build();
