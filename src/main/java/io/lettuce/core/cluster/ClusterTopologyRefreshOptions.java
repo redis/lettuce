@@ -114,7 +114,7 @@ public class ClusterTopologyRefreshOptions {
     /**
      * Create a new {@link ClusterTopologyRefreshOptions} using default settings.
      *
-     * @return a new instance of default cluster client client options.
+     * @return a new instance of default cluster client options.
      */
     public static ClusterTopologyRefreshOptions create() {
         return builder().build();
@@ -123,7 +123,7 @@ public class ClusterTopologyRefreshOptions {
     /**
      * Create a new {@link ClusterTopologyRefreshOptions} using default settings with enabled periodic and adaptive refresh.
      *
-     * @return a new instance of default cluster client client options.
+     * @return a new instance of default cluster client options.
      */
     public static ClusterTopologyRefreshOptions enabled() {
         return builder().enablePeriodicRefresh().enableAllAdaptiveRefreshTriggers().build();
@@ -236,10 +236,11 @@ public class ClusterTopologyRefreshOptions {
 
         /**
          * Discover cluster nodes from topology and use the discovered nodes as source for the cluster topology. Using dynamic
-         * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node.If
-         * set to {@code false}, only the initial seed nodes will be used as sources for topology discovery and the number of
-         * clients will be obtained only for the initial seed nodes. This can be useful when using Redis Cluster with many
-         * nodes. Defaults to {@code true}. See {@link ClusterTopologyRefreshOptions#DEFAULT_DYNAMIC_REFRESH_SOURCES}.
+         * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node.
+         * If set to {@code false}, only the initial seed nodes will be used as sources for topology discovery and the number of
+         * clients including response latency will be obtained only for the initial seed nodes. This can be useful when using
+         * Redis Cluster with many nodes. Defaults to {@code true}. See
+         * {@link ClusterTopologyRefreshOptions#DEFAULT_DYNAMIC_REFRESH_SOURCES}.
          *
          * @param dynamicRefreshSources {@code true} to discover and query all cluster nodes for obtaining the cluster topology
          * @return {@code this}
@@ -381,8 +382,8 @@ public class ClusterTopologyRefreshOptions {
     }
 
     /**
-     * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@code true}. Comes only
-     * into effect if {@link #isPeriodicRefreshEnabled()} is {@code true}.
+     * Flag, whether to close stale connections when refreshing the cluster topology. Defaults to {@code true}. Comes only into
+     * effect if {@link #isPeriodicRefreshEnabled()} is {@code true}.
      *
      * @return {@code true} if stale connections are cleaned up after cluster topology updates
      */
@@ -392,9 +393,11 @@ public class ClusterTopologyRefreshOptions {
 
     /**
      * Discover cluster nodes from topology and use the discovered nodes as source for the cluster topology. Using dynamic
-     * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node.If set
-     * to {@code false}, only the initial seed nodes will be used as sources for topology discovery and the number of clients
-     * will be obtained only for the initial seed nodes. This can be useful when using Redis Cluster with many nodes.
+     * refresh will query all discovered nodes for the cluster topology and calculate the number of clients for each node. If
+     * set to {@code false}, only the initial seed nodes will be used as sources for topology discovery and the number of
+     * clients including response latency will be obtained only for the initial seed nodes. This can be useful when using Redis
+     * Cluster with many nodes. Defaults to {@code true}. See
+     * {@link ClusterTopologyRefreshOptions#DEFAULT_DYNAMIC_REFRESH_SOURCES}.
      *
      * @return {@code true} if dynamic refresh sources are enabled
      */
