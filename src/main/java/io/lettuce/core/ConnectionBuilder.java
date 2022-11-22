@@ -59,7 +59,7 @@ public class ConnectionBuilder {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionBuilder.class);
 
-    public static final AttributeKey<String> REDIS_URI = AttributeKey.newInstance("RedisURI");
+    public static final AttributeKey<String> REDIS_URI = AttributeKey.valueOf("RedisURI");
 
     private Mono<SocketAddress> socketAddressSupplier;
 
