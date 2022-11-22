@@ -35,6 +35,7 @@ import reactor.core.publisher.Mono;
  * Unit tests for {@link RedisURI}
  *
  * @author Mark Paluch
+ * @author Lei Zhang
  */
 class RedisURIUnitTests {
 
@@ -194,20 +195,21 @@ class RedisURIUnitTests {
 
     @Test
     void escapeCharacterParsingTest() throws UnsupportedEncodingException {
+
         String password = "abc@#d";
         String translatedPassword = URLEncoder.encode(password, StandardCharsets.UTF_8.name());
 
         // redis sentinel
-        String uri = "redis-sentinel://"+translatedPassword+"@h1:1234,h2:1234,h3:1234/0?sentinelMasterId=masterId";
+        String uri = "redis-sentinel://" + translatedPassword + "@h1:1234,h2:1234,h3:1234/0?sentinelMasterId=masterId";
         RedisURI redisURI = RedisURI.create(uri);
         assertThat(redisURI.getSentinels().get(0).getHost()).isEqualTo("h1");
-        assertThat(String.valueOf(redisURI.getCredentialsProvider().resolveCredentials().block().getPassword())).isEqualTo(password);
+        assertThat(redisURI.getPassword()).isEqualTo(password.toCharArray());
 
         // redis standalone
-        uri = "redis://"+translatedPassword+"@h1:1234/0";
+        uri = "redis://" + translatedPassword + "@h1:1234/0";
         redisURI = RedisURI.create(uri);
         assertThat(redisURI.getHost()).isEqualTo("h1");
-        assertThat(String.valueOf(redisURI.getCredentialsProvider().resolveCredentials().block().getPassword())).isEqualTo(password);
+        assertThat(redisURI.getPassword()).isEqualTo(password.toCharArray());
     }
 
     @Test
