@@ -156,6 +156,10 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xtrim(key, true, 8);
 
         assertThat(redis.xlen(key)).isLessThanOrEqualTo(10);
+
+        redis.xtrim(key, XTrimArgs.Builder.maxlen(0).limit(0).approximateTrimming());
+
+        assertThat(redis.xlen(key)).isLessThanOrEqualTo(10);
     }
 
     @Test
