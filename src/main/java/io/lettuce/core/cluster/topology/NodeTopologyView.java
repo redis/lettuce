@@ -91,6 +91,10 @@ class NodeTopologyView {
 
     private static <T> T getMatchOrDefault(String haystack, Pattern pattern, Function<String, T> converter, T defaultValue) {
 
+        if (haystack == null) {
+            return defaultValue;
+        }
+
         Matcher matcher = pattern.matcher(haystack);
 
         if (matcher.find() && LettuceStrings.isNotEmpty(matcher.group(1))) {
