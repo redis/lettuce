@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 import io.lettuce.core.codec.StringCodec;
@@ -97,6 +98,10 @@ class RedisHandshake implements ConnectionInitializer {
         CompletionStage<Map<String, Object>> hello = initiateHandshakeResp3(channel, connectionState.getCredentialsProvider());
 
         hello.whenComplete((settings, throwable) -> {
+
+            if (throwable instanceof CompletionException) {
+                throwable = throwable.getCause();
+            }
 
             if (throwable != null) {
                 if (isUnknownCommand(throwable)) {

@@ -15,7 +15,7 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
@@ -29,8 +29,10 @@ import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
+import reactor.core.publisher.Mono;
 
 /**
  * Integration test for authentication.
@@ -62,4 +64,23 @@ class AuthenticationIntegrationTests extends TestSupport {
 
         connection.close();
     }
+
+    @Test
+    @Inject
+    void ownCredentialProvider(RedisClient client) {
+
+        RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(TestSettings.port()).withAuthentication(() -> {
+            return Mono.just(RedisCredentials.just(null, TestSettings.password()));
+        }).build();
+
+        client.setOptions(ClientOptions.create());
+        WithPassword.run(client, () -> {
+
+            StatefulRedisConnection<String, String> connection = client.connect(uri);
+
+            assertThat(connection.sync().ping()).isEqualTo("PONG");
+            connection.close();
+        });
+    }
+
 }
