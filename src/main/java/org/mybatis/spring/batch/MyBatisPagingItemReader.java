@@ -130,9 +130,4 @@ public class MyBatisPagingItemReader<T> extends AbstractPagingItemReader<T> {
     results.addAll(sqlSessionTemplate.selectList(queryId, parameters));
   }
 
-  @Override
-  protected void doJumpToPage(int itemIndex) {
-    // Not Implemented
-  }
-
 }

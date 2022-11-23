@@ -15,11 +15,13 @@
  */
 package org.mybatis.spring.sample;
 
+import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 @SpringJUnitConfig({ AbstractSampleJobTest.LocalContext.class, SampleJobXmlConfigTest.LocalContext.class })
+@SpringBatchTest
 class SampleJobXmlConfigTest extends AbstractSampleJobTest {
 
   @Override
