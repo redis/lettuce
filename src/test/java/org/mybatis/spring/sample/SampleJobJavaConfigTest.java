@@ -16,9 +16,11 @@
 package org.mybatis.spring.sample;
 
 import org.mybatis.spring.sample.config.SampleJobConfig;
+import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 @SpringJUnitConfig({ SampleJobConfig.class, AbstractSampleJobTest.LocalContext.class })
+@SpringBatchTest
 class SampleJobJavaConfigTest extends AbstractSampleJobTest {
   @Override
   protected String getExpectedOperationBy() {
