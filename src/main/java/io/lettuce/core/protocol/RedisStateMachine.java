@@ -20,7 +20,6 @@ import static io.lettuce.core.protocol.RedisStateMachine.State.Type.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import io.lettuce.core.internal.LettuceStrings;
@@ -205,6 +204,7 @@ public class RedisStateMachine {
                     Consumer<Exception> errorHandler) {
                 return behavior.handle(rsm, state, buffer, output, errorHandler);
             }
+
         }
 
         enum Result {
@@ -231,8 +231,6 @@ public class RedisStateMachine {
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
-    private final AtomicBoolean closed = new AtomicBoolean();
-
     private final Resp2LongProcessor longProcessor = new Resp2LongProcessor();
 
     private ProtocolVersion protocolVersion = null;
@@ -241,9 +239,18 @@ public class RedisStateMachine {
 
     /**
      * Initialize a new instance.
+     *
+     * @deprecated since 6.3, {@link ByteBufAllocator no longer required}.
+     */
+    @Deprecated
+    public RedisStateMachine(ByteBufAllocator alloc) {
+        this();
+    }
+
+    /**
+     * Initialize a new instance.
      */
     public RedisStateMachine() {
-
     }
 
     public boolean isDiscoverProtocol() {
@@ -358,8 +365,8 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    static State.Result handleBigNumber(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handleBigNumber(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         ByteBuffer bytes;
 
         if ((bytes = rsm.readLine(buffer)) == null) {
@@ -425,8 +432,8 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    static State.Result handleBulkAndVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handleBulkAndVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         int length;
         int end;
 
@@ -445,8 +452,8 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    static State.Result handleBulkError(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handleBulkError(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         int length;
         int end;
 
@@ -479,8 +486,8 @@ public class RedisStateMachine {
         return returnDependStateCount(rsm, state);
     }
 
-    static State.Result handlePushAndMulti(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handlePushAndMulti(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         int end;
 
         if (state.count == NOT_FOUND) {
@@ -547,8 +554,8 @@ public class RedisStateMachine {
         return State.Result.CONTINUE_LOOP;
     }
 
-    static State.Result handleVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handleVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         ByteBuffer bytes;
 
         if ((bytes = rsm.readBytes(buffer, state.count)) == null) {
@@ -588,9 +595,6 @@ public class RedisStateMachine {
      * Close the state machine to free resources.
      */
     public void close() {
-        if (closed.compareAndSet(false, true)) {
-            // free resources if any
-        }
     }
 
     private int findLineEnd(ByteBuf buffer) {
@@ -671,7 +675,8 @@ public class RedisStateMachine {
     }
 
     private ByteBuffer readBytes0(ByteBuf buffer, int count) {
-        final ByteBuffer byteBuffer = buffer.internalNioBuffer(buffer.readerIndex(), count);
+
+        ByteBuffer byteBuffer = buffer.internalNioBuffer(buffer.readerIndex(), count);
 
         // advance reader index
         buffer.readerIndex(buffer.readerIndex() + count);
