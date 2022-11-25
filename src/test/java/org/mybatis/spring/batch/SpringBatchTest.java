@@ -17,12 +17,10 @@ package org.mybatis.spring.batch;
 
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.Test;
 import org.mybatis.spring.batch.domain.Employee;
+import org.springframework.batch.item.Chunk;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
@@ -56,7 +54,7 @@ class SpringBatchTest {
   @Test
   @Transactional
   void shouldDuplicateSalaryOfAllEmployees() throws Exception {
-    List<Employee> employees = new ArrayList<>();
+    Chunk<Employee> employees = new Chunk<>();
     Employee employee = pagingNoNestedItemReader.read();
     while (employee != null) {
       employee.setSalary(employee.getSalary() * 2);
@@ -73,7 +71,7 @@ class SpringBatchTest {
   @Transactional
   void checkPagingReadingWithNestedInResultMap() throws Exception {
     // This test is here to show that PagingReader can return wrong result in case of nested result maps
-    List<Employee> employees = new ArrayList<>();
+    Chunk<Employee> employees = new Chunk<>();
     Employee employee = pagingNestedItemReader.read();
     while (employee != null) {
       employee.setSalary(employee.getSalary() * 2);
@@ -91,7 +89,7 @@ class SpringBatchTest {
   void checkCursorReadingWithoutNestedInResultMap() throws Exception {
     cursorNoNestedItemReader.doOpen();
     try {
-      List<Employee> employees = new ArrayList<>();
+      Chunk<Employee> employees = new Chunk<>();
       Employee employee = cursorNoNestedItemReader.read();
       while (employee != null) {
         employee.setSalary(employee.getSalary() * 2);
@@ -112,7 +110,7 @@ class SpringBatchTest {
   void checkCursorReadingWithNestedInResultMap() throws Exception {
     cursorNestedItemReader.doOpen();
     try {
-      List<Employee> employees = new ArrayList<>();
+      Chunk<Employee> employees = new Chunk<>();
       Employee employee = cursorNestedItemReader.read();
       while (employee != null) {
         employee.setSalary(employee.getSalary() * 2);

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import com.mockrunner.mock.ejb.MockUserTransaction;
 import com.mockrunner.mock.jdbc.MockConnection;
 import com.mockrunner.mock.jdbc.MockDataSource;
 import com.mockrunner.mock.jdbc.MockPreparedStatement;
@@ -32,11 +31,14 @@ import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.jta.JtaTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+
+import jakarta.transaction.UserTransaction;
 
 class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
@@ -275,7 +277,7 @@ class MyBatisSpringTest extends AbstractMyBatisSpringTest {
 
   @Test
   void testWithJtaTxManager() {
-    JtaTransactionManager jtaManager = new JtaTransactionManager(new MockUserTransaction());
+    JtaTransactionManager jtaManager = new JtaTransactionManager(Mockito.mock(UserTransaction.class));
 
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
     txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
@@ -304,7 +306,7 @@ class MyBatisSpringTest extends AbstractMyBatisSpringTest {
     Environment nonSpring = new Environment("non-spring", new ManagedTransactionFactory(), mockDataSource);
     sqlSessionFactory.getConfiguration().setEnvironment(nonSpring);
 
-    JtaTransactionManager jtaManager = new JtaTransactionManager(new MockUserTransaction());
+    JtaTransactionManager jtaManager = new JtaTransactionManager(Mockito.mock(UserTransaction.class));
 
     DefaultTransactionDefinition txDef = new DefaultTransactionDefinition();
     txDef.setPropagationBehaviorName("PROPAGATION_REQUIRED");
