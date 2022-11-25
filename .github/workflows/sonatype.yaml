@@ -19,7 +19,7 @@ name: Sonatype
 on:
   push:
     branches:
-      - 3.x
+      - master
 
 jobs:
   build:
