@@ -36,6 +36,7 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
+import org.springframework.core.NativeDetector;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.util.StringUtils;
@@ -84,6 +85,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
     super(registry, false);
+    setIncludeAnnotationConfig(!NativeDetector.inNativeImage());
   }
 
   public void setAddToConfig(boolean addToConfig) {
