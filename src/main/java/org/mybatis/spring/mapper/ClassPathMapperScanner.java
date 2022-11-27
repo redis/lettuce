@@ -67,6 +67,8 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
 
   private boolean lazyInitialization;
 
+  private boolean printWarnLogIfNotFoundMappers = true;
+
   private SqlSessionFactory sqlSessionFactory;
 
   private SqlSessionTemplate sqlSessionTemplate;
@@ -86,6 +88,7 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
   public ClassPathMapperScanner(BeanDefinitionRegistry registry) {
     super(registry, false);
     setIncludeAnnotationConfig(!NativeDetector.inNativeImage());
+    setPrintWarnLogIfNotFoundMappers(!NativeDetector.inNativeImage());
   }
 
   public void setAddToConfig(boolean addToConfig) {
@@ -109,6 +112,21 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
    */
   public void setLazyInitialization(boolean lazyInitialization) {
     this.lazyInitialization = lazyInitialization;
+  }
+
+  /**
+   * Set whether print warning log if not found mappers that matches conditions.
+   * <p>
+   * Default is {@code true}. But {@code false} when running in native image.
+   * </p>
+   *
+   * @param printWarnLogIfNotFoundMappers
+   *          Set the @{code true} to print
+   *
+   * @since 3.0.1
+   */
+  public void setPrintWarnLogIfNotFoundMappers(boolean printWarnLogIfNotFoundMappers) {
+    this.printWarnLogIfNotFoundMappers = printWarnLogIfNotFoundMappers;
   }
 
   public void setMarkerInterface(Class<?> markerInterface) {
@@ -211,8 +229,10 @@ public class ClassPathMapperScanner extends ClassPathBeanDefinitionScanner {
     Set<BeanDefinitionHolder> beanDefinitions = super.doScan(basePackages);
 
     if (beanDefinitions.isEmpty()) {
-      LOGGER.warn(() -> "No MyBatis mapper was found in '" + Arrays.toString(basePackages)
-          + "' package. Please check your configuration.");
+      if (printWarnLogIfNotFoundMappers) {
+        LOGGER.warn(() -> "No MyBatis mapper was found in '" + Arrays.toString(basePackages)
+            + "' package. Please check your configuration.");
+      }
     } else {
       processBeanDefinitions(beanDefinitions);
     }
