@@ -42,7 +42,7 @@ import org.springframework.dao.InvalidDataAccessResourceUsageException;
  * <p>
  * The user must provide a MyBatis statement id that points to the SQL statement defined in the MyBatis.
  * <p>
- * It is expected that {@link #write(List)} is called inside a transaction. If it is not each statement call will be
+ * It is expected that {@link #write(Chunk)} is called inside a transaction. If it is not each statement call will be
  * autocommitted and flushStatements will return no results.
  * <p>
  * The writer is thread safe after its properties are set (normal singleton behavior), so it can be used to write in
