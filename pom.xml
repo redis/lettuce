@@ -331,14 +331,35 @@
           </systemProperties>
         </configuration>
       </plugin>
+      <plugin><!-- prepare site content by filtering ${project.*} values-->
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>filter-site</id>
+            <phase>pre-site</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/site-src</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>src/site</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-site-plugin</artifactId>
         <configuration>
           <locales>en,es,zh_CN,ja,ko</locales>
-          <!-- Build using files that replace a placeholder using project properties -->
           <siteDirectory>${project.build.directory}/site-src</siteDirectory>
-        </configuration>
+       </configuration>
       </plugin>
     </plugins>
 
@@ -353,12 +374,6 @@
       </resource>
       <resource>
         <directory>${project.basedir}/src/main/resources</directory>
-      </resource>
-      <!-- Copy for replacing a placeholder using project properties -->
-      <resource>
-        <directory>${project.basedir}/src/site</directory>
-        <targetPath>${project.build.directory}/site-src</targetPath>
-        <filtering>true</filtering>
       </resource>
     </resources>
     <testResources>
