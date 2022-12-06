@@ -27,7 +27,7 @@ Fixes
 * XTrimArgs Should Allow Limit = 0 #2250
 * NullPointerException if INFO command on redis cluster fails #2243
 * Own `RedisCredentialsProvider` causes issue with protocol handshake on Redis 5 #2234
-* * Proper creation of `AttributeKey` #2111
+* Proper creation of `AttributeKey` #2111
 
 Other
 -----
