@@ -440,7 +440,7 @@ clean:
 
 release:
 	mvn release:clean
-	mvn release:prepare -Psonatype-oss-release
-	mvn release:perform -Psonatype-oss-release
+	mvn release:prepare
+	mvn release:perform
 	ls target/checkout/target/*-bin.zip | xargs gpg -b -a
 	ls target/checkout/target/*-bin.tar.gz | xargs gpg -b -a
