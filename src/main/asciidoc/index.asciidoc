@@ -13,7 +13,7 @@ ifdef::backend-pdf[]
 endif::[]
 
 ifdef::backend-html5[]
-image::lettuce-green-text@2x.png[width=50%,link=https://lettuce.io]
+image::images/lettuce-green-text@2x.png[width=50%,link=https://lettuce.io]
 endif::[]
 
 include::overview.asciidoc[]
