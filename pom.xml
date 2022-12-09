@@ -365,6 +365,17 @@
           <siteDirectory>${project.build.directory}/site-src</siteDirectory>
        </configuration>
       </plugin>
+      <!-- We are not modular yet but use automatic module names, javadoc plugin has well known incorrect determination of modular, patch it -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <additionalOptions combine.children="append">
+            <option>--add-modules</option>
+            <option>java.sql</option>
+          </additionalOptions>
+        </configuration>
+      </plugin>
     </plugins>
 
     <resources>
