@@ -7,3 +7,5 @@
 *.iml
 /.idea
 .mvn/wrapper/maven-wrapper.jar
+release.properties
+*.releaseBackup
