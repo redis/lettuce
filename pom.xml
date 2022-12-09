@@ -373,6 +373,8 @@
           <additionalOptions combine.children="append">
             <option>--add-modules</option>
             <option>java.sql</option>
+            <option>--add-modules</option>
+            <option>java.xml</option>
           </additionalOptions>
         </configuration>
       </plugin>
