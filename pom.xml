@@ -114,7 +114,7 @@
     <spring-batch.version>5.0.0</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
 
-    <junit.version>5.9.1</junit.version>
+    <junit.version>5.9.2</junit.version>
 
     <!-- Keep this setting until mybatis-parent 37 official released -->
     <maven.compiler.parameters>true</maven.compiler.parameters>
