@@ -33,7 +33,7 @@ public interface MetricCollector<T> {
     /**
      * Returns the collected/aggregated metrics.
      *
-     * @return the the collected/aggregated metrics
+     * @return the collected/aggregated metrics
      */
     T retrieveMetrics();
 
