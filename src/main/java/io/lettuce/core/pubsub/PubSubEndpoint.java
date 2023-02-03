@@ -37,34 +37,11 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PubSubEndpoint.class);
 
-    private static final Set<String> ALLOWED_COMMANDS_SUBSCRIBED;
-
-    private static final Set<String> SUBSCRIBE_COMMANDS;
-
     private final List<RedisPubSubListener<K, V>> listeners = new CopyOnWriteArrayList<>();
 
     private final Set<Wrapper<K>> channels;
 
     private final Set<Wrapper<K>> patterns;
-
-    private volatile boolean subscribeWritten = false;
-
-    static {
-
-        ALLOWED_COMMANDS_SUBSCRIBED = new HashSet<>(6, 1);
-
-        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.SUBSCRIBE.name());
-        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PSUBSCRIBE.name());
-        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.UNSUBSCRIBE.name());
-        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PUNSUBSCRIBE.name());
-        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.QUIT.name());
-        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PING.name());
-
-        SUBSCRIBE_COMMANDS = new HashSet<>(2, 1);
-
-        SUBSCRIBE_COMMANDS.add(CommandType.SUBSCRIBE.name());
-        SUBSCRIBE_COMMANDS.add(CommandType.PSUBSCRIBE.name());
-    }
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -118,86 +95,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         return unwrap(this.patterns);
     }
 
-    @Override
-    public void notifyChannelActive(Channel channel) {
-        subscribeWritten = false;
-        super.notifyChannelActive(channel);
-    }
-
-    @Override
-    public <K1, V1, T> RedisCommand<K1, V1, T> write(RedisCommand<K1, V1, T> command) {
-
-        if (isSubscribed() && !isAllowed(command)) {
-            rejectCommand(command);
-            return command;
-        }
-
-        if (!subscribeWritten && SUBSCRIBE_COMMANDS.contains(command.getType().name())) {
-            subscribeWritten = true;
-        }
-
-        return super.write(command);
-    }
-
-    @Override
-    public <K1, V1> Collection<RedisCommand<K1, V1, ?>> write(Collection<? extends RedisCommand<K1, V1, ?>> redisCommands) {
-
-        if (isSubscribed()) {
-
-            if (containsViolatingCommands(redisCommands)) {
-                rejectCommands(redisCommands);
-                return (Collection<RedisCommand<K1, V1, ?>>) redisCommands;
-            }
-        }
-
-        if (!subscribeWritten) {
-            for (RedisCommand<?, ?, ?> redisCommand : redisCommands) {
-                if (SUBSCRIBE_COMMANDS.contains(redisCommand.getType().name())) {
-                    subscribeWritten = true;
-                    break;
-                }
-            }
-        }
-
-        return super.write(redisCommands);
-    }
-
-    protected void rejectCommand(RedisCommand<?, ?, ?> command) {
-        command.completeExceptionally(
-                new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
-                        command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED)));
-    }
-
-    protected void rejectCommands(Collection<? extends RedisCommand<?, ?, ?>> redisCommands) {
-        for (RedisCommand<?, ?, ?> command : redisCommands) {
-            command.completeExceptionally(
-                    new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
-                            command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED)));
-        }
-    }
-
-    protected boolean containsViolatingCommands(Collection<? extends RedisCommand<?, ?, ?>> redisCommands) {
-
-        for (RedisCommand<?, ?, ?> redisCommand : redisCommands) {
-
-            if (!isAllowed(redisCommand)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static boolean isAllowed(RedisCommand<?, ?, ?> command) {
-        return ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name());
-    }
-
-    private boolean isSubscribed() {
-        return subscribeWritten && (hasChannelSubscriptions() || hasPatternSubscriptions());
-    }
-
     void notifyMessage(PubSubMessage<K, V> message) {
-
         // drop empty messages
         if (message.type() == null || (message.pattern() == null && message.channel() == null && message.body() == null)) {
             return;

@@ -489,12 +489,30 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
     }
 
     @Test
-    void pingNotAllowedInSubscriptionState() {
+    void echoNotAllowedInSubscriptionState_resp2() {
+        client.setOptions(
+                ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
+        RedisPubSubAsyncCommands<String, String>  pubsub = client.connectPubSub().async();
+        pubsub.getStatefulConnection().addListener(PubSubCommandTest.this);
+        pubsub.auth(passwd);
 
         TestFutures.awaitOrTimeout(pubsub.subscribe(channel));
 
         assertThatThrownBy(() -> TestFutures.getOrTimeout(pubsub.echo("ping"))).isInstanceOf(RedisException.class)
-                .hasMessageContaining("not allowed");
+                .hasMessageContaining("only (P)SUBSCRIBE / (P)UNSUBSCRIBE / PING / QUIT / RESET are allowed in this context");
+        pubsub.unsubscribe(channel);
+
+        Wait.untilTrue(() -> channels.size() == 2).waitOrTimeout();
+
+        assertThat(TestFutures.getOrTimeout(pubsub.echo("ping"))).isEqualTo("ping");
+    }
+
+    @Test
+    void echoAllowedInSubscriptionState_resp3() {
+
+        TestFutures.awaitOrTimeout(pubsub.subscribe(channel));
+
+        assertThat(TestFutures.getOrTimeout(pubsub.echo("ping"))).isEqualTo("ping");
         pubsub.unsubscribe(channel);
 
         Wait.untilTrue(() -> channels.size() == 2).waitOrTimeout();
