@@ -44,7 +44,7 @@ import io.lettuce.test.resource.TestClientResources;
  */
 class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
-    private static final int CLUSTER_PORT_SSL_1 = 7443;
+    private static final int CLUSTER_PORT_SSL_1 = 7442;
 
     private static final int CLUSTER_PORT_SSL_2 = 7444; // replica cannot replicate properly with upstream
     private static final int CLUSTER_PORT_SSL_3 = 7445;
@@ -58,7 +58,7 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
     @BeforeEach
     void before() {
-        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_1), "Assume that stunnel runs on port 7443");
+        assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_1), "Assume that stunnel runs on port 7442");
         assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_2), "Assume that stunnel runs on port 7444");
         assumeTrue(CanConnect.to(host(), CLUSTER_PORT_SSL_3), "Assume that stunnel runs on port 7445");
         assumeTrue(CanConnect.to(host(), 7479), "Assume that Redis runs on port 7479");
@@ -117,7 +117,7 @@ class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
         try {
             node2Connection.sync().get(SLOT_1_KEY);
         } catch (RedisCommandExecutionException e) {
-            assertThat(e).hasMessage("MOVED 1 127.0.0.1:7443");
+            assertThat(e).hasMessage("MOVED 1 127.0.0.1:7442");
         }
 
         connection.close();

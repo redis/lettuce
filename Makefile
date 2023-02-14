@@ -207,7 +207,7 @@ work/cluster-node-7479.conf:
 	@echo cluster-enabled yes >> $@
 	@echo cluster-node-timeout 150 >> $@
 	@echo cluster-config-file $(shell pwd)/work/cluster-node-config-7479.conf >> $@
-	@echo cluster-announce-port 7443 >> $@
+	@echo cluster-announce-port 7442 >> $@
 	@echo requirepass foobared >> $@
 
 
@@ -289,7 +289,7 @@ work/stunnel.conf:
 	@echo key=$(ROOT_DIR)/work/ca/private/foo-host.decrypted.key.pem >> $@
 
 	@echo [ssl-cluster-node-1] >> $@
-	@echo accept = 127.0.0.1:7443 >> $@
+	@echo accept = 127.0.0.1:7442 >> $@
 	@echo connect = 127.0.0.1:7479 >> $@
 
 	@echo [ssl-cluster-node-2] >> $@
