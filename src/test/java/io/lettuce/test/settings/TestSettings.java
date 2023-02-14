@@ -150,6 +150,11 @@ public class TestSettings {
      * @return {@link #sslPort()} with added {@literal offset}
      */
     public static int sslPort(int offset) {
-        return sslPort() + offset;
+        int port = sslPort() + offset;
+        if (port == 7443) {
+            throw new IllegalStateException("Please use a different port than 7443. Thank you.");
+        }
+        return port;
     }
+
 }
