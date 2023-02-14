@@ -105,7 +105,12 @@ class RedisHandshake implements ConnectionInitializer {
 
             if (throwable != null) {
                 if (isUnknownCommand(throwable)) {
-                    fallbackToResp2(channel, handshake);
+                    try {
+                        fallbackToResp2(channel, handshake);
+                    } catch (Exception e) {
+                        e.addSuppressed(throwable);
+                        handshake.completeExceptionally(e);
+                    }
                 } else {
                     handshake.completeExceptionally(throwable);
                 }

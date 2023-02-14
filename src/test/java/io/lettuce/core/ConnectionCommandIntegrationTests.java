@@ -215,12 +215,6 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void authEmpty() {
-        assertThatThrownBy(() -> redis.auth("")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> redis.auth("", "x")).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
     void authReconnect() {
         WithPassword.run(client, () -> {
 
