@@ -297,19 +297,28 @@ public class ClusterPartitionParser {
         return slots;
     }
 
-    private static BitSet readSlotRanges(List<Integer> slotRanges) {
+    private static BitSet readSlotRanges(List<?> slotRanges) {
 
         BitSet slots = new BitSet(SlotHash.SLOT_COUNT);
 
         for (int i = 0; i < slotRanges.size(); i += 2) {
 
-            Number from = slotRanges.get(i);
-            Number to = slotRanges.get(i + 1);
+            Number from = getAsNumber(slotRanges.get(i));
+            Number to = getAsNumber(slotRanges.get(i + 1));
 
             addSlots(slots, from.intValue(), to.intValue());
         }
 
         return slots;
+    }
+
+    private static Number getAsNumber(Object stringOrNumber) {
+
+        if (stringOrNumber instanceof Number) {
+            return (Number) stringOrNumber;
+        }
+
+        return Integer.parseInt(stringOrNumber.toString());
     }
 
     private static void addSlots(BitSet slots, int from, int to) {
