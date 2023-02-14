@@ -324,7 +324,7 @@ public class SocketOptions {
             }
 
             /**
-             * Set the the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to
+             * Set the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to
              * {@code 9}. See also {@link #DEFAULT_COUNT} and {@code TCP_KEEPCNT}.
              *
              * @param count the maximum number of keepalive probes TCP
