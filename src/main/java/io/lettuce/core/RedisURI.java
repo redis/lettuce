@@ -472,7 +472,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Sets the password. Use empty string to skip authentication.
      * <p>
      * This method is deprecated as of Lettuce 6.0. The reason is that {@link String} has a strong caching affinity and the JVM
-     * cannot easily GC {@code String} instances. Therefore we suggest using either {@code char[]} or a custom
+     * cannot easily GC {@code String} instances. Therefore, we suggest using either {@code char[]} or a custom
      * {@link CharSequence} (e.g. {@link StringBuilder} or netty's {@link io.netty.util.AsciiString}).
      *
      * @param password the password, must not be {@code null}.
@@ -486,7 +486,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Sets the password. Use empty string to skip authentication.
+     * Sets the password. Use {@code null} to skip authentication. Empty password is supported (although not recommended for
+     * security reasons).
      *
      * @param password the password, must not be {@code null}.
      * @throws IllegalStateException if a {@link RedisCredentialsProvider} is configured
@@ -501,7 +502,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Sets the password. Use empty char array to skip authentication.
+     * Sets the password. Use {@code null} to skip authentication. Empty password is supported (although not recommended for
+     * security reasons).
      *
      * @param password the password, can be {@code null}.
      * @throws IllegalStateException if a {@link RedisCredentialsProvider} is configured
@@ -1585,7 +1587,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Configures authentication.
+         * Configures authentication. Empty password is supported (although not recommended for security reasons).
          *
          * @param username the user name
          * @param password the password name
@@ -1616,7 +1618,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Configures authentication.
+         * Configures authentication. Empty password is supported (although not recommended for security reasons).
          * <p>
          * This method is deprecated as of Lettuce 6.0. The reason is that {@link String} has a strong caching affinity and the
          * JVM cannot easily GC {@code String} instances. Therefore, we suggest using either {@code char[]} or a custom
@@ -1636,7 +1638,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Configures authentication.
+         * Configures authentication. Empty password is supported (although not recommended for security reasons).
          *
          * @param password the password
          * @return the builder
@@ -1655,7 +1657,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Configures authentication.
+         * Configures authentication. Empty password is supported (although not recommended for security reasons).
          *
          * @param password the password
          * @return the builder

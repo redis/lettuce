@@ -45,7 +45,7 @@ public interface RedisCredentials {
     /**
      * Retrieve the Redis password, used to authenticate the user interacting with Redis.
      *
-     * @return the password Can be {@code null} if not set.
+     * @return the password. Can be {@code null} if not set.
      * @see #hasUsername()
      */
     char[] getPassword();

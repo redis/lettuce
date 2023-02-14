@@ -205,7 +205,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, String> auth(CharSequence password) {
         LettuceAssert.notNull(password, "Password " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(password, "Password " + MUST_NOT_BE_EMPTY);
 
         char[] chars = new char[password.length()];
         for (int i = 0; i < password.length(); i++) {
@@ -216,7 +215,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     Command<K, V, String> auth(char[] password) {
         LettuceAssert.notNull(password, "Password " + MUST_NOT_BE_NULL);
-        LettuceAssert.isTrue(password.length > 0, "Password " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(password);
         return createCommand(AUTH, new StatusOutput<>(codec), args);
@@ -226,7 +224,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(username, "Username " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(!username.isEmpty(), "Username " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(password, "Password " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(password, "Password " + MUST_NOT_BE_EMPTY);
 
         char[] chars = new char[password.length()];
         for (int i = 0; i < password.length(); i++) {
@@ -239,7 +236,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(username, "Username " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(!username.isEmpty(), "Username " + MUST_NOT_BE_EMPTY);
         LettuceAssert.notNull(password, "Password " + MUST_NOT_BE_NULL);
-        LettuceAssert.isTrue(password.length > 0, "Password " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(username).add(password);
         return createCommand(AUTH, new StatusOutput<>(codec), args);
