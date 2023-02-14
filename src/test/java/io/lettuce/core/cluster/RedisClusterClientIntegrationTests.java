@@ -575,6 +575,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     @Test
     void getKeysInSlot() {
 
+        sync.flushall();
+
         sync.set(ClusterTestSettings.KEY_A, value);
         sync.set(ClusterTestSettings.KEY_B, value);
 
@@ -588,6 +590,8 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
     @Test
     void countKeysInSlot() {
+
+        sync.flushall();
 
         sync.set(ClusterTestSettings.KEY_A, value);
         sync.set(ClusterTestSettings.KEY_B, value);
