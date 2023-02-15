@@ -23,6 +23,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -116,16 +119,38 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldParseMovedTargetCorrectly() {
 
-        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget("MOVED 1234-2020 127.0.0.1:6381");
+        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(new Partitions(), "MOVED 1234-2020 127.0.0.1:6381");
 
         assertThat(moveTarget.getHostText()).isEqualTo("127.0.0.1");
         assertThat(moveTarget.getPort()).isEqualTo(6381);
     }
 
     @Test
+    void shouldParseMovedTargetWithoutHostnameCorrectly() {
+
+        Partitions partitions = new Partitions();
+        partitions.add(new RedisClusterNode(RedisURI.create("redis://1.2.3.4:6381"), "foo", false,null,0,0,0,Collections.emptyList(), Collections.emptySet()));
+        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(partitions, "MOVED 1234 :6381");
+
+        assertThat(moveTarget.getHostText()).isEqualTo("1.2.3.4");
+        assertThat(moveTarget.getPort()).isEqualTo(6381);
+    }
+
+    @Test
+    void shouldParseMovedTargetWithoutHostnameUsingSlotFallbackCorrectly() {
+
+        Partitions partitions = new Partitions();
+        partitions.add(new RedisClusterNode(RedisURI.create("redis://1.2.3.4:5678"), "foo", false,null,0,0,0, Collections.singletonList(1234), Collections.emptySet()));
+        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(partitions, "MOVED 1234 :6381");
+
+        assertThat(moveTarget.getHostText()).isEqualTo("1.2.3.4");
+        assertThat(moveTarget.getPort()).isEqualTo(6381);
+    }
+
+    @Test
     void shouldParseIPv6MovedTargetCorrectly() {
 
-        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget("MOVED 1234-2020 1:2:3:4::6:6381");
+        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(new Partitions(), "MOVED 1234-2020 1:2:3:4::6:6381");
 
         assertThat(moveTarget.getHostText()).isEqualTo("1:2:3:4::6");
         assertThat(moveTarget.getPort()).isEqualTo(6381);
