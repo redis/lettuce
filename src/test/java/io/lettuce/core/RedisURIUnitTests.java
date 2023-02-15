@@ -314,6 +314,10 @@ class RedisURIUnitTests {
         assertThat(target.isSsl()).isTrue();
         assertThat(target.isVerifyPeer()).isFalse();
         assertThat(target.isStartTls()).isTrue();
+
+        source.setVerifyPeer(SslVerifyMode.CA);
+        target.applySsl(source);
+        assertThat(target.getVerifyMode()).isEqualTo(SslVerifyMode.CA);
     }
 
     @Test
