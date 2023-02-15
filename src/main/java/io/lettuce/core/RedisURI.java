@@ -145,6 +145,7 @@ import io.lettuce.core.internal.LettuceStrings;
  * @author Guy Korland
  * @author Johnny Lim
  * @author Jon Iantosca
+ * @author Jacob Halsey
  * @since 3.0
  */
 @SuppressWarnings("serial")
