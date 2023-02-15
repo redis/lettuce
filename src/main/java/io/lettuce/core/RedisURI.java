@@ -625,7 +625,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         LettuceAssert.notNull(source, "Source RedisURI must not be null");
 
         setSsl(source.isSsl());
-        setVerifyPeer(source.isVerifyPeer());
+        setVerifyPeer(source.getVerifyMode());
         setStartTls(source.isStartTls());
     }
 
