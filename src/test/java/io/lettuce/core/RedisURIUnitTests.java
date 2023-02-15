@@ -36,6 +36,7 @@ import reactor.core.publisher.Mono;
  *
  * @author Mark Paluch
  * @author Lei Zhang
+ * @author Jacob Halsey
  */
 class RedisURIUnitTests {
 
