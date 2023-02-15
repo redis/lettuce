@@ -33,10 +33,12 @@ import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.event.AskRedirectionEvent;
 import io.lettuce.core.cluster.event.MovedRedirectionEvent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.internal.Futures;
@@ -110,7 +112,6 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             ClusterCommand<K, V, T> clusterCommand = (ClusterCommand<K, V, T>) command;
             if (clusterCommand.isMoved() || clusterCommand.isAsk()) {
 
-
                 HostAndPort target;
                 boolean asking;
                 ByteBuffer firstEncodedKey = clusterCommand.getArgs().getFirstEncodedKey();
@@ -125,7 +126,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
                 if (clusterCommand.isMoved()) {
 
-                    target = getMoveTarget(clusterCommand.getError());
+                    target = getMoveTarget(partitions, clusterCommand.getError());
                     clusterEventListener.onMovedRedirection();
                     asking = false;
 
@@ -329,8 +330,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     /**
      * Optimization: Determine command intents and optimize for bulk execution preferring one node.
      * <p>
-     * If there is only one connectionIntent, then we take the connectionIntent derived from the commands. If there is more than one connectionIntent, then
-     * use {@link ConnectionIntent#WRITE}.
+     * If there is only one connectionIntent, then we take the connectionIntent derived from the commands. If there is more than
+     * one connectionIntent, then use {@link ConnectionIntent#WRITE}.
      *
      * @param commands {@link Collection} of {@link RedisCommand commands}.
      * @return the connectionIntent.
@@ -368,7 +369,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         return ReadOnlyCommands.isReadOnlyCommand(type) ? ConnectionIntent.READ : ConnectionIntent.WRITE;
     }
 
-    static HostAndPort getMoveTarget(String errorMessage) {
+    static HostAndPort getMoveTarget(Partitions partitions, String errorMessage) {
 
         LettuceAssert.notEmpty(errorMessage, "ErrorMessage must not be empty");
         LettuceAssert.isTrue(errorMessage.startsWith(CommandKeyword.MOVED.name()),
@@ -376,8 +377,30 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
         String[] movedMessageParts = errorMessage.split(" ");
         LettuceAssert.isTrue(movedMessageParts.length >= 3, "ErrorMessage must consist of 3 tokens (" + errorMessage + ")");
+        String redirectTarget = movedMessageParts[2];
 
-        return HostAndPort.parseCompat(movedMessageParts[2]);
+        if (redirectTarget.startsWith(":")) {
+
+            // unknown redirection hostname. We attempt discovering the hostname from Partitions
+
+            int redirectPort = Integer.parseInt(redirectTarget.substring(1));
+            for (RedisClusterNode partition : partitions) {
+
+                RedisURI uri = partition.getUri();
+                if (uri.getPort() == redirectPort) {
+                    return HostAndPort.of(uri.getHost(), redirectPort);
+                }
+            }
+
+            int slot = Integer.parseInt(movedMessageParts[1]);
+            RedisClusterNode partition = partitions.getPartitionBySlot(slot);
+            if (partition != null) {
+                RedisURI uri = partition.getUri();
+                return HostAndPort.of(uri.getHost(), redirectPort);
+            }
+        }
+
+        return HostAndPort.parseCompat(redirectTarget);
     }
 
     static HostAndPort getAskTarget(String errorMessage) {
