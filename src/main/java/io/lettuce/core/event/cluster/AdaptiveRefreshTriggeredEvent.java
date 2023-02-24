@@ -17,6 +17,7 @@ package io.lettuce.core.event.cluster;
 
 import java.util.function.Supplier;
 
+import io.lettuce.core.cluster.ClusterTopologyRefreshOptions;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.event.Event;
 
@@ -31,10 +32,13 @@ public class AdaptiveRefreshTriggeredEvent implements Event {
     private final Supplier<Partitions> partitionsSupplier;
 
     private final Runnable topologyRefreshScheduler;
+    private final ClusterTopologyRefreshOptions.RefreshTrigger refreshTrigger;
 
-    public AdaptiveRefreshTriggeredEvent(Supplier<Partitions> partitionsSupplier, Runnable topologyRefreshScheduler) {
+    public AdaptiveRefreshTriggeredEvent(Supplier<Partitions> partitionsSupplier, Runnable topologyRefreshScheduler,
+                                         ClusterTopologyRefreshOptions.RefreshTrigger refreshTrigger) {
         this.partitionsSupplier = partitionsSupplier;
         this.topologyRefreshScheduler = topologyRefreshScheduler;
+        this.refreshTrigger = refreshTrigger;
     }
 
     /**
@@ -53,4 +57,10 @@ public class AdaptiveRefreshTriggeredEvent implements Event {
         return partitionsSupplier.get();
     }
 
+    /**
+     * Retrieve the {@link ClusterTopologyRefreshOptions.RefreshTrigger} that caused this event.
+     */
+    public ClusterTopologyRefreshOptions.RefreshTrigger getRefreshTrigger() {
+        return refreshTrigger;
+    }
 }

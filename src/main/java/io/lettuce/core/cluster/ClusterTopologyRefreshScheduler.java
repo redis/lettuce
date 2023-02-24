@@ -125,7 +125,9 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     public void onAskRedirection() {
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.ASK_REDIRECT)) {
-            indicateTopologyRefreshSignal();
+            if (indicateTopologyRefreshSignal()) {
+                emitAdaptiveRefreshScheduledEvent(ClusterTopologyRefreshOptions.RefreshTrigger.ASK_REDIRECT);
+            }
         }
     }
 
@@ -134,7 +136,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT)) {
             if (indicateTopologyRefreshSignal()) {
-                emitAdaptiveRefreshScheduledEvent();
+                emitAdaptiveRefreshScheduledEvent(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT);
             }
         }
     }
@@ -145,7 +147,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.PERSISTENT_RECONNECTS)
                 && attempt >= getClusterTopologyRefreshOptions().getRefreshTriggersReconnectAttempts()) {
             if (indicateTopologyRefreshSignal()) {
-                emitAdaptiveRefreshScheduledEvent();
+                emitAdaptiveRefreshScheduledEvent(ClusterTopologyRefreshOptions.RefreshTrigger.PERSISTENT_RECONNECTS);
             }
         }
     }
@@ -155,7 +157,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.UNCOVERED_SLOT)) {
             if (indicateTopologyRefreshSignal()) {
-                emitAdaptiveRefreshScheduledEvent();
+                emitAdaptiveRefreshScheduledEvent(ClusterTopologyRefreshOptions.RefreshTrigger.UNCOVERED_SLOT);
             }
         }
     }
@@ -165,14 +167,15 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.UNKNOWN_NODE)) {
             if (indicateTopologyRefreshSignal()) {
-                emitAdaptiveRefreshScheduledEvent();
+                emitAdaptiveRefreshScheduledEvent(ClusterTopologyRefreshOptions.RefreshTrigger.UNKNOWN_NODE);
             }
         }
     }
 
-    private void emitAdaptiveRefreshScheduledEvent() {
+    private void emitAdaptiveRefreshScheduledEvent(ClusterTopologyRefreshOptions.RefreshTrigger trigger) {
+        logger.debug("Adaptive refresh event due to: {}", trigger);
 
-        AdaptiveRefreshTriggeredEvent event = new AdaptiveRefreshTriggeredEvent(partitions, this::scheduleRefresh);
+        AdaptiveRefreshTriggeredEvent event = new AdaptiveRefreshTriggeredEvent(partitions, this::scheduleRefresh, trigger);
 
         clientResources.eventBus().publish(event);
     }
