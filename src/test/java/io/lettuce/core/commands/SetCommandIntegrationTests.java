@@ -358,7 +358,7 @@ public class SetCommandIntegrationTests extends TestSupport {
 
         Set<String> expect = new HashSet<>();
         Set<String> check = new HashSet<>();
-        setup100KeyValues(expect);
+        setup129KeyValues(expect);
 
         ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.limit(5));
 
@@ -379,18 +379,20 @@ public class SetCommandIntegrationTests extends TestSupport {
     void scanMatch() {
 
         Set<String> expect = new HashSet<>();
-        setup100KeyValues(expect);
+        setup129KeyValues(expect);
 
         ValueScanCursor<String> cursor = redis.sscan(key, ScanArgs.Builder.limit(200).match("value1*"));
 
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
 
-        assertThat(cursor.getValues()).hasSize(11);
+        assertThat(cursor.getValues()).hasSize(40);
     }
 
-    void setup100KeyValues(Set<String> expect) {
-        for (int i = 0; i < 100; i++) {
+    void setup129KeyValues(Set<String> expect) {
+        // Redis 7.0 introduce listpack, and `set-max-listpack-entries` is 128
+        // so we add 129 elements to convert it to hashtable
+        for (int i = 0; i < 129; i++) {
             redis.sadd(key, value + i);
             expect.add(value + i);
         }
