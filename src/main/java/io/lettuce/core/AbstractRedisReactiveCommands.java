@@ -433,6 +433,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> clusterFailover(boolean force, boolean takeOver) {
+        return createMono(() -> commandBuilder.clusterFailover(force, takeOver));
+    }
+
+    @Override
     public Mono<String> clusterFlushslots() {
         return createMono(commandBuilder::clusterFlushslots);
     }
