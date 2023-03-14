@@ -140,8 +140,19 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *
      * @param force do not coordinate with master if {@code true}
      * @return String simple-string-reply
+     * @deprecated use {@link #clusterFailover(boolean,boolean)} instead.
      */
+     @Deprecated
     RedisFuture<String> clusterFailover(boolean force);
+
+    /**
+     * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
+     *
+     * @param force do not coordinate with master if {@code true}
+     * @param takeOver do not coordinate with the rest of the cluster if {@code true}
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> clusterFailover(boolean force,boolean takeOver);
 
     /**
      * Delete all the slots associated with the specified node. The number of deleted slots is returned.

@@ -411,6 +411,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> clusterFailover(boolean force,boolean takeOver) {
+        return dispatch(commandBuilder.clusterFailover(force,takeOver));
+    }
+
+    @Override
     public RedisFuture<String> clusterFlushslots() {
         return dispatch(commandBuilder.clusterFlushslots());
     }
