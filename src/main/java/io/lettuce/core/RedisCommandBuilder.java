@@ -583,6 +583,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLUSTER, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, String> clusterFailover(boolean force, boolean takeOver) {
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FAILOVER);
+        if (force) {
+            args.add(FORCE);
+        } else if (takeOver) {
+            args.add(TAKEOVER);
+        }
+        return createCommand(CLUSTER, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, String> clusterFlushslots() {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSHSLOTS);
