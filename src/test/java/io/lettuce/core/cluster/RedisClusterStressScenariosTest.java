@@ -132,6 +132,32 @@ public class RedisClusterStressScenariosTest extends TestSupport {
         assertThat(redis6Node.is(RedisClusterNode.NodeFlag.UPSTREAM)).isTrue();
 
     }
+    @Test
+    public void testClusterFailoverWithTakeOver() {
+
+        log.info("Cluster node 5 is master");
+        log.info("Cluster nodes seen from node 5:\n" + redissync5.clusterNodes());
+        log.info("Cluster nodes seen from node 6:\n" + redissync6.clusterNodes());
+
+        Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.UPSTREAM)).waitOrTimeout();
+        Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.REPLICA)).waitOrTimeout();
+
+        String failover = redissync6.clusterFailover(false, true);
+        assertThat(failover).isEqualTo("OK");
+
+        Wait.untilTrue(() -> getOwnPartition(redissync6).is(RedisClusterNode.NodeFlag.UPSTREAM)).waitOrTimeout();
+        Wait.untilTrue(() -> getOwnPartition(redissync5).is(RedisClusterNode.NodeFlag.REPLICA)).waitOrTimeout();
+
+        log.info("Cluster nodes seen from node 5 after clusterFailover:\n" + redissync5.clusterNodes());
+        log.info("Cluster nodes seen from node 6 after clusterFailover:\n" + redissync6.clusterNodes());
+
+        RedisClusterNode redis5Node = getOwnPartition(redissync5);
+        RedisClusterNode redis6Node = getOwnPartition(redissync6);
+
+        assertThat(redis5Node.is(RedisClusterNode.NodeFlag.REPLICA)).isTrue();
+        assertThat(redis6Node.is(RedisClusterNode.NodeFlag.UPSTREAM)).isTrue();
+
+    }
 
     @Test
     public void testClusterConnectionStability() {

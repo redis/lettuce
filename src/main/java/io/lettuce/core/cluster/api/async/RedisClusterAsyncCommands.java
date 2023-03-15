@@ -150,9 +150,10 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *
      * @param force do not coordinate with master if {@code true}
      * @param takeOver do not coordinate with the rest of the cluster if {@code true}
+     * force will take precedence over takeOver if both are set.
      * @return String simple-string-reply
      */
-    RedisFuture<String> clusterFailover(boolean force,boolean takeOver);
+    RedisFuture<String> clusterFailover(boolean force, boolean takeOver);
 
     /**
      * Delete all the slots associated with the specified node. The number of deleted slots is returned.

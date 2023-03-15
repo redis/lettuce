@@ -143,6 +143,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
      * @return String simple-string-reply
      * @deprecated use {@link #clusterFailover(boolean, boolean)} instead.
      */
+    @Deprecated
     Mono<String> clusterFailover(boolean force);
 
     /**
