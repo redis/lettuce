@@ -138,9 +138,7 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
      *
      * @param force do not coordinate with master if {@code true}
      * @return String simple-string-reply
-     * @deprecated use {@link #clusterFailover(boolean, boolean)} instead.
      */
-    @Deprecated
     String clusterFailover(boolean force);
 
     /**
