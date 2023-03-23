@@ -141,9 +141,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
      *
      * @param force do not coordinate with master if {@code true}
      * @return String simple-string-reply
-     * @deprecated use {@link #clusterFailover(boolean, boolean)} instead.
      */
-    @Deprecated
     Mono<String> clusterFailover(boolean force);
 
     /**
