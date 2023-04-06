@@ -107,7 +107,7 @@ RedisStringAsyncCommands<String, String> async = connection.async();
 RedisFuture<String> set = async.set("key", "value")
 RedisFuture<String> get = async.get("key")
 
-async.awaitAll(set, get) == true
+LettuceFutures.awaitAll(set, get) == true
 
 set.get() == "OK"
 get.get() == "value"
