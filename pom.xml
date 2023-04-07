@@ -99,7 +99,7 @@
   </distributionManagement>
 
   <properties>
-    <clirr.comparisonVersion>1.3.2</clirr.comparisonVersion>
+    <clirr.comparisonVersion>2.1.0</clirr.comparisonVersion>
     <findbugs.onlyAnalyze>org.mybatis.spring.*,org.mybatis.spring.mapper.*,org.mybatis.spring.support.*,org.mybatis.spring.transaction.*</findbugs.onlyAnalyze>
     <gcu.product>Spring</gcu.product>
     <osgi.import>org.springframework.batch.*;resolution:=optional,*</osgi.import>
@@ -116,11 +116,14 @@
 
     <junit.version>5.9.2</junit.version>
 
-    <!-- Keep this setting until mybatis-parent 37 official released -->
-    <maven.compiler.parameters>true</maven.compiler.parameters>
-
     <!-- Reproducible Builds -->
     <project.build.outputTimestamp>1670546764</project.build.outputTimestamp>
+
+    <!-- TODO: Remove this after mybatis-parent 38 -->
+    <jacoco.plugin>0.8.9</jacoco.plugin>
+
+    <!-- Set byte buddy to experimental -->
+    <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
   </properties>
 
   <dependencies>
@@ -233,7 +236,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>4.9.0</version>
+      <version>5.2.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -314,6 +317,18 @@
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>1.14.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy-agent</artifactId>
+      <version>1.14.4</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
