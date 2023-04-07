@@ -18,8 +18,6 @@ package org.mybatis.spring.sample;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mybatis.spring.sample.domain.User;
 import org.mybatis.spring.sample.service.BarService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +28,6 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
  * Example of basic MyBatis-Spring integration usage with a manual DAO implementation that subclasses
  * SqlSessionDaoSupport.
  */
-@ExtendWith(MockitoExtension.class)
 @DirtiesContext
 @SpringJUnitConfig(locations = { "classpath:org/mybatis/spring/sample/config/applicationContext-sqlsession.xml" })
 class SampleSqlSessionTest {
