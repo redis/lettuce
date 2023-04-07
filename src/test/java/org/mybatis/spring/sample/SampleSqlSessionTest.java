@@ -36,7 +36,7 @@ class SampleSqlSessionTest {
   private BarService barService;
 
   @Test
-  final void testFooService() {
+  void testFooService() {
     User user = this.barService.doSomeBusinessStuff("u1");
     assertThat(user).isNotNull();
     assertThat(user.getName()).isEqualTo("Pocoyo");
