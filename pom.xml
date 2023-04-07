@@ -121,6 +121,9 @@
 
     <!-- TODO: Remove this after mybatis-parent 38 -->
     <jacoco.plugin>0.8.9</jacoco.plugin>
+
+    <!-- Set byte buddy to experimental -->
+    <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
   </properties>
 
   <dependencies>
