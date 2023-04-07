@@ -116,9 +116,6 @@
 
     <junit.version>5.9.2</junit.version>
 
-    <!-- Keep this setting until mybatis-parent 37 official released -->
-    <maven.compiler.parameters>true</maven.compiler.parameters>
-
     <!-- Reproducible Builds -->
     <project.build.outputTimestamp>1670546764</project.build.outputTimestamp>
   </properties>
