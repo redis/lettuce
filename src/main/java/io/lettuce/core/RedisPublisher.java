@@ -408,7 +408,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         void potentiallyReadMore() {
 
-            if ((getDemand() + 1) > data.size()) {
+            /*
+             * getDemand() maybe is Long.MAX_VALUE，because MonoNext.NextSubscriber#request(long n) inner use the Long.MAX_VALUE,
+             * so maybe "getDemand() + 1" will be overflow，we use "getDemand() > data.size() - 1" replace the "(getDemand() + 1) > data.size()"
+             */
+            if (getDemand() > data.size() - 1) {
                 state().readData(this);
             }
         }
