@@ -15,22 +15,6 @@
  */
 package io.lettuce.core;
 
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicLongFieldUpdater;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
-import java.util.function.Supplier;
-
-import org.reactivestreams.Publisher;
-import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
-
-import reactor.core.CoreSubscriber;
-import reactor.core.Exceptions;
-import reactor.util.context.Context;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.ExceptionFactory;
@@ -43,6 +27,21 @@ import io.netty.util.Recycler;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
+import reactor.core.CoreSubscriber;
+import reactor.core.Exceptions;
+import reactor.util.context.Context;
+
+import java.util.Collection;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLongFieldUpdater;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Supplier;
 
 /**
  * Reactive command {@link Publisher} using ReactiveStreams.
@@ -408,7 +407,11 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
         void potentiallyReadMore() {
 
-            if ((getDemand() + 1) > data.size()) {
+            /*
+             * getDemand() maybe is Long.MAX_VALUE，because MonoNext.NextSubscriber#request(long n) inner use the Long.MAX_VALUE,
+             * so maybe "getDemand() + 1" will be overflow，we use "getDemand() > data.size() - 1" replace the "(getDemand() + 1) > data.size()"
+             */
+            if (getDemand() > data.size() - 1) {
                 state().readData(this);
             }
         }
