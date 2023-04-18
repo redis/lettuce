@@ -915,6 +915,7 @@
                                     <head>Generated class:</head>
                                 </tag>
                             </tags>
+                            <javadocVersion>1.8</javadocVersion>
                         </configuration>
                     </plugin>
 
