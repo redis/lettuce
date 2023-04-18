@@ -145,9 +145,10 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
      * Failover a cluster node. Turns the currently connected node into a master and the master into its replica.
      *
      * @param force do not coordinate with master if {@code true}
-     * @param takeOver do not coordinate with the rest of the cluster if {@code true}
-     * force will take precedence over takeOver if both are set.
+     * @param takeOver do not coordinate with the rest of the cluster if {@code true} force will take precedence over takeOver
+     *        if both are set.
      * @return String simple-string-reply
+     * @since 6.2.3
      */
     String clusterFailover(boolean force, boolean takeOver);
 

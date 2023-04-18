@@ -15,12 +15,17 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.ScriptOutputType.STATUS;
-import static org.assertj.core.api.Assertions.assertThat;
+import static io.lettuce.core.ScriptOutputType.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Fail.fail;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Vector;
 
 import javax.inject.Inject;
 
@@ -56,6 +61,10 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
 
         this.clusterClient = clusterClient;
         this.commands = connection.sync();
+        try {
+            connection.sync().scriptKill();
+        } catch (Exception e) {
+        }
         connection.sync().flushall();
     }
 
