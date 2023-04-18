@@ -30,7 +30,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @author Mark Paluch
  * @since 5.1
  */
-public class XReadArgs {
+public class XReadArgs implements CompositeArgument {
 
     private Long block;
 

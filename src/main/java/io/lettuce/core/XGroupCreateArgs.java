@@ -26,7 +26,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * @author Mark Paluch
  * @since 5.2
  */
-public class XGroupCreateArgs {
+public class XGroupCreateArgs implements CompositeArgument {
 
     private boolean mkstream;
 
