@@ -18,7 +18,6 @@ package io.lettuce.core.resource;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
-import reactor.core.scheduler.Schedulers;
 import io.lettuce.core.event.DefaultEventBus;
 import io.lettuce.core.event.DefaultEventPublisherOptions;
 import io.lettuce.core.event.EventBus;
@@ -47,6 +46,7 @@ import io.netty.util.concurrent.PromiseCombiner;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * Default instance of the client resources.
@@ -386,8 +386,8 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the {@link CommandLatencyCollectorOptions} that can that can be used across different instances of the
-         * RedisClient. The options are only effective if no {@code commandLatencyCollector} is provided.
+         * Sets the {@link CommandLatencyCollectorOptions} that can be used across different instances of the RedisClient. The
+         * options are only effective if no {@code commandLatencyCollector} is provided.
          *
          * @param commandLatencyCollectorOptions the command latency collector options, must not be {@code null}.
          * @return {@code this} {@link Builder}.
@@ -405,7 +405,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the {@link CommandLatencyRecorder} that can that can be used across different instances of the RedisClient.
+         * Sets the {@link CommandLatencyRecorder} that can be used across different instances of the RedisClient.
          *
          * @param commandLatencyRecorder the command latency recorder, must not be {@code null}.
          * @return {@code this} {@link Builder}.
@@ -454,7 +454,7 @@ public class DefaultClientResources implements ClientResources {
         }
 
         /**
-         * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
+         * Sets the {@link EventBus} that can be used across different instances of the RedisClient.
          *
          * @param eventBus the event bus, must not be {@code null}.
          * @return {@code this} {@link Builder}.

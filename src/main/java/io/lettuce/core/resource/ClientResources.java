@@ -106,7 +106,7 @@ public interface ClientResources {
         Builder addressResolverGroup(AddressResolverGroup<?> addressResolverGroup);
 
         /**
-         * Sets the {@link CommandLatencyCollector} that can that can be used across different instances of the RedisClient.
+         * Sets the {@link CommandLatencyCollector} that can be used across different instances of the RedisClient.
          *
          * @param commandLatencyCollector the command latency collector, must not be {@code null}.
          * @return {@code this} {@link Builder}.
@@ -118,7 +118,7 @@ public interface ClientResources {
         }
 
         /**
-         * Sets the {@link CommandLatencyRecorder} that can that can be used across different instances of the RedisClient.
+         * Sets the {@link CommandLatencyRecorder} that can be used across different instances of the RedisClient.
          *
          * @param latencyRecorder the command latency recorder, must not be {@code null}.
          * @return {@code this} {@link Builder}.
@@ -127,8 +127,8 @@ public interface ClientResources {
         Builder commandLatencyRecorder(CommandLatencyRecorder latencyRecorder);
 
         /**
-         * Sets the {@link CommandLatencyCollectorOptions} that can that can be used across different instances of the
-         * RedisClient. The options are only effective if no {@code commandLatencyCollector} is provided.
+         * Sets the {@link CommandLatencyCollectorOptions} that can be used across different instances of the RedisClient. The
+         * options are only effective if no {@code commandLatencyCollector} is provided.
          *
          * @param commandLatencyCollectorOptions the command latency collector options, must not be {@code null}.
          * @return {@code this} {@link Builder}.
@@ -171,7 +171,7 @@ public interface ClientResources {
         Builder dnsResolver(DnsResolver dnsResolver);
 
         /**
-         * Sets the {@link EventBus} that can that can be used across different instances of the RedisClient.
+         * Sets the {@link EventBus} that can be used across different instances of the RedisClient.
          *
          * @param eventBus the event bus, must not be {@code null}.
          * @return {@code this} {@link Builder}.
@@ -437,4 +437,5 @@ public interface ClientResources {
      * @since 5.1
      */
     Tracing tracing();
+
 }
