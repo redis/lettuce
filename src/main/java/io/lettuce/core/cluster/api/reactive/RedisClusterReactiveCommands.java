@@ -18,10 +18,10 @@ package io.lettuce.core.cluster.api.reactive;
 import java.time.Duration;
 import java.util.List;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.Range;
 import io.lettuce.core.api.reactive.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * A complete reactive and thread-safe cluster Redis API with 400+ Methods.
@@ -150,6 +150,7 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
      * @param force do not coordinate with master if {@code true}
      * @param takeOver do not coordinate with the rest of the cluster if {@code true}
      * @return String simple-string-reply
+     * @since 6.2.3
      */
     Mono<String> clusterFailover(boolean force, boolean takeOver);
 

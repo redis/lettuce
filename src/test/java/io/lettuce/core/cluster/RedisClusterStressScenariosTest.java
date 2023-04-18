@@ -130,8 +130,8 @@ public class RedisClusterStressScenariosTest extends TestSupport {
 
         assertThat(redis5Node.is(RedisClusterNode.NodeFlag.REPLICA)).isTrue();
         assertThat(redis6Node.is(RedisClusterNode.NodeFlag.UPSTREAM)).isTrue();
-
     }
+
     @Test
     public void testClusterFailoverWithTakeOver() {
 
@@ -156,7 +156,6 @@ public class RedisClusterStressScenariosTest extends TestSupport {
 
         assertThat(redis5Node.is(RedisClusterNode.NodeFlag.REPLICA)).isTrue();
         assertThat(redis6Node.is(RedisClusterNode.NodeFlag.UPSTREAM)).isTrue();
-
     }
 
     @Test
@@ -194,7 +193,6 @@ public class RedisClusterStressScenariosTest extends TestSupport {
         }
 
         connection.getStatefulConnection().close();
-
     }
 
 }

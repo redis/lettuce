@@ -579,12 +579,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, String> clusterFailover(boolean force) {
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FAILOVER);
-        if (force) {
-            args.add(FORCE);
-        }
-        return createCommand(CLUSTER, new StatusOutput<>(codec), args);
+        return clusterFailover(force, false);
     }
 
     Command<K, V, String> clusterFailover(boolean force, boolean takeOver) {
