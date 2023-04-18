@@ -29,7 +29,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @author dengliming
  * @since 5.1
  */
-public class XAddArgs {
+public class XAddArgs implements CompositeArgument {
 
     private String id;
 
@@ -89,6 +89,7 @@ public class XAddArgs {
         public static XAddArgs minId(String minid) {
             return new XAddArgs().minId(minid);
         }
+
     }
 
     /**

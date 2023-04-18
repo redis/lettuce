@@ -33,7 +33,7 @@ import io.lettuce.core.protocol.CommandType;
  * @author Mark Paluch
  * @since 5.1
  */
-public class XClaimArgs {
+public class XClaimArgs implements CompositeArgument {
 
     long minIdleTime;
 
