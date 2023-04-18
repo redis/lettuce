@@ -32,10 +32,11 @@ public class AdaptiveRefreshTriggeredEvent implements Event {
     private final Supplier<Partitions> partitionsSupplier;
 
     private final Runnable topologyRefreshScheduler;
+
     private final ClusterTopologyRefreshOptions.RefreshTrigger refreshTrigger;
 
     public AdaptiveRefreshTriggeredEvent(Supplier<Partitions> partitionsSupplier, Runnable topologyRefreshScheduler,
-                                         ClusterTopologyRefreshOptions.RefreshTrigger refreshTrigger) {
+            ClusterTopologyRefreshOptions.RefreshTrigger refreshTrigger) {
         this.partitionsSupplier = partitionsSupplier;
         this.topologyRefreshScheduler = topologyRefreshScheduler;
         this.refreshTrigger = refreshTrigger;
@@ -59,8 +60,64 @@ public class AdaptiveRefreshTriggeredEvent implements Event {
 
     /**
      * Retrieve the {@link ClusterTopologyRefreshOptions.RefreshTrigger} that caused this event.
+     *
+     * @return the {@link ClusterTopologyRefreshOptions.RefreshTrigger} that caused this event.
      */
     public ClusterTopologyRefreshOptions.RefreshTrigger getRefreshTrigger() {
         return refreshTrigger;
     }
+
+    /**
+     * Extension to {@link AdaptiveRefreshTriggeredEvent} providing the reconnect-attempt counter value.
+     *
+     * @since 6.2.3
+     */
+    public static class PersistentReconnectsAdaptiveRefreshTriggeredEvent extends AdaptiveRefreshTriggeredEvent {
+
+        private final int attempt;
+
+        public PersistentReconnectsAdaptiveRefreshTriggeredEvent(Supplier<Partitions> partitionsSupplier,
+                Runnable topologyRefreshScheduler, int attempt) {
+            super(partitionsSupplier, topologyRefreshScheduler,
+                    ClusterTopologyRefreshOptions.RefreshTrigger.PERSISTENT_RECONNECTS);
+            this.attempt = attempt;
+        }
+
+        /**
+         * Return the reconnection-attempt at which this event was emitted.
+         *
+         * @return the reconnection-attempt at which this event was emitted.
+         */
+        public int getAttempt() {
+            return attempt;
+        }
+
+    }
+
+    /**
+     * Extension to {@link AdaptiveRefreshTriggeredEvent} providing the uncovered slot value.
+     *
+     * @since 6.2.3
+     */
+    public static class UncoveredSlotAdaptiveRefreshTriggeredEvent extends AdaptiveRefreshTriggeredEvent {
+
+        private final int slot;
+
+        public UncoveredSlotAdaptiveRefreshTriggeredEvent(Supplier<Partitions> partitionsSupplier,
+                Runnable topologyRefreshScheduler, int slot) {
+            super(partitionsSupplier, topologyRefreshScheduler, ClusterTopologyRefreshOptions.RefreshTrigger.UNCOVERED_SLOT);
+            this.slot = slot;
+        }
+
+        /**
+         * Return the slot that is not covered.
+         *
+         * @return the slot that is not covered.
+         */
+        public int getSlot() {
+            return slot;
+        }
+
+    }
+
 }
