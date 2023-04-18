@@ -494,8 +494,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     public void notifyChannelInactive(Channel channel) {
 
         if (isClosed()) {
-            RedisException closed = new RedisException("Connection closed");
-            cancelCommands("Connection closed", drainCommands(), it -> it.completeExceptionally(closed));
+            Lazy<RedisException> lazy = Lazy.of(() -> new RedisException("Connection closed"));
+            cancelCommands("Connection closed", drainCommands(), it -> it.completeExceptionally(lazy.get()));
         }
 
         sharedLock.doExclusive(() -> {
@@ -676,16 +676,15 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         if (isClosed()) {
 
-            RedisException closed = new RedisException("Connection closed");
-            cancelCommands(closed.getMessage(), queuedCommands.drainQueue(), it -> it.completeExceptionally(closed));
-            cancelCommands(closed.getMessage(), drainCommands(), it -> it.completeExceptionally(closed));
+            Lazy<RedisException> lazy = Lazy.of(() -> new RedisException("Connection closed"));
+            cancelCommands("Connection closed", queuedCommands.drainQueue(), it -> it.completeExceptionally(lazy.get()));
+            cancelCommands("Connection closed", drainCommands(), it -> it.completeExceptionally(lazy.get()));
             return;
         } else if (reliability == Reliability.AT_MOST_ONCE && rejectCommandsWhileDisconnected) {
 
-            RedisException disconnected = new RedisException("Connection disconnected");
-            cancelCommands(disconnected.getMessage(), queuedCommands.drainQueue(),
-                    it -> it.completeExceptionally(disconnected));
-            cancelCommands(disconnected.getMessage(), drainCommands(), it -> it.completeExceptionally(disconnected));
+            Lazy<RedisException> lazy = Lazy.of(() -> new RedisException("Connection disconnected"));
+            cancelCommands("Connection disconnected", queuedCommands.drainQueue(), it -> it.completeExceptionally(lazy.get()));
+            cancelCommands("Connection disconnected", drainCommands(), it -> it.completeExceptionally(lazy.get()));
             return;
         }
 
@@ -800,8 +799,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             return logPrefix;
         }
 
-        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "epid=" + getId()
-                + ']';
+        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", " + "epid=" + getId() + ']';
         return logPrefix = buffer;
     }
 
@@ -1107,6 +1105,94 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             }
 
             return false;
+        }
+
+    }
+
+    static class Lazy<T> implements Supplier<T> {
+
+        private static final Lazy<?> EMPTY = new Lazy<>(() -> null, null, true);
+
+        static final String UNRESOLVED = "[Unresolved]";
+
+        private final Supplier<? extends T> supplier;
+
+        private T value;
+
+        private volatile boolean resolved;
+
+        /**
+         * Creates a new {@link Lazy} instance for the given supplier.
+         *
+         * @param supplier
+         */
+        private Lazy(Supplier<? extends T> supplier) {
+            this(supplier, null, false);
+        }
+
+        /**
+         * Creates a new {@link Lazy} for the given {@link Supplier}, value and whether it has been resolved or not.
+         *
+         * @param supplier must not be {@literal null}.
+         * @param value can be {@literal null}.
+         * @param resolved whether the value handed into the constructor represents a resolved value.
+         */
+        private Lazy(Supplier<? extends T> supplier, T value, boolean resolved) {
+
+            this.supplier = supplier;
+            this.value = value;
+            this.resolved = resolved;
+        }
+
+        /**
+         * Creates a new {@link Lazy} to produce an object lazily.
+         *
+         * @param <T> the type of which to produce an object of eventually.
+         * @param supplier the {@link Supplier} to create the object lazily.
+         * @return
+         */
+        public static <T> Lazy<T> of(Supplier<? extends T> supplier) {
+            return new Lazy<>(supplier);
+        }
+
+        /**
+         * Creates a pre-resolved empty {@link Lazy}.
+         *
+         * @return
+         * @since 2.1
+         */
+        @SuppressWarnings("unchecked")
+        public static <T> Lazy<T> empty() {
+            return (Lazy<T>) EMPTY;
+        }
+
+        /**
+         * Returns the value created by the configured {@link Supplier}. Will return the calculated instance for subsequent
+         * lookups.
+         *
+         * @return
+         */
+        public T get() {
+
+            T value = getNullable();
+
+            if (value == null) {
+                throw new IllegalStateException("Expected lazy evaluation to yield a non-null value but got null");
+            }
+
+            return value;
+        }
+
+        public T getNullable() {
+
+            if (resolved) {
+                return value;
+            }
+
+            this.value = supplier.get();
+            this.resolved = true;
+
+            return value;
         }
 
     }
