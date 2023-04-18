@@ -15,6 +15,8 @@
  */
 package io.lettuce.core.cluster;
 
+import static io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent.*;
+
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -147,7 +149,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.PERSISTENT_RECONNECTS)
                 && attempt >= getClusterTopologyRefreshOptions().getRefreshTriggersReconnectAttempts()) {
             if (indicateTopologyRefreshSignal()) {
-                emitAdaptiveRefreshScheduledEvent(ClusterTopologyRefreshOptions.RefreshTrigger.PERSISTENT_RECONNECTS);
+                emitPersistentReconnectAdaptiveRefreshScheduledEvent(attempt);
             }
         }
     }
@@ -157,7 +159,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         if (isEnabled(ClusterTopologyRefreshOptions.RefreshTrigger.UNCOVERED_SLOT)) {
             if (indicateTopologyRefreshSignal()) {
-                emitAdaptiveRefreshScheduledEvent(ClusterTopologyRefreshOptions.RefreshTrigger.UNCOVERED_SLOT);
+                emitUncoveredSlotAdaptiveRefreshScheduledEvent(slot);
             }
         }
     }
@@ -176,6 +178,26 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         logger.debug("Adaptive refresh event due to: {}", trigger);
 
         AdaptiveRefreshTriggeredEvent event = new AdaptiveRefreshTriggeredEvent(partitions, this::scheduleRefresh, trigger);
+
+        clientResources.eventBus().publish(event);
+    }
+
+    private void emitPersistentReconnectAdaptiveRefreshScheduledEvent(int attempt) {
+        logger.debug("Adaptive refresh event due to: {} attempt {}",
+                ClusterTopologyRefreshOptions.RefreshTrigger.PERSISTENT_RECONNECTS, attempt);
+
+        AdaptiveRefreshTriggeredEvent event = new PersistentReconnectsAdaptiveRefreshTriggeredEvent(partitions,
+                this::scheduleRefresh, attempt);
+
+        clientResources.eventBus().publish(event);
+    }
+
+    private void emitUncoveredSlotAdaptiveRefreshScheduledEvent(int slot) {
+        logger.debug("Adaptive refresh event due to: {} for slot {}",
+                ClusterTopologyRefreshOptions.RefreshTrigger.UNCOVERED_SLOT, slot);
+
+        AdaptiveRefreshTriggeredEvent event = new UncoveredSlotAdaptiveRefreshTriggeredEvent(partitions, this::scheduleRefresh,
+                slot);
 
         clientResources.eventBus().publish(event);
     }
