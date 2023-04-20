@@ -130,11 +130,12 @@ class MasterReplicaTopologyProviderUnitTests {
 
         String info = "# Replication\r\n" + "role:master\r\n"
                 + "slave0:ip=127.0.0.1,port=6483,state=online,offset=56276,lag=0\r\n"
-                + "slave1:ip=127.0.0.1,port=6484,state=online,offset=56276,lag=0\r\n" + "master_repl_offset:56276\r\n"
+                + "slave1:ip=127.0.0.1,port=6484,state=online,offset=56276,lag=0\r\n"
+                + "slave2:ip=redis-replica-2.,port=6484,state=online,offset=56276,lag=0\r\n" + "master_repl_offset:56276\r\n"
                 + "repl_backlog_active:1\r\n";
 
         List<RedisNodeDescription> result = sut.getNodesFromInfo(info);
-        assertThat(result).hasSize(3);
+        assertThat(result).hasSize(4);
 
         RedisNodeDescription replica1 = result.get(1);
 
@@ -147,6 +148,12 @@ class MasterReplicaTopologyProviderUnitTests {
         assertThat(replica2.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
         assertThat(replica2.getUri().getHost()).isEqualTo("127.0.0.1");
         assertThat(replica2.getUri().getPort()).isEqualTo(6484);
+
+        RedisNodeDescription replica3 = result.get(3);
+
+        assertThat(replica3.getRole()).isEqualTo(RedisInstance.Role.SLAVE);
+        assertThat(replica3.getUri().getHost()).isEqualTo("redis-replica-2.");
+        assertThat(replica3.getUri().getPort()).isEqualTo(6484);
     }
 
     @Test
