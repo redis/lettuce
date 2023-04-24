@@ -32,8 +32,6 @@ import java.util.stream.Collectors;
 
 import org.reactivestreams.Publisher;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
@@ -49,6 +47,8 @@ import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.ConnectionIntent;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
@@ -333,7 +333,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             publishers.add(super.mget(channel, entry.getValue()));
         }
 
-        return Flux.merge(publishers).reduce((accu, next) -> accu + next);
+        return Flux.merge(publishers).reduce(Long::sum);
     }
 
     @Override
