@@ -33,7 +33,7 @@ enum RedisObservation implements ObservationDocumentation {
 
         @Override
         public String getName() {
-            return "spring.data.redis";
+            return "lettuce";
         }
 
         @Override
@@ -102,7 +102,7 @@ enum RedisObservation implements ObservationDocumentation {
         },
 
         /**
-         * Mongo peer address.
+         * Redis peer address.
          */
         NET_SOCK_PEER_ADDR {
 
@@ -114,7 +114,7 @@ enum RedisObservation implements ObservationDocumentation {
         },
 
         /**
-         * Mongo peer port.
+         * Redis peer port.
          */
         NET_SOCK_PEER_PORT {
 
@@ -187,7 +187,7 @@ enum RedisObservation implements ObservationDocumentation {
 
             @Override
             public String asString() {
-                return "spring.data.redis.command.error";
+                return "lettuce.command.error";
             }
 
         }
