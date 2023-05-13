@@ -16,7 +16,6 @@ Supported Versions
 
 - master - Support for Spring 6 and Spring Batch 5
 - 2.1.x - Enhance and maintenance for Spring 5 and Spring Batch 4
-- 1.3.x - Continued support for Java 6 and 7
 
 Essentials
 ----------
