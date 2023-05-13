@@ -71,7 +71,7 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword protocolKeyword,
             long firstResponseLatency, long completionLatency) {
 
-        if (!isEnabled()) {
+        if (!isEnabled() || !isCommandEnabled(protocolKeyword)) {
             return;
         }
 
@@ -87,6 +87,11 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     @Override
     public boolean isEnabled() {
         return options.isEnabled();
+    }
+
+    private boolean isCommandEnabled(ProtocolKeyword protocolKeyword) {
+        return options.getEnabledCommands().isEmpty() ||
+                options.getEnabledCommands().stream().anyMatch(command -> command.name().equals(protocolKeyword.name()));
     }
 
     private CommandLatencyId createId(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType) {

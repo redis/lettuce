@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 
+import io.lettuce.core.protocol.CommandType;
 import org.junit.jupiter.api.Test;
 
 import io.micrometer.core.instrument.Tags;
@@ -94,6 +95,14 @@ class MicrometerOptionsUnitTests {
         MicrometerOptions options = MicrometerOptions.builder().targetPercentiles(percentiles).build();
 
         assertThat(options.targetPercentiles()).hasSize(3).isEqualTo(percentiles);
+    }
+
+    @Test
+    void enabledCommands() {
+        CommandType[] enabledCommands = {CommandType.HSET, CommandType.HGET, CommandType.EXPIRE};
+        MicrometerOptions options = MicrometerOptions.builder().enabledCommands(enabledCommands).build();
+
+        assertThat(options.getEnabledCommands()).hasSize(3).containsExactly(enabledCommands);
     }
 
 }
