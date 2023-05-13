@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 the original author or authors.
+ * Copyright 2010-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,24 @@ import com.mockrunner.mock.jdbc.MockDataSource;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import org.apache.ibatis.cache.impl.PerpetualCache;
+import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.io.JBoss6VFS;
+import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.plugin.Interceptor;
+import org.apache.ibatis.plugin.Intercepts;
+import org.apache.ibatis.plugin.Invocation;
+import org.apache.ibatis.plugin.Signature;
 import org.apache.ibatis.reflection.factory.DefaultObjectFactory;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.wrapper.DefaultObjectWrapperFactory;
@@ -41,9 +52,12 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.transaction.TransactionFactory;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
+import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.EnumOrdinalTypeHandler;
+import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeAliasRegistry;
 import org.apache.ibatis.type.TypeException;
+import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 import org.junit.jupiter.api.Test;
 import org.mybatis.core.jdk.type.AtomicNumberTypeHandler;
@@ -492,6 +506,88 @@ class SqlSessionFactoryBeanTest {
     assertThat(registry.getDriver(RawLanguageDriver.class)).isNotNull();
   }
 
+  @Test
+  void testAppendableMethod() throws Exception {
+    setupFactoryBean();
+    // add values
+    this.factoryBean.addScriptingLanguageDrivers(new MyLanguageDriver1());
+    this.factoryBean.addScriptingLanguageDrivers(new MyLanguageDriver2());
+    this.factoryBean.addPlugins(new MyPlugin1(), new MyPlugin2());
+    this.factoryBean.addPlugins(new MyPlugin3());
+    this.factoryBean.addTypeHandlers(new MyTypeHandler1());
+    this.factoryBean.addTypeHandlers(new MyTypeHandler2(), new MyTypeHandler3());
+    this.factoryBean.addTypeAliases(MyTypeHandler1.class, MyTypeHandler2.class, MyTypeHandler3.class);
+    this.factoryBean.addTypeAliases(MyPlugin1.class);
+    this.factoryBean.addMapperLocations(new ClassPathResource("org/mybatis/spring/TestMapper.xml"),
+        new ClassPathResource("org/mybatis/spring/TestMapper2.xml"));
+    this.factoryBean.addMapperLocations(new ClassPathResource("org/mybatis/spring/TestMapper3.xml"));
+    // ignore null value
+    this.factoryBean.addScriptingLanguageDrivers(null);
+    this.factoryBean.addPlugins(null);
+    this.factoryBean.addTypeHandlers(null);
+    this.factoryBean.addTypeAliases(null);
+    this.factoryBean.addMapperLocations(null);
+    SqlSessionFactory factory = this.factoryBean.getObject();
+    LanguageDriverRegistry languageDriverRegistry = factory.getConfiguration().getLanguageRegistry();
+    TypeHandlerRegistry typeHandlerRegistry = factory.getConfiguration().getTypeHandlerRegistry();
+    TypeAliasRegistry typeAliasRegistry = factory.getConfiguration().getTypeAliasRegistry();
+    assertThat(languageDriverRegistry.getDriver(MyLanguageDriver1.class)).isNotNull();
+    assertThat(languageDriverRegistry.getDriver(MyLanguageDriver2.class)).isNotNull();
+    assertThat(typeHandlerRegistry.getTypeHandlers().stream().map(TypeHandler::getClass).map(Class::getSimpleName)
+        .collect(Collectors.toSet())).contains(MyTypeHandler1.class.getSimpleName(),
+            MyTypeHandler2.class.getSimpleName(), MyTypeHandler3.class.getSimpleName());
+    assertThat(typeAliasRegistry.getTypeAliases()).containsKeys(MyTypeHandler1.class.getSimpleName().toLowerCase(),
+        MyTypeHandler2.class.getSimpleName().toLowerCase(), MyTypeHandler3.class.getSimpleName().toLowerCase(),
+        MyPlugin1.class.getSimpleName().toLowerCase());
+    assertThat(factory.getConfiguration().getMappedStatement("org.mybatis.spring.TestMapper.findFail")).isNotNull();
+    assertThat(factory.getConfiguration().getMappedStatement("org.mybatis.spring.TestMapper2.selectOne")).isNotNull();
+    assertThat(factory.getConfiguration().getMappedStatement("org.mybatis.spring.TestMapper3.selectOne")).isNotNull();
+    assertThat(
+        factory.getConfiguration().getInterceptors().stream().map(Interceptor::getClass).map(Class::getSimpleName))
+            .contains(MyPlugin1.class.getSimpleName(), MyPlugin2.class.getSimpleName(),
+                MyPlugin3.class.getSimpleName());
+  }
+
+  @Test
+  void testAppendableMethodWithEmpty() throws Exception {
+    setupFactoryBean();
+    this.factoryBean.addScriptingLanguageDrivers();
+    this.factoryBean.addPlugins();
+    this.factoryBean.addTypeHandlers();
+    this.factoryBean.addTypeAliases();
+    this.factoryBean.addMapperLocations();
+    SqlSessionFactory factory = this.factoryBean.getObject();
+    LanguageDriverRegistry languageDriverRegistry = factory.getConfiguration().getLanguageRegistry();
+    TypeHandlerRegistry typeHandlerRegistry = factory.getConfiguration().getTypeHandlerRegistry();
+    TypeAliasRegistry typeAliasRegistry = factory.getConfiguration().getTypeAliasRegistry();
+    assertThat(languageDriverRegistry.getDriver(MyLanguageDriver1.class)).isNull();
+    assertThat(languageDriverRegistry.getDriver(MyLanguageDriver2.class)).isNull();
+    assertThat(typeHandlerRegistry.getTypeHandlers()).hasSize(40);
+    assertThat(typeAliasRegistry.getTypeAliases()).hasSize(80);
+    assertThat(factory.getConfiguration().getMappedStatementNames()).isEmpty();
+    assertThat(factory.getConfiguration().getInterceptors()).isEmpty();
+  }
+
+  @Test
+  void testAppendableMethodWithNull() throws Exception {
+    setupFactoryBean();
+    this.factoryBean.addScriptingLanguageDrivers(null);
+    this.factoryBean.addPlugins(null);
+    this.factoryBean.addTypeHandlers(null);
+    this.factoryBean.addTypeAliases(null);
+    this.factoryBean.addMapperLocations(null);
+    SqlSessionFactory factory = this.factoryBean.getObject();
+    LanguageDriverRegistry languageDriverRegistry = factory.getConfiguration().getLanguageRegistry();
+    TypeHandlerRegistry typeHandlerRegistry = factory.getConfiguration().getTypeHandlerRegistry();
+    TypeAliasRegistry typeAliasRegistry = factory.getConfiguration().getTypeAliasRegistry();
+    assertThat(languageDriverRegistry.getDriver(MyLanguageDriver1.class)).isNull();
+    assertThat(languageDriverRegistry.getDriver(MyLanguageDriver2.class)).isNull();
+    assertThat(typeHandlerRegistry.getTypeHandlers()).hasSize(40);
+    assertThat(typeAliasRegistry.getTypeAliases()).hasSize(80);
+    assertThat(factory.getConfiguration().getMappedStatementNames()).isEmpty();
+    assertThat(factory.getConfiguration().getInterceptors()).isEmpty();
+  }
+
   private void assertDefaultConfig(SqlSessionFactory factory) {
     assertConfig(factory, SqlSessionFactoryBean.class.getSimpleName(),
         org.mybatis.spring.transaction.SpringManagedTransactionFactory.class);
@@ -520,6 +616,71 @@ class SqlSessionFactoryBeanTest {
   }
 
   private static class MyLanguageDriver2 extends RawLanguageDriver {
+  }
+
+  private static class MyBasePlugin implements Interceptor {
+
+    @Override
+    public Object intercept(Invocation invocation) throws Throwable {
+      return null;
+    }
+
+    @Override
+    public Object plugin(Object target) {
+      return Interceptor.super.plugin(target);
+    }
+
+    @Override
+    public void setProperties(Properties properties) {
+      Interceptor.super.setProperties(properties);
+    }
+  }
+
+  @Intercepts({ @Signature(type = Executor.class, method = "update", args = { MappedStatement.class, Object.class }) })
+  private static class MyPlugin1 extends MyBasePlugin {
+
+  }
+
+  @Intercepts({ @Signature(type = Executor.class, method = "update", args = { MappedStatement.class, Object.class }) })
+  private static class MyPlugin2 extends MyBasePlugin {
+
+  }
+
+  @Intercepts({ @Signature(type = Executor.class, method = "update", args = { MappedStatement.class, Object.class }) })
+  private static class MyPlugin3 extends MyBasePlugin {
+
+  }
+
+  private static class MyBaseTypeHandler extends BaseTypeHandler<String> {
+
+    @Override
+    public void setNonNullParameter(PreparedStatement ps, int i, String parameter, JdbcType jdbcType)
+        throws SQLException {
+    }
+
+    @Override
+    public String getNullableResult(ResultSet rs, String columnName) throws SQLException {
+      return null;
+    }
+
+    @Override
+    public String getNullableResult(ResultSet rs, int columnIndex) throws SQLException {
+      return null;
+    }
+
+    @Override
+    public String getNullableResult(CallableStatement cs, int columnIndex) throws SQLException {
+      return null;
+    }
+  }
+
+  private static class MyTypeHandler1 extends MyBaseTypeHandler {
+  }
+
+  private static class MyTypeHandler2 extends MyBaseTypeHandler {
+  }
+
+  private static class MyTypeHandler3 extends MyBaseTypeHandler {
   }
 
   private static enum MyEnum {
