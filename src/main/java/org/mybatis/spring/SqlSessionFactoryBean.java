@@ -24,10 +24,14 @@ import static org.springframework.util.StringUtils.tokenizeToStringArray;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
 import javax.sql.DataSource;
@@ -476,6 +480,88 @@ public class SqlSessionFactoryBean
    */
   public void setDefaultScriptingLanguageDriver(Class<? extends LanguageDriver> defaultScriptingLanguageDriver) {
     this.defaultScriptingLanguageDriver = defaultScriptingLanguageDriver;
+  }
+
+  /**
+   * Add locations of MyBatis mapper files that are going to be merged into the {@code SqlSessionFactory} configuration
+   * at runtime.
+   * <p>
+   * This is an alternative to specifying "&lt;sqlmapper&gt;" entries in an MyBatis config file. This property being
+   * based on Spring's resource abstraction also allows for specifying resource patterns here: e.g.
+   * "classpath*:sqlmap/*-mapper.xml".
+   *
+   * @param mapperLocations
+   *          location of MyBatis mapper files
+   *
+   * @see #setMapperLocations(Resource...)
+   *
+   * @since 3.0.2
+   */
+  public void addMapperLocations(Resource... mapperLocations) {
+    setMapperLocations(appendArrays(this.mapperLocations, mapperLocations, Resource[]::new));
+  }
+
+  /**
+   * Add type handlers.
+   *
+   * @param typeHandlers
+   *          Type handler list
+   *
+   * @since 3.0.2
+   */
+  public void addTypeHandlers(TypeHandler<?>... typeHandlers) {
+    setTypeHandlers(appendArrays(this.typeHandlers, typeHandlers, TypeHandler[]::new));
+  }
+
+  /**
+   * Add scripting language drivers.
+   *
+   * @param scriptingLanguageDrivers
+   *          scripting language drivers
+   *
+   * @since 3.0.2
+   */
+  public void addScriptingLanguageDrivers(LanguageDriver... scriptingLanguageDrivers) {
+    setScriptingLanguageDrivers(
+        appendArrays(this.scriptingLanguageDrivers, scriptingLanguageDrivers, LanguageDriver[]::new));
+  }
+
+  /**
+   * Add Mybatis plugins.
+   *
+   * @param plugins
+   *          list of plugins
+   *
+   * @since 3.0.2
+   */
+  public void addPlugins(Interceptor... plugins) {
+    setPlugins(appendArrays(this.plugins, plugins, Interceptor[]::new));
+  }
+
+  /**
+   * Add type aliases.
+   *
+   * @param typeAliases
+   *          Type aliases list
+   *
+   * @since 3.0.2
+   */
+  public void addTypeAliases(Class<?>... typeAliases) {
+    setTypeAliases(appendArrays(this.typeAliases, typeAliases, Class[]::new));
+  }
+
+  private <T> T[] appendArrays(T[] oldArrays, T[] newArrays, IntFunction<T[]> generator) {
+    if (oldArrays == null) {
+      return newArrays;
+    } else {
+      if (newArrays == null) {
+        return oldArrays;
+      } else {
+        List<T> newList = new ArrayList<>(Arrays.asList(oldArrays));
+        newList.addAll(Arrays.asList(newArrays));
+        return newList.toArray(generator.apply(0));
+      }
+    }
   }
 
   /**
