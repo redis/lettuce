@@ -155,4 +155,31 @@ class MicrometerCommandLatencyRecorderUnitTests {
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_REMOTE, REMOTE_ADDRESS.toString()).timers()).hasSize(1);
     }
 
+    @Test
+    void enabledCommandsEmpty() {
+        MicrometerOptions options = MicrometerOptions.builder().build();
+        MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
+
+        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.AUTH, 1, 10);
+        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.CLUSTER, 1, 10);
+
+        assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(2);
+        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(2);
+    }
+
+    @Test
+    void enabledCommandsNotEmpty() {
+        MicrometerOptions options = MicrometerOptions.builder().enabledCommands(CommandType.CLUSTER).build();
+        MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
+
+        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.AUTH, 1, 10);
+        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.CLUSTER, 1, 10);
+
+        assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(1);
+        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(1);
+
+        assertThat(meterRegistry.find(METRIC_COMPLETION).tag(LABEL_COMMAND, CommandType.CLUSTER.name()).timers()).hasSize(1);
+        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.CLUSTER.name()).timers()).hasSize(1);
+    }
+
 }

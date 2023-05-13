@@ -16,8 +16,12 @@
 package io.lettuce.core.metrics;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandType;
 import io.micrometer.core.instrument.Tags;
 
 /**
@@ -41,7 +45,10 @@ public class MicrometerOptions {
 
     public static final double[] DEFAULT_TARGET_PERCENTILES = new double[] { 0.50, 0.90, 0.95, 0.99, 0.999 };
 
+    private static final List<CommandType> DEFAULT_ENABLED_COMMANDS = new ArrayList<>();
+
     private static final MicrometerOptions DISABLED = builder().disable().build();
+
 
     private final Builder builder;
 
@@ -59,6 +66,8 @@ public class MicrometerOptions {
 
     private final double[] targetPercentiles;
 
+    private final List<CommandType> enabledCommands;
+
     protected MicrometerOptions(Builder builder) {
 
         this.builder = builder;
@@ -69,6 +78,7 @@ public class MicrometerOptions {
         this.minLatency = builder.minLatency;
         this.tags = builder.tags;
         this.targetPercentiles = builder.targetPercentiles;
+        this.enabledCommands = builder.enabledCommands;
     }
 
     /**
@@ -127,6 +137,8 @@ public class MicrometerOptions {
         private Tags tags = Tags.empty();
 
         private double[] targetPercentiles = DEFAULT_TARGET_PERCENTILES;
+
+        private List<CommandType> enabledCommands = DEFAULT_ENABLED_COMMANDS;
 
         private Builder() {
         }
@@ -235,6 +247,18 @@ public class MicrometerOptions {
         }
 
         /**
+         * Sets which commands are enabled for latency recording. Defaults to an empty list, which means all commands will be recorded
+         * See {@link MicrometerOptions#DEFAULT_ENABLED_COMMANDS}.
+         *
+         * @param commands list of Redis commands that are enabled for latency recording
+         * @return this {@link Builder}.
+         */
+        public Builder enabledCommands(CommandType... commands) {
+            this.enabledCommands = Arrays.asList(commands);
+            return this;
+        }
+
+        /**
          * @return a new instance of {@link MicrometerOptions}.
          */
         public MicrometerOptions build() {
@@ -273,4 +297,7 @@ public class MicrometerOptions {
         return result;
     }
 
+    public List<CommandType> getEnabledCommands() {
+        return enabledCommands;
+    }
 }
