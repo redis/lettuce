@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 the original author or authors.
+ * Copyright 2010-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ public class MapperScannerBeanDefinitionParser extends AbstractBeanDefinitionPar
   private static final String ATTRIBUTE_MAPPER_FACTORY_BEAN_CLASS = "mapper-factory-bean-class";
   private static final String ATTRIBUTE_LAZY_INITIALIZATION = "lazy-initialization";
   private static final String ATTRIBUTE_DEFAULT_SCOPE = "default-scope";
+  private static final String ATTRIBUTE_PROCESS_PROPERTY_PLACEHOLDERS = "process-property-placeholders";
 
   /**
    * {@inheritDoc}
@@ -68,7 +69,9 @@ public class MapperScannerBeanDefinitionParser extends AbstractBeanDefinitionPar
 
     ClassLoader classLoader = ClassUtils.getDefaultClassLoader();
 
-    builder.addPropertyValue("processPropertyPlaceHolders", true);
+    String processPropertyPlaceHolders = element.getAttribute(ATTRIBUTE_PROCESS_PROPERTY_PLACEHOLDERS);
+    builder.addPropertyValue("processPropertyPlaceHolders",
+        !StringUtils.hasText(processPropertyPlaceHolders) || Boolean.parseBoolean(processPropertyPlaceHolders));
     try {
       String annotationClassName = element.getAttribute(ATTRIBUTE_ANNOTATION);
       if (StringUtils.hasText(annotationClassName)) {
