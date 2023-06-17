@@ -9,7 +9,7 @@ MyBatis Spring Adapter
 
 ![mybatis-spring](https://mybatis.org/images/mybatis-logo.png)
 
-MyBatis-Spring adapter is an easy-to-use Spring bridge for MyBatis sql mapping framework.
+MyBatis-Spring adapter is an easy-to-use [Spring Framework](https://github.com/spring-projects/spring-framework) bridge for [MyBatis](https://github.com/mybatis/mybatis-3) sql mapping framework.
 
 Supported Versions
 ------------------
