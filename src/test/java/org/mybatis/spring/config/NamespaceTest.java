@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 the original author or authors.
+ * Copyright 2010-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,6 +269,37 @@ class NamespaceTest {
 
     SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
     assertEquals(2, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+  }
+
+  @Test
+  void processPropertyPlaceHoldersIsTrue() {
+
+    applicationContext = new ClassPathXmlApplicationContext(
+        new String[] { "org/mybatis/spring/config/process-property-placeholders-true.xml" }, setupSqlSessionTemplate());
+
+    startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(5, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+
+    MyBean myBean = applicationContext.getBean("myBean", MyBean.class);
+    assertThat(myBean.getName()).isEqualTo("MyBean!!");
+  }
+
+  @Test
+  void processPropertyPlaceHoldersIsFalse() {
+
+    applicationContext = new ClassPathXmlApplicationContext(
+        new String[] { "org/mybatis/spring/config/process-property-placeholders-false.xml" },
+        setupSqlSessionTemplate());
+
+    startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(5, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+
+    MyBean myBean = applicationContext.getBean("myBean", MyBean.class);
+    assertThat(myBean.getName()).isEqualTo("MyBean!!");
   }
 
   private GenericApplicationContext setupSqlSessionTemplate() {

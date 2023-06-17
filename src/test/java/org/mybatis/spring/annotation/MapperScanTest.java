@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2022 the original author or authors.
+ * Copyright 2010-2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import org.mybatis.spring.type.DummyMapperFactoryBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
+import org.springframework.beans.factory.config.PropertyOverrideConfigurer;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
@@ -390,6 +391,32 @@ class MapperScanTest {
     assertEquals(2, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
   }
 
+  @Test
+  void testProcessPropertyPlaceHoldersIsTrue() {
+    applicationContext.register(ProcessPropertyPlaceHoldersTrueConfiguration.class);
+
+    startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(1, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+
+    MyBean myBean = applicationContext.getBean(MyBean.class);
+    assertThat(myBean.getName()).isEqualTo("MyBean!!");
+  }
+
+  @Test
+  void testProcessPropertyPlaceHoldersIsFalse() {
+    applicationContext.register(ProcessPropertyPlaceHoldersFalseConfiguration.class);
+
+    startContext();
+
+    SqlSessionFactory sqlSessionFactory = applicationContext.getBean(SqlSessionFactory.class);
+    assertEquals(1, sqlSessionFactory.getConfiguration().getMapperRegistry().getMappers().size());
+
+    MyBean myBean = applicationContext.getBean(MyBean.class);
+    assertThat(myBean.getName()).isEqualTo("MyBean!!");
+  }
+
   @Configuration
   @MapperScan("org.mybatis.spring.mapper")
   public static class AppConfigWithPackageScan {
@@ -457,6 +484,53 @@ class MapperScanTest {
       return configurer;
     }
 
+  }
+
+  @ComponentScan("org.mybatis.spring.annotation.factory")
+  @MapperScan(basePackages = "${scan-package}")
+  public static class ProcessPropertyPlaceHoldersTrueConfiguration {
+    @Bean
+    static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+      PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
+      configurer.setLocation(new ClassPathResource("/org/mybatis/spring/annotation/placeholders.properties"));
+      return configurer;
+    }
+
+    @Bean
+    static PropertyOverrideConfigurer propertyOverrideConfigurer() {
+      PropertyOverrideConfigurer configurer = new PropertyOverrideConfigurer();
+      configurer.setLocation(new ClassPathResource("/org/mybatis/spring/annotation/override.properties"));
+      configurer.setIgnoreInvalidKeys(true);
+      return configurer;
+    }
+
+    @Bean
+    MyBean myBean() {
+      return new MyBean("annotation");
+    }
+  }
+
+  @ComponentScan("org.mybatis.spring.annotation.factory")
+  @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1", processPropertyPlaceHolders = false)
+  public static class ProcessPropertyPlaceHoldersFalseConfiguration {
+    @Bean
+    static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
+      PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
+      configurer.setLocation(new ClassPathResource("/org/mybatis/spring/annotation/placeholders.properties"));
+      return configurer;
+    }
+
+    @Bean
+    static PropertyOverrideConfigurer propertyOverrideConfigurer() {
+      PropertyOverrideConfigurer configurer = new PropertyOverrideConfigurer();
+      configurer.setLocation(new ClassPathResource("/org/mybatis/spring/annotation/override.properties"));
+      return configurer;
+    }
+
+    @Bean
+    MyBean myBean() {
+      return new MyBean("annotation");
+    }
   }
 
   @MapperScan(basePackages = "org.mybatis.spring.annotation.mapper.ds1", lazyInitialization = "${mybatis.lazy-initialization:false}")

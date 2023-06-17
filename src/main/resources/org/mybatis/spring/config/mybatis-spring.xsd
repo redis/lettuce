@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright 2010-2022 the original author or authors.
+    Copyright 2010-2023 the original author or authors.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -144,6 +144,16 @@
           <xsd:documentation>
             <![CDATA[
               Specifies the default scope of scanned mappers. (Since 2.0.6)
+            ]]>
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute name="process-property-placeholders" type="xsd:boolean">
+        <xsd:annotation>
+          <xsd:documentation>
+            <![CDATA[
+              Specifies a flag that whether execute a property placeholder processing or not. (Since 3.0.3)
+              The default is true. This means that a property placeholder processing execute.
             ]]>
           </xsd:documentation>
         </xsd:annotation>
