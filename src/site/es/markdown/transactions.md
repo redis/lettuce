@@ -73,7 +73,7 @@ Fijate que si quieres usar transacciones CMT pero **no** quieres utilizar la ges
 
 ```java
 @Configuration
-public class MyBatisConfig { 
+public class MyBatisConfig {
   @Bean
   public SqlSessionFactory sqlSessionFactory() {
     SqlSessionFactoryBean factoryBean = new SqlSessionFactoryBean();

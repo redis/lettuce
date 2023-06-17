@@ -13,7 +13,7 @@ To create the factory bean, put the following in the Spring XML configuration fi
 </bean>
 ```
 Note that `SqlSessionFactoryBean` implements Spring's `FactoryBean` interface see [the Spring documentation(Core Technologies -Customizing instantiation logic with a FactoryBean-)](https://docs.spring.io/spring/docs/current/spring-framework-reference/core.html#beans-factory-extension-factorybean)).
-This means that the bean Spring ultimately creates is **not** the `SqlSessionFactoryBean` itself, but what the factory returns as a result of the `getObject()` call on the factory. 
+This means that the bean Spring ultimately creates is **not** the `SqlSessionFactoryBean` itself, but what the factory returns as a result of the `getObject()` call on the factory.
 In this case, Spring will build an `SqlSessionFactory` for you at application startup and store it with the name `sqlSessionFactory`.
 In Java, the equivalent code would be:
 

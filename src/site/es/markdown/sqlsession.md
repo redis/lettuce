@@ -86,7 +86,7 @@ Ahora todos tus statements se ejecutarán en batch de forma que puedes programar
 
 ```java
 public class UserService {
-  private final SqlSession sqlSession; 
+  private final SqlSession sqlSession;
   public UserService(SqlSession sqlSession) {
     this.sqlSession = sqlSession;
   }
