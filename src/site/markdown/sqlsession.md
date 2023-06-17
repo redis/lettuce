@@ -82,7 +82,7 @@ Now all your statements will be batched so the following could be coded in a DAO
 
 ```java
 public class UserService {
-  private final SqlSession sqlSession; 
+  private final SqlSession sqlSession;
   public UserService(SqlSession sqlSession) {
     this.sqlSession = sqlSession;
   }

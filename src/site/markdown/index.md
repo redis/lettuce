@@ -53,4 +53,4 @@ Users can read about MyBatis-Spring in the following translations:
 </ul>
 
 Do you want to read about MyBatis in your own native language? Fill an issue providing patches with your mother tongue documentation!
-        
+

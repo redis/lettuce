@@ -3,7 +3,7 @@
 
 One of the primary reasons for using MyBatis-Spring is that it allows MyBatis to participate in Spring transactions.
 Rather than create a new transaction manager specific to MyBatis,  MyBatis-Spring leverages the existing `DataSourceTransactionManager` in Spring.
-      
+
 Once a Spring transaction manager is configured, you can configure transactions in Spring as you normally would. Both `@Transactional` annotations and AOP style configurations are supported.
 A single `SqlSession` object will be created and used for the duration of the transaction. This session will be committed or rolled back as appropriate when then transaction completes.
 

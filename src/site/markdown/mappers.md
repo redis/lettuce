@@ -25,7 +25,7 @@ public class FooServiceImpl implements FooService {
   }
 }
 ```
-    
+
 Notice that there are no `SqlSession` or MyBatis references in this code. Nor is there any need to create, open or close the session, MyBatis-Spring will take care of that.
 
 <a name="register"></a>

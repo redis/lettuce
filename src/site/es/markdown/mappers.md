@@ -85,7 +85,7 @@ The motivation for adding this option is supporting a lazy initialization contro
 The default of this option is `false` (= not use lazy initialization).
 If developer want to use lazy initialization for mapper bean, it should be set to the `true` expressly.
 
-<span class="label important">IMPORTANT</span> 
+<span class="label important">IMPORTANT</span>
 If use the lazy initialization feature, the developer need to understand following limitations.
 If any of following conditions are matches, usually the lazy initialization feature cannot use on your application.
 
