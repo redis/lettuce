@@ -3110,6 +3110,48 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return result;
     }
 
+    Command<K, V, KeyValue<K, ScoredValue<V>>> bzmpop(long timeout, ZPopArgs popArgs, K[] keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(timeout).add(keys.length).addKeys(keys);
+
+        popArgs.build(args);
+
+        return createCommand(BZMPOP, new KeyValueOfScoredValueOutput<>(codec, keys[0]), args);
+    }
+
+    Command<K, V, KeyValue<K, ScoredValue<V>>> bzmpop(double timeout, ZPopArgs popArgs, K[] keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(timeout).add(keys.length).addKeys(keys);
+
+        popArgs.build(args);
+
+        return createCommand(BZMPOP, new KeyValueOfScoredValueOutput<>(codec, keys[0]), args);
+    }
+
+    Command<K, V, KeyValue<K, List<ScoredValue<V>>>> bzmpop(long timeout, long count, ZPopArgs popArgs, K[] keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(timeout).add(keys.length).addKeys(keys);
+
+        popArgs.build(args);
+        args.add(COUNT).add(count);
+
+        return createCommand(BZMPOP, new KeyValueListScoredValueOutput<>(codec, keys[0]), args);
+    }
+
+    Command<K, V, KeyValue<K, List<ScoredValue<V>>>> bzmpop(double timeout, long count, ZPopArgs popArgs, K[] keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(timeout).add(keys.length).addKeys(keys);
+
+        popArgs.build(args);
+        args.add(COUNT).add(count);
+
+        return createCommand(BZMPOP, new KeyValueListScoredValueOutput<>(codec, keys[0]), args);
+    }
+
     Command<K, V, KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
         notEmpty(keys);
 
@@ -3347,6 +3389,27 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notEmpty(members);
 
         return createCommand(ZMSCORE, new DoubleListOutput<>(codec), key, members);
+    }
+
+    Command<K, V, KeyValue<K, ScoredValue<V>>> zmpop(ZPopArgs popArgs, K[] keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys);
+
+        popArgs.build(args);
+
+        return createCommand(ZMPOP, new KeyValueOfScoredValueOutput<>(codec, keys[0]), args);
+    }
+
+    Command<K, V, KeyValue<K, List<ScoredValue<V>>>> zmpop(long count, ZPopArgs popArgs, K[] keys) {
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(keys.length).addKeys(keys);
+
+        popArgs.build(args);
+        args.add(COUNT).add(count);
+
+        return createCommand(ZMPOP, new KeyValueListScoredValueOutput<>(codec, keys[0]), args);
     }
 
     Command<K, V, ScoredValue<V>> zpopmin(K key) {

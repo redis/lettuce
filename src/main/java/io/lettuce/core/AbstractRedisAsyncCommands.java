@@ -2180,6 +2180,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<KeyValue<K, ScoredValue<V>>> bzmpop(long timeout, ZPopArgs args, K... keys) {
+        return dispatch(commandBuilder.bzmpop(timeout, args, keys));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, List<ScoredValue<V>>>> bzmpop(long timeout, long count, ZPopArgs args, K... keys) {
+        return dispatch(commandBuilder.bzmpop(timeout, count, args, keys));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, ScoredValue<V>>> bzmpop(double timeout, ZPopArgs args, K... keys) {
+        return dispatch(commandBuilder.bzmpop(timeout, args, keys));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, List<ScoredValue<V>>>> bzmpop(double timeout, int count, ZPopArgs args, K... keys) {
+        return dispatch(commandBuilder.bzmpop(timeout, count, args, keys));
+    }
+
+    @Override
     public RedisFuture<KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
         return dispatch(commandBuilder.bzpopmin(timeout, keys));
     }
@@ -2332,6 +2352,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<Double>> zmscore(K key, V... members) {
         return dispatch(commandBuilder.zmscore(key, members));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, ScoredValue<V>>> zmpop(ZPopArgs args, K... keys) {
+        return dispatch(commandBuilder.zmpop(args, keys));
+    }
+
+    @Override
+    public RedisFuture<KeyValue<K, List<ScoredValue<V>>>> zmpop(int count, ZPopArgs args, K... keys) {
+        return dispatch(commandBuilder.zmpop(count, args, keys));
     }
 
     @Override

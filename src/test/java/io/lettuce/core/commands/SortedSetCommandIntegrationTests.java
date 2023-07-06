@@ -24,6 +24,7 @@ import static java.lang.Double.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.data.Offset.offset;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -289,6 +290,59 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.bzpopmax(1, "zset")).isEqualTo(KeyValue.just("zset", ScoredValue.just(4.0, "c")));
         assertThat(redis.bzpopmax(0.5, "zset2")).isNull();
+    }
+
+    @Test
+    @EnabledOnCommand("BZMPOP")
+    void bzmpop() {
+
+        redis.zadd("zset", 2.0, "a1", 3.0, "b1");
+        redis.zadd("other", 2.0, "a2", 3.0, "b2");
+
+        assertThat(redis.bzmpop(1, ZPopArgs.Builder.min(), "zset", "other"))
+                .isEqualTo(KeyValue.just("zset", ScoredValue.just(2.0, "a1")));
+        assertThat(redis.bzmpop(1, ZPopArgs.Builder.min(), "zset"))
+                .isEqualTo(KeyValue.just("zset", ScoredValue.just(3.0, "b1")));
+        assertThat(redis.bzmpop(0.01, ZPopArgs.Builder.min(), "does_not_exist")).isEqualTo(KeyValue.empty("does_not_exist"));
+        assertThat(redis.bzmpop(0.5, ZPopArgs.Builder.max(), "zset", "other"))
+                .isEqualTo(KeyValue.just("other", ScoredValue.just(3.0, "b2")));
+    }
+
+    @Test
+    @EnabledOnCommand("BZMPOP")
+    void bzmpopWithCount() {
+
+        redis.zadd("zset", 2.0, "a1", 3.0, "b1");
+
+        assertThat(redis.bzmpop(0.1, 2, ZPopArgs.Builder.min(), "zset"))
+                .isEqualTo(KeyValue.just("zset", Arrays.asList(ScoredValue.just(2.0, "a1"), ScoredValue.just(3.0, "b1"))));
+        assertThat(redis.bzmpop(0.1, 2, ZPopArgs.Builder.min(), "zset")).isEqualTo(KeyValue.empty("zset"));
+    }
+
+    @Test
+    @EnabledOnCommand("ZMPOP")
+    void zmpop() {
+
+        redis.zadd("zset", 2.0, "a1", 3.0, "b1");
+        redis.zadd("other", 2.0, "a2", 3.0, "b2");
+
+        assertThat(redis.zmpop(ZPopArgs.Builder.min(), "zset", "other"))
+                .isEqualTo(KeyValue.just("zset", ScoredValue.just(2.0, "a1")));
+        assertThat(redis.zmpop(ZPopArgs.Builder.min(), "zset")).isEqualTo(KeyValue.just("zset", ScoredValue.just(3.0, "b1")));
+        assertThat(redis.zmpop(ZPopArgs.Builder.min(), "does_not_exist")).isEqualTo(KeyValue.empty("does_not_exist"));
+        assertThat(redis.zmpop(ZPopArgs.Builder.max(), "zset", "other"))
+                .isEqualTo(KeyValue.just("other", ScoredValue.just(3.0, "b2")));
+    }
+
+    @Test
+    @EnabledOnCommand("ZMPOP")
+    void zmpopWithCount() {
+
+        redis.zadd("zset", 2.0, "a1", 3.0, "b1");
+
+        assertThat(redis.zmpop(2, ZPopArgs.Builder.min(), "zset"))
+                .isEqualTo(KeyValue.just("zset", Arrays.asList(ScoredValue.just(2.0, "a1"), ScoredValue.just(3.0, "b1"))));
+        assertThat(redis.zmpop(2, ZPopArgs.Builder.min(), "zset")).isEqualTo(KeyValue.empty("zset"));
     }
 
     @Test

@@ -25,8 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.reactive.*;
@@ -54,6 +52,8 @@ import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * A reactive and thread-safe API for a Redis connection.
@@ -2258,6 +2258,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<KeyValue<K, ScoredValue<V>>> bzmpop(long timeout, ZPopArgs args, K... keys) {
+        return createMono(() -> commandBuilder.bzmpop(timeout, args, keys));
+    }
+
+    @Override
+    public Mono<KeyValue<K, List<ScoredValue<V>>>> bzmpop(long timeout, long count, ZPopArgs args, K... keys) {
+        return createMono(() -> commandBuilder.bzmpop(timeout, count, args, keys));
+    }
+
+    @Override
+    public Mono<KeyValue<K, ScoredValue<V>>> bzmpop(double timeout, ZPopArgs args, K... keys) {
+        return createMono(() -> commandBuilder.bzmpop(timeout, args, keys));
+    }
+
+    @Override
+    public Mono<KeyValue<K, List<ScoredValue<V>>>> bzmpop(double timeout, int count, ZPopArgs args, K... keys) {
+        return createMono(() -> commandBuilder.bzmpop(timeout, count, args, keys));
+    }
+
+    @Override
     public Mono<KeyValue<K, ScoredValue<V>>> bzpopmin(long timeout, K... keys) {
         return createMono(() -> commandBuilder.bzpopmin(timeout, keys));
     }
@@ -2409,6 +2429,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<List<Double>> zmscore(K key, V... members) {
         return createMono(() -> commandBuilder.zmscore(key, members));
+    }
+
+    @Override
+    public Mono<KeyValue<K, ScoredValue<V>>> zmpop(ZPopArgs args, K... keys) {
+        return createMono(() -> commandBuilder.zmpop(args, keys));
+    }
+
+    @Override
+    public Mono<KeyValue<K, List<ScoredValue<V>>>> zmpop(int count, ZPopArgs args, K... keys) {
+        return createMono(() -> commandBuilder.zmpop(count, args, keys));
     }
 
     @Override

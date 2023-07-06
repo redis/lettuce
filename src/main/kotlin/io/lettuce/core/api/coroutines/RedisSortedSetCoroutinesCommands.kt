@@ -32,6 +32,68 @@ import kotlinx.coroutines.flow.Flow
 interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
 
     /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return ScoredValue<V> the removed element or [KeyValue#empty].
+     * @since 6.3
+     */
+    suspend fun bzmpop(
+        timeout: Long,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, ScoredValue<V>>
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param count number of elements to pop.
+     * @param args the command args.
+     * @param keys the keys.
+     * @return ScoredValue<V> the removed element or [KeyValue#empty].
+     * @since 6.3
+     */
+    suspend fun bzmpop(
+        timeout: Long,
+        count: Long,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, List<ScoredValue<V>>>
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return ScoredValue<V> the removed element or [KeyValue#empty].
+     * @since 6.3
+     */
+    suspend fun bzmpop(
+        timeout: Double,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, ScoredValue<V>>
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param count number of elements to pop.
+     * @param args the command args.
+     * @param keys the keys.
+     * @return ScoredValue<V> the removed element or [KeyValue#empty].
+     * @since 6.3
+     */
+    suspend fun bzmpop(
+        timeout: Double,
+        count: Int,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, List<ScoredValue<V>>>
+
+    /**
      * Removes and returns a member with the lowest scores in the sorted set stored at one of the keys.
      *
      * @param timeout the timeout in seconds.
@@ -335,6 +397,30 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @since 6.1
      */
     suspend fun zmscore(key: K, vararg members: V): List<Double?>
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param keys the keys.
+     * @return ScoredValue<V> the removed element or [KeyValue#empty].
+     * @since 6.3
+     */
+    suspend fun zmpop(args: ZPopArgs, vararg keys: K): KeyValue<K, ScoredValue<V>>
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param count number of elements to pop.
+     * @param args the command args.
+     * @param keys the keys.
+     * @return ScoredValue<V> the removed element or [KeyValue#empty].
+     * @since 6.3
+     */
+    suspend fun zmpop(
+        count: Int,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, List<ScoredValue<V>>>
 
     /**
      * Removes and returns up to count members with the lowest scores in the sorted set stored at key.

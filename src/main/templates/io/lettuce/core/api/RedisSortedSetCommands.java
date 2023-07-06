@@ -32,6 +32,50 @@ import io.lettuce.core.output.ValueStreamingChannel;
 public interface RedisSortedSetCommands<K, V> {
 
     /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return ScoredValue&lt;V&gt; the removed element or {@link KeyValue#empty()}.
+     * @since 6.3
+     */
+    KeyValue<K, ScoredValue<V>> bzmpop(long timeout, ZPopArgs args, K... keys);
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param count number of elements to pop.
+     * @param args the command args.
+     * @param keys the keys.
+     * @return ScoredValue&lt;V&gt; the removed elements or {@link KeyValue#empty()}.
+     * @since 6.3
+     */
+    KeyValue<K, List<ScoredValue<V>>> bzmpop(long timeout, long count, ZPopArgs args, K... keys);
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param keys the keys.
+     * @return ScoredValue&lt;V&gt; the removed element or {@link KeyValue#empty()}.
+     * @since 6.3
+     */
+    KeyValue<K, ScoredValue<V>> bzmpop(double timeout, ZPopArgs args, K... keys);
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param timeout the timeout in seconds.
+     * @param count number of elements to pop.
+     * @param args the command args.
+     * @param keys the keys.
+     * @return ScoredValue&lt;V&gt; the removed elements or {@link KeyValue#empty()}.
+     * @since 6.3
+     */
+    KeyValue<K, List<ScoredValue<V>>> bzmpop(double timeout, int count, ZPopArgs args, K... keys);
+
+    /**
      * Removes and returns a member with the lowest scores in the sorted set stored at one of the keys.
      *
      * @param timeout the timeout in seconds.
@@ -368,6 +412,26 @@ public interface RedisSortedSetCommands<K, V> {
      * @since 6.1
      */
     List<Double> zmscore(K key, V... members);
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param keys the keys.
+     * @return ScoredValue&lt;V&gt; the removed element or {@link KeyValue#empty()}.
+     * @since 6.3
+     */
+    KeyValue<K, ScoredValue<V>> zmpop(ZPopArgs args, K... keys);
+
+    /**
+     * Pops one or more elements, that are member-score pairs, from the first non-empty sorted set in the provided list of keys.
+     *
+     * @param count number of elements to pop.
+     * @param args the command args.
+     * @param keys the keys.
+     * @return ScoredValue&lt;V&gt; the removed elements or {@link KeyValue#empty()}.
+     * @since 6.3
+     */
+    KeyValue<K, List<ScoredValue<V>>> zmpop(int count, ZPopArgs args, K... keys);
 
     /**
      * Removes and returns up to count members with the lowest scores in the sorted set stored at key.

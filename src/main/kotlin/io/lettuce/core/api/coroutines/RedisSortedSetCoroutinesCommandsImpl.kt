@@ -21,6 +21,7 @@ import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 
 
@@ -36,6 +37,34 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
  */
 @ExperimentalLettuceCoroutinesApi
 internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisSortedSetReactiveCommands<K, V>) : RedisSortedSetCoroutinesCommands<K, V> {
+
+    override suspend fun bzmpop(
+        timeout: Long,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, ScoredValue<V>> = ops.bzmpop(timeout, args, *keys).awaitFirst()
+
+    override suspend fun bzmpop(
+        timeout: Long,
+        count: Long,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, List<ScoredValue<V>>> =
+        ops.bzmpop(timeout, count, args, *keys).awaitFirst()
+
+    override suspend fun bzmpop(
+        timeout: Double,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, ScoredValue<V>> = ops.bzmpop(timeout, args, *keys).awaitFirst()
+
+    override suspend fun bzmpop(
+        timeout: Double,
+        count: Int,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, List<ScoredValue<V>>> =
+        ops.bzmpop(timeout, count, args, *keys).awaitFirst()
 
     override suspend fun bzpopmin(
         timeout: Long,
@@ -108,15 +137,36 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override fun zinterWithScores(vararg keys: K): Flow<ScoredValue<V>> = ops.zinterWithScores(*keys).asFlow()
 
-    override fun zinterWithScores(aggregateArgs: ZAggregateArgs, vararg keys: K): Flow<ScoredValue<V>> = ops.zinterWithScores(aggregateArgs, *keys).asFlow()
+    override fun zinterWithScores(
+        aggregateArgs: ZAggregateArgs,
+        vararg keys: K
+    ): Flow<ScoredValue<V>> = ops.zinterWithScores(aggregateArgs, *keys).asFlow()
 
-    override suspend fun zinterstore(destination: K, vararg keys: K): Long? = ops.zinterstore(destination, *keys).awaitFirstOrNull()
+    override suspend fun zinterstore(destination: K, vararg keys: K): Long? =
+        ops.zinterstore(destination, *keys).awaitFirstOrNull()
 
-    override suspend fun zinterstore(destination: K, storeArgs: ZStoreArgs, vararg keys: K): Long? = ops.zinterstore(destination, storeArgs, *keys).awaitFirstOrNull()
+    override suspend fun zinterstore(
+        destination: K,
+        storeArgs: ZStoreArgs,
+        vararg keys: K
+    ): Long? = ops.zinterstore(destination, storeArgs, *keys).awaitFirstOrNull()
 
-    override suspend fun zlexcount(key: K, range: Range<out V>): Long? = ops.zlexcount(key, range).awaitFirstOrNull()
+    override suspend fun zlexcount(key: K, range: Range<out V>): Long? =
+        ops.zlexcount(key, range).awaitFirstOrNull()
 
-    override suspend fun zmscore(key: K, vararg members: V): List<Double?> = ops.zmscore(key, *members).awaitFirstOrNull().orEmpty()
+    override suspend fun zmscore(key: K, vararg members: V): List<Double?> =
+        ops.zmscore(key, *members).awaitFirstOrNull().orEmpty()
+
+    override suspend fun zmpop(
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, ScoredValue<V>> = ops.zmpop(args, *keys).awaitFirst()
+
+    override suspend fun zmpop(
+        count: Int,
+        args: ZPopArgs,
+        vararg keys: K
+    ): KeyValue<K, List<ScoredValue<V>>> = ops.zmpop(count, args, *keys).awaitFirst()
 
     override suspend fun zpopmin(key: K): ScoredValue<V>? =
         ops.zpopmin(key).awaitFirstOrNull()
