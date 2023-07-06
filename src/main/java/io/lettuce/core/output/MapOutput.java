@@ -69,6 +69,32 @@ public class MapOutput<K, V> extends CommandOutput<K, V, Map<K, V>> {
     }
 
     @Override
+    public void set(double number) {
+
+        if (key == null) {
+            key = (K) Double.valueOf(number);
+            return;
+        }
+
+        V value = (V) Double.valueOf(number);
+        output.put(key, value);
+        key = null;
+    }
+
+    @Override
+    public void set(boolean flag) {
+
+        if (key == null) {
+            key = (K) Boolean.valueOf(flag);
+            return;
+        }
+
+        V value = (V) Boolean.valueOf(flag);
+        output.put(key, value);
+        key = null;
+    }
+
+    @Override
     public void multi(int count) {
 
         if (!initialized) {
