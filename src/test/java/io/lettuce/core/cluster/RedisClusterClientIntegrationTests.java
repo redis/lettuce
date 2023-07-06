@@ -178,7 +178,7 @@ class RedisClusterClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void pubSubclusterConnectionShouldSetClientName() {
+    void pubSubClusterConnectionShouldSetClientName() {
 
         StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub();
 
@@ -201,6 +201,36 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
         clusterClient.reloadPartitions();
         assertThat(clusterClient.getPartitions()).hasSize(4);
+    }
+
+    @Test
+    void suspendedTopologyRefreshCanBeResumed() {
+
+        RedisClusterClient client = RedisClusterClient.create(clusterClient.getResources(),
+                RedisURI.Builder.redis(host, ClusterTestSettings.port1).build());
+        try {
+
+            client.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(ClusterTopologyRefreshOptions.builder()
+                    .enablePeriodicRefresh(true).refreshPeriod(Duration.ofMillis(200)).build()).build());
+            client.connect().close();
+
+            Wait.untilTrue(client::isTopologyRefreshInProgress).during(Duration.ofSeconds(5)).waitOrTimeout();
+
+            client.suspendTopologyRefresh();
+
+            Wait.untilTrue(() -> !client.isTopologyRefreshInProgress()).during(Duration.ofSeconds(5)).waitOrTimeout();
+
+            client.getPartitions().clear();
+            client.getPartitions().updateCache();
+
+            client.connect().close();
+            Wait.untilTrue(client::isTopologyRefreshInProgress).during(Duration.ofSeconds(5)).waitOrTimeout();
+            Wait.untilTrue(() -> !client.isTopologyRefreshInProgress()).during(Duration.ofSeconds(5)).waitOrTimeout();
+
+            assertThat(client.getPartitions()).isNotEmpty();
+        } finally {
+            FastShutdown.shutdown(client);
+        }
     }
 
     @Test

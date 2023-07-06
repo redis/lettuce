@@ -34,7 +34,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
@@ -68,6 +67,7 @@ import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import reactor.core.publisher.Mono;
 
 /**
  * A scalable and thread-safe <a href="https://redis.io/">Redis</a> cluster client supporting synchronous, asynchronous and
@@ -177,8 +177,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      * cluster. If any uri is successful for connection, the others are not tried anymore. The initial uri is needed to discover
      * the cluster structure for distributing the requests.
      *
-     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of
-     *        client resources and keep track of them.
+     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of client
+     *        resources and keep track of them.
      * @param redisURIs iterable of initial {@link RedisURI cluster URIs}. Must not be {@code null} and not empty.
      */
     protected RedisClusterClient(ClientResources clientResources, Iterable<RedisURI> redisURIs) {
@@ -905,6 +905,26 @@ public class RedisClusterClient extends AbstractRedisClient {
         }).whenComplete((unused, throwable) -> event.record());
     }
 
+    /**
+     * Suspend periodic topology refresh if it was activated previously. Suspending cancels the periodic schedule without
+     * interrupting any running topology refresh. Suspension is in place until obtaining a new {@link #connect connection}.
+     *
+     * @since 6.3
+     */
+    public void suspendTopologyRefresh() {
+        topologyRefreshScheduler.suspendTopologyRefresh();
+    }
+
+    /**
+     * Return whether a scheduled or adaptive topology refresh is in progress.
+     *
+     * @return {@code true} if a topology refresh is in progress.
+     * @since 6.3
+     */
+    public boolean isTopologyRefreshInProgress() {
+        return topologyRefreshScheduler.isTopologyRefreshInProgress();
+    }
+
     protected void updatePartitionsInConnections() {
 
         forEachClusterConnection(input -> {
@@ -1074,7 +1094,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     @Override
     public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
-        topologyRefreshScheduler.shutdown();
+        suspendTopologyRefresh();
 
         return super.shutdownAsync(quietPeriod, timeout, timeUnit);
     }

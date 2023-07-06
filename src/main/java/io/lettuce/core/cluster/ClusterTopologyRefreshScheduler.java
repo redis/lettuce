@@ -87,9 +87,9 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     }
 
     /**
-     * Disable periodic topology refresh.
+     * Suspend (cancel) periodic topology refresh.
      */
-    public void shutdown() {
+    public void suspendTopologyRefresh() {
 
         if (clusterTopologyRefreshActivated.compareAndSet(true, false)) {
 
@@ -102,6 +102,10 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
                 logger.debug("Could not cancel Cluster topology refresh", e);
             }
         }
+    }
+
+    public boolean isTopologyRefreshInProgress() {
+        return clusterTopologyRefreshTask.get();
     }
 
     @Override
