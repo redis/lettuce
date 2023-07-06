@@ -1732,7 +1732,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, Long> memoryUsage(K key) {
-        return createCommand(MEMORY, new IntegerOutput<>(codec), new CommandArgs<>(codec).add(USAGE).add(key.toString()));
+        return createCommand(MEMORY, new IntegerOutput<>(codec), new CommandArgs<>(codec).add(USAGE).addKey(key));
     }
 
     Command<K, V, List<V>> mget(K... keys) {
