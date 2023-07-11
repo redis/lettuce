@@ -337,32 +337,15 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
      * @return the connectionIntent.
      */
     static ConnectionIntent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
-
-        boolean w = false;
-        boolean r = false;
-        ConnectionIntent singleConnectionIntent = ConnectionIntent.WRITE;
-
+        
         for (RedisCommand<?, ?, ?> command : commands) {
-
-            if (command instanceof ClusterCommand) {
-                continue;
-            }
-
-            singleConnectionIntent = getIntent(command.getType());
-            if (singleConnectionIntent == ConnectionIntent.READ) {
-                r = true;
-            }
-
-            if (singleConnectionIntent == ConnectionIntent.WRITE) {
-                w = true;
-            }
-
-            if (r && w) {
+            ConnectionIntent singleIntent = getIntent(command.getType());
+            if (singleIntent == ConnectionIntent.WRITE) {
                 return ConnectionIntent.WRITE;
             }
         }
 
-        return singleConnectionIntent;
+        return ConnectionIntent.READ;
     }
 
     private static ConnectionIntent getIntent(ProtocolKeyword type) {

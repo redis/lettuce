@@ -164,27 +164,14 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
      */
     static ConnectionIntent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
 
-        boolean w = false;
-        boolean r = false;
-        ConnectionIntent singleIntent = ConnectionIntent.WRITE;
-
         for (RedisCommand<?, ?, ?> command : commands) {
-
-            singleIntent = getIntent(command.getType());
-            if (singleIntent == ConnectionIntent.READ) {
-                r = true;
-            }
-
+            ConnectionIntent singleIntent = getIntent(command.getType());
             if (singleIntent == ConnectionIntent.WRITE) {
-                w = true;
-            }
-
-            if (r && w) {
                 return ConnectionIntent.WRITE;
             }
         }
 
-        return singleIntent;
+        return ConnectionIntent.READ;
     }
 
     private static ConnectionIntent getIntent(ProtocolKeyword type) {
