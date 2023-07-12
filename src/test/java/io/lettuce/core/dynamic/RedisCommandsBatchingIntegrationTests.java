@@ -42,6 +42,7 @@ import io.lettuce.test.TestFutures;
 
 /**
  * @author Mark Paluch
+ * @author Lucio Paiva
  */
 @ExtendWith(LettuceExtension.class)
 class RedisCommandsBatchingIntegrationTests extends TestSupport {
@@ -97,6 +98,16 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
             assertThat(redis.get("k1")).isEqualTo(value);
             assertThat(e.getFailedCommands()).hasSize(1);
         }
+    }
+
+    @Test
+    void shouldNotCrashWhenFlushCalledWithEmptyQueue() {
+
+        RedisCommandFactory factory = new RedisCommandFactory(redis.getStatefulConnection());
+
+        SelectiveBatchingWithSize api = factory.getCommands(SelectiveBatchingWithSize.class);
+
+        api.flush();
     }
 
     @Test
@@ -212,6 +223,11 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
         void set(String key, String value, CommandBatching commandBatching);
 
         void llen(String key, CommandBatching commandBatching);
+
+    }
+
+    @BatchSize(5)
+    interface SelectiveBatchingWithSize extends Commands, BatchExecutor {
 
     }
 
