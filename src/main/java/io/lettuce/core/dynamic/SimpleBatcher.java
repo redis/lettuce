@@ -35,6 +35,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * </ul>
  *
  * @author Mark Paluch
+ * @author Lucio Paiva
  */
 class SimpleBatcher implements Batcher {
 
@@ -148,12 +149,12 @@ class SimpleBatcher implements Batcher {
 
         List<RedisCommand<Object, Object, Object>> batch = new ArrayList<>(Math.max(batchSize, 10));
 
-        do {
+        while (!queue.isEmpty()) {
+
             RedisCommand<Object, Object, Object> poll = queue.poll();
 
-            assert poll != null;
             batch.add(poll);
-        } while (!queue.isEmpty());
+        }
 
         return batch;
     }
@@ -166,7 +167,6 @@ class SimpleBatcher implements Batcher {
 
             RedisCommand<Object, Object, Object> poll = queue.poll();
 
-            assert poll != null;
             batch.add(poll);
         }
 
