@@ -18,8 +18,10 @@ package io.lettuce.core.masterreplica;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -33,6 +35,7 @@ import io.lettuce.core.resource.ClientResources;
  * Channel writer/dispatcher that dispatches commands based on the ConnectionIntent to different connections.
  *
  * @author Mark Paluch
+ * @author Jim Brunner
  */
 class MasterReplicaChannelWriter implements RedisChannelWriter {
 
@@ -40,14 +43,17 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
 
     private final ClientResources clientResources;
 
+    private final ClientOptions clientOptions;
+
     private boolean closed = false;
 
     private boolean inTransaction;
 
     MasterReplicaChannelWriter(MasterReplicaConnectionProvider<?, ?> masterReplicaConnectionProvider,
-            ClientResources clientResources) {
+            ClientResources clientResources, ClientOptions clientOptions) {
         this.masterReplicaConnectionProvider = masterReplicaConnectionProvider;
         this.clientResources = clientResources;
+        this.clientOptions = clientOptions;
     }
 
     @Override
@@ -162,7 +168,7 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
      * @param commands {@link Collection} of {@link RedisCommand commands}.
      * @return the ConnectionIntent.
      */
-    static ConnectionIntent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+    ConnectionIntent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
 
         boolean w = false;
         boolean r = false;
@@ -187,8 +193,9 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         return singleIntent;
     }
 
-    private static ConnectionIntent getIntent(ProtocolKeyword type) {
-        return ReadOnlyCommands.isReadOnlyCommand(type) ? ConnectionIntent.READ : ConnectionIntent.WRITE;
+    private ConnectionIntent getIntent(ProtocolKeyword type) {
+        return (ReadOnlyCommands.isReadOnlyCommand(type) || clientOptions.isExtraReadOnlyCommand(type))
+            ? ConnectionIntent.READ : ConnectionIntent.WRITE;
     }
 
     @Override
