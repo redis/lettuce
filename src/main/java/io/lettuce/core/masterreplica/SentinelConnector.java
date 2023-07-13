@@ -35,6 +35,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * {@link MasterReplicaConnector} to connect a Sentinel-managed Master/Replica setup using a Sentinel {@link RedisURI}.
  *
  * @author Mark Paluch
+ * @author Jim Brunner
  * @since 5.1
  */
 class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
@@ -83,7 +84,7 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
         connectionProvider.setKnownNodes(nodes);
 
         MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
-                redisClient.getResources()) {
+                redisClient.getResources(), redisClient.getOptions()) {
 
             @Override
             public CompletableFuture<Void> closeAsync() {

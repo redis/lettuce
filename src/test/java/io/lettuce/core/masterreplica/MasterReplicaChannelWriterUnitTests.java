@@ -31,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.StatusOutput;
@@ -42,6 +43,7 @@ import io.lettuce.core.resource.ClientResources;
 
 /**
  * @author Mark Paluch
+ * @author Jim Brunner
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -54,58 +56,69 @@ class MasterReplicaChannelWriterUnitTests {
     private ClientResources clientResources;
 
     @Mock
+    private ClientOptions clientOptions;
+
+    @Mock
     private StatefulRedisConnection<String, String> connection;
 
     @Test
     void shouldReturnIntentForWriteCommand() {
 
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mset = new Command<>(CommandType.MSET, null);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Arrays.asList(set, mset)))
+        assertThat(writer.getIntent(Arrays.asList(set, mset)))
                 .isEqualTo(ConnectionIntent.WRITE);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Collections.singletonList(set)))
+        assertThat(writer.getIntent(Collections.singletonList(set)))
                 .isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
     void shouldReturnDefaultIntentForNoCommands() {
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Collections.emptyList()))
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
+        assertThat(writer.getIntent(Collections.emptyList()))
                 .isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
     void shouldReturnIntentForReadCommand() {
 
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
         RedisCommand<String, String, String> get = new Command<>(CommandType.GET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Arrays.asList(get, mget)))
+        assertThat(writer.getIntent(Arrays.asList(get, mget)))
                 .isEqualTo(ConnectionIntent.READ);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Collections.singletonList(get)))
+        assertThat(writer.getIntent(Collections.singletonList(get)))
                 .isEqualTo(ConnectionIntent.READ);
     }
 
     @Test
     void shouldReturnIntentForMixedCommands() {
 
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
+
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Arrays.asList(set, mget)))
+        assertThat(writer.getIntent(Arrays.asList(set, mget)))
                 .isEqualTo(ConnectionIntent.WRITE);
 
-        assertThat(MasterReplicaChannelWriter.getIntent(Collections.singletonList(set)))
+        assertThat(writer.getIntent(Collections.singletonList(set)))
                 .isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
     void shouldBindTransactionsToMaster() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
 
         when(connectionProvider.getConnectionAsync(any(ConnectionIntent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
@@ -120,7 +133,7 @@ class MasterReplicaChannelWriterUnitTests {
     @Test
     void shouldBindTransactionsToMasterInBatch() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
 
         when(connectionProvider.getConnectionAsync(any(ConnectionIntent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
@@ -136,7 +149,7 @@ class MasterReplicaChannelWriterUnitTests {
     @Test
     void shouldDeriveIntentFromCommandTypeAfterTransaction() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
 
         when(connectionProvider.getConnectionAsync(any(ConnectionIntent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
@@ -152,7 +165,7 @@ class MasterReplicaChannelWriterUnitTests {
     @Test
     void shouldDeriveIntentFromCommandTypeAfterDiscardedTransaction() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
 
         when(connectionProvider.getConnectionAsync(any(ConnectionIntent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
@@ -168,7 +181,7 @@ class MasterReplicaChannelWriterUnitTests {
     @Test
     void shouldDeriveIntentFromCommandBatchTypeAfterDiscardedTransaction() {
 
-        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources);
+        MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
 
         when(connectionProvider.getConnectionAsync(any(ConnectionIntent.class)))
                 .thenReturn(CompletableFuture.completedFuture(connection));
