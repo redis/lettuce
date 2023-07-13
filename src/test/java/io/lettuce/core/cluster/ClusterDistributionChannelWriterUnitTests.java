@@ -38,6 +38,7 @@ import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.CommandListenerWriter;
+import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -60,6 +61,7 @@ import io.lettuce.core.resource.ClientResources;
  *
  * @author Mark Paluch
  * @author koisyu
+ * @author Jim Brunner
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -73,6 +75,9 @@ class ClusterDistributionChannelWriterUnitTests {
 
     @Mock
     private ClientResources clientResources;
+
+    @Mock
+    private ClientOptions clientOptions;
 
     @Mock
     private ClusterEventListener clusterEventListener;
@@ -159,40 +164,48 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldReturnIntentForWriteCommand() {
 
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter, clientOptions, clusterEventListener);
+
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mset = new Command<>(CommandType.MSET, null);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(set, mset))).isEqualTo(ConnectionIntent.WRITE);
+        assertThat(writer.getIntent(Arrays.asList(set, mset))).isEqualTo(ConnectionIntent.WRITE);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(ConnectionIntent.WRITE);
+        assertThat(writer.getIntent(Collections.singletonList(set))).isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
     void shouldReturnDefaultIntentForNoCommands() {
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.emptyList())).isEqualTo(ConnectionIntent.WRITE);
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter, clientOptions, clusterEventListener);
+
+        assertThat(writer.getIntent(Collections.emptyList())).isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
     void shouldReturnIntentForReadCommand() {
 
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter, clientOptions, clusterEventListener);
+
         RedisCommand<String, String, String> get = new Command<>(CommandType.GET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(get, mget))).isEqualTo(ConnectionIntent.READ);
+        assertThat(writer.getIntent(Arrays.asList(get, mget))).isEqualTo(ConnectionIntent.READ);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(get))).isEqualTo(ConnectionIntent.READ);
+        assertThat(writer.getIntent(Collections.singletonList(get))).isEqualTo(ConnectionIntent.READ);
     }
 
     @Test
     void shouldReturnIntentForMixedCommands() {
 
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter, clientOptions, clusterEventListener);
+
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Arrays.asList(set, mget))).isEqualTo(ConnectionIntent.WRITE);
+        assertThat(writer.getIntent(Arrays.asList(set, mget))).isEqualTo(ConnectionIntent.WRITE);
 
-        assertThat(ClusterDistributionChannelWriter.getIntent(Collections.singletonList(set))).isEqualTo(ConnectionIntent.WRITE);
+        assertThat(writer.getIntent(Collections.singletonList(set))).isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test

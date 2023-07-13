@@ -61,11 +61,14 @@ import io.lettuce.core.resource.ClientResources;
  * Channel writer for cluster operation. This writer looks up the right partition by hash/slot for the operation.
  *
  * @author Mark Paluch
+ * @author Jim Brunner
  * @since 3.0
  */
 class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
     private final RedisChannelWriter defaultWriter;
+
+    private final ClientOptions clientOptions;
 
     private final ClusterEventListener clusterEventListener;
 
@@ -89,6 +92,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         }
 
         this.defaultWriter = defaultWriter;
+        this.clientOptions = clientOptions;
         this.clusterEventListener = clusterEventListener;
     }
 
@@ -336,7 +340,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
      * @param commands {@link Collection} of {@link RedisCommand commands}.
      * @return the connectionIntent.
      */
-    static ConnectionIntent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+    ConnectionIntent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
 
         boolean w = false;
         boolean r = false;
@@ -365,8 +369,9 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         return singleConnectionIntent;
     }
 
-    private static ConnectionIntent getIntent(ProtocolKeyword type) {
-        return ReadOnlyCommands.isReadOnlyCommand(type) ? ConnectionIntent.READ : ConnectionIntent.WRITE;
+    private ConnectionIntent getIntent(ProtocolKeyword type) {
+        return (ReadOnlyCommands.isReadOnlyCommand(type) || clientOptions.isExtraReadOnlyCommand(type))
+            ? ConnectionIntent.READ : ConnectionIntent.WRITE;
     }
 
     static HostAndPort getMoveTarget(Partitions partitions, String errorMessage) {

@@ -35,6 +35,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * {@link RedisURI}. This connector determines roles and remains using only the provided endpoints.
  *
  * @author Mark Paluch
+ * @author Jim Brunner
  * @since 5.1
  */
 class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V> {
@@ -81,8 +82,7 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
 
         connectionProvider.setKnownNodes(nodes);
 
-        MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
-                redisClient.getResources());
+        MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider, redisClient.getResources(), redisClient.getOptions());
 
         StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
                 channelWriter, codec, seedNode.getTimeout());

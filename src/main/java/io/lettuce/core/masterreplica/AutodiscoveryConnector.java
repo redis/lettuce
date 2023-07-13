@@ -39,6 +39,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * a single {@link RedisURI}.
  *
  * @author Mark Paluch
+ * @author Jim Brunner
  * @since 5.1
  */
 class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
@@ -125,8 +126,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
 
             connectionProvider.setKnownNodes(nodes);
 
-            MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider,
-                    redisClient.getResources());
+            MasterReplicaChannelWriter channelWriter = new MasterReplicaChannelWriter(connectionProvider, redisClient.getResources(), redisClient.getOptions());
 
             StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
                     channelWriter, codec, redisURI.getTimeout());
