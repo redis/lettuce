@@ -478,6 +478,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
+    Command<K, V, String> clientList(ClientListArgs clientListArgs) {
+        LettuceAssert.notNull(clientListArgs, "ClientListArgs " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(LIST);
+        clientListArgs.build(args);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> clientInfo() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.INFO);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
     Command<K, V, String> clientNoEvict(boolean on) {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add("NO-EVICT").add(on ? ON : OFF);
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
@@ -499,6 +512,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(SETNAME).addKey(name);
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
+
+    Command<K, V, String> clientSetinfo(K key, V value) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SETINFO).addKey(key).addValue(value);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
 
     Command<K, V, String> clientTracking(TrackingArgs trackingArgs) {
         LettuceAssert.notNull(trackingArgs, "TrackingArgs " + MUST_NOT_BE_NULL);
@@ -612,7 +631,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, String> clusterInfo() {
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(INFO);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandType.INFO);
 
         return createCommand(CLUSTER, new StatusOutput<>(codec), args);
     }
@@ -738,7 +757,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.noNullElements(commands, "Commands " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
         CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8);
-        args.add(INFO);
+        args.add(CommandKeyword.INFO);
 
         for (String command : commands) {
             args.add(command);
@@ -1574,14 +1593,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, String> info() {
-        return createCommand(INFO, new StatusOutput<>(codec));
+        return createCommand(CommandType.INFO, new StatusOutput<>(codec));
     }
 
     Command<K, V, String> info(String section) {
         LettuceAssert.notNull(section, "Section " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(section);
-        return createCommand(INFO, new StatusOutput<>(codec), args);
+        return createCommand(CommandType.INFO, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, List<K>> keys(K pattern) {

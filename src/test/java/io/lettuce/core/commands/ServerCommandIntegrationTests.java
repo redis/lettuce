@@ -36,6 +36,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.AclSetuserArgs;
+import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.KillArgs;
@@ -199,6 +200,17 @@ public class ServerCommandIntegrationTests extends TestSupport {
     @Test
     void clientList() {
         assertThat(redis.clientList().contains("addr=")).isTrue();
+    }
+
+    @Test
+    void clientListExtended() {
+        Long clientId = redis.clientId();
+
+        assertThat(redis.clientList(ClientListArgs.Builder.ids(clientId, 0)).contains("addr=")).isTrue();
+        assertThat(redis.clientList(ClientListArgs.Builder.ids(0)).contains("addr=")).isFalse();
+
+        assertThat(redis.clientList(ClientListArgs.Builder.typeNormal()).contains("addr=")).isTrue();
+        assertThat(redis.clientList(ClientListArgs.Builder.typePubsub()).contains("addr=")).isFalse();
     }
 
     @Test
@@ -551,6 +563,18 @@ public class ServerCommandIntegrationTests extends TestSupport {
     @Disabled("Run me manually") // Redis 7.0
     void shutdown() {
         redis.shutdown(new ShutdownArgs().save(true).now());
+    }
+
+    @Test
+    void clientInfo() {
+        assertThat(redis.clientInfo().contains("addr=")).isTrue();
+    }
+
+    @Test
+    void clientSetinfo() {
+        redis.clientSetinfo("lib-name", "lettuce");
+
+        assertThat(redis.clientInfo().contains("lib-name=lettuce")).isTrue();
     }
 
     private boolean noSaveInProgress() {

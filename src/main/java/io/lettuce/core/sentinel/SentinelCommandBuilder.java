@@ -22,6 +22,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
@@ -31,10 +32,7 @@ import io.lettuce.core.output.ListOfMapsOutput;
 import io.lettuce.core.output.MapOutput;
 import io.lettuce.core.output.SocketAddressOutput;
 import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.BaseRedisCommandBuilder;
-import io.lettuce.core.protocol.Command;
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.protocol.*;
 
 /**
  * @author Mark Paluch
@@ -103,6 +101,11 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
+    public Command<K, V, String> clientSetinfo(K key, V value) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SETINFO).addKey(key).addValue(value);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
     public Command<K, V, String> clientKill(String addr) {
         LettuceAssert.notNull(addr, "Addr must not be null");
         LettuceAssert.notEmpty(addr, "Addr must not be empty");
@@ -129,15 +132,28 @@ class SentinelCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
+    public Command<K, V, String> clientList(ClientListArgs clientListArgs) {
+        LettuceAssert.notNull(clientListArgs, "ClientListArgs must not be null");
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(LIST);
+        clientListArgs.build(args);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
+    public Command<K, V, String> clientInfo() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.INFO);
+        return createCommand(CLIENT, new StatusOutput<>(codec), args);
+    }
+
     public Command<K, V, String> info() {
-        return createCommand(INFO, new StatusOutput<>(codec));
+        return createCommand(CommandType.INFO, new StatusOutput<>(codec));
     }
 
     public Command<K, V, String> info(String section) {
         LettuceAssert.notNull(section, "Section must not be null");
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(section);
-        return createCommand(INFO, new StatusOutput<>(codec), args);
+        return createCommand(CommandType.INFO, new StatusOutput<>(codec), args);
     }
 
     public Command<K, V, String> ping() {

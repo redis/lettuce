@@ -19,6 +19,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandArgs;
@@ -139,6 +140,16 @@ public interface RedisSentinelCommands<K, V> {
     String clientSetname(K name);
 
     /**
+     * Assign various info attributes to the current connection.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return simple-string-reply {@code OK} if the connection name was successfully set.
+     * @since 6.3
+     */
+    String clientSetinfo(K key, V value);
+
+    /**
      * Kill the connection of a client identified by ip:port.
      *
      * @param addr ip:port.
@@ -169,6 +180,22 @@ public interface RedisSentinelCommands<K, V> {
      *         each line is composed of a succession of property=value fields separated by a space character.
      */
     String clientList();
+
+    /**
+     * Get the list of client connections which are filtered by {@code clientListArgs}.
+     *
+     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
+     *         each line is composed of a succession of property=value fields separated by a space character.
+     */
+    String clientList(ClientListArgs clientListArgs);
+
+    /**
+     * Get the list of the current client connection.
+     *
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @since 6.3
+     */
+    String clientInfo();
 
     /**
      * Get information and statistics about the server.

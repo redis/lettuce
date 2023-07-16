@@ -87,6 +87,9 @@ class KotlinCompilationUnitFactory {
         Map<String, String> deprecatedMethodsSpec = new HashMap<>();
         deprecatedMethodsSpec.put("flushallAsync", "flushall(FlushMode.ASYNC)");
         deprecatedMethodsSpec.put("flushdbAsync", "flushdb(FlushMode.ASYNC)");
+        deprecatedMethodsSpec.put("slaveof", "replicaof(host, port)");
+        deprecatedMethodsSpec.put("slaveofNoOne", "replicaofNoOne()");
+        deprecatedMethodsSpec.put("slaves", "replicas(key)");
         KEEP_DEPRECATED_METHODS = deprecatedMethodsSpec;
     }
 

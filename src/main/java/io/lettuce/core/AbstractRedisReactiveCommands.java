@@ -359,6 +359,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> clientList(ClientListArgs clientListArgs) {
+        return createMono(() -> commandBuilder.clientList(clientListArgs));
+    }
+
+    @Override
+    public Mono<String> clientInfo() {
+        return createMono(commandBuilder::clientInfo);
+    }
+
+    @Override
     public Mono<String> clientNoEvict(boolean on) {
         return createMono(() -> commandBuilder.clientNoEvict(on));
     }
@@ -376,6 +386,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> clientSetname(K name) {
         return createMono(() -> commandBuilder.clientSetname(name));
+    }
+
+    @Override
+    public Mono<String> clientSetinfo(K key, V value) {
+        return createMono(() -> commandBuilder.clientSetinfo(key, value));
     }
 
     @Override

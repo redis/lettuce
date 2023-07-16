@@ -19,6 +19,7 @@ import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulConnection;
@@ -118,6 +119,11 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     }
 
     @Override
+    public RedisFuture<String> clientSetinfo(K key, V value) {
+        return dispatch(commandBuilder.clientSetinfo(key, value));
+    }
+
+    @Override
     public RedisFuture<String> clientKill(String addr) {
         return dispatch(commandBuilder.clientKill(addr));
     }
@@ -135,6 +141,16 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     @Override
     public RedisFuture<String> clientList() {
         return dispatch(commandBuilder.clientList());
+    }
+
+    @Override
+    public RedisFuture<String> clientList(ClientListArgs clientListArgs) {
+        return dispatch(commandBuilder.clientList(clientListArgs));
+    }
+
+    @Override
+    public RedisFuture<String> clientInfo() {
+        return dispatch(commandBuilder.clientInfo());
     }
 
     @Override

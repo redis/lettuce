@@ -16,6 +16,7 @@
 
 package io.lettuce.core.sentinel.api.coroutines
 
+import io.lettuce.core.ClientListArgs
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.KillArgs
 import io.lettuce.core.output.CommandOutput
@@ -64,12 +65,18 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @return List<Map<K, V>>.
+     * @deprecated since 6.2, use #replicas(Any) instead.
      */
-    @Deprecated(
-        "Since 6.2, use #replicas(…) instead",
-        replaceWith = ReplaceWith("replicas(K)")
-    )
+    @Deprecated("Use [replicas(key)] instead.", ReplaceWith("replicas(key)"))
     suspend fun slaves(key: K): List<Map<K, V>>
+
+    /**
+     * This command will reset all the masters with matching name.
+     *
+     * @param key the key.
+     * @return Long.
+     */
+    suspend fun reset(key: K): Long
 
     /**
      * Provides a list of replicas for the master with the specified name.
@@ -79,14 +86,6 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * @since 6.2
      */
     suspend fun replicas(key: K): List<Map<K, V>>
-
-    /**
-     * This command will reset all the masters with matching name.
-     *
-     * @param key the key.
-     * @return Long.
-     */
-    suspend fun reset(key: K): Long
 
     /**
      * Perform a failover.
@@ -141,6 +140,16 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
     suspend fun clientSetname(name: K): String?
 
     /**
+     * Assign various info attributes to the current connection.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return simple-string-reply `OK` if the connection name was successfully set.
+     * @since 6.3
+     */
+    suspend fun clientSetinfo(key: K, value: V): String?
+
+    /**
      * Kill the connection of a client identified by ip:port.
      *
      * @param addr ip:port.
@@ -171,6 +180,22 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      *         each line is composed of a succession of property=value fields separated by a space character.
      */
     suspend fun clientList(): String?
+
+    /**
+     * Get the list of client connections which are filtered by `clientListArgs`.
+     *
+     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
+     *         each line is composed of a succession of property=value fields separated by a space character.
+     */
+    suspend fun clientList(clientListArgs: ClientListArgs): String?
+
+    /**
+     * Get the list of the current client connection.
+     *
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @since 6.3
+     */
+    suspend fun clientInfo(): String?
 
     /**
      * Get information and statistics about the server.

@@ -20,6 +20,7 @@ import java.util.Map;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandArgs;
@@ -140,6 +141,16 @@ public interface RedisSentinelReactiveCommands<K, V> {
     Mono<String> clientSetname(K name);
 
     /**
+     * Assign various info attributes to the current connection.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return simple-string-reply {@code OK} if the connection name was successfully set.
+     * @since 6.3
+     */
+    Mono<String> clientSetinfo(K key, V value);
+
+    /**
      * Kill the connection of a client identified by ip:port.
      *
      * @param addr ip:port.
@@ -170,6 +181,22 @@ public interface RedisSentinelReactiveCommands<K, V> {
      *         each line is composed of a succession of property=value fields separated by a space character.
      */
     Mono<String> clientList();
+
+    /**
+     * Get the list of client connections which are filtered by {@code clientListArgs}.
+     *
+     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
+     *         each line is composed of a succession of property=value fields separated by a space character.
+     */
+    Mono<String> clientList(ClientListArgs clientListArgs);
+
+    /**
+     * Get the list of the current client connection.
+     *
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @since 6.3
+     */
+    Mono<String> clientInfo();
 
     /**
      * Get information and statistics about the server.
