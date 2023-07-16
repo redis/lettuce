@@ -16,6 +16,7 @@
 
 package io.lettuce.core.sentinel.api.coroutines
 
+import io.lettuce.core.ClientListArgs
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.KillArgs
 import io.lettuce.core.output.CommandOutput
@@ -67,6 +68,8 @@ internal class RedisSentinelCoroutinesCommandsImpl<K : Any, V : Any>(internal va
 
     override suspend fun clientGetname(): K? = ops.clientGetname().awaitFirstOrNull()
 
+    override suspend fun clientSetinfo(key: K, value: V): String? = ops.clientSetinfo(key, value).awaitFirstOrNull()
+
     override suspend fun clientSetname(name: K): String = ops.clientSetname(name).awaitLast()
 
     override suspend fun clientKill(addr: String): String = ops.clientKill(addr).awaitLast()
@@ -76,6 +79,10 @@ internal class RedisSentinelCoroutinesCommandsImpl<K : Any, V : Any>(internal va
     override suspend fun clientPause(timeout: Long): String = ops.clientPause(timeout).awaitLast()
 
     override suspend fun clientList(): String = ops.clientList().awaitLast()
+
+    override suspend fun clientList(clientListArgs: ClientListArgs): String? = ops.clientList(clientListArgs).awaitLast()
+
+    override suspend fun clientInfo(): String? = ops.clientInfo().awaitFirstOrNull()
 
     override suspend fun info(): String = ops.info().awaitLast()
 

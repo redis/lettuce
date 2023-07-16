@@ -104,11 +104,27 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     suspend fun clientList(): String?
 
     /**
+     * Get the list of client connections which are filtered by `clientListArgs`.
+     *
+     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
+     *         each line is composed of a succession of property=value fields separated by a space character.
+     */
+    suspend fun clientList(clientListArgs: ClientListArgs): String?
+
+    /**
+     * Get the list of the current client connection.
+     *
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @since 6.3
+     */
+    suspend fun clientInfo(): String?
+
+    /**
      * Sets the client eviction mode for the current connection.
-	 *
-	 * @param on @code true} will turn eviction mode on, and `false` will turn it off.
-	 * @return String simple-string-reply `OK`.
-	 * @since 6.2
+     *
+     * @param on @code true} will turn eviction mode on, and `false` will turn it off.
+     * @return String simple-string-reply `OK`.
+     * @since 6.2
      */
     suspend fun clientNoEvict(on: Boolean): String?
 
@@ -127,6 +143,16 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return simple-string-reply `OK` if the connection name was successfully set.
      */
     suspend fun clientSetname(name: K): String?
+
+    /**
+     * Assign various info attributes to the current connection.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return simple-string-reply `OK` if the connection name was successfully set.
+     * @since 6.3
+     */
+    suspend fun clientSetinfo(key: K, value: V): String?
 
     /**
      * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
@@ -366,43 +392,43 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      *
      * @return Date integer-reply an UNIX time stamp.
      */
-	suspend fun lastsave(): Date?
+    suspend fun lastsave(): Date?
 
-	/**
-	 * Reports the number of bytes that a key and its value require to be stored in RAM.
-	 *
-	 * @return memory usage in bytes.
-	 * @since 5.2
-	 */
-	suspend fun memoryUsage(key: K): Long?
+    /**
+     * Reports the number of bytes that a key and its value require to be stored in RAM.
+     *
+     * @return memory usage in bytes.
+     * @since 5.2
+     */
+    suspend fun memoryUsage(key: K): Long?
 
-	/**
-	 * Make the server a replica of another instance.
-	 *
-	 * @param host the host type: string.
-	 * @param port the port type: string.
-	 * @return String simple-string-reply.
-	 * @since 6.1.7
-	 */
-	suspend fun replicaof(host: String, port: Int): String?
+    /**
+     * Make the server a replica of another instance.
+     *
+     * @param host the host type: string.
+     * @param port the port type: string.
+     * @return String simple-string-reply.
+     * @since 6.1.7
+     */
+    suspend fun replicaof(host: String, port: Int): String?
 
-	/**
-	 * Promote server as master.
-	 *
-	 * @return String simple-string-reply.
-	 * @since 6.1.7
-	 */
-	suspend fun replicaofNoOne(): String?
+    /**
+     * Promote server as master.
+     *
+     * @return String simple-string-reply.
+     * @since 6.1.7
+     */
+    suspend fun replicaofNoOne(): String?
 
-	/**
-	 * Synchronously save the dataset to disk.
-	 *
-	 * @return String simple-string-reply The commands returns OK on success.
-	 */
-	suspend fun save(): String?
+    /**
+     * Synchronously save the dataset to disk.
+     *
+     * @return String simple-string-reply The commands returns OK on success.
+     */
+    suspend fun save(): String?
 
-	/**
-	 * Synchronously save the dataset to disk and then shut down the server.
+    /**
+     * Synchronously save the dataset to disk and then shut down the server.
      *
      * @param save @code true} force save operation.
      */
@@ -412,25 +438,28 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * Synchronously save the dataset to disk and then shutdown the server.
      *
      * @param args
+     * @since 6.2
      */
     suspend fun shutdown(args: ShutdownArgs)
 
     /**
-	 * Make the server a replica of another instance.
-	 *
-	 * @param host the host type: string.
-	 * @param port the port type: string.
-	 * @return String simple-string-reply.
-	 * @deprecated since 6.1.7, use [replicaof(String, Integer)] instead.
+     * Make the server a replica of another instance.
+     *
+     * @param host the host type: string.
+     * @param port the port type: string.
+     * @return String simple-string-reply.
+     * @deprecated since 6.1.7, use [replicaof(String, Integer)] instead.
      */
+    @Deprecated("Use [replicaof(host, port)] instead.", ReplaceWith("replicaof(host, port)"))
     suspend fun slaveof(host: String, port: Int): String?
 
     /**
-	 * Promote server as master.
-	 *
-	 * @return String simple-string-reply.
-	 * @deprecated since 6.1.7, use [replicaofNoOne] instead.
+     * Promote server as master.
+     *
+     * @return String simple-string-reply.
+     * @deprecated since 6.1.7, use [replicaofNoOne] instead.
      */
+    @Deprecated("Use [replicaofNoOne()] instead.", ReplaceWith("replicaofNoOne()"))
     suspend fun slaveofNoOne(): String?
 
     /**

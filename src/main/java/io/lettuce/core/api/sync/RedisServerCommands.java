@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.ShutdownArgs;
@@ -109,6 +110,22 @@ public interface RedisServerCommands<K, V> {
     String clientList();
 
     /**
+     * Get the list of client connections which are filtered by {@code clientListArgs}.
+     *
+     * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
+     *         each line is composed of a succession of property=value fields separated by a space character.
+     */
+    String clientList(ClientListArgs clientListArgs);
+
+    /**
+     * Get the list of the current client connection.
+     *
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @since 6.3
+     */
+    String clientInfo();
+
+    /**
      * Sets the client eviction mode for the current connection.
      *
      * @param on {@code true} will turn eviction mode on, and {@code false} will turn it off.
@@ -132,6 +149,16 @@ public interface RedisServerCommands<K, V> {
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      */
     String clientSetname(K name);
+
+    /**
+     * Assign various info attributes to the current connection.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @return simple-string-reply {@code OK} if the connection name was successfully set.
+     * @since 6.3
+     */
+    String clientSetinfo(K key, V value);
 
     /**
      * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
@@ -429,6 +456,7 @@ public interface RedisServerCommands<K, V> {
      * @return String simple-string-reply.
      * @deprecated since 6.1.7, use {@link #replicaof(String, int)} instead.
      */
+    @Deprecated
     String slaveof(String host, int port);
 
     /**
@@ -437,6 +465,7 @@ public interface RedisServerCommands<K, V> {
      * @return String simple-string-reply.
      * @deprecated since 6.1.7, use {@link #replicaofNoOne()} instead.
      */
+    @Deprecated
     String slaveofNoOne();
 
     /**

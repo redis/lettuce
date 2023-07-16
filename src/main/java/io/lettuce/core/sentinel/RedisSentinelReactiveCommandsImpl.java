@@ -21,6 +21,7 @@ import java.util.Map;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.AbstractRedisReactiveCommands;
+import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.codec.RedisCodec;
@@ -116,6 +117,11 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
     }
 
     @Override
+    public Mono<String> clientSetinfo(K key, V value) {
+        return createMono(() -> commandBuilder.clientSetinfo(key, value));
+    }
+
+    @Override
     public Mono<String> clientKill(String addr) {
         return createMono(() -> commandBuilder.clientKill(addr));
     }
@@ -133,6 +139,16 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
     @Override
     public Mono<String> clientList() {
         return createMono(commandBuilder::clientList);
+    }
+
+    @Override
+    public Mono<String> clientList(ClientListArgs clientListArgs) {
+        return createMono(() -> commandBuilder.clientList(clientListArgs));
+    }
+
+    @Override
+    public Mono<String> clientInfo() {
+        return createMono(commandBuilder::clientInfo);
     }
 
     @Override
