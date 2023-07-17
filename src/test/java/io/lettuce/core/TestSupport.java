@@ -61,6 +61,10 @@ public abstract class TestSupport {
         return ScoredValue.just(score, value);
     }
 
+    protected static ScoredValue<Long> sv(double score, long value) {
+        return ScoredValue.just(score, value);
+    }
+
     protected static Set<String> set(String... args) {
         return LettuceSets.newHashSet(args);
     }

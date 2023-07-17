@@ -3758,6 +3758,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZRANK, new IntegerOutput<>(codec), key, member);
     }
 
+    Command<K, V, ScoredValue<Long>> zrankWithScore(K key, V member) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(member).add(WITHSCORE);
+        return createCommand(ZRANK, new ScoredValueLongOutput<>(codec), args);
+    }
+
     Command<K, V, Long> zrem(K key, V... members) {
         notNullKey(key);
         LettuceAssert.notNull(members, "Members " + MUST_NOT_BE_NULL);
@@ -4014,6 +4021,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         return createCommand(ZREVRANK, new IntegerOutput<>(codec), key, member);
+    }
+
+    Command<K, V, ScoredValue<Long>> zrevrankWithScore(K key, V member) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(member).add(WITHSCORE);
+        return createCommand(ZREVRANK, new ScoredValueLongOutput<>(codec), args);
     }
 
     Command<K, V, ScoredValueScanCursor<V>> zscan(K key) {

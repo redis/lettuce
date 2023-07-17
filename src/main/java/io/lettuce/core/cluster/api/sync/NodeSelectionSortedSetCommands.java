@@ -16,7 +16,6 @@
 package io.lettuce.core.cluster.api.sync;
 
 import java.util.List;
-
 import io.lettuce.core.*;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
@@ -49,7 +48,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param count number of elements to pop.
      * @param args the command args.
      * @param keys the keys.
-     * @return ScoredValue&lt;V&gt; the removed element or {@link KeyValue#empty()}.
+     * @return ScoredValue&lt;V&gt; the removed elements or {@link KeyValue#empty()}.
      * @since 6.3
      */
     Executions<KeyValue<K, List<ScoredValue<V>>>> bzmpop(long timeout, long count, ZPopArgs args, K... keys);
@@ -71,7 +70,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param count number of elements to pop.
      * @param args the command args.
      * @param keys the keys.
-     * @return ScoredValue&lt;V&gt; the removed element or {@link KeyValue#empty()}.
+     * @return ScoredValue&lt;V&gt; the removed elements or {@link KeyValue#empty()}.
      * @since 6.3
      */
     Executions<KeyValue<K, List<ScoredValue<V>>>> bzmpop(double timeout, int count, ZPopArgs args, K... keys);
@@ -429,7 +428,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param count number of elements to pop.
      * @param args the command args.
      * @param keys the keys.
-     * @return ScoredValue&lt;V&gt; the removed element or {@link KeyValue#empty()}.
+     * @return ScoredValue&lt;V&gt; the removed elements or {@link KeyValue#empty()}.
      * @since 6.3
      */
     Executions<KeyValue<K, List<ScoredValue<V>>>> zmpop(int count, ZPopArgs args, K... keys);
@@ -485,8 +484,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * Return {@code count} random members from the sorted set stored at {@code key}.
      *
      * @param key the key.
-     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct
-     *        fields.
+     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct fields.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of scores and elements.
      * @since 6.1
      */
@@ -505,8 +503,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * Return {@code count} random members along their value from the sorted set stored at {@code key}.
      *
      * @param key the key.
-     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct
-     *        fields.
+     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct fields.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of scores and elements.
      * @since 6.1
      */
@@ -906,8 +903,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
-     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
-     * {@code dstKey} destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -918,8 +914,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Long> zrangestore(K dstKey, K srcKey, Range<Long> range);
 
     /**
-     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
-     * {@code dstKey} destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -931,8 +926,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Long> zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
     /**
-     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
-     * {@code dstKey} destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -952,6 +946,16 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      *         does not exist,.
      */
     Executions<Long> zrank(K key, V member);
+
+    /**
+     * Returns the rank of member in the sorted set stored at key, with the scores ordered from low to high.
+     *
+     * @param key the key.
+     * @param member the member type: value.
+     * @return the rank and score
+     * @since 6.3
+     */
+    Executions<ScoredValue<Long>> zrankWithScore(K key, V member);
 
     /**
      * Remove one or more members from a sorted set.
@@ -1397,8 +1401,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
-     * Get the specified range of elements ordered from high to low in the sorted set stored at {@code srcKey} and stores the
-     * result in the {@code dstKey} destination key.
+     * Get the specified range of elements ordered from high to low in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -1409,8 +1412,7 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Long> zrevrangestore(K dstKey, K srcKey, Range<Long> range);
 
     /**
-     * Get the lexicographical range ordered from high to low of elements in the sorted set stored at {@code srcKey} and stores
-     * the result in the {@code dstKey} destination key.
+     * Get the lexicographical range ordered from high to low of elements in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
      *
      * @param dstKey the src key.
      * @param srcKey the dst key.
@@ -1422,11 +1424,9 @@ public interface NodeSelectionSortedSetCommands<K, V> {
     Executions<Long> zrevrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
     /**
-     * Get the specified range of elements in the sorted set stored at {@code srcKey with scores ordered from high to low and
-     * stores the result in the {@code dstKey} destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey with scores ordered from high to low and stores the result in the {@code dstKey} destination key.
      *
      * @param dstKey the src key.
-     *
      * @param srcKey the dst key.
      * @param range the score range.
      * @param limit the limit to apply.
@@ -1441,9 +1441,19 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @param key the key.
      * @param member the member type: value.
      * @return Long integer-reply the rank of {@code member}. If {@code member} does not exist in the sorted set or {@code key}
-     *         does not exist,.
+     *         does not exist return {@code null}.
      */
     Executions<Long> zrevrank(K key, V member);
+
+    /**
+     * Returns the rank of member in the sorted set stored at key, with the scores ordered from high to low.
+     *
+     * @param key the key.
+     * @param member the member type: value.
+     * @return the rank and score
+     * @since 6.3
+     */
+    Executions<ScoredValue<Long>> zrevrankWithScore(K key, V member);
 
     /**
      * Incrementally iterate sorted sets elements and associated scores.
