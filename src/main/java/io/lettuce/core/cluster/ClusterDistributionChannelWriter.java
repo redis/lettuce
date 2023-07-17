@@ -53,7 +53,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.DefaultEndpoint;
-import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 
@@ -69,6 +69,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     private final RedisChannelWriter defaultWriter;
 
     private final ClientOptions clientOptions;
+
+    private final ReadOnlyCommands.ReadOnlyPredicate readOnlyCommands;
 
     private final ClusterEventListener clusterEventListener;
 
@@ -93,6 +95,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
         this.defaultWriter = defaultWriter;
         this.clientOptions = clientOptions;
+        this.readOnlyCommands = clientOptions.getReadOnlyCommands();
         this.clusterEventListener = clusterEventListener;
     }
 
@@ -169,7 +172,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             if (encodedKey != null) {
 
                 int hash = getSlot(encodedKey);
-                ConnectionIntent connectionIntent = getIntent(command.getType());
+                ConnectionIntent connectionIntent = getIntent(command);
 
                 CompletableFuture<StatefulRedisConnection<K, V>> connectFuture = ((AsyncClusterConnectionProvider) clusterConnectionProvider)
                         .getConnectionAsync(connectionIntent, hash);
@@ -342,36 +345,22 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
      */
     ConnectionIntent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
 
-        boolean w = false;
-        boolean r = false;
-        ConnectionIntent singleConnectionIntent = ConnectionIntent.WRITE;
+        if (commands.isEmpty()) {
+            return ConnectionIntent.WRITE;
+        }
 
         for (RedisCommand<?, ?, ?> command : commands) {
 
-            if (command instanceof ClusterCommand) {
-                continue;
-            }
-
-            singleConnectionIntent = getIntent(command.getType());
-            if (singleConnectionIntent == ConnectionIntent.READ) {
-                r = true;
-            }
-
-            if (singleConnectionIntent == ConnectionIntent.WRITE) {
-                w = true;
-            }
-
-            if (r && w) {
+            if (!readOnlyCommands.isReadOnly(command)) {
                 return ConnectionIntent.WRITE;
             }
         }
 
-        return singleConnectionIntent;
+        return ConnectionIntent.READ;
     }
 
-    private ConnectionIntent getIntent(ProtocolKeyword type) {
-        return (ReadOnlyCommands.isReadOnlyCommand(type) || clientOptions.isExtraReadOnlyCommand(type))
-            ? ConnectionIntent.READ : ConnectionIntent.WRITE;
+    private ConnectionIntent getIntent(RedisCommand<?, ?, ?> command) {
+        return readOnlyCommands.isReadOnly(command) ? ConnectionIntent.READ : ConnectionIntent.WRITE;
     }
 
     static HostAndPort getMoveTarget(Partitions partitions, String errorMessage) {

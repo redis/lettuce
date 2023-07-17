@@ -27,6 +27,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.ProtocolVersion;
+import io.lettuce.core.protocol.ReadOnlyCommands;
 
 /**
  * Client Options to control the behavior of {@link RedisClusterClient}.
@@ -37,6 +38,8 @@ import io.lettuce.core.protocol.ProtocolVersion;
 public class ClusterClientOptions extends ClientOptions {
 
     public static final boolean DEFAULT_CLOSE_STALE_CONNECTIONS = true;
+
+    public static final ReadOnlyCommands.ReadOnlyPredicate DEFAULT_READ_ONLY_COMMANDS = ClusterReadOnlyCommands.asPredicate();
 
     public static final int DEFAULT_MAX_REDIRECTS = 5;
 
@@ -163,6 +166,7 @@ public class ClusterClientOptions extends ClientOptions {
         private ClusterTopologyRefreshOptions topologyRefreshOptions = null;
 
         protected Builder() {
+            readOnlyCommands(DEFAULT_READ_ONLY_COMMANDS);
         }
 
         @Override
@@ -243,6 +247,13 @@ public class ClusterClientOptions extends ClientOptions {
         @Override
         public Builder publishOnScheduler(boolean publishOnScheduler) {
             super.publishOnScheduler(publishOnScheduler);
+            return this;
+        }
+
+        @Override
+        public Builder readOnlyCommands(ReadOnlyCommands.ReadOnlyPredicate readOnlyCommands) {
+
+            super.readOnlyCommands(readOnlyCommands);
             return this;
         }
 
@@ -343,7 +354,8 @@ public class ClusterClientOptions extends ClientOptions {
                 .decodeBufferPolicy(getDecodeBufferPolicy())
                 .disconnectedBehavior(getDisconnectedBehavior()).maxRedirects(getMaxRedirects())
                 .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
-                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
+                .protocolVersion(getConfiguredProtocolVersion()).readOnlyCommands(getReadOnlyCommands())
+                .requestQueueSize(getRequestQueueSize())
                 .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
                 .topologyRefreshOptions(getTopologyRefreshOptions())

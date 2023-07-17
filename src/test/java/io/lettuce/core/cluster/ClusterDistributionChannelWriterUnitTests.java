@@ -23,14 +23,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.cluster.models.partitions.Partitions;
-import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -38,10 +34,12 @@ import org.mockito.quality.Strictness;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.CommandListenerWriter;
-import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.internal.HostAndPort;
@@ -76,8 +74,7 @@ class ClusterDistributionChannelWriterUnitTests {
     @Mock
     private ClientResources clientResources;
 
-    @Mock
-    private ClientOptions clientOptions;
+    private ClientOptions clientOptions = ClientOptions.create();
 
     @Mock
     private ClusterEventListener clusterEventListener;
@@ -94,13 +91,15 @@ class ClusterDistributionChannelWriterUnitTests {
     @Mock
     private PooledClusterConnectionProvider pooledClusterConnectionProvider;
 
-    @InjectMocks
     private ClusterDistributionChannelWriter clusterDistributionChannelWriter;
 
     @BeforeEach
     void setUp() {
         when(defaultWriter.getClientResources()).thenReturn(clientResources);
         when(clientResources.eventBus()).thenReturn(eventBus);
+
+        clusterDistributionChannelWriter = new ClusterDistributionChannelWriter(defaultWriter, clientOptions,
+                clusterEventListener);
     }
 
     @Test
