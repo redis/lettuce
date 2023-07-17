@@ -153,7 +153,9 @@ class SimpleBatcher implements Batcher {
 
             RedisCommand<Object, Object, Object> poll = queue.poll();
 
-            batch.add(poll);
+            if (poll != null) {
+                batch.add(poll);
+            }
         }
 
         return batch;
@@ -167,7 +169,9 @@ class SimpleBatcher implements Batcher {
 
             RedisCommand<Object, Object, Object> poll = queue.poll();
 
-            batch.add(poll);
+            if (poll != null) {
+                batch.add(poll);
+            }
         }
 
         return batch;
