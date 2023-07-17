@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>6.2.5.BUILD-SNAPSHOT</version>
+    <version>6.2.5.RELEASE</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -82,7 +82,7 @@
         <developerConnection>scm:git:https://github.com/lettuce-io/lettuce-core.git
         </developerConnection>
         <url>http://github.com/lettuce-io/lettuce-core</url>
-        <tag>HEAD</tag>
+        <tag>6.2.5.RELEASE</tag>
     </scm>
 
     <distributionManagement>
