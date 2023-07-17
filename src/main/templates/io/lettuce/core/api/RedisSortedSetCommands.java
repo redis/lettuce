@@ -950,6 +950,16 @@ public interface RedisSortedSetCommands<K, V> {
     Long zrank(K key, V member);
 
     /**
+     * Returns the rank of member in the sorted set stored at key, with the scores ordered from low to high.
+     *
+     * @param key the key.
+     * @param member the member type: value.
+     * @return the rank and score
+     * @since 6.3
+     */
+    ScoredValue<Long> zrankWithScore(K key, V member);
+
+    /**
      * Remove one or more members from a sorted set.
      *
      * @param key the key.
@@ -1435,9 +1445,19 @@ public interface RedisSortedSetCommands<K, V> {
      * @param key the key.
      * @param member the member type: value.
      * @return Long integer-reply the rank of {@code member}. If {@code member} does not exist in the sorted set or {@code key}
-     *         does not exist,.
+     *         does not exist return {@code null}.
      */
     Long zrevrank(K key, V member);
+
+    /**
+     * Returns the rank of member in the sorted set stored at key, with the scores ordered from high to low.
+     *
+     * @param key the key.
+     * @param member the member type: value.
+     * @return the rank and score
+     * @since 6.3
+     */
+    ScoredValue<Long> zrevrankWithScore(K key, V member);
 
     /**
      * Incrementally iterate sorted sets elements and associated scores.

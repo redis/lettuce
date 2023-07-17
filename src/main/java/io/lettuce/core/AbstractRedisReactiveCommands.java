@@ -2665,6 +2665,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<ScoredValue<Long>> zrankWithScore(K key, V member) {
+        return createMono(() -> commandBuilder.zrankWithScore(key, member));
+    }
+
+    @Override
     public Mono<Long> zrem(K key, V... members) {
         return createMono(() -> commandBuilder.zrem(key, members));
     }
@@ -2872,6 +2877,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Long> zrevrank(K key, V member) {
         return createMono(() -> commandBuilder.zrevrank(key, member));
+    }
+
+    @Override
+    public Mono<ScoredValue<Long>> zrevrankWithScore(K key, V member) {
+        return createMono(() -> commandBuilder.zrevrankWithScore(key, member));
     }
 
     @Override

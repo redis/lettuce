@@ -560,6 +560,15 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void zrankWithScore() {
+        assertThat(redis.zrankWithScore(key, "a")).isEqualTo(ScoredValue.empty());
+        setup();
+        assertThat(redis.zrankWithScore(key, "a")).isEqualTo(sv(1, 0));
+        assertThat(redis.zrankWithScore(key, "b")).isEqualTo(sv(2, 1));
+        assertThat(redis.zrankWithScore(key, "c")).isEqualTo(sv(3, 2));
+    }
+
+    @Test
     void zrem() {
         assertThat(redis.zrem(key, "a")).isEqualTo(0);
         setup();
@@ -747,6 +756,15 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
         setup();
         assertThat(redis.zrevrank(key, "c")).isEqualTo(0);
         assertThat(redis.zrevrank(key, "a")).isEqualTo(2);
+    }
+
+    @Test
+    void zrevrankWithScore() {
+        assertThat(redis.zrevrankWithScore(key, "a")).isEqualTo(ScoredValue.empty());
+        setup();
+        assertThat(redis.zrevrankWithScore(key, "c")).isEqualTo(sv(3, 0));
+        assertThat(redis.zrevrankWithScore(key, "b")).isEqualTo(sv(2, 1));
+        assertThat(redis.zrevrankWithScore(key, "a")).isEqualTo(sv(1, 2));
     }
 
     @Test

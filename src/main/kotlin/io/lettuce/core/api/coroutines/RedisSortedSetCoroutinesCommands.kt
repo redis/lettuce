@@ -16,8 +16,9 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.*
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.*
 
 /**
  * Coroutine executed commands for Sorted Sets.
@@ -631,6 +632,16 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun zrank(key: K, member: V): Long?
 
     /**
+     * Returns the rank of member in the sorted set stored at key, with the scores ordered from low to high.
+     *
+     * @param key the key.
+     * @param member the member type: value.
+     * @return the rank and score
+     * @since 6.3
+     */
+    suspend fun zrankWithScore(key: K, member: V): ScoredValue<Long>?
+
+    /**
      * Remove one or more members from a sorted set.
      *
      * @param key the key.
@@ -799,9 +810,19 @@ interface RedisSortedSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param member the member type: value.
      * @return Long integer-reply the rank of `member`. If `member` does not exist in the sorted set or `key`
-     *         does not exist,.
+     *         does not exist return `null`.
      */
     suspend fun zrevrank(key: K, member: V): Long?
+
+    /**
+     * Returns the rank of member in the sorted set stored at key, with the scores ordered from high to low.
+     *
+     * @param key the key.
+     * @param member the member type: value.
+     * @return the rank and score
+     * @since 6.3
+     */
+    suspend fun zrevrankWithScore(key: K, member: V): ScoredValue<Long>?
 
     /**
      * Incrementally iterate sorted sets elements and associated scores.

@@ -242,6 +242,9 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override suspend fun zrank(key: K, member: V): Long? =
         ops.zrank(key, member).awaitFirstOrNull()
 
+    override suspend fun zrankWithScore(key: K, member: V): ScoredValue<Long>? =
+        ops.zrankWithScore(key, member).awaitFirstOrNull()
+
     override suspend fun zrem(key: K, vararg members: V): Long? =
         ops.zrem(key, *members).awaitFirstOrNull()
 
@@ -300,6 +303,9 @@ internal class RedisSortedSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun zrevrank(key: K, member: V): Long? =
         ops.zrevrank(key, member).awaitFirstOrNull()
+
+    override suspend fun zrevrankWithScore(key: K, member: V): ScoredValue<Long>? =
+        ops.zrevrankWithScore(key, member).awaitFirstOrNull()
 
     override suspend fun zscan(key: K): ScoredValueScanCursor<V>? =
         ops.zscan(key).awaitFirstOrNull()

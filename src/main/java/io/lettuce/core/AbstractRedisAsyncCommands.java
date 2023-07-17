@@ -2592,6 +2592,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<ScoredValue<Long>> zrankWithScore(K key, V member) {
+        return dispatch(commandBuilder.zrankWithScore(key, member));
+    }
+
+    @Override
     public RedisFuture<Long> zrem(K key, V... members) {
         return dispatch(commandBuilder.zrem(key, members));
     }
@@ -2803,6 +2808,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Long> zrevrank(K key, V member) {
         return dispatch(commandBuilder.zrevrank(key, member));
+    }
+
+    @Override
+    public RedisFuture<ScoredValue<Long>> zrevrankWithScore(K key, V member) {
+        return dispatch(commandBuilder.zrevrankWithScore(key, member));
     }
 
     @Override
