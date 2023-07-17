@@ -89,7 +89,7 @@ class SimpleBatcher implements Batcher {
 
         boolean defaultFlush = false;
 
-        List<RedisCommand<?, ?, ?>> commands = new ArrayList<>(Math.max(batchSize, 10));
+        List<RedisCommand<?, ?, ?>> commands = newDrainTarget();
 
         while (flushing.compareAndSet(false, true)) {
 
@@ -147,7 +147,7 @@ class SimpleBatcher implements Batcher {
 
     private List<RedisCommand<Object, Object, Object>> prepareForceFlush() {
 
-        List<RedisCommand<Object, Object, Object>> batch = new ArrayList<>(Math.max(batchSize, 10));
+        List<RedisCommand<Object, Object, Object>> batch = newDrainTarget();
 
         while (!queue.isEmpty()) {
 
@@ -163,7 +163,7 @@ class SimpleBatcher implements Batcher {
 
     private List<RedisCommand<Object, Object, Object>> prepareDefaultFlush(int consume) {
 
-        List<RedisCommand<Object, Object, Object>> batch = new ArrayList<>(Math.max(consume, 10));
+        List<RedisCommand<Object, Object, Object>> batch = newDrainTarget();
 
         while ((batch.size() < consume || consume == -1) && !queue.isEmpty()) {
 
@@ -177,4 +177,7 @@ class SimpleBatcher implements Batcher {
         return batch;
     }
 
+    private <T> ArrayList<T> newDrainTarget() {
+        return new ArrayList<>(Math.max(0, Math.min(batchSize, queue.size())));
+    }
 }
