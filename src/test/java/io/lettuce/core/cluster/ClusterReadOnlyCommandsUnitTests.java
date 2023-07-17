@@ -23,21 +23,21 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 
 /**
- * Tests for {@link ReadOnlyCommands}.
+ * Tests for {@link ClusterReadOnlyCommands}.
  *
  * @author Mark Paluch
  */
-class ReadOnlyCommandsUnitTests {
+class ClusterReadOnlyCommandsUnitTests {
 
     @Test
     void testCount() {
-        assertThat(ReadOnlyCommands.getReadOnlyCommands()).hasSize(83);
+        assertThat(ClusterReadOnlyCommands.getReadOnlyCommands()).hasSize(83);
     }
 
     @Test
     void testResolvableCommandNames() {
 
-        for (ProtocolKeyword readOnlyCommand : ReadOnlyCommands.getReadOnlyCommands()) {
+        for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
             assertThat(readOnlyCommand.name()).isEqualTo(CommandType.valueOf(readOnlyCommand.name()).name());
         }
     }

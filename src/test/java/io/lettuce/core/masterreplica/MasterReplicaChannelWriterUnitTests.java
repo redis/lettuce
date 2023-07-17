@@ -55,8 +55,7 @@ class MasterReplicaChannelWriterUnitTests {
     @Mock
     private ClientResources clientResources;
 
-    @Mock
-    private ClientOptions clientOptions;
+    private ClientOptions clientOptions = ClientOptions.create();
 
     @Mock
     private StatefulRedisConnection<String, String> connection;

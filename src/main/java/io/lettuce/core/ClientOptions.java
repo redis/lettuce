@@ -18,16 +18,13 @@ package io.lettuce.core;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
 import io.lettuce.core.protocol.DecodeBufferPolicy;
-import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.ProtocolVersion;
+import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -48,13 +45,13 @@ public class ClientOptions implements Serializable {
 
     public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
 
-    public static final Set<ProtocolKeyword> DEFAULT_EXTRA_READONLY_COMMANDS = Collections.emptySet();
-    
     public static final boolean DEFAULT_PUBLISH_ON_SCHEDULER = false;
 
     public static final boolean DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION = true;
 
     public static final ProtocolVersion DEFAULT_PROTOCOL_VERSION = ProtocolVersion.newestSupported();
+
+    public static final ReadOnlyCommands.ReadOnlyPredicate DEFAULT_READ_ONLY_COMMANDS = ReadOnlyCommands.asPredicate();
 
     public static final int DEFAULT_REQUEST_QUEUE_SIZE = Integer.MAX_VALUE;
 
@@ -76,13 +73,13 @@ public class ClientOptions implements Serializable {
 
     private final DisconnectedBehavior disconnectedBehavior;
 
-    private final Set<ProtocolKeyword> extraReadOnlyCommands;
-
     private final boolean publishOnScheduler;
 
     private final boolean pingBeforeActivateConnection;
 
     private final ProtocolVersion protocolVersion;
+
+    private final ReadOnlyCommands.ReadOnlyPredicate readOnlyCommands;
 
     private final int requestQueueSize;
 
@@ -102,10 +99,10 @@ public class ClientOptions implements Serializable {
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.disconnectedBehavior = builder.disconnectedBehavior;
-        this.extraReadOnlyCommands = builder.extraReadOnlyCommands;
         this.publishOnScheduler = builder.publishOnScheduler;
         this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
         this.protocolVersion = builder.protocolVersion;
+        this.readOnlyCommands = builder.readOnlyCommands;
         this.requestQueueSize = builder.requestQueueSize;
         this.scriptCharset = builder.scriptCharset;
         this.socketOptions = builder.socketOptions;
@@ -119,10 +116,10 @@ public class ClientOptions implements Serializable {
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
-        this.extraReadOnlyCommands = original.getExtraReadOnlyCommands();
         this.publishOnScheduler = original.isPublishOnScheduler();
         this.pingBeforeActivateConnection = original.isPingBeforeActivateConnection();
         this.protocolVersion = original.getConfiguredProtocolVersion();
+        this.readOnlyCommands = original.getReadOnlyCommands();
         this.requestQueueSize = original.getRequestQueueSize();
         this.scriptCharset = original.getScriptCharset();
         this.socketOptions = original.getSocketOptions();
@@ -172,13 +169,13 @@ public class ClientOptions implements Serializable {
 
         private DisconnectedBehavior disconnectedBehavior = DEFAULT_DISCONNECTED_BEHAVIOR;
 
-        private Set<ProtocolKeyword> extraReadOnlyCommands = DEFAULT_EXTRA_READONLY_COMMANDS;
-
         private boolean pingBeforeActivateConnection = DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION;
 
         private ProtocolVersion protocolVersion;
 
         private boolean publishOnScheduler = DEFAULT_PUBLISH_ON_SCHEDULER;
+
+        private ReadOnlyCommands.ReadOnlyPredicate readOnlyCommands = DEFAULT_READ_ONLY_COMMANDS;
 
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
 
@@ -272,20 +269,6 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Identifies extra commands (module commands) as read-only. Defaults to {@code emptySet}. See
-         * {@link #DEFAULT_EXTRA_READONLY_COMMANDS}.
-         *
-         * @param extraReadOnlyCommands must not be {@code null}.
-         * @return {@code this}
-         */
-        public Builder extraReadOnlyCommands(Set<ProtocolKeyword> extraReadOnlyCommands) {
-
-            LettuceAssert.notNull(extraReadOnlyCommands, "extraReadOnlyCommands must not be null");
-            this.extraReadOnlyCommands = Collections.unmodifiableSet(new HashSet<>(extraReadOnlyCommands));
-            return this;
-        }
-
-        /**
          * Perform a lightweight {@literal PING} connection handshake when establishing a Redis connection. If {@code true}
          * (default is {@code true}, {@link #DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION}), every connection and reconnect will
          * issue a {@literal PING} command and await its response before the connection is activated and enabled for use. If the
@@ -335,6 +318,21 @@ public class ClientOptions implements Serializable {
          */
         public Builder publishOnScheduler(boolean publishOnScheduler) {
             this.publishOnScheduler = publishOnScheduler;
+            return this;
+        }
+
+        /**
+         * Identifies commands (e.g. module commands) as read-only. Defaults {@link #DEFAULT_READ_ONLY_COMMANDS}, see
+         * {@link ReadOnlyCommands}.
+         *
+         * @param readOnlyCommands must not be {@code null}.
+         * @return {@code this}
+         * @see 6.2.4
+         */
+        public Builder readOnlyCommands(ReadOnlyCommands.ReadOnlyPredicate readOnlyCommands) {
+
+            LettuceAssert.notNull(readOnlyCommands, "readOnlyCommands must not be null");
+            this.readOnlyCommands = readOnlyCommands;
             return this;
         }
 
@@ -446,7 +444,7 @@ public class ClientOptions implements Serializable {
 
         builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .extraReadOnlyCommands(getExtraReadOnlyCommands())
+                .readOnlyCommands(getReadOnlyCommands())
                 .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
                 .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
                 .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
@@ -516,23 +514,12 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Extra commands (module commands) which are identified as read-only. Defaults to {@code emptySet}. See
-     * {@link #DEFAULT_EXTRA_READONLY_COMMANDS}.
+     * Predicate to identify commands as read-only. Defaults to {@link #DEFAULT_READ_ONLY_COMMANDS}.
      *
-     * @return the set of extra read-only commands
+     * @return the predicate to identify read-only commands.
      */
-    public Set<ProtocolKeyword> getExtraReadOnlyCommands() {
-        return extraReadOnlyCommands;
-    }
-
-    /**
-     * Check if a command is identified as an extra read-only command.
-     * 
-     * @param command
-     * @return {@code true} if the command is an extra read-only command.
-     */
-    public boolean isExtraReadOnlyCommand(ProtocolKeyword command) {
-        return extraReadOnlyCommands.contains(command);
+    public ReadOnlyCommands.ReadOnlyPredicate getReadOnlyCommands() {
+        return readOnlyCommands;
     }
 
     /**

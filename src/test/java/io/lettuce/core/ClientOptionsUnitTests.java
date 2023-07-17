@@ -15,12 +15,14 @@
  */
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
 
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolVersion;
 
 /**
@@ -33,6 +35,16 @@ class ClientOptionsUnitTests {
     @Test
     void testNew() {
         checkAssertions(ClientOptions.create());
+    }
+
+    @Test
+    void testDefault() {
+
+        ClientOptions options = ClientOptions.builder().build();
+
+        assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.SET, null))).isFalse();
+        assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.PUBLISH, null))).isFalse();
+        assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.GET, null))).isTrue();
     }
 
     @Test

@@ -21,7 +21,6 @@ import java.util.concurrent.CompletableFuture;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelWriter;
-import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -45,6 +44,8 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
 
     private final ClientOptions clientOptions;
 
+    private final io.lettuce.core.protocol.ReadOnlyCommands.ReadOnlyPredicate readOnlyCommands;
+
     private boolean closed = false;
 
     private boolean inTransaction;
@@ -54,6 +55,7 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         this.masterReplicaConnectionProvider = masterReplicaConnectionProvider;
         this.clientResources = clientResources;
         this.clientOptions = clientOptions;
+        this.readOnlyCommands = clientOptions.getReadOnlyCommands();
     }
 
     @Override
@@ -70,7 +72,8 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
             inTransaction = true;
         }
 
-        ConnectionIntent connectionIntent = inTransaction ? ConnectionIntent.WRITE : getIntent(command.getType());
+        ConnectionIntent connectionIntent = inTransaction ? ConnectionIntent.WRITE
+                : (readOnlyCommands.isReadOnly(command) ? ConnectionIntent.READ : ConnectionIntent.WRITE);
         CompletableFuture<StatefulRedisConnection<K, V>> future = (CompletableFuture) masterReplicaConnectionProvider
                 .getConnectionAsync(connectionIntent);
 
@@ -170,32 +173,18 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
      */
     ConnectionIntent getIntent(Collection<? extends RedisCommand<?, ?, ?>> commands) {
 
-        boolean w = false;
-        boolean r = false;
-        ConnectionIntent singleIntent = ConnectionIntent.WRITE;
+        if (commands.isEmpty()) {
+            return ConnectionIntent.WRITE;
+        }
 
         for (RedisCommand<?, ?, ?> command : commands) {
 
-            singleIntent = getIntent(command.getType());
-            if (singleIntent == ConnectionIntent.READ) {
-                r = true;
-            }
-
-            if (singleIntent == ConnectionIntent.WRITE) {
-                w = true;
-            }
-
-            if (r && w) {
+            if (!readOnlyCommands.isReadOnly(command)) {
                 return ConnectionIntent.WRITE;
             }
         }
 
-        return singleIntent;
-    }
-
-    private ConnectionIntent getIntent(ProtocolKeyword type) {
-        return (ReadOnlyCommands.isReadOnlyCommand(type) || clientOptions.isExtraReadOnlyCommand(type))
-            ? ConnectionIntent.READ : ConnectionIntent.WRITE;
+        return ConnectionIntent.READ;
     }
 
     @Override
