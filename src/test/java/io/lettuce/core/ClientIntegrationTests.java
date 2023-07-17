@@ -106,7 +106,7 @@ class ClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void reconnectNotifiesListener() {
+    void reconnectNotifiesListener() throws InterruptedException {
 
         class MyListener implements RedisConnectionStateListener {
 
@@ -130,6 +130,7 @@ class ClientIntegrationTests extends TestSupport {
 
         redis.getStatefulConnection().addListener(listener);
         redis.quit();
+        Thread.sleep(100);
 
         Wait.untilTrue(redis::isOpen).waitOrTimeout();
 
