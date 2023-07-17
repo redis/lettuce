@@ -75,7 +75,7 @@ public class SetArgs implements CompositeArgument {
         /**
          * Creates new {@link SetArgs} and enable {@literal EX}.
          *
-         * @param timeout expire time in seconds.
+         * @param timeout expire time as duration.
          * @return new {@link SetArgs} with {@literal EX} enabled.
          * @see SetArgs#ex(long)
          * @since 6.1
