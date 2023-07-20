@@ -156,9 +156,7 @@ public class CommandListenerWriter implements RedisChannelWriter {
         }
 
         @Override
-        public void complete() {
-            super.complete();
-
+        protected void doOnComplete() {
             if (getOutput().hasError()) {
 
                 CommandFailedEvent failedEvent = new CommandFailedEvent((RedisCommand<Object, Object, Object>) command, context,
@@ -173,20 +171,15 @@ public class CommandListenerWriter implements RedisChannelWriter {
         }
 
         @Override
-        public void cancel() {
-            super.cancel();
-        }
-
-        @Override
-        public boolean completeExceptionally(Throwable throwable) {
-
-            boolean state = super.completeExceptionally(throwable);
-
+        protected void doOnError(Throwable throwable) {
             CommandFailedEvent failedEvent = new CommandFailedEvent((RedisCommand<Object, Object, Object>) command, context,
                     throwable);
             listener.commandFailed(failedEvent);
+        }
 
-            return state;
+        @Override
+        public void cancel() {
+            super.cancel();
         }
 
     }
