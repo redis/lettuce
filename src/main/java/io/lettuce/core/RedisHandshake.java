@@ -104,7 +104,7 @@ class RedisHandshake implements ConnectionInitializer {
             }
 
             if (throwable != null) {
-                if (isUnknownCommand(throwable)) {
+                if (isUnknownCommand(throwable) || isNoProto(throwable)) {
                     try {
                         fallbackToResp2(channel, handshake);
                     } catch (Exception e) {
@@ -115,6 +115,7 @@ class RedisHandshake implements ConnectionInitializer {
                     handshake.completeExceptionally(throwable);
                 }
             } else {
+                onHelloResponse(settings);
                 handshake.complete(null);
             }
         });
@@ -145,19 +146,20 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     private CompletionStage<Void> initializeResp3(Channel channel) {
+        return initiateHandshakeResp3(channel, connectionState.getCredentialsProvider()).thenAccept(this::onHelloResponse);
+    }
 
-        return initiateHandshakeResp3(channel, connectionState.getCredentialsProvider()).thenAccept(response -> {
+    private void onHelloResponse(Map<String, Object> response) {
 
-            Long id = (Long) response.get("id");
-            String mode = (String) response.get("mode");
-            String version = (String) response.get("version");
-            String role = (String) response.get("role");
+        Long id = (Long) response.get("id");
+        String mode = (String) response.get("mode");
+        String version = (String) response.get("version");
+        String role = (String) response.get("role");
 
-            negotiatedProtocolVersion = ProtocolVersion.RESP3;
+        negotiatedProtocolVersion = ProtocolVersion.RESP3;
 
-            connectionState.setHandshakeResponse(
-                    new ConnectionState.HandshakeResponse(negotiatedProtocolVersion, id, version, mode, role));
-        });
+        connectionState.setHandshakeResponse(
+                new ConnectionState.HandshakeResponse(negotiatedProtocolVersion, id, version, mode, role));
     }
 
     /**
@@ -270,6 +272,11 @@ class RedisHandshake implements ConnectionInitializer {
     private static boolean isUnknownCommand(Throwable error) {
         return error instanceof RedisException && LettuceStrings.isNotEmpty(error.getMessage())
                 && ((error.getMessage().startsWith("ERR") && error.getMessage().contains("unknown")));
+    }
+
+    private static boolean isNoProto(Throwable error) {
+        return error instanceof RedisException && LettuceStrings.isNotEmpty(error.getMessage())
+                && error.getMessage().startsWith("NOPROTO");
     }
 
 }
