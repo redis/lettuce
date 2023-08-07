@@ -32,6 +32,7 @@ import io.lettuce.core.resource.ClientResources;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -50,7 +51,6 @@ public class SslConnectionBuilder extends ConnectionBuilder {
 
     private RedisURI redisURI;
 
-
     public SslConnectionBuilder ssl(RedisURI redisURI) {
         this.redisURI = redisURI;
         return this;
@@ -67,7 +67,7 @@ public class SslConnectionBuilder extends ConnectionBuilder {
      * @return
      * @since 6.0.8
      */
-    public static boolean isSslChannelInitializer(ChannelHandler handler){
+    public static boolean isSslChannelInitializer(ChannelHandler handler) {
         return handler instanceof SslChannelInitializer;
     }
 
@@ -179,6 +179,12 @@ public class SslConnectionBuilder extends ConnectionBuilder {
             sslEngine.setSSLParameters(sslParams);
 
             return sslEngine;
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            ctx.channel().attr(INIT_FAILURE).set(cause);
+            super.exceptionCaught(ctx, cause);
         }
 
     }

@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import jdk.net.ExtendedSocketOptions;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandEncoder;
 import io.lettuce.core.protocol.CommandHandler;
@@ -41,6 +39,7 @@ import io.lettuce.core.resource.Transports;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
@@ -49,6 +48,8 @@ import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.util.AttributeKey;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import jdk.net.ExtendedSocketOptions;
+import reactor.core.publisher.Mono;
 
 /**
  * Connection builder for connections. This class is part of the internal API.
@@ -60,6 +61,8 @@ public class ConnectionBuilder {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ConnectionBuilder.class);
 
     public static final AttributeKey<String> REDIS_URI = AttributeKey.valueOf("RedisURI");
+
+    public static final AttributeKey<Throwable> INIT_FAILURE = AttributeKey.valueOf("ConnectionBuilder.INIT_FAILURE");
 
     private Mono<SocketAddress> socketAddressSupplier;
 
@@ -330,6 +333,12 @@ public class ConnectionBuilder {
             }
 
             clientResources.nettyCustomizer().afterChannelInitialized(channel);
+        }
+
+        @Override
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+            ctx.channel().attr(INIT_FAILURE).set(cause);
+            super.exceptionCaught(ctx, cause);
         }
 
     }
