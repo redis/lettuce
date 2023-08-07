@@ -1084,31 +1084,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         AT_MOST_ONCE, AT_LEAST_ONCE
     }
 
-    static class ActivationCommand<K, V, T> extends CommandWrapper<K, V, T> {
-
-        public ActivationCommand(RedisCommand<K, V, T> command) {
-            super(command);
-        }
-
-        public static boolean isActivationCommand(RedisCommand<?, ?, ?> command) {
-
-            if (command instanceof ActivationCommand) {
-                return true;
-            }
-
-            while (command instanceof CommandWrapper) {
-                command = ((CommandWrapper<?, ?, ?>) command).getDelegate();
-
-                if (command instanceof ActivationCommand) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-    }
-
     static class Lazy<T> implements Supplier<T> {
 
         private static final Lazy<?> EMPTY = new Lazy<>(() -> null, null, true);
