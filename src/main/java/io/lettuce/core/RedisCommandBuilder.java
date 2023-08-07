@@ -1290,7 +1290,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(SETNAME).add(name);
         }
 
-        return new Command<>(HELLO, TransformingOutput.transform(new ObjectOutput<>(StringCodec.ASCII), o -> o.map()), args);
+        return new Command<>(HELLO, new GenericMapOutput<>(StringCodec.ASCII), args);
     }
 
     Command<K, V, Boolean> hexists(K key, K field) {

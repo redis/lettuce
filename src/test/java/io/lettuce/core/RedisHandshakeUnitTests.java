@@ -15,16 +15,17 @@
  */
 package io.lettuce.core;
 
+import static org.assertj.core.api.Assertions.*;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
+
+import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.channel.embedded.EmbeddedChannel;
-import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.*;
 
 /**
  * Unit tests for {@link RedisHandshake}.
@@ -87,7 +88,7 @@ class RedisHandshakeUnitTests {
 
     private static void helloResponse(CommandOutput<String, String, Map<String, String>> output) {
 
-        output.multi(8);
+        output.multiMap(8);
         output.set(ByteBuffer.wrap("id".getBytes()));
         output.set(1);
 
