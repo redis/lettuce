@@ -388,16 +388,18 @@ class DefaultEndpointUnitTests {
             return promise;
         });
 
-        assertThat(queue).hasSize(2).hasOnlyElementsOfTypes(DefaultEndpoint.ActivationCommand.class);
+        assertThat(queue).hasSize(2).hasOnlyElementsOfTypes(ActivationCommand.class);
     }
 
     @Test
     void shouldNotReplayActivationCommands() {
 
         when(channel.isActive()).thenReturn(true);
-        ConnectionTestUtil.getDisconnectedBuffer(sut).add(new DefaultEndpoint.ActivationCommand<>(
+        ConnectionTestUtil.getDisconnectedBuffer(sut)
+                .add(new ActivationCommand<>(
                 new Command<>(CommandType.SELECT, new StatusOutput<>(StringCodec.UTF8))));
-        ConnectionTestUtil.getDisconnectedBuffer(sut).add(new LatencyMeteredCommand<>(new DefaultEndpoint.ActivationCommand<>(
+        ConnectionTestUtil.getDisconnectedBuffer(sut).add(new LatencyMeteredCommand<>(
+                new ActivationCommand<>(
                 new Command<>(CommandType.SUBSCRIBE, new StatusOutput<>(StringCodec.UTF8)))));
 
         doAnswer(i -> {

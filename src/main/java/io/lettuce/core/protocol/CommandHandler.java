@@ -493,18 +493,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         try {
 
-            validateWrite(1);
+            if (!ActivationCommand.isActivationCommand(command)) {
+                validateWrite(1);
+            }
 
             if (command.getOutput() == null) {
-                // fire&forget commands are excluded from metrics
+                // fire&forget commands are excluded from metrics and replies
                 complete(command);
             }
 
             RedisCommand<?, ?, ?> redisCommand = potentiallyWrapLatencyCommand(command);
 
-            if (promise.isVoid()) {
-                stack.add(redisCommand);
-            } else {
+            stack.add(redisCommand);
+            if (!promise.isVoid()) {
                 promise.addListener(AddToStack.newInstance(stack, redisCommand));
             }
         } catch (Exception e) {
@@ -519,10 +520,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             // number of maintenance commands (AUTH, CLIENT SETNAME, SELECT, READONLY) should be allowed on top
             // of number of user commands to ensure the driver recovers properly from a disconnect
-            int maxMaintenanceCommands = 5;
-            int allowedRequestQueueSize = Math.max(1, clientOptions.getRequestQueueSize() - maxMaintenanceCommands);
 
-            if (stack.size() + commands > allowedRequestQueueSize)
+            if (stack.size() + commands > clientOptions.getRequestQueueSize())
 
                 throw new RedisException("Internal stack size exceeded: " + clientOptions.getRequestQueueSize()
                         + ". Commands are not accepted until the stack size drops.");
@@ -1058,8 +1057,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         public void operationComplete(Future<Void> future) {
 
             try {
-                if (future.isSuccess()) {
-                    stack.add(command);
+                if (!future.isSuccess()) {
+                    stack.remove(command);
                 }
             } finally {
                 recycle();
