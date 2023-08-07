@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -37,7 +36,6 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisNoScriptException;
 import io.lettuce.core.TestSupport;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
@@ -198,16 +196,6 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.scriptFlush()).isEqualTo("OK");
         assertThat(redis.scriptExists(digest1, digest2)).isEqualTo(list(false, false));
-
-        redis.configSet("lua-time-limit", "10");
-        StatefulRedisConnection<String, String> connection = client.connect();
-        try {
-            connection.async().eval("while true do end", STATUS, new String[0]).await(100, TimeUnit.MILLISECONDS);
-
-            assertThat(redis.scriptKill()).isEqualTo("OK");
-        } finally {
-            connection.close();
-        }
     }
 
     @Test

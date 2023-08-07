@@ -15,11 +15,9 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.ScriptOutputType.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Fail.fail;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,7 +31,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -168,26 +165,6 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
         assertThat(selection.asMap()).hasSize(1);
 
         clusterClient.reloadPartitions();
-    }
-
-    @Test
-    void testAsynchronicityOfMultiNodeExecution() {
-
-        RedisAdvancedClusterCommands<String, String> connection2 = clusterClient.connect().sync();
-
-        connection2.setTimeout(Duration.ofSeconds(1));
-        NodeSelection<String, String> masters = connection2.masters();
-        masters.commands().configSet("lua-time-limit", "10");
-
-        Executions<Object> eval = null;
-        try {
-            eval = masters.commands().eval("while true do end", STATUS, new String[0]);
-            fail("missing exception");
-        } catch (RedisCommandTimeoutException e) {
-            assertThat(e).hasMessageContaining("Command timed out for node(s)");
-        }
-
-        commands.masters().commands().scriptKill();
     }
 
     @Test

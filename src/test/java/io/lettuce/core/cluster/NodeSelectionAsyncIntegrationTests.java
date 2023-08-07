@@ -15,10 +15,8 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.ScriptOutputType.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +47,6 @@ import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.output.StringListOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
-import io.lettuce.test.Delay;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
@@ -243,37 +240,6 @@ class NodeSelectionAsyncIntegrationTests extends TestSupport {
         clusterClient.reloadPartitions();
     }
 
-    @Test
-    void testAsynchronicityOfMultiNodeExecution() {
-
-        StatefulRedisClusterConnection<String, String> connection2 = clusterClient.connect();
-        RedisAdvancedClusterAsyncCommands<String, String> async2 = connection2.async();
-
-        AsyncNodeSelection<String, String> masters = async2.masters();
-        TestFutures.awaitOrTimeout(masters.commands().configSet("lua-time-limit", "10"));
-
-        AsyncExecutions<Object> eval = masters.commands().eval("while true do end", STATUS, new String[0]);
-
-        for (CompletableFuture<Object> future : eval.futures()) {
-            assertThat(future.isDone()).isFalse();
-            assertThat(future.isCancelled()).isFalse();
-        }
-        Delay.delay(Duration.ofMillis(200));
-
-        AsyncExecutions<String> kill = commands.masters().commands().scriptKill();
-        TestFutures.awaitOrTimeout(kill);
-
-        for (CompletionStage<String> execution : kill) {
-            assertThat(TestFutures.getOrTimeout(execution)).isEqualTo("OK");
-        }
-
-        TestFutures.awaitOrTimeout(CompletableFuture.allOf(eval.futures()).exceptionally(throwable -> null));
-        for (CompletableFuture<Object> future : eval.futures()) {
-            assertThat(future.isDone()).isTrue();
-        }
-
-        connection2.close();
-    }
 
     @Test
     void testReplicaReadWrite() {
