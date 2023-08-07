@@ -357,29 +357,33 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
     }
 
     /**
+     * No-op implementation of {@link PauseDetectorWrapper}.
+     */
+    enum NoOpPauseDetectorWrapper implements PauseDetectorWrapper {
+
+        INSTANCE;
+
+        @Override
+        public void retain() {
+
+        }
+
+        @Override
+        public void release() {
+
+        }
+
+        @Override
+        public Object getPauseDetector() {
+            return NoPauseDetector.INSTANCE;
+        }
+
+    }
+
+    /**
      * Wrapper for initialization of {@link PauseDetector}. Encapsulates absence of LatencyUtils.
      */
     interface PauseDetectorWrapper {
-
-        /**
-         * No-operation {@link PauseDetectorWrapper} implementation.
-         */
-        PauseDetectorWrapper NO_OP = new PauseDetectorWrapper() {
-
-            @Override
-            public void release() {
-            }
-
-            @Override
-            public void retain() {
-            }
-
-            @Override
-            public Object getPauseDetector() {
-                return NoPauseDetector.INSTANCE;
-            }
-
-        };
 
         static PauseDetectorWrapper create() {
 
@@ -387,11 +391,11 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
                 return new DefaultPauseDetectorWrapper();
             }
 
-            return NO_OP;
+            return NoOpPauseDetectorWrapper.INSTANCE;
         }
 
         static PauseDetectorWrapper noop() {
-            return NO_OP;
+            return NoOpPauseDetectorWrapper.INSTANCE;
         }
 
         /**
