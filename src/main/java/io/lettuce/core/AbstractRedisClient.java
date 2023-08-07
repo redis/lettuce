@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
 import io.lettuce.core.event.connection.ConnectionCreatedEvent;
@@ -61,6 +60,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import reactor.core.publisher.Mono;
 
 /**
  * Base Redis client. This class holds the netty infrastructure, {@link ClientOptions} and the basic connection procedure. This
@@ -112,8 +112,8 @@ public abstract class AbstractRedisClient implements AutoCloseable {
     /**
      * Create a new instance with client resources.
      *
-     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of
-     *        client resources and keep track of them.
+     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of client
+     *        resources and keep track of them.
      */
     protected AbstractRedisClient(ClientResources clientResources) {
 
@@ -395,8 +395,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
 
         String uriString = connectionBuilder.getRedisURI().toString();
 
-        EventRecorder.getInstance().record(
-                new ConnectionCreatedEvent(uriString, connectionBuilder.endpoint().getId()));
+        EventRecorder.getInstance().record(new ConnectionCreatedEvent(uriString, connectionBuilder.endpoint().getId()));
         EventRecorder.RecordableEvent event = EventRecorder.getInstance()
                 .start(new ConnectEvent(uriString, connectionBuilder.endpoint().getId()));
 
@@ -439,15 +438,24 @@ public abstract class AbstractRedisClient implements AutoCloseable {
 
         connectFuture.addListener(future -> {
 
+            Channel channel = connectFuture.channel();
             if (!future.isSuccess()) {
 
-                logger.debug("Connecting to Redis at {}: {}", redisAddress, future.cause());
+                Throwable cause = future.cause();
+                Throwable detail = channel.attr(ConnectionBuilder.INIT_FAILURE).get();
+
+                if (detail != null) {
+                    detail.addSuppressed(cause);
+                    cause = detail;
+                }
+
+                logger.debug("Connecting to Redis at {}: {}", redisAddress, cause);
                 connectionBuilder.endpoint().initialState();
-                channelReadyFuture.completeExceptionally(future.cause());
+                channelReadyFuture.completeExceptionally(cause);
                 return;
             }
 
-            RedisHandshakeHandler handshakeHandler = connectFuture.channel().pipeline().get(RedisHandshakeHandler.class);
+            RedisHandshakeHandler handshakeHandler = channel.pipeline().get(RedisHandshakeHandler.class);
 
             if (handshakeHandler == null) {
                 channelReadyFuture.completeExceptionally(new IllegalStateException("RedisHandshakeHandler not registered"));
@@ -461,7 +469,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
                     logger.debug("Connecting to Redis at {}: Success", redisAddress);
                     RedisChannelHandler<?, ?> connection = connectionBuilder.connection();
                     connection.registerCloseables(closeableResources, connection);
-                    channelReadyFuture.complete(connectFuture.channel());
+                    channelReadyFuture.complete(channel);
                     return;
                 }
 

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.net.SocketAddress;
 import java.time.Duration;
+import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.enterprise.inject.New;
@@ -31,10 +32,12 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.NettyCustomizer;
 import io.lettuce.test.Delay;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
+import io.netty.channel.Channel;
 
 /**
  * @author Will Glozer
@@ -44,6 +47,7 @@ import io.lettuce.test.resource.FastShutdown;
 class ClientIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -59,6 +63,25 @@ class ClientIntegrationTests extends TestSupport {
 
         connection.close();
         assertThatThrownBy(() -> connection.sync().get(key)).isInstanceOf(RedisException.class);
+    }
+
+    @Test
+    void propagatesChannelInitFailure() {
+
+        ClientResources handshakeFailure = ClientResources.builder().nettyCustomizer(new NettyCustomizer() {
+
+            @Override
+            public void afterChannelInitialized(Channel channel) {
+                throw new NoSuchElementException();
+            }
+
+        }).build();
+        RedisURI uri = RedisURI.create(host, port);
+        RedisClient customClient = RedisClient.create(handshakeFailure, uri);
+        assertThatException().isThrownBy(customClient::connect).withRootCauseInstanceOf(NoSuchElementException.class);
+
+        FastShutdown.shutdown(customClient);
+        FastShutdown.shutdown(handshakeFailure);
     }
 
     @Test
@@ -265,4 +288,5 @@ class ClientIntegrationTests extends TestSupport {
 
         connection.close();
     }
+
 }
