@@ -86,6 +86,21 @@ public class RedisReplicaInstance implements RedisInstance, Serializable {
      * State of the Replica.
      */
     public enum State {
+
+        /**
+         * Nothing to replicate.
+         */
+        NONE,
+
+        /**
+         * unknown state.
+         */
+        UNKNOWN,
+
+        /**
+         * the instance is in the handshake state.
+         */
+        HANDSHAKE,
         /**
          * the instance needs to connect to its master.
          */
