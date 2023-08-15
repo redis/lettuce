@@ -3758,7 +3758,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(member).add(WITHSCORE);
-        return createCommand(ZRANK, new ScoredValueLongOutput<>(codec), args);
+        return createCommand(ZRANK, (ScoredValueOutput) new ScoredValueOutput<>(LongCodec.INSTANCE), args);
     }
 
     Command<K, V, Long> zrem(K key, V... members) {
@@ -4023,7 +4023,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(member).add(WITHSCORE);
-        return createCommand(ZREVRANK, new ScoredValueLongOutput<>(codec), args);
+        return createCommand(ZREVRANK, (ScoredValueOutput) new ScoredValueOutput<>(LongCodec.INSTANCE), args);
     }
 
     Command<K, V, ScoredValueScanCursor<V>> zscan(K key) {
@@ -4278,6 +4278,35 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static void notEmptyRanges(Range<?>[] ranges) {
         LettuceAssert.notEmpty(ranges, "Ranges " + MUST_NOT_BE_NULL);
+    }
+
+    enum LongCodec implements RedisCodec<Long, Long> {
+
+        INSTANCE;
+
+        @Override
+        public Long decodeKey(ByteBuffer bytes) {
+
+            String s = StringCodec.ASCII.decodeKey(bytes);
+
+            return s == null ? null : Long.valueOf(s);
+        }
+
+        @Override
+        public Long decodeValue(ByteBuffer bytes) {
+            return decodeKey(bytes);
+        }
+
+        @Override
+        public ByteBuffer encodeKey(Long key) {
+            return StringCodec.ASCII.encodeKey(key == null ? null : key.toString());
+        }
+
+        @Override
+        public ByteBuffer encodeValue(Long value) {
+            return encodeKey(value);
+        }
+
     }
 
 }

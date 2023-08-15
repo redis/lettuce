@@ -560,6 +560,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("WAITAOF") // Redis 7.2
     void zrankWithScore() {
         assertThat(redis.zrankWithScore(key, "a")).isEqualTo(ScoredValue.empty());
         setup();
@@ -759,6 +760,7 @@ public class SortedSetCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("WAITAOF") // Redis 7.2
     void zrevrankWithScore() {
         assertThat(redis.zrevrankWithScore(key, "a")).isEqualTo(ScoredValue.empty());
         setup();

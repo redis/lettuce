@@ -54,6 +54,11 @@ public class ScoredValueOutput<K, V> extends CommandOutput<K, V, ScoredValue<V>>
     }
 
     @Override
+    public void set(long integer) {
+        value = (V) (Long) integer;
+    }
+
+    @Override
     public void set(double number) {
         output = ScoredValue.just(number, value);
         value = null;
