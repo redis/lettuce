@@ -124,7 +124,7 @@ class ClusterCommandIntegrationTests extends TestSupport {
 
         Partitions partitions = ClusterPartitionParser.parse(result);
 
-        assertThat(partitions).hasSize(4);
+        assertThat(partitions).hasSizeGreaterThan(2); // Redis 7.2 doesn't include the self-partition anymore
         assertThat(partitions.getPartitionBySlot(1).getUri().getPort()).isIn(7379, 7381);
         assertThat(partitions.getPartitionBySlot(12001).getUri().getPort()).isIn(7380, 7382);
         assertThat(partitions.getPartition("127.0.0.1", 7382).is(RedisClusterNode.NodeFlag.REPLICA)).isTrue();
