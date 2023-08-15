@@ -273,7 +273,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         bitFieldArgs.build(args);
 
-        return createCommand(BITFIELD, (CommandOutput) new ArrayOutput<>(codec), args);
+        return createCommand(BITFIELD, (CommandOutput) new IntegerListOutput<>(LongCodec.INSTANCE), args);
     }
 
     Command<K, V, List<Value<Long>>> bitfieldValue(K key, BitFieldArgs bitFieldArgs) {
@@ -285,7 +285,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         bitFieldArgs.build(args);
 
-        return createCommand(BITFIELD, (CommandOutput) new ValueValueListOutput<>(codec), args);
+        return createCommand(BITFIELD, (CommandOutput) new ValueValueListOutput<>(LongCodec.INSTANCE), args);
     }
 
     Command<K, V, Long> bitopAnd(K destination, K... keys) {
@@ -759,7 +759,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         for (String parameter : parameters) {
             args.add(parameter);
         }
-        return Command.class.cast(new Command(CONFIG, new MapOutput<>(StringCodec.UTF8), args));
+        return Command.class.cast(new Command<>(CONFIG, new MapOutput<>(StringCodec.UTF8), args));
     }
 
     Command<K, V, String> configResetstat() {
@@ -3984,8 +3984,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
             long offset, long count) {
         notNullKey(key);
-        LettuceAssert.notNull(min, "Min " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(max, "Max " + MUST_NOT_BE_NULL);
         notNull(channel);
         return zrevrangebyscoreWithScores(channel, key, string(max), string(min), offset, count);
     }

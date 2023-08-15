@@ -37,7 +37,7 @@ public class RoleParser {
 
     protected static final Map<String, RedisInstance.Role> ROLE_MAPPING;
 
-    protected static final Map<String, RedisSlaveInstance.State> REPLICA_STATE_MAPPING;
+    protected static final Map<String, RedisReplicaInstance.State> REPLICA_STATE_MAPPING;
 
     static {
         Map<String, RedisInstance.Role> roleMap = new HashMap<>();
@@ -52,6 +52,9 @@ public class RoleParser {
         replicas.put("connected", RedisReplicaInstance.State.CONNECTED);
         replicas.put("connecting", RedisReplicaInstance.State.CONNECTING);
         replicas.put("sync", RedisReplicaInstance.State.SYNC);
+        replicas.put("handshake", RedisReplicaInstance.State.HANDSHAKE);
+        replicas.put("none", RedisReplicaInstance.State.NONE);
+        replicas.put("unknown", RedisReplicaInstance.State.NONE);
 
         REPLICA_STATE_MAPPING = Collections.unmodifiableMap(replicas);
     }
@@ -117,6 +120,9 @@ public class RoleParser {
         ReplicationPartner master = new ReplicationPartner(HostAndPort.of(ip, Math.toIntExact(port)), replicationOffset);
 
         RedisReplicaInstance.State state = REPLICA_STATE_MAPPING.get(stateString);
+        if (state == null) {
+            throw new IllegalStateException("Cannot resolve Replica State for \"" + stateString + "\"");
+        }
 
         return new RedisReplicaInstance(master, state);
     }
@@ -128,8 +134,7 @@ public class RoleParser {
 
         List<String> monitoredMasters = getMonitoredUpstreams(iterator);
 
-        RedisSentinelInstance result = new RedisSentinelInstance(Collections.unmodifiableList(monitoredMasters));
-        return result;
+        return new RedisSentinelInstance(Collections.unmodifiableList(monitoredMasters));
     }
 
     private static List<String> getMonitoredUpstreams(Iterator<?> iterator) {
