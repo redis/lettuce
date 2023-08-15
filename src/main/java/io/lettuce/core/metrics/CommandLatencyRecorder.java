@@ -19,6 +19,7 @@ package io.lettuce.core.metrics;
 import java.net.SocketAddress;
 
 import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * Interface defining a method to collect command latency metrics based upon command completion. Command latencies are collected
@@ -50,6 +51,23 @@ public interface CommandLatencyRecorder {
             }
 
         };
+    }
+
+    /**
+     * Record the command latency per {@code connectionPoint} and {@code commandType}.
+     *
+     * @param local the local address
+     * @param remote the remote address
+     * @param command the command
+     * @param firstResponseLatency latency value in {@link java.util.concurrent.TimeUnit#NANOSECONDS} from send to the first
+     *        response
+     * @param completionLatency latency value in {@link java.util.concurrent.TimeUnit#NANOSECONDS} from send to the command
+     *        completion
+     * @since 6.3
+     */
+    default void recordCommandLatency(SocketAddress local, SocketAddress remote, RedisCommand<?, ?, ?> command,
+            long firstResponseLatency, long completionLatency) {
+        recordCommandLatency(local, remote, command.getType(), firstResponseLatency, completionLatency);
     }
 
     /**

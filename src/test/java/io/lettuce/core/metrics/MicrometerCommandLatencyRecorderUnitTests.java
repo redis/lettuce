@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
@@ -172,8 +173,10 @@ class MicrometerCommandLatencyRecorderUnitTests {
         MicrometerOptions options = MicrometerOptions.builder().enabledCommands(CommandType.CLUSTER).build();
         MicrometerCommandLatencyRecorder commandLatencyRecorder = new MicrometerCommandLatencyRecorder(meterRegistry, options);
 
-        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.AUTH, 1, 10);
-        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, CommandType.CLUSTER, 1, 10);
+        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, new Command<>(CommandType.AUTH, null), 1,
+                10);
+        commandLatencyRecorder.recordCommandLatency(LOCAL_ADDRESS, REMOTE_ADDRESS, new Command<>(CommandType.CLUSTER, null), 1,
+                10);
 
         assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(1);
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(1);

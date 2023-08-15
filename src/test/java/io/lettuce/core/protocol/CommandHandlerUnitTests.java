@@ -474,7 +474,7 @@ class CommandHandlerUnitTests {
 
         sut.channelRead(context, Unpooled.wrappedBuffer("*1\r\n+OK\r\n".getBytes()));
 
-        verify(latencyCollector).recordCommandLatency(any(), any(), eq(CommandType.APPEND), gt(0L), gt(0L));
+        verify(latencyCollector).recordCommandLatency(any(), any(), any(LatencyMeteredCommand.class), gt(0L), gt(0L));
 
         sut.channelUnregistered(context);
     }

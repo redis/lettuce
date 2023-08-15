@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.RedisCommand;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.netty.channel.local.LocalAddress;
@@ -68,14 +69,23 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
     }
 
     @Override
-    public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword protocolKeyword,
+    public void recordCommandLatency(SocketAddress local, SocketAddress remote, RedisCommand<?, ?, ?> redisCommand,
             long firstResponseLatency, long completionLatency) {
 
-        if (!isEnabled() || !isCommandEnabled(protocolKeyword)) {
+        if (isEnabled() && isCommandEnabled(redisCommand)) {
+            recordCommandLatency(local, remote, redisCommand.getType(), firstResponseLatency, completionLatency);
+        }
+    }
+
+    @Override
+    public void recordCommandLatency(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType,
+            long firstResponseLatency, long completionLatency) {
+
+        if (!isEnabled()) {
             return;
         }
 
-        CommandLatencyId commandLatencyId = createId(local, remote, protocolKeyword);
+        CommandLatencyId commandLatencyId = createId(local, remote, commandType);
 
         Timer firstResponseTimer = firstResponseTimers.computeIfAbsent(commandLatencyId, this::firstResponseTimer);
         firstResponseTimer.record(firstResponseLatency, TimeUnit.NANOSECONDS);
@@ -89,9 +99,8 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
         return options.isEnabled();
     }
 
-    private boolean isCommandEnabled(ProtocolKeyword protocolKeyword) {
-        return options.getEnabledCommands().isEmpty() ||
-                options.getEnabledCommands().stream().anyMatch(command -> command.name().equals(protocolKeyword.name()));
+    private boolean isCommandEnabled(RedisCommand<?, ?, ?> redisCommand) {
+        return options.getMetricsFilter().test(redisCommand);
     }
 
     private CommandLatencyId createId(SocketAddress local, SocketAddress remote, ProtocolKeyword commandType) {

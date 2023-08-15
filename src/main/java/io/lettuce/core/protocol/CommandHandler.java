@@ -767,7 +767,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 return false;
             }
 
-            recordLatency(withLatency, command.getType());
+            recordLatency(withLatency, command);
 
             return true;
         }
@@ -903,15 +903,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         decodeBufferPolicy.afterCommandDecoded(buffer);
     }
 
-    private void recordLatency(WithLatency withLatency, ProtocolKeyword commandType) {
+    private void recordLatency(WithLatency withLatency, RedisCommand<?, ?, ?> command) {
 
         if (withLatency != null && latencyMetricsEnabled && channel != null && remote() != null) {
 
             long firstResponseLatency = withLatency.getFirstResponse() - withLatency.getSent();
             long completionLatency = nanoTime() - withLatency.getSent();
 
-            commandLatencyRecorder.recordCommandLatency(local(), remote(), commandType, firstResponseLatency,
-                    completionLatency);
+            commandLatencyRecorder.recordCommandLatency(local(), remote(), command, firstResponseLatency, completionLatency);
         }
     }
 

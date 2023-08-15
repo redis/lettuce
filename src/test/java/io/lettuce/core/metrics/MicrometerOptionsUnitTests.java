@@ -20,15 +20,18 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 
-import io.lettuce.core.protocol.CommandType;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandType;
 import io.micrometer.core.instrument.Tags;
 
 /**
  * Unit tests for {@link MicrometerOptions}.
  *
  * @author Steven Sheehy
+ * @author André Tibola
+ * @author Mark Paluch
  */
 class MicrometerOptionsUnitTests {
 
@@ -99,10 +102,11 @@ class MicrometerOptionsUnitTests {
 
     @Test
     void enabledCommands() {
-        CommandType[] enabledCommands = {CommandType.HSET, CommandType.HGET, CommandType.EXPIRE};
+        CommandType[] enabledCommands = { CommandType.HSET, CommandType.HGET, CommandType.EXPIRE };
         MicrometerOptions options = MicrometerOptions.builder().enabledCommands(enabledCommands).build();
 
-        assertThat(options.getEnabledCommands()).hasSize(3).containsExactly(enabledCommands);
+        assertThat(options.getMetricsFilter()).accepts(new Command<>(CommandType.HSET, null))
+                .rejects(new Command<>(CommandType.SET, null));
     }
 
 }
