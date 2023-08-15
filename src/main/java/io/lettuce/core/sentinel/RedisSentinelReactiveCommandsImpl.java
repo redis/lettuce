@@ -18,8 +18,6 @@ package io.lettuce.core.sentinel;
 import java.net.SocketAddress;
 import java.util.Map;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.AbstractRedisReactiveCommands;
 import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
@@ -32,6 +30,8 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * A reactive and thread-safe API for a Redis Sentinel connection.
@@ -117,7 +117,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
     }
 
     @Override
-    public Mono<String> clientSetinfo(K key, V value) {
+    public Mono<String> clientSetinfo(String key, String value) {
         return createMono(() -> commandBuilder.clientSetinfo(key, value));
     }
 

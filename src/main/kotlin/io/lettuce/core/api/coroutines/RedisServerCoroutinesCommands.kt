@@ -108,6 +108,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      *
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
+     * @since 6.3
      */
     suspend fun clientList(clientListArgs: ClientListArgs): String?
 
@@ -152,7 +153,7 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return simple-string-reply `OK` if the connection name was successfully set.
      * @since 6.3
      */
-    suspend fun clientSetinfo(key: K, value: V): String?
+    suspend fun clientSetinfo(key: String, value: String): String?
 
     /**
      * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
@@ -344,7 +345,10 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      * @deprecated since 6.1, use [flushall(FlushMode)] instead.
      */
-    @Deprecated("Use [flushall(FlushMode.ASYNC)] instead.", ReplaceWith("flushall(FlushMode.ASYNC)"))
+    @Deprecated(
+        "Use [flushall(FlushMode.ASYNC)] instead.",
+        ReplaceWith("flushall(FlushMode.ASYNC)")
+    )
     suspend fun flushallAsync(): String?
 
     /**
@@ -369,7 +373,10 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      * @deprecated since 6.1, use [flushdb(FlushMode)] instead.
      */
-    @Deprecated("Use [flushdb(FlushMode.ASYNC)] instead.", ReplaceWith("flushdb(FlushMode.ASYNC)"))
+    @Deprecated(
+        "Use [flushdb(FlushMode.ASYNC)] instead.",
+        ReplaceWith("flushdb(FlushMode.ASYNC)")
+    )
     suspend fun flushdbAsync(): String?
 
     /**
@@ -450,7 +457,10 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply.
      * @deprecated since 6.1.7, use [replicaof(String, Integer)] instead.
      */
-    @Deprecated("Use [replicaof(host, port)] instead.", ReplaceWith("replicaof(host, port)"))
+    @Deprecated(
+        "Use [replicaof(host, port)] instead.",
+        ReplaceWith("replicaof(host, port)")
+    )
     suspend fun slaveof(host: String, port: Int): String?
 
     /**

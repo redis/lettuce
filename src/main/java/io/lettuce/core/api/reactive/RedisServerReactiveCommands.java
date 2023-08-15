@@ -18,8 +18,6 @@ package io.lettuce.core.api.reactive;
 import java.util.Date;
 import java.util.Map;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
@@ -27,6 +25,8 @@ import io.lettuce.core.ShutdownArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Reactive executed commands for Server Control.
@@ -115,13 +115,15 @@ public interface RedisServerReactiveCommands<K, V> {
      *
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
+     * @since 6.3
      */
     Mono<String> clientList(ClientListArgs clientListArgs);
 
     /**
      * Get the list of the current client connection.
      *
-     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space
+     *         character.
      * @since 6.3
      */
     Mono<String> clientInfo();
@@ -159,7 +161,7 @@ public interface RedisServerReactiveCommands<K, V> {
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      * @since 6.3
      */
-    Mono<String> clientSetinfo(K key, V value);
+    Mono<String> clientSetinfo(String key, String value);
 
     /**
      * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
@@ -508,4 +510,5 @@ public interface RedisServerReactiveCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     Flux<V> time();
+
 }

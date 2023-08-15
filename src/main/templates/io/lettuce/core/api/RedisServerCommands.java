@@ -113,13 +113,15 @@ public interface RedisServerCommands<K, V> {
      *
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
+     * @since 6.3
      */
     String clientList(ClientListArgs clientListArgs);
 
     /**
      * Get the list of the current client connection.
      *
-     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space
+     *         character.
      * @since 6.3
      */
     String clientInfo();
@@ -157,7 +159,7 @@ public interface RedisServerCommands<K, V> {
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      * @since 6.3
      */
-    String clientSetinfo(K key, V value);
+    String clientSetinfo(String key, String value);
 
     /**
      * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages

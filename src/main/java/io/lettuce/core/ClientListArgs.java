@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 the original author or authors.
+ * Copyright 2023 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandType;
+import static io.lettuce.core.protocol.CommandKeyword.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.lettuce.core.protocol.CommandKeyword.ID;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandType;
 
 /**
  *
@@ -36,7 +36,7 @@ import static io.lettuce.core.protocol.CommandKeyword.ID;
 public class ClientListArgs implements CompositeArgument {
 
     private enum Type {
-        NORMAL, MASTER, SLAVE, PUBSUB
+        NORMAL, MASTER, REPLICA, PUBSUB
     }
 
     private List<Long> ids;
@@ -90,21 +90,21 @@ public class ClientListArgs implements CompositeArgument {
          *
          * @return new {@link ClientListArgs} with {@literal TYPE MASTER} set.
          * @see ClientListArgs#type(Type)
-         * @since 5.0.4
          */
         public static ClientListArgs typeMaster() {
             return new ClientListArgs().type(Type.MASTER);
         }
 
         /**
-         * Creates new {@link ClientListArgs} setting {@literal TYPE SLAVE}.
+         * Creates new {@link ClientListArgs} setting {@literal TYPE REPLICA}.
          *
-         * @return new {@link ClientListArgs} with {@literal TYPE SLAVE} set.
+         * @return new {@link ClientListArgs} with {@literal TYPE REPLICA} set.
          * @see ClientListArgs#type(Type)
          */
-        public static ClientListArgs typeSlave() {
-            return new ClientListArgs().type(Type.SLAVE);
+        public static ClientListArgs typeReplica() {
+            return new ClientListArgs().type(Type.REPLICA);
         }
+
     }
 
     /**
@@ -125,8 +125,8 @@ public class ClientListArgs implements CompositeArgument {
     }
 
     /**
-     * This filters the connections of all the clients in the specified {@link ClientListArgs.Type}. Note that clients blocked into the
-     * {@literal MONITOR} command are considered to belong to the normal class.
+     * This filters the connections of all the clients in the specified {@link ClientListArgs.Type}. Note that clients blocked
+     * into the {@literal MONITOR} command are considered to belong to the normal class.
      *
      * @param type must not be {@code null}.
      * @return {@code this} {@link ClientListArgs}.
@@ -152,4 +152,5 @@ public class ClientListArgs implements CompositeArgument {
             args.add(CommandType.TYPE).add(type.name().toLowerCase());
         }
     }
+
 }

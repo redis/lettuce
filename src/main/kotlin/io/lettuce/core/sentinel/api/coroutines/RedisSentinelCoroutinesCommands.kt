@@ -147,7 +147,7 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      * @return simple-string-reply `OK` if the connection name was successfully set.
      * @since 6.3
      */
-    suspend fun clientSetinfo(key: K, value: V): String?
+    suspend fun clientSetinfo(key: String, value: String): String?
 
     /**
      * Kill the connection of a client identified by ip:port.

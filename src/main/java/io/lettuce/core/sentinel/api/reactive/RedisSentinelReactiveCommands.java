@@ -18,14 +18,14 @@ package io.lettuce.core.sentinel.api.reactive;
 import java.net.SocketAddress;
 import java.util.Map;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Reactive executed commands for Redis Sentinel.
@@ -148,7 +148,7 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      * @since 6.3
      */
-    Mono<String> clientSetinfo(K key, V value);
+    Mono<String> clientSetinfo(String key, String value);
 
     /**
      * Kill the connection of a client identified by ip:port.
@@ -187,13 +187,15 @@ public interface RedisSentinelReactiveCommands<K, V> {
      *
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
+     * @since 6.3
      */
     Mono<String> clientList(ClientListArgs clientListArgs);
 
     /**
      * Get the list of the current client connection.
      *
-     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space
+     *         character.
      * @since 6.3
      */
     Mono<String> clientInfo();
@@ -252,4 +254,5 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
 }

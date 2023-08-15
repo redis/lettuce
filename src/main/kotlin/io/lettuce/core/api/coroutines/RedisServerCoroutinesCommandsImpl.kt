@@ -64,7 +64,8 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun clientPause(timeout: Long): String? = ops.clientPause(timeout).awaitFirstOrNull()
 
-    override suspend fun clientSetinfo(key: K, value: V): String? = ops.clientSetinfo(key, value).awaitFirstOrNull()
+    override suspend fun clientSetinfo(key: String, value: String): String? =
+        ops.clientSetinfo(key, value).awaitFirstOrNull()
 
     override suspend fun clientSetname(name: K): String? = ops.clientSetname(name).awaitFirstOrNull()
 

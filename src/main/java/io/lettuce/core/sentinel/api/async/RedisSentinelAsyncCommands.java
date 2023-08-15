@@ -148,7 +148,7 @@ public interface RedisSentinelAsyncCommands<K, V> {
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      * @since 6.3
      */
-    RedisFuture<String> clientSetinfo(K key, V value);
+    RedisFuture<String> clientSetinfo(String key, String value);
 
     /**
      * Kill the connection of a client identified by ip:port.
@@ -187,13 +187,15 @@ public interface RedisSentinelAsyncCommands<K, V> {
      *
      * @return String bulk-string-reply a unique string, formatted as follows: One client connection per line (separated by LF),
      *         each line is composed of a succession of property=value fields separated by a space character.
+     * @since 6.3
      */
     RedisFuture<String> clientList(ClientListArgs clientListArgs);
 
     /**
      * Get the list of the current client connection.
      *
-     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space
+     *         character.
      * @since 6.3
      */
     RedisFuture<String> clientInfo();
@@ -252,4 +254,5 @@ public interface RedisSentinelAsyncCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
 }

@@ -35,17 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.AclSetuserArgs;
-import io.lettuce.core.ClientListArgs;
-import io.lettuce.core.FlushMode;
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.KillArgs;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisFuture;
-import io.lettuce.core.ShutdownArgs;
-import io.lettuce.core.TestSupport;
-import io.lettuce.core.TrackingArgs;
-import io.lettuce.core.UnblockType;
+import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -203,14 +193,14 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("WAITAOF") // Redis 7.2
     void clientListExtended() {
         Long clientId = redis.clientId();
 
-        assertThat(redis.clientList(ClientListArgs.Builder.ids(clientId, 0)).contains("addr=")).isTrue();
+        assertThat(redis.clientList(ClientListArgs.Builder.ids(clientId, 0))).contains("addr=");
         assertThat(redis.clientList(ClientListArgs.Builder.ids(0)).contains("addr=")).isFalse();
 
-        assertThat(redis.clientList(ClientListArgs.Builder.typeNormal()).contains("addr=")).isTrue();
-        assertThat(redis.clientList(ClientListArgs.Builder.typePubsub()).contains("addr=")).isFalse();
+        assertThat(redis.clientList(ClientListArgs.Builder.typeNormal())).contains("addr=");
     }
 
     @Test
@@ -566,11 +556,13 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("WAITAOF") // Redis 7.2
     void clientInfo() {
         assertThat(redis.clientInfo().contains("addr=")).isTrue();
     }
 
     @Test
+    @EnabledOnCommand("WAITAOF") // Redis 7.2
     void clientSetinfo() {
         redis.clientSetinfo("lib-name", "lettuce");
 

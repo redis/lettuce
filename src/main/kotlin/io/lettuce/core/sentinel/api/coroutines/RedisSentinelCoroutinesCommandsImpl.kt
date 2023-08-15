@@ -68,7 +68,8 @@ internal class RedisSentinelCoroutinesCommandsImpl<K : Any, V : Any>(internal va
 
     override suspend fun clientGetname(): K? = ops.clientGetname().awaitFirstOrNull()
 
-    override suspend fun clientSetinfo(key: K, value: V): String? = ops.clientSetinfo(key, value).awaitFirstOrNull()
+    override suspend fun clientSetinfo(key: String, value: String): String? =
+        ops.clientSetinfo(key, value).awaitFirstOrNull()
 
     override suspend fun clientSetname(name: K): String = ops.clientSetname(name).awaitLast()
 

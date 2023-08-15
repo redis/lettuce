@@ -119,7 +119,7 @@ public class RedisSentinelAsyncCommandsImpl<K, V> implements RedisSentinelAsyncC
     }
 
     @Override
-    public RedisFuture<String> clientSetinfo(K key, V value) {
+    public RedisFuture<String> clientSetinfo(String key, String value) {
         return dispatch(commandBuilder.clientSetinfo(key, value));
     }
 

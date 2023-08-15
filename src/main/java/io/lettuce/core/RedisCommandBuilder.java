@@ -509,11 +509,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, String> clientSetinfo(K key, V value) {
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SETINFO).addKey(key).addValue(value);
+    Command<K, V, String> clientSetinfo(String key, String value) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SETINFO).add(key).add(value);
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
-
 
     Command<K, V, String> clientTracking(TrackingArgs trackingArgs) {
         LettuceAssert.notNull(trackingArgs, "TrackingArgs " + MUST_NOT_BE_NULL);

@@ -389,7 +389,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> clientSetinfo(K key, V value) {
+    public Mono<String> clientSetinfo(String key, String value) {
         return createMono(() -> commandBuilder.clientSetinfo(key, value));
     }
 
