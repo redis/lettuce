@@ -50,6 +50,7 @@ import io.lettuce.test.Wait;
 class NodeSelectionSyncIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
+
     private final RedisAdvancedClusterCommands<String, String> commands;
 
     @Inject
@@ -229,4 +230,5 @@ class NodeSelectionSyncIntegrationTests extends TestSupport {
             return null;
         }).waitOrTimeout();
     }
+
 }

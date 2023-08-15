@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;

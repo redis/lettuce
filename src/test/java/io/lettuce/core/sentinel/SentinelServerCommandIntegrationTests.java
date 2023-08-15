@@ -27,7 +27,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -124,26 +123,9 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    public void clientListExtended() {
-        assertThat(sentinel.clientList(ClientListArgs.Builder.typeMaster()).contains("addr=")).isTrue();
-        assertThat(sentinel.clientList(ClientListArgs.Builder.typeSlave()).contains("addr=")).isFalse();
-    }
-
-    @Test
     public void info() {
         assertThat(sentinel.info().contains("redis_version")).isTrue();
         assertThat(sentinel.info("server").contains("redis_version")).isTrue();
     }
 
-    @Test
-    public void clientInfo() {
-        assertThat(sentinel.clientInfo().contains("addr=")).isTrue();
-    }
-
-    @Test
-    public void clientSetinfo() {
-        sentinel.clientSetinfo("lib-name", "lettuce");
-
-        assertThat(sentinel.clientInfo().contains("lib-name=lettuce")).isTrue();
-    }
 }

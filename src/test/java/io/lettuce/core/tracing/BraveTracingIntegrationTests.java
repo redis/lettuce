@@ -28,8 +28,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import reactor.test.StepVerifier;
-import zipkin2.Span;
 import brave.ScopedSpan;
 import brave.Tracer;
 import brave.Tracing;
@@ -44,6 +42,8 @@ import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.resource.FastShutdown;
+import reactor.test.StepVerifier;
+import zipkin2.Span;
 
 /**
  * Integration tests for {@link BraveTracing}.
@@ -56,8 +56,11 @@ import io.lettuce.test.resource.FastShutdown;
 class BraveTracingIntegrationTests extends TestSupport {
 
     private static ClientResources clientResources;
+
     private static RedisClient client;
+
     private static Tracing clientTracing;
+
     private static Queue<Span> spans = new LinkedBlockingQueue<>();
 
     @BeforeAll
@@ -67,7 +70,8 @@ class BraveTracingIntegrationTests extends TestSupport {
                 .currentTraceContext(CurrentTraceContext.Default.create()).spanReporter(spans::add).build();
 
         clientResources = DefaultClientResources.builder().tracing(BraveTracing.create(clientTracing)).build();
-        client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
+        client = RedisClient.create(clientResources,
+                RedisURI.Builder.redis(host, port).withLibraryVersion("").withLibraryName("").build());
     }
 
     @BeforeEach
@@ -137,7 +141,8 @@ class BraveTracingIntegrationTests extends TestSupport {
 
         ClientResources clientResources = ClientResources.builder()
                 .tracing(BraveTracing.builder().tracing(clientTracing).excludeCommandArgsFromSpanTags().build()).build();
-        RedisClient client = RedisClient.create(clientResources, RedisURI.Builder.redis(host, port).build());
+        RedisClient client = RedisClient.create(clientResources,
+                RedisURI.Builder.redis(host, port).withLibraryName("").withLibraryVersion("").build());
 
         ScopedSpan trace = clientTracing.tracer().startScopedSpan("foo");
 
@@ -224,7 +229,8 @@ class BraveTracingIntegrationTests extends TestSupport {
 
         StatefulRedisConnection<String, String> connect = client.connect();
         connect.reactive().set("foo", "bar").then(connect.reactive().get("foo"))
-                .contextWrite(io.lettuce.core.tracing.Tracing.withTraceContextProvider(() -> BraveTracing.BraveTraceContext.create(trace.context()))) //
+                .contextWrite(io.lettuce.core.tracing.Tracing
+                        .withTraceContextProvider(() -> BraveTracing.BraveTraceContext.create(trace.context()))) //
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();
 
@@ -237,4 +243,5 @@ class BraveTracingIntegrationTests extends TestSupport {
         assertThat(spans.get(1).name()).isEqualTo("set");
         assertThat(spans.get(2).name()).isEqualTo("get");
     }
+
 }

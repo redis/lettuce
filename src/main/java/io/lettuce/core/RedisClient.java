@@ -28,14 +28,12 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.masterreplica.MasterReplica;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
@@ -51,6 +49,7 @@ import io.lettuce.core.sentinel.StatefulRedisSentinelConnectionImpl;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import reactor.core.publisher.Mono;
 
 /**
  * A scalable and thread-safe <a href="https://redis.io/">Redis</a> client supporting synchronous, asynchronous and reactive
@@ -510,7 +509,7 @@ public class RedisClient extends AbstractRedisClient {
         logger.debug("Trying to get a Redis Sentinel connection for one of: " + redisURI.getSentinels());
 
         if (redisURI.getSentinels().isEmpty() && (isNotEmpty(redisURI.getHost()) || !isEmpty(redisURI.getSocket()))) {
-            return doConnectSentinelAsync(codec, redisURI, timeout, redisURI.getClientName()).toCompletableFuture();
+            return doConnectSentinelAsync(codec, redisURI, timeout, new ConnectionMetadata(redisURI)).toCompletableFuture();
         }
 
         List<RedisURI> sentinels = redisURI.getSentinels();
@@ -522,7 +521,7 @@ public class RedisClient extends AbstractRedisClient {
         for (RedisURI uri : sentinels) {
 
             Mono<StatefulRedisSentinelConnection<K, V>> connectionMono = Mono
-                    .fromCompletionStage(() -> doConnectSentinelAsync(codec, uri, timeout, redisURI.getClientName()))
+                    .fromCompletionStage(() -> doConnectSentinelAsync(codec, uri, timeout, new ConnectionMetadata(redisURI)))
                     .onErrorMap(CompletionException.class, Throwable::getCause)
                     .onErrorMap(e -> new RedisConnectionException("Cannot connect Redis Sentinel at " + uri, e))
                     .doOnError(exceptionCollector::add);
@@ -557,7 +556,7 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     private <K, V> ConnectionFuture<StatefulRedisSentinelConnection<K, V>> doConnectSentinelAsync(RedisCodec<K, V> codec,
-            RedisURI redisURI, Duration timeout, String clientName) {
+            RedisURI redisURI, Duration timeout, ConnectionMetadata metadata) {
 
         ConnectionBuilder connectionBuilder;
         if (redisURI.isSsl()) {
@@ -585,9 +584,7 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionState state = connection.getConnectionState();
 
         state.apply(redisURI);
-        if (LettuceStrings.isEmpty(state.getClientName())) {
-            state.setClientName(clientName);
-        }
+        state.apply(metadata);
 
         connectionBuilder.connectionInitializer(createHandshake(state));
 

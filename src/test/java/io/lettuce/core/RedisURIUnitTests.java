@@ -274,6 +274,15 @@ class RedisURIUnitTests {
     }
 
     @Test
+    void libraryParsingTest() {
+        RedisURI redisURI = RedisURI.create("redis://auth@localhost:1234/?libraryName=lib&libraryVersion=1.0");
+        assertThat(redisURI.getLibraryName()).isEqualTo("lib");
+        assertThat(redisURI.getLibraryVersion()).isEqualTo("1.0");
+
+        assertThat(redisURI).hasToString("redis://****@localhost:1234?libraryName=lib&libraryVersion=1.0");
+    }
+
+    @Test
     void parsingWithInvalidValuesTest() {
         RedisURI redisURI = RedisURI
                 .create("redis://@host:1234/?database=AAA&database=&timeout=&timeout=XYZ&sentinelMasterId=");

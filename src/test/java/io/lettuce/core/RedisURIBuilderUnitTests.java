@@ -85,6 +85,14 @@ class RedisURIBuilderUnitTests {
     }
 
     @Test
+    void redisWithLibrary() {
+        RedisURI result = RedisURI.Builder.redis("localhost").withLibraryName("name").withLibraryVersion("1.foo").build();
+
+        assertThat(result.getLibraryName()).isEqualTo("name");
+        assertThat(result.getLibraryVersion()).isEqualTo("1.foo");
+    }
+
+    @Test
     void redisHostAndPortWithInvalidPort() {
         assertThatThrownBy(() -> RedisURI.Builder.redis("localhost", -1)).isInstanceOf(IllegalArgumentException.class);
     }
@@ -333,6 +341,8 @@ class RedisURIBuilderUnitTests {
         source.setPort(1234);
         source.setTimeout(Duration.ofSeconds(2));
         source.setClientName("foo");
+        source.setLibraryName("lib");
+        source.setLibraryVersion("libver");
         source.setUsername("foo");
         source.setPassword("bar");
         source.setDatabase(4);
@@ -350,6 +360,8 @@ class RedisURIBuilderUnitTests {
         assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
         assertThat(target.getTimeout()).isEqualTo(source.getTimeout());
         assertThat(target.getClientName()).isEqualTo(source.getClientName());
+        assertThat(target.getLibraryName()).isEqualTo(source.getLibraryName());
+        assertThat(target.getLibraryVersion()).isEqualTo(source.getLibraryVersion());
         assertThat(target.getSocket()).isEqualTo(source.getSocket());
         assertThat(target.getDatabase()).isEqualTo(source.getDatabase());
         assertThat(target.isStartTls()).isEqualTo(source.isStartTls());

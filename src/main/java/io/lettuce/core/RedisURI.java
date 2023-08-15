@@ -75,24 +75,28 @@ import io.lettuce.core.internal.LettuceStrings;
  * <b>Redis Standalone</b> <blockquote> <i>redis</i><b>{@code ://}</b>[[<i>username</i>{@code :}]<i>password@</i>]<i>host</i>
  * [<b>{@code :} </b> <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b>
  * [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [ <i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]
- * [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
+ * [<i>&amp;libraryName=libraryName</i>] [<i>&amp;libraryVersion=libraryVersion</i>] [<i>&amp;verifyPeer=NONE|CA|FULL</i>]]
+ * </blockquote>
  *
  * <b>Redis Standalone (SSL)</b> <blockquote>
  * <i>rediss</i><b>{@code ://}</b>[[<i>username</i>{@code :}]<i>password@</i>]<i>host</i> [<b>{@code :} </b>
  * <i>port</i>][<b>{@code /}</b><i>database</i>][<b>{@code ?}</b> [<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
- * <i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>] [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
+ * <i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>] [<i>&amp;libraryName=libraryName</i>]
+ * [<i>&amp;libraryVersion=libraryVersion</i>] [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
  *
  * Redis Standalone (Unix Domain Sockets)</b> <blockquote> <i>redis-socket</i><b>{@code ://}
  * </b>[[<i>username</i>{@code :}]<i>password@</i>]<i>path</i>[
  * <b>{@code ?}</b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]][<i>&amp;database=database</i>]
- * [<i>&amp;clientName=clientName</i>] [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
+ * [<i>&amp;clientName=clientName</i>] [<i>&amp;libraryName=libraryName</i>] [<i>&amp;libraryVersion=libraryVersion</i>]
+ * [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
  *
  * <b>Redis Sentinel</b> <blockquote>
  * <i>redis-sentinel</i><b>{@code ://}</b>[[<i>username</i>{@code :}]<i>password@</i>]<i>host1</i> [<b>{@code :} </b>
  * <i>port1</i>][, <i>host2</i> [<b>{@code :}</b><i>port2</i>]][, <i>hostN</i> [<b>{@code :}</b><i>portN</i>]][<b>{@code /} </b>
  * <i>database</i>][<b>{@code ?} </b>[<i>timeout=timeout</i>[<i>d|h|m|s|ms|us|ns</i>]] [
  * <i>&amp;sentinelMasterId=sentinelMasterId</i>] [<i>&amp;database=database</i>] [<i>&amp;clientName=clientName</i>]
- * [<i>&amp;verifyPeer=NONE|CA|FULL</i>]] </blockquote>
+ * [<i>&amp;libraryName=libraryName</i>] [<i>&amp;libraryVersion=libraryVersion</i>] [<i>&amp;verifyPeer=NONE|CA|FULL</i>]]
+ * </blockquote>
  *
  *
  * <h3><b>Schemes</b>
@@ -139,6 +143,8 @@ import io.lettuce.core.internal.LettuceStrings;
  * <li>When using Redis Sentinel, the password from the URI applies to the data nodes only. Sentinel authentication must be
  * configured for each {@link #getSentinels() sentinel node}.</li>
  * <li>Usernames are supported as of Redis 6.</li>
+ * <li>Library name and library version are automatically set on Redis 7.2 or greater defaulting to
+ * {@link LettuceVersion#getVersion()}.</li>
  * </ul>
  *
  * @author Mark Paluch
@@ -176,6 +182,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
     public static final String PARAMETER_NAME_SENTINEL_MASTER_ID = "sentinelMasterId";
 
     public static final String PARAMETER_NAME_CLIENT_NAME = "clientName";
+
+    public static final String PARAMETER_NAME_LIBRARY_NAME = "libraryName";
+
+    public static final String PARAMETER_NAME_LIBRARY_VERSION = "libraryVersion";
 
     public static final String PARAMETER_NAME_VERIFY_PEER = "verifyPeer";
 
@@ -221,6 +231,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
     private int database;
 
     private String clientName;
+
+    private String libraryName = LettuceVersion.getName();
+
+    private String libraryVersion = LettuceVersion.getVersion();
 
     @Deprecated
     private String username;
@@ -325,6 +339,14 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         if (source.getClientName() != null) {
             builder.withClientName(source.getClientName());
+        }
+
+        if (source.getLibraryName() != null) {
+            builder.withLibraryName(source.getLibraryName());
+        }
+
+        if (source.getLibraryVersion() != null) {
+            builder.withLibraryVersion(source.getLibraryVersion());
         }
 
         if (source.socket != null) {
@@ -617,6 +639,52 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
+     * Returns the library name.
+     *
+     * @return the library name.
+     * @since 6.3
+     */
+    public String getLibraryName() {
+        return libraryName;
+    }
+
+    /**
+     * Sets the library name to be applied on Redis connections.
+     *
+     * @param libraryName the library name.
+     * @since 4.4
+     */
+    public void setLibraryName(String libraryName) {
+        if (libraryName != null && libraryName.indexOf(' ') != -1) {
+            throw new IllegalArgumentException("Library name must not contain spaces");
+        }
+        this.libraryName = libraryName;
+    }
+
+    /**
+     * Returns the library version.
+     *
+     * @return the library version.
+     * @since 6.3
+     */
+    public String getLibraryVersion() {
+        return libraryVersion;
+    }
+
+    /**
+     * Sets the library version to be applied on Redis connections.
+     *
+     * @param libraryVersion the library version.
+     * @since 4.4
+     */
+    public void setLibraryVersion(String libraryVersion) {
+        if (libraryVersion != null && libraryVersion.indexOf(' ') != -1) {
+            throw new IllegalArgumentException("Library version must not contain spaces");
+        }
+        this.libraryVersion = libraryVersion;
+    }
+
+    /**
      * Apply authentication from another {@link RedisURI}. The SSL settings of the {@code source} URI will be applied to this
      * URI. That is in particular SSL usage, peer verification and StartTLS.
      *
@@ -815,6 +883,14 @@ public class RedisURI implements Serializable, ConnectionPoint {
                     parseClientName(builder, queryParam);
                 }
 
+                if (forStartWith.startsWith(PARAMETER_NAME_LIBRARY_NAME.toLowerCase() + "=")) {
+                    parseLibraryName(builder, queryParam);
+                }
+
+                if (forStartWith.startsWith(PARAMETER_NAME_LIBRARY_VERSION.toLowerCase() + "=")) {
+                    parseLibraryVersion(builder, queryParam);
+                }
+
                 if (forStartWith.startsWith(PARAMETER_NAME_VERIFY_PEER.toLowerCase() + "=")) {
                     parseVerifyPeer(builder, queryParam);
                 }
@@ -897,6 +973,14 @@ public class RedisURI implements Serializable, ConnectionPoint {
             queryPairs.add(PARAMETER_NAME_CLIENT_NAME + "=" + urlEncode(clientName));
         }
 
+        if (libraryName != null && !libraryName.equals(LettuceVersion.getName())) {
+            queryPairs.add(PARAMETER_NAME_LIBRARY_NAME + "=" + urlEncode(libraryName));
+        }
+
+        if (libraryVersion != null && !libraryVersion.equals(LettuceVersion.getVersion())) {
+            queryPairs.add(PARAMETER_NAME_LIBRARY_VERSION + "=" + urlEncode(libraryVersion));
+        }
+
         if (isSsl() && getVerifyMode() != SslVerifyMode.FULL) {
             queryPairs.add(PARAMETER_NAME_VERIFY_PEER + "=" + verifyMode.name());
         }
@@ -914,7 +998,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
             }
         }
 
-        return queryPairs.stream().collect(Collectors.joining("&"));
+        return String.join("&", queryPairs);
     }
 
     private String getPortPart(int port, String scheme) {
@@ -1073,6 +1157,22 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
     }
 
+    private static void parseLibraryName(Builder builder, String queryParam) {
+
+        String libraryName = getValuePart(queryParam);
+        if (isNotEmpty(libraryName)) {
+            builder.withLibraryName(libraryName);
+        }
+    }
+
+    private static void parseLibraryVersion(Builder builder, String queryParam) {
+
+        String libraryVersion = getValuePart(queryParam);
+        if (isNotEmpty(libraryVersion)) {
+            builder.withLibraryVersion(libraryVersion);
+        }
+    }
+
     private static void parseVerifyPeer(Builder builder, String queryParam) {
 
         String verifyPeer = getValuePart(queryParam);
@@ -1216,6 +1316,10 @@ public class RedisURI implements Serializable, ConnectionPoint {
         private int database;
 
         private String clientName;
+
+        private String libraryName = LettuceVersion.getName();
+
+        private String libraryVersion = LettuceVersion.getVersion();
 
         private String username;
 
@@ -1537,7 +1641,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
         }
 
         /**
-         * Configures a client name.
+         * Configures a client name. Sets client name also for already configured Redis Sentinel nodes.
          *
          * @param clientName the client name
          * @return the builder
@@ -1547,6 +1651,47 @@ public class RedisURI implements Serializable, ConnectionPoint {
             LettuceAssert.notNull(clientName, "Client name must not be null");
 
             this.clientName = clientName;
+            this.sentinels.forEach(it -> it.setClientName(clientName));
+            return this;
+        }
+
+        /**
+         * Configures a library name. Sets library name also for already configured Redis Sentinel nodes.
+         *
+         * @param libraryName the library name
+         * @return the builder
+         * @since 6.3
+         */
+        public Builder withLibraryName(String libraryName) {
+
+            LettuceAssert.notNull(libraryName, "Library name must not be null");
+
+            if (libraryName.indexOf(' ') != -1) {
+                throw new IllegalArgumentException("Library name must not contain spaces");
+            }
+
+            this.libraryName = libraryName;
+            this.sentinels.forEach(it -> it.setLibraryName(libraryName));
+            return this;
+        }
+
+        /**
+         * Configures a library version. Sets library version also for already configured Redis Sentinel nodes.
+         *
+         * @param libraryVersion the library version
+         * @return the builder
+         * @since 6.3
+         */
+        public Builder withLibraryVersion(String libraryVersion) {
+
+            LettuceAssert.notNull(libraryVersion, "Library version must not be null");
+
+            if (libraryVersion.indexOf(' ') != -1) {
+                throw new IllegalArgumentException("Library version must not contain spaces");
+            }
+
+            this.libraryVersion = libraryVersion;
+            this.sentinels.forEach(it -> it.setLibraryVersion(libraryVersion));
             return this;
         }
 
@@ -1725,6 +1870,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             redisURI.setDatabase(database);
             redisURI.setClientName(clientName);
+            redisURI.setLibraryName(libraryName);
+            redisURI.setLibraryVersion(libraryVersion);
 
             redisURI.setSentinelMasterId(sentinelMasterId);
 

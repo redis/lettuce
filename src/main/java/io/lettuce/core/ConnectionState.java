@@ -37,7 +37,7 @@ public class ConnectionState {
 
     private volatile boolean readOnly;
 
-    private volatile String clientName;
+    private volatile ConnectionMetadata connectionMetadata = new ConnectionMetadata();
 
     /**
      * Applies settings from {@link RedisURI}.
@@ -46,8 +46,16 @@ public class ConnectionState {
      */
     public void apply(RedisURI redisURI) {
 
-        setClientName(redisURI.getClientName());
+        connectionMetadata.apply(redisURI);
         setCredentialsProvider(redisURI.getCredentialsProvider());
+    }
+
+    void apply(ConnectionMetadata metadata) {
+        this.connectionMetadata.apply(metadata);
+    }
+
+    ConnectionMetadata getConnectionMetadata() {
+        return connectionMetadata;
     }
 
     /**
@@ -142,11 +150,11 @@ public class ConnectionState {
     }
 
     protected void setClientName(String clientName) {
-        this.clientName = clientName;
+        this.connectionMetadata.setClientName(clientName);
     }
 
     String getClientName() {
-        return clientName;
+        return connectionMetadata.getClientName();
     }
 
     /**

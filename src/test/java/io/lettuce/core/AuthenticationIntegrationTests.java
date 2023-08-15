@@ -56,7 +56,7 @@ class AuthenticationIntegrationTests extends TestSupport {
     void authAsJohn(RedisClient client) {
 
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(TestSettings.port())
-                .withAuthentication("john", "foobared").build();
+                .withAuthentication("john", "foobared").withLibraryName("").withLibraryVersion("").build();
 
         StatefulRedisConnection<String, String> connection = client.connect(uri);
 

@@ -18,6 +18,7 @@ package io.lettuce.core;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -40,6 +41,8 @@ import io.netty.channel.Channel;
  * @since 6.0
  */
 class RedisHandshake implements ConnectionInitializer {
+
+    private static final RedisVersion CLIENT_SET_INFO_SINCE = RedisVersion.of("7.2");
 
     private final RedisCommandBuilder<String, String> commandBuilder = new RedisCommandBuilder<>(StringCodec.UTF8);
 
@@ -89,7 +92,8 @@ class RedisHandshake implements ConnectionInitializer {
                     new RedisConnectionException("Protocol version" + this.requestedProtocolVersion + " not supported"));
         }
 
-        return handshake.thenCompose(ignore -> applyPostHandshake(channel, getNegotiatedProtocolVersion()));
+        return handshake.thenCompose(
+                ignore -> applyPostHandshake(channel, connectionState.getRedisVersion(), getNegotiatedProtocolVersion()));
     }
 
     private CompletionStage<?> tryHandshakeResp3(Channel channel) {
@@ -226,12 +230,33 @@ class RedisHandshake implements ConnectionInitializer {
         return dispatch(channel, this.commandBuilder.hello(3, null, null, connectionState.getClientName()));
     }
 
-    private CompletableFuture<Void> applyPostHandshake(Channel channel, ProtocolVersion negotiatedProtocolVersion) {
+    private CompletableFuture<Void> applyPostHandshake(Channel channel, String redisVersion,
+            ProtocolVersion negotiatedProtocolVersion) {
 
         List<AsyncCommand<?, ?, ?>> postHandshake = new ArrayList<>();
 
-        if (connectionState.getClientName() != null && negotiatedProtocolVersion == ProtocolVersion.RESP2) {
+        ConnectionMetadata metadata = connectionState.getConnectionMetadata();
+
+        if (metadata.getClientName() != null && negotiatedProtocolVersion == ProtocolVersion.RESP2) {
             postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetname(connectionState.getClientName())));
+        }
+
+        if (negotiatedProtocolVersion == ProtocolVersion.RESP3) {
+
+            RedisVersion currentVersion = RedisVersion.of(redisVersion);
+
+            if (currentVersion.isGreaterThanOrEqualTo(CLIENT_SET_INFO_SINCE)) {
+
+                if (LettuceStrings.isNotEmpty(metadata.getLibraryName())) {
+                    postHandshake
+                            .add(new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-name", metadata.getLibraryName())));
+                }
+
+                if (LettuceStrings.isNotEmpty(metadata.getLibraryVersion())) {
+                    postHandshake.add(
+                            new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-ver", metadata.getLibraryVersion())));
+                }
+            }
         }
 
         if (connectionState.getDb() > 0) {
@@ -277,6 +302,109 @@ class RedisHandshake implements ConnectionInitializer {
     private static boolean isNoProto(Throwable error) {
         return error instanceof RedisException && LettuceStrings.isNotEmpty(error.getMessage())
                 && error.getMessage().startsWith("NOPROTO");
+    }
+
+    /**
+     * Value object to represent a Redis version.
+     */
+    static class RedisVersion {
+
+        private final static RedisVersion UNKNOWN = new RedisVersion("0.0.0");
+
+        private final static RedisVersion UNSTABLE = new RedisVersion("255.255.255");
+
+        private final int major;
+
+        private final int minor;
+
+        private final int bugfix;
+
+        private RedisVersion(String version) {
+
+            String[] split = version.split("\\.");
+
+            int major = 0;
+            int minor = 0;
+            int bugfix = 0;
+            if (split.length > 0) {
+                major = Integer.parseInt(split[0]);
+            }
+            if (split.length > 1) {
+                minor = Integer.parseInt(split[1]);
+            }
+
+            if (split.length > 2) {
+                bugfix = Integer.parseInt(split[2]);
+            }
+
+            this.major = major;
+            this.minor = minor;
+            this.bugfix = bugfix;
+        }
+
+        /**
+         * Construct a new {@link RedisVersion} from a version string containing major, minor and bugfix version such as
+         * {@code 7.2.0}.
+         *
+         * @param version
+         * @return
+         */
+        public static RedisVersion of(String version) {
+            return new RedisVersion(version);
+        }
+
+        public boolean isGreaterThan(RedisVersion version) {
+            return this.compareTo(version) > 0;
+        }
+
+        public boolean isGreaterThanOrEqualTo(RedisVersion version) {
+            return this.compareTo(version) >= 0;
+        }
+
+        public boolean is(RedisVersion version) {
+            return this.equals(version);
+        }
+
+        public boolean isLessThan(RedisVersion version) {
+            return this.compareTo(version) < 0;
+        }
+
+        public boolean isLessThanOrEqualTo(RedisVersion version) {
+            return this.compareTo(version) <= 0;
+        }
+
+        public int compareTo(RedisVersion that) {
+            if (this.major != that.major) {
+                return this.major - that.major;
+            } else if (this.minor != that.minor) {
+                return this.minor - that.minor;
+            } else {
+                return this.bugfix - that.bugfix;
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            RedisVersion that = (RedisVersion) o;
+            return major == that.major && minor == that.minor && bugfix == that.bugfix;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(major, minor, bugfix);
+        }
+
+        @Override
+        public String toString() {
+            return major + "." + minor + "." + bugfix;
+        }
+
     }
 
 }
