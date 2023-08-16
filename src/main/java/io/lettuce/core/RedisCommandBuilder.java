@@ -4201,4 +4201,33 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notEmpty(ranges, "Ranges " + MUST_NOT_BE_NULL);
     }
 
+    enum LongCodec implements RedisCodec<Long, Long> {
+
+        INSTANCE;
+
+        @Override
+        public Long decodeKey(ByteBuffer bytes) {
+
+            String s = StringCodec.ASCII.decodeKey(bytes);
+
+            return s == null ? null : Long.valueOf(s);
+        }
+
+        @Override
+        public Long decodeValue(ByteBuffer bytes) {
+            return decodeKey(bytes);
+        }
+
+        @Override
+        public ByteBuffer encodeKey(Long key) {
+            return StringCodec.ASCII.encodeKey(key == null ? null : key.toString());
+        }
+
+        @Override
+        public ByteBuffer encodeValue(Long value) {
+            return encodeKey(value);
+        }
+
+    }
+
 }
