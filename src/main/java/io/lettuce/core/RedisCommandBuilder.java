@@ -273,7 +273,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         bitFieldArgs.build(args);
 
-        return createCommand(BITFIELD, (CommandOutput) new IntegerListOutput<>(LongCodec.INSTANCE), args);
+        return createCommand(BITFIELD, (CommandOutput) new ArrayOutput<>(codec), args);
     }
 
     Command<K, V, List<Value<Long>>> bitfieldValue(K key, BitFieldArgs bitFieldArgs) {
@@ -285,7 +285,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         bitFieldArgs.build(args);
 
-        return createCommand(BITFIELD, (CommandOutput) new ValueValueListOutput<>(LongCodec.INSTANCE), args);
+        return createCommand(BITFIELD, (CommandOutput) new ValueValueListOutput<>(codec), args);
     }
 
     Command<K, V, Long> bitopAnd(K destination, K... keys) {
