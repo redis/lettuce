@@ -111,7 +111,7 @@
 
     <mybatis.version>3.5.13</mybatis.version>
     <spring.version>6.0.11</spring.version>
-    <spring-batch.version>5.0.2</spring-batch.version>
+    <spring-batch.version>5.0.3</spring-batch.version>
     <module.name>org.mybatis.spring</module.name>
 
     <junit.version>5.10.0</junit.version>
