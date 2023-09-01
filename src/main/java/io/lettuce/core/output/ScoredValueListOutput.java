@@ -40,6 +40,8 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
 
     private V value;
 
+    private boolean hasValue;
+
     public ScoredValueListOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());
         setSubscriber(ListSubscriber.instance());
@@ -48,8 +50,9 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
     @Override
     public void set(ByteBuffer bytes) {
 
-        if (value == null) {
+        if (!hasValue) {
             value = codec.decodeValue(bytes);
+            hasValue = true;
             return;
         }
 
@@ -62,6 +65,7 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
 
         subscriber.onNext(output, ScoredValue.just(number, value));
         value = null;
+        hasValue = false;
     }
 
     @Override

@@ -32,6 +32,8 @@ public class KeyValueOutput<K, V> extends CommandOutput<K, V, KeyValue<K, V>> {
 
     private K key;
 
+    private boolean hasKey;
+
     public KeyValueOutput(RedisCodec<K, V> codec) {
         super(codec, null);
     }
@@ -40,8 +42,9 @@ public class KeyValueOutput<K, V> extends CommandOutput<K, V, KeyValue<K, V>> {
     public void set(ByteBuffer bytes) {
 
         if (bytes != null) {
-            if (key == null) {
+            if (!hasKey) {
                 key = codec.decodeKey(bytes);
+                hasKey = true;
             } else {
                 V value = codec.decodeValue(bytes);
                 output = KeyValue.fromNullable(key, value);

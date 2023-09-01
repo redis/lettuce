@@ -33,6 +33,8 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
 
     private V value;
 
+    private boolean hasValue;
+
     public ScoredValueScanOutput(RedisCodec<K, V> codec) {
         super(codec, new ScoredValueScanCursor<V>());
     }
@@ -40,8 +42,9 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
     @Override
     protected void setOutput(ByteBuffer bytes) {
 
-        if (value == null) {
+        if (!hasValue) {
             value = codec.decodeValue(bytes);
+            hasValue = true;
             return;
         }
 
@@ -51,10 +54,11 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
 
     @Override
     public void set(double number) {
-        if (value != null) {
+        if (hasValue) {
             output.getValues().add(ScoredValue.just(number, value));
         }
         value = null;
+        hasValue = false;
     }
 
 }

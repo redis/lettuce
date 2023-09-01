@@ -31,6 +31,8 @@ public class MapScanOutput<K, V> extends ScanOutput<K, V, MapScanCursor<K, V>> {
 
     private K key;
 
+    private boolean hasKey;
+
     public MapScanOutput(RedisCodec<K, V> codec) {
         super(codec, new MapScanCursor<K, V>());
     }
@@ -38,14 +40,16 @@ public class MapScanOutput<K, V> extends ScanOutput<K, V, MapScanCursor<K, V>> {
     @Override
     protected void setOutput(ByteBuffer bytes) {
 
-        if (key == null) {
+        if (!hasKey) {
             key = codec.decodeKey(bytes);
+            hasKey = true;
             return;
         }
 
         V value = (bytes == null) ? null : codec.decodeValue(bytes);
         output.getMap().put(key, value);
         key = null;
+        hasKey = false;
     }
 
 }

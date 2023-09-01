@@ -42,6 +42,8 @@ public class PendingMessagesOutput<K, V> extends CommandOutput<K, V, PendingMess
 
     private String consumer;
 
+    private boolean hasConsumer;
+
     private final Map<String, Long> consumerMessageCount = new LinkedHashMap<>();
 
     public PendingMessagesOutput(RedisCodec<K, V> codec) {
@@ -61,8 +63,9 @@ public class PendingMessagesOutput<K, V> extends CommandOutput<K, V, PendingMess
             return;
         }
 
-        if (consumer == null) {
+        if (!hasConsumer) {
             consumer = StringCodec.UTF8.decodeKey(bytes);
+            hasConsumer = true;
             return;
         }
 
@@ -77,9 +80,10 @@ public class PendingMessagesOutput<K, V> extends CommandOutput<K, V, PendingMess
             return;
         }
 
-        if (consumer != null) {
+        if (hasConsumer) {
             consumerMessageCount.put(consumer, integer);
             consumer = null;
+            hasConsumer = false;
         }
     }
 

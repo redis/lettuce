@@ -35,6 +35,8 @@ public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, Strea
 
     private V value;
 
+    private boolean hasValue;
+
     public ScoredValueScanStreamingOutput(RedisCodec<K, V> codec, ScoredValueStreamingChannel<V> channel) {
         super(codec, new StreamScanCursor());
         this.channel = channel;
@@ -42,8 +44,9 @@ public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, Strea
 
     @Override
     protected void setOutput(ByteBuffer bytes) {
-        if (value == null) {
+        if (!hasValue) {
             value = codec.decodeValue(bytes);
+            hasValue = true;
             return;
         }
 
@@ -54,12 +57,13 @@ public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, Strea
     @Override
     public void set(double number) {
 
-        if (value != null) {
+        if (hasValue) {
             channel.onValue(ScoredValue.just(number, value));
         }
 
-        value = null;
         output.setCount(output.getCount() + 1);
+        value = null;
+        hasValue = false;
     }
 
 }

@@ -46,6 +46,8 @@ public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<
 
     private K key;
 
+    private boolean hasKey;
+
     public KeyValueListOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());
         setSubscriber(ListSubscriber.instance());
@@ -62,13 +64,15 @@ public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<
     public void set(ByteBuffer bytes) {
 
         if (keys == null) {
-            if (key == null) {
+            if (!hasKey) {
                 key = codec.decodeKey(bytes);
+                hasKey = true;
                 return;
             }
 
             K key = this.key;
             this.key = null;
+            this.hasKey = false;
             subscriber.onNext(output, KeyValue.fromNullable(key, bytes == null ? null : codec.decodeValue(bytes)));
 
         } else {

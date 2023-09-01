@@ -44,7 +44,11 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
 
     private String id;
 
+    private boolean hasId;
+
     private K key;
+
+    private boolean hasKey;
 
     private Map<K, V> body;
 
@@ -75,8 +79,9 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
             return;
         }
 
-        if (key == null) {
+        if (!hasKey) {
             bodyReceived = true;
+            hasKey = true;
 
             if (bytes == null) {
                 return;
@@ -92,6 +97,7 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
 
         body.put(key, bytes == null ? null : codec.decodeValue(bytes));
         key = null;
+        hasKey = false;
     }
 
     @Override
@@ -101,15 +107,19 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
             messages.add(new StreamMessage<>(stream, id, body == null ? Collections.emptyMap() : body));
             bodyReceived = false;
             key = null;
+            hasKey = false;
             body = null;
             id = null;
+            hasId = false;
         }
 
         if (depth == 2 && justId) {
             messages.add(new StreamMessage<>(stream, id, null));
             key = null;
+            hasKey = false;
             body = null;
             id = null;
+            hasId = false;
         }
 
         if (depth == 0) {

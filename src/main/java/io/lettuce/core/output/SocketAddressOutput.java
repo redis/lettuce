@@ -31,6 +31,8 @@ public class SocketAddressOutput<K, V> extends CommandOutput<K, V, SocketAddress
 
     private String hostname;
 
+    private boolean hasHostname;
+
     public SocketAddressOutput(RedisCodec<K, V> codec) {
         super(codec, null);
     }
@@ -38,8 +40,9 @@ public class SocketAddressOutput<K, V> extends CommandOutput<K, V, SocketAddress
     @Override
     public void set(ByteBuffer bytes) {
 
-        if (hostname == null) {
+        if (!hasHostname) {
             hostname = decodeAscii(bytes);
+            hasHostname = true;
             return;
         }
 
