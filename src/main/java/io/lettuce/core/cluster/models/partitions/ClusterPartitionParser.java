@@ -216,11 +216,23 @@ public class ClusterPartitionParser {
         RedisURI uri = null;
 
         String hostAndPortPart = iterator.next();
-        if (hostAndPortPart.contains("@")) {
-            hostAndPortPart = hostAndPortPart.substring(0, hostAndPortPart.indexOf('@'));
+        String announcedHostName = null;
+        int atIndex = hostAndPortPart.indexOf('@');
+        if (atIndex != -1) {
+            String busPart = hostAndPortPart.substring(atIndex + 1);
+            hostAndPortPart = hostAndPortPart.substring(0, atIndex);
+
+            int comma = busPart.indexOf(',');
+            if (comma != -1) {
+                announcedHostName = busPart.substring(comma + 1);
+            }
         }
 
         HostAndPort hostAndPort = HostAndPort.parseCompat(hostAndPortPart);
+
+        if (LettuceStrings.isNotEmpty(announcedHostName)) {
+            hostAndPort = HostAndPort.of(announcedHostName, hostAndPort.getPort());
+        }
 
         if (LettuceStrings.isNotEmpty(hostAndPort.getHostText())) {
             uri = RedisURI.Builder.redis(hostAndPort.getHostText(), hostAndPort.getPort()).build();

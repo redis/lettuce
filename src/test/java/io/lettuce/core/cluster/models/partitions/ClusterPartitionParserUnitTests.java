@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.cluster.models.partitions;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -26,6 +26,9 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.internal.LettuceLists;
 
+/**
+ * Unit tests for {@link ClusterPartitionParser}.
+ */
 class ClusterPartitionParserUnitTests {
 
     private static String nodes = "c37ab8396be428403d4e55c0d317348be27ed973 127.0.0.1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n"
@@ -42,6 +45,9 @@ class ClusterPartitionParserUnitTests {
             + "3d005a179da7d8dc1adae6409d47b39c369e992b 127.0.0.1:7380@17380 master - 0 1454482721690 0 connected 12000-16383\n"
             + "4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 127.0.0.1:7379@17379 myself,master - 0 0 1 connected 0-11999\n"
             + "5f4a2236d00008fba7ac0dd24b95762b446767bd 127.0.0.1:7382@17382 slave 3d005a179da7d8dc1adae6409d47b39c369e992b 0 1454482721690 2 connected";
+
+    private static String nodesWithHostname = "c37ab8396be428403d4e55c0d317348be27ed973 127.0.0.1:7381@17381,my-host.name.com slave 4213a8dabb94f92eb6a860f4d0729e6a25d43e0c 0 1454482721690 3 connected\n"
+            + "3d005a179da7d8dc1adae6409d47b39c369e992b 127.0.0.1:7380@17380, master - 0 1454482721690 0 connected 12000-16383";
 
     @Test
     void shouldParseNodesCorrectly() {
@@ -83,6 +89,24 @@ class ClusterPartitionParserUnitTests {
         assertThat(p1.getNodeId()).isEqualTo("c37ab8396be428403d4e55c0d317348be27ed973");
         assertThat(p1.getUri().getHost()).isEqualTo("127.0.0.1");
         assertThat(p1.getUri().getPort()).isEqualTo(7381);
+    }
+
+    @Test
+    void shouldParseNodesWithHostname() {
+
+        Partitions result = ClusterPartitionParser.parse(nodesWithHostname);
+
+        assertThat(result.getPartitions()).hasSize(2);
+
+        RedisClusterNode p1 = result.getPartitions().get(0);
+
+        assertThat(p1.getNodeId()).isEqualTo("c37ab8396be428403d4e55c0d317348be27ed973");
+        assertThat(p1.getUri().getHost()).isEqualTo("my-host.name.com");
+        assertThat(p1.getUri().getPort()).isEqualTo(7381);
+
+        RedisClusterNode p2 = result.getPartitions().get(1);
+
+        assertThat(p2.getUri().getHost()).isEqualTo("127.0.0.1");
     }
 
     @Test
@@ -141,4 +165,5 @@ class ClusterPartitionParserUnitTests {
 
         assertThat(original).isEqualTo(created);
     }
+
 }
