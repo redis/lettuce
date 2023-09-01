@@ -24,6 +24,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * Options to configure low-level socket options for the connections kept to Redis servers.
  *
  * @author Mark Paluch
+ * @author Bodong Ybd
  * @since 4.3
  */
 public class SocketOptions {
@@ -64,7 +65,7 @@ public class SocketOptions {
         this.keepAlive = original.getKeepAlive();
         this.extendedKeepAlive = original.isExtendedKeepAlive();
         this.tcpNoDelay = original.isTcpNoDelay();
-        this.tcpUserTimeout = original.tcpUserTimeout;
+        this.tcpUserTimeout = original.getTcpUserTimeout();
     }
 
     /**
@@ -104,8 +105,8 @@ public class SocketOptions {
 
         private KeepAliveOptions keepAlive = KeepAliveOptions.builder().enable(DEFAULT_SO_KEEPALIVE).build();
 
-        private TcpUserTimeoutOptions tcpUserTimeout = TcpUserTimeoutOptions.builder()
-            .enable(DEFAULT_TCP_USER_TIMEOUT_ENABLED).build();
+        private TcpUserTimeoutOptions tcpUserTimeout = TcpUserTimeoutOptions.builder().enable(DEFAULT_TCP_USER_TIMEOUT_ENABLED)
+                .build();
 
         private boolean tcpNoDelay = DEFAULT_SO_NO_DELAY;
 
@@ -183,8 +184,17 @@ public class SocketOptions {
             return this;
         }
 
+        /**
+         * Configure TCP User Timeout. Defaults to disabled. See {@link #DEFAULT_TCP_USER_TIMEOUT_ENABLED}.
+         *
+         * @param tcpUserTimeout the TCP User Timeout options.
+         * @return {@code this}
+         * @since 6.2.7
+         * @see TcpUserTimeoutOptions
+         */
         public Builder tcpUserTimeout(TcpUserTimeoutOptions tcpUserTimeout) {
-            LettuceAssert.notNull(tcpUserTimeout, "tcpUserTimeout options must not be null");
+
+            LettuceAssert.notNull(tcpUserTimeout, "TcpUserTimeout options must not be null");
 
             this.tcpUserTimeout = tcpUserTimeout;
 
@@ -349,8 +359,8 @@ public class SocketOptions {
             }
 
             /**
-             * Set the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to
-             * {@code 9}. See also {@link #DEFAULT_COUNT} and {@code TCP_KEEPCNT}.
+             * Set the maximum number of keepalive probes TCP should send before dropping the connection. Defaults to {@code 9}.
+             * See also {@link #DEFAULT_COUNT} and {@code TCP_KEEPCNT}.
              *
              * @param count the maximum number of keepalive probes TCP
              * @return {@code this}
@@ -509,15 +519,17 @@ public class SocketOptions {
     }
 
     /**
-     * TCP_USER_TIMEOUT TCP_USER_TIMEOUT comes from <a href="https://datatracker.ietf.org/doc/html/rfc5482">RFC5482</a>
-     * , configuring this parameter can allow the user TCP to initiate a reconnection to solve this problem when the
-     * network is abnormal: <a href="https://github.com/lettuce-io/ettuce-core/issues/2082">#2082</a>
+     * TCP_USER_TIMEOUT comes from <a href="https://datatracker.ietf.org/doc/html/rfc5482">RFC5482</a> , configuring this
+     * parameter can allow the user TCP to initiate a reconnection to solve this problem when the network is abnormal.
+     * <p>
+     * The timeout is currently only supported with epoll and io_uring native transports.
+     *
+     * @since 6.2.7
      */
     public static class TcpUserTimeoutOptions {
 
         /**
-         * Recommended default TCP_USER_TIMEOUT == TCP_KEEPIDLE(2 hour) + TCP_KEEPINTVL(75 s) * TCP_KEEPCNT(9)
-         * 2 * 3600 + 75 * 9 = 7875
+         * Recommended default TCP_KEEPIDLE(2 hour) + TCP_KEEPINTVL(75 s) * TCP_KEEPCNT(9) 2 * 3600 + 75 * 9 = 7875
          */
         public static final Duration DEFAULT_TCP_USER_TIMEOUT = Duration.ofSeconds(7875);
 
@@ -531,12 +543,17 @@ public class SocketOptions {
             this.enabled = builder.enabled;
         }
 
+        /**
+         * Returns a new {@link TcpUserTimeoutOptions.Builder} to construct {@link TcpUserTimeoutOptions}.
+         *
+         * @return a new {@link TcpUserTimeoutOptions.Builder} to construct {@link TcpUserTimeoutOptions}.
+         */
         public static TcpUserTimeoutOptions.Builder builder() {
             return new TcpUserTimeoutOptions.Builder();
         }
 
         /**
-         * Builder class for TcpUserTimeoutOptions.
+         * Builder class for {@link TcpUserTimeoutOptions}.
          */
         public static class Builder {
 
@@ -547,29 +564,58 @@ public class SocketOptions {
             private Builder() {
             }
 
+            /**
+             * Enable TCP User Timeout. Defaults to disabled. See {@link #DEFAULT_TCP_USER_TIMEOUT_ENABLED}.
+             *
+             * @return {@code this}
+             */
             public TcpUserTimeoutOptions.Builder enable() {
                 return enable(true);
             }
 
+            /**
+             * Disable TCP User Timeout. Defaults to disabled. See {@link #DEFAULT_TCP_USER_TIMEOUT_ENABLED}.
+             *
+             * @return {@code this}
+             */
             public TcpUserTimeoutOptions.Builder disable() {
                 return enable(false);
             }
 
+            /**
+             * Enable or disable TCP User Timeout. Defaults to disabled. See {@link #DEFAULT_TCP_USER_TIMEOUT_ENABLED}.
+             *
+             * @param enabled whether to enable TCP User Timeout.
+             * @return {@code this}
+             */
             public TcpUserTimeoutOptions.Builder enable(boolean enabled) {
 
                 this.enabled = enabled;
                 return this;
             }
 
+            /**
+             * The TCP User Timeout. Defaults to {@code 7875 second}. See also {@link #DEFAULT_TCP_USER_TIMEOUT}.
+             * <p>
+             * The time granularity of is seconds.
+             *
+             * @param tcpUserTimeout connection interval time, must be greater {@literal 0}
+             * @return {@code this}
+             */
             public TcpUserTimeoutOptions.Builder tcpUserTimeout(Duration tcpUserTimeout) {
 
-                LettuceAssert.notNull(tcpUserTimeout, "tcpUserTimeout must not be null");
-                LettuceAssert.isTrue(!tcpUserTimeout.isNegative(), "tcpUserTimeout must not be begative");
+                LettuceAssert.notNull(tcpUserTimeout, "Duration must not be null");
+                LettuceAssert.isTrue(!tcpUserTimeout.isNegative(), "Duration must not be negative");
 
                 this.tcpUserTimeout = tcpUserTimeout;
                 return this;
             }
 
+            /**
+             * Create a new instance of {@link TcpUserTimeoutOptions}
+             *
+             * @return new instance of {@link TcpUserTimeoutOptions}
+             */
             public TcpUserTimeoutOptions build() {
                 return new TcpUserTimeoutOptions(this);
             }
@@ -577,9 +623,11 @@ public class SocketOptions {
         }
 
         /**
-         * Creates a new Builder instance with the current TcpUserTimeoutOptions state.
+         * Returns a builder to create new {@link TcpUserTimeoutOptions} whose settings are replicated from the current
+         * {@link TcpUserTimeoutOptions}.
          *
-         * @return a new Builder with the current state
+         * @return a {@link TcpUserTimeoutOptions.Builder} to create new {@link TcpUserTimeoutOptions} whose settings are
+         *         replicated from the current {@link TcpUserTimeoutOptions}
          */
         public TcpUserTimeoutOptions.Builder mutate() {
 
@@ -591,13 +639,24 @@ public class SocketOptions {
             return builder;
         }
 
+        /**
+         * Returns whether to enable TCP User Timeout.
+         *
+         * @return whether to enable TCP User Timeout
+         */
         public boolean isEnabled() {
             return enabled;
         }
 
+        /**
+         * Returns the actual timeout.
+         *
+         * @return the actual timeout.
+         */
         public Duration getTcpUserTimeout() {
             return tcpUserTimeout;
         }
+
     }
 
 }

@@ -55,6 +55,7 @@ import reactor.core.publisher.Mono;
  * Connection builder for connections. This class is part of the internal API.
  *
  * @author Mark Paluch
+ * @author Bodong Ybd
  */
 public class ConnectionBuilder {
 
@@ -263,8 +264,22 @@ public class ConnectionBuilder {
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.toIntExact(options.getConnectTimeout().toMillis()));
 
         if (!domainSocket) {
+
             bootstrap.option(ChannelOption.SO_KEEPALIVE, options.isKeepAlive());
             bootstrap.option(ChannelOption.TCP_NODELAY, options.isTcpNoDelay());
+
+            if (options.isEnableTcpUserTimeout()) {
+
+                SocketOptions.TcpUserTimeoutOptions tcpUserTimeoutOptions = options.getTcpUserTimeout();
+
+                if (IOUringProvider.isAvailable()) {
+                    IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+                } else if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
+                    EpollProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+                } else {
+                    logger.warn("Cannot apply TCP User Timeout options to channel type " + channelClass.getName());
+                }
+            }
         }
 
         bootstrap.channel(channelClass).group(eventLoopGroup);
@@ -285,17 +300,6 @@ public class ConnectionBuilder {
             }
         }
 
-        if (options.isEnableTcpUserTimeout()) {
-            SocketOptions.TcpUserTimeoutOptions tcpUserTimeoutOptions = options.getTcpUserTimeout();
-
-            if (IOUringProvider.isAvailable()) {
-                IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
-            } else if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
-                EpollProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
-            } else {
-                logger.warn("Cannot apply tcp user timeout options to channel type " + channelClass.getName());
-            }
-        }
     }
 
     public RedisChannelHandler<?, ?> connection() {
