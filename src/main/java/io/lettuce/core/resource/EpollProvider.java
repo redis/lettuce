@@ -123,6 +123,13 @@ public class EpollProvider {
     }
 
     /**
+     * Apply TcpUserTimeout options.
+     */
+    public static void applyTcpUserTimeout(Bootstrap bootstrap, Duration timeout) {
+        bootstrap.option(EpollChannelOption.TCP_USER_TIMEOUT, Math.toIntExact(timeout.toMillis()));
+    }
+
+    /**
      * {@link EventLoopResources} for available Epoll.
      */
     enum EpollResources implements EventLoopResources {
