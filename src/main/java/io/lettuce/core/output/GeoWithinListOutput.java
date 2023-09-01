@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.output;
 
-import static java.lang.Double.parseDouble;
+import static java.lang.Double.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -35,7 +35,11 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
 
     private V member;
 
+    private boolean hasMember;
+
     private Double distance;
+
+    private boolean hasDistance;
 
     private Long geohash;
 
@@ -43,11 +47,13 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
 
     private Double x;
 
-    private boolean withDistance;
+    private boolean hasX;
 
-    private boolean withHash;
+    private final boolean withDistance;
 
-    private boolean withCoordinates;
+    private final boolean withHash;
+
+    private final boolean withCoordinates;
 
     private Subscriber<GeoWithin<V>> subscriber;
 
@@ -62,8 +68,9 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     @Override
     public void set(long integer) {
 
-        if (member == null) {
+        if (!hasMember) {
             member = (V) (Long) integer;
+            hasMember = true;
             return;
         }
 
@@ -75,8 +82,9 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     @Override
     public void set(ByteBuffer bytes) {
 
-        if (member == null) {
+        if (!hasMember) {
             member = codec.decodeValue(bytes);
+            hasMember = true;
             return;
         }
 
@@ -88,15 +96,17 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
     public void set(double number) {
 
         if (withDistance) {
-            if (distance == null) {
+            if (!hasDistance) {
                 distance = number;
+                hasDistance = true;
                 return;
             }
         }
 
         if (withCoordinates) {
-            if (x == null) {
+            if (!hasX) {
                 x = number;
+                hasX = true;
                 return;
             }
 
@@ -111,10 +121,13 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
             subscriber.onNext(output, new GeoWithin<V>(member, distance, geohash, coordinates));
 
             member = null;
+            hasMember = false;
             distance = null;
+            hasDistance = false;
             geohash = null;
             coordinates = null;
             x = null;
+            hasX = false;
         }
     }
 

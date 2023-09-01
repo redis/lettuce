@@ -32,6 +32,8 @@ public class KeyValueScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamSc
 
     private K key;
 
+    private boolean hasKey;
+
     private KeyValueStreamingChannel<K, V> channel;
 
     public KeyValueScanStreamingOutput(RedisCodec<K, V> codec, KeyValueStreamingChannel<K, V> channel) {
@@ -42,8 +44,9 @@ public class KeyValueScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamSc
     @Override
     protected void setOutput(ByteBuffer bytes) {
 
-        if (key == null) {
+        if (!hasKey) {
             key = codec.decodeKey(bytes);
+            hasKey = true;
             return;
         }
 
@@ -52,6 +55,7 @@ public class KeyValueScanStreamingOutput<K, V> extends ScanOutput<K, V, StreamSc
         channel.onKeyValue(key, value);
         output.setCount(output.getCount() + 1);
         key = null;
+        hasKey = false;
     }
 
 }

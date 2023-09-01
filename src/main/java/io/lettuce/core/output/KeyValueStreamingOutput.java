@@ -35,6 +35,8 @@ public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
 
     private K key;
 
+    private boolean hasKey;
+
     private KeyValueStreamingChannel<K, V> channel;
 
     public KeyValueStreamingOutput(RedisCodec<K, V> codec, KeyValueStreamingChannel<K, V> channel) {
@@ -52,8 +54,9 @@ public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
     public void set(ByteBuffer bytes) {
 
         if (keys == null) {
-            if (key == null) {
+            if (!hasKey) {
                 key = codec.decodeKey(bytes);
+                hasKey = true;
                 return;
             }
         } else {
@@ -67,6 +70,7 @@ public class KeyValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> {
         channel.onKeyValue(key, value);
         output = output.longValue() + 1;
         key = null;
+        hasKey = false;
     }
 
 }

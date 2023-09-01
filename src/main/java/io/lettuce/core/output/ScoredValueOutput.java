@@ -33,6 +33,8 @@ public class ScoredValueOutput<K, V> extends CommandOutput<K, V, ScoredValue<V>>
 
     private V value;
 
+    private boolean hasValue;
+
     public ScoredValueOutput(RedisCodec<K, V> codec) {
         super(codec, ScoredValue.empty());
     }
@@ -44,8 +46,9 @@ public class ScoredValueOutput<K, V> extends CommandOutput<K, V, ScoredValue<V>>
             return;
         }
 
-        if (value == null) {
+        if (!hasValue) {
             value = codec.decodeValue(bytes);
+            hasValue = true;
             return;
         }
 
@@ -57,6 +60,7 @@ public class ScoredValueOutput<K, V> extends CommandOutput<K, V, ScoredValue<V>>
     public void set(double number) {
         output = ScoredValue.just(number, value);
         value = null;
+        hasValue = false;
     }
 
 }

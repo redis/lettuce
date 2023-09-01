@@ -32,6 +32,7 @@ import io.lettuce.core.codec.RedisCodec;
  */
 public class GenericMapOutput<K, V> extends CommandOutput<K, V, Map<K, Object>> {
 
+    boolean hasKey;
     private K key;
 
     public GenericMapOutput(RedisCodec<K, V> codec) {
@@ -41,14 +42,16 @@ public class GenericMapOutput<K, V> extends CommandOutput<K, V, Map<K, Object>> 
     @Override
     public void set(ByteBuffer bytes) {
 
-        if (key == null) {
+        if (!hasKey) {
             key = (bytes == null) ? null : codec.decodeKey(bytes);
+            hasKey = true;
             return;
         }
 
         Object value = (bytes == null) ? null : codec.decodeValue(bytes);
         output.put(key, value);
         key = null;
+        hasKey = false;
     }
 
     @Override
@@ -60,27 +63,31 @@ public class GenericMapOutput<K, V> extends CommandOutput<K, V, Map<K, Object>> 
     @SuppressWarnings("unchecked")
     public void set(long integer) {
 
-        if (key == null) {
+        if (!hasKey) {
             key = (K) Long.valueOf(integer);
+            hasKey = true;
             return;
         }
 
         V value = (V) Long.valueOf(integer);
         output.put(key, value);
         key = null;
+        hasKey = false;
     }
 
     @Override
     public void set(double number) {
 
-        if (key == null) {
+        if (!hasKey) {
             key = (K) Double.valueOf(number);
+            hasKey = true;
             return;
         }
 
         Object value = Double.valueOf(number);
         output.put(key, value);
         key = null;
+        hasKey = false;
     }
 
     @Override

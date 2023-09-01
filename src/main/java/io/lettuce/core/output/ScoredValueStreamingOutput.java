@@ -32,6 +32,8 @@ public class ScoredValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> 
 
     private V value;
 
+    private boolean hasValue;
+
     private final ScoredValueStreamingChannel<V> channel;
 
     public ScoredValueStreamingOutput(RedisCodec<K, V> codec, ScoredValueStreamingChannel<V> channel) {
@@ -42,8 +44,9 @@ public class ScoredValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> 
     @Override
     public void set(ByteBuffer bytes) {
 
-        if (value == null) {
+        if (!hasValue) {
             value = codec.decodeValue(bytes);
+            hasValue = true;
             return;
         }
 
@@ -55,8 +58,9 @@ public class ScoredValueStreamingOutput<K, V> extends CommandOutput<K, V, Long> 
     public void set(double number) {
 
         channel.onValue(ScoredValue.just(number, value));
-        value = null;
         output = output.longValue() + 1;
+        value = null;
+        hasValue = false;
     }
 
 }

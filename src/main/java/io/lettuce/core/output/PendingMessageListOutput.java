@@ -43,6 +43,8 @@ public class PendingMessageListOutput<K, V> extends CommandOutput<K, V, List<Pen
 
     private String consumer;
 
+    private boolean hasConsumer;
+
     private Long msSinceLastDelivery;
 
     public PendingMessageListOutput(RedisCodec<K, V> codec) {
@@ -58,8 +60,9 @@ public class PendingMessageListOutput<K, V> extends CommandOutput<K, V, List<Pen
             return;
         }
 
-        if (consumer == null) {
+        if (!hasConsumer) {
             consumer = StringCodec.UTF8.decodeKey(bytes);
+            hasConsumer = true;
             return;
         }
 
@@ -77,6 +80,7 @@ public class PendingMessageListOutput<K, V> extends CommandOutput<K, V, List<Pen
         PendingMessage message = new PendingMessage(messageId, consumer, msSinceLastDelivery, integer);
         messageId = null;
         consumer = null;
+        hasConsumer = false;
         msSinceLastDelivery = null;
         subscriber.onNext(output, message);
     }

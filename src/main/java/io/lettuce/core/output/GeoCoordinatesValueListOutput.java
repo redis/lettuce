@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.output;
 
-import static java.lang.Double.parseDouble;
+import static java.lang.Double.*;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -33,6 +33,8 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, List<Value<GeoCoordinates>>>
         implements StreamingOutput<Value<GeoCoordinates>> {
+
+    boolean hasX;
 
     private Double x;
 
@@ -60,13 +62,15 @@ public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, Lis
     @Override
     public void set(double number) {
 
-        if (x == null) {
+        if (!hasX) {
             x = number;
+            hasX = true;
             return;
         }
 
         subscriber.onNext(output, Value.fromNullable(new GeoCoordinates(x, number)));
         x = null;
+        hasX = false;
     }
 
     @Override
