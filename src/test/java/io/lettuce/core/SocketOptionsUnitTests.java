@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.SocketOptions.TcpUserTimeoutOptions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -87,5 +88,19 @@ class SocketOptionsUnitTests {
         assertThat(sut.isKeepAlive()).isFalse();
         assertThat(sut.isTcpNoDelay()).isTrue();
         assertThat(sut.getConnectTimeout()).isEqualTo(Duration.ofSeconds(10));
+    }
+
+    @Test
+    void testDefaultTcpUserTimeoutOption() {
+        SocketOptions sut = SocketOptions.builder().build();
+        assertThat(sut.isEnableTcpUserTimeout()).isFalse();
+    }
+
+    @Test
+    void testConfigTcpUserTimeoutOption() {
+        SocketOptions sut = SocketOptions.builder().tcpUserTimeout(TcpUserTimeoutOptions
+            .builder().enable().tcpUserTimeout(Duration.ofSeconds(60)).build()).build();
+        assertThat(sut.isEnableTcpUserTimeout()).isTrue();
+        assertThat(sut.getTcpUserTimeout().getTcpUserTimeout()).isEqualTo(Duration.ofSeconds(60));
     }
 }

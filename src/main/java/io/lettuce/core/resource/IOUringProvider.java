@@ -121,6 +121,13 @@ public class IOUringProvider {
     }
 
     /**
+     * Apply TcpUserTimeout options.
+     */
+    public static void applyTcpUserTimeout(Bootstrap bootstrap, Duration timeout) {
+        bootstrap.option(IOUringChannelOption.TCP_USER_TIMEOUT, Math.toIntExact(timeout.toMillis()));
+    }
+
+    /**
      * {@link EventLoopResources} for available io_uring.
      */
     enum IOUringResources implements EventLoopResources {

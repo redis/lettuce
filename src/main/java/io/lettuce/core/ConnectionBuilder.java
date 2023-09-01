@@ -284,6 +284,18 @@ public class ConnectionBuilder {
                 logger.warn("Cannot apply extended TCP keepalive options to channel type " + channelClass.getName());
             }
         }
+
+        if (options.isEnableTcpUserTimeout()) {
+            SocketOptions.TcpUserTimeoutOptions tcpUserTimeoutOptions = options.getTcpUserTimeout();
+
+            if (IOUringProvider.isAvailable()) {
+                IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+            } else if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
+                EpollProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+            } else {
+                logger.warn("Cannot apply tcp user timeout options to channel type " + channelClass.getName());
+            }
+        }
     }
 
     public RedisChannelHandler<?, ?> connection() {
