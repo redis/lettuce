@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2010-2023 the original author or authors.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<!--
+    A sample context that shows how to integrate MyBatis with Spring using
+    a hand-coded DAO implementation.
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="
+     http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!-- import common beans  -->
+    <import resource="classpath:org/mybatis/spring/sample/config/applicationContext-infrastructure.xml"/>
+
+    <!-- Mock for preventing bean creation error -->
+    <bean id="userMapper" name="userMapper" class="org.mockito.Mockito" factory-method="mock">
+      <constructor-arg>
+        <value type="java.lang.Class">org.mybatis.spring.sample.mapper.UserMapper</value>
+      </constructor-arg>
+    </bean>
+
+    <!-- Classic DAO pattern built with an interface and an implementation. -->
+    <bean id="userDao" class="org.mybatis.spring.sample.dao.UserDaoImpl" autowire="byType" />
+
+    <bean id="barService" class="org.mybatis.spring.sample.service.BarService">
+      <constructor-arg ref="userDao"/>
+    </bean>
+
+</beans>

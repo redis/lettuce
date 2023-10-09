@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2010-2022 the original author or authors.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project name="${project.name}" xmlns="http://maven.apache.org/DECORATION/1.7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/DECORATION/1.7.0 http://maven.apache.org/xsd/decoration-1.7.0.xsd">
+
+  <body>
+    <menu name="참조 문서">
+      <item name="소개" href="index.html"/>
+      <item name="시작하기" href="getting-started.html"/>
+      <item name="SqlSessionFactoryBean" href="factorybean.html"/>
+      <item name="트랜잭션" href="transactions.html" collapse="true">
+        <item name="표준 설정" href="transactions.html#configuration" />
+        <item name="컨테이너 관리 트랜잭션" href="transactions.html#container" />
+        <item name="수동으로 트랜잭션 관리" href="transactions.html#programmatic" />
+      </item>
+      <item name="SqlSession 사용" href="sqlsession.html" collapse="true">
+        <item name="SqlSessionTemplate" href="sqlsession.html#SqlSessionTemplate" />
+        <item name="SqlSessionDaoSupport" href="sqlsession.html#SqlSessionDaoSupport" />
+      </item>
+      <item name="매퍼 주입" href="mappers.html" collapse="true">
+        <item name="매퍼 등록" href="mappers.html#register" />
+        <item name="매퍼 검색" href="mappers.html#scan" />
+      </item>
+      <item name="스프링 부트" href="boot.html"/>
+      <item name="마이바티스 API 사용" href="using-api.html"/>
+      <item name="스프링 배치" href="batch.html"/>
+      <item name="샘플 코드" href="sample.html"/>
+    </menu>
+
+    <menu ref="reports"/>
+  </body>
+</project>
