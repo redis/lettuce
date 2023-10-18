@@ -1,6 +1,11 @@
 [[new-features]]
 = New & Noteworthy
 
+[[new-features.6-3-0]]
+== What's new in Lettuce 6.3
+
+* <<_redis_functions,Redis Function support>> (`fcall` and `FUNCTION` commands).
+
 [[new-features.6-2-0]]
 == What's new in Lettuce 6.2
 

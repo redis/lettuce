@@ -26,7 +26,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
 
 /**
- * {@link List} of command outputs, possibly deeply nested. Decodes simple strings through {@link StringCodec#UTF8}.
+ * {@link List} of flat arrays, possibly deeply nested. Decodes simple strings through {@link StringCodec#UTF8}.
  *
  * @param <K> Key type.
  * @param <V> Value type.

@@ -18,7 +18,13 @@ package io.lettuce.core.protocol;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.output.*;
+import io.lettuce.core.output.BooleanOutput;
+import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.output.NestedMultiOutput;
+import io.lettuce.core.output.ObjectOutput;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.output.ValueOutput;
 
 /**
  * @author Mark Paluch
@@ -68,6 +74,8 @@ public class BaseRedisCommandBuilder<K, V> {
                 return (CommandOutput<K, V, T>) new NestedMultiOutput<>(codec);
             case VALUE:
                 return (CommandOutput<K, V, T>) new ValueOutput<>(codec);
+            case OBJECT:
+                return (CommandOutput<K, V, T>) new ObjectOutput<>(codec);
             default:
                 throw new RedisException("Unsupported script output type");
         }

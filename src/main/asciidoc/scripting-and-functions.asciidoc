@@ -1,0 +1,4 @@
+:command-interfaces-link: <<redis-command-interfaces,Command Interfaces>>
+[[redis-scripting-and-functions]]
+include::{ext-doc}/Scripting-and-Functions.asciidoc[leveloffset=+2]
+

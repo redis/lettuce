@@ -1011,6 +1011,73 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(FLUSHDB, new StatusOutput<>(codec), new CommandArgs<>(codec).add(flushMode));
     }
 
+    <T> Command<K, V, T> fcall(String function, ScriptOutputType type, boolean readonly, K[] keys, V... values) {
+        LettuceAssert.notEmpty(function, "Function " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notNull(type, "ScriptOutputType " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(function).add(keys.length).addKeys(keys).addValues(values);
+        CommandOutput<K, V, T> output = newScriptOutput(codec, type);
+
+        return createCommand(readonly ? FCALL_RO : FCALL, output, args);
+    }
+
+    Command<K, V, String> functionLoad(byte[] functionCode, boolean replace) {
+        LettuceAssert.notNull(functionCode, "Function code " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(LOAD);
+        if (replace) {
+            args.add(REPLACE);
+        }
+        args.add(functionCode);
+
+        return createCommand(FUNCTION, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, byte[]> functionDump() {
+        return createCommand(FUNCTION, new ByteArrayOutput<>(codec), new CommandArgs<>(codec).add(DUMP));
+    }
+
+    Command<K, V, String> functionRestore(byte dump[], FunctionRestoreMode mode) {
+
+        LettuceAssert.notNull(dump, "Function dump " + MUST_NOT_BE_NULL);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(RESTORE).add(dump);
+
+        if (mode != null) {
+            args.add(mode);
+        }
+
+        return createCommand(FUNCTION, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> functionFlush(FlushMode mode) {
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(FLUSH);
+
+        if (mode != null) {
+            args.add(mode);
+        }
+
+        return createCommand(FUNCTION, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> functionKill() {
+        return createCommand(FUNCTION, new StatusOutput<>(codec), new CommandArgs<>(codec).add(KILL));
+    }
+
+    Command<K, V, List<Map<String, Object>>> functionList(String pattern) {
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(LIST);
+
+        if (pattern != null) {
+            args.add("LIBRARYNAME").add(pattern);
+        }
+
+        return createCommand(FUNCTION, (CommandOutput) new ObjectOutput<>(StringCodec.UTF8), args);
+    }
+
     Command<K, V, Long> geoadd(K key, double longitude, double latitude, V member, GeoAddArgs geoArgs) {
         notNullKey(key);
 

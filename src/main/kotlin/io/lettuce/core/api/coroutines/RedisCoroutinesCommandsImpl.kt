@@ -37,6 +37,7 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
 ) : RedisCoroutinesCommands<K, V>, RedisClusterCoroutinesCommands<K, V>,
     BaseRedisCoroutinesCommands<K, V> by BaseRedisCoroutinesCommandsImpl(ops),
     RedisAclCoroutinesCommands<K, V> by RedisAclCoroutinesCommandsImpl(ops),
+    RedisFunctionCoroutinesCommands<K, V> by RedisFunctionCoroutinesCommandsImpl(ops),
     RedisGeoCoroutinesCommands<K, V> by RedisGeoCoroutinesCommandsImpl(ops),
     RedisHashCoroutinesCommands<K, V> by RedisHashCoroutinesCommandsImpl(ops),
     RedisHLLCoroutinesCommands<K, V> by RedisHLLCoroutinesCommandsImpl(ops),

@@ -827,6 +827,71 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public <T> RedisFuture<T> fcall(String function, ScriptOutputType type, K... keys) {
+        return dispatch(commandBuilder.fcall(function, type, false, keys));
+    }
+
+    @Override
+    public <T> RedisFuture<T> fcall(String function, ScriptOutputType type, K[] keys, V... values) {
+        return dispatch(commandBuilder.fcall(function, type, false, keys, values));
+    }
+
+    @Override
+    public <T> RedisFuture<T> fcallReadOnly(String function, ScriptOutputType type, K... keys) {
+        return dispatch(commandBuilder.fcall(function, type, true, keys));
+    }
+
+    @Override
+    public <T> RedisFuture<T> fcallReadOnly(String function, ScriptOutputType type, K[] keys, V... values) {
+        return dispatch(commandBuilder.fcall(function, type, true, keys, values));
+    }
+
+    @Override
+    public RedisFuture<String> functionLoad(String functionCode) {
+        return functionLoad(functionCode, false);
+    }
+
+    @Override
+    public RedisFuture<String> functionLoad(String functionCode, boolean replace) {
+        return dispatch(commandBuilder.functionLoad(encodeFunction(functionCode), replace));
+    }
+
+    @Override
+    public RedisFuture<byte[]> functionDump() {
+        return dispatch(commandBuilder.functionDump());
+    }
+
+    @Override
+    public RedisFuture<String> functionRestore(byte[] dump) {
+        return functionRestore(dump, null);
+    }
+
+    @Override
+    public RedisFuture<String> functionRestore(byte[] dump, FunctionRestoreMode mode) {
+        return dispatch(commandBuilder.functionRestore(dump, mode));
+    }
+
+    @Override
+    public RedisFuture<String> functionFlush(FlushMode flushMode) {
+        return dispatch(commandBuilder.functionFlush(flushMode));
+    }
+
+    @Override
+    public RedisFuture<String> functionKill() {
+        return dispatch(commandBuilder.functionKill());
+    }
+
+    @Override
+    public RedisFuture<List<Map<String, Object>>> functionList() {
+        return functionList(null);
+    }
+
+    @Override
+    public RedisFuture<List<Map<String, Object>>> functionList(String libraryName) {
+        return dispatch(commandBuilder.functionList(libraryName));
+    }
+
+    @Override
     public void flushCommands() {
         connection.flushCommands();
     }
@@ -2904,6 +2969,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Long> zunionstore(K destination, ZStoreArgs zStoreArgs, K... keys) {
         return dispatch(commandBuilder.zunionstore(destination, zStoreArgs, keys));
+    }
+
+    private byte[] encodeFunction(String functionCode) {
+        LettuceAssert.notNull(functionCode, "Function code must not be null");
+        LettuceAssert.notEmpty(functionCode, "Function code script must not be empty");
+        return functionCode.getBytes(getConnection().getOptions().getScriptCharset());
     }
 
     private byte[] encodeScript(String script) {

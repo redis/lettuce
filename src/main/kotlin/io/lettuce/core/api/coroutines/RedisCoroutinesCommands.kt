@@ -30,6 +30,7 @@ import io.lettuce.core.cluster.api.coroutines.RedisClusterCoroutinesCommands
 interface RedisCoroutinesCommands<K : Any, V : Any> :
     BaseRedisCoroutinesCommands<K, V>,
     RedisAclCoroutinesCommands<K, V>,
+    RedisFunctionCoroutinesCommands<K, V>,
     RedisGeoCoroutinesCommands<K, V>,
     RedisHashCoroutinesCommands<K, V>,
     RedisHLLCoroutinesCommands<K, V>,

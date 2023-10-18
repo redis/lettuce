@@ -175,6 +175,7 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
     void evalshaReadOnly() {
         redis.scriptFlush();
         redis.set("foo", "bar");
+
         String digest = redis.scriptLoad("return redis.call('get','foo')");
         String[] keys = new String[0];
         assertThat((String) redis.evalshaReadOnly(digest, STATUS, keys)).isEqualTo("bar");

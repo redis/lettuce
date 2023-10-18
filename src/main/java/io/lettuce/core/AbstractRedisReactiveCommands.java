@@ -887,6 +887,71 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public <T> Flux<T> fcall(String function, ScriptOutputType type, K... keys) {
+        return createFlux(() -> commandBuilder.fcall(function, type, false, keys));
+    }
+
+    @Override
+    public <T> Flux<T> fcall(String function, ScriptOutputType type, K[] keys, V... values) {
+        return createFlux(() -> commandBuilder.fcall(function, type, false, keys, values));
+    }
+
+    @Override
+    public <T> Flux<T> fcallReadOnly(String function, ScriptOutputType type, K... keys) {
+        return createFlux(() -> commandBuilder.fcall(function, type, true, keys));
+    }
+
+    @Override
+    public <T> Flux<T> fcallReadOnly(String function, ScriptOutputType type, K[] keys, V... values) {
+        return createFlux(() -> commandBuilder.fcall(function, type, true, keys, values));
+    }
+
+    @Override
+    public Mono<String> functionLoad(String functionCode) {
+        return functionLoad(functionCode, false);
+    }
+
+    @Override
+    public Mono<String> functionLoad(String functionCode, boolean replace) {
+        return createMono(() -> commandBuilder.functionLoad(encodeScript(functionCode), replace));
+    }
+
+    @Override
+    public Mono<byte[]> functionDump() {
+        return createMono(commandBuilder::functionDump);
+    }
+
+    @Override
+    public Mono<String> functionRestore(byte[] dump) {
+        return createMono(() -> commandBuilder.functionRestore(dump, null));
+    }
+
+    @Override
+    public Mono<String> functionRestore(byte[] dump, FunctionRestoreMode mode) {
+        return createMono(() -> commandBuilder.functionRestore(dump, mode));
+    }
+
+    @Override
+    public Mono<String> functionFlush(FlushMode flushMode) {
+        return createMono(() -> commandBuilder.functionFlush(flushMode));
+    }
+
+    @Override
+    public Mono<String> functionKill() {
+        return createMono(commandBuilder::functionKill);
+    }
+
+    @Override
+    public Flux<Map<String, Object>> functionList() {
+        return createDissolvingFlux(() -> commandBuilder.functionList(null));
+    }
+
+    @Override
+    public Flux<Map<String, Object>> functionList(String libraryName) {
+        return createDissolvingFlux(() -> commandBuilder.functionList(libraryName));
+    }
+
+    @Override
     public void flushCommands() {
         connection.flushCommands();
     }
@@ -2973,6 +3038,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Long> zunionstore(K destination, ZStoreArgs zStoreArgs, K... keys) {
         return createMono(() -> commandBuilder.zunionstore(destination, zStoreArgs, keys));
+    }
+
+    private byte[] encodeFunction(String functionCode) {
+        LettuceAssert.notNull(functionCode, "Function code must not be null");
+        LettuceAssert.notEmpty(functionCode, "Function code script must not be empty");
+        return functionCode.getBytes(getConnection().getOptions().getScriptCharset());
     }
 
     private byte[] encodeScript(String script) {

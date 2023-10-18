@@ -41,3 +41,8 @@ include::{ext-doc}/Pub-Sub.asciidoc[leveloffset=+1]
 === Transactions/Multi
 
 include::{ext-doc}/Transactions.asciidoc[leveloffset=+1]
+
+[[scripting-and-functions]]
+=== Scripting and Functions
+
+include::scripting-and-functions.asciidoc[]
