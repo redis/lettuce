@@ -5,6 +5,9 @@
 == What's new in Lettuce 6.3
 
 * <<_redis_functions,Redis Function support>> (`fcall` and `FUNCTION` commands).
+* Support for Library Name and Version through `LettuceVersion`.
+Automated registration of the Lettuce library version upon connection handshake.
+* Support for Micrometer Tracing to trace observations (distributed tracing and metrics).
 
 [[new-features.6-2-0]]
 == What's new in Lettuce 6.2
