@@ -15,14 +15,10 @@
  */
 package io.lettuce.core.cluster.pubsub;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.inject.Inject;
@@ -34,7 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
-import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -45,12 +40,13 @@ import io.lettuce.core.cluster.pubsub.api.reactive.NodeSelectionPubSubReactiveCo
 import io.lettuce.core.cluster.pubsub.api.reactive.PubSubReactiveNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.sync.NodeSelectionPubSubCommands;
 import io.lettuce.core.cluster.pubsub.api.sync.PubSubNodeSelection;
+import io.lettuce.core.event.command.CommandFailedEvent;
+import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.support.PubSubTestListener;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
-import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Mark Paluch
@@ -61,10 +57,13 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     private final RedisClusterClient clusterClient;
 
     private final PubSubTestListener connectionListener = new PubSubTestListener();
+
     private final PubSubTestListener nodeListener = new PubSubTestListener();
 
     private StatefulRedisClusterConnection<String, String> connection;
+
     private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection;
+
     private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection2;
 
     @Inject
@@ -99,6 +98,34 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         List<String> channelsOnOtherNode = connection.getConnection(otherNode.getNodeId()).sync().pubsubChannels();
         assertThat(channelsOnOtherNode).isEmpty();
+    }
+
+    @Test
+    void myIdWorksAfterDisconnect() throws InterruptedException {
+
+        BlockingQueue<CommandFailedEvent> failedEvents = new LinkedBlockingQueue<CommandFailedEvent>();
+
+        CommandListener listener = new CommandListener() {
+
+            @Override
+            public void commandFailed(CommandFailedEvent event) {
+                failedEvents.add(event);
+            }
+
+        };
+        clusterClient.addListener(listener);
+
+        StatefulRedisClusterPubSubConnection<String, String> pubsub = clusterClient.connectPubSub();
+        pubsub.sync().subscribe("foo");
+        pubsub.async().quit();
+
+        Thread.sleep(100);
+        Wait.untilTrue(pubsub::isOpen).waitOrTimeout();
+
+        pubsub.close();
+        clusterClient.removeListener(listener);
+
+        assertThat(failedEvents).isEmpty();
     }
 
     @Test
@@ -164,8 +191,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
 
         StatefulRedisPubSubConnection<String, String> node = TestFutures
-                .getOrTimeout(pubSubConnection.getConnectionAsync(partition
-                .getNodeId()));
+                .getOrTimeout(pubSubConnection.getConnectionAsync(partition.getNodeId()));
 
         assertThat(node.sync().ping()).isEqualTo("PONG");
     }
@@ -177,8 +203,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         RedisURI uri = partition.getUri();
         StatefulRedisPubSubConnection<String, String> node = TestFutures
-                .getOrTimeout(pubSubConnection.getConnectionAsync(uri.getHost(),
-                uri.getPort()));
+                .getOrTimeout(pubSubConnection.getConnectionAsync(uri.getHost(), uri.getPort()));
 
         assertThat(node.sync().ping()).isEqualTo("PONG");
     }
@@ -297,6 +322,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
             public void message(RedisClusterNode node, String pattern, String channel, String message) {
                 nodes.add(node);
             }
+
         });
 
         PubSubNodeSelection<String, String> masters = pubSubConnection.sync().masters();
@@ -326,4 +352,5 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         throw new IllegalStateException("No other nodes than " + nodeId + " available");
     }
+
 }
