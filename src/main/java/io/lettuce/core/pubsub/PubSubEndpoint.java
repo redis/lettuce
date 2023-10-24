@@ -15,7 +15,12 @@
  */
 package io.lettuce.core.pubsub;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -192,7 +197,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         return ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name());
     }
 
-    private boolean isSubscribed() {
+    public boolean isSubscribed() {
         return subscribeWritten && (hasChannelSubscriptions() || hasPatternSubscriptions());
     }
 

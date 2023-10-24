@@ -171,9 +171,12 @@ class StatefulRedisClusterPubSubConnectionImpl<K, V> extends StatefulRedisPubSub
 
     @Override
     public void activated() {
-        super.activated();
 
-        async.clusterMyId().thenAccept(this::setNodeId);
+        if (!endpoint.isSubscribed()) {
+            async.clusterMyId().thenAccept(this::setNodeId);
+        }
+
+        super.activated();
     }
 
     public void setPartitions(Partitions partitions) {
