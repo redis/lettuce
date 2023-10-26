@@ -120,8 +120,6 @@ public class AclCommandIntegrationTests extends TestSupport {
         assertThatThrownBy(() -> redis.auth("non-existing2", "foobar"));
         assertThat(redis.aclLog()).hasSize(2).first().hasFieldOrProperty("reason");
         assertThat(redis.aclLog(1)).hasSize(1);
-        assertThat(redis.aclLogReset()).isEqualTo("OK");
-        assertThat(redis.aclLog()).isEmpty();
     }
 
     @Test

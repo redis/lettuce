@@ -484,7 +484,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             if (traced != null) {
                 traced.setSpan(span);
-
             }
         }
     }

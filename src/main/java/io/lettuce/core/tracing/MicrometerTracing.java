@@ -18,6 +18,9 @@ package io.lettuce.core.tracing;
 import static io.lettuce.core.tracing.RedisObservation.*;
 
 import java.net.SocketAddress;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CompleteableCommand;
@@ -137,7 +140,7 @@ public class MicrometerTracing implements Tracing {
 
         @Override
         public Span nextSpan() {
-            return this.postProcessSpan(createObservation());
+            return new MicrometerSpan(serviceName, this::createObservation);
         }
 
         @Override
@@ -151,67 +154,16 @@ public class MicrometerTracing implements Tracing {
                     return nextSpan();
                 }
 
-                return postProcessSpan(createObservation().parentObservation(micrometerTraceContext.getObservation()));
+                return new MicrometerSpan(serviceName,
+                        context -> createObservation(context).parentObservation(micrometerTraceContext.getObservation()));
             }
 
             return nextSpan();
         }
 
-        private Observation createObservation() {
-            return REDIS_COMMAND_OBSERVATION.observation(observationRegistry, () -> new LettuceObservationContext(serviceName));
-        }
-
-        private Span postProcessSpan(Observation observation) {
-
-            return observation != null && !observation.isNoop()
-                    ? new MicrometerSpan(observation.observationConvention(observationConvention))
-                    : NoOpSpan.INSTANCE;
-        }
-
-    }
-
-    /**
-     * No-op {@link Span} implemementation.
-     */
-    static class NoOpSpan extends Span {
-
-        static final NoOpSpan INSTANCE = new NoOpSpan();
-
-        public NoOpSpan() {
-        }
-
-        @Override
-        public Span start(RedisCommand<?, ?, ?> command) {
-            return this;
-        }
-
-        @Override
-        public Span name(String name) {
-            return this;
-        }
-
-        @Override
-        public Span annotate(String value) {
-            return this;
-        }
-
-        @Override
-        public Span tag(String key, String value) {
-            return this;
-        }
-
-        @Override
-        public Span error(Throwable throwable) {
-            return this;
-        }
-
-        @Override
-        public Span remoteEndpoint(Endpoint endpoint) {
-            return this;
-        }
-
-        @Override
-        public void finish() {
+        private Observation createObservation(LettuceObservationContext context) {
+            return REDIS_COMMAND_OBSERVATION.observation(observationRegistry, () -> context)
+                    .observationConvention(observationConvention);
         }
 
     }
@@ -221,20 +173,27 @@ public class MicrometerTracing implements Tracing {
      */
     static class MicrometerSpan extends Span {
 
-        private final Observation observation;
+        private final LettuceObservationContext context;
 
-        private RedisCommand<?, ?, ?> command;
+        private final Function<LettuceObservationContext, Observation> observationFactory;
 
-        public MicrometerSpan(Observation observation) {
-            this.observation = observation;
+        private Map<String, String> highCardinalityKeyValue;
+
+        private Observation observation;
+
+        public MicrometerSpan(String serviceName, Function<LettuceObservationContext, Observation> observationFactory) {
+            this.context = new LettuceObservationContext(serviceName);
+            this.observationFactory = observationFactory;
         }
 
         @Override
         public Span start(RedisCommand<?, ?, ?> command) {
 
-            ((LettuceObservationContext) observation.getContext()).setCommand(command);
-
-            this.command = command;
+            this.context.setCommand(command);
+            this.observation = observationFactory.apply(context);
+            if (this.highCardinalityKeyValue != null) {
+                this.highCardinalityKeyValue.forEach(this.observation::highCardinalityKeyValue);
+            }
 
             if (command instanceof CompleteableCommand<?>) {
 
@@ -246,7 +205,7 @@ public class MicrometerTracing implements Tracing {
 
                         String error = command.getOutput().getError();
                         if (error != null) {
-                            observation.highCardinalityKeyValue(HighCardinalityCommandKeyNames.ERROR.withValue(error));
+                            this.observation.highCardinalityKeyValue(HighCardinalityCommandKeyNames.ERROR.withValue(error));
                         } else if (throwable != null) {
                             error(throwable);
                         }
@@ -259,7 +218,7 @@ public class MicrometerTracing implements Tracing {
                         + " must implement CompleteableCommand to attach Span completion to command completion");
             }
 
-            observation.start();
+            this.observation.start();
             return this;
         }
 
@@ -275,26 +234,28 @@ public class MicrometerTracing implements Tracing {
 
         @Override
         public Span tag(String key, String value) {
-            observation.highCardinalityKeyValue(key, value);
+            if (this.highCardinalityKeyValue == null) {
+                this.highCardinalityKeyValue = new HashMap<>();
+            }
+            this.highCardinalityKeyValue.put(key, value);
             return this;
         }
 
         @Override
         public Span error(Throwable throwable) {
-            observation.error(throwable);
+            this.observation.error(throwable);
             return this;
         }
 
         @Override
         public Span remoteEndpoint(Endpoint endpoint) {
-
-            ((LettuceObservationContext) observation.getContext()).setEndpoint(endpoint);
+            this.context.setEndpoint(endpoint);
             return this;
         }
 
         @Override
         public void finish() {
-            observation.stop();
+            this.observation.stop();
         }
 
     }

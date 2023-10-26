@@ -17,9 +17,13 @@ package io.lettuce.core.tracing;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.concurrent.LinkedBlockingQueue;
+
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
@@ -53,8 +57,18 @@ public class SynchronousIntegrationTests extends SampleTestRunner {
     @Override
     public SampleTestRunnerConsumer yourCode() {
 
+        LinkedBlockingQueue<RedisCommand<?, ?, ?>> commands = new LinkedBlockingQueue<>();
+        ObservationRegistry observationRegistry = createObservationRegistry();
+        observationRegistry.observationConfig().observationPredicate((s, context) -> {
+
+            if (context instanceof LettuceObservationContext) {
+                commands.add(((LettuceObservationContext) context).getRequiredCommand());
+            }
+
+            return true;
+        });
         ClientResources clientResources = ClientResources.builder()
-                .tracing(new MicrometerTracing(createObservationRegistry(), "Redis", true)).build();
+                .tracing(new MicrometerTracing(observationRegistry, "Redis", true)).build();
 
         return (tracer, meterRegistry) -> {
 
@@ -65,6 +79,8 @@ public class SynchronousIntegrationTests extends SampleTestRunner {
             connection.sync().ping();
 
             connection.close();
+            FastShutdown.shutdown(redisClient);
+            FastShutdown.shutdown(clientResources);
 
             assertThat(tracer.getFinishedSpans()).isNotEmpty();
             System.out.println(((SimpleMeterRegistry) meterRegistry).getMetersAsString());
@@ -78,8 +94,7 @@ public class SynchronousIntegrationTests extends SampleTestRunner {
                 assertThat(finishedSpan.getTags()).containsKeys("db.operation");
             }
 
-            FastShutdown.shutdown(redisClient);
-            FastShutdown.shutdown(clientResources);
+            assertThat(commands).extracting(RedisCommand::getType).contains(CommandType.PING, CommandType.HELLO);
         };
     }
 
