@@ -222,8 +222,9 @@ public class MicrometerOptions {
         }
 
         /**
-         * Sets the emitted percentiles. Defaults to 0.50, 0.90, 0.95, 0.99, 0.999}. Only applicable when histogram is enabled.
-         * See {@link MicrometerOptions#DEFAULT_TARGET_PERCENTILES}.
+         * Sets the emitted percentiles. Defaults to {@code 0.50, 0.90, 0.95, 0.99, 0.999} for the 50th, 90th, 95th, 99th, and
+         * 99th percentiles. Only applicable when histogram is enabled. See
+         * {@link MicrometerOptions#DEFAULT_TARGET_PERCENTILES}.
          *
          * @param targetPercentiles the percentiles which should be emitted, must not be {@code null}
          * @return this {@link Builder}.
