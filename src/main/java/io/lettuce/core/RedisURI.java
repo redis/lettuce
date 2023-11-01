@@ -652,7 +652,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Sets the library name to be applied on Redis connections.
      *
      * @param libraryName the library name.
-     * @since 4.4
+     * @since 6.3
      */
     public void setLibraryName(String libraryName) {
         if (libraryName != null && libraryName.indexOf(' ') != -1) {
@@ -675,7 +675,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
      * Sets the library version to be applied on Redis connections.
      *
      * @param libraryVersion the library version.
-     * @since 4.4
+     * @since 6.3
      */
     public void setLibraryVersion(String libraryVersion) {
         if (libraryVersion != null && libraryVersion.indexOf(' ') != -1) {
