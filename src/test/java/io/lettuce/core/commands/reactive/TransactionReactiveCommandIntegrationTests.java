@@ -21,7 +21,6 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.Test;
 
-import reactor.test.StepVerifier;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisException;
@@ -29,6 +28,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.commands.TransactionCommandIntegrationTests;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
+import reactor.test.StepVerifier;
 
 /**
  * @author Mark Paluch
@@ -54,7 +54,7 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
 
         StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
-        commands.set(key, value).toProcessor();
+        commands.set(key, value).toFuture();
 
         StepVerifier.create(commands.discard()).expectNext("OK").verifyComplete();
         StepVerifier.create(commands.get(key)).verifyComplete();
@@ -70,7 +70,7 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
         StepVerifier.create(commands.watch(key)).expectNext("OK").verifyComplete();
         StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
-        commands.set(key, value).toProcessor();
+        commands.set(key, value).toFuture();
 
         otherConnection.sync().del(key);
 
@@ -97,9 +97,9 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
     void errorInMulti() {
 
         StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
-        commands.set(key, value).toProcessor();
-        commands.lpop(key).toProcessor();
-        commands.get(key).toProcessor();
+        commands.set(key, value).toFuture();
+        commands.lpop(key).toFuture();
+        commands.get(key).toFuture();
 
         StepVerifier.create(commands.exec()).consumeNextWith(actual -> {
 
@@ -135,10 +135,10 @@ public class TransactionReactiveCommandIntegrationTests extends TransactionComma
 
         StepVerifier.create(commands.multi()).expectNext("OK").verifyComplete();
 
-        commands.set("key1", "value1").toProcessor();
-        commands.set("key2", "value2").toProcessor();
-        commands.mget("key1", "key2").collectList().toProcessor();
-        commands.llen("something").toProcessor();
+        commands.set("key1", "value1").toFuture();
+        commands.set("key2", "value2").toFuture();
+        commands.mget("key1", "key2").collectList().toFuture();
+        commands.llen("something").toFuture();
 
         StepVerifier.create(commands.exec()).consumeNextWith(actual -> {
 
