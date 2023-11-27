@@ -22,6 +22,8 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
@@ -309,6 +311,8 @@ class RedisHandshake implements ConnectionInitializer {
      */
     static class RedisVersion {
 
+        private final static Pattern BUGFIX_PATTERN = Pattern.compile("(\\d+).*");
+
         private final static RedisVersion UNKNOWN = new RedisVersion("0.0.0");
 
         private final static RedisVersion UNSTABLE = new RedisVersion("255.255.255");
@@ -334,7 +338,10 @@ class RedisHandshake implements ConnectionInitializer {
             }
 
             if (split.length > 2) {
-                bugfix = Integer.parseInt(split[2]);
+                Matcher matcher = BUGFIX_PATTERN.matcher(split[2]);
+                if (matcher.find()) {
+                    bugfix = Integer.parseInt(matcher.group(1));
+                }
             }
 
             this.major = major;
