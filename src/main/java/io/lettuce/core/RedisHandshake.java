@@ -22,9 +22,12 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
@@ -309,6 +312,8 @@ class RedisHandshake implements ConnectionInitializer {
      */
     static class RedisVersion {
 
+        private static final Pattern DECIMALS = Pattern.compile("(\\d+)");
+
         private final static RedisVersion UNKNOWN = new RedisVersion("0.0.0");
 
         private final static RedisVersion UNSTABLE = new RedisVersion("255.255.255");
@@ -321,20 +326,24 @@ class RedisHandshake implements ConnectionInitializer {
 
         private RedisVersion(String version) {
 
-            String[] split = version.split("\\.");
-
             int major = 0;
             int minor = 0;
             int bugfix = 0;
-            if (split.length > 0) {
-                major = Integer.parseInt(split[0]);
-            }
-            if (split.length > 1) {
-                minor = Integer.parseInt(split[1]);
-            }
 
-            if (split.length > 2) {
-                bugfix = Integer.parseInt(split[2]);
+            LettuceAssert.notNull(version, "Version must not be null");
+
+            Matcher matcher = DECIMALS.matcher(version);
+
+            if (matcher.find()) {
+                major = Integer.parseInt(matcher.group(1));
+
+                if (matcher.find()) {
+                    minor = Integer.parseInt(matcher.group(1));
+                }
+
+                if (matcher.find()) {
+                    bugfix = Integer.parseInt(matcher.group(1));
+                }
             }
 
             this.major = major;

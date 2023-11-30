@@ -86,6 +86,20 @@ class RedisHandshakeUnitTests {
         assertThat(state.getNegotiatedProtocolVersion()).isEqualTo(ProtocolVersion.RESP2);
     }
 
+    @Test
+    void shouldParseVersionWithCharacters() {
+
+        assertThat(RedisHandshake.RedisVersion.of("1.2.3").toString()).isEqualTo("1.2.3");
+        assertThat(RedisHandshake.RedisVersion.of("01.02.03").toString()).isEqualTo("1.2.3");
+        assertThat(RedisHandshake.RedisVersion.of("01.02").toString()).isEqualTo("1.2.0");
+        assertThat(RedisHandshake.RedisVersion.of("01").toString()).isEqualTo("1.0.0");
+
+        assertThat(RedisHandshake.RedisVersion.of("1.2a.3").toString()).isEqualTo("1.2.3");
+        assertThat(RedisHandshake.RedisVersion.of("1.2.3a").toString()).isEqualTo("1.2.3");
+        assertThat(RedisHandshake.RedisVersion.of("1.2.3(c)").toString()).isEqualTo("1.2.3");
+        assertThat(RedisHandshake.RedisVersion.of("a.2.3(c)").toString()).isEqualTo("2.3.0");
+    }
+
     private static void helloResponse(CommandOutput<String, String, Map<String, String>> output) {
 
         output.multiMap(8);
