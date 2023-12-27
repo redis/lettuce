@@ -15,7 +15,7 @@
  */
 package io.lettuce.core.cluster;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions.RefreshTrigger;
 
 /**
+ * Unit tests for {@link ClusterTopologyRefreshOptions}.
+ *
  * @author Mark Paluch
  */
 class ClusterTopologyRefreshOptionsUnitTests {
@@ -80,16 +82,16 @@ class ClusterTopologyRefreshOptionsUnitTests {
 
         assertThat(options.getRefreshPeriod()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_REFRESH_PERIOD_DURATION);
         assertThat(options.isCloseStaleConnections()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_CLOSE_STALE_CONNECTIONS);
-        assertThat(options.isPeriodicRefreshEnabled())
-                .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_PERIODIC_REFRESH_ENABLED).isFalse();
+        assertThat(options.isPeriodicRefreshEnabled()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_PERIODIC_REFRESH_ENABLED)
+                .isFalse();
         assertThat(options.useDynamicRefreshSources()).isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_DYNAMIC_REFRESH_SOURCES)
                 .isTrue();
-        assertThat(options.getAdaptiveRefreshTimeout()).isEqualTo(
-                ClusterTopologyRefreshOptions.DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_DURATION);
-        assertThat(options.getAdaptiveRefreshTriggers()).isEqualTo(
-                ClusterTopologyRefreshOptions.DEFAULT_ADAPTIVE_REFRESH_TRIGGERS);
-        assertThat(options.getRefreshTriggersReconnectAttempts()).isEqualTo(
-                ClusterTopologyRefreshOptions.DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS);
+        assertThat(options.getAdaptiveRefreshTimeout())
+                .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_DURATION);
+        assertThat(options.getAdaptiveRefreshTriggers())
+                .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_ADAPTIVE_REFRESH_TRIGGERS);
+        assertThat(options.getRefreshTriggersReconnectAttempts())
+                .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS);
     }
 
     @Test
@@ -102,4 +104,13 @@ class ClusterTopologyRefreshOptionsUnitTests {
         assertThat(options.getAdaptiveRefreshTriggers()).contains(RefreshTrigger.ASK_REDIRECT, RefreshTrigger.MOVED_REDIRECT,
                 RefreshTrigger.PERSISTENT_RECONNECTS);
     }
+
+    @Test
+    void emptyTriggersShouldFail() {
+
+        ClusterTopologyRefreshOptions.Builder builder = ClusterTopologyRefreshOptions.builder();
+
+        assertThatIllegalArgumentException().isThrownBy(builder::enableAdaptiveRefreshTrigger);
+    }
+
 }
