@@ -15,6 +15,7 @@
  */
 package io.lettuce.core.protocol;
 
+import reactor.util.annotation.Nullable;
 import io.lettuce.core.output.CommandOutput;
 import io.netty.buffer.ByteBuf;
 
@@ -62,6 +63,7 @@ public interface RedisCommand<K, V, T> {
     /**
      * @return the current command args.
      */
+    @Nullable
     CommandArgs<K, V> getArgs();
 
     /**
