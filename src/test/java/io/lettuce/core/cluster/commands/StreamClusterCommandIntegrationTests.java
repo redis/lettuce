@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Disabled;
 import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.commands.StreamCommandIntegrationTests;
+import org.junit.jupiter.api.Test;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisStreamCommands} using Redis Cluster.
@@ -36,12 +37,14 @@ class StreamClusterCommandIntegrationTests extends StreamCommandIntegrationTests
     }
 
     @Disabled("MULTI not available on Redis Cluster")
+    @Test
     @Override
     public void xreadTransactional() {
         super.xreadTransactional();
     }
 
     @Disabled("Required node reconfiguration with stream-node-max-entries")
+    @Test
     @Override
     public void xaddMinidLimit() {
         super.xaddMinidLimit();
