@@ -137,6 +137,34 @@ class DefaultEndpointUnitTests {
     }
 
     @Test
+    void writeShouldGuaranteeFIFOOrder() {
+        sut.write(Collections.singletonList(new Command<>(CommandType.SELECT, new StatusOutput<>(StringCodec.UTF8))));
+
+        sut.registerConnectionWatchdog(connectionWatchdog);
+        doAnswer(i -> sut.write(new Command<>(CommandType.AUTH, new StatusOutput<>(StringCodec.UTF8)))).when(connectionWatchdog)
+                .arm();
+        when(channel.isActive()).thenReturn(true);
+
+        sut.notifyChannelActive(channel);
+
+        DefaultChannelPromise promise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+
+        when(channel.writeAndFlush(any())).thenAnswer(invocation -> {
+            if (invocation.getArguments()[0] instanceof RedisCommand) {
+                queue.add((RedisCommand) invocation.getArguments()[0]);
+            }
+
+            if (invocation.getArguments()[0] instanceof Collection) {
+                queue.addAll((Collection) invocation.getArguments()[0]);
+            }
+            return promise;
+        });
+
+        assertThat(queue).hasSize(2).first().hasFieldOrPropertyWithValue("type", CommandType.SELECT);
+        assertThat(queue).hasSize(2).last().hasFieldOrPropertyWithValue("type", CommandType.AUTH);
+    }
+
+    @Test
     void writeConnectedShouldWriteCommandToChannel() {
 
         when(channel.isActive()).thenReturn(true);
@@ -396,11 +424,9 @@ class DefaultEndpointUnitTests {
 
         when(channel.isActive()).thenReturn(true);
         ConnectionTestUtil.getDisconnectedBuffer(sut)
-                .add(new ActivationCommand<>(
-                new Command<>(CommandType.SELECT, new StatusOutput<>(StringCodec.UTF8))));
+                .add(new ActivationCommand<>(new Command<>(CommandType.SELECT, new StatusOutput<>(StringCodec.UTF8))));
         ConnectionTestUtil.getDisconnectedBuffer(sut).add(new LatencyMeteredCommand<>(
-                new ActivationCommand<>(
-                new Command<>(CommandType.SUBSCRIBE, new StatusOutput<>(StringCodec.UTF8)))));
+                new ActivationCommand<>(new Command<>(CommandType.SUBSCRIBE, new StatusOutput<>(StringCodec.UTF8)))));
 
         doAnswer(i -> {
 
