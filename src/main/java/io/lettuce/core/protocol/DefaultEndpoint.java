@@ -63,11 +63,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
     private static final AtomicLong ENDPOINT_COUNTER = new AtomicLong();
 
-    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater
-            .newUpdater(DefaultEndpoint.class, "queueSize");
+    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater.newUpdater(
+            DefaultEndpoint.class, "queueSize");
 
-    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> STATUS = AtomicIntegerFieldUpdater
-            .newUpdater(DefaultEndpoint.class, "status");
+    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> STATUS = AtomicIntegerFieldUpdater.newUpdater(
+            DefaultEndpoint.class, "status");
 
     private static final int ST_OPEN = 0;
 
@@ -745,8 +745,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         List<RedisCommand<?, ?, ?>> target = new ArrayList<>(disconnectedBuffer.size() + commandBuffer.size());
 
-        target.addAll(drainCommands(disconnectedBuffer));
-        target.addAll(drainCommands(commandBuffer));
+        drainCommands(disconnectedBuffer, target);
+        drainCommands(commandBuffer, target);
 
         return target;
     }
@@ -761,6 +761,19 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         List<RedisCommand<?, ?, ?>> target = new ArrayList<>(source.size());
 
+        drainCommands(source, target);
+        return target;
+    }
+
+    /**
+     * Drain commands from a queue and return only active commands.
+     *
+     * @param source the source queue.
+     * @return List of commands.
+     */
+    private static void drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source,
+            List<RedisCommand<?, ?, ?>> target) {
+
         RedisCommand<?, ?, ?> cmd;
         while ((cmd = source.poll()) != null) {
 
@@ -768,8 +781,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 target.add(cmd);
             }
         }
-
-        return target;
     }
 
     private void cancelBufferedCommands(String message) {
