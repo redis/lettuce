@@ -23,6 +23,7 @@ import io.netty.buffer.ByteBuf;
  * A {@link RedisCodec} that uses plain byte arrays without further transformations.
  *
  * @author Mark Paluch
+ * @author shikharid
  * @since 3.3
  */
 public class ByteArrayCodec implements RedisCodec<byte[], byte[]>, ToByteBufEncoder<byte[], byte[]> {
@@ -52,6 +53,11 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]>, ToByteBufEnco
         }
 
         return ((byte[]) keyOrValue).length;
+    }
+
+    @Override
+    public boolean isEstimateExact() {
+        return true;
     }
 
     @Override
