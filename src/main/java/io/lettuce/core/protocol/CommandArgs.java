@@ -45,6 +45,7 @@ import io.netty.buffer.UnpooledByteBufAllocator;
  * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
+ * @author shikharid
  */
 public class CommandArgs<K, V> {
 
@@ -682,14 +683,25 @@ public class CommandArgs<K, V> {
             if (codec instanceof ToByteBufEncoder) {
 
                 ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
-                ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(key) + 6);
 
-                try {
+                if (toByteBufEncoder.isEstimateExact()) {
+                    target.writeByte('$');
 
-                    toByteBufEncoder.encodeKey(key, temporaryBuffer);
-                    ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
-                } finally {
-                    temporaryBuffer.release();
+                    IntegerArgument.writeInteger(target, toByteBufEncoder.estimateSize(key));
+                    target.writeBytes(CRLF);
+
+                    toByteBufEncoder.encodeKey(key, target);
+                    target.writeBytes(CRLF);
+                } else {
+                    ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(key) + 6);
+
+                    try {
+
+                        toByteBufEncoder.encodeKey(key, temporaryBuffer);
+                        ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
+                    } finally {
+                        temporaryBuffer.release();
+                    }
                 }
 
                 return;
@@ -727,13 +739,23 @@ public class CommandArgs<K, V> {
             if (codec instanceof ToByteBufEncoder) {
 
                 ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
-                ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(val) + 6);
+                if (toByteBufEncoder.isEstimateExact()) {
+                    target.writeByte('$');
 
-                try {
-                    toByteBufEncoder.encodeValue(val, temporaryBuffer);
-                    ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
-                } finally {
-                    temporaryBuffer.release();
+                    IntegerArgument.writeInteger(target, toByteBufEncoder.estimateSize(val));
+                    target.writeBytes(CRLF);
+
+                    toByteBufEncoder.encodeValue(val, target);
+                    target.writeBytes(CRLF);
+                } else {
+                    ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(val) + 6);
+
+                    try {
+                        toByteBufEncoder.encodeValue(val, temporaryBuffer);
+                        ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
+                    } finally {
+                        temporaryBuffer.release();
+                    }
                 }
 
                 return;

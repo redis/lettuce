@@ -28,12 +28,14 @@ import org.openjdk.jmh.runner.options.TimeValue;
  * Manual JMH Test Launcher.
  *
  * @author Mark Paluch
+ * @author shikharid
  */
 public class JmhMain {
 
     public static void main(String... args) throws RunnerException {
 
-        runCommandBenchmark();
+        //runCommandBenchmark();
+        runExactVsEstimatedSizeEncoderBenchmark();
     }
 
     private static void runCommandBenchmark() throws RunnerException {
@@ -41,6 +43,21 @@ public class JmhMain {
         new Runner(prepareOptions().mode(Mode.AverageTime) //
                 .timeUnit(TimeUnit.NANOSECONDS) //
                 .include(".*CodecBenchmark.*") //
+                .build()).run();
+    }
+
+    private static void runExactVsEstimatedSizeEncoderBenchmark() throws RunnerException {
+
+        // measure time-per-op
+        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
+                .include(".*ExactVsEstimatedSizeCodecBenchmark.*")
+                .addProfiler("gc")
+                .build()).run();
+
+        // measure thrpt (ops/sec)
+        new Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS)
+                .include(".*ExactVsEstimatedSizeCodecBenchmark.*")
+                .addProfiler("gc")
                 .build()).run();
     }
 
