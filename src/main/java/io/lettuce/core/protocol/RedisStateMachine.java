@@ -37,6 +37,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Will Glozer
  * @author Mark Paluch
  * @author Helly Guo
+ * @author shikharid
  */
 public class RedisStateMachine {
 
@@ -225,9 +226,27 @@ public class RedisStateMachine {
             return sb.toString();
         }
 
+        void reset() {
+            this.type = null;
+            this.count = NOT_FOUND;
+        }
+
+        /**
+         * Pre-allocates a State array of given len
+         *
+         * @param len len of the states array to be created
+         * @return array of State's of len size
+         */
+        private static State[] createStates(int len) {
+            final State[] stack = new State[len];
+            for (int i = 0;i < len; ++i) {
+                stack[i] = new State();
+            }
+            return stack;
+        }
     }
 
-    private final State[] stack = new State[32];
+    private final State[] stack = State.createStates(32);
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
@@ -290,7 +309,7 @@ public class RedisStateMachine {
         buffer.touch("RedisStateMachine.decode(…)");
 
         if (isEmpty(stack)) {
-            add(stack, new State());
+            addHead(stack);
         }
 
         if (output == null) {
@@ -549,7 +568,7 @@ public class RedisStateMachine {
         }
 
         state.count--;
-        rsm.addFirst(rsm.stack, new State());
+        rsm.addHead(rsm.stack);
 
         return State.Result.CONTINUE_LOOP;
     }
@@ -587,7 +606,9 @@ public class RedisStateMachine {
      * Reset the state machine.
      */
     public void reset() {
-        Arrays.fill(stack, null);
+        for (State state : stack) {
+            state.reset();
+        }
         stackElements = 0;
     }
 
@@ -689,18 +710,16 @@ public class RedisStateMachine {
      * @param stack
      */
     private void remove(State[] stack) {
-        stack[stackElements - 1] = null;
-        stackElements--;
+        stack[--stackElements].reset();
     }
 
     /**
      * Add the element to the stack to be the new head element.
      *
      * @param stack
-     * @param state
      */
-    private void addFirst(State[] stack, State state) {
-        stack[stackElements++] = state;
+    private void addHead(State[] stack) {
+        ++stackElements;
     }
 
     /**
@@ -711,22 +730,6 @@ public class RedisStateMachine {
      */
     private State peek(State[] stack) {
         return stack[stackElements - 1];
-    }
-
-    /**
-     * Add a state as tail element. This method shifts the whole stack if the stack is not empty.
-     *
-     * @param stack
-     * @param state
-     */
-    private void add(State[] stack, State state) {
-
-        if (stackElements != 0) {
-            System.arraycopy(stack, 0, stack, 1, stackElements);
-        }
-
-        stack[0] = state;
-        stackElements++;
     }
 
     /**
