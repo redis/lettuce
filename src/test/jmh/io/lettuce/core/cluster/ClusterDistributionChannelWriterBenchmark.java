@@ -22,6 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import io.lettuce.core.protocol.ConnectionIntent;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
@@ -69,7 +70,7 @@ public class ClusterDistributionChannelWriterBenchmark {
     @Setup
     public void setup() {
 
-        writer = new ClusterDistributionChannelWriter(CLIENT_OPTIONS, EMPTY_WRITER, ClusterEventListener.NO_OP);
+        writer = new ClusterDistributionChannelWriter(EMPTY_WRITER, CLIENT_OPTIONS, ClusterEventListener.NO_OP);
 
         Partitions partitions = new Partitions();
 

@@ -35,9 +35,9 @@ public class JmhMain {
 
         // run selectively
         // runCommandBenchmark();
-        runCommandHandlerBenchmark();
+        // runCommandHandlerBenchmark();
         // runRedisEndpointBenchmark();
-        // runRedisStateMachineBenchmark();
+        runRedisStateMachineBenchmark();
         // runCommandEncoderBenchmark();
 
         // or all
@@ -83,14 +83,21 @@ public class JmhMain {
 
     private static void runRedisStateMachineBenchmark() throws RunnerException {
 
-        new Runner(prepareOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
+        // measures AverageTime in ns (time/op)
+        new Runner(prepareRSMOptions().mode(Mode.AverageTime).timeUnit(TimeUnit.NANOSECONDS)
                 .include(".*RedisStateMachineBenchmark.*").build()).run();
-        // new
-        // Runner(prepareOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS).include(".*CommandHandlerBenchmark.*").build()).run();
+
+        // measures Throughput (ops/sec)
+        new Runner(prepareRSMOptions().mode(Mode.Throughput).timeUnit(TimeUnit.SECONDS)
+                .include(".*RedisStateMachineBenchmark.*").build()).run();
     }
 
     private static ChainedOptionsBuilder prepareOptions() {
         return new OptionsBuilder().forks(1).warmupIterations(5).threads(1).measurementIterations(5)
                 .timeout(TimeValue.seconds(2));
+    }
+
+    private static ChainedOptionsBuilder prepareRSMOptions() {
+        return prepareOptions().addProfiler("gc");
     }
 }
