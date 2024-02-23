@@ -27,6 +27,7 @@ import io.netty.buffer.ByteBuf;
  * </p>
  *
  * @author Mark Paluch
+ * @author shikharid
  * @since 4.3
  */
 public interface ToByteBufEncoder<K, V> {
@@ -55,5 +56,15 @@ public interface ToByteBufEncoder<K, V> {
      * @return the estimated number of bytes in the encoded representation.
      */
     int estimateSize(Object keyOrValue);
+
+    /**
+     * Returns true if {@link ToByteBufEncoder#estimateSize(Object)} returns exact size
+     * This is used as an optimisation to reduce memory allocations when encoding data
+     *
+     * @return true if {@link ToByteBufEncoder#estimateSize(Object)} returns exact size
+     */
+    default boolean isEstimateExact() {
+        return false;
+    }
 
 }
