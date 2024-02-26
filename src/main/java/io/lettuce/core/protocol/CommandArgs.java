@@ -547,9 +547,9 @@ public class CommandArgs<K, V> {
 
     static class IntegerCache {
 
-        static final IntegerArgument cache[];
+        static final IntegerArgument[] cache;
 
-        static final IntegerArgument negativeCache[];
+        static final IntegerArgument[] negativeCache;
 
         static {
             int high = Integer.getInteger("io.lettuce.core.CommandArgs.IntegerCache", 128);
@@ -648,8 +648,8 @@ public class CommandArgs<K, V> {
             IntegerArgument.writeInteger(target, value.length);
             target.writeBytes(CRLF);
 
-            for (int i = 0; i < value.length; i++) {
-                target.writeByte((byte) value[i]);
+            for (char c : value) {
+                target.writeByte((byte) c);
             }
             target.writeBytes(CRLF);
         }
@@ -681,29 +681,7 @@ public class CommandArgs<K, V> {
         void encode(ByteBuf target) {
 
             if (codec instanceof ToByteBufEncoder) {
-
-                ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
-
-                if (toByteBufEncoder.isEstimateExact()) {
-                    target.writeByte('$');
-
-                    IntegerArgument.writeInteger(target, toByteBufEncoder.estimateSize(key));
-                    target.writeBytes(CRLF);
-
-                    toByteBufEncoder.encodeKey(key, target);
-                    target.writeBytes(CRLF);
-                } else {
-                    ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(key) + 6);
-
-                    try {
-
-                        toByteBufEncoder.encodeKey(key, temporaryBuffer);
-                        ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
-                    } finally {
-                        temporaryBuffer.release();
-                    }
-                }
-
+                CommandArgs.encode(target, (ToByteBufEncoder<K, K>) codec, key, ToByteBufEncoder::encodeKey);
                 return;
             }
 
@@ -737,27 +715,7 @@ public class CommandArgs<K, V> {
         void encode(ByteBuf target) {
 
             if (codec instanceof ToByteBufEncoder) {
-
-                ToByteBufEncoder<K, V> toByteBufEncoder = (ToByteBufEncoder<K, V>) codec;
-                if (toByteBufEncoder.isEstimateExact()) {
-                    target.writeByte('$');
-
-                    IntegerArgument.writeInteger(target, toByteBufEncoder.estimateSize(val));
-                    target.writeBytes(CRLF);
-
-                    toByteBufEncoder.encodeValue(val, target);
-                    target.writeBytes(CRLF);
-                } else {
-                    ByteBuf temporaryBuffer = target.alloc().buffer(toByteBufEncoder.estimateSize(val) + 6);
-
-                    try {
-                        toByteBufEncoder.encodeValue(val, temporaryBuffer);
-                        ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
-                    } finally {
-                        temporaryBuffer.release();
-                    }
-                }
-
+                CommandArgs.encode(target, (ToByteBufEncoder<V, V>) codec, val, ToByteBufEncoder::encodeValue);
                 return;
             }
 
@@ -768,6 +726,35 @@ public class CommandArgs<K, V> {
         public String toString() {
             return String.format("value<%s>", new StringCodec().decodeValue(codec.encodeValue(val)));
         }
+
+    }
+
+    static <T> void encode(ByteBuf target, ToByteBufEncoder<T, T> encoder, T item, EncodeFunction<T> encodeFunction) {
+
+        if (encoder.isEstimateExact()) {
+
+            target.writeByte('$');
+            IntegerArgument.writeInteger(target, encoder.estimateSize(item));
+            target.writeBytes(CRLF);
+
+            encodeFunction.encode(encoder, item, target);
+            target.writeBytes(CRLF);
+        } else {
+
+            ByteBuf temporaryBuffer = target.alloc().buffer(encoder.estimateSize(item) + 6);
+
+            try {
+                encodeFunction.encode(encoder, item, temporaryBuffer);
+                ByteBufferArgument.writeByteBuf(target, temporaryBuffer);
+            } finally {
+                temporaryBuffer.release();
+            }
+        }
+    }
+
+    interface EncodeFunction<T> {
+
+        void encode(ToByteBufEncoder<T, T> encoder, T item, ByteBuf target);
 
     }
 

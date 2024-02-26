@@ -58,10 +58,11 @@ public interface ToByteBufEncoder<K, V> {
     int estimateSize(Object keyOrValue);
 
     /**
-     * Returns true if {@link ToByteBufEncoder#estimateSize(Object)} returns exact size
-     * This is used as an optimisation to reduce memory allocations when encoding data
+     * Returns {@code true} if {@link #estimateSize(Object)} returns exact size This is used as an optimization to reduce memory
+     * allocations when encoding data.
      *
-     * @return true if {@link ToByteBufEncoder#estimateSize(Object)} returns exact size
+     * @return {@code true} if {@link #estimateSize(Object)} returns exact size.
+     * @since 6.3.2
      */
     default boolean isEstimateExact() {
         return false;
