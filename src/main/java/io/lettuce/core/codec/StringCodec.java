@@ -17,7 +17,11 @@ package io.lettuce.core.codec;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.*;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.buffer.ByteBuf;
@@ -98,6 +102,16 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
             return sizeOf((String) keyOrValue, true);
         }
         return 0;
+    }
+
+    @Override
+    public boolean isEstimateExact() {
+
+        if (ascii) {
+            return true;
+        }
+
+        return ToByteBufEncoder.super.isEstimateExact();
     }
 
     @Override
@@ -186,8 +200,8 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
     }
 
     /**
-     * Calculate either the maximum number of bytes a string may occupy in a given character set or
-     * the average number of bytes it may hold.
+     * Calculate either the maximum number of bytes a string may occupy in a given character set or the average number of bytes
+     * it may hold.
      */
     int sizeOf(String value, boolean estimate) {
 
@@ -205,4 +219,5 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
 
         return (int) maxBytesPerChar * value.length();
     }
+
 }
