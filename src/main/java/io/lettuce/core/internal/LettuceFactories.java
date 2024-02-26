@@ -20,7 +20,7 @@ import java.util.Deque;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -41,13 +41,13 @@ public class LettuceFactories {
     /**
      * Creates a new, optionally bounded, {@link Queue} that does not require external synchronization.
      *
-     * @param maxSize queue size. If {@link Integer#MAX_VALUE}, then creates an {@link ConcurrentLinkedDeque unbounded queue}.
+     * @param maxSize queue size. If {@link Integer#MAX_VALUE}, then creates an {@link ConcurrentLinkedQueue unbounded queue}.
      * @return a new, empty {@link Queue}.
      */
     public static <T> Queue<T> newConcurrentQueue(int maxSize) {
 
         if (maxSize == Integer.MAX_VALUE) {
-            return new ConcurrentLinkedDeque<>();
+            return new ConcurrentLinkedQueue<>();
         }
 
         return maxSize > ARRAY_QUEUE_THRESHOLD ? new LinkedBlockingQueue<>(maxSize) : new ArrayBlockingQueue<>(maxSize);

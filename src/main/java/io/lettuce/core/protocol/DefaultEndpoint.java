@@ -696,7 +696,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 logger.debug("{} notifyQueuedCommands adding {} command(s) to buffer", logPrefix(), commands.size());
             }
 
-            commands.addAll(drainCommands(disconnectedBuffer));
+            drainCommands(disconnectedBuffer, commands);
 
             for (RedisCommand<?, ?, ?> command : commands) {
 
@@ -745,8 +745,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
         List<RedisCommand<?, ?, ?>> target = new ArrayList<>(disconnectedBuffer.size() + commandBuffer.size());
 
-        target.addAll(drainCommands(disconnectedBuffer));
-        target.addAll(drainCommands(commandBuffer));
+        drainCommands(disconnectedBuffer, target);
+        drainCommands(commandBuffer, target);
 
         return target;
     }
@@ -769,7 +769,24 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             }
         }
 
+        drainCommands(source, target);
         return target;
+    }
+
+    /**
+     * Drain commands from a queue and return only active commands.
+     *
+     * @param source the source queue.
+     */
+    private static void drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source, Collection<RedisCommand<?, ?, ?>> target) {
+
+        RedisCommand<?, ?, ?> cmd;
+        while ((cmd = source.poll()) != null) {
+
+            if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
+                target.add(cmd);
+            }
+        }
     }
 
     private void cancelBufferedCommands(String message) {
