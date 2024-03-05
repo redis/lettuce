@@ -884,12 +884,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         endpoint.notifyException(exception);
 
+        stack.forEach(cmd -> cmd.completeExceptionally(exception));
+        stack.clear();
+
         if (channel != null) {
             channel.disconnect();
         }
-
-        stack.forEach(cmd -> cmd.completeExceptionally(exception));
-        stack.clear();
     }
 
     /**

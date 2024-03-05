@@ -518,12 +518,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         if (t instanceof RedisConnectionException && RedisConnectionException.isProtectedMode(t.getMessage())) {
 
             connectionError = t;
-
-            if (connectionWatchdog != null) {
-                connectionWatchdog.setListenOnChannelInactive(false);
-                connectionWatchdog.setReconnectSuspended(false);
-            }
-
             doExclusive(this::drainCommands).forEach(cmd -> cmd.completeExceptionally(t));
         }
 
