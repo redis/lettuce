@@ -30,12 +30,15 @@ import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
 
 /**
  * Extension to {@link RedisChannelWriter} that expires commands. Command timeout starts at the time the command is written
  * regardless to {@link #setAutoFlushCommands(boolean) flushing mode} (user-controlled batching).
  *
  * @author Mark Paluch
+ * @author Tianyi Yang
  * @since 5.1
  * @see io.lettuce.core.TimeoutOptions
  */
@@ -48,6 +51,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
     private final TimeUnit timeUnit;
 
     private final ScheduledExecutorService executorService;
+
+    private final Timer timer;
 
     private final boolean applyConnectionTimeout;
 
@@ -72,6 +77,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         this.applyConnectionTimeout = timeoutOptions.isApplyConnectionTimeout();
         this.timeUnit = source.getTimeUnit();
         this.executorService = clientResources.eventExecutorGroup();
+        this.timer = clientResources.timer();
     }
 
     /**
@@ -168,24 +174,19 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         if (timeout <= 0) {
             return;
         }
-
-        ScheduledFuture<?> schedule = executors.schedule(() -> {
-
+        
+        Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
-                command.completeExceptionally(
-                        ExceptionFactory.createTimeoutException(Duration.ofNanos(timeUnit.toNanos(timeout))));
-            }
+                executors.submit(() -> command.completeExceptionally(
+                        ExceptionFactory.createTimeoutException(Duration.ofNanos(timeUnit.toNanos(timeout)))));
 
+            }
         }, timeout, timeUnit);
 
         if (command instanceof CompleteableCommand) {
-            ((CompleteableCommand) command).onComplete((o, o2) -> {
-
-                if (!schedule.isDone()) {
-                    schedule.cancel(false);
-                }
-            });
+            ((CompleteableCommand) command).onComplete((o, o2) -> commandTimeout.cancel());
         }
+
     }
 
 }
