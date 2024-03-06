@@ -1557,6 +1557,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
+        return dispatch(commandBuilder.pubsubShardNumsub(shardChannels));
+    }
+
+    @Override
     public RedisFuture<String> quit() {
         return dispatch(commandBuilder.quit());
     }

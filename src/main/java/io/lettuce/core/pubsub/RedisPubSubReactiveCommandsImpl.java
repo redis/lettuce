@@ -144,6 +144,11 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     }
 
     @Override
+    public Mono<Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
+        return createMono(() -> commandBuilder.pubsubShardNumsub(shardChannels));
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public StatefulRedisPubSubConnection<K, V> getStatefulConnection() {
         return (StatefulRedisPubSubConnection<K, V>) super.getStatefulConnection();

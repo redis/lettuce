@@ -17,6 +17,7 @@ package io.lettuce.core.pubsub;
 
 import static io.lettuce.core.protocol.CommandKeyword.CHANNELS;
 import static io.lettuce.core.protocol.CommandKeyword.NUMSUB;
+import static io.lettuce.core.protocol.CommandKeyword.SHARDNUMSUB;
 import static io.lettuce.core.protocol.CommandType.*;
 
 import java.util.List;
@@ -59,10 +60,18 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SafeVarargs
-    final Command<K, V, Map<K, Long>> pubsubNumsub(K... patterns) {
-        LettuceAssert.notEmpty(patterns, "patterns " + MUST_NOT_BE_EMPTY);
+    final Command<K, V, Map<K, Long>> pubsubNumsub(K... channels) {
+        LettuceAssert.notEmpty(channels, "Channels " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(NUMSUB).addKeys(patterns);
+        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(NUMSUB).addKeys(channels);
+        return createCommand(PUBSUB, new MapOutput<>((RedisCodec) codec), args);
+    }
+
+    @SafeVarargs
+    final Command<K, V, Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
+        LettuceAssert.notEmpty(shardChannels, "ShardChannels " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(SHARDNUMSUB).addKeys(shardChannels);
         return createCommand(PUBSUB, new MapOutput<>((RedisCodec) codec), args);
     }
 

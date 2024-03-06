@@ -67,6 +67,15 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
     AsyncExecutions<Map<K, Long>> pubsubNumsub(K... channels);
 
     /**
+     * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified shard channels.
+     *
+     * @param shardChannels channel keys.
+     * @return array-reply a list of channels and number of subscribers for every channel.
+     * @since 7.0
+     */
+    AsyncExecutions<Map<K, Long>> pubsubShardNumsub(K... shardChannels);
+
+    /**
      * Returns the number of subscriptions to patterns.
      *
      * @return Long integer-reply the number of patterns all the clients are subscribed to.

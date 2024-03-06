@@ -73,7 +73,7 @@ class KotlinCompilationUnitFactory {
             "RedisSentinelCoroutinesCommands.set", "remove", "RedisSentinelCoroutinesCommands.clientSetname",
             "RedisSentinelCoroutinesCommands.clientKill", "RedisSentinelCoroutinesCommands.clientPause",
             "RedisSentinelCoroutinesCommands.clientList", "RedisSentinelCoroutinesCommands.info",
-            "RedisSentinelCoroutinesCommands.ping", "pubsubNumsub", "pubsubNumpat", "echo", "ping", "readOnly", "readWrite");
+            "RedisSentinelCoroutinesCommands.ping", "pubsubNumsub", "pubsubShardNumsub", "pubsubNumpat", "echo", "ping", "readOnly", "readWrite");
 
     private static final Map<String, String> RESULT_SPEC;
     private static final Map<String, String> KEEP_DEPRECATED_METHODS;
