@@ -1636,6 +1636,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Map<K, Long>> pubsubShardNumsub(K... channels) {
+        return createMono(() -> commandBuilder.pubsubShardNumsub(channels));
+    }
+
+    @Override
     public Mono<String> quit() {
         return createMono(commandBuilder::quit);
     }

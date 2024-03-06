@@ -86,6 +86,11 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
     }
 
     @Override
+    public RedisFuture<Map<K, Long>> pubsubShardNumsub(K... channels) {
+        return dispatch(commandBuilder.pubsubShardNumsub(channels));
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public StatefulRedisPubSubConnection<K, V> getStatefulConnection() {
         return (StatefulRedisPubSubConnection<K, V>) super.getStatefulConnection();

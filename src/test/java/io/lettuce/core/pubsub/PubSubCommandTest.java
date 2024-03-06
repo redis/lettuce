@@ -65,6 +65,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
     private BlockingQueue<Long> counts;
 
     private String channel = "channel0";
+    private String shardChannel = "shard-channel";
     private String pattern = "channel*";
     private String message = "msg!";
 
@@ -340,6 +341,15 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
         Map<String, Long> result = redis.pubsubNumsub(channel);
         assertThat(result).isNotEmpty();
         assertThat(result).containsKeys(channel);
+    }
+
+    @Test
+    void pubsubShardNumsub() {
+        // TODO After we have SSUBSCRIBE implement a step to subscribe to a shard channel
+
+        Map<String, Long> result = redis.pubsubShardNumsub(shardChannel);
+        assertThat(result).isEmpty();
+        // TODO verify that the channel from step 1 is the one returned by the command
     }
 
     @Test

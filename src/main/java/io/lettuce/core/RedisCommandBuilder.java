@@ -2107,6 +2107,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PUBSUB, (MapOutput) new MapOutput<K, Long>((RedisCodec) codec), args);
     }
 
+    Command<K, V, Map<K, Long>> pubsubShardNumsub(K... pattern) {
+        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(pattern, "Pattern " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SHARDNUMSUB).addKeys(pattern);
+        return createCommand(PUBSUB, (MapOutput) new MapOutput<K, Long>((RedisCodec) codec), args);
+    }
+
     Command<K, V, String> quit() {
         return createCommand(QUIT, new StatusOutput<>(codec));
     }
