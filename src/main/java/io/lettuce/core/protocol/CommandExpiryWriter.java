@@ -21,7 +21,6 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.ClientOptions;
@@ -166,7 +165,6 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         return this.executorService;
     }
 
-    @SuppressWarnings("unchecked")
     private void potentiallyExpire(RedisCommand<?, ?, ?> command, ScheduledExecutorService executors) {
 
         long timeout = applyConnectionTimeout ? this.timeout : source.getTimeout(command);
@@ -174,7 +172,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         if (timeout <= 0) {
             return;
         }
-        
+
         Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
                 executors.submit(() -> command.completeExceptionally(
@@ -184,7 +182,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         }, timeout, timeUnit);
 
         if (command instanceof CompleteableCommand) {
-            ((CompleteableCommand) command).onComplete((o, o2) -> commandTimeout.cancel());
+            ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
         }
 
     }
