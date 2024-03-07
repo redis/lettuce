@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -253,6 +254,7 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
     }
 
     @Test
+    @EnabledOnCommand("SPUBLISH")
     void pubsubShardNumsub() {
 
         // TODO After we have SSUBSCRIBE implement a step to subscribe to a shard channel
@@ -275,7 +277,6 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
         Long result = block(pubsub2.pubsubNumpat());
         assertThat(result.longValue()).isGreaterThan(0);
     }
-
     @Test
     void punsubscribe() throws Exception {
 

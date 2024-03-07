@@ -71,6 +71,7 @@ public interface BaseRedisReactiveCommands<K, V> {
      *
      * @param channels channel keys.
      * @return array-reply a list of channels and number of subscribers for every channel.
+     * @since 7.0
      */
     Mono<Map<K, Long>> pubsubShardNumsub(K... channels);
 

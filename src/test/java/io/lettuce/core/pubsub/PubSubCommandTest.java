@@ -344,6 +344,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
     }
 
     @Test
+    @EnabledOnCommand("SPUBLISH")
     void pubsubShardNumsub() {
         // TODO After we have SSUBSCRIBE implement a step to subscribe to a shard channel
 

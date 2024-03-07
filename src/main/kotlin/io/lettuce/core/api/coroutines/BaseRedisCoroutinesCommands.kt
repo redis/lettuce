@@ -71,6 +71,7 @@ interface BaseRedisCoroutinesCommands<K : Any, V : Any> {
      *
      * @param channels channel keys.
      * @return array-reply a list of channels and number of subscribers for every channel.
+     * @since 7.0
      */
     suspend fun pubsubShardNumsub(vararg channels: K): Map<K, Long>?
 
