@@ -69,11 +69,11 @@ interface BaseRedisCoroutinesCommands<K : Any, V : Any> {
     /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified shard channels.
      *
-     * @param channels channel keys.
+     * @param shardChannels channel keys.
      * @return array-reply a list of channels and number of subscribers for every channel.
      * @since 7.0
      */
-    suspend fun pubsubShardNumsub(vararg channels: K): Map<K, Long>?
+    suspend fun pubsubShardNumsub(vararg shardChannels: K): Map<K, Long>?
 
     /**
      * Returns the number of subscriptions to patterns.

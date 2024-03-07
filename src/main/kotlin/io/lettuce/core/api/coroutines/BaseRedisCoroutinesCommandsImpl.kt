@@ -47,7 +47,7 @@ internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun pubsubNumsub(vararg channels: K): Map<K, Long> = ops.pubsubNumsub(*channels).awaitSingle()
 
-    override suspend fun pubsubShardNumsub(vararg channels: K): Map<K, Long> = ops.pubsubShardNumsub(*channels).awaitSingle()
+    override suspend fun pubsubShardNumsub(vararg shardChannels: K): Map<K, Long> = ops.pubsubShardNumsub(*shardChannels).awaitSingle()
 
     override suspend fun pubsubNumpat(): Long = ops.pubsubNumpat().awaitSingle()
 

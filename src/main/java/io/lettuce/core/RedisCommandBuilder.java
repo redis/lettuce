@@ -2099,19 +2099,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    Command<K, V, Map<K, Long>> pubsubNumsub(K... pattern) {
-        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(pattern, "Pattern " + MUST_NOT_BE_EMPTY);
+    Command<K, V, Map<K, Long>> pubsubNumsub(K... channels) {
+        LettuceAssert.notNull(channels, "Channels " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(channels, "Channels " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(NUMSUB).addKeys(pattern);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(NUMSUB).addKeys(channels);
         return createCommand(PUBSUB, (MapOutput) new MapOutput<K, Long>((RedisCodec) codec), args);
     }
 
-    Command<K, V, Map<K, Long>> pubsubShardNumsub(K... pattern) {
-        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(pattern, "Pattern " + MUST_NOT_BE_EMPTY);
+    Command<K, V, Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
+        LettuceAssert.notNull(shardChannels, "ShardChannels " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(shardChannels, "ShardChannels " + MUST_NOT_BE_EMPTY);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SHARDNUMSUB).addKeys(pattern);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SHARDNUMSUB).addKeys(shardChannels);
         return createCommand(PUBSUB, (MapOutput) new MapOutput<K, Long>((RedisCodec) codec), args);
     }
 
