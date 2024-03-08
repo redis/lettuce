@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
  * @author Mark Paluch
  * @author Zhang Jessey
  * @author dengliming
+ * @author Tihomir Mateev
  */
 public enum CommandKeyword implements ProtocolKeyword {
 

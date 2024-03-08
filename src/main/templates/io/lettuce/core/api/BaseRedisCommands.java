@@ -29,6 +29,7 @@ import io.lettuce.core.output.CommandOutput;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Tihomir Mateev
  * @since 4.0
  */
 public interface BaseRedisCommands<K, V> {

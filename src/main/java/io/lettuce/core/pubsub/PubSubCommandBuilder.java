@@ -15,9 +15,7 @@
  */
 package io.lettuce.core.pubsub;
 
-import static io.lettuce.core.protocol.CommandKeyword.CHANNELS;
-import static io.lettuce.core.protocol.CommandKeyword.NUMSUB;
-import static io.lettuce.core.protocol.CommandKeyword.SHARDNUMSUB;
+import static io.lettuce.core.protocol.CommandKeyword.*;
 import static io.lettuce.core.protocol.CommandType.*;
 
 import java.util.List;
@@ -38,6 +36,7 @@ import io.lettuce.core.protocol.CommandType;
  * Dedicated pub/sub command builder to build pub/sub commands.
  *
  * @author Mark Paluch
+ * @author Tihomir Mateev
  * @since 4.2
  */
 @SuppressWarnings("varargs")
@@ -60,6 +59,7 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SafeVarargs
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     final Command<K, V, Map<K, Long>> pubsubNumsub(K... channels) {
         LettuceAssert.notEmpty(channels, "Channels " + MUST_NOT_BE_EMPTY);
 
@@ -68,8 +68,9 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SafeVarargs
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     final Command<K, V, Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
-        LettuceAssert.notEmpty(shardChannels, "ShardChannels " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notEmpty(shardChannels, "Shard channels " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(SHARDNUMSUB).addKeys(shardChannels);
         return createCommand(PUBSUB, new MapOutput<>((RedisCodec) codec), args);
@@ -77,7 +78,7 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     @SafeVarargs
     final Command<K, V, V> psubscribe(K... patterns) {
-        LettuceAssert.notEmpty(patterns, "patterns " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notEmpty(patterns, "Patterns " + MUST_NOT_BE_EMPTY);
 
         return pubSubCommand(PSUBSCRIBE, new PubSubOutput<>(codec), patterns);
     }
@@ -89,7 +90,7 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     @SafeVarargs
     final Command<K, V, V> subscribe(K... channels) {
-        LettuceAssert.notEmpty(channels, "channels " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.notEmpty(channels, "Channels " + MUST_NOT_BE_EMPTY);
 
         return pubSubCommand(SUBSCRIBE, new PubSubOutput<>(codec), channels);
     }
@@ -99,7 +100,8 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return pubSubCommand(UNSUBSCRIBE, new PubSubOutput<>(codec), channels);
     }
 
-    <T> Command<K, V, T> pubSubCommand(CommandType type, CommandOutput<K, V, T> output, K... keys) {
+    @SafeVarargs
+    final <T> Command<K, V, T> pubSubCommand(CommandType type, CommandOutput<K, V, T> output, K... keys) {
         return new Command<>(type, output, new PubSubCommandArgs<>(codec).addKeys(keys));
     }
 

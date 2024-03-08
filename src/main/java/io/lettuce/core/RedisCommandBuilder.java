@@ -52,6 +52,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Tugdual Grall
  * @author dengliming
  * @author Mikhael Sokolov
+ * @author Tihomir Mateev
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {

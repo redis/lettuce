@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.pubsub;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -33,7 +32,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.KillArgs;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.internal.LettuceFactories;
@@ -54,6 +59,7 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Mark Paluch
  * @author Tugdual Grall
  * @author dengliming
+ * @author Tihomir Mateev
  */
 class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
@@ -347,9 +353,10 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
     @EnabledOnCommand("SPUBLISH")
     void pubsubShardNumsub() {
         // TODO After we have SSUBSCRIBE implement a step to subscribe to a shard channel
+        // Depends on https://github.com/lettuce-io/lettuce-core/issues/2758
 
         Map<String, Long> result = redis.pubsubShardNumsub(shardChannel);
-        assertThat(result).isEmpty();
+        assertThat(result.getOrDefault(shardChannel, 0L)).isEqualTo(0);
         // TODO verify that the channel from step 1 is the one returned by the command
     }
 
