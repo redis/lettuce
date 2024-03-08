@@ -1,0 +1,56 @@
+---
+
+name: CI / CD Pipeline
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
+    branches:
+      - master
+      - '[0-9].*'
+  pull_request:
+    branches:
+      - master
+      - '[0-9].*'
+  schedule:
+    - cron: '0 1 * * *' # nightly build
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Set Java up n the runner
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+      - name: Install missing dependencies to container
+        run: |
+          sudo apt update
+          sudo apt install -y stunnel make git gcc maven
+      - name: Maven offline
+        run: |
+          mvn -q dependency:go-offline
+      - name: Clean environment
+        run: |
+          make cleanup
+        env:
+          JVM_OPTS: -Xmx3200m
+          TERM: dumb
+      - name: Run tests
+        run: |
+          make test-coverage
+        env:
+          JVM_OPTS: -Xmx3200m
+          TERM: dumb
+      - name: Codecov
+        run: |
+          bash <(curl -s https://codecov.io/bash)
