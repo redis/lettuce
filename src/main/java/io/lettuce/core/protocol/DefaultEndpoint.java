@@ -814,6 +814,10 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         return logPrefix = buffer;
     }
 
+    protected ProtocolVersion getProtocolVersion() {
+        return clientOptions.getProtocolVersion();
+    }
+
     @Override
     public String getId() {
         return cachedEndpointId;
