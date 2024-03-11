@@ -28,6 +28,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
@@ -193,8 +194,8 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         return false;
     }
 
-    private static boolean isAllowed(RedisCommand<?, ?, ?> command) {
-        return ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name());
+    private boolean isAllowed(RedisCommand<?, ?, ?> command) {
+        return getProtocolVersion() == ProtocolVersion.RESP3 || ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name());
     }
 
     public boolean isSubscribed() {
