@@ -27,15 +27,20 @@ jobs:
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
-      - name: Set Java up n the runner
+      - name: Set Java up in the runner
         uses: actions/setup-java@v2
         with:
           java-version: '8'
           distribution: 'temurin'
+          cache: 'maven'
+      - name: Setup Maven
+        uses: s4u/setup-maven-action@v1.8.0
+        with:
+          java-version: 8
       - name: Install missing dependencies to container
         run: |
           sudo apt update
-          sudo apt install -y stunnel make git gcc maven
+          sudo apt install -y stunnel make git gcc
       - name: Maven offline
         run: |
           mvn -q dependency:go-offline
