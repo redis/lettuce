@@ -50,6 +50,8 @@ public class KillArgs implements CompositeArgument {
 
     private String username;
 
+    private Long maxAge;
+
     /**
      * Builder entry points for {@link KillArgs}.
      */
@@ -155,6 +157,17 @@ public class KillArgs implements CompositeArgument {
         public static KillArgs user(String username) {
             return new KillArgs().user(username);
         }
+
+        /**
+         * Creates new {@link KillArgs} setting {@literal MAXAGE}.
+         *
+         * @return new {@link KillArgs} with {@literal MAXAGE} set.
+         * @see KillArgs#maxAge(Long)
+         * @since 8.0
+         */
+        public static KillArgs maxAge(Long maxAge) {
+            return new KillArgs().maxAge(maxAge);
+        }
     }
 
     /**
@@ -237,6 +250,21 @@ public class KillArgs implements CompositeArgument {
     }
 
     /**
+     * Closes all the connections that are older than the specified age, in seconds.
+     *
+     * @param maxAge must not be {@code null}.
+     * @return {@code this} {@link KillArgs}.
+     * @since 8.0
+     */
+    public KillArgs maxAge(Long maxAge) {
+
+        LettuceAssert.notNull(maxAge, "MaxAge must not be null");
+
+        this.maxAge = maxAge;
+        return this;
+    }
+
+    /**
      * Closes all the connections that are authenticated with the specified ACL {@code username}.
      *
      * @param username must not be {@code null}.
@@ -276,6 +304,10 @@ public class KillArgs implements CompositeArgument {
 
         if (username != null) {
             args.add("USER").add(username);
+        }
+
+        if (maxAge != null) {
+            args.add("MAXAGE").add(maxAge);
         }
     }
 
