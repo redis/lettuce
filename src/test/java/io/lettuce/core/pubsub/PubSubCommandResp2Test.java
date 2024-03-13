@@ -15,11 +15,16 @@
  */
 package io.lettuce.core.pubsub;
 
+import static org.assertj.core.api.Assertions.*;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.protocol.ProtocolVersion;
+import io.lettuce.test.TestFutures;
+import io.lettuce.test.Wait;
 
 /**
  * Pub/Sub Command tests using RESP2.
@@ -28,13 +33,35 @@ import io.lettuce.core.protocol.ProtocolVersion;
  */
 class PubSubCommandResp2Test extends PubSubCommandTest {
 
+    @Override
     protected ClientOptions getOptions() {
         return ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build();
     }
 
-    @Override
     @Test
     @Disabled("Push messages are not available with RESP2")
+    @Override
     void messageAsPushMessage() {
     }
+
+    @Test
+    @Disabled("Does not apply with RESP2")
+    @Override
+    void echoAllowedInSubscriptionState() {
+    }
+
+    @Test
+    void echoNotAllowedInSubscriptionState() {
+
+        TestFutures.awaitOrTimeout(pubsub.subscribe(channel));
+
+        assertThatThrownBy(() -> TestFutures.getOrTimeout(pubsub.echo("ping"))).isInstanceOf(RedisException.class)
+                .hasMessageContaining("not allowed");
+        pubsub.unsubscribe(channel);
+
+        Wait.untilTrue(() -> channels.size() == 2).waitOrTimeout();
+
+        assertThat(TestFutures.getOrTimeout(pubsub.echo("ping"))).isEqualTo("ping");
+    }
+
 }

@@ -59,8 +59,8 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
             Duration timeout) {
 
         super(writer, endpoint, codec, timeout);
-
         this.endpoint = endpoint;
+        endpoint.setConnectionState(getConnectionState());
     }
 
     /**

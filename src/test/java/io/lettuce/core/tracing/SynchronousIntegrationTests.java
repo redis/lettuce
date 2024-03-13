@@ -28,7 +28,6 @@ import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.tracing.exporter.FinishedSpan;
 import io.micrometer.tracing.test.SampleTestRunner;
@@ -83,7 +82,6 @@ public class SynchronousIntegrationTests extends SampleTestRunner {
             FastShutdown.shutdown(clientResources);
 
             assertThat(tracer.getFinishedSpans()).isNotEmpty();
-            System.out.println(((SimpleMeterRegistry) meterRegistry).getMetersAsString());
 
             assertThat(tracer.getFinishedSpans()).isNotEmpty();
 

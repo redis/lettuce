@@ -15,8 +15,7 @@
  */
 package io.lettuce.core.pubsub;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
@@ -33,7 +32,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.KillArgs;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.internal.LettuceFactories;
@@ -57,16 +61,21 @@ import io.lettuce.test.resource.TestClientResources;
  */
 class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
-    private RedisPubSubAsyncCommands<String, String> pubsub;
+    RedisPubSubAsyncCommands<String, String> pubsub;
 
-    private BlockingQueue<String> channels;
-    private BlockingQueue<String> patterns;
-    private BlockingQueue<String> messages;
-    private BlockingQueue<Long> counts;
+    BlockingQueue<String> channels;
 
-    private String channel = "channel0";
-    private String pattern = "channel*";
-    private String message = "msg!";
+    BlockingQueue<String> patterns;
+
+    BlockingQueue<String> messages;
+
+    BlockingQueue<Long> counts;
+
+    String channel = "channel0";
+
+    String pattern = "channel*";
+
+    String message = "msg!";
 
     @BeforeEach
     void openPubSubConnection() {
@@ -446,6 +455,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
         final BlockingQueue<Long> localCounts = LettuceFactories.newBlockingQueue();
 
         RedisPubSubAdapter<String, String> adapter = new RedisPubSubAdapter<String, String>() {
+
             @Override
             public void subscribed(String channel, long count) {
                 super.subscribed(channel, count);
@@ -457,6 +467,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
                 super.unsubscribed(channel, count);
                 localCounts.add(count);
             }
+
         };
 
         pubsub.getStatefulConnection().addListener(adapter);
@@ -489,17 +500,12 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
     }
 
     @Test
-    void pingNotAllowedInSubscriptionState() {
+    void echoAllowedInSubscriptionState() {
 
         TestFutures.awaitOrTimeout(pubsub.subscribe(channel));
 
-        assertThatThrownBy(() -> TestFutures.getOrTimeout(pubsub.echo("ping"))).isInstanceOf(RedisException.class)
-                .hasMessageContaining("not allowed");
-        pubsub.unsubscribe(channel);
-
-        Wait.untilTrue(() -> channels.size() == 2).waitOrTimeout();
-
         assertThat(TestFutures.getOrTimeout(pubsub.echo("ping"))).isEqualTo("ping");
+        pubsub.unsubscribe(channel);
     }
 
     // RedisPubSubListener implementation
@@ -540,4 +546,5 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
         patterns.add(pattern);
         counts.add(count);
     }
+
 }
