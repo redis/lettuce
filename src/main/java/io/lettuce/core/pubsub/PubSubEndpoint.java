@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionState;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.DefaultEndpoint;
@@ -54,6 +55,8 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     private final Set<Wrapper<K>> patterns;
 
     private volatile boolean subscribeWritten = false;
+
+    private ConnectionState connectionState;
 
     static {
 
@@ -195,11 +198,22 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     }
 
     private boolean isAllowed(RedisCommand<?, ?, ?> command) {
-        return getProtocolVersion() == ProtocolVersion.RESP3 || ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name());
+
+        ProtocolVersion protocolVersion = connectionState != null ? connectionState.getNegotiatedProtocolVersion() : null;
+
+        if (protocolVersion == null) {
+            protocolVersion = getProtocolVersion();
+        }
+
+        return protocolVersion == ProtocolVersion.RESP3 || ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name());
     }
 
     public boolean isSubscribed() {
         return subscribeWritten && (hasChannelSubscriptions() || hasPatternSubscriptions());
+    }
+
+    void setConnectionState(ConnectionState connectionState) {
+        this.connectionState = connectionState;
     }
 
     void notifyMessage(PubSubMessage<K, V> message) {
