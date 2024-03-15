@@ -54,6 +54,7 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Tugdual Grall
  * @author dengliming
  * @author Tihomir Mateev
+ * @author Ali Takavci
  */
 class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
@@ -346,6 +347,34 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
         Map<String, Long> result = redis.pubsubNumsub(channel);
         assertThat(result).isNotEmpty();
         assertThat(result).containsKeys(channel);
+    }
+
+    @Test
+    @EnabledOnCommand("SPUBLISH")
+    void pubsubShardChannels() {
+        /// TODO : uncomment after SSUBSCRIBE is implemented
+        // TestFutures.awaitOrTimeout(pubsub.ssubscribe(channel));
+        List<String> result = redis.pubsubShardChannels();
+        // assertThat(result).contains(channel);
+    }
+
+    @Test
+    @EnabledOnCommand("SPUBLISH")
+    void pubsubMultipleShardChannels() {
+        /// TODO : uncomment after SSUBSCRIBE is implemented
+        // TestFutures.awaitOrTimeout(pubsub.ssubscribe(channel, "channel1", "channel3"));
+        List<String> result = redis.pubsubShardChannels();
+        // assertThat(result).contains(channel, "channel1", "channel3");
+
+    }
+
+    @Test
+    @EnabledOnCommand("SPUBLISH")
+    void pubsubShardChannelsWithArg() {        
+        /// TODO : uncomment after SSUBSCRIBE is implemented
+        // TestFutures.awaitOrTimeout(pubsub.ssubscribe(channel));
+        List<String> result = redis.pubsubShardChannels(pattern);
+        // assertThat(result).contains(channel);
     }
 
     @Test

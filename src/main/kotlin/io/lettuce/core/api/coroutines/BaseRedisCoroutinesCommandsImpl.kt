@@ -34,6 +34,7 @@ import kotlinx.coroutines.reactive.awaitSingle
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mikhael Sokolov
+ * @author Ali Takavci
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
@@ -46,6 +47,10 @@ internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun pubsubChannels(channel: K): List<K> = ops.pubsubChannels(channel).asFlow().toList()
 
     override suspend fun pubsubNumsub(vararg channels: K): Map<K, Long> = ops.pubsubNumsub(*channels).awaitSingle()
+
+    override suspend fun pubsubShardChannels(): List<K> = ops.pubsubShardChannels().asFlow().toList()
+
+    override suspend fun pubsubShardChannels(pattern: K): List<K> = ops.pubsubShardChannels(pattern).asFlow().toList()
 
     override suspend fun pubsubShardNumsub(vararg shardChannels: K): Map<K, Long> = ops.pubsubShardNumsub(*shardChannels).awaitSingle()
 

@@ -56,6 +56,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Tugdual Grall
  * @author dengliming
  * @author Andrey Shlykov
+ * @author Ali Takavci
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
@@ -1554,6 +1555,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Map<K, Long>> pubsubNumsub(K... channels) {
         return dispatch(commandBuilder.pubsubNumsub(channels));
+    }
+
+    @Override
+    public RedisFuture<List<K>> pubsubShardChannels() {
+        return dispatch(commandBuilder.pubsubShardChannels());
+    }
+
+    @Override
+    public RedisFuture<List<K>> pubsubShardChannels(K pattern) {
+        return dispatch(commandBuilder.pubsubShardChannels(pattern));
     }
 
     @Override

@@ -32,6 +32,7 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Ali Takavci
  * @since 5.0
  */
 public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommandsImpl<K, V>
@@ -141,6 +142,11 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     @Override
     public Mono<Map<K, Long>> pubsubNumsub(K... channels) {
         return createMono(() -> commandBuilder.pubsubNumsub(channels));
+    }
+
+    @Override
+    public Flux<K> pubsubShardChannels(K channel) {
+        return createDissolvingFlux(() -> commandBuilder.pubsubShardChannels(channel));
     }
 
     @Override
