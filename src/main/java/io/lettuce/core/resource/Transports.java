@@ -74,7 +74,7 @@ public class Transports {
     public static class NativeTransports {
 
         static EventLoopResources RESOURCES = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
-                : IOUringProvider.isAvailable() ? IOUringProvider.getResources() : EpollProvider.getResources();
+                : EpollProvider.isAvailable() ? EpollProvider.getResources() : IOUringProvider.getResources();
 
         /**
          * @return {@code true} if a native transport is available.
