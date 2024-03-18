@@ -68,13 +68,14 @@ public class Transports {
 
         return NioDatagramChannel.class;
     }
+
     /**
      * Native transport support.
      */
     public static class NativeTransports {
 
         static EventLoopResources RESOURCES = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
-                : EpollProvider.isAvailable() ? EpollProvider.getResources() : IOUringProvider.getResources();
+                : IOUringProvider.isAvailable() ? IOUringProvider.getResources() : EpollProvider.getResources();
 
         /**
          * @return {@code true} if a native transport is available.
@@ -109,7 +110,9 @@ public class Transports {
          */
         public static Class<? extends Channel> domainSocketChannelClass() {
             assertDomainSocketAvailable();
-            return RESOURCES.domainSocketChannelClass();
+            return EpollProvider.isAvailable() && IOUringProvider.isAvailable()
+                    ? EpollProvider.getResources().domainSocketChannelClass()
+                    : RESOURCES.domainSocketChannelClass();
         }
 
         /**
