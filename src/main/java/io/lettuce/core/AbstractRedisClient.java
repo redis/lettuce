@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
 import io.lettuce.core.event.connection.ConnectionCreatedEvent;
@@ -60,7 +61,6 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.publisher.Mono;
 
 /**
  * Base Redis client. This class holds the netty infrastructure, {@link ClientOptions} and the basic connection procedure. This
@@ -302,7 +302,8 @@ public abstract class AbstractRedisClient implements AutoCloseable {
 
         boolean domainSocket = LettuceStrings.isNotEmpty(connectionPoint.getSocket());
         connectionBuilder.bootstrap().group(
-                getEventLoopGroup(domainSocket ? NativeTransports.eventLoopGroupClass() : Transports.eventLoopGroupClass()));
+                getEventLoopGroup(
+                        domainSocket ? NativeTransports.eventLoopGroupClass(true) : Transports.eventLoopGroupClass()));
 
         if (connectionPoint.getSocket() != null) {
             NativeTransports.assertDomainSocketAvailable();
