@@ -116,10 +116,23 @@ public class Transports {
         }
 
         /**
-         * @return the native transport {@link EventLoopGroup} class.
+         * @return the native transport {@link EventLoopGroup} class. Defaults to TCP sockets. See
+         *         {@link #eventLoopGroupClass(boolean)} to request a specific EventLoopGroup for Domain Socket usage.
          */
         public static Class<? extends EventLoopGroup> eventLoopGroupClass() {
-            return RESOURCES.eventLoopGroupClass();
+            return eventLoopGroupClass(false);
+        }
+
+        /**
+         * @return the native transport {@link EventLoopGroup} class.
+         * @param domainSocket {@code true} to indicate Unix Domain Socket usage, {@code false} otherwise.
+         * @since 6.3.3
+         */
+        public static Class<? extends EventLoopGroup> eventLoopGroupClass(boolean domainSocket) {
+
+            return domainSocket && EpollProvider.isAvailable() && IOUringProvider.isAvailable()
+                    ? EpollProvider.getResources().eventLoopGroupClass()
+                    : RESOURCES.eventLoopGroupClass();
         }
 
         public static void assertDomainSocketAvailable() {
