@@ -1638,7 +1638,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     @Override
     public Flux<K> pubsubShardChannels() {
-        return createDissolvingFlux(() -> commandBuilder.pubsubShardChannels());
+        return createDissolvingFlux(commandBuilder::pubsubShardChannels);
     }
 
     @Override
