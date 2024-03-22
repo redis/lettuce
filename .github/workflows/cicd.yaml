@@ -56,6 +56,7 @@ jobs:
         env:
           JVM_OPTS: -Xmx3200m
           TERM: dumb
-      - name: Codecov
-        run: |
-          bash <(curl -s https://codecov.io/bash)
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
