@@ -360,6 +360,10 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
             return false;
         }
 
+        if (this.slots.isEmpty() && other.slots.isEmpty()) {
+            return true;
+        }
+
         return this.slots.equals(other.slots);
     }
 
