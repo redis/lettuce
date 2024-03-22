@@ -6,11 +6,11 @@ on:
       - '**/*.md'
       - '**/*.rst'
     branches:
-      - master
+      - main
       - '[0-9].*'
   pull_request:
     branches:
-      - master
+      - main
       - '[0-9].*'
   schedule:
     - cron: '0 1 * * *' # nightly build
