@@ -69,3 +69,7 @@ codec
 javadoc
 NullPointerException
 RedisObservation
+github
+runtime
+transactional
+Github  
