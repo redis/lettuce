@@ -72,4 +72,4 @@ RedisObservation
 github
 runtime
 transactional
-Github  
+Github

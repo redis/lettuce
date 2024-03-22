@@ -1,7 +1,4 @@
----
-
 name: CI / CD Pipeline
-
 on:
   push:
     paths-ignore:
