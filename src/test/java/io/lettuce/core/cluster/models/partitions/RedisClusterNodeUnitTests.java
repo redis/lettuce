@@ -18,6 +18,7 @@ package io.lettuce.core.cluster.models.partitions;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -44,6 +45,46 @@ class RedisClusterNodeUnitTests {
         assertThat(copy.hasSlot(1)).isTrue();
         assertThat(copy.hasSlot(SlotHash.SLOT_COUNT - 1)).isTrue();
         assertThat(copy.getAliases()).contains(RedisURI.create("foo", 6379));
+    }
+
+    @Test
+    void hasSameSlotsAs() {
+
+        // When both nodes have the same slots
+        RedisClusterNode nodeWithSameSlots1 = new RedisClusterNode();
+        nodeWithSameSlots1.setSlots(Arrays.asList(1, 2, 3, SlotHash.SLOT_COUNT - 1));
+
+        RedisClusterNode nodeWithSameSlots2 = new RedisClusterNode();
+        nodeWithSameSlots2.setSlots(Arrays.asList(1, 2, 3, SlotHash.SLOT_COUNT - 1));
+
+        assertThat(nodeWithSameSlots1.hasSameSlotsAs(nodeWithSameSlots2)).isTrue();
+
+        // When nodes have different slots
+        RedisClusterNode nodeWithDifferentSlots1 = new RedisClusterNode();
+        nodeWithDifferentSlots1.setSlots(Arrays.asList(1, 2, 3, SlotHash.SLOT_COUNT - 1));
+
+        RedisClusterNode nodeWithDifferentSlots2 = new RedisClusterNode();
+        nodeWithDifferentSlots2.setSlots(Arrays.asList(1, 2, 3, SlotHash.SLOT_COUNT - 2));
+
+        assertThat(nodeWithDifferentSlots1.hasSameSlotsAs(nodeWithDifferentSlots2)).isFalse();
+
+        // When both nodes' slots are empty
+        RedisClusterNode emptySlotsNode1 = new RedisClusterNode();
+        emptySlotsNode1.setSlots(List.of());
+
+        RedisClusterNode emptySlotsNode2 = new RedisClusterNode();
+        emptySlotsNode2.setSlots(List.of());
+
+        assertThat(emptySlotsNode1.hasSameSlotsAs(emptySlotsNode2)).isTrue();
+
+        // When one node's slots are empty and the other node's slots are not empty
+        RedisClusterNode oneEmptySlotsNode = new RedisClusterNode();
+        oneEmptySlotsNode.setSlots(List.of());
+
+        RedisClusterNode nonEmptySlotsNode = new RedisClusterNode();
+        nonEmptySlotsNode.setSlots(Arrays.asList(1, 2, 3));
+
+        assertThat(oneEmptySlotsNode.hasSameSlotsAs(nonEmptySlotsNode)).isFalse();
     }
 
     @Test // considers nodeId only
