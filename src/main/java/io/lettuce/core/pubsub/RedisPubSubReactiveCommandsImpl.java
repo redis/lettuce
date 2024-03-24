@@ -32,6 +32,7 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Manish Manghwani
  * @since 5.0
  */
 public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommandsImpl<K, V>
@@ -131,6 +132,11 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     @Override
     public Mono<Long> publish(K channel, V message) {
         return createMono(() -> commandBuilder.publish(channel, message));
+    }
+
+    @Override
+    public Mono<Long> spublish(K shardChannel, V message) {
+        return createMono(() -> commandBuilder.spublish(shardChannel, message));
     }
 
     @Override

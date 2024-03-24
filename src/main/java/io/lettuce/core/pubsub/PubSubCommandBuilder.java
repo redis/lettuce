@@ -37,6 +37,7 @@ import io.lettuce.core.protocol.CommandType;
  *
  * @author Mark Paluch
  * @author Tihomir Mateev
+ * @author Manish Manghwani
  * @since 4.2
  */
 @SuppressWarnings("varargs")
@@ -51,6 +52,11 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, Long> publish(K channel, V message) {
         CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).addKey(channel).addValue(message);
         return createCommand(PUBLISH, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spublish(K shardChannel, V message) {
+        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).addKey(shardChannel).addValue(message);
+        return createCommand(SPUBLISH, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, List<K>> pubsubChannels(K pattern) {

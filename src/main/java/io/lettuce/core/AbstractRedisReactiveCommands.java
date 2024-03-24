@@ -65,6 +65,7 @@ import reactor.core.publisher.Mono;
  * @author Tugdual Grall
  * @author dengliming
  * @author Andrey Shlykov
+ * @author Manish Manghwani
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>
@@ -1613,6 +1614,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Long> publish(K channel, V message) {
         return createMono(() -> commandBuilder.publish(channel, message));
+    }
+
+    @Override
+    public Mono<Long> spublish(K channel, V message) {
+        return createMono(() -> commandBuilder.spublish(channel, message));
     }
 
     @Override

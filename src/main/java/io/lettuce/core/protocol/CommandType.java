@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
  * @author Zhang Jessey
  * @author dengliming
  * @author Mikhael Sokolov
+ * @author Manish Manghwani
  */
 public enum CommandType implements ProtocolKeyword {
 
@@ -70,7 +71,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // Pub/Sub
 
-    PSUBSCRIBE, PUBLISH, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE, PUBSUB,
+    PSUBSCRIBE, PUBLISH, SPUBLISH, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE, PUBSUB,
 
     // Sets
 

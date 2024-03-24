@@ -30,6 +30,7 @@ import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
  * @param <V> Value type.
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Manish Manghwani
  */
 public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K, V> implements RedisPubSubAsyncCommands<K, V> {
 
@@ -73,6 +74,11 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
     @Override
     public RedisFuture<Long> publish(K channel, V message) {
         return dispatch(commandBuilder.publish(channel, message));
+    }
+
+    @Override
+    public RedisFuture<Long> spublish(K shardChannel, V message) {
+        return dispatch(commandBuilder.spublish(shardChannel, message));
     }
 
     @Override

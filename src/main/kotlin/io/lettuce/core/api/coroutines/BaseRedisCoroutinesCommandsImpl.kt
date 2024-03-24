@@ -34,12 +34,15 @@ import kotlinx.coroutines.reactive.awaitSingle
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mikhael Sokolov
+ * @author Manish Manghwani
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
 internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: BaseRedisReactiveCommands<K, V>) : BaseRedisCoroutinesCommands<K, V> {
 
     override suspend fun publish(channel: K, message: V): Long? = ops.publish(channel, message).awaitFirstOrNull()
+
+    override suspend fun spublish(shardChannel: K, message: V): Long? = ops.spublish(shardChannel, message).awaitFirstOrNull()
 
     override suspend fun pubsubChannels(): List<K> = ops.pubsubChannels().asFlow().toList()
 
