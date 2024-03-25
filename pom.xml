@@ -923,7 +923,7 @@
                 </os>
             </activation>
             <properties>
-                <os.detected.classifier>linux-aarch64-fedora</os.detected.classifier>
+                <os.detected.classifier>linux-aarch_64-fedora</os.detected.classifier>
             </properties>
         </profile>
 
