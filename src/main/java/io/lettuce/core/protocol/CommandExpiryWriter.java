@@ -32,9 +32,12 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.rebind.RebindCompletedEvent;
+import io.lettuce.core.rebind.RebindInitiatedEvent;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
+import reactor.core.Disposable;
 
 /**
  * Extension to {@link RedisChannelWriter} that expires commands. Command timeout starts at the time the command is written
@@ -61,11 +64,13 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     private final Duration relaxedTimeout;
 
+    private final Disposable rebindStatedListener;
+
+    private final Disposable rebindEndedListener;
+
     private volatile long timeout = -1;
 
-    public static boolean relaxTimeoutsGlobally = false;
-
-    public static boolean enableProactive = false;
+    private volatile boolean relaxTimeoutsGlobally = false;
 
     /**
      * Create a new {@link CommandExpiryWriter}.
@@ -88,6 +93,18 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         this.timeUnit = source.getTimeUnit();
         this.executorService = clientResources.eventExecutorGroup();
         this.timer = clientResources.timer();
+
+        this.rebindStatedListener = clientResources.eventBus()
+                .get().filter(e -> e instanceof RebindInitiatedEvent)
+                .subscribe(e -> {
+                    this.relaxTimeoutsGlobally = true;
+                });
+
+        this.rebindEndedListener = clientResources.eventBus()
+                .get().filter(e -> e instanceof RebindCompletedEvent)
+                .subscribe(e -> {
+                    this.relaxTimeoutsGlobally = false;
+                });
     }
 
     /**
@@ -151,6 +168,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     @Override
     public void close() {
+        this.rebindStatedListener.dispose();
+        this.rebindEndedListener.dispose();
         delegate.close();
     }
 
@@ -161,6 +180,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     @Override
     public void reset() {
+        this.relaxTimeoutsGlobally = false;
         delegate.reset();
     }
 
@@ -188,10 +208,10 @@ public class CommandExpiryWriter implements RedisChannelWriter {
             if (!command.isDone()) {
                 executors.submit(() -> {
                     if (shouldRelaxTimeoutsGlobally()) {
+                        relaxedAttempt(command, executors);
+                    } else {
                         command.completeExceptionally(
                                 ExceptionFactory.createTimeoutException(command.getType().toString(), Duration.ofNanos(timeUnit.toNanos(timeout))));
-                    } else {
-                        relaxedAttempt(command, executors);
                     }
                 });
 
@@ -205,7 +225,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
     }
 
     public boolean shouldRelaxTimeoutsGlobally() {
-        return relaxTimeoutsGlobally && relaxedTimeout.isNegative();
+        return relaxTimeoutsGlobally && !relaxedTimeout.isNegative();
     }
 
     // when relaxing the timeouts - instead of expiring immediately, we will start a new timer with 10 seconds

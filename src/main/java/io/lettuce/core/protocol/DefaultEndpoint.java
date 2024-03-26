@@ -20,6 +20,7 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.core.protocol.CommandHandler.*;
+import static io.lettuce.core.protocol.ConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
@@ -45,6 +46,7 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
+import io.lettuce.core.rebind.RebindState;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -68,11 +70,11 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
     private static final AtomicLong ENDPOINT_COUNTER = new AtomicLong();
 
-    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater
-            .newUpdater(DefaultEndpoint.class, "queueSize");
+    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater.newUpdater(
+            DefaultEndpoint.class, "queueSize");
 
-    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> STATUS = AtomicIntegerFieldUpdater
-            .newUpdater(DefaultEndpoint.class, "status");
+    private static final AtomicIntegerFieldUpdater<DefaultEndpoint> STATUS = AtomicIntegerFieldUpdater.newUpdater(
+            DefaultEndpoint.class, "status");
 
     private static final int ST_OPEN = 0;
 
@@ -812,7 +814,16 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     private boolean isConnected(Channel channel) {
-        return channel != null && channel.isActive();
+
+        if (channel == null || !channel.isActive()) {
+            return false;
+        }
+
+        if (channel.hasAttr(REBIND_ATTRIBUTE)) {
+            return channel.attr(REBIND_ATTRIBUTE).get() != RebindState.STARTED;
+        }
+
+        return true;
     }
 
     protected String logPrefix() {
