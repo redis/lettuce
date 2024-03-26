@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
  * @author Zhang Jessey
  * @author dengliming
  * @author Tihomir Mateev
+ * @author Ali Takavci
  */
 public enum CommandKeyword implements ProtocolKeyword {
 
@@ -36,7 +37,7 @@ public enum CommandKeyword implements ProtocolKeyword {
 
     IDLETIME, JUSTID, KILL, KEYSLOT, LEFT, LEN, LIMIT, LIST, LOAD, LOG, MATCH,
 
-    MAX, MAXLEN, MEET, MIN, MINID, MOVED, NO, NOACK, NOCOMMANDS, NODE, NODES, NOMKSTREAM, NOPASS, NOSAVE, NOT, NUMSUB, SHARDNUMSUB, NUMPAT, NX, OFF, ON, ONE, OR, PAUSE,
+    MAX, MAXLEN, MEET, MIN, MINID, MOVED, NO, NOACK, NOCOMMANDS, NODE, NODES, NOMKSTREAM, NOPASS, NOSAVE, NOT, NUMSUB, SHARDCHANNELS, SHARDNUMSUB, NUMPAT, NX, OFF, ON, ONE, OR, PAUSE,
 
     REFCOUNT, REMOVE, RELOAD, REPLACE, REPLICATE, REPLICAS, REV, RESET, RESETCHANNELS, RESETKEYS, RESETPASS,
 

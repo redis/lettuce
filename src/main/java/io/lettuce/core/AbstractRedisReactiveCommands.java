@@ -65,6 +65,7 @@ import reactor.core.publisher.Mono;
  * @author Tugdual Grall
  * @author dengliming
  * @author Andrey Shlykov
+ * @author Ali Takavci
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>
@@ -1633,6 +1634,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Map<K, Long>> pubsubNumsub(K... channels) {
         return createMono(() -> commandBuilder.pubsubNumsub(channels));
+    }
+
+    @Override
+    public Flux<K> pubsubShardChannels() {
+        return createDissolvingFlux(commandBuilder::pubsubShardChannels);
+    }
+
+    @Override
+    public Flux<K> pubsubShardChannels(K pattern) {
+        return createDissolvingFlux(() -> commandBuilder.pubsubShardChannels(pattern));
     }
 
     @Override

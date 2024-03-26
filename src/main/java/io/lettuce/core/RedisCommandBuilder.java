@@ -53,6 +53,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author dengliming
  * @author Mikhael Sokolov
  * @author Tihomir Mateev
+ * @author Ali Takavci
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -2106,6 +2107,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(NUMSUB).addKeys(channels);
         return createCommand(PUBSUB, (MapOutput) new MapOutput<K, Long>((RedisCodec) codec), args);
+    }
+
+    Command<K, V, List<K>> pubsubShardChannels() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SHARDCHANNELS);
+        return createCommand(PUBSUB, new KeyListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<K>> pubsubShardChannels(K pattern) {
+        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SHARDCHANNELS).addKey(pattern);
+        return createCommand(PUBSUB, new KeyListOutput<>(codec), args);
     }
 
     Command<K, V, Map<K, Long>> pubsubShardNumsub(K... shardChannels) {

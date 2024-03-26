@@ -100,6 +100,22 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         assertThat(channelsOnOtherNode).isEmpty();
     }
 
+
+    @Test
+    void testRegularClientPubSubShardChannels() {
+
+        String nodeId = pubSubConnection.sync().clusterMyId();
+        RedisClusterNode otherNode = getOtherThan(nodeId);
+        /// TODO : uncomment after SSUBSCRIBE is implemented
+        // pubSubConnection.sync().ssubscribe(key);
+
+        List<String> channelsOnSubscribedNode = connection.getConnection(nodeId).sync().pubsubShardChannels();
+        // assertThat(channelsOnSubscribedNode).hasSize(1);
+
+        List<String> channelsOnOtherNode = connection.getConnection(otherNode.getNodeId()).sync().pubsubShardChannels();
+        assertThat(channelsOnOtherNode).isEmpty();
+    }
+
     @Test
     void myIdWorksAfterDisconnect() throws InterruptedException {
 

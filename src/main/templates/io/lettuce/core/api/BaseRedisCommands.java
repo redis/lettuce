@@ -30,6 +30,7 @@ import io.lettuce.core.output.CommandOutput;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author Tihomir Mateev
+ * @author Ali Takavci
  * @since 4.0
  */
 public interface BaseRedisCommands<K, V> {
@@ -65,6 +66,21 @@ public interface BaseRedisCommands<K, V> {
      * @return array-reply a list of channels and number of subscribers for every channel.
      */
     Map<K, Long> pubsubNumsub(K... channels);
+
+    /**
+     * Lists the currently *active shard channels*.
+     *
+     * @return List&lt;K&gt; array-reply a list of active channels.
+     */
+    List<K> pubsubShardChannels();
+
+    /**
+     * Lists the currently *active shard channels*.
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
+     */
+    List<K> pubsubShardChannels(K pattern);
 
     /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified shard channels.

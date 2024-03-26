@@ -47,6 +47,7 @@ import io.lettuce.test.resource.TestClientResources;
 
 /**
  * @author Mark Paluch
+ * @author Ali Takavci
  */
 class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
@@ -250,6 +251,36 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
         Map<String, Long> result = block(pubsub2.pubsubNumsub(channel));
         assertThat(result).hasSize(1);
         assertThat(result).containsKeys(channel);
+    }
+
+    @Test
+    @EnabledOnCommand("SPUBLISH")
+    void pubsubShardChannels() {
+        /// TODO : uncomment after SSUBSCRIBE is implemented
+        // block(pubsub.ssubscribe(channel));
+        List<String> result = block(pubsub2.pubsubShardChannels().collectList());
+        // assertThat(result).contains(channel);
+    }
+
+    @Test
+    @EnabledOnCommand("SPUBLISH")
+    void pubsubShardMultipleChannels() {
+        /// TODO : uncomment after SSUBSCRIBE is implemented
+        // StepVerifier.create(pubsub.ssubscribe(channel, "channel1", "channel3")).verifyComplete();
+
+        // StepVerifier.create(pubsub2.pubsubShardChannels().collectList())
+        //         .consumeNextWith(actual -> assertThat(actual).contains(channel, "channel1", "channel3")).verifyComplete();
+    }
+
+    @Test
+    @EnabledOnCommand("SPUBLISH")
+    void pubsubShardChannelsWithArg() {
+        /// TODO : uncomment after SSUBSCRIBE is implemented
+        // StepVerifier.create(pubsub.ssubscribe(channel)).verifyComplete();
+        // Wait.untilTrue(() -> mono(pubsub2.pubsubShardChannels(pattern).filter(s -> channel.equals(s))) != null).waitOrTimeout();
+
+        String result = mono(pubsub2.pubsubShardChannels(pattern).filter(s -> channel.equals(s)));
+        // assertThat(result).isEqualToIgnoringCase(channel);
     }
 
     @Test
