@@ -121,7 +121,7 @@ public class TimeoutOptions implements Serializable {
          * Enable proactive timeout relaxing. Disabled by default, see {@link #DEFAULT_RELAXED_TIMEOUT}.
          * <p/>
          * If the Redis server supports this, the client could listen to notifications that the current endpoint is about to go
-         * down as part of some maintenance or failover activity. In such cases the driver could extend the existing timeout
+         * down as part of some maintenance activity, for example. In such cases, the driver could extend the existing timeout
          * settings for existing commands to make sure they do not time out during this process either as part of the offline
          * buffer or while waiting for a reply.
          *
