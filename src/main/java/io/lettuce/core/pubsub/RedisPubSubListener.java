@@ -77,4 +77,15 @@ public interface RedisPubSubListener<K, V> {
      */
     void punsubscribed(K pattern, long count);
 
+    /**
+     * Subscribed to a Shard channel.
+     *
+     * @param shardChannel Shard channel
+     * @param count Subscription count.
+     * @since 7.0
+     */
+    default void ssubscribed(K shardChannel, long count) {
+        subscribed(shardChannel, count);
+    }
+
 }

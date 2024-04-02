@@ -98,6 +98,16 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
     Mono<Void> unsubscribe(K... channels);
 
     /**
+     * Listen for messages published to the given shard channels. The {@link Mono} completes without a result as soon as the *
+     * subscription is registered.
+     *
+     * @param shardChannels the channels.
+     * @return Mono&lt;Void&gt; Mono for {@code subscribe} command.
+     * @since 7.0
+     */
+    Mono<Void> ssubscribe(K... shardChannels);
+
+    /**
      * @return the underlying connection.
      * @since 6.2, will be removed with Lettuce 7 to avoid exposing the underlying connection.
      */

@@ -167,6 +167,11 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
             notifications.punsubscribed(getNode(), pattern, count);
         }
 
+        @Override
+        public void ssubscribed(K channel, long count) {
+            notifications.ssubscribed(getNode(), channel, count);
+        }
+
         private RedisClusterNode getNode() {
             return nodeId != null ? getPartitions().getPartitionByNodeId(nodeId) : getPartitions().getPartition(host, port);
         }
