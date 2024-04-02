@@ -1,6 +1,11 @@
 name: Release
 
 on:
+  # REMOVE ME: Only for debugging
+  push:
+    branches:
+      - release_workflows
+ # REMOVE END
   release:
     types: [published]
 
