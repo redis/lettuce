@@ -27,7 +27,7 @@ package io.lettuce.core.pubsub;
  *
  * @author Will Glozer
  */
-public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {
+public class RedisPubSubAdapter<K, V> implements RedisShardedPubSubListener<K, V> {
 
     @Override
     public void message(K channel, V message) {
@@ -56,6 +56,11 @@ public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {
 
     @Override
     public void punsubscribed(K pattern, long count) {
+        // empty adapter method
+    }
+
+    @Override
+    public void ssubscribed(K shardChannel, long count) {
         // empty adapter method
     }
 

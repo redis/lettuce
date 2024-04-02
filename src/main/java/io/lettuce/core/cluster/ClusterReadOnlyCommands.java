@@ -58,7 +58,7 @@ public class ClusterReadOnlyCommands {
     enum CommandName {
 
         // Pub/Sub commands are no key-space commands so they are safe to execute on replica nodes
-        PUBLISH, PUBSUB, PSUBSCRIBE, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE
+        PUBLISH, PUBSUB, PSUBSCRIBE, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE, SSUBSCRIBE
     }
 
 }

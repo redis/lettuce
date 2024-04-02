@@ -218,6 +218,9 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
             case subscribe:
                 return commandType.equalsIgnoreCase("SUBSCRIBE");
 
+            case ssubscribe:
+                return commandType.equalsIgnoreCase("SSUBSCRIBE");
+
             case psubscribe:
                 return commandType.equalsIgnoreCase("PSUBSCRIBE");
 

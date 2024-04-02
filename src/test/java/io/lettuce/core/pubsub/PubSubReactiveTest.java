@@ -53,12 +53,13 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Mark Paluch
  * @author Ali Takavci
  */
-class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
+class PubSubReactiveTest extends AbstractRedisClientTest implements RedisShardedPubSubListener<String, String> {
 
     private RedisPubSubReactiveCommands<String, String> pubsub;
     private RedisPubSubReactiveCommands<String, String> pubsub2;
 
     private BlockingQueue<String> channels;
+    private BlockingQueue<String> shardChannels;
     private BlockingQueue<String> patterns;
     private BlockingQueue<String> messages;
     private BlockingQueue<Long> counts;
@@ -75,6 +76,7 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
         pubsub2 = client.connectPubSub().reactive();
         pubsub.getStatefulConnection().addListener(this);
         channels = LettuceFactories.newBlockingQueue();
+        shardChannels = LettuceFactories.newBlockingQueue();
         patterns = LettuceFactories.newBlockingQueue();
         messages = LettuceFactories.newBlockingQueue();
         counts = LettuceFactories.newBlockingQueue();
@@ -344,6 +346,13 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
     }
 
     @Test
+    void ssubscribe() throws Exception {
+        StepVerifier.create(pubsub.ssubscribe(channel)).verifyComplete();
+        assertThat(shardChannels.take()).isEqualTo(channel);
+        assertThat((long) counts.take()).isGreaterThan(0);
+    }
+
+    @Test
     void pubsubCloseOnClientShutdown() {
 
         RedisClient redisClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
@@ -490,6 +499,12 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
     @Override
     public void punsubscribed(String pattern, long count) {
         patterns.add(pattern);
+        counts.add(count);
+    }
+
+    @Override
+    public void ssubscribed(String shardChannel, long count) {
+        shardChannels.add(shardChannel);
         counts.add(count);
     }
 

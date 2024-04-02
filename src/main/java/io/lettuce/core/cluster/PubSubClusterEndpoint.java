@@ -2,13 +2,17 @@ package io.lettuce.core.cluster;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubAdapter;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
+import io.lettuce.core.cluster.pubsub.RedisClusterShardedPubSubListener;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.PubSubMessage;
+import io.lettuce.core.pubsub.RedisPubSubListener;
+import io.lettuce.core.pubsub.RedisShardedPubSubListener;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -45,7 +49,7 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
         clusterListeners.add(listener);
     }
 
-    public RedisClusterPubSubListener<K, V> getUpstreamListener() {
+    public RedisClusterShardedPubSubListener<K, V> getUpstreamListener() {
         return upstream;
     }
 
@@ -87,6 +91,9 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
                 break;
             case unsubscribe:
                 multicast.unsubscribed(clusterNode, output.channel(), output.count());
+                break;
+            case ssubscribe:
+                multicast.ssubscribed(clusterNode, output.channel(), output.count());
                 break;
             default:
                 throw new UnsupportedOperationException("Operation " + output.type() + " not supported");
@@ -187,6 +194,20 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
 
             getListeners().forEach(listener -> listener.punsubscribed(pattern, count));
             clusterListeners.forEach(listener -> listener.punsubscribed(node, pattern, count));
+        }
+
+        @Override
+        public void ssubscribed(RedisClusterNode node, K channel, long count) {
+            getListeners().forEach(listener -> {
+                if (listener instanceof RedisShardedPubSubListener) {
+                    ((RedisShardedPubSubListener<K, V>) listener).ssubscribed(channel, count);
+                }
+            });
+            clusterListeners.forEach(listener -> {
+                if (listener instanceof RedisClusterShardedPubSubListener) {
+                    ((RedisClusterShardedPubSubListener<K, V>) listener).ssubscribed(node, channel, count);
+                }
+            });
         }
 
     }

@@ -102,6 +102,12 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
 
     @Override
     @SuppressWarnings("unchecked")
+    public RedisFuture<Void> ssubscribe(K... channels) {
+        return (RedisFuture<Void>) dispatch(commandBuilder.ssubscribe(channels));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
     public StatefulRedisPubSubConnection<K, V> getStatefulConnection() {
         return (StatefulRedisPubSubConnection<K, V>) super.getStatefulConnection();
     }

@@ -51,4 +51,12 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
      */
     StatefulRedisPubSubConnection<K, V> getStatefulConnection();
 
+    /**
+     * Listen for messages published to the given shard channels.
+     *
+     * @param shardChannels the shard channels
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
+     */
+    RedisFuture<Void> ssubscribe(K... shardChannels);
+
 }

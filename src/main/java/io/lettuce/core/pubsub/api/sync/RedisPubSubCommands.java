@@ -42,6 +42,13 @@ public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
     void unsubscribe(K... channels);
 
     /**
+     * Listen for messages published to the given shard channels.
+     *
+     * @param shardChannels the channels
+     */
+    void ssubscribe(K... shardChannels);
+
+    /**
      * @return the underlying connection.
      */
     StatefulRedisPubSubConnection<K, V> getStatefulConnection();

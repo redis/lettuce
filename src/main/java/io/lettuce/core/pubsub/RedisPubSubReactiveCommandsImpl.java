@@ -26,6 +26,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.protocol.Command;
 import io.lettuce.core.pubsub.api.reactive.ChannelMessage;
 import io.lettuce.core.pubsub.api.reactive.PatternMessage;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -156,6 +157,15 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     @Override
     public Mono<Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
         return createMono(() -> commandBuilder.pubsubShardNumsub(shardChannels));
+    }
+
+    @Override
+    public Mono<Void> ssubscribe(K... shardChannels) {
+        return createFlux(() -> {
+            Command<K, V, V> c = commandBuilder.ssubscribe(shardChannels);
+            System.out.println("");
+            return c;
+        }).then();
     }
 
     @Override

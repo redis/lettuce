@@ -6,6 +6,8 @@ import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.KeyListOutput;
 import io.lettuce.core.output.MapOutput;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -121,6 +123,17 @@ class PubSubCommandBuilderUnitTests {
 
         assertEquals( UNSUBSCRIBE, command.getType());
         assertInstanceOf(PubSubCommandArgs.class, command.getArgs());
+        assertEquals( "key<channelPattern>",  command.getArgs().toCommandString());
+        assertInstanceOf(PubSubOutput.class, command.getOutput());
+    }
+
+    @Test
+    void ssubscribe() {
+        String channel = "channelPattern";
+        Command<String, String, String> command = this.commandBuilder.ssubscribe(channel);
+
+        assertEquals( SSUBSCRIBE, command.getType());
+        assertInstanceOf(CommandArgs.class, command.getArgs());
         assertEquals( "key<channelPattern>",  command.getArgs().toCommandString());
         assertInstanceOf(PubSubOutput.class, command.getOutput());
     }

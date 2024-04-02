@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionState;
@@ -56,6 +57,8 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
     private final Set<Wrapper<K>> channels;
 
+    private final Set<Wrapper<K>> shardChannels;
+
     private final Set<Wrapper<K>> patterns;
 
     private volatile boolean subscribeWritten = false;
@@ -70,6 +73,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.UNSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PUNSUBSCRIBE.name());
+        ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.SSUBSCRIBE.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.QUIT.name());
         ALLOWED_COMMANDS_SUBSCRIBED.add(CommandType.PING.name());
 
@@ -77,6 +81,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
         SUBSCRIBE_COMMANDS.add(CommandType.SUBSCRIBE.name());
         SUBSCRIBE_COMMANDS.add(CommandType.PSUBSCRIBE.name());
+        SUBSCRIBE_COMMANDS.add(CommandType.SSUBSCRIBE.name());
     }
 
     /**
@@ -91,6 +96,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
         this.channels = ConcurrentHashMap.newKeySet();
         this.patterns = ConcurrentHashMap.newKeySet();
+        this.shardChannels = ConcurrentHashMap.newKeySet();
     }
 
     /**
@@ -257,9 +263,18 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
                 case unsubscribe:
                     listener.unsubscribed(message.channel(), message.count());
                     break;
+                case ssubscribe:
+                    shardNotify(listener, (l) -> l.ssubscribed(message.channel(), message.count()));
+                    break;
                 default:
                     throw new UnsupportedOperationException("Operation " + message.type() + " not supported");
             }
+        }
+    }
+
+    private void shardNotify(RedisPubSubListener<K, V> listener, Consumer<RedisShardedPubSubListener<K, V>> c) {
+        if (listener instanceof RedisShardedPubSubListener) {
+            c.accept((RedisShardedPubSubListener<K, V>) listener);
         }
     }
 
@@ -277,6 +292,9 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
                 break;
             case unsubscribe:
                 channels.remove(new Wrapper<>(message.channel()));
+                break;
+            case ssubscribe:
+                shardChannels.add(new Wrapper<>(message.channel()));
                 break;
             default:
                 break;
