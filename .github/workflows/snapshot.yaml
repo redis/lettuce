@@ -15,29 +15,22 @@ jobs:
     name: Deploy Snapshot
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up publishing to maven central
         uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'temurin'
+          cache: 'maven'
           server-id: ossrh
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
-      - name: Cache dependencies
-        uses: actions/cache@v2
-        with:
-          path: |
-            ~/.m2/repository
-            /var/cache/apt
-          key: lettuce-${{hashFiles('**/pom.xml')}}
       - name: mvn offline
         run: |
           mvn -q dependency:go-offline
       - name: deploy
         run: |
-          mvn --no-transfer-progress \
-            -DskipTests deploy
+          mvn --no-transfer-progress deploy
         env:
           MAVEN_USERNAME: ${{secrets.OSSH_USERNAME}}
           MAVEN_PASSWORD: ${{secrets.OSSH_TOKEN}}
