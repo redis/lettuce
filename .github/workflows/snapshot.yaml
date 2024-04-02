@@ -5,7 +5,8 @@ name: Publish Snapshot
 on:
   push:
     branches:
-      - master
+      - main
+      - release_workflows
       - '[0-9].x'
   workflow_dispatch:
 
