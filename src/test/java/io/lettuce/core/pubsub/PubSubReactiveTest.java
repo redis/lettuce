@@ -53,7 +53,7 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Mark Paluch
  * @author Ali Takavci
  */
-class PubSubReactiveTest extends AbstractRedisClientTest implements RedisShardedPubSubListener<String, String> {
+class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
     private RedisPubSubReactiveCommands<String, String> pubsub;
     private RedisPubSubReactiveCommands<String, String> pubsub2;

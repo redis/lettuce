@@ -5,7 +5,7 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.core.cluster.pubsub.RedisClusterShardedPubSubListener;
+import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.RedisPubSubListener;
@@ -28,7 +28,7 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
 
     private final RedisCodec<K, V> redisCodec;
 
-    private final RedisClusterShardedPubSubListener<K, V> notifications;
+    private final RedisClusterPubSubListener<K, V> notifications;
 
     /**
      * Creates a new {@link ClusterPubSubConnectionProvider}.
@@ -40,7 +40,7 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
      * @param clusterEventListener must not be {@code null}.
      */
     ClusterPubSubConnectionProvider(RedisClusterClient redisClusterClient, RedisChannelWriter clusterWriter,
-            RedisCodec<K, V> redisCodec, RedisClusterShardedPubSubListener<K, V> notificationTarget,
+            RedisCodec<K, V> redisCodec, RedisClusterPubSubListener<K, V> notificationTarget,
             ClusterEventListener clusterEventListener) {
 
         super(redisClusterClient, clusterWriter, redisCodec, clusterEventListener);

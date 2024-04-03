@@ -27,7 +27,7 @@ package io.lettuce.core.pubsub;
  *
  * @author Will Glozer
  */
-public class RedisPubSubAdapter<K, V> implements RedisShardedPubSubListener<K, V> {
+public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {
 
     @Override
     public void message(K channel, V message) {

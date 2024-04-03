@@ -264,17 +264,11 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
                     listener.unsubscribed(message.channel(), message.count());
                     break;
                 case ssubscribe:
-                    shardNotify(listener, (l) -> l.ssubscribed(message.channel(), message.count()));
+                    listener.ssubscribed(message.channel(), message.count());
                     break;
                 default:
                     throw new UnsupportedOperationException("Operation " + message.type() + " not supported");
             }
-        }
-    }
-
-    private void shardNotify(RedisPubSubListener<K, V> listener, Consumer<RedisShardedPubSubListener<K, V>> c) {
-        if (listener instanceof RedisShardedPubSubListener) {
-            c.accept((RedisShardedPubSubListener<K, V>) listener);
         }
     }
 

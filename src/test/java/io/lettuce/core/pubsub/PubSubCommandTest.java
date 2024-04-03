@@ -41,7 +41,6 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
-import io.lettuce.core.cluster.pubsub.RedisClusterShardedPubSubListener;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
 import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
 import io.lettuce.core.internal.LettuceFactories;
@@ -67,15 +66,11 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Ali Takavci
  */
 class PubSubCommandTest extends AbstractRedisClientTest
-        implements RedisShardedPubSubListener<String, String>, RedisClusterShardedPubSubListener<String, String> {
+        implements RedisPubSubListener<String, String> {
 
     RedisPubSubAsyncCommands<String, String> pubsub;
 
-    RedisClusterPubSubAsyncCommands<String, String> clusterPubsub;
-
     BlockingQueue<String> channels;
-
-    BlockingQueue<String> shardChannels;
 
     BlockingQueue<String> patterns;
 
@@ -87,13 +82,9 @@ class PubSubCommandTest extends AbstractRedisClientTest
 
     String shardChannel = "shard-channel";
 
-    String shardTestChannel = "shard-test-channel";
-
     private String pattern = "channel*";
 
     String message = "msg!";
-
-    String shardMessage = "shard msg!";
 
     @BeforeEach
     void openPubSubConnection() {
@@ -102,15 +93,8 @@ class PubSubCommandTest extends AbstractRedisClientTest
             client.setOptions(getOptions());
             pubsub = client.connectPubSub().async();
             pubsub.getStatefulConnection().addListener(this);
-
-            StatefulRedisClusterPubSubConnection<String, String> clusterPubSubConn = DefaultRedisClusterClient.get()
-                    .connectPubSub();
-            // clusterPubSubConn.setNodeMessagePropagation(true);
-            clusterPubsub = clusterPubSubConn.async();
-            clusterPubSubConn.addListener((RedisClusterPubSubListener<String, String>) this);
         } finally {
             channels = LettuceFactories.newBlockingQueue();
-            shardChannels = LettuceFactories.newBlockingQueue();
             patterns = LettuceFactories.newBlockingQueue();
             messages = LettuceFactories.newBlockingQueue();
             counts = LettuceFactories.newBlockingQueue();
@@ -238,28 +222,6 @@ class PubSubCommandTest extends AbstractRedisClientTest
         assertThat(messages.take()).isEqualTo(message);
     }
 
-    @Test
-    void subscribeToShardChannel() throws Exception {
-        clusterPubsub.ssubscribe(shardChannel);
-        assertThat(shardChannels.poll(3, TimeUnit.SECONDS)).isEqualTo(shardChannel);
-    }
-
-    @Test
-    void subscribeToShardChannelViaOtherEndpoint() throws Exception {
-        String nodeId = getNodeId(clusterPubsub);
-        RedisPubSubAsyncCommands<String, String> other = clusterPubsub
-                .nodes(node -> node.getRole().isUpstream() && !node.getNodeId().equals(nodeId)).commands(0);
-        other.ssubscribe(shardChannel);
-        assertThat(shardChannels.poll(3, TimeUnit.SECONDS)).isEqualTo(shardChannel);
-    }
-
-    private String getNodeId(RedisClusterPubSubAsyncCommands<String, String> clusterPubsub2) {
-        try {
-            return clusterPubsub.clusterMyId().get();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Test
     @EnabledOnCommand("ACL")
@@ -595,7 +557,7 @@ class PubSubCommandTest extends AbstractRedisClientTest
         pubsub.unsubscribe(channel);
     }
 
-    // RedisShardedPubSubListener implementation
+    // RedisPubSubListener implementation
 
     @Override
     public void message(String channel, String message) {
@@ -629,59 +591,14 @@ class PubSubCommandTest extends AbstractRedisClientTest
     }
 
     @Override
-    public void ssubscribed(String shardChannel, long count) {
-        shardChannels.add(shardChannel);
-        counts.add(count);
-    }
-
-    @Override
     public void punsubscribed(String pattern, long count) {
         patterns.add(pattern);
         counts.add(count);
     }
 
-    // RedisClusterShardedPubSubListener implementation
-
     @Override
-    public void message(RedisClusterNode node, String channel, String message) {
-        channels.add(channel);
-        messages.add(message);
-    }
-
-    @Override
-    public void message(RedisClusterNode node, String pattern, String channel, String message) {
-        patterns.add(pattern);
-        channels.add(channel);
-        messages.add(message);
-    }
-
-    @Override
-    public void subscribed(RedisClusterNode node, String channel, long count) {
-        channels.add(channel);
-        counts.add(count);
-    }
-
-    @Override
-    public void psubscribed(RedisClusterNode node, String pattern, long count) {
-        patterns.add(pattern);
-        counts.add(count);
-    }
-
-    @Override
-    public void unsubscribed(RedisClusterNode node, String channel, long count) {
-        channels.add(channel);
-        counts.add(count);
-    }
-
-    @Override
-    public void punsubscribed(RedisClusterNode node, String pattern, long count) {
-        patterns.add(pattern);
-        counts.add(count);
-    }
-
-    @Override
-    public void ssubscribed(RedisClusterNode node, String shardChannel, long count) {
-        shardChannels.add(shardChannel);
+    public void ssubscribed(String shardChannel, long count) {
+        channels.add(shardChannel);
         counts.add(count);
     }
 

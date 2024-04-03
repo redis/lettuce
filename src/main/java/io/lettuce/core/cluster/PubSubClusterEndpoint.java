@@ -2,17 +2,13 @@ package io.lettuce.core.cluster;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubAdapter;
 import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
-import io.lettuce.core.cluster.pubsub.RedisClusterShardedPubSubListener;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.PubSubMessage;
-import io.lettuce.core.pubsub.RedisPubSubListener;
-import io.lettuce.core.pubsub.RedisShardedPubSubListener;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -49,7 +45,7 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
         clusterListeners.add(listener);
     }
 
-    public RedisClusterShardedPubSubListener<K, V> getUpstreamListener() {
+    public RedisClusterPubSubListener<K, V> getUpstreamListener() {
         return upstream;
     }
 
@@ -198,16 +194,8 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
 
         @Override
         public void ssubscribed(RedisClusterNode node, K channel, long count) {
-            getListeners().forEach(listener -> {
-                if (listener instanceof RedisShardedPubSubListener) {
-                    ((RedisShardedPubSubListener<K, V>) listener).ssubscribed(channel, count);
-                }
-            });
-            clusterListeners.forEach(listener -> {
-                if (listener instanceof RedisClusterShardedPubSubListener) {
-                    ((RedisClusterShardedPubSubListener<K, V>) listener).ssubscribed(node, channel, count);
-                }
-            });
+            getListeners().forEach(listener -> listener.ssubscribed(channel, count));
+            clusterListeners.forEach(listener -> listener.ssubscribed(node, channel, count));
         }
 
     }

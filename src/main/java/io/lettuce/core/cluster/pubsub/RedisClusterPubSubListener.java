@@ -67,4 +67,16 @@ public interface RedisClusterPubSubListener<K, V> {
      */
     void punsubscribed(RedisClusterNode node, K pattern, long count);
 
+    /**
+     * Subscribed to a shard channel.
+     *
+     * @param node the {@link RedisClusterNode} from which the {@code message} originates.
+     * @param shardChannel Shard channel
+     * @param count Subscription count.
+     */
+    default void ssubscribed(RedisClusterNode node, K shardChannel, long count){
+        throw new UnsupportedOperationException(
+                "This operation is not available by default! Use one of available pub/sub adapters or override this method in your class.");
+    }
+
 }

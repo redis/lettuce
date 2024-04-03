@@ -10,7 +10,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
  * @author Mark Paluch
  * @since 4.4
  */
-public class RedisClusterPubSubAdapter<K, V> implements RedisClusterShardedPubSubListener<K, V> {
+public class RedisClusterPubSubAdapter<K, V> implements RedisClusterPubSubListener<K, V> {
 
     @Override
     public void message(RedisClusterNode node, K channel, V message) {
