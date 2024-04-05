@@ -82,9 +82,10 @@ public interface RedisPubSubListener<K, V> {
      *
      * @param shardChannel Shard channel
      * @param count Subscription count.
+     * @since 7.0
      */
-    default void ssubscribed(K chashardChannelnnel, long count) {
-        throw new UnsupportedOperationException(
-                "This operation is not available by default. Use one of available pub/sub adapters or override this method in your class!");
+    default void ssubscribed(K shardChannel, long count) {
+        subscribed(shardChannel, count);
     }
+
 }

@@ -45,6 +45,7 @@ public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
      * Listen for messages published to the given shard channels.
      *
      * @param shardChannels the channels
+     * @since 7.0
      */
     void ssubscribe(K... shardChannels);
 

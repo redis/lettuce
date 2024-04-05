@@ -103,6 +103,7 @@ public interface RedisPubSubReactiveCommands<K, V> extends RedisReactiveCommands
      *
      * @param shardChannels the channels.
      * @return Mono&lt;Void&gt; Mono for {@code subscribe} command.
+     * @since 7.0
      */
     Mono<Void> ssubscribe(K... shardChannels);
 

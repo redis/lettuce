@@ -202,17 +202,18 @@ class RedisPubSubAsyncCommandsImplUnitTests {
     @Test
     void ssubscribe() throws ExecutionException, InterruptedException {
         String pattern = "channelPattern";
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.ssubscribe(pattern).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
-        Assertions.assertEquals( SSUBSCRIBE, capturedCommand.getValue().getType());
+        Assertions.assertEquals(SSUBSCRIBE, capturedCommand.getValue().getType());
         assertInstanceOf(PubSubOutput.class, capturedCommand.getValue().getOutput());
-        Assertions.assertEquals( "key<channelPattern>",  capturedCommand.getValue().getArgs().toCommandString());
+        Assertions.assertEquals("key<channelPattern>", capturedCommand.getValue().getArgs().toCommandString());
 
         assertNotEquals(capturedCommand.getValue(), dispachedMock);
     }

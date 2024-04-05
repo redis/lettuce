@@ -36,12 +36,13 @@ import io.lettuce.core.support.PubSubTestListener;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
-class RedisClusterPubSubConnectionIntegrationTests extends TestSupport implements RedisClusterPubSubListener<String, String> {
+class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
 
@@ -113,29 +114,23 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport implement
     }
 
     @Test
+    @EnabledOnCommand("SSUBSCRIBE")
     void subscribeToShardChannel() throws Exception {
-        pubSubConnection.addListener(this);
+        pubSubConnection.addListener(connectionListener);
         pubSubConnection.async().ssubscribe(shardChannel);
-        assertThat(shardChannels.poll(3, TimeUnit.SECONDS)).isEqualTo(shardChannel);
+        assertThat(connectionListener.getChannels().poll(3, TimeUnit.SECONDS)).isEqualTo(shardChannel);
     }
 
     @Test
+    @EnabledOnCommand("SSUBSCRIBE")
     void subscribeToShardChannelViaOtherEndpoint() throws Exception {
-        pubSubConnection.addListener(this);
+        pubSubConnection.addListener(connectionListener);
         RedisClusterPubSubAsyncCommands<String, String> pubSub = pubSubConnection.async();
-        String nodeId = getNodeId(pubSub);
+        String nodeId = pubSub.clusterMyId().get();
         RedisPubSubAsyncCommands<String, String> other = pubSub
                 .nodes(node -> node.getRole().isUpstream() && !node.getNodeId().equals(nodeId)).commands(0);
         other.ssubscribe(shardChannel);
-        assertThat(shardChannels.poll(3, TimeUnit.SECONDS)).isEqualTo(shardChannel);
-    }
-
-    private String getNodeId(RedisClusterPubSubAsyncCommands<String, String> clusterPubsub2) {
-        try {
-            return clusterPubsub2.clusterMyId().get();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        assertThat(connectionListener.getChannels().poll(3, TimeUnit.SECONDS)).isEqualTo(shardChannel);
     }
 
     @Test
@@ -389,37 +384,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport implement
         }
 
         throw new IllegalStateException("No other nodes than " + nodeId + " available");
-    }
-
-    // RedisClusterShardedPubSubListener implementation
-
-    @Override
-    public void message(RedisClusterNode node, String channel, String message) {
-    }
-
-    @Override
-    public void message(RedisClusterNode node, String pattern, String channel, String message) {
-    }
-
-    @Override
-    public void subscribed(RedisClusterNode node, String channel, long count) {
-    }
-
-    @Override
-    public void psubscribed(RedisClusterNode node, String pattern, long count) {
-    }
-
-    @Override
-    public void unsubscribed(RedisClusterNode node, String channel, long count) {
-    }
-
-    @Override
-    public void punsubscribed(RedisClusterNode node, String pattern, long count) {
-    }
-
-    @Override
-    public void ssubscribed(RedisClusterNode node, String shardChannel, long count) {
-        shardChannels.add(shardChannel);
     }
 
 }

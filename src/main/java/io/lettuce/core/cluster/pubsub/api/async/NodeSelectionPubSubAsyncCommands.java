@@ -47,6 +47,7 @@ public interface NodeSelectionPubSubAsyncCommands<K, V> {
      *
      * @param shardChannels the channels
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
+     * @since 7.0
      */
     AsyncExecutions<Void> ssubscribe(K... shardChannels);
 }

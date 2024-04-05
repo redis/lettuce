@@ -39,19 +39,15 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.*;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushMessage;
-import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.core.cluster.pubsub.RedisClusterPubSubListener;
-import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
-import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
+import io.lettuce.core.support.PubSubTestListener;
 import io.lettuce.test.Delay;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
-import io.lettuce.test.resource.DefaultRedisClusterClient;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
@@ -65,18 +61,19 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Tihomir Mateev
  * @author Ali Takavci
  */
-class PubSubCommandTest extends AbstractRedisClientTest
-        implements RedisPubSubListener<String, String> {
+class PubSubCommandTest extends AbstractRedisClientTest {
 
     RedisPubSubAsyncCommands<String, String> pubsub;
 
-    BlockingQueue<String> channels;
+    PubSubTestListener listener = new PubSubTestListener();
 
-    BlockingQueue<String> patterns;
+    BlockingQueue<String> channels = listener.getChannels();
 
-    BlockingQueue<String> messages;
+    BlockingQueue<String> patterns = listener.getPatterns();
 
-    BlockingQueue<Long> counts;
+    BlockingQueue<String> messages = listener.getMessages();
+
+    BlockingQueue<Long> counts = listener.getCounts();
 
     String channel = "channel0";
 
@@ -92,12 +89,12 @@ class PubSubCommandTest extends AbstractRedisClientTest
 
             client.setOptions(getOptions());
             pubsub = client.connectPubSub().async();
-            pubsub.getStatefulConnection().addListener(this);
+            pubsub.getStatefulConnection().addListener(listener);
         } finally {
-            channels = LettuceFactories.newBlockingQueue();
-            patterns = LettuceFactories.newBlockingQueue();
-            messages = LettuceFactories.newBlockingQueue();
-            counts = LettuceFactories.newBlockingQueue();
+            channels.clear();
+            patterns.clear();
+            messages.clear();
+            counts.clear();
         }
     }
 
@@ -119,7 +116,7 @@ class PubSubCommandTest extends AbstractRedisClientTest
             client.setOptions(
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
             RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-            connection.getStatefulConnection().addListener(PubSubCommandTest.this);
+            connection.getStatefulConnection().addListener(listener);
             connection.auth(passwd);
 
             connection.subscribe(channel);
@@ -135,7 +132,7 @@ class PubSubCommandTest extends AbstractRedisClientTest
             client.setOptions(
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
             RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-            connection.getStatefulConnection().addListener(PubSubCommandTest.this);
+            connection.getStatefulConnection().addListener(listener);
             connection.auth(username, passwd);
 
             connection.subscribe(channel);
@@ -152,7 +149,7 @@ class PubSubCommandTest extends AbstractRedisClientTest
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
 
             RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-            connection.getStatefulConnection().addListener(PubSubCommandTest.this);
+            connection.getStatefulConnection().addListener(listener);
             connection.auth(passwd);
 
             connection.clientSetname("authWithReconnect");
@@ -181,7 +178,7 @@ class PubSubCommandTest extends AbstractRedisClientTest
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
 
             RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-            connection.getStatefulConnection().addListener(PubSubCommandTest.this);
+            connection.getStatefulConnection().addListener(listener);
             connection.auth(username, passwd);
             connection.clientSetname("authWithReconnect");
             connection.subscribe(channel).get();
@@ -221,7 +218,6 @@ class PubSubCommandTest extends AbstractRedisClientTest
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
     }
-
 
     @Test
     @EnabledOnCommand("ACL")
@@ -541,7 +537,7 @@ class PubSubCommandTest extends AbstractRedisClientTest
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
 
-        pubsub.getStatefulConnection().removeListener(this);
+        pubsub.getStatefulConnection().removeListener(listener);
 
         redis.publish(channel, message);
         assertThat(channels.poll(10, TimeUnit.MILLISECONDS)).isNull();
@@ -555,51 +551,6 @@ class PubSubCommandTest extends AbstractRedisClientTest
 
         assertThat(TestFutures.getOrTimeout(pubsub.echo("ping"))).isEqualTo("ping");
         pubsub.unsubscribe(channel);
-    }
-
-    // RedisPubSubListener implementation
-
-    @Override
-    public void message(String channel, String message) {
-        channels.add(channel);
-        messages.add(message);
-    }
-
-    @Override
-    public void message(String pattern, String channel, String message) {
-        patterns.add(pattern);
-        channels.add(channel);
-        messages.add(message);
-    }
-
-    @Override
-    public void subscribed(String channel, long count) {
-        channels.add(channel);
-        counts.add(count);
-    }
-
-    @Override
-    public void psubscribed(String pattern, long count) {
-        patterns.add(pattern);
-        counts.add(count);
-    }
-
-    @Override
-    public void unsubscribed(String channel, long count) {
-        channels.add(channel);
-        counts.add(count);
-    }
-
-    @Override
-    public void punsubscribed(String pattern, long count) {
-        patterns.add(pattern);
-        counts.add(count);
-    }
-
-    @Override
-    public void ssubscribed(String shardChannel, long count) {
-        channels.add(shardChannel);
-        counts.add(count);
     }
 
 }

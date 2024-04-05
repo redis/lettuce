@@ -42,11 +42,12 @@ public interface NodeSelectionPubSubCommands<K, V> {
      */
     Executions<Void> unsubscribe(K... channels);
 
-        /**
+    /**
      * Listen for messages published to the given shard channels.
      *
      * @param shardChannels the channels
      * @return Executions Future to synchronize {@code subscribe} completion
+     * @since 7.0
      */
     Executions<Void> ssubscribe(K... shardChannels);
 
