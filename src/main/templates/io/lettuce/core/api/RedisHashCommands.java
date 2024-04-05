@@ -22,6 +22,12 @@ package io.lettuce.core.api;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.MapScanCursor;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
@@ -208,6 +214,15 @@ public interface RedisHashCommands<K, V> {
     MapScanCursor<K, V> hscan(K key);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    KeyScanCursor<K> hscanNovalues(K key);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key.
@@ -215,6 +230,16 @@ public interface RedisHashCommands<K, V> {
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
     MapScanCursor<K, V> hscan(K key, ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanArgs scan arguments.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    KeyScanCursor<K> hscanNovalues(K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -227,6 +252,17 @@ public interface RedisHashCommands<K, V> {
     MapScanCursor<K, V> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    KeyScanCursor<K> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key.
@@ -234,6 +270,16 @@ public interface RedisHashCommands<K, V> {
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
     MapScanCursor<K, V> hscan(K key, ScanCursor scanCursor);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    KeyScanCursor<K> hscanNovalues(K key, ScanCursor scanCursor);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -245,6 +291,16 @@ public interface RedisHashCommands<K, V> {
     StreamScanCursor hscan(KeyValueStreamingChannel<K, V> channel, K key);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @return StreamScanCursor scan cursor.
+     * @since 7.0
+     */
+    StreamScanCursor hscanNovalues(KeyStreamingChannel<K> channel, K key);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param channel streaming channel that receives a call for every key-value pair.
@@ -253,6 +309,17 @@ public interface RedisHashCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @param scanArgs scan arguments.
+     * @return StreamScanCursor scan cursor.
+     * @since 7.0
+     */
+    StreamScanCursor hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -266,6 +333,18 @@ public interface RedisHashCommands<K, V> {
     StreamScanCursor hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
+     * @return StreamScanCursor scan cursor.
+     * @since 7.0
+     */
+    StreamScanCursor hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param channel streaming channel that receives a call for every key-value pair.
@@ -274,6 +353,17 @@ public interface RedisHashCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     StreamScanCursor hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @return StreamScanCursor scan cursor.
+     * @since 7.0
+     */
+    StreamScanCursor hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor);
 
     /**
      * Set the string value of a hash field.

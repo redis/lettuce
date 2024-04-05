@@ -105,6 +105,21 @@ public abstract class ScanIterator<T> implements Iterator<T> {
     }
 
     /**
+     * Sequentially iterate over keys in a hash identified by {@code key}. This method uses {@code HSCAN NOVALUES} to perform an
+     * iterative scan.
+     *
+     * @param commands the commands interface, must not be {@code null}.
+     * @param key the hash to scan.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new {@link ScanIterator}.
+     * @since 7.0
+     */
+    public static <K, V> ScanIterator<K> hscanNovalues(RedisHashCommands<K, V> commands, K key) {
+        return hscanNovalues(commands, key, Optional.empty());
+    }
+
+    /**
      * Sequentially iterate over entries in a hash identified by {@code key}. This method uses {@code HSCAN} to perform an
      * iterative scan.
      *
@@ -120,6 +135,25 @@ public abstract class ScanIterator<T> implements Iterator<T> {
         LettuceAssert.notNull(scanArgs, "ScanArgs must not be null");
 
         return hscan(commands, key, Optional.of(scanArgs));
+    }
+
+    /**
+     * Sequentially iterate over keys in a hash identified by {@code key}. This method uses {@code HSCAN NOVALUES} to perform an
+     * iterative scan.
+     *
+     * @param commands the commands interface, must not be {@code null}.
+     * @param key the hash to scan.
+     * @param scanArgs the scan arguments, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new {@link ScanIterator}.
+     * @since 7.0
+     */
+    public static <K, V> ScanIterator<K> hscanNovalues(RedisHashCommands<K, V> commands, K key, ScanArgs scanArgs) {
+
+        LettuceAssert.notNull(scanArgs, "ScanArgs must not be null");
+
+        return hscanNovalues(commands, key, Optional.of(scanArgs));
     }
 
     private static <K, V> ScanIterator<KeyValue<K, V>> hscan(RedisHashCommands<K, V> commands, K key,
@@ -146,6 +180,35 @@ public abstract class ScanIterator<T> implements Iterator<T> {
 
                 return scanArgs.map((scanArgs) -> commands.hscan(key, scanCursor, scanArgs))
                         .orElseGet(() -> commands.hscan(key, scanCursor));
+            }
+
+        };
+    }
+
+    private static <K, V> ScanIterator<K> hscanNovalues(RedisHashCommands<K, V> commands, K key,
+            Optional<ScanArgs> scanArgs) {
+
+        LettuceAssert.notNull(commands, "RedisKeyCommands must not be null");
+        LettuceAssert.notNull(key, "Key must not be null");
+
+        return new SyncScanIterator<K>() {
+
+            @Override
+            protected ScanCursor nextScanCursor(ScanCursor scanCursor) {
+
+                KeyScanCursor<K> cursor = getNextScanCursor(scanCursor);
+                chunk = cursor.getKeys().iterator();
+                return cursor;
+            }
+
+            private KeyScanCursor<K> getNextScanCursor(ScanCursor scanCursor) {
+
+                if (scanCursor == null) {
+                    return scanArgs.map(scanArgs -> commands.hscanNovalues(key, scanArgs)).orElseGet(() -> commands.hscanNovalues(key));
+                }
+
+                return scanArgs.map((scanArgs) -> commands.hscanNovalues(key, scanCursor, scanArgs))
+                        .orElseGet(() -> commands.hscanNovalues(key, scanCursor));
             }
 
         };

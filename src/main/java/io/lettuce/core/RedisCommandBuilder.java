@@ -1535,16 +1535,34 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return hscan(key, ScanCursor.INITIAL, null);
     }
 
+    Command<K, V, KeyScanCursor<K>> hscanNovalues(K key) {
+        notNullKey(key);
+
+        return hscanNovalues(key, ScanCursor.INITIAL, null);
+    }
+
     Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
         notNullKey(key);
 
         return hscan(key, scanCursor, null);
     }
 
+    Command<K, V, KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor) {
+        notNullKey(key);
+
+        return hscanNovalues(key, scanCursor, null);
+    }
+
     Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
         notNullKey(key);
 
         return hscan(key, ScanCursor.INITIAL, scanArgs);
+    }
+
+    Command<K, V, KeyScanCursor<K>> hscanNovalues(K key, ScanArgs scanArgs) {
+        notNullKey(key);
+
+        return hscanNovalues(key, ScanCursor.INITIAL, scanArgs);
     }
 
     Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
@@ -1559,11 +1577,32 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HSCAN, output, args);
     }
 
+    Command<K, V, KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key);
+
+        scanArgs(scanCursor, scanArgs, args);
+
+        args.add(NOVALUES);
+
+        KeyScanOutput<K, V> output = new KeyScanOutput<>(codec);
+        return createCommand(HSCAN, output, args);
+    }
+
     Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key) {
         notNullKey(key);
         notNull(channel);
 
         return hscanStreaming(channel, key, ScanCursor.INITIAL, null);
+    }
+
+    Command<K, V, StreamScanCursor> hscanNoValuesStreaming(KeyStreamingChannel<K> channel, K key) {
+        notNullKey(key);
+        notNull(channel);
+
+        return hscanNoValuesStreaming(channel, key, ScanCursor.INITIAL, null);
     }
 
     Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
@@ -1573,11 +1612,25 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return hscanStreaming(channel, key, scanCursor, null);
     }
 
+    Command<K, V, StreamScanCursor> hscanNoValuesStreaming(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor) {
+        notNullKey(key);
+        notNull(channel);
+
+        return hscanNoValuesStreaming(channel, key, scanCursor, null);
+    }
+
     Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
         notNullKey(key);
         notNull(channel);
 
         return hscanStreaming(channel, key, ScanCursor.INITIAL, scanArgs);
+    }
+
+    Command<K, V, StreamScanCursor> hscanNoValuesStreaming(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs) {
+        notNullKey(key);
+        notNull(channel);
+
+        return hscanNoValuesStreaming(channel, key, ScanCursor.INITIAL, scanArgs);
     }
 
     Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
@@ -1591,6 +1644,22 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         KeyValueScanStreamingOutput<K, V> output = new KeyValueScanStreamingOutput<>(codec, channel);
+        return createCommand(HSCAN, output, args);
+    }
+
+    Command<K, V, StreamScanCursor> hscanNoValuesStreaming(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+                                                           ScanArgs scanArgs) {
+        notNullKey(key);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+
+        args.addKey(key);
+        scanArgs(scanCursor, scanArgs, args);
+
+        args.add(NOVALUES);
+
+        KeyScanStreamingOutput<K, V> output = new KeyScanStreamingOutput<>(codec, channel);
         return createCommand(HSCAN, output, args);
     }
 
