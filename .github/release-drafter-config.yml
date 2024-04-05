@@ -1,7 +1,6 @@
-name-template: 'RESOLVED_VERSION'
-tag-template: 'v$RESOLVED_VERSION'
+name-template: '$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
 filter-by-commitish: true
-commitish: master
 
 autolabeler:
   - label: 'type: documentation'
