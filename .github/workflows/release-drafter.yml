@@ -6,7 +6,7 @@ on:
     branches:
       - '[0-9].*'
   # pull_request event is required only for autolabeler
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize]
 
 permissions:
