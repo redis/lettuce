@@ -106,6 +106,21 @@ public abstract class ScanStream {
     }
 
     /**
+     * Sequentially iterate over keys in a hash identified by {@code key}. This method uses {@code HSCAN NOVALUES} to perform an
+     * iterative scan.
+     *
+     * @param commands the commands interface, must not be {@code null}.
+     * @param key the hash to scan.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new {@link Flux}.
+     * @since 7.0
+     */
+    public static <K, V> Flux<K> hscanNovalues(RedisHashReactiveCommands<K, V> commands, K key) {
+        return hscanNovalues(commands, key, Optional.empty());
+    }
+
+    /**
      * Sequentially iterate over entries in a hash identified by {@code key}. This method uses {@code HSCAN} to perform an
      * iterative scan.
      *
@@ -121,6 +136,25 @@ public abstract class ScanStream {
         LettuceAssert.notNull(scanArgs, "ScanArgs must not be null");
 
         return hscan(commands, key, Optional.of(scanArgs));
+    }
+
+    /**
+     * Sequentially iterate over keys in a hash identified by {@code key}. This method uses {@code HSCAN NOVALUES} to perform an
+     * iterative scan.
+     *
+     * @param commands the commands interface, must not be {@code null}.
+     * @param key the hash to scan.
+     * @param scanArgs the scan arguments, must not be {@code null}.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return a new {@link Flux}.
+     * @since 7.0
+     */
+    public static <K, V> Flux<K> hscanNovalues(RedisHashReactiveCommands<K, V> commands, K key, ScanArgs scanArgs) {
+
+        LettuceAssert.notNull(scanArgs, "ScanArgs must not be null");
+
+        return hscanNovalues(commands, key, Optional.of(scanArgs));
     }
 
     private static <K, V> Flux<KeyValue<K, V>> hscan(RedisHashReactiveCommands<K, V> commands, K key,
@@ -139,6 +173,23 @@ public abstract class ScanStream {
                     for (Map.Entry<K, V> kvEntry : c.getMap().entrySet()) {
                         list.add(KeyValue.fromNullable(kvEntry.getKey(), kvEntry.getValue()));
                     }
+                    return list;
+                });
+    }
+
+    private static <K, V> Flux<K> hscanNovalues(RedisHashReactiveCommands<K, V> commands, K key,
+            Optional<ScanArgs> scanArgs) {
+
+        LettuceAssert.notNull(commands, "RedisHashReactiveCommands must not be null");
+        LettuceAssert.notNull(key, "Key must not be null");
+
+        return scanArgs.map(it -> commands.hscanNovalues(key, it)).orElseGet(() -> commands.hscanNovalues(key))
+                .expand(c -> !c.isFinished()
+                        ? scanArgs.map(it -> commands.hscanNovalues(key, c, it)).orElseGet(() -> commands.hscanNovalues(key, c))
+                        : Mono.empty())
+                .flatMapIterable(c -> {
+                    List<K> list = new ArrayList<>(c.getKeys().size());
+                    list.addAll(c.getKeys());
                     return list;
                 });
     }

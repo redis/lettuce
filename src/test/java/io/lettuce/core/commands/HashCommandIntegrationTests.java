@@ -22,9 +22,11 @@ package io.lettuce.core.commands;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.MapScanCursor;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ScanCursor;
@@ -307,6 +310,16 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNovalues() {
+        redis.hset(key, key, value);
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key);
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).containsExactly(key);
+    }
+
+    @Test
     void hscanWithCursor() {
         redis.hset(key, key, value);
 
@@ -318,6 +331,17 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNoValuesWithCursor() {
+        redis.hset(key, key, value);
+
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanCursor.INITIAL);
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).containsExactly(key);
+    }
+
+    @Test
     void hscanWithCursorAndArgs() {
         redis.hset(key, key, value);
 
@@ -326,6 +350,17 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(cursor.getMap()).isEqualTo(Collections.singletonMap(key, value));
+    }
+
+    @Test
+    void hscanNoValuesWithCursorAndArgs() {
+        redis.hset(key, key, value);
+
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanCursor.INITIAL, ScanArgs.Builder.limit(2));
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).containsExactly(key);
     }
 
     @Test
@@ -342,6 +377,19 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNoValuesStreaming() {
+        redis.hset(key, key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor cursor = redis.hscanNovalues(adapter, key, ScanArgs.Builder.limit(100).match("*"));
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).containsExactly(key);
+    }
+
+    @Test
     void hscanStreamingWithCursor() {
         redis.hset(key, key, value);
         KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
@@ -351,6 +399,19 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
+    }
+
+    @Test
+    void hscanNoValuesStreamingWithCursor() {
+        redis.hset(key, key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor cursor = redis.hscanNovalues(adapter, key, ScanCursor.INITIAL);
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).containsExactly(key);
     }
 
     @Test
@@ -366,6 +427,19 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNoValuesStreamingWithCursorAndArgs() {
+        redis.hset(key, key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor cursor = redis.hscanNovalues(adapter, key, ScanCursor.INITIAL, ScanArgs.Builder.limit(100).match("*"));
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).containsExactly(key);
+    }
+
+    @Test
     void hscanStreamingWithArgs() {
         redis.hset(key, key, value);
         KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
@@ -375,6 +449,19 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
+    }
+
+    @Test
+    void hscanNoValuesStreamingWithArgs() {
+        redis.hset(key, key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor cursor = redis.hscanNovalues(adapter, key);
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).containsExactly(key);
     }
 
     @Test
@@ -403,6 +490,30 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNoValuesMultiple() {
+
+        Map<String, String> expect = new LinkedHashMap<>();
+        setup100KeyValues(expect);
+
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanArgs.Builder.limit(5));
+
+        assertThat(cursor.getCursor()).isNotNull();
+        assertThat(cursor.getKeys()).hasSize(100);
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+
+        Set<String> check = new HashSet<>(cursor.getKeys());
+
+        while (!cursor.isFinished()) {
+            cursor = redis.hscanNovalues(key, cursor);
+            check.addAll(cursor.getKeys());
+        }
+
+        assertThat(check).isEqualTo(expect.keySet());
+    }
+
+    @Test
     void hscanMatch() {
 
         Map<String, String> expect = new LinkedHashMap<>();
@@ -414,6 +525,20 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(cursor.isFinished()).isTrue();
 
         assertThat(cursor.getMap()).hasSize(11);
+    }
+
+    @Test
+    void hscanNoValuesMatch() {
+
+        Map<String, String> expect = new LinkedHashMap<>();
+        setup100KeyValues(expect);
+
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanArgs.Builder.limit(100).match("key1*"));
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+
+        assertThat(cursor.getKeys()).hasSize(11);
     }
 
     void setup100KeyValues(Map<String, String> expect) {

@@ -90,6 +90,20 @@ class ScanStreamIntegrationTests extends TestSupport {
     }
 
     @Test
+    void shouldHscanNovaluesIteratively() {
+
+        for (int i = 0; i < 1000; i++) {
+            redis.hset(key, "field-" + i, "value-" + i);
+        }
+
+        RedisReactiveCommands<String, String> reactive = redis.getStatefulConnection().reactive();
+
+        StepVerifier.create(ScanStream.hscanNovalues(reactive, key, ScanArgs.Builder.limit(200)).take(250)).expectNextCount(250)
+                .verifyComplete();
+        StepVerifier.create(ScanStream.hscanNovalues(reactive, key)).expectNextCount(1000).verifyComplete();
+    }
+
+    @Test
     void shouldSscanIteratively() {
 
         for (int i = 0; i < 1000; i++) {
@@ -130,6 +144,29 @@ class ScanStreamIntegrationTests extends TestSupport {
         redis.del(targetKey);
 
         ScanStream.hscan(commands, sourceKey).map(KeyValue::getValue) //
+                .map(Integer::parseInt) //
+                .filter(num -> num % 2 == 0) //
+                .concatMap(item -> commands.sadd(targetKey, String.valueOf(item))) //
+                .as(StepVerifier::create) //
+                .expectNextCount(5000) //
+                .verifyComplete();
+
+        assertThat(redis.scard(targetKey)).isEqualTo(5_000);
+    }
+
+    @Test
+    void shouldCorrectlyEmitKeysWithConcurrentPoll() {
+
+        RedisReactiveCommands<String, String> commands = connection.reactive();
+
+        String sourceKey = "source";
+        String targetKey = "target";
+
+        IntStream.range(0, 10_000).forEach(num -> connection.async().hset(sourceKey, String.valueOf(num), String.valueOf(num)));
+
+        redis.del(targetKey);
+
+        ScanStream.hscanNovalues(commands, sourceKey) //
                 .map(Integer::parseInt) //
                 .filter(num -> num % 2 == 0) //
                 .concatMap(item -> commands.sadd(targetKey, String.valueOf(item))) //

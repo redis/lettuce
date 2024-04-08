@@ -177,6 +177,15 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
     suspend fun hscan(key: K): MapScanCursor<K, V>?
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @return KeyScanCursor<K> key scan cursor.
+     * @since 7.0
+     */
+    suspend fun hscanNovalues(key: K): KeyScanCursor<K>?
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key.
@@ -184,6 +193,16 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @return MapScanCursor<K, V> map scan cursor.
      */
     suspend fun hscan(key: K, scanArgs: ScanArgs): MapScanCursor<K, V>?
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanArgs scan arguments.
+     * @return KeyScanCursor<K> key scan cursor.
+     * @since 7.0
+     */
+    suspend fun hscanNovalues(key: K, scanArgs: ScanArgs): KeyScanCursor<K>?
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -196,6 +215,17 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
     suspend fun hscan(key: K, scanCursor: ScanCursor, scanArgs: ScanArgs): MapScanCursor<K, V>?
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be `null`.
+     * @param scanArgs scan arguments.
+     * @return KeyScanCursor<K> key scan cursor.
+     * @since 7.0
+     */
+    suspend fun hscanNovalues(key: K, scanCursor: ScanCursor, scanArgs: ScanArgs): KeyScanCursor<K>?
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key.
@@ -203,6 +233,16 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @return MapScanCursor<K, V> map scan cursor.
      */
     suspend fun hscan(key: K, scanCursor: ScanCursor): MapScanCursor<K, V>?
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be `null`.
+     * @return KeyScanCursor<K> key scan cursor.
+     * @since 7.0
+     */
+    suspend fun hscanNovalues(key: K, scanCursor: ScanCursor): KeyScanCursor<K>?
 
     /**
      * Set the string value of a hash field.

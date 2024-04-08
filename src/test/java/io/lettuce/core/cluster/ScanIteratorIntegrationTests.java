@@ -145,6 +145,23 @@ class ScanIteratorIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNovaluesShouldThrowNoSuchElementExceptionOnEmpty() {
+
+        redis.mset(KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, "none",
+                ScanArgs.Builder.limit(50).match("key-foo"));
+
+        assertThat(scan.hasNext()).isFalse();
+        try {
+            scan.next();
+            fail("Missing NoSuchElementException");
+        } catch (NoSuchElementException e) {
+            assertThat(e).isInstanceOf(NoSuchElementException.class);
+        }
+    }
+
+    @Test
     void hashSinglePass() {
 
         redis.hmset(key, KeysAndValues.MAP);
@@ -164,6 +181,24 @@ class ScanIteratorIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hashNovaluesSinglePass() {
+
+        redis.hmset(key, KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, key,
+                ScanArgs.Builder.limit(50).match("key-11*"));
+
+        for (int i = 0; i < 11; i++) {
+            assertThat(scan.hasNext()).isTrue();
+            String next = scan.next();
+            assertThat(next).isNotNull();
+            assertThat(next).startsWith("key-11");
+        }
+
+        assertThat(scan.hasNext()).isFalse();
+    }
+
+    @Test
     void hashMultiPass() {
 
         redis.hmset(key, KeysAndValues.MAP);
@@ -174,6 +209,18 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         assertThat(keys).containsAll(KeysAndValues.KEYS.stream().map(s -> KeyValue.fromNullable(s, KeysAndValues.MAP.get(s)))
                 .collect(Collectors.toList()));
+    }
+
+    @Test
+    void hashNovaluesMultiPass() {
+
+        redis.hmset(key, KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, key);
+
+        List<String> keys = scan.stream().collect(Collectors.toList());
+
+        assertThat(keys).containsAll(KeysAndValues.KEYS);
     }
 
     @Test

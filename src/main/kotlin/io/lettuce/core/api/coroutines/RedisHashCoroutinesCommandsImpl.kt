@@ -76,8 +76,14 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun hscan(key: K): MapScanCursor<K, V>? =
         ops.hscan(key).awaitFirstOrNull()
 
+    override suspend fun hscanNovalues(key: K): KeyScanCursor<K>? =
+        ops.hscanNovalues(key).awaitFirstOrNull()
+
     override suspend fun hscan(key: K, scanArgs: ScanArgs): MapScanCursor<K, V>? =
         ops.hscan(key, scanArgs).awaitFirstOrNull()
+
+    override suspend fun hscanNovalues(key: K, scanArgs: ScanArgs): KeyScanCursor<K>? =
+        ops.hscanNovalues(key, scanArgs).awaitFirstOrNull()
 
     override suspend fun hscan(
         key: K,
@@ -85,8 +91,17 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
         scanArgs: ScanArgs
     ): MapScanCursor<K, V>? = ops.hscan(key, scanCursor, scanArgs).awaitFirstOrNull()
 
+    override suspend fun hscanNovalues(
+        key: K,
+        scanCursor: ScanCursor,
+        scanArgs: ScanArgs
+    ): KeyScanCursor<K>? = ops.hscanNovalues(key, scanCursor, scanArgs).awaitFirstOrNull()
+
     override suspend fun hscan(key: K, scanCursor: ScanCursor): MapScanCursor<K, V>? =
         ops.hscan(key, scanCursor).awaitFirstOrNull()
+
+    override suspend fun hscanNovalues(key: K, scanCursor: ScanCursor): KeyScanCursor<K>? =
+        ops.hscanNovalues(key, scanCursor).awaitFirstOrNull()
 
     override suspend fun hset(key: K, field: K, value: V): Boolean? = ops.hset(key, field, value).awaitFirstOrNull()
 

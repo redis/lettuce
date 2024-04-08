@@ -74,6 +74,18 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
     }
 
     @Test
+    fun `should hscanNovalues iteratively`() = runBlocking<Unit> {
+        with(connection.coroutines()) {
+            repeat(iterations) {
+                hset(key, "field-$it", "value-$it")
+            }
+
+            assertThat(ScanFlow.hscanNovalues(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
+            assertThat(ScanFlow.hscanNovalues(this, key).count()).isEqualTo(iterations)
+        }
+    }
+
+    @Test
     fun shouldSscanIteratively() = runBlocking<Unit> {
         with(connection.coroutines()) {
             repeat(iterations) {

@@ -1233,8 +1233,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<KeyScanCursor<K>> hscanNovalues(K key) {
+        return createMono(() -> commandBuilder.hscanNovalues(key));
+    }
+
+    @Override
     public Mono<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
         return createMono(() -> commandBuilder.hscan(key, scanArgs));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscanNovalues(key, scanArgs));
     }
 
     @Override
@@ -1243,8 +1253,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscanNovalues(key, scanCursor, scanArgs));
+    }
+
+    @Override
     public Mono<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
         return createMono(() -> commandBuilder.hscan(key, scanCursor));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.hscanNovalues(key, scanCursor));
     }
 
     @Override
@@ -1253,8 +1273,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key) {
+        return createMono(() -> commandBuilder.hscanNoValuesStreaming(channel, key));
+    }
+
+    @Override
     public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
         return createMono(() -> commandBuilder.hscanStreaming(channel, key, scanArgs));
+    }
+
+    @Override
+    public Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscanNoValuesStreaming(channel, key, scanArgs));
     }
 
     @Override
@@ -1264,8 +1294,19 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+                                                ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor, scanArgs));
+    }
+
+    @Override
     public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
         return createMono(() -> commandBuilder.hscanStreaming(channel, key, scanCursor));
+    }
+
+    @Override
+    public Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor));
     }
 
     @Override

@@ -23,6 +23,7 @@ import java.util.Map;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
 import io.lettuce.core.ScanArgs;
@@ -223,6 +224,15 @@ public interface RedisHashReactiveCommands<K, V> {
     Mono<MapScanCursor<K, V>> hscan(K key);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    Mono<KeyScanCursor<K>> hscanNovalues(K key);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key.
@@ -230,6 +240,16 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
     Mono<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanArgs scan arguments.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -242,6 +262,17 @@ public interface RedisHashReactiveCommands<K, V> {
     Mono<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key.
@@ -249,6 +280,16 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
     Mono<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -262,6 +303,17 @@ public interface RedisHashReactiveCommands<K, V> {
     Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @return StreamScanCursor scan cursor.
+     * @deprecated since 7.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscanNovalues}.
+     */
+    @Deprecated
+    Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param channel streaming channel that receives a call for every key-value pair.
@@ -272,6 +324,18 @@ public interface RedisHashReactiveCommands<K, V> {
      */
     @Deprecated
     Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @param scanArgs scan arguments.
+     * @return StreamScanCursor scan cursor.
+     * @deprecated since 7.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscanNovalues}.
+     */
+    @Deprecated
+    Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -287,6 +351,19 @@ public interface RedisHashReactiveCommands<K, V> {
     Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
+     * @return StreamScanCursor scan cursor.
+     * @deprecated since 7.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscanNovalues}.
+     */
+    @Deprecated
+    Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param channel streaming channel that receives a call for every key-value pair.
@@ -297,6 +374,18 @@ public interface RedisHashReactiveCommands<K, V> {
      */
     @Deprecated
     Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @return StreamScanCursor scan cursor.
+     * @deprecated since 7.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscanNovalues}.
+     */
+    @Deprecated
+    Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor);
 
     /**
      * Set the string value of a hash field.

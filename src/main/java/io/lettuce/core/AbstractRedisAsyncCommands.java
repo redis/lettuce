@@ -1170,8 +1170,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<KeyScanCursor<K>> hscanNovalues(K key) {
+        return dispatch(commandBuilder.hscanNovalues(key));
+    }
+
+    @Override
     public RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
         return dispatch(commandBuilder.hscan(key, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> hscanNovalues(K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanNovalues(key, scanArgs));
     }
 
     @Override
@@ -1180,8 +1190,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanNovalues(key, scanCursor, scanArgs));
+    }
+
+    @Override
     public RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
         return dispatch(commandBuilder.hscan(key, scanCursor));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.hscanNovalues(key, scanCursor));
     }
 
     @Override
@@ -1190,8 +1210,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key) {
+        return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key));
+    }
+
+    @Override
     public RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
         return dispatch(commandBuilder.hscanStreaming(channel, key, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key, scanArgs));
     }
 
     @Override
@@ -1201,8 +1231,19 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+                                                       ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor, scanArgs));
+    }
+
+    @Override
     public RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
         return dispatch(commandBuilder.hscanStreaming(channel, key, scanCursor));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor));
     }
 
     @Override
