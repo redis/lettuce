@@ -33,7 +33,7 @@ public class DefaultEventBus implements EventBus {
     @Override
     public void publish(Event event) {
 
-        recorder.record(event);
+        recorder.publish(event);
 
         Sinks.EmitResult emitResult;
 

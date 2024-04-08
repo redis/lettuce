@@ -54,6 +54,7 @@ import io.lettuce.core.cluster.topology.NodeConnectionFactory;
 import io.lettuce.core.cluster.topology.TopologyComparators;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.event.RecordableEvent;
 import io.lettuce.core.event.jfr.EventRecorder;
 import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.Futures;
@@ -886,7 +887,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             sources.add(redisURI);
         }
 
-        EventRecorder.RecordableEvent event = EventRecorder.getInstance().start(new TopologyRefreshEvent(sources));
+        RecordableEvent event = EventRecorder.getInstance().start(new TopologyRefreshEvent(sources));
 
         if (partitions == null) {
             return initializePartitions().thenAccept(Partitions::updateCache)

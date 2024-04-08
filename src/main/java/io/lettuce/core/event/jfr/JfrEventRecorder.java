@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.lettuce.core.event.Event;
+import io.lettuce.core.event.RecordableEvent;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceClassUtils;
 
@@ -16,7 +17,7 @@ import io.lettuce.core.internal.LettuceClassUtils;
  * <p>
  * JFR event forwarding tries to detect a JFR event class that is co-located with the actual event type in the same package
  * whose simple name is prefixed with {@code Jfr} (e.g. {@code ConnectedEvent} translates to {@code JfrConnectedEvent}). JFR
- * event implementations are expected to accept the originak event type as constructor argument. Implementations can be
+ * event implementations are expected to accept the original event type as constructor argument. Implementations can be
  * package-private.
  *
  * @author Mark Paluch
@@ -42,14 +43,33 @@ class JfrEventRecorder implements EventRecorder {
 
         LettuceAssert.notNull(event, "Event must not be null");
 
-        jdk.jfr.Event jfrEvent = createEvent(event);
+        JfrRecordableEvent jfrRecordableEvent = new JfrRecordableEvent(event);
+        jdk.jfr.Event jfrEvent = jfrRecordableEvent.getJfrEvent();
 
         if (jfrEvent != null) {
             jfrEvent.begin();
-            return new JfrRecordableEvent(jfrEvent);
+            return jfrRecordableEvent;
         }
 
         return NoOpEventRecorder.INSTANCE;
+    }
+
+    /**
+     * When the given event is an instance of RecordableEvent, this method works the same as {@link #record}.
+     * Otherwise, do nothing.
+     *
+     * @param event the event to be published
+     */
+    @Override
+    public void publish(Event event) {
+
+        LettuceAssert.notNull(event, "Event must not be null");
+
+        if (event instanceof RecordableEvent) {
+            ((RecordableEvent) event).record();
+        } else {
+            record(event);
+        }
     }
 
     private Constructor<?> getEventConstructor(Event event) throws NoSuchMethodException {
@@ -97,18 +117,30 @@ class JfrEventRecorder implements EventRecorder {
         }
     }
 
-    static class JfrRecordableEvent implements RecordableEvent {
+    class JfrRecordableEvent implements RecordableEvent {
+
+        private final Event originalEvent;
 
         private final jdk.jfr.Event jfrEvent;
 
-        public JfrRecordableEvent(jdk.jfr.Event jfrEvent) {
-            this.jfrEvent = jfrEvent;
+        public JfrRecordableEvent(Event event) {
+            this.originalEvent = event;
+            this.jfrEvent = createEvent(event);
         }
 
         @Override
         public void record() {
             jfrEvent.end();
             jfrEvent.commit();
+        }
+
+        @Override
+        public Event getSource() {
+            return originalEvent;
+        }
+
+        public jdk.jfr.Event getJfrEvent() {
+            return jfrEvent;
         }
 
     }
