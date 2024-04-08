@@ -36,7 +36,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.KillArgs;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.internal.LettuceFactories;
@@ -91,10 +96,7 @@ class PubSubCommandTest extends AbstractRedisClientTest {
             pubsub = client.connectPubSub().async();
             pubsub.getStatefulConnection().addListener(listener);
         } finally {
-            channels.clear();
-            patterns.clear();
-            messages.clear();
-            counts.clear();
+            listener.clear();
         }
     }
 
@@ -378,7 +380,7 @@ class PubSubCommandTest extends AbstractRedisClientTest {
 
     @Test
     @EnabledOnCommand("SPUBLISH")
-    void pubsubShardChannelsWithArg() {        
+    void pubsubShardChannelsWithArg() {
         /// TODO : uncomment after SSUBSCRIBE is implemented
         // TestFutures.awaitOrTimeout(pubsub.ssubscribe(channel));
         List<String> result = redis.pubsubShardChannels(pattern);

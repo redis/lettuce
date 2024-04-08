@@ -39,6 +39,8 @@ import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for Cluster Pub/Sub.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
