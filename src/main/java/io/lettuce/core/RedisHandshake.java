@@ -38,6 +38,8 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.ConnectionInitializer;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.channel.Channel;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Redis RESP2/RESP3 handshake using the configured {@link ProtocolVersion} and other options for connection initialization and
@@ -49,7 +51,7 @@ import io.netty.channel.Channel;
  */
 class RedisHandshake implements ConnectionInitializer {
 
-    private static final RedisVersion CLIENT_SET_INFO_SINCE = RedisVersion.of("7.2");
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisHandshake.class);
 
     private final RedisCommandBuilder<String, String> commandBuilder = new RedisCommandBuilder<>(StringCodec.UTF8);
 
@@ -106,7 +108,12 @@ class RedisHandshake implements ConnectionInitializer {
         // post-handshake commands, executed in a 'fire and forget' manner, to avoid having to react to different
         // implementations or versions of the server runtime, and whose execution result (whether a success or a
         // failure ) should not alter the outcome of the connection attempt
-        CompletableFuture<Void> connectionMetadata = applyConnectionMetadata(channel).handle((result, error) -> null);
+        CompletableFuture<Void> connectionMetadata = applyConnectionMetadata(channel).handle((result, error) -> {
+            if (error != null) {
+                LOG.debug("Error applying connection metadata", error);
+            }
+            return null;
+        });
 
         return handshake.thenCompose(ignore -> postHandshake).thenCompose(ignore -> connectionMetadata);
     }
