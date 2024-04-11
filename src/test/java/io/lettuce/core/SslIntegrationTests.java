@@ -383,14 +383,13 @@ class SslIntegrationTests extends TestSupport {
         RedisPubSubCommands<String, String> connection = redisClient.connectPubSub(URI_NO_VERIFY).sync();
         connection.subscribe("c1");
         connection.subscribe("c2");
-        Delay.delay(Duration.ofMillis(200));
 
         RedisPubSubCommands<String, String> connection2 = redisClient.connectPubSub(URI_NO_VERIFY).sync();
 
-        assertThat(connection2.pubsubChannels()).contains("c1", "c2");
+        Wait.untilTrue(()->connection2.pubsubChannels().contains("c1")).waitOrTimeout();
+        Wait.untilTrue(()->connection2.pubsubChannels().contains("c2")).waitOrTimeout();
         connection.quit();
-        Delay.delay(Duration.ofMillis(200));
-        Wait.untilTrue(connection::isOpen).waitOrTimeout();
+        Wait.untilTrue(connection.getStatefulConnection()::isOpen).waitOrTimeout();
         Wait.untilEquals(2, () -> connection2.pubsubChannels().size()).waitOrTimeout();
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
