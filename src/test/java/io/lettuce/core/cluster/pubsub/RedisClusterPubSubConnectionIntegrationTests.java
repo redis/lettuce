@@ -120,7 +120,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     void subscribeToShardChannel() throws Exception {
         pubSubConnection.addListener(connectionListener);
         pubSubConnection.async().ssubscribe(shardChannel);
-        assertThat(connectionListener.getChannels().take()).isEqualTo(shardChannel);
+        Wait.untilTrue(() -> shardChannel.equals(connectionListener.getChannels().poll())).waitOrTimeout();
     }
 
     @Test
@@ -132,7 +132,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         RedisPubSubAsyncCommands<String, String> other = pubSub
                 .nodes(node -> node.getRole().isUpstream() && !node.getNodeId().equals(nodeId)).commands(0);
         other.ssubscribe(shardChannel);
-        assertThat(connectionListener.getChannels().take()).isEqualTo(shardChannel);
+        Wait.untilTrue(() -> shardChannel.equals(connectionListener.getChannels().poll())).waitOrTimeout();
     }
 
     @Test
