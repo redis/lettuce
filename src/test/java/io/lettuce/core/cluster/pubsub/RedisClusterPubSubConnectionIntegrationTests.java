@@ -5,10 +5,11 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.RedisAsyncCommandsImpl;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -98,15 +99,18 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     @Test
     void testRegularClientPubSubShardChannels() {
 
-        String nodeId = pubSubConnection.sync().clusterMyId();
-        RedisClusterNode otherNode = getOtherThan(nodeId);
-
         pubSubConnection.sync().ssubscribe(shardChannel);
 
-        List<String> channelsOnSubscribedNode = connection.getConnection(nodeId).sync().pubsubShardChannels();
+        Integer clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
+        RedisCommands<String, String> rightSlot =
+                connection.sync().nodes(node -> node.getSlots().contains(clusterKeyslot)).commands(0);
+        RedisCommands<String, String> wrongSlot =
+                connection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot)).commands(0);
+
+        List<String> channelsOnSubscribedNode = rightSlot.pubsubShardChannels();
         assertThat(channelsOnSubscribedNode).hasSize(1);
 
-        List<String> channelsOnOtherNode = connection.getConnection(otherNode.getNodeId()).sync().pubsubShardChannels();
+        List<String> channelsOnOtherNode = wrongSlot.pubsubShardChannels();
         assertThat(channelsOnOtherNode).isEmpty();
     }
 
