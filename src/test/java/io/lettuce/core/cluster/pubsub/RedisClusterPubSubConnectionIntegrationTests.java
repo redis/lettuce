@@ -8,7 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.inject.Inject;
 
-import io.lettuce.core.RedisAsyncCommandsImpl;
+import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,7 +23,6 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.api.async.NodeSelectionPubSubAsyncCommands;
 import io.lettuce.core.cluster.pubsub.api.async.PubSubAsyncNodeSelection;
-import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
 import io.lettuce.core.cluster.pubsub.api.reactive.NodeSelectionPubSubReactiveCommands;
 import io.lettuce.core.cluster.pubsub.api.reactive.PubSubReactiveNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.sync.NodeSelectionPubSubCommands;
@@ -31,7 +30,6 @@ import io.lettuce.core.cluster.pubsub.api.sync.PubSubNodeSelection;
 import io.lettuce.core.event.command.CommandFailedEvent;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
-import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.support.PubSubTestListener;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
@@ -128,7 +126,10 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     void subscribeToShardChannelViaOtherEndpoint() throws Exception {
         Integer clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
         RedisPubSubCommands<String, String> otherSlot =
-                pubSubConnection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot)).commands(0);
+                pubSubConnection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot) && node.getRole().isReplica()).commands(0);
+
+        Partitions partitions = connection.getPartitions();
+        assertThat("27f88788f03a86296b7d860152f4ae24ee59c8c9").isEqualTo(partitions.getPartitionBySlot(clusterKeyslot).getNodeId());
 
         otherSlot.ssubscribe(shardChannel);
 
