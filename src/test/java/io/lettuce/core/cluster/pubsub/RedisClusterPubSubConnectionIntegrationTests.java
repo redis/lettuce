@@ -11,7 +11,6 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -97,6 +96,21 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     }
 
     @Test
+    void testRegularClientPubSubShardChannels() {
+
+        String nodeId = pubSubConnection.sync().clusterMyId();
+        RedisClusterNode otherNode = getOtherThan(nodeId);
+
+        pubSubConnection.sync().ssubscribe(shardChannel);
+
+        List<String> channelsOnSubscribedNode = connection.getConnection(nodeId).sync().pubsubShardChannels();
+        assertThat(channelsOnSubscribedNode).hasSize(1);
+
+        List<String> channelsOnOtherNode = connection.getConnection(otherNode.getNodeId()).sync().pubsubShardChannels();
+        assertThat(channelsOnOtherNode).isEmpty();
+    }
+
+    @Test
     @EnabledOnCommand("SSUBSCRIBE")
     void subscribeToShardChannel() throws Exception {
         pubSubConnection.sync().ssubscribe(shardChannel);
@@ -105,22 +119,21 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
     }
 
-    @Disabled
-    // This test is currently failing because the replica of the master node, where we subscribe to a shard channel,
-    // could be used to SPUBLISH to this channel, but does not list the shard channels with PUBSUB SHARDCHANNELS or
-    // PUBSUB SHARDNUMSUB
-
-    // furthermore the test does not address the possibility that the SSUBSCRIBE could result in a MOVED, e.g. when
-    // the hash of the shard channel name falls into the slot space of another node
     @Test
-    // @EnabledOnCommand("SSUBSCRIBE")
+    @EnabledOnCommand("SSUBSCRIBE")
     void subscribeToShardChannelViaOtherEndpoint() throws Exception {
+        // Step 1. fetch the connection to the shard that serves the slot for <shardChannel>
         RedisClusterPubSubAsyncCommands<String, String> pubSub = pubSubConnection.async();
         String nodeId = pubSub.clusterMyId().get();
+        // Step 2. fetch another node, that does not serve this slot
         RedisPubSubAsyncCommands<String, String> other = pubSub
                 .nodes(node -> node.getRole().isUpstream() && !node.getNodeId().equals(nodeId)).commands(0);
+        // Step 3. Use the connection from step 2 to subscribe to <shardChannel>
+        // This should cause a MOVED response and a subscription using the right connection automatically
         other.ssubscribe(shardChannel);
-        assertThat(connectionListener.getChannels().poll(3, TimeUnit.SECONDS)).isEqualTo(shardChannel);
+
+        // Step 4. Verify that the subscription succeeded
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
     }
 
     @Test
