@@ -124,12 +124,10 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("SSUBSCRIBE")
     void subscribeToShardChannelViaOtherEndpoint() throws Exception {
-        Integer clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
+        int clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
+        String thisNode = connection.getPartitions().getPartitionBySlot(clusterKeyslot).getNodeId();
         RedisPubSubCommands<String, String> otherSlot =
-                pubSubConnection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot) && node.getRole().isReplica()).commands(0);
-
-        Partitions partitions = connection.getPartitions();
-        assertThat("27f88788f03a86296b7d860152f4ae24ee59c8c9").isEqualTo(partitions.getPartitionBySlot(clusterKeyslot).getNodeId());
+                pubSubConnection.sync().nodes(node -> thisNode.equals(node.getSlaveOf())).commands(0);
 
         otherSlot.ssubscribe(shardChannel);
 
