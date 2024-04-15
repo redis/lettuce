@@ -126,17 +126,12 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("SSUBSCRIBE")
     void subscribeToShardChannelViaOtherEndpoint() throws Exception {
-        // Step 1. fetch the connection to the shard that serves the slot for <shardChannel>
-        RedisClusterPubSubAsyncCommands<String, String> pubSub = pubSubConnection.async();
-        String nodeId = pubSub.clusterMyId().get();
-        // Step 2. fetch another node, that does not serve this slot
-        RedisPubSubAsyncCommands<String, String> other = pubSub
-                .nodes(node -> node.getRole().isUpstream() && !node.getNodeId().equals(nodeId)).commands(0);
-        // Step 3. Use the connection from step 2 to subscribe to <shardChannel>
-        // This should cause a MOVED response and a subscription using the right connection automatically
-        other.ssubscribe(shardChannel);
+        Integer clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
+        RedisPubSubCommands<String, String> otherSlot =
+                pubSubConnection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot)).commands(0);
 
-        // Step 4. Verify that the subscription succeeded
+        otherSlot.ssubscribe(shardChannel);
+
         Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
     }
 
