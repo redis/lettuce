@@ -8,8 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.inject.Inject;
 
-import io.lettuce.core.cluster.models.partitions.Partitions;
-import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
+import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -114,7 +113,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("SSUBSCRIBE")
-    void subscribeToShardChannel() throws Exception {
+    void subscribeToShardChannel(){
         pubSubConnection.sync().ssubscribe(shardChannel);
 
         Wait.untilEquals(1L, connectionListener.getShardCounts()::poll).waitOrTimeout();
@@ -123,13 +122,13 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("SSUBSCRIBE")
-    void subscribeToShardChannelViaOtherEndpoint() throws Exception {
+    void subscribeToShardChannelViaReplica() {
         int clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
         String thisNode = connection.getPartitions().getPartitionBySlot(clusterKeyslot).getNodeId();
-        RedisPubSubCommands<String, String> otherSlot =
-                pubSubConnection.sync().nodes(node -> thisNode.equals(node.getSlaveOf())).commands(0);
 
-        otherSlot.ssubscribe(shardChannel);
+        RedisPubSubAsyncCommands<String, String> replica =
+                pubSubConnection.async().nodes(node -> thisNode.equals(node.getSlaveOf())).commands(0);
+        replica.ssubscribe(shardChannel);
 
         Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
     }
