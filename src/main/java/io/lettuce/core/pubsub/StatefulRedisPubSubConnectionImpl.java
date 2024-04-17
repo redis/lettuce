@@ -24,7 +24,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CompletionStage;
 
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisCommandExecutionException;
@@ -148,33 +147,14 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
     @Override
     public void activated() {
-        List<RedisFuture<Void>> futures = resubscribe();
-
-        if (futures.isEmpty()) {
-            super.activated();
-            return;
-        }
-
-        CompletionStage<Void> lastCommand = null;
-        for (RedisFuture<Void> command : futures) {
-            if (lastCommand == null){
-                lastCommand = command;
-                continue;
-            }
-            lastCommand = lastCommand.handleAsync( (result,throwable) -> {
+        super.activated();
+        for (RedisFuture<Void> command : resubscribe()) {
+            command.exceptionally(throwable -> {
                 if (throwable instanceof RedisCommandExecutionException) {
-                    InternalLoggerFactory.getInstance(getClass()).warn("Re-subscribe failed: " + throwable.getMessage());
+                    InternalLoggerFactory.getInstance(getClass()).warn("Re-subscribe failed: " + command.getError());
                 }
                 return null;
-            }).thenCombineAsync(command, (res1, res2) -> null);
+            });
         }
-
-        lastCommand.handleAsync( (result,throwable) -> {
-            if (throwable instanceof RedisCommandExecutionException) {
-                InternalLoggerFactory.getInstance(getClass()).warn("Re-subscribe failed: " + throwable.getMessage());
-            }
-            return null;
-        }).thenRun(super::activated);
     }
-
 }
