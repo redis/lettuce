@@ -389,8 +389,8 @@ class SslIntegrationTests extends TestSupport {
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
         connection.quit();
-        Wait.untilTrue(connection::isOpen).waitOrTimeout();
-        Wait.untilEquals(2, () -> connection2.pubsubChannels().size()).during(Duration.ofSeconds(120)).waitOrTimeout();
+        Wait.untilTrue(connection.getStatefulConnection()::isOpen).waitOrTimeout();
+        Wait.untilEquals(2, () -> connection2.pubsubChannels().size()).waitOrTimeout();
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
     }

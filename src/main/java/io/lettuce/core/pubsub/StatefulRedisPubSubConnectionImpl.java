@@ -24,12 +24,14 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.Futures;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -146,15 +148,33 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
 
     @Override
     public void activated() {
-        super.activated();
-        for (RedisFuture<Void> command : resubscribe()) {
-            command.exceptionally(throwable -> {
+        List<RedisFuture<Void>> futures = resubscribe();
+
+        if (futures.isEmpty()) {
+            super.activated();
+            return;
+        }
+
+        CompletionStage<Void> lastCommand = null;
+        for (RedisFuture<Void> command : futures) {
+            if (lastCommand == null){
+                lastCommand = command;
+                continue;
+            }
+            lastCommand = lastCommand.handleAsync( (result,throwable) -> {
                 if (throwable instanceof RedisCommandExecutionException) {
-                    InternalLoggerFactory.getInstance(getClass()).warn("Re-subscribe failed: " + command.getError());
+                    InternalLoggerFactory.getInstance(getClass()).warn("Re-subscribe failed: " + throwable.getMessage());
                 }
                 return null;
-            });
+            }).thenCombineAsync(command, (res1, res2) -> null);
         }
+
+        lastCommand.handleAsync( (result,throwable) -> {
+            if (throwable instanceof RedisCommandExecutionException) {
+                InternalLoggerFactory.getInstance(getClass()).warn("Re-subscribe failed: " + throwable.getMessage());
+            }
+            return null;
+        }).thenRun(super::activated);
     }
 
 }
