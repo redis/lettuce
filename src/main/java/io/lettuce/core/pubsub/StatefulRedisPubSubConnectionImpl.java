@@ -30,7 +30,6 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.Futures;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -157,4 +156,5 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
             });
         }
     }
+
 }
