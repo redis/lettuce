@@ -378,20 +378,17 @@ class SslIntegrationTests extends TestSupport {
                 .isInstanceOf(RedisConnectionException.class);
     }
 
-    @Disabled // constantly fails on the pipeline, but not locally, hard to reproduce
     @Test
     void pubSubSsl() {
 
         RedisPubSubCommands<String, String> connection = redisClient.connectPubSub(URI_NO_VERIFY).sync();
         connection.subscribe("c1");
         connection.subscribe("c2");
-        Delay.delay(Duration.ofMillis(200));
 
         RedisPubSubCommands<String, String> connection2 = redisClient.connectPubSub(URI_NO_VERIFY).sync();
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
         connection.quit();
-        Delay.delay(Duration.ofMillis(200));
         Wait.untilTrue(connection::isOpen).waitOrTimeout();
         Wait.untilEquals(2, () -> connection2.pubsubChannels().size()).waitOrTimeout();
 
