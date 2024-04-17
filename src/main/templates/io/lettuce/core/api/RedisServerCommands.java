@@ -176,6 +176,16 @@ public interface RedisServerCommands<K, V> {
     String clientTracking(TrackingArgs args);
 
     /**
+     * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
+     * are either available when using the RESP3 protocol or through Pub/Sub notification when using RESP2.
+     *
+     * @param args for the CLIENT TRACKING operation.
+     * @return String simple-string-reply {@code OK}.
+     * @since 6.0
+     */
+    Map<String, String>  clientTrackinginfo(TrackingArgs args);
+
+    /**
      * Unblock the specified blocked client.
      *
      * @param id the client id.
