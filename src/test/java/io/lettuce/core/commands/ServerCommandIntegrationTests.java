@@ -119,6 +119,21 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void clientTrackinginfo() {
+        try {
+            redis.clientTracking(TrackingArgs.Builder.enabled(true).optin());
+            Map<String, String> trackingInfo = redis.clientTrackinginfo();
+
+            assertThat(trackingInfo.get("flags")).contains("on");
+            assertThat(trackingInfo.get("flags")).contains("optin");
+            assertThat(trackingInfo.get("redirect")).contains("-1");
+            assertThat(trackingInfo.get("prefixes")).isEmpty();
+        } finally {
+            redis.clientTracking(TrackingArgs.Builder.enabled(false));
+        }
+    }
+
+    @Test
     void clientGetSetname() {
         assertThat(redis.clientGetname()).isNull();
         assertThat(redis.clientSetname("test")).isEqualTo("OK");

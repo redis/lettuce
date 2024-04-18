@@ -176,6 +176,14 @@ public interface NodeSelectionServerCommands<K, V> {
     Executions<String> clientTracking(TrackingArgs args);
 
     /**
+     * Returns information about the current client connection's use of the server assisted client side caching feature.
+     *
+     * @return Map&lt;String, String&gt; bulk-string-reply, for more information check the documentation
+     * @since 7.0
+     */
+    Executions<Map<String, String>> clientTrackinginfo();
+
+    /**
      * Unblock the specified blocked client.
      *
      * @param id the client id.

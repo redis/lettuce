@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-Present, Redis Ltd. and Contributors
+ * Copyright 2017-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
@@ -168,6 +168,14 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @since 6.0
      */
     suspend fun clientTracking(args: TrackingArgs): String?
+
+    /**
+     * Returns information about the current client connection's use of the server assisted client side caching feature.
+     *
+     * @return Map<String, String> bulk-string-reply, for more information check the documentation
+     * @since 7.0
+     */
+    suspend fun clientTrackinginfo(): Map<String, String>?
 
     /**
      * Unblock the specified blocked client.

@@ -75,6 +75,8 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun clientTracking(args: TrackingArgs): String? = ops.clientTracking(args).awaitFirstOrNull()
 
+    override suspend fun clientTrackinginfo(): Map<String, String>? = ops.clientTrackinginfo().awaitFirstOrNull()
+
     override suspend fun clientUnblock(id: Long, type: UnblockType): Long? = ops.clientUnblock(id, type).awaitFirstOrNull()
 
     override suspend fun command(): List<Any> = ops.command().asFlow().toList()
