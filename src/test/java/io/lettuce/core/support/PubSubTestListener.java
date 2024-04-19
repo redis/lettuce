@@ -33,6 +33,8 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
     private BlockingQueue<String> patterns = LettuceFactories.newBlockingQueue();
     private BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
     private BlockingQueue<Long> counts = LettuceFactories.newBlockingQueue();
+    private BlockingQueue<String> shardChannels = LettuceFactories.newBlockingQueue();
+    private BlockingQueue<Long> shardCounts = LettuceFactories.newBlockingQueue();
 
     // RedisPubSubListener implementation
 
@@ -53,6 +55,12 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
     public void subscribed(String channel, long count) {
         channels.add(channel);
         counts.add(count);
+    }
+
+    @Override
+    public void ssubscribed(String shardChannel, long count) {
+        shardChannels.add(shardChannel);
+        shardCounts.add(count);
     }
 
     @Override
@@ -77,6 +85,10 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
         return channels;
     }
 
+    public BlockingQueue<String> getShardChannels() {
+        return shardChannels;
+    }
+
     public BlockingQueue<String> getPatterns() {
         return patterns;
     }
@@ -89,13 +101,19 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
         return counts;
     }
 
+    public BlockingQueue<Long> getShardCounts() {
+        return shardCounts;
+    }
+
     /**
      * Clear listener state (i.e. channels, patterns, messages, counts).
      */
     public void clear() {
         channels.clear();
+        shardChannels.clear();
         patterns.clear();
         messages.clear();
         counts.clear();
+        shardCounts.clear();
     }
 }
