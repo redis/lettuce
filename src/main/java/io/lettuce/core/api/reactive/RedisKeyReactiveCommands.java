@@ -22,6 +22,7 @@ package io.lettuce.core.api.reactive;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -146,6 +147,56 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @since 6.2
      */
     Mono<Boolean> expire(K key, Duration seconds, ExpireArgs expireArgs);
+
+    /**
+     * Set the time to live (in seconds) for a {@link List} of fields, belonging to a certain key.
+     *
+     * @param key the key of the fields.
+     * @param seconds the seconds type: long.
+     * @param fields a {@link List} of fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    Mono<Boolean> hexpire(K key, long seconds, List<V> fields);
+
+    /**
+     * Set the time to live (in seconds) for a {@link List} of fields, belonging to a certain key.
+     *
+     * @param key the key of the fields.
+     * @param seconds the seconds type: long.
+     * @param expireArgs the expire arguments.
+     * @param fields a {@link List} of fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    Mono<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, List<V> fields);
+
+    /**
+     * Set the time to live for a {@link List} of fields, belonging to a certain key.
+     *
+     * @param key the key.
+     * @param seconds the TTL {@link Duration}
+     * @param fields a {@link List} of fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    Mono<Boolean> hexpire(K key, Duration seconds, List<V> fields);
+
+    /**
+     * Set the time to live for a {@link List} of fields, belonging to a certain key.
+     *
+     * @param key the key.
+     * @param seconds the TTL {@link Duration}
+     * @param expireArgs the {@link ExpireArgs}.
+     * @param fields a {@link List} of fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    Mono<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, List<V> fields);
 
     /**
      * Set the expiration for a key as a UNIX timestamp.

@@ -795,6 +795,27 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Boolean> hexpire(K key, long seconds, List<V> fields) {
+        return hexpire(key, seconds, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, List<V> fields) {
+        return dispatch(commandBuilder.hexpire(key, seconds, expireArgs, fields));
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpire(K key, Duration seconds, List<V> fields) {
+        return hexpire(key, seconds, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, List<V> fields) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return hexpire(key, seconds.toMillis() / 1000, expireArgs, fields);
+    }
+
+    @Override
     public RedisFuture<Boolean> expireat(K key, long timestamp) {
         return expireat(key, timestamp, null);
     }

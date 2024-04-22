@@ -978,6 +978,23 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXPIRE, new BooleanOutput<>(codec), args);
     }
 
+    Command<K, V, Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, List<V> fields) {
+        notNullKey(key);
+        notEmpty(fields == null ? new Object[]{} : fields.toArray());
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(fields.size());
+
+        fields.forEach(args::addValue);
+
+        return createCommand(HEXPIRE, new BooleanOutput<>(codec), args);
+    }
+
     Command<K, V, Boolean> expireat(K key, long timestamp, ExpireArgs expireArgs) {
         notNullKey(key);
 
