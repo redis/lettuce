@@ -203,9 +203,9 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
         assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
 
-        assertThat(redis.hexpire("myKey", 1, Collections.singletonList("myField"))).isTrue();
+        assertThat(redis.hexpire(MY_KEY, 1, Collections.singletonList(MY_FIELD))).isTrue();
 
-        await().until(() -> redis.hget("myKey", "myField") == null);
+        await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
     }
 
     @Test
@@ -217,24 +217,24 @@ public class KeyCommandIntegrationTests extends TestSupport {
         assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
         assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
 
-        assertThat(redis.hexpire("myKey",
+        assertThat(redis.hexpire(MY_KEY,
                 Duration.ofSeconds(1),
                 ExpireArgs.Builder.nx(),
-                Collections.singletonList("myField"))).isTrue();
-        assertThat(redis.hexpire("myKey",
+                Collections.singletonList(MY_FIELD))).isTrue();
+        assertThat(redis.hexpire(MY_KEY,
                 Duration.ofSeconds(1),
                 ExpireArgs.Builder.xx(),
-                Collections.singletonList("myField"))).isTrue();
-        assertThat(redis.hexpire("myKey",
+                Collections.singletonList(MY_FIELD))).isTrue();
+        assertThat(redis.hexpire(MY_KEY,
                 Duration.ofSeconds(10),
                 ExpireArgs.Builder.gt(),
-                Collections.singletonList("myField"))).isTrue();
-        assertThat(redis.hexpire("myKey",
+                Collections.singletonList(MY_FIELD))).isTrue();
+        assertThat(redis.hexpire(MY_KEY,
                 Duration.ofSeconds(1),
                 ExpireArgs.Builder.lt(),
-                Collections.singletonList("myField"))).isTrue();
+                Collections.singletonList(MY_FIELD))).isTrue();
 
-        await().until(() -> redis.hget("myKey", "myField") == null);
+        await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
     }
 
     @Test
