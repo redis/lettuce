@@ -19,14 +19,24 @@
  */
 package io.lettuce.core.api.async;
 
+import io.lettuce.core.CopyArgs;
+import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.KeyScanArgs;
+import io.lettuce.core.KeyScanCursor;
+import io.lettuce.core.MigrateArgs;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.RestoreArgs;
+import io.lettuce.core.ScanArgs;
+import io.lettuce.core.ScanCursor;
+import io.lettuce.core.SortArgs;
+import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.output.KeyStreamingChannel;
+import io.lettuce.core.output.ValueStreamingChannel;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-
-import io.lettuce.core.*;
-import io.lettuce.core.output.KeyStreamingChannel;
-import io.lettuce.core.output.ValueStreamingChannel;
 
 /**
  * Asynchronous executed commands for Keys (Key manipulation/querying).
@@ -136,56 +146,6 @@ public interface RedisKeyAsyncCommands<K, V> {
      * @since 6.2
      */
     RedisFuture<Boolean> expire(K key, Duration seconds, ExpireArgs expireArgs);
-
-    /**
-     * Set the time to live (in seconds) for a {@link List} of fields, belonging to a certain key.
-     *
-     * @param key the key of the fields.
-     * @param seconds the seconds type: long.
-     * @param fields a {@link List} of fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set.
-     * @since 7.0
-     */
-    RedisFuture<Boolean> hexpire(K key, long seconds, List<V> fields);
-
-    /**
-     * Set the time to live (in seconds) for a {@link List} of fields, belonging to a certain key.
-     *
-     * @param key the key of the fields.
-     * @param seconds the seconds type: long.
-     * @param expireArgs the expire arguments.
-     * @param fields a {@link List} of fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set.
-     * @since 7.0
-     */
-    RedisFuture<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, List<V> fields);
-
-    /**
-     * Set the time to live for a {@link List} of fields, belonging to a certain key.
-     *
-     * @param key the key.
-     * @param seconds the TTL {@link Duration}
-     * @param fields a {@link List} of fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set.
-     * @since 7.0
-     */
-    RedisFuture<Boolean> hexpire(K key, Duration seconds, List<V> fields);
-
-    /**
-     * Set the time to live for a {@link List} of fields, belonging to a certain key.
-     *
-     * @param key the key.
-     * @param seconds the TTL {@link Duration}
-     * @param expireArgs the {@link ExpireArgs}.
-     * @param fields a {@link List} of fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set.
-     * @since 7.0
-     */
-    RedisFuture<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, List<V> fields);
 
     /**
      * Set the expiration for a key as a UNIX timestamp.

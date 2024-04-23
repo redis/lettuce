@@ -19,20 +19,6 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.awaitility.Awaitility.await;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-
-import javax.inject.Inject;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
-
 import io.lettuce.core.CopyArgs;
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.KeyScanArgs;
@@ -46,6 +32,23 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.condition.EnabledOnCommand;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import javax.inject.Inject;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisKeyCommands}.
@@ -57,12 +60,6 @@ import io.lettuce.test.condition.EnabledOnCommand;
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class KeyCommandIntegrationTests extends TestSupport {
-
-    public static final String MY_KEY = "hKey";
-
-    public static final String MY_FIELD = "hField";
-
-    public static final String MY_VALUE = "hValue";
 
     private final RedisCommands<String, String> redis;
 
@@ -192,49 +189,6 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.expireat(key, expiration);
 
         assertThat(redis.expiretime(key)).isEqualTo(expiration.getTime() / 1000);
-    }
-
-    @Test
-    @EnabledOnCommand("HEXPIRE")
-    void hexpire() {
-        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
-        // the below settings are required until the solution is able to support listpack entries
-        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
-
-        assertThat(redis.hexpire(MY_KEY, 1, Collections.singletonList(MY_FIELD))).isTrue();
-
-        await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
-    }
-
-    @Test
-    @EnabledOnCommand("HEXPIRE")
-    void hexpireExpireArgs() {
-        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
-        // the below settings are required until the solution is able to support listpack entries
-        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
-
-        assertThat(redis.hexpire(MY_KEY,
-                Duration.ofSeconds(1),
-                ExpireArgs.Builder.nx(),
-                Collections.singletonList(MY_FIELD))).isTrue();
-        assertThat(redis.hexpire(MY_KEY,
-                Duration.ofSeconds(1),
-                ExpireArgs.Builder.xx(),
-                Collections.singletonList(MY_FIELD))).isTrue();
-        assertThat(redis.hexpire(MY_KEY,
-                Duration.ofSeconds(10),
-                ExpireArgs.Builder.gt(),
-                Collections.singletonList(MY_FIELD))).isTrue();
-        assertThat(redis.hexpire(MY_KEY,
-                Duration.ofSeconds(1),
-                ExpireArgs.Builder.lt(),
-                Collections.singletonList(MY_FIELD))).isTrue();
-
-        await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
     }
 
     @Test

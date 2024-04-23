@@ -74,24 +74,6 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     ): Boolean? =
         ops.expire(key, seconds, expireArgs).awaitFirstOrNull()
 
-    override suspend fun hexpire(key: K, seconds: Long, fields: List<V>): Boolean? =
-        ops.hexpire(key, seconds, fields).awaitFirstOrNull()
-
-    override suspend fun hexpire(key: K, seconds: Long, expireArgs: ExpireArgs, fields: List<V>): Boolean? =
-        ops.hexpire(key, seconds, expireArgs, fields).awaitFirstOrNull()
-
-
-    override suspend fun hexpire(key: K, seconds: Duration, fields: List<V>): Boolean? =
-        ops.hexpire(key, seconds, fields).awaitFirstOrNull()
-
-    override suspend fun hexpire(
-        key: K,
-        seconds: Duration,
-        expireArgs: ExpireArgs,
-        fields: List<V>
-    ): Boolean? =
-        ops.hexpire(key, seconds, expireArgs, fields).awaitFirstOrNull()
-
     override suspend fun expireat(key: K, timestamp: Date): Boolean? =
         ops.expireat(key, timestamp).awaitFirstOrNull()
 

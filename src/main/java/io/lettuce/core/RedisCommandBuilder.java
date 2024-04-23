@@ -19,19 +19,6 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.internal.LettuceStrings.*;
-import static io.lettuce.core.protocol.CommandKeyword.*;
-import static io.lettuce.core.protocol.CommandType.*;
-import static io.lettuce.core.protocol.CommandType.COPY;
-import static io.lettuce.core.protocol.CommandType.SAVE;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
@@ -40,13 +27,175 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
-import io.lettuce.core.output.*;
+import io.lettuce.core.output.ArrayOutput;
+import io.lettuce.core.output.BooleanListOutput;
+import io.lettuce.core.output.BooleanOutput;
+import io.lettuce.core.output.ByteArrayOutput;
+import io.lettuce.core.output.ClaimedMessagesOutput;
+import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.output.DateOutput;
+import io.lettuce.core.output.DoubleListOutput;
+import io.lettuce.core.output.DoubleOutput;
+import io.lettuce.core.output.EnumSetOutput;
+import io.lettuce.core.output.GenericMapOutput;
+import io.lettuce.core.output.GeoCoordinatesListOutput;
+import io.lettuce.core.output.GeoCoordinatesValueListOutput;
+import io.lettuce.core.output.GeoWithinListOutput;
+import io.lettuce.core.output.IntegerListOutput;
+import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.output.KeyListOutput;
+import io.lettuce.core.output.KeyOutput;
+import io.lettuce.core.output.KeyScanOutput;
+import io.lettuce.core.output.KeyScanStreamingOutput;
+import io.lettuce.core.output.KeyStreamingChannel;
+import io.lettuce.core.output.KeyStreamingOutput;
+import io.lettuce.core.output.KeyValueListOutput;
+import io.lettuce.core.output.KeyValueListScoredValueOutput;
+import io.lettuce.core.output.KeyValueOfScoredValueOutput;
+import io.lettuce.core.output.KeyValueOutput;
+import io.lettuce.core.output.KeyValueScanStreamingOutput;
+import io.lettuce.core.output.KeyValueScoredValueOutput;
+import io.lettuce.core.output.KeyValueStreamingChannel;
+import io.lettuce.core.output.KeyValueStreamingOutput;
+import io.lettuce.core.output.KeyValueValueListOutput;
+import io.lettuce.core.output.ListOfGenericMapsOutput;
+import io.lettuce.core.output.MapOutput;
+import io.lettuce.core.output.MapScanOutput;
+import io.lettuce.core.output.NestedMultiOutput;
+import io.lettuce.core.output.ObjectOutput;
+import io.lettuce.core.output.PendingMessageListOutput;
+import io.lettuce.core.output.PendingMessagesOutput;
+import io.lettuce.core.output.ScoredValueListOutput;
+import io.lettuce.core.output.ScoredValueOutput;
+import io.lettuce.core.output.ScoredValueScanOutput;
+import io.lettuce.core.output.ScoredValueScanStreamingOutput;
+import io.lettuce.core.output.ScoredValueStreamingChannel;
+import io.lettuce.core.output.ScoredValueStreamingOutput;
+import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.output.StreamMessageListOutput;
+import io.lettuce.core.output.StreamReadOutput;
+import io.lettuce.core.output.StringListOutput;
+import io.lettuce.core.output.StringMatchResultOutput;
+import io.lettuce.core.output.StringValueListOutput;
+import io.lettuce.core.output.ValueListOutput;
+import io.lettuce.core.output.ValueOutput;
+import io.lettuce.core.output.ValueScanOutput;
+import io.lettuce.core.output.ValueScanStreamingOutput;
+import io.lettuce.core.output.ValueSetOutput;
+import io.lettuce.core.output.ValueStreamingChannel;
+import io.lettuce.core.output.ValueStreamingOutput;
+import io.lettuce.core.output.ValueValueListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static io.lettuce.core.internal.LettuceStrings.string;
+import static io.lettuce.core.protocol.CommandKeyword.ADDSLOTS;
+import static io.lettuce.core.protocol.CommandKeyword.ADDSLOTSRANGE;
+import static io.lettuce.core.protocol.CommandKeyword.AFTER;
+import static io.lettuce.core.protocol.CommandKeyword.AND;
+import static io.lettuce.core.protocol.CommandKeyword.BEFORE;
+import static io.lettuce.core.protocol.CommandKeyword.BUMPEPOCH;
+import static io.lettuce.core.protocol.CommandKeyword.BYLEX;
+import static io.lettuce.core.protocol.CommandKeyword.BYSCORE;
+import static io.lettuce.core.protocol.CommandKeyword.CACHING;
+import static io.lettuce.core.protocol.CommandKeyword.CAT;
+import static io.lettuce.core.protocol.CommandKeyword.CHANNELS;
+import static io.lettuce.core.protocol.CommandKeyword.CONSUMERS;
+import static io.lettuce.core.protocol.CommandKeyword.COUNT;
+import static io.lettuce.core.protocol.CommandKeyword.COUNTKEYSINSLOT;
+import static io.lettuce.core.protocol.CommandKeyword.CREATE;
+import static io.lettuce.core.protocol.CommandKeyword.DELSLOTS;
+import static io.lettuce.core.protocol.CommandKeyword.DELSLOTSRANGE;
+import static io.lettuce.core.protocol.CommandKeyword.DELUSER;
+import static io.lettuce.core.protocol.CommandKeyword.DRYRUN;
+import static io.lettuce.core.protocol.CommandKeyword.ENCODING;
+import static io.lettuce.core.protocol.CommandKeyword.FAILOVER;
+import static io.lettuce.core.protocol.CommandKeyword.FLUSH;
+import static io.lettuce.core.protocol.CommandKeyword.FLUSHSLOTS;
+import static io.lettuce.core.protocol.CommandKeyword.FORCE;
+import static io.lettuce.core.protocol.CommandKeyword.FORGET;
+import static io.lettuce.core.protocol.CommandKeyword.FREQ;
+import static io.lettuce.core.protocol.CommandKeyword.GENPASS;
+import static io.lettuce.core.protocol.CommandKeyword.GETKEYSINSLOT;
+import static io.lettuce.core.protocol.CommandKeyword.GETNAME;
+import static io.lettuce.core.protocol.CommandKeyword.GETREDIR;
+import static io.lettuce.core.protocol.CommandKeyword.GETUSER;
+import static io.lettuce.core.protocol.CommandKeyword.GROUPS;
+import static io.lettuce.core.protocol.CommandKeyword.HARD;
+import static io.lettuce.core.protocol.CommandKeyword.HTSTATS;
+import static io.lettuce.core.protocol.CommandKeyword.ID;
+import static io.lettuce.core.protocol.CommandKeyword.IDLETIME;
+import static io.lettuce.core.protocol.CommandKeyword.IMPORTING;
+import static io.lettuce.core.protocol.CommandKeyword.KEYSLOT;
+import static io.lettuce.core.protocol.CommandKeyword.KILL;
+import static io.lettuce.core.protocol.CommandKeyword.LEN;
+import static io.lettuce.core.protocol.CommandKeyword.LIMIT;
+import static io.lettuce.core.protocol.CommandKeyword.LIST;
+import static io.lettuce.core.protocol.CommandKeyword.LOAD;
+import static io.lettuce.core.protocol.CommandKeyword.LOG;
+import static io.lettuce.core.protocol.CommandKeyword.MAXLEN;
+import static io.lettuce.core.protocol.CommandKeyword.MEET;
+import static io.lettuce.core.protocol.CommandKeyword.MIGRATING;
+import static io.lettuce.core.protocol.CommandKeyword.NO;
+import static io.lettuce.core.protocol.CommandKeyword.NODE;
+import static io.lettuce.core.protocol.CommandKeyword.NODES;
+import static io.lettuce.core.protocol.CommandKeyword.NOSAVE;
+import static io.lettuce.core.protocol.CommandKeyword.NOT;
+import static io.lettuce.core.protocol.CommandKeyword.NOVALUES;
+import static io.lettuce.core.protocol.CommandKeyword.NUMPAT;
+import static io.lettuce.core.protocol.CommandKeyword.NUMSUB;
+import static io.lettuce.core.protocol.CommandKeyword.OFF;
+import static io.lettuce.core.protocol.CommandKeyword.ON;
+import static io.lettuce.core.protocol.CommandKeyword.ONE;
+import static io.lettuce.core.protocol.CommandKeyword.OR;
+import static io.lettuce.core.protocol.CommandKeyword.PAUSE;
+import static io.lettuce.core.protocol.CommandKeyword.REFCOUNT;
+import static io.lettuce.core.protocol.CommandKeyword.RELOAD;
+import static io.lettuce.core.protocol.CommandKeyword.REPLACE;
+import static io.lettuce.core.protocol.CommandKeyword.REPLICAS;
+import static io.lettuce.core.protocol.CommandKeyword.REPLICATE;
+import static io.lettuce.core.protocol.CommandKeyword.RESET;
+import static io.lettuce.core.protocol.CommandKeyword.RESETSTAT;
+import static io.lettuce.core.protocol.CommandKeyword.RESTART;
+import static io.lettuce.core.protocol.CommandKeyword.REV;
+import static io.lettuce.core.protocol.CommandKeyword.REWRITE;
+import static io.lettuce.core.protocol.CommandKeyword.SAVECONFIG;
+import static io.lettuce.core.protocol.CommandKeyword.SEGFAULT;
+import static io.lettuce.core.protocol.CommandKeyword.SETINFO;
+import static io.lettuce.core.protocol.CommandKeyword.SETNAME;
+import static io.lettuce.core.protocol.CommandKeyword.SETSLOT;
+import static io.lettuce.core.protocol.CommandKeyword.SETUSER;
+import static io.lettuce.core.protocol.CommandKeyword.SHARDCHANNELS;
+import static io.lettuce.core.protocol.CommandKeyword.SHARDNUMSUB;
+import static io.lettuce.core.protocol.CommandKeyword.SHARDS;
+import static io.lettuce.core.protocol.CommandKeyword.SLAVES;
+import static io.lettuce.core.protocol.CommandKeyword.SLOTS;
+import static io.lettuce.core.protocol.CommandKeyword.SOFT;
+import static io.lettuce.core.protocol.CommandKeyword.STABLE;
+import static io.lettuce.core.protocol.CommandKeyword.STREAM;
+import static io.lettuce.core.protocol.CommandKeyword.TAKEOVER;
+import static io.lettuce.core.protocol.CommandKeyword.TRACKING;
+import static io.lettuce.core.protocol.CommandKeyword.UNBLOCK;
+import static io.lettuce.core.protocol.CommandKeyword.USAGE;
+import static io.lettuce.core.protocol.CommandKeyword.USERS;
+import static io.lettuce.core.protocol.CommandKeyword.WHOAMI;
+import static io.lettuce.core.protocol.CommandKeyword.WITHSCORE;
+import static io.lettuce.core.protocol.CommandKeyword.WITHSCORES;
+import static io.lettuce.core.protocol.CommandKeyword.WITHVALUES;
+import static io.lettuce.core.protocol.CommandKeyword.XOR;
+import static io.lettuce.core.protocol.CommandKeyword.YES;
+import static io.lettuce.core.protocol.CommandType.*;
 
 /**
  * @param <K>
@@ -978,9 +1127,9 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXPIRE, new BooleanOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, List<V> fields) {
+    Command<K, V, Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
         notNullKey(key);
-        notEmpty(fields == null ? new Object[]{} : fields.toArray());
+        notEmpty(fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
 
@@ -988,11 +1137,26 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             expireArgs.build(args);
         }
 
-        args.add(fields.size());
-
-        fields.forEach(args::addValue);
+        args.add(fields.length);
+        args.addKeys(fields);
 
         return createCommand(HEXPIRE, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> hexpireat(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HEXPIREAT, new BooleanOutput<>(codec), args);
     }
 
     Command<K, V, Boolean> expireat(K key, long timestamp, ExpireArgs expireArgs) {
@@ -1012,6 +1176,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         return createCommand(EXPIRETIME, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> hexpiretime(K key, K... fields) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(fields.length);
+        args.addKeys(fields);
+        return createCommand(HEXPIRETIME, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, String> flushall() {
@@ -2058,6 +2231,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         return createCommand(PERSIST, new BooleanOutput<>(codec), key);
+    }
+
+    Command<K, V, Boolean> hpersist(K key, K... fields) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HPERSIST, new BooleanOutput<>(codec), args);
     }
 
     Command<K, V, Boolean> pexpire(K key, long milliseconds, ExpireArgs expireArgs) {

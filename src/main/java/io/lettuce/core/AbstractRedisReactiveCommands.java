@@ -19,19 +19,21 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandType.*;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Supplier;
-
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.reactive.*;
+import io.lettuce.core.api.reactive.BaseRedisReactiveCommands;
+import io.lettuce.core.api.reactive.RedisAclReactiveCommands;
+import io.lettuce.core.api.reactive.RedisGeoReactiveCommands;
+import io.lettuce.core.api.reactive.RedisHLLReactiveCommands;
+import io.lettuce.core.api.reactive.RedisHashReactiveCommands;
+import io.lettuce.core.api.reactive.RedisKeyReactiveCommands;
+import io.lettuce.core.api.reactive.RedisListReactiveCommands;
+import io.lettuce.core.api.reactive.RedisScriptingReactiveCommands;
+import io.lettuce.core.api.reactive.RedisServerReactiveCommands;
+import io.lettuce.core.api.reactive.RedisSetReactiveCommands;
+import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands;
+import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
+import io.lettuce.core.api.reactive.RedisTransactionalReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
@@ -58,6 +60,20 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import static io.lettuce.core.protocol.CommandType.EXEC;
+import static io.lettuce.core.protocol.CommandType.GEORADIUS;
+import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER;
+import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
+import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
 
 /**
  * A reactive and thread-safe API for a Redis connection.
@@ -855,22 +871,22 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Boolean> hexpire(K key, long seconds, List<V> fields) {
+    public Mono<Boolean> hexpire(K key, long seconds, K... fields) {
         return hexpire(key, seconds, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, List<V> fields) {
+    public Mono<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
         return createMono(() -> commandBuilder.hexpire(key, seconds, expireArgs, fields));
     }
 
     @Override
-    public Mono<Boolean> hexpire(K key, Duration seconds, List<V> fields) {
+    public Mono<Boolean> hexpire(K key, Duration seconds, K... fields) {
         return hexpire(key, seconds, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, List<V> fields) {
+    public Mono<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(seconds, "Timeout must not be null");
         return hexpire(key, seconds.toMillis() / 1000, expireArgs, fields);
     }
@@ -908,8 +924,45 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Boolean> hexpireat(K key, long timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+        return createMono(() -> commandBuilder.hexpireat(key, timestamp, expireArgs, fields));
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, Date timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hexpireat(key, timestamp.getTime() / 1000, expireArgs, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, Instant timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, fields);
+    }
+
+    @Override
     public Mono<Long> expiretime(K key) {
         return createMono(() -> commandBuilder.expiretime(key));
+    }
+
+    @Override
+    public Mono<Long> hexpiretime(K key, K... fields) {
+        return createMono(() -> commandBuilder.hexpiretime(key, fields));
     }
 
     @Override
@@ -1575,6 +1628,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Boolean> persist(K key) {
         return createMono(() -> commandBuilder.persist(key));
+    }
+
+    @Override
+    public Mono<Boolean> hpersist(K key, K... fields) {
+        return createMono(() -> commandBuilder.hpersist(key, fields));
     }
 
     @Override

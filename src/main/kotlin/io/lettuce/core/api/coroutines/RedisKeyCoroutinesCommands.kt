@@ -20,11 +20,19 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.*
+import io.lettuce.core.CopyArgs
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.ExpireArgs
+import io.lettuce.core.KeyScanCursor
+import io.lettuce.core.MigrateArgs
+import io.lettuce.core.RestoreArgs
+import io.lettuce.core.ScanArgs
+import io.lettuce.core.ScanCursor
+import io.lettuce.core.SortArgs
 import kotlinx.coroutines.flow.Flow
 import java.time.Duration
 import java.time.Instant
-import java.util.*
+import java.util.Date
 
 /**
  * Coroutine executed commands for Keys (Key manipulation/querying).
@@ -135,56 +143,6 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @since 6.2
      */
     suspend fun expire(key: K, seconds: Duration, expireArgs: ExpireArgs): Boolean?
-
-    /**
-     * Set the time to live (in seconds) for a [List] of fields, belonging to a certain key.
-     *
-     * @param key the key of the fields.
-     * @param seconds the seconds type: long.
-     * @param fields a [List] of fields to set the TTL for.
-     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
-     *         exist or the timeout could not be set.
-     * @since 7.0
-     */
-    suspend fun hexpire(key: K, seconds: Long, fields: List<V>): Boolean?
-
-    /**
-     * Set the time to live (in seconds) for a [List] of fields, belonging to a certain key.
-     *
-     * @param key the key of the fields.
-     * @param seconds the seconds type: long.
-     * @param expireArgs the expire arguments.
-     * @param fields a [List] of fields to set the TTL for.
-     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
-     *         exist or the timeout could not be set.
-     * @since 7.0
-     */
-    suspend fun hexpire(key: K, seconds: Long, expireArgs: ExpireArgs, fields: List<V>): Boolean?
-
-    /**
-     * Set the time to live for a [List] of fields, belonging to a certain key.
-     *
-     * @param key the key.
-     * @param seconds the TTL [Duration]
-     * @param fields a [List] of fields to set the TTL for.
-     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
-     *         exist or the timeout could not be set.
-     * @since 7.0
-     */
-    suspend fun hexpire(key: K, seconds: Duration, fields: List<V>): Boolean?
-
-    /**
-     * Set the time to live for a [List] of fields, belonging to a certain key.
-     *
-     * @param key the key.
-     * @param seconds the TTL [Duration]
-     * @param expireArgs the [ExpireArgs].
-     * @param fields a [List] of fields to set the TTL for.
-     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
-     *         exist or the timeout could not be set.
-     * @since 7.0
-     */
-    suspend fun hexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, fields: List<V>): Boolean?
 
     /**
      * Set the expiration for a key as a UNIX timestamp.

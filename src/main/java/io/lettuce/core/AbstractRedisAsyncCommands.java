@@ -19,18 +19,21 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandType.*;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.async.*;
+import io.lettuce.core.api.async.BaseRedisAsyncCommands;
+import io.lettuce.core.api.async.RedisAclAsyncCommands;
+import io.lettuce.core.api.async.RedisGeoAsyncCommands;
+import io.lettuce.core.api.async.RedisHLLAsyncCommands;
+import io.lettuce.core.api.async.RedisHashAsyncCommands;
+import io.lettuce.core.api.async.RedisKeyAsyncCommands;
+import io.lettuce.core.api.async.RedisListAsyncCommands;
+import io.lettuce.core.api.async.RedisScriptingAsyncCommands;
+import io.lettuce.core.api.async.RedisServerAsyncCommands;
+import io.lettuce.core.api.async.RedisSetAsyncCommands;
+import io.lettuce.core.api.async.RedisSortedSetAsyncCommands;
+import io.lettuce.core.api.async.RedisStringAsyncCommands;
+import io.lettuce.core.api.async.RedisTransactionalAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
@@ -49,6 +52,19 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static io.lettuce.core.protocol.CommandType.EXEC;
+import static io.lettuce.core.protocol.CommandType.GEORADIUS;
+import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER;
+import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
+import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
 
 /**
  * An asynchronous and thread-safe API for a Redis connection.
@@ -795,22 +811,22 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Boolean> hexpire(K key, long seconds, List<V> fields) {
+    public RedisFuture<Boolean> hexpire(K key, long seconds, K... fields) {
         return hexpire(key, seconds, null, fields);
     }
 
     @Override
-    public RedisFuture<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, List<V> fields) {
+    public RedisFuture<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
         return dispatch(commandBuilder.hexpire(key, seconds, expireArgs, fields));
     }
 
     @Override
-    public RedisFuture<Boolean> hexpire(K key, Duration seconds, List<V> fields) {
+    public RedisFuture<Boolean> hexpire(K key, Duration seconds, K... fields) {
         return hexpire(key, seconds, null, fields);
     }
 
     @Override
-    public RedisFuture<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, List<V> fields) {
+    public RedisFuture<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(seconds, "Timeout must not be null");
         return hexpire(key, seconds.toMillis() / 1000, expireArgs, fields);
     }
@@ -848,8 +864,46 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Boolean> hexpireat(K key, long timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+        return dispatch(commandBuilder.hexpireat(key, timestamp, expireArgs, fields));
+
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, Date timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hexpireat(key, timestamp.getTime() / 1000, expireArgs, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, Instant timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, fields);
+    }
+
+    @Override
     public RedisFuture<Long> expiretime(K key) {
         return dispatch(commandBuilder.expiretime(key));
+    }
+
+    @Override
+    public RedisFuture<Long> hexpiretime(K key, K... fields) {
+        return dispatch(commandBuilder.hexpiretime(key, fields));
     }
 
     @Override
@@ -1508,6 +1562,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Boolean> persist(K key) {
         return dispatch(commandBuilder.persist(key));
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpersist(K key, K... fields) {
+        return dispatch(commandBuilder.hpersist(key, fields));
     }
 
     @Override
