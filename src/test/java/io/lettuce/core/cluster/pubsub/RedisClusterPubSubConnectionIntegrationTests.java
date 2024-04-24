@@ -15,14 +15,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.api.async.NodeSelectionPubSubAsyncCommands;
 import io.lettuce.core.cluster.pubsub.api.async.PubSubAsyncNodeSelection;
+import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
 import io.lettuce.core.cluster.pubsub.api.reactive.NodeSelectionPubSubReactiveCommands;
 import io.lettuce.core.cluster.pubsub.api.reactive.PubSubReactiveNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.sync.NodeSelectionPubSubCommands;
@@ -179,6 +180,29 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         DefaultRedisClusterClient.get().connectPubSub().async().spublish(shardChannel, shardMessage);
         Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void publishToShardChannelViaNewClientWithNoRedirects() throws Exception {
+        pubSubConnection.addListener(connectionListener);
+        pubSubConnection.async().ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        pubSubConnection.async().ssubscribe(shardTestChannel);
+        Wait.untilEquals(shardTestChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        ClusterClientOptions.Builder builder = ClusterClientOptions.builder().maxRedirects(0);
+        RedisClusterPubSubAsyncCommands<String, String> cmd = DefaultRedisClusterClient.get(builder.build()).connectPubSub()
+                .async();
+
+        cmd.spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+
+        cmd.spublish(shardTestChannel, shardMessage);
+        Wait.untilEquals(shardTestChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
         Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
     }
 

@@ -34,4 +34,16 @@ public class DefaultRedisClusterClient {
         instance.redisClient.setOptions(ClusterClientOptions.create());
         return instance.redisClient;
     }
+
+
+    /**
+     * Do not close the client.
+     *
+     * @return redis client with given options for the tests.
+     */
+    public static RedisClusterClient get(ClusterClientOptions options) {
+        DefaultRedisClusterClient client = new DefaultRedisClusterClient();
+        client.redisClient.setOptions(options);
+        return instance.redisClient;
+    }
 }
