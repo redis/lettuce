@@ -49,17 +49,6 @@ public interface BaseRedisReactiveCommands<K, V> {
     Mono<Long> publish(K channel, V message);
 
     /**
-     * Post a message to a shard channel.
-     *
-     * @param shardChannel the shard channel type: key.
-     * @param message the message type: value.
-     * @return Long integer-reply the number of clients that received the message.
-     * @since 7.0
-     */
-    Mono<Long> spublish(K shardChannel, V message);
-
-
-    /**
      * Lists the currently *active channels*.
      *
      * @return K array-reply a list of active channels, optionally matching the specified pattern.
@@ -112,6 +101,16 @@ public interface BaseRedisReactiveCommands<K, V> {
      * @return Long integer-reply the number of patterns all the clients are subscribed to.
      */
     Mono<Long> pubsubNumpat();
+
+    /**
+     * Post a message to a shard channel.
+     *
+     * @param shardChannel the shard channel type: key.
+     * @param message the message type: value.
+     * @return Long integer-reply the number of clients that received the message.
+     * @since 7.0
+     */
+    Mono<Long> spublish(K shardChannel, V message);
 
     /**
      * Echo the given string.
