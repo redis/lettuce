@@ -46,6 +46,8 @@ internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun publish(channel: K, message: V): Long? = ops.publish(channel, message).awaitFirstOrNull()
 
+    override suspend fun spublish(shardChannel: K, message: V): Long? = ops.spublish(shardChannel, message).awaitFirstOrNull()
+
     override suspend fun pubsubChannels(): List<K> = ops.pubsubChannels().asFlow().toList()
 
     override suspend fun pubsubChannels(channel: K): List<K> = ops.pubsubChannels(channel).asFlow().toList()

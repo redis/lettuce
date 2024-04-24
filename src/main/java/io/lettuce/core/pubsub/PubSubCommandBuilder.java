@@ -58,6 +58,11 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PUBLISH, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, Long> spublish(K shardChannel, V message) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(shardChannel).addValue(message);
+        return createCommand(SPUBLISH, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, List<K>> pubsubChannels(K pattern) {
         CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(CHANNELS).addKey(pattern);
         return createCommand(PUBSUB, new KeyListOutput<>(codec), args);

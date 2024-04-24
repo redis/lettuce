@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
@@ -34,6 +35,7 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.resource.DefaultRedisClusterClient;
 
 /**
  * Integration tests for Cluster Pub/Sub.
@@ -56,6 +58,10 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection2;
 
     String shardChannel = "shard-channel";
+
+    String shardMessage = "shard msg!";
+
+    String shardTestChannel = "shard-test-channel";
 
     @Inject
     RedisClusterPubSubConnectionIntegrationTests(RedisClusterClient clusterClient) {
@@ -94,15 +100,16 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("SSUBSCRIBE")
     void testRegularClientPubSubShardChannels() {
 
         pubSubConnection.sync().ssubscribe(shardChannel);
 
         Integer clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
-        RedisCommands<String, String> rightSlot =
-                connection.sync().nodes(node -> node.getSlots().contains(clusterKeyslot)).commands(0);
-        RedisCommands<String, String> wrongSlot =
-                connection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot)).commands(0);
+        RedisCommands<String, String> rightSlot = connection.sync().nodes(node -> node.getSlots().contains(clusterKeyslot))
+                .commands(0);
+        RedisCommands<String, String> wrongSlot = connection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot))
+                .commands(0);
 
         List<String> channelsOnSubscribedNode = rightSlot.pubsubShardChannels();
         assertThat(channelsOnSubscribedNode).hasSize(1);
@@ -113,7 +120,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("SSUBSCRIBE")
-    void subscribeToShardChannel(){
+    void subscribeToShardChannel() {
         pubSubConnection.sync().ssubscribe(shardChannel);
 
         Wait.untilEquals(1L, connectionListener.getShardCounts()::poll).waitOrTimeout();
@@ -126,11 +133,53 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         int clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
         String thisNode = connection.getPartitions().getPartitionBySlot(clusterKeyslot).getNodeId();
 
-        RedisPubSubAsyncCommands<String, String> replica =
-                pubSubConnection.async().nodes(node -> thisNode.equals(node.getSlaveOf())).commands(0);
+        RedisPubSubAsyncCommands<String, String> replica = pubSubConnection.async()
+                .nodes(node -> thisNode.equals(node.getSlaveOf())).commands(0);
         replica.ssubscribe(shardChannel);
 
         Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void publishToShardChannel() throws Exception {
+        pubSubConnection.addListener(connectionListener);
+        pubSubConnection.async().ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        pubSubConnection.async().spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void publishToShardChannelViaDifferentEndpoints() throws Exception {
+        pubSubConnection.addListener(connectionListener);
+        pubSubConnection.async().ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        pubSubConnection.async().ssubscribe(shardTestChannel);
+        Wait.untilEquals(shardTestChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        pubSubConnection.async().spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+
+        pubSubConnection.async().spublish(shardTestChannel, shardMessage);
+        Wait.untilEquals(shardTestChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void publishToShardChannelViaNewClient() throws Exception {
+        pubSubConnection.addListener(connectionListener);
+        pubSubConnection.async().ssubscribe(shardChannel);
+
+        DefaultRedisClusterClient.get().connectPubSub().async().spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
     }
 
     @Test

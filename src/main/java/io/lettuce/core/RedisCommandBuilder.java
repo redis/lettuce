@@ -2156,6 +2156,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PUBLISH, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, Long> spublish(K shardChannel, V message) {
+        LettuceAssert.notNull(shardChannel, "ShardChannel " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(shardChannel).addValue(message);
+        return createCommand(SPUBLISH, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, List<K>> pubsubChannels() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(CHANNELS);
         return createCommand(PUBSUB, new KeyListOutput<>(codec), args);

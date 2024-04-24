@@ -49,6 +49,17 @@ interface BaseRedisCoroutinesCommands<K : Any, V : Any> {
     suspend fun publish(channel: K, message: V): Long?
 
     /**
+     * Post a message to a shard channel.
+     *
+     * @param shardChannel the shard channel type: key.
+     * @param message the message type: value.
+     * @return Long integer-reply the number of clients that received the message.
+     * @since 7.0
+     */
+    suspend fun spublish(shardChannel: K, message: V): Long?
+
+
+    /**
      * Lists the currently *active channels*.
      *
      * @return List<K> array-reply a list of active channels, optionally matching the specified pattern.

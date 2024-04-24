@@ -1662,6 +1662,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> spublish(K shardChannel, V message) {
+        return createMono(() -> commandBuilder.spublish(shardChannel, message));
+    }
+
+    @Override
     public Flux<K> pubsubChannels() {
         return createDissolvingFlux(commandBuilder::pubsubChannels);
     }

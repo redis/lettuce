@@ -81,6 +81,11 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
     }
 
     @Override
+    public RedisFuture<Long> spublish(K shardChannel, V message) {
+        return dispatch(commandBuilder.spublish(shardChannel, message));
+    }
+
+    @Override
     public RedisFuture<List<K>> pubsubChannels(K channel) {
         return dispatch(commandBuilder.pubsubChannels(channel));
     }
