@@ -82,7 +82,7 @@ public class HashCommandIntegrationTests extends TestSupport {
     @AfterEach
     void tearDown() {
         // resets the configuration settings to default, would not be needed once listpack is supported
-        assertThat(redis.configSet("hash-max-listpack-entries","128")).isEqualTo("OK");
+        assertThat(redis.configSet("hash-max-listpack-entries","512")).isEqualTo("OK");
         assertThat(redis.configSet("set-max-listpack-value","64")).isEqualTo("OK");
     }
 
