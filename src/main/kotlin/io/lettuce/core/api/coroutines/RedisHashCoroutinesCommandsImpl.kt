@@ -26,6 +26,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import java.time.Duration
+import java.time.Instant
+import java.util.*
 
 
 /**
@@ -112,6 +115,61 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun hstrlen(key: K, field: K): Long? = ops.hstrlen(key, field).awaitFirstOrNull()
 
     override fun hvals(key: K): Flow<V> = ops.hvals(key).asFlow()
+
+    override suspend fun hexpire(key: K, seconds: Long, vararg fields: K): Boolean? =
+        ops.hexpire(key, seconds, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpire(key: K, seconds: Long, expireArgs: ExpireArgs, vararg fields: K): Boolean? =
+        ops.hexpire(key, seconds, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpire(key: K, seconds: Duration, vararg fields: K): Boolean? =
+        ops.hexpire(key, seconds, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpire(
+        key: K,
+        seconds: Duration,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hexpire(key, seconds, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(key: K, timestamp: Date, vararg fields: K): Boolean? =
+        ops.hexpireat(key, timestamp, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(
+        key: K,
+        timestamp: Long,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(key: K, timestamp: Instant, vararg fields: K): Boolean? =
+        ops.hexpireat(key, timestamp, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(
+        key: K,
+        timestamp: Instant,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(key: K, timestamp: Long, vararg fields: K): Boolean? =
+        ops.hexpireat(key, timestamp, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(
+        key: K,
+        timestamp: Date,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpiretime(key: K, vararg fields: K): Long? =
+        ops.hexpiretime(key).awaitFirstOrNull()
+
+    override suspend fun hpersist(key: K, vararg fields: K): Boolean? = ops.hpersist(key).awaitFirstOrNull()
 
 }
 

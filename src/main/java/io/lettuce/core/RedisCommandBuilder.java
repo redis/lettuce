@@ -19,19 +19,6 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.internal.LettuceStrings.*;
-import static io.lettuce.core.protocol.CommandKeyword.*;
-import static io.lettuce.core.protocol.CommandType.*;
-import static io.lettuce.core.protocol.CommandType.COPY;
-import static io.lettuce.core.protocol.CommandType.SAVE;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
@@ -47,6 +34,19 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
+
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static io.lettuce.core.internal.LettuceStrings.string;
+import static io.lettuce.core.protocol.CommandKeyword.*;
+import static io.lettuce.core.protocol.CommandType.*;
+import static io.lettuce.core.protocol.CommandType.COPY;
+import static io.lettuce.core.protocol.CommandType.SAVE;
 
 /**
  * @param <K>
@@ -978,6 +978,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXPIRE, new BooleanOutput<>(codec), args);
     }
 
+    Command<K, V, Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HEXPIRE, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> hexpireat(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HEXPIREAT, new BooleanOutput<>(codec), args);
+    }
+
     Command<K, V, Boolean> expireat(K key, long timestamp, ExpireArgs expireArgs) {
         notNullKey(key);
 
@@ -995,6 +1027,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         return createCommand(EXPIRETIME, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> hexpiretime(K key, K... fields) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(fields.length);
+        args.addKeys(fields);
+        return createCommand(HEXPIRETIME, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, String> flushall() {
@@ -2041,6 +2082,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         return createCommand(PERSIST, new BooleanOutput<>(codec), key);
+    }
+
+    Command<K, V, Boolean> hpersist(K key, K... fields) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HPERSIST, new BooleanOutput<>(codec), args);
     }
 
     Command<K, V, Boolean> pexpire(K key, long milliseconds, ExpireArgs expireArgs) {

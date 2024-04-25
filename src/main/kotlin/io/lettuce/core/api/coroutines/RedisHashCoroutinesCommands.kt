@@ -20,8 +20,17 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.*
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.ExpireArgs
 import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.KeyScanCursor
+import io.lettuce.core.KeyValue
+import io.lettuce.core.MapScanCursor
+import io.lettuce.core.ScanArgs
+import io.lettuce.core.ScanCursor
+import java.time.Duration
+import java.time.Instant
+import java.util.*
 
 /**
  * Coroutine executed commands for Hashes (Key-Value pairs).
@@ -297,6 +306,154 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @return List<V> array-reply list of values in the hash, or an empty list when `key` does not exist.
      */
     fun hvals(key: K): Flow<V>
+
+    /**
+     * Set the time to live (in seconds) for one or more fields, belonging to a certain key.
+     *
+     * @param key the key of the fields.
+     * @param seconds the seconds type: long.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    suspend fun hexpire(key: K, seconds: Long, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live (in seconds) for one or more fields, belonging to a certain key.
+     *
+     * @param key the key of the fields.
+     * @param seconds the seconds type: long.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    suspend fun hexpire(key: K, seconds: Long, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key.
+     *
+     * @param key the key.
+     * @param seconds the TTL [Duration]
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    suspend fun hexpire(key: K, seconds: Duration, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key.
+     *
+     * @param key the key.
+     * @param seconds the TTL [Duration]
+     * @param expireArgs the [ExpireArgs].
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    suspend fun hexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hexpireat(key: K, timestamp: Long, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hexpireat(key: K, timestamp: Date, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hexpireat(key: K, timestamp: Instant, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Get the time to live for one or more fields in as unix timestamp in seconds.
+     *
+     * @param key the key.
+     * @param fields one or more fields to get the TTL for.
+     * @return Long integer-reply in seconds, or a negative value in order to signal an error. The command returns `-1` if
+     *         the key exists but has no associated expiration time. The command returns `-2` if the key does not exist.
+     * @since 7.0
+     */
+    suspend fun hexpiretime(key: K, vararg fields: K): Long?
+
+    /**
+     * Remove the expiration from one or more fields.
+     *
+     * @param key the key.
+     * @param fields one or more fields to remove the TTL for.
+     * @return Boolean integer-reply specifically:
+     *
+     *         `true` if the timeout was removed. `false` if `key` does not exist or does not have an
+     *         associated timeout.
+     */
+    suspend fun hpersist(key: K, vararg fields: K): Boolean?
 
 }
 
