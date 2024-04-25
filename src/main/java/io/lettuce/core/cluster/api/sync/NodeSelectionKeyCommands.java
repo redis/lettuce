@@ -19,6 +19,11 @@
  */
 package io.lettuce.core.cluster.api.sync;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+
 import io.lettuce.core.CopyArgs;
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.KeyScanArgs;
@@ -31,11 +36,6 @@ import io.lettuce.core.SortArgs;
 import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Synchronous executed commands on a node selection for Keys (Key manipulation/querying).
