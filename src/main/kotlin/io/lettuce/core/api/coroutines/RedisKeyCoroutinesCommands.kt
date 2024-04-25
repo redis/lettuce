@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-Present, Redis Ltd. and Contributors
+ * Copyright 2020-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
