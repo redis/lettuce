@@ -32,6 +32,7 @@ import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.condition.EnabledOnCommand;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -76,6 +77,13 @@ public class HashCommandIntegrationTests extends TestSupport {
     @BeforeEach
     void setUp() {
         this.redis.flushall();
+    }
+
+    @AfterEach
+    void tearDown() {
+        // resets the configuration settings to default, would not be needed once listpack is supported
+        assertThat(redis.configSet("hash-max-listpack-entries","128")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value","64")).isEqualTo("OK");
     }
 
     @Test
@@ -551,12 +559,12 @@ public class HashCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("HEXPIRE")
     void hexpire() {
-        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         // the below settings are required until the solution is able to support listpack entries
         // see TODOs in https://github.com/redis/redis/pull/13172 for more details
         assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
         assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
 
+        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).isTrue();
 
         await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
@@ -565,12 +573,12 @@ public class HashCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("HEXPIRE")
     void hexpireExpireArgs() {
-        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         // the below settings are required until the solution is able to support listpack entries
         // see TODOs in https://github.com/redis/redis/pull/13172 for more details
         assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
         assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
 
+        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.nx(), MY_FIELD)).isTrue();
         assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.xx(), MY_FIELD)).isTrue();
         assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(10), ExpireArgs.Builder.gt(), MY_FIELD)).isTrue();
@@ -588,7 +596,6 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
 
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
-
         assertThat(redis.hexpireat(MY_KEY,Instant.now().plusSeconds(1) , MY_FIELD)).isTrue();
 
         await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
