@@ -1,17 +1,5 @@
 package io.lettuce.core;
 
-import static org.assertj.core.api.Assertions.*;
-
-import java.lang.reflect.Field;
-import java.net.SocketAddress;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.Test;
-
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.event.command.CommandFailedEvent;
 import io.lettuce.core.event.command.CommandListener;
@@ -27,6 +15,17 @@ import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
 import io.netty.util.concurrent.EventExecutorGroup;
+import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Field;
+import java.net.SocketAddress;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for {@link RedisClient}.
@@ -138,7 +137,9 @@ class RedisClientIntegrationTests extends TestSupport {
 
         assertThat(commandListener.started).hasSize(1);
         assertThat(commandListener.succeeded).isEmpty();
-        assertThat(commandListener.failed).hasSize(1).extracting(it -> it.getCommand().getType()).contains(CommandType.BLPOP);
+
+        Wait.untilTrue(() -> commandListener.failed.size() == 1);
+        assertThat(commandListener.failed).extracting(it -> it.getCommand().getType()).contains(CommandType.BLPOP);
 
         FastShutdown.shutdown(client);
     }
