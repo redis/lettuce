@@ -11,6 +11,7 @@ labels: 'type: waiting-for-triage'
 #### Current Behavior
 
 <!-- A clear and concise description of the behavior.-->
+<!-- See https://stackoverflow.com/help/minimal-reproducible-example for details of what a good minimum reproducible example is -->
 
 <details>
 <summary>Stack trace</summary>
