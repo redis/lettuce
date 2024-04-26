@@ -45,7 +45,9 @@ import io.lettuce.test.LettuceExtension;
 class RedisClusterReadFromIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
+
     private StatefulRedisClusterConnection<String, String> connection;
+
     private RedisAdvancedClusterCommands<String, String> sync;
 
     @Inject

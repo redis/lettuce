@@ -63,4 +63,5 @@ class ClientMetricsIntegrationTests extends TestSupport {
         redis.get(key);
         redis.get(key);
     }
+
 }

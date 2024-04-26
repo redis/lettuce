@@ -16,4 +16,5 @@ class ScriptingReactiveCommandIntegrationTests extends ScriptingCommandIntegrati
     ScriptingReactiveCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         super(client, ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

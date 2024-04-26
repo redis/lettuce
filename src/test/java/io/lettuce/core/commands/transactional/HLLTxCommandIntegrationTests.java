@@ -14,4 +14,5 @@ class HLLTxCommandIntegrationTests extends HLLCommandIntegrationTests {
     HLLTxCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(TxSyncInvocationHandler.sync(connection));
     }
+
 }

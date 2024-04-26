@@ -60,4 +60,5 @@ class MultiOutputUnitTests {
         assertThat(command.getOutput().getError()).isNull();
         assertThat(output.getError()).isEqualTo("Fail");
     }
+
 }

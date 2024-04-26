@@ -50,4 +50,5 @@ class TimeoutProviderUnitTests {
 
         assertThat(timeout).isEqualTo(0);
     }
+
 }

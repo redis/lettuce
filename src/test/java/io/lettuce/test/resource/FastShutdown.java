@@ -27,4 +27,5 @@ public class FastShutdown {
     public static void shutdown(ClientResources clientResources) {
         clientResources.shutdown(0, 10, TimeUnit.MILLISECONDS);
     }
+
 }

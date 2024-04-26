@@ -99,10 +99,10 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         pubSubConnection.sync().ssubscribe(shardChannel);
 
         Integer clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
-        RedisCommands<String, String> rightSlot =
-                connection.sync().nodes(node -> node.getSlots().contains(clusterKeyslot)).commands(0);
-        RedisCommands<String, String> wrongSlot =
-                connection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot)).commands(0);
+        RedisCommands<String, String> rightSlot = connection.sync().nodes(node -> node.getSlots().contains(clusterKeyslot))
+                .commands(0);
+        RedisCommands<String, String> wrongSlot = connection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot))
+                .commands(0);
 
         List<String> channelsOnSubscribedNode = rightSlot.pubsubShardChannels();
         assertThat(channelsOnSubscribedNode).hasSize(1);
@@ -113,7 +113,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("SSUBSCRIBE")
-    void subscribeToShardChannel(){
+    void subscribeToShardChannel() {
         pubSubConnection.sync().ssubscribe(shardChannel);
 
         Wait.untilEquals(1L, connectionListener.getShardCounts()::poll).waitOrTimeout();
@@ -126,8 +126,8 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         int clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
         String thisNode = connection.getPartitions().getPartitionBySlot(clusterKeyslot).getNodeId();
 
-        RedisPubSubAsyncCommands<String, String> replica =
-                pubSubConnection.async().nodes(node -> thisNode.equals(node.getSlaveOf())).commands(0);
+        RedisPubSubAsyncCommands<String, String> replica = pubSubConnection.async()
+                .nodes(node -> thisNode.equals(node.getSlaveOf())).commands(0);
         replica.ssubscribe(shardChannel);
 
         Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();

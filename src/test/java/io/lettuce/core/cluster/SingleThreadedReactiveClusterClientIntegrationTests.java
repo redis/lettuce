@@ -55,4 +55,5 @@ class SingleThreadedReactiveClusterClientIntegrationTests {
 
         assertThat(keys).contains("key", "foo");
     }
+
 }

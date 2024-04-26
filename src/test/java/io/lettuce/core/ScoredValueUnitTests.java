@@ -124,4 +124,5 @@ class ScoredValueUnitTests {
         assertThat(value.toString()).contains("ScoredValue[12").contains("340000, hello]");
         assertThat(empty.toString()).contains(String.format("ScoredValue[%f].empty", 0d));
     }
+
 }

@@ -106,4 +106,5 @@ public class HLLCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.pfcount("key8885")).isEqualTo(3);
     }
+
 }

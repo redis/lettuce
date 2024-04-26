@@ -47,4 +47,5 @@ public class LettuceGeoDemo {
         redis.getStatefulConnection().close();
         redisClient.shutdown();
     }
+
 }

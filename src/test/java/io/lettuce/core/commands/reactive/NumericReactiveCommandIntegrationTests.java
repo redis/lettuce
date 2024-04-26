@@ -15,4 +15,5 @@ class NumericReactiveCommandIntegrationTests extends NumericCommandIntegrationTe
     NumericReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

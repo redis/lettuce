@@ -147,6 +147,7 @@ class AnnotationRedisCodecResolverUnitTests {
         String withWrappers(@Value Range<String> range, @Value io.lettuce.core.Value<Number> value);
 
         String withMap(Map<Integer, String> map);
+
     }
 
 }

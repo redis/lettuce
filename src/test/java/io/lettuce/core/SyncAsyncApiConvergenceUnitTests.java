@@ -61,7 +61,8 @@ class SyncAsyncApiConvergenceUnitTests {
             }
         }
 
-        assertThat(returnType.toString()).describedAs(syncMethod.toString()).isEqualTo(
-                syncMethod.getGenericReturnType().toString());
+        assertThat(returnType.toString()).describedAs(syncMethod.toString())
+                .isEqualTo(syncMethod.getGenericReturnType().toString());
     }
+
 }

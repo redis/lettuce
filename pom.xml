@@ -848,7 +848,8 @@
                 <configuration>
                     <directories>
                         <directory>${project.build.sourceDirectory}</directory>
-                        <directory>${project.build.directory}/generated-sources</directory>
+                        <directory>${project.build.testSourceDirectory}</directory>
+                        <directory>${project.basedir}/src/main/templates</directory>
                     </directories>
                 </configuration>
                 <executions>

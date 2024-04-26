@@ -40,8 +40,8 @@ class ClusterClientOptionsIntegrationTests extends TestSupport {
     @Test
     void shouldApplyTimeoutOptionsToClusterConnection() throws InterruptedException {
 
-        clusterClient.setOptions(ClusterClientOptions.builder().timeoutOptions(TimeoutOptions.enabled(Duration.ofMillis(100)))
-                .build());
+        clusterClient.setOptions(
+                ClusterClientOptions.builder().timeoutOptions(TimeoutOptions.enabled(Duration.ofMillis(100))).build());
 
         try (StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
 
@@ -60,8 +60,8 @@ class ClusterClientOptionsIntegrationTests extends TestSupport {
     @Test
     void shouldApplyTimeoutOptionsToPubSubClusterConnection() throws InterruptedException {
 
-        clusterClient.setOptions(ClusterClientOptions.builder().timeoutOptions(TimeoutOptions.enabled(Duration.ofMillis(100)))
-                .build());
+        clusterClient.setOptions(
+                ClusterClientOptions.builder().timeoutOptions(TimeoutOptions.enabled(Duration.ofMillis(100))).build());
 
         try (StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub()) {
             connection.setTimeout(Duration.ofMillis(100));
@@ -76,4 +76,5 @@ class ClusterClientOptionsIntegrationTests extends TestSupport {
 
         Thread.sleep(300);
     }
+
 }

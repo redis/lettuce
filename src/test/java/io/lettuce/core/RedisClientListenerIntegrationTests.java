@@ -12,5 +12,4 @@ import io.lettuce.test.LettuceExtension;
 @ExtendWith(LettuceExtension.class)
 class RedisClientListenerIntegrationTests extends TestSupport {
 
-
 }

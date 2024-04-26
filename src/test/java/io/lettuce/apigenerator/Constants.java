@@ -26,26 +26,15 @@ import java.io.File;
  */
 class Constants {
 
-    public static final String[] TEMPLATE_NAMES = {
-            "BaseRedisCommands",
-            "RedisAclCommands",
-            "RedisFunctionCommands",
-            "RedisGeoCommands",
-            "RedisHashCommands",
-            "RedisHLLCommands",
-            "RedisKeyCommands",
-            "RedisListCommands",
-            "RedisScriptingCommands",
-            "RedisSentinelCommands",
-            "RedisServerCommands",
-            "RedisSetCommands",
-            "RedisSortedSetCommands",
-            "RedisStreamCommands",
-            "RedisStringCommands",
-            "RedisTransactionalCommands"
-    };
+    public static final String[] TEMPLATE_NAMES = { "BaseRedisCommands", "RedisAclCommands", "RedisFunctionCommands",
+            "RedisGeoCommands", "RedisHashCommands", "RedisHLLCommands", "RedisKeyCommands", "RedisListCommands",
+            "RedisScriptingCommands", "RedisSentinelCommands", "RedisServerCommands", "RedisSetCommands",
+            "RedisSortedSetCommands", "RedisStreamCommands", "RedisStringCommands", "RedisTransactionalCommands" };
 
     public static final File TEMPLATES = new File("src/main/templates");
+
     public static final File SOURCES = new File("src/main/java");
+
     public static final File KOTLIN_SOURCES = new File("src/main/kotlin");
+
 }

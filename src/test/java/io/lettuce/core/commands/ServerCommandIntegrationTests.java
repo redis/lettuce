@@ -208,7 +208,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @EnabledOnCommand("EVAL_RO")   // Redis 7.0
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
     void clientNoEvict() {
         assertThat(redis.clientNoEvict(true)).isEqualTo("OK");
         assertThat(redis.clientNoEvict(false)).isEqualTo("OK");
@@ -338,7 +338,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @EnabledOnCommand("EVAL_RO")    // Redis 7.0
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
     void configGetMultipleParameters() {
         assertThat(redis.configGet("maxmemory", "*max-*-entries*")).containsEntry("maxmemory", "0")
                 .containsEntry("hash-max-listpack-entries", "512");
@@ -361,7 +361,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @EnabledOnCommand("EVAL_RO")    // Redis 7.0
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
     void configSetMultipleParameters() {
         Map<String, String> original = redis.configGet("maxmemory", "hash-max-listpack-entries");
         Map<String, String> config = new HashMap<>();

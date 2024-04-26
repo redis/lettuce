@@ -36,4 +36,5 @@ class DefaultEventLoopGroupProviderUnitTests {
         TestFutures.awaitOrTimeout(sut.shutdown(10, 10, TimeUnit.MILLISECONDS));
         assertThatThrownBy(() -> sut.allocate(NioEventLoopGroup.class)).isInstanceOf(IllegalStateException.class);
     }
+
 }

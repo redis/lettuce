@@ -46,6 +46,7 @@ import io.lettuce.test.LettuceExtension;
 class ScanStreamIntegrationTests extends TestSupport {
 
     private final StatefulRedisConnection<String, String> connection;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -176,4 +177,5 @@ class ScanStreamIntegrationTests extends TestSupport {
 
         assertThat(redis.scard(targetKey)).isEqualTo(5_000);
     }
+
 }

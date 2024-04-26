@@ -86,6 +86,7 @@ class RedisCommandsClusterIntegrationTests extends TestSupport {
 
         @Command("MGET")
         List<Value<String>> mgetAsValues(String... keys);
+
     }
 
 }

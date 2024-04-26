@@ -575,4 +575,5 @@ public interface RedisHashCommands<K, V> {
      *         associated timeout.
      */
     Boolean hpersist(K key, K... fields);
+
 }

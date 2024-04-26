@@ -20,4 +20,5 @@ public class BitStringCodec extends StringCodec {
         }
         return bits.toString();
     }
+
 }

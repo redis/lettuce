@@ -20,6 +20,7 @@ class TestEventLoopGroupProvider extends DefaultEventLoopGroupProvider {
     public TestEventLoopGroupProvider() {
         super(10);
         Runtime.getRuntime().addShutdownHook(new Thread() {
+
             @Override
             public void run() {
                 try {
@@ -28,6 +29,7 @@ class TestEventLoopGroupProvider extends DefaultEventLoopGroupProvider {
                     e.printStackTrace();
                 }
             }
+
         });
     }
 
@@ -38,4 +40,5 @@ class TestEventLoopGroupProvider extends DefaultEventLoopGroupProvider {
 
         return result;
     }
+
 }

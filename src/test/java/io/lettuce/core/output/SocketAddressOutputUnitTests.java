@@ -26,4 +26,5 @@ class SocketAddressOutputUnitTests {
 
         assertThat(output.get()).isNotNull().isInstanceOf(InetSocketAddress.class);
     }
+
 }

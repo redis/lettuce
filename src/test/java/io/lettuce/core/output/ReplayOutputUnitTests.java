@@ -64,4 +64,5 @@ class ReplayOutputUnitTests {
         assertThat(replay.getError()).isEqualTo("foo");
         assertThat(target.getError()).isEqualTo("foo");
     }
+
 }

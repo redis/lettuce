@@ -132,5 +132,7 @@ class DefaultCommandMethodVerifierUnitTests {
         void lpop(@Param("key") String key);
 
         void rpop(String key1, String key2);
+
     }
+
 }

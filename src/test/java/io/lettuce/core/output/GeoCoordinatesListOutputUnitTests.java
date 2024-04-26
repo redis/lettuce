@@ -31,4 +31,5 @@ class GeoCoordinatesListOutputUnitTests {
 
         assertThat(sut.get()).contains(new GeoCoordinates(1.234, 4.567));
     }
+
 }

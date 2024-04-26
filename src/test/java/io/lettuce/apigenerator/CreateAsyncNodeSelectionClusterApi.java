@@ -45,9 +45,12 @@ import io.lettuce.core.internal.LettuceSets;
  */
 class CreateAsyncNodeSelectionClusterApi {
 
-    private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands", "RedisTransactionalCommands");
-    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "setAutoFlushCommands", "flushCommands");
+    private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands",
+            "RedisTransactionalCommands");
+
+    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault",
+            "digest", "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "setAutoFlushCommands",
+            "flushCommands");
 
     /**
      * Mutate type comment.
@@ -93,10 +96,7 @@ class CreateAsyncNodeSelectionClusterApi {
     }
 
     static List<String> arguments() {
-        return Stream
-                .of(Constants.TEMPLATE_NAMES)
-                .filter(t -> !FILTER_TEMPLATES.contains(t))
-                .collect(Collectors.toList());
+        return Stream.of(Constants.TEMPLATE_NAMES).filter(t -> !FILTER_TEMPLATES.contains(t)).collect(Collectors.toList());
     }
 
     private CompilationUnitFactory createFactory(String templateName) {
@@ -110,4 +110,5 @@ class CreateAsyncNodeSelectionClusterApi {
 
         return factory;
     }
+
 }

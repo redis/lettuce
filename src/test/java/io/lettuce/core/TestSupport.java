@@ -33,7 +33,9 @@ import io.lettuce.test.settings.TestSettings;
 public abstract class TestSupport {
 
     public static final String host = TestSettings.hostAddr();
+
     public static final int port = TestSettings.port();
+
     public static final String username = TestSettings.username();
 
     public static final CharSequence passwd = TestSettings.password();
@@ -43,6 +45,7 @@ public abstract class TestSupport {
     public static final CharSequence aclPasswd = TestSettings.aclPassword();
 
     public static final String key = "key";
+
     public static final String value = "value";
 
     protected static List<String> list(String... args) {
@@ -72,4 +75,5 @@ public abstract class TestSupport {
     protected static Set<String> set(String... args) {
         return LettuceSets.newHashSet(args);
     }
+
 }

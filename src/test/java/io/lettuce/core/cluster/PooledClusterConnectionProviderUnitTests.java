@@ -109,10 +109,10 @@ class PooledClusterConnectionProviderUnitTests {
         List<Integer> slots1 = IntStream.range(0, 8192).boxed().collect(Collectors.toList());
         List<Integer> slots2 = IntStream.range(8192, SlotHash.SLOT_COUNT).boxed().collect(Collectors.toList());
 
-        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 1), "1", true, null, 0, 0, 0, slots1, Collections
-                .singleton(RedisClusterNode.NodeFlag.UPSTREAM)));
-        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 2), "2", true, "1", 0, 0, 0, slots2, Collections
-                .singleton(RedisClusterNode.NodeFlag.REPLICA)));
+        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 1), "1", true, null, 0, 0, 0, slots1,
+                Collections.singleton(RedisClusterNode.NodeFlag.UPSTREAM)));
+        partitions.add(new RedisClusterNode(RedisURI.create("localhost", 2), "2", true, "1", 0, 0, 0, slots2,
+                Collections.singleton(RedisClusterNode.NodeFlag.REPLICA)));
 
         sut.setPartitions(partitions);
 
@@ -123,8 +123,7 @@ class PooledClusterConnectionProviderUnitTests {
     void shouldObtainConnection() {
 
         when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any()))
-                .thenReturn(
-                ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+                .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
 
         StatefulRedisConnection<String, String> connection = sut.getConnection(ConnectionIntent.READ, 1);
 
@@ -138,8 +137,7 @@ class PooledClusterConnectionProviderUnitTests {
     void shouldReuseMasterConnectionForReadFromMaster() {
 
         when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any()))
-                .thenReturn(
-                ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
+                .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
 
         sut.setReadFrom(ReadFrom.UPSTREAM);
 
@@ -186,7 +184,8 @@ class PooledClusterConnectionProviderUnitTests {
 
         sut.setReadFrom(ReadFrom.REPLICA);
 
-        assertThatExceptionOfType(PartitionSelectorException.class).isThrownBy(() -> sut.getConnection(ConnectionIntent.READ, 1));
+        assertThatExceptionOfType(PartitionSelectorException.class)
+                .isThrownBy(() -> sut.getConnection(ConnectionIntent.READ, 1));
     }
 
     @Test
@@ -388,10 +387,12 @@ class PooledClusterConnectionProviderUnitTests {
     void shouldNotifyListerOnUncoveredReadSlotAfterSelection() {
 
         sut.setReadFrom(new ReadFrom() {
+
             @Override
             public List<RedisNodeDescription> select(Nodes nodes) {
                 return Collections.emptyList();
             }
+
         });
 
         sut.getConnectionAsync(ConnectionIntent.READ, 2);
@@ -418,7 +419,8 @@ class PooledClusterConnectionProviderUnitTests {
     @Test
     void shouldRejectConnectionsToUnknownNodeId() {
 
-        assertThatThrownBy(() -> sut.getConnection(ConnectionIntent.READ, "foobar")).isInstanceOf(UnknownPartitionException.class);
+        assertThatThrownBy(() -> sut.getConnection(ConnectionIntent.READ, "foobar"))
+                .isInstanceOf(UnknownPartitionException.class);
 
         verify(clusterEventListener).onUnknownNode();
     }
@@ -431,4 +433,5 @@ class PooledClusterConnectionProviderUnitTests {
 
         verify(clusterEventListener).onUnknownNode();
     }
+
 }

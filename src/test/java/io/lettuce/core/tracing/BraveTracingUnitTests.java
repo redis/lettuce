@@ -33,6 +33,7 @@ import io.netty.channel.unix.DomainSocketAddress;
 class BraveTracingUnitTests extends TestSupport {
 
     private static Tracing clientTracing;
+
     private static Queue<Span> spans = new LinkedBlockingQueue<>();
 
     @BeforeAll
@@ -89,8 +90,8 @@ class BraveTracingUnitTests extends TestSupport {
     @Test
     void shouldCustomizeEndpoint() {
 
-        BraveTracing tracing = BraveTracing.builder().tracing(clientTracing)
-                .endpointCustomizer(it -> it.serviceName("foo-bar")).build();
+        BraveTracing tracing = BraveTracing.builder().tracing(clientTracing).endpointCustomizer(it -> it.serviceName("foo-bar"))
+                .build();
         BraveTracing.BraveEndpoint endpoint = (BraveTracing.BraveEndpoint) tracing
                 .createEndpoint(new DomainSocketAddress("foo"));
 
@@ -111,4 +112,5 @@ class BraveTracingUnitTests extends TestSupport {
 
         assertThat(tags).contains("cmd", "AUTH");
     }
+
 }

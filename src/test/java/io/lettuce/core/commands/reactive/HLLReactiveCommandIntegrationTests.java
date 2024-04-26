@@ -15,4 +15,5 @@ class HLLReactiveCommandIntegrationTests extends HLLCommandIntegrationTests {
     HLLReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

@@ -53,6 +53,7 @@ import io.lettuce.test.LettuceExtension;
 class ScanIteratorIntegrationTests extends TestSupport {
 
     private final StatefulRedisClusterConnection<String, String> connection;
+
     private final RedisClusterCommands<String, String> redis;
 
     @Inject
@@ -149,8 +150,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         redis.mset(KeysAndValues.MAP);
 
-        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, "none",
-                ScanArgs.Builder.limit(50).match("key-foo"));
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, "none", ScanArgs.Builder.limit(50).match("key-foo"));
 
         assertThat(scan.hasNext()).isFalse();
         try {
@@ -185,8 +185,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         redis.hmset(key, KeysAndValues.MAP);
 
-        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, key,
-                ScanArgs.Builder.limit(50).match("key-11*"));
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, key, ScanArgs.Builder.limit(50).match("key-11*"));
 
         for (int i = 0; i < 11; i++) {
             assertThat(scan.hasNext()).isTrue();
@@ -322,4 +321,5 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         assertThat(values).containsAll(values);
     }
+
 }

@@ -25,7 +25,9 @@ import io.lettuce.test.LettuceExtension;
 class ClusterReactiveCommandIntegrationTests {
 
     private final RedisClusterClient clusterClient;
+
     private final RedisClusterReactiveCommands<String, String> reactive;
+
     private final RedisClusterCommands<String, String> sync;
 
     @Inject
@@ -94,4 +96,5 @@ class ClusterReactiveCommandIntegrationTests {
 
         assertThat(result.size()).isGreaterThan(0);
     }
+
 }

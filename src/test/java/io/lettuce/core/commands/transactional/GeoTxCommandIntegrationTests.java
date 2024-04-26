@@ -56,4 +56,5 @@ class GeoTxCommandIntegrationTests extends GeoCommandIntegrationTests {
     @Override
     public void geohashInTransaction() {
     }
+
 }

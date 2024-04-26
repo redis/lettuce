@@ -15,6 +15,7 @@ import io.lettuce.test.settings.TestSettings;
 class RedisClientFactoryUnitTests {
 
     private static final String URI = "redis://" + TestSettings.host() + ":" + TestSettings.port();
+
     private static final RedisURI REDIS_URI = RedisURI.create(URI);
 
     @Test
@@ -59,8 +60,8 @@ class RedisClientFactoryUnitTests {
 
     @Test
     void clientResourcesWithStringUriNull() {
-        assertThatThrownBy(() -> RedisClient.create(TestClientResources.get(), (String) null)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> RedisClient.create(TestClientResources.get(), (String) null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -70,17 +71,18 @@ class RedisClientFactoryUnitTests {
 
     @Test
     void clientResourcesWithUri() {
-        FastShutdown.shutdown(RedisClient.create(TestClientResources.get(),  REDIS_URI));
+        FastShutdown.shutdown(RedisClient.create(TestClientResources.get(), REDIS_URI));
     }
 
     @Test
     void clientResourcesWithUriNull() {
-        assertThatThrownBy(() -> RedisClient.create(TestClientResources.get(), (RedisURI) null)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> RedisClient.create(TestClientResources.get(), (RedisURI) null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void clientResourcesNullWithUri() {
         assertThatThrownBy(() -> RedisClient.create(null, REDIS_URI)).isInstanceOf(IllegalArgumentException.class);
     }
+
 }

@@ -548,4 +548,5 @@ class ClientOptionsIntegrationTests extends TestSupport {
             redisConnection.close();
         });
     }
+
 }
