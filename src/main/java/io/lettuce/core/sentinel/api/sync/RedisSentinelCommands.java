@@ -197,7 +197,8 @@ public interface RedisSentinelCommands<K, V> {
     /**
      * Get the list of the current client connection.
      *
-     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space character.
+     * @return String bulk-string-reply a unique string, formatted as a succession of property=value fields separated by a space
+     *         character.
      * @since 6.3
      */
     String clientInfo();
@@ -256,4 +257,5 @@ public interface RedisSentinelCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
 }

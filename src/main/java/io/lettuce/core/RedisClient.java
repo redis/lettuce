@@ -744,28 +744,28 @@ public class RedisClient extends AbstractRedisClient {
         return Mono.usingWhen(
                 Mono.fromCompletionStage(() -> connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout)), c -> {
 
-            String sentinelMasterId = sentinelUri.getSentinelMasterId();
-            return c.reactive().getMasterAddrByName(sentinelMasterId).map(it -> {
+                    String sentinelMasterId = sentinelUri.getSentinelMasterId();
+                    return c.reactive().getMasterAddrByName(sentinelMasterId).map(it -> {
 
-                if (it instanceof InetSocketAddress) {
+                        if (it instanceof InetSocketAddress) {
 
-                    InetSocketAddress isa = (InetSocketAddress) it;
-                    SocketAddress resolved = getResources().socketAddressResolver()
-                            .resolve(RedisURI.create(isa.getHostString(), isa.getPort()));
+                            InetSocketAddress isa = (InetSocketAddress) it;
+                            SocketAddress resolved = getResources().socketAddressResolver()
+                                    .resolve(RedisURI.create(isa.getHostString(), isa.getPort()));
 
-                    logger.debug("Resolved Master {} SocketAddress {}:{} to {}", sentinelMasterId, isa.getHostString(),
-                            isa.getPort(), resolved);
+                            logger.debug("Resolved Master {} SocketAddress {}:{} to {}", sentinelMasterId, isa.getHostString(),
+                                    isa.getPort(), resolved);
 
-                    return resolved;
-                }
+                            return resolved;
+                        }
 
-                return it;
-            }).timeout(timeout) //
+                        return it;
+                    }).timeout(timeout) //
                             .onErrorMap(e -> {
 
-                        RedisCommandTimeoutException ex = ExceptionFactory
-                                .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
-                        ex.addSuppressed(e);
+                                RedisCommandTimeoutException ex = ExceptionFactory
+                                        .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
+                                ex.addSuppressed(e);
 
                                 return ex;
                             });

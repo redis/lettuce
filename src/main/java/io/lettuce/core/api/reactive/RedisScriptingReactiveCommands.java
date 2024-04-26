@@ -137,9 +137,9 @@ public interface RedisScriptingReactiveCommands<K, V> {
      * Check existence of scripts in the script cache.
      *
      * @param digests script digests.
-     * @return Boolean array-reply The command returns an array of integers that correspond to the specified SHA1
-     *         digest arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1
-     *         is returned, otherwise 0 is returned.
+     * @return Boolean array-reply The command returns an array of integers that correspond to the specified SHA1 digest
+     *         arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1 is
+     *         returned, otherwise 0 is returned.
      */
     Flux<Boolean> scriptExists(String... digests);
 
@@ -201,4 +201,5 @@ public interface RedisScriptingReactiveCommands<K, V> {
      * @since 6.0
      */
     String digest(byte[] script);
+
 }

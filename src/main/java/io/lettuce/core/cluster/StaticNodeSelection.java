@@ -50,7 +50,7 @@ class StaticNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CMD
     private final Function<StatefulRedisConnection<K, V>, API> apiExtractor;
 
     public StaticNodeSelection(ClusterDistributionChannelWriter writer, Predicate<RedisClusterNode> selector,
-                               ConnectionIntent connectionIntent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
+            ConnectionIntent connectionIntent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
 
         this.writer = writer;
         this.connectionIntent = connectionIntent;

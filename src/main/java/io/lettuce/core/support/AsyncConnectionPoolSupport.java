@@ -220,6 +220,7 @@ public abstract class AsyncConnectionPoolSupport {
         public CompletableFuture<Boolean> validate(T object) {
             return CompletableFuture.completedFuture(object.isOpen());
         }
+
     }
 
     private static class AsyncPoolWrapper<T> implements Origin<T> {

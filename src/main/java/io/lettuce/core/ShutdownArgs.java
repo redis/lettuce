@@ -91,6 +91,7 @@ public class ShutdownArgs implements CompositeArgument {
         public static ShutdownArgs abort() {
             return new ShutdownArgs().abort();
         }
+
     }
 
     /**

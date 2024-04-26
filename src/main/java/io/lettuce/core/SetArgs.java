@@ -29,8 +29,8 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
- * Argument list builder for the Redis <a href="https://redis.io/commands/set">SET</a> command starting from Redis 2.6.12. Static
- * import the methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
+ * Argument list builder for the Redis <a href="https://redis.io/commands/set">SET</a> command starting from Redis 2.6.12.
+ * Static import the methods from {@link Builder} and chain the method calls: {@code ex(10).nx()}.
  * <p>
  * {@link SetArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *

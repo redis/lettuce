@@ -46,4 +46,5 @@ class JfrCommandLatencyEvent extends Event {
             new JfrCommandLatency(commandLatencyId, commandMetrics).commit();
         });
     }
+
 }

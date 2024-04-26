@@ -1689,7 +1689,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, StreamScanCursor> hscanNoValuesStreaming(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
-                                                           ScanArgs scanArgs) {
+            ScanArgs scanArgs) {
         notNullKey(key);
         notNull(channel);
 

@@ -97,7 +97,6 @@ public class ClientOptions implements Serializable {
 
     private final TimeoutOptions timeoutOptions;
 
-
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
@@ -448,11 +447,11 @@ public class ClientOptions implements Serializable {
 
         builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .readOnlyCommands(getReadOnlyCommands())
-                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
-                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
-                .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
-                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
+                .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
+                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).socketOptions(getSocketOptions())
+                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
+                .timeoutOptions(getTimeoutOptions());
 
         return builder;
     }

@@ -79,7 +79,7 @@ public interface BaseRedisReactiveCommands<K, V> {
     Flux<K> pubsubShardChannels();
 
     /**
-     * Lists the currently *active shard channels*.     
+     * Lists the currently *active shard channels*.
      * 
      * @param pattern the pattern type: patternkey (pattern).
      * @return K array-reply a list of active channels, optionally matching the specified pattern.
@@ -113,8 +113,8 @@ public interface BaseRedisReactiveCommands<K, V> {
     /**
      * Return the role of the instance in the context of replication.
      *
-     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional
-     *         elements are role-specific.
+     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional elements are
+     *         role-specific.
      */
     Flux<Object> role();
 

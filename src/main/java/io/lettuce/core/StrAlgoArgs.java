@@ -26,8 +26,8 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
- * Argument list builder for the Redis <a href="https://redis.io/commands/stralgo">STRALGO</a> command. Static import the methods
- * from {@link StrAlgoArgs.Builder} and call the methods: {@code keys(…)} .
+ * Argument list builder for the Redis <a href="https://redis.io/commands/stralgo">STRALGO</a> command. Static import the
+ * methods from {@link StrAlgoArgs.Builder} and call the methods: {@code keys(…)} .
  * <p>
  * {@link StrAlgoArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *

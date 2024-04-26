@@ -684,7 +684,8 @@ public class RedisClusterClient extends AbstractRedisClient {
                     .onErrorResume(t -> connect(socketAddressSupplier, endpoint, connection, commandHandlerSupplier));
         }
 
-        return connectionMono.doOnNext(
+        return connectionMono
+                .doOnNext(
                         c -> connection.registerCloseables(closeableResources, clusterWriter, pooledClusterConnectionProvider))
                 .map(it -> (StatefulRedisClusterConnection<K, V>) it).toFuture();
     }

@@ -212,4 +212,5 @@ public class XAutoClaimArgs<K> implements CompositeArgument {
             args.add(CommandKeyword.JUSTID);
         }
     }
+
 }

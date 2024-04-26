@@ -336,7 +336,8 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields, without associated values.
@@ -348,7 +349,8 @@ public interface RedisHashAsyncCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      * @since 7.0
      */
-    RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -581,4 +583,5 @@ public interface RedisHashAsyncCommands<K, V> {
      *         associated timeout.
      */
     RedisFuture<Boolean> hpersist(K key, K... fields);
+
 }

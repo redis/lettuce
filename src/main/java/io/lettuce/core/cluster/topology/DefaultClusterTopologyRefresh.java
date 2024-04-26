@@ -131,8 +131,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
                                         .requestTopology(commandTimeoutNs, TimeUnit.NANOSECONDS).mergeWith(requestedTopology);
                                 Requests additionalInfo = newConnections.requestInfo(commandTimeoutNs, TimeUnit.NANOSECONDS)
                                         .mergeWith(requestedInfo);
-                                return CompletableFuture
-                                        .allOf(additionalTopology.allCompleted(), additionalInfo.allCompleted())
+                                return CompletableFuture.allOf(additionalTopology.allCompleted(), additionalInfo.allCompleted())
                                         .thenApplyAsync(ignore2 -> getNodeSpecificViews(additionalTopology, additionalInfo),
                                                 clientResources.eventExecutorGroup());
                             });

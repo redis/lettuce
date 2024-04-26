@@ -137,4 +137,5 @@ public interface BaseNodeSelectionCommands<K, V> {
      * @return number of replicas.
      */
     Executions<Long> waitForReplication(int replicas, long timeout);
+
 }

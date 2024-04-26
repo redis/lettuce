@@ -580,4 +580,5 @@ public interface NodeSelectionHashCommands<K, V> {
      *         associated timeout.
      */
     Executions<Boolean> hpersist(K key, K... fields);
+
 }

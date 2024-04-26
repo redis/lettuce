@@ -1295,7 +1295,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
-                                                       ScanArgs scanArgs) {
+            ScanArgs scanArgs) {
         return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor, scanArgs));
     }
 

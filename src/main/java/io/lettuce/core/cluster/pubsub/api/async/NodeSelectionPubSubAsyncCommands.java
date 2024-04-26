@@ -50,4 +50,5 @@ public interface NodeSelectionPubSubAsyncCommands<K, V> {
      * @since 7.0
      */
     AsyncExecutions<Void> ssubscribe(K... shardChannels);
+
 }

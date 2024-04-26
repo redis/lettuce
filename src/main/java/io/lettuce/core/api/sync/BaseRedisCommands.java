@@ -76,7 +76,7 @@ public interface BaseRedisCommands<K, V> {
      * @return List&lt;K&gt; array-reply a list of active channels.
      */
     List<K> pubsubShardChannels();
-    
+
     /**
      * Lists the currently *active shard channels*.
      *
@@ -84,7 +84,7 @@ public interface BaseRedisCommands<K, V> {
      * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
      */
     List<K> pubsubShardChannels(K pattern);
-    
+
     /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified shard channels.
      *
@@ -194,4 +194,5 @@ public interface BaseRedisCommands<K, V> {
      */
     @Deprecated
     void reset();
+
 }
