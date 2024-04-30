@@ -139,7 +139,10 @@ class RedisClientIntegrationTests extends TestSupport {
         assertThat(commandListener.succeeded).isEmpty();
 
         Wait.untilTrue(() -> commandListener.failed.size() == 1);
-        assertThat(commandListener.failed).extracting(it -> it.getCommand().getType()).contains(CommandType.BLPOP);
+        Wait.untilTrue(() ->
+                commandListener.failed.stream().anyMatch(command ->
+                        command.getCommand().getType().equals(CommandType.BLPOP)));
+
 
         FastShutdown.shutdown(client);
     }
