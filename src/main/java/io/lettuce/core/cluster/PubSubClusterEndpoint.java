@@ -88,6 +88,9 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
             case unsubscribe:
                 multicast.unsubscribed(clusterNode, output.channel(), output.count());
                 break;
+            case smessage:
+                multicast.smessage(clusterNode, output.channel(), output.body());
+                break;
             case ssubscribe:
                 multicast.ssubscribed(clusterNode, output.channel(), output.count());
                 break;
@@ -190,6 +193,12 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
 
             getListeners().forEach(listener -> listener.punsubscribed(pattern, count));
             clusterListeners.forEach(listener -> listener.punsubscribed(node, pattern, count));
+        }
+
+        @Override
+        public void smessage(RedisClusterNode node, K shardChannel, V message) {
+            getListeners().forEach(listener -> listener.smessage(shardChannel, message));
+            clusterListeners.forEach(listener -> listener.smessage(node, shardChannel, message));
         }
 
         @Override

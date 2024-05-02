@@ -88,4 +88,15 @@ public interface RedisPubSubListener<K, V> {
         subscribed(shardChannel, count);
     }
 
+    /**
+     * Message received from a shard channel subscription.
+     *
+     * @param shardChannel shard channel.
+     * @param message Message.
+     * @since 7.0
+     */
+    default void smessage(K shardChannel, V message) {
+        message(shardChannel, message);
+    }
+
 }

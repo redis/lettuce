@@ -1295,7 +1295,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
-                                                       ScanArgs scanArgs) {
+            ScanArgs scanArgs) {
         return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor, scanArgs));
     }
 
@@ -2067,6 +2067,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Set<V>> spop(K key, long count) {
         return dispatch(commandBuilder.spop(key, count));
+    }
+
+    @Override
+    public RedisFuture<Long> spublish(K shardChannel, V message) {
+        return dispatch(commandBuilder.spublish(shardChannel, message));
     }
 
     @Override

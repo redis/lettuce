@@ -30,10 +30,15 @@ import io.lettuce.core.pubsub.RedisPubSubListener;
 public class PubSubTestListener implements RedisPubSubListener<String, String> {
 
     private BlockingQueue<String> channels = LettuceFactories.newBlockingQueue();
+
     private BlockingQueue<String> patterns = LettuceFactories.newBlockingQueue();
+
     private BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
+
     private BlockingQueue<Long> counts = LettuceFactories.newBlockingQueue();
+
     private BlockingQueue<String> shardChannels = LettuceFactories.newBlockingQueue();
+
     private BlockingQueue<Long> shardCounts = LettuceFactories.newBlockingQueue();
 
     // RedisPubSubListener implementation
@@ -48,6 +53,12 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
     public void message(String pattern, String channel, String message) {
         patterns.add(pattern);
         channels.add(channel);
+        messages.add(message);
+    }
+
+    @Override
+    public void smessage(String channel, String message) {
+        shardChannels.add(channel);
         messages.add(message);
     }
 
@@ -116,4 +127,5 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
         counts.clear();
         shardCounts.clear();
     }
+
 }
