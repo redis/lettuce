@@ -63,8 +63,11 @@ class ListOutputUnitTests {
     static class Fixture {
 
         final CommandOutput<Object, Object, List<Object>> commandOutput;
+
         final StreamingOutput<?> streamingOutput;
+
         final byte[] valueBytes;
+
         final Object value;
 
         Fixture(CommandOutput<?, ?, ?> commandOutput, StreamingOutput<?> streamingOutput, byte[] valueBytes, Object value) {
@@ -79,5 +82,7 @@ class ListOutputUnitTests {
         public String toString() {
             return commandOutput.getClass().getSimpleName() + "/" + value;
         }
+
     }
+
 }

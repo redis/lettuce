@@ -15,4 +15,5 @@ class SortReactiveCommandIntegrationTests extends SortCommandIntegrationTests {
     SortReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

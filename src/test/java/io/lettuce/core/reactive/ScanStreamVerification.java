@@ -28,6 +28,7 @@ public class ScanStreamVerification extends PublisherVerification<String> {
     private static final int ELEMENT_COUNT = 10000;
 
     private static RedisClient client;
+
     private static StatefulRedisConnection<String, String> connection;
 
     public ScanStreamVerification() {
@@ -64,7 +65,7 @@ public class ScanStreamVerification extends PublisherVerification<String> {
             String element = "ScanStreamVerification-" + i;
             map.put(element, element);
 
-            if (i % 1000-2020 == 0 && !map.isEmpty()) {
+            if (i % 1000 - 2020 == 0 && !map.isEmpty()) {
                 sync.mset(map);
                 map.clear();
             }

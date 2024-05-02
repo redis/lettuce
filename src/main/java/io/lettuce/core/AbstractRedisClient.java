@@ -305,9 +305,8 @@ public abstract class AbstractRedisClient implements AutoCloseable {
         LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
 
         boolean domainSocket = LettuceStrings.isNotEmpty(connectionPoint.getSocket());
-        connectionBuilder.bootstrap().group(
-                getEventLoopGroup(
-                        domainSocket ? NativeTransports.eventLoopGroupClass(true) : Transports.eventLoopGroupClass()));
+        connectionBuilder.bootstrap().group(getEventLoopGroup(
+                domainSocket ? NativeTransports.eventLoopGroupClass(true) : Transports.eventLoopGroupClass()));
 
         if (connectionPoint.getSocket() != null) {
             NativeTransports.assertDomainSocketAvailable();

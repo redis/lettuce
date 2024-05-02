@@ -15,4 +15,5 @@ class KeyReactiveCommandIntegrationTests extends KeyCommandIntegrationTests {
     KeyReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

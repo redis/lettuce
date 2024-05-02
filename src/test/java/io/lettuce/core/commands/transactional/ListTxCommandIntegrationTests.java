@@ -14,4 +14,5 @@ class ListTxCommandIntegrationTests extends ListCommandIntegrationTests {
     ListTxCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(TxSyncInvocationHandler.sync(connection));
     }
+
 }

@@ -50,7 +50,7 @@ class DynamicNodeSelection<API, CMD, K, V> extends AbstractNodeSelection<API, CM
     private final Function<StatefulRedisConnection<K, V>, API> apiExtractor;
 
     public DynamicNodeSelection(ClusterDistributionChannelWriter writer, Predicate<RedisClusterNode> selector,
-                                ConnectionIntent connectionIntent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
+            ConnectionIntent connectionIntent, Function<StatefulRedisConnection<K, V>, API> apiExtractor) {
 
         this.selector = selector;
         this.connectionIntent = connectionIntent;

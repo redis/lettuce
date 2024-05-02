@@ -59,4 +59,5 @@ class ClientOptionsUnitTests {
         assertThat(sut.isSuspendReconnectOnProtocolFailure()).isFalse();
         assertThat(sut.getDisconnectedBehavior()).isEqualTo(ClientOptions.DisconnectedBehavior.DEFAULT);
     }
+
 }

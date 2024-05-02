@@ -335,7 +335,8 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields, without associated values.
@@ -347,7 +348,8 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      * @since 7.0
      */
-    AsyncExecutions<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    AsyncExecutions<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -580,4 +582,5 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      *         associated timeout.
      */
     AsyncExecutions<Boolean> hpersist(K key, K... fields);
+
 }

@@ -43,6 +43,7 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
         implements AsyncCloseable {
 
     private final Lock lock = new ReentrantLock();
+
     private final Map<RedisURI, StatefulRedisConnection<String, String>> connections = new TreeMap<>(
             ReplicaUtils.RedisURIComparator.INSTANCE);
 
@@ -110,8 +111,7 @@ class Connections extends CompletableEventLatchSupport<Tuple2<RedisURI, Stateful
         try {
             lock.lock();
             return this.connections.isEmpty();
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
     }

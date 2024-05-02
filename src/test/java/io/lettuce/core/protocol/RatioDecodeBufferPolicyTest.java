@@ -67,4 +67,5 @@ class RatioDecodeBufferPolicyTest {
         verify(buffer).readerIndex();
         verify(buffer).discardReadBytes();
     }
+
 }

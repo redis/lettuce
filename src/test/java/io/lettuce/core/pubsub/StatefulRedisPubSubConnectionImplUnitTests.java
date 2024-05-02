@@ -24,6 +24,7 @@ class StatefulRedisPubSubConnectionImplUnitTests {
     private StatefulRedisPubSubConnectionImpl connection;
 
     private final RedisCodec<String, String> codec = StringCodec.UTF8;
+
     private final Duration timeout = Duration.ofSeconds(5);
 
     PubSubEndpoint mockedEndpoint;
@@ -43,7 +44,6 @@ class StatefulRedisPubSubConnectionImplUnitTests {
 
         connection = new StatefulRedisPubSubConnectionImpl(mockedEndpoint, mockedWriter, codec, timeout);
     }
-
 
     @Test
     void addListener() {
@@ -83,7 +83,7 @@ class StatefulRedisPubSubConnectionImplUnitTests {
         RedisFuture<Void> commandFuture = subscriptions.get(0);
 
         assertEquals(1, subscriptions.size());
-        assertInstanceOf( AsyncCommand.class, commandFuture);
+        assertInstanceOf(AsyncCommand.class, commandFuture);
     }
 
     @Test
@@ -93,11 +93,11 @@ class StatefulRedisPubSubConnectionImplUnitTests {
         when(mockedEndpoint.hasPatternSubscriptions()).thenReturn(true);
         when(mockedEndpoint.getPatterns()).thenReturn(new HashSet<>(Arrays.asList(new String[] { "bcast*", "echo" })));
 
-
         List<RedisFuture<Void>> subscriptions = connection.resubscribe();
 
         assertEquals(2, subscriptions.size());
-        assertInstanceOf( AsyncCommand.class, subscriptions.get(0));
-        assertInstanceOf( AsyncCommand.class, subscriptions.get(1));
+        assertInstanceOf(AsyncCommand.class, subscriptions.get(0));
+        assertInstanceOf(AsyncCommand.class, subscriptions.get(1));
     }
+
 }

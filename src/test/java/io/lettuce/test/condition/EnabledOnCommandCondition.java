@@ -35,10 +35,12 @@ class EnabledOnCommandCondition implements ExecutionCondition {
 
             RedisConditions conditions = RedisConditions.of(connection);
             boolean hasCommand = conditions.hasCommand(command);
-            return hasCommand ? enabled("Enabled on command " + command) : disabled("Disabled, command " + command
-                    + " not available on Redis version " + conditions.getRedisVersion());
+            return hasCommand ? enabled("Enabled on command " + command)
+                    : disabled(
+                            "Disabled, command " + command + " not available on Redis version " + conditions.getRedisVersion());
         }
 
         return ENABLED_BY_DEFAULT;
     }
+
 }

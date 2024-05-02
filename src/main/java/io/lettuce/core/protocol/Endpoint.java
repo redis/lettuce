@@ -57,4 +57,5 @@ public interface Endpoint extends PushHandler {
      * @since 6.1
      */
     String getId();
+
 }

@@ -341,4 +341,5 @@ public interface NodeSelectionSetCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     Executions<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
+
 }

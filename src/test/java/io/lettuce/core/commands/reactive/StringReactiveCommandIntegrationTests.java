@@ -19,6 +19,7 @@ import io.lettuce.test.ReactiveSyncInvocationHandler;
 class StringReactiveCommandIntegrationTests extends StringCommandIntegrationTests {
 
     private final RedisCommands<String, String> redis;
+
     private final RedisReactiveCommands<String, String> reactive;
 
     @Inject
@@ -47,4 +48,5 @@ class StringReactiveCommandIntegrationTests extends StringCommandIntegrationTest
         Flux<KeyValue<String, String>> mget = reactive.mget("unknown");
         StepVerifier.create(mget.next()).expectNext(KeyValue.empty("unknown")).verifyComplete();
     }
+
 }

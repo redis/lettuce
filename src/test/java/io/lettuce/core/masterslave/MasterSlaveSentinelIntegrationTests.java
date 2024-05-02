@@ -28,6 +28,7 @@ import io.netty.channel.group.ChannelGroup;
 class MasterSlaveSentinelIntegrationTests extends TestSupport {
 
     private final Pattern pattern = Pattern.compile("role:(\\w+)");
+
     private final RedisClient redisClient;
 
     @Inject
@@ -133,4 +134,5 @@ class MasterSlaveSentinelIntegrationTests extends TestSupport {
         assertThat(matcher.find()).isTrue();
         assertThat(matcher.group(1)).isEqualTo(expectation);
     }
+
 }

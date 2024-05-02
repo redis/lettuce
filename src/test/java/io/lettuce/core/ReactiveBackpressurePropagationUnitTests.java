@@ -39,6 +39,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 class ReactiveBackpressurePropagationUnitTests {
 
     private CommandHandler commandHandler;
+
     private EmbeddedChannel embeddedChannel;
 
     @Mock
@@ -183,6 +184,7 @@ class ReactiveBackpressurePropagationUnitTests {
         static byte[] bulkString(String string) {
             return String.format("$%d\r\n%s\r\n", string.getBytes().length, string).getBytes();
         }
+
     }
 
 }

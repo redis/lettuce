@@ -145,4 +145,5 @@ class ClusterNodeEndpointUnitTests {
         sut = new ClusterNodeEndpoint(clientOptions, clientResources, clusterChannelWriter);
         disconnectedBuffer = (Queue) ReflectionTestUtils.getField(sut, "disconnectedBuffer");
     }
+
 }

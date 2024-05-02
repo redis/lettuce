@@ -40,6 +40,9 @@ class RedisCommandsAsyncIntegrationTests extends TestSupport {
     }
 
     static interface MultipleExecutionModels extends Commands {
+
         Future<String> set(String key, String value);
+
     }
+
 }

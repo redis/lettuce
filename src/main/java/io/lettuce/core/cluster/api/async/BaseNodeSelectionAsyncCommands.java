@@ -78,7 +78,7 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
      */
     AsyncExecutions<List<K>> pubsubShardChannels();
 
-        /**
+    /**
      * Lists the currently *active shard channels*.
      *
      * @param pattern the pattern type: patternkey (pattern).
@@ -203,4 +203,5 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
      */
     <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, Supplier<CommandOutput<K, V, T>> outputSupplier,
             CommandArgs<K, V> args);
+
 }

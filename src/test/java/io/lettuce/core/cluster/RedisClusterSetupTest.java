@@ -83,10 +83,13 @@ public class RedisClusterSetupTest extends TestSupport {
             .enablePeriodicRefresh(Duration.ofSeconds(1)).dynamicRefreshSources(false).build();
 
     private static RedisClusterClient clusterClient;
+
     private static RedisClient client = DefaultRedisClient.get();
+
     private static ClusterTestHelper clusterHelper;
 
     private RedisCommands<String, String> redis1;
+
     private RedisCommands<String, String> redis2;
 
     @BeforeAll
@@ -309,8 +312,8 @@ public class RedisClusterSetupTest extends TestSupport {
         assertRoutedExecution(clusterConnection);
 
         RedisClusterNode partition1 = getOwnPartition(redis1);
-        RedisClusterAsyncCommands<String, String> node1Connection = clusterConnection.getConnection(partition1.getUri()
-                .getHost(), partition1.getUri().getPort());
+        RedisClusterAsyncCommands<String, String> node1Connection = clusterConnection
+                .getConnection(partition1.getUri().getHost(), partition1.getUri().getPort());
 
         shiftAllSlotsToNode1();
 
@@ -321,7 +324,7 @@ public class RedisClusterSetupTest extends TestSupport {
         set.await(5, TimeUnit.SECONDS);
 
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(set)).hasRootCauseInstanceOf(RedisException.class);
-            clusterConnection.getStatefulConnection().close();
+        clusterConnection.getStatefulConnection().close();
     }
 
     @Test
@@ -336,11 +339,11 @@ public class RedisClusterSetupTest extends TestSupport {
 
         RedisClusterNode partition1 = getOwnPartition(redis1);
         RedisClusterNode partition2 = getOwnPartition(redis2);
-        RedisClusterAsyncCommands<String, String> node1Connection = clusterConnection.getConnection(partition1.getUri()
-                .getHost(), partition1.getUri().getPort());
+        RedisClusterAsyncCommands<String, String> node1Connection = clusterConnection
+                .getConnection(partition1.getUri().getHost(), partition1.getUri().getPort());
 
-        RedisClusterAsyncCommands<String, String> node2Connection = clusterConnection.getConnection(partition2.getUri()
-                .getHost(), partition2.getUri().getPort());
+        RedisClusterAsyncCommands<String, String> node2Connection = clusterConnection
+                .getConnection(partition2.getUri().getHost(), partition2.getUri().getPort());
 
         shiftAllSlotsToNode1();
 
@@ -447,7 +450,8 @@ public class RedisClusterSetupTest extends TestSupport {
 
         ClusterSetup.setup2Masters(clusterHelper);
 
-        PooledClusterConnectionProvider<String, String> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
+        PooledClusterConnectionProvider<String, String> clusterConnectionProvider = getPooledClusterConnectionProvider(
+                clusterConnection);
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(0);
 
@@ -490,7 +494,8 @@ public class RedisClusterSetupTest extends TestSupport {
 
         ClusterSetup.setup2Masters(clusterHelper);
 
-        PooledClusterConnectionProvider<String, String> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
+        PooledClusterConnectionProvider<String, String> clusterConnectionProvider = getPooledClusterConnectionProvider(
+                clusterConnection);
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(0);
 
@@ -528,7 +533,8 @@ public class RedisClusterSetupTest extends TestSupport {
 
         ClusterSetup.setup2Masters(clusterHelper);
 
-        final PooledClusterConnectionProvider<String, String> clusterConnectionProvider = getPooledClusterConnectionProvider(clusterConnection);
+        final PooledClusterConnectionProvider<String, String> clusterConnectionProvider = getPooledClusterConnectionProvider(
+                clusterConnection);
 
         assertThat(clusterConnectionProvider.getConnectionCount()).isEqualTo(0);
 
@@ -634,6 +640,7 @@ public class RedisClusterSetupTest extends TestSupport {
         RedisClusterNode redis2Partition = getOwnPartition(redis2);
 
         Wait.untilTrue(new Supplier<Boolean>() {
+
             @Override
             public Boolean get() {
                 Partitions partitions = ClusterPartitionParser.parse(redis1.clusterNodes());
@@ -653,6 +660,7 @@ public class RedisClusterSetupTest extends TestSupport {
                     // ignore
                 }
             }
+
         }).waitOrTimeout();
 
         redis1.clusterAddSlots(createSlots(12000, 16384));
@@ -668,4 +676,5 @@ public class RedisClusterSetupTest extends TestSupport {
     private void waitForSlots(RedisClusterCommands<String, String> connection, int slotCount) {
         Wait.untilEquals(slotCount, () -> getOwnPartition(connection).getSlots().size()).waitOrTimeout();
     }
+
 }

@@ -28,7 +28,8 @@ class MyPubSubConnection<K, V> extends StatefulRedisPubSubConnectionImpl<K, V> {
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
      */
-    public MyPubSubConnection(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
+    public MyPubSubConnection(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec,
+            Duration timeout) {
         super(endpoint, writer, codec, timeout);
     }
 
@@ -41,4 +42,5 @@ class MyPubSubConnection<K, V> extends StatefulRedisPubSubConnectionImpl<K, V> {
 
         return super.dispatch(command);
     }
+
 }

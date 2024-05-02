@@ -241,7 +241,7 @@ public class SetCommandIntegrationTests extends TestSupport {
 
     @Test
     void sremNulls() {
-        assertThatThrownBy(() -> redis.srem(key, new String[0])).isInstanceOf(IllegalArgumentException. class);
+        assertThatThrownBy(() -> redis.srem(key, new String[0])).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -252,7 +252,7 @@ public class SetCommandIntegrationTests extends TestSupport {
 
     @Test
     void sunionEmpty() {
-        assertThatThrownBy(() -> redis.sunion()).isInstanceOf(IllegalArgumentException. class);
+        assertThatThrownBy(() -> redis.sunion()).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

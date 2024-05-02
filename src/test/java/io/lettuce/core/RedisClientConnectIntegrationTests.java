@@ -136,7 +136,7 @@ class RedisClientConnectIntegrationTests extends TestSupport {
         CompletableFuture<String> f = connection.async().get("key1").whenComplete((result, e) -> {
             connection.close();
             redisClient.shutdown(0, 0, SECONDS); // deadlock expected.
-            }).toCompletableFuture();
+        }).toCompletableFuture();
 
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(f)).isInstanceOf(TimeoutException.class);
     }
@@ -200,8 +200,7 @@ class RedisClientConnectIntegrationTests extends TestSupport {
     @Test
     void connectPubSubAsync() {
         RedisURI redisURI = redis(host, port).build();
-        ConnectionFuture<StatefulRedisPubSubConnection<String, String>> future = client.connectPubSubAsync(
-UTF8, redisURI);
+        ConnectionFuture<StatefulRedisPubSubConnection<String, String>> future = client.connectPubSubAsync(UTF8, redisURI);
         StatefulRedisPubSubConnection<String, String> connection = future.join();
         assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeout());
         connection.close();
@@ -278,4 +277,5 @@ UTF8, redisURI);
 
         return redisURI;
     }
+
 }

@@ -33,7 +33,9 @@ import io.netty.channel.group.ChannelGroup;
 class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
 
     private static RedisClient client;
+
     private static Set<?> channels;
+
     private static RedisURI uri = RedisURI.Builder.redis(host, port).build();
 
     @BeforeAll
@@ -53,8 +55,8 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void asyncPoolShouldWorkWithWrappedConnections() {
 
-        BoundedAsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
-                () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
+        BoundedAsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
+                .createBoundedObjectPool(() -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
 
         borrowAndReturn(pool);
         borrowAndClose(pool);
@@ -122,8 +124,8 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void asyncPoolShouldWorkWithPlainConnections() {
 
-        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
-                () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create(), false);
+        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
+                .createBoundedObjectPool(() -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create(), false);
 
         borrowAndReturn(pool);
 
@@ -137,8 +139,8 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void asyncPoolUsingWrappingShouldPropagateExceptionsCorrectly() {
 
-        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
-                () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
+        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
+                .createBoundedObjectPool(() -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
 
         StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
         RedisCommands<String, String> sync = connection.sync();
@@ -158,20 +160,20 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void wrappedConnectionShouldUseWrappers() {
 
-        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
-                () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
+        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
+                .createBoundedObjectPool(() -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
 
         StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
         RedisCommands<String, String> sync = connection.sync();
 
-        assertThat(connection).isInstanceOf(StatefulRedisConnection.class).isNotInstanceOf(
-                StatefulRedisClusterConnectionImpl.class);
+        assertThat(connection).isInstanceOf(StatefulRedisConnection.class)
+                .isNotInstanceOf(StatefulRedisClusterConnectionImpl.class);
         assertThat(Proxy.isProxyClass(connection.getClass())).isTrue();
 
         assertThat(sync).isInstanceOf(RedisCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
-        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class).isNotInstanceOf(
-                RedisReactiveCommandsImpl.class);
+        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class)
+                .isNotInstanceOf(RedisReactiveCommandsImpl.class);
         assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
                 .isNotInstanceOf(StatefulRedisConnectionImpl.class).isSameAs(connection);
 
@@ -182,8 +184,8 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void wrappedObjectClosedAfterReturn() {
 
-        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
-                () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create(), true);
+        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
+                .createBoundedObjectPool(() -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create(), true);
 
         StatefulRedisConnection<String, String> connection = TestFutures.getOrTimeout(pool.acquire());
         RedisCommands<String, String> sync = connection.sync();
@@ -204,8 +206,8 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void shouldPropagateAsyncFlow() {
 
-        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
-                () -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
+        AsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport
+                .createBoundedObjectPool(() -> client.connectAsync(StringCodec.ASCII, uri), BoundedPoolConfig.create());
 
         CompletableFuture<String> pingResponse = pool.acquire().thenCompose(c -> {
             return c.async().ping().whenComplete((s, throwable) -> pool.release(c));
@@ -246,4 +248,5 @@ class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
             TestFutures.getOrTimeout(connection.closeAsync());
         }
     }
+
 }

@@ -27,8 +27,8 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
- * Argument list builder for the Redis <a href="https://redis.io/commands/restore">RESTORE</a> command. Static import the methods
- * from {@link RestoreArgs.Builder} and call the methods: {@code ttl(…)} .
+ * Argument list builder for the Redis <a href="https://redis.io/commands/restore">RESTORE</a> command. Static import the
+ * methods from {@link RestoreArgs.Builder} and call the methods: {@code ttl(…)} .
  * <p>
  * {@link RestoreArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
@@ -199,4 +199,5 @@ public class RestoreArgs implements CompositeArgument {
             args.add(FREQ).add(frequency);
         }
     }
+
 }

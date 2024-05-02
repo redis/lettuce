@@ -72,11 +72,9 @@ class MasterReplicaChannelWriterUnitTests {
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mset = new Command<>(CommandType.MSET, null);
 
-        assertThat(writer.getIntent(Arrays.asList(set, mset)))
-                .isEqualTo(ConnectionIntent.WRITE);
+        assertThat(writer.getIntent(Arrays.asList(set, mset))).isEqualTo(ConnectionIntent.WRITE);
 
-        assertThat(writer.getIntent(Collections.singletonList(set)))
-                .isEqualTo(ConnectionIntent.WRITE);
+        assertThat(writer.getIntent(Collections.singletonList(set))).isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
@@ -84,8 +82,7 @@ class MasterReplicaChannelWriterUnitTests {
 
         MasterReplicaChannelWriter writer = new MasterReplicaChannelWriter(connectionProvider, clientResources, clientOptions);
 
-        assertThat(writer.getIntent(Collections.emptyList()))
-                .isEqualTo(ConnectionIntent.WRITE);
+        assertThat(writer.getIntent(Collections.emptyList())).isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
@@ -96,11 +93,9 @@ class MasterReplicaChannelWriterUnitTests {
         RedisCommand<String, String, String> get = new Command<>(CommandType.GET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(writer.getIntent(Arrays.asList(get, mget)))
-                .isEqualTo(ConnectionIntent.READ);
+        assertThat(writer.getIntent(Arrays.asList(get, mget))).isEqualTo(ConnectionIntent.READ);
 
-        assertThat(writer.getIntent(Collections.singletonList(get)))
-                .isEqualTo(ConnectionIntent.READ);
+        assertThat(writer.getIntent(Collections.singletonList(get))).isEqualTo(ConnectionIntent.READ);
     }
 
     @Test
@@ -111,11 +106,9 @@ class MasterReplicaChannelWriterUnitTests {
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
 
-        assertThat(writer.getIntent(Arrays.asList(set, mget)))
-                .isEqualTo(ConnectionIntent.WRITE);
+        assertThat(writer.getIntent(Arrays.asList(set, mget))).isEqualTo(ConnectionIntent.WRITE);
 
-        assertThat(writer.getIntent(Collections.singletonList(set)))
-                .isEqualTo(ConnectionIntent.WRITE);
+        assertThat(writer.getIntent(Collections.singletonList(set))).isEqualTo(ConnectionIntent.WRITE);
     }
 
     @Test
@@ -202,4 +195,5 @@ class MasterReplicaChannelWriterUnitTests {
     private static Command<String, String, String> mockCommand(CommandType multi) {
         return new Command<>(multi, new StatusOutput<>(StringCodec.UTF8));
     }
+
 }

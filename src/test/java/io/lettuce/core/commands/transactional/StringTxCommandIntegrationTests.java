@@ -14,4 +14,5 @@ class StringTxCommandIntegrationTests extends StringCommandIntegrationTests {
     StringTxCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(TxSyncInvocationHandler.sync(connection));
     }
+
 }

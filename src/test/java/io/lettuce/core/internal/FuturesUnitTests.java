@@ -55,4 +55,5 @@ class FuturesUnitTests {
 
         assertThat(Thread.currentThread().isInterrupted()).isTrue();
     }
+
 }

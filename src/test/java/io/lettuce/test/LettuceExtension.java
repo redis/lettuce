@@ -88,9 +88,9 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
 
     private final ExtensionContext.Namespace LETTUCE = ExtensionContext.Namespace.create("lettuce.parameters");
 
-    private static final Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
-            StatefulRedisPubSubConnection.class, RedisCommands.class, RedisClient.class, ClientResources.class,
-            StatefulRedisClusterConnection.class, RedisClusterClient.class));
+    private static final Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(
+            Arrays.asList(StatefulRedisConnection.class, StatefulRedisPubSubConnection.class, RedisCommands.class,
+                    RedisClient.class, ClientResources.class, StatefulRedisClusterConnection.class, RedisClusterClient.class));
 
     private static final Set<Class<?>> CLOSE_AFTER_EACH = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
             StatefulRedisPubSubConnection.class, StatefulRedisClusterConnection.class));
@@ -147,8 +147,8 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
     private Object doGetInstance(Type parameterizedType) {
 
         Optional<ResourceFunction> resourceFunction = findFunction(parameterizedType);
-        return resourceFunction.map(it -> it.function.apply(findSupplier(it.dependsOn.getType()).get())).orElseGet(
-                () -> findSupplier(parameterizedType).get());
+        return resourceFunction.map(it -> it.function.apply(findSupplier(it.dependsOn.getType()).get()))
+                .orElseGet(() -> findSupplier(parameterizedType).get());
     }
 
     /**
@@ -249,7 +249,9 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
     @Target(ElementType.PARAMETER)
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Connection {
+
         boolean requiresNew() default false;
+
     }
 
     static class CloseAfterTest extends ArrayList<Object> {
@@ -258,7 +260,9 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
     static class ResourceFunction {
 
         final ResolvableType dependsOn;
+
         final ResolvableType provides;
+
         final Function<Object, Object> function;
 
         public ResourceFunction(ResolvableType dependsOn, ResolvableType provides, Function<?, ?> function) {
@@ -266,6 +270,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
             this.provides = provides;
             this.function = (Function) function;
         }
+
     }
 
     enum ClientResourcesSupplier implements Supplier<ClientResources> {
@@ -276,6 +281,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
         public ClientResources get() {
             return TestClientResources.get();
         }
+
     }
 
     enum RedisClientSupplier implements Supplier<RedisClient> {
@@ -286,6 +292,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
         public RedisClient get() {
             return DefaultRedisClient.get();
         }
+
     }
 
     enum RedisClusterClientSupplier implements Supplier<RedisClusterClient> {
@@ -296,6 +303,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
         public RedisClusterClient get() {
             return DefaultRedisClusterClient.get();
         }
+
     }
 
     enum StatefulRedisConnectionSupplier implements Supplier<StatefulRedisConnection<String, String>> {
@@ -306,6 +314,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
         public StatefulRedisConnection<String, String> get() {
             return RedisClientSupplier.INSTANCE.get().connect();
         }
+
     }
 
     enum StatefulRedisPubSubConnectionSupplier implements Supplier<StatefulRedisPubSubConnection<String, String>> {
@@ -316,6 +325,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
         public StatefulRedisPubSubConnection<String, String> get() {
             return RedisClientSupplier.INSTANCE.get().connectPubSub();
         }
+
     }
 
     enum StatefulRedisClusterConnectionSupplier implements Supplier<StatefulRedisClusterConnection<String, String>> {
@@ -326,14 +336,18 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
         public StatefulRedisClusterConnection<String, String> get() {
             return RedisClusterClientSupplier.INSTANCE.get().connect();
         }
+
     }
 
     enum RedisCommandsFunction implements Function<StatefulRedisConnection<String, String>, RedisCommands<String, String>> {
+
         INSTANCE;
 
         @Override
         public RedisCommands<String, String> apply(StatefulRedisConnection<String, String> connection) {
             return connection.sync();
         }
+
     }
+
 }

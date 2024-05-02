@@ -85,4 +85,5 @@ class MasterReplicaUtilsUnitTests {
         assertThat(ReplicaUtils.isChanged(Arrays.asList(upstream, replica), Arrays.asList(newupstream, newslave))).isTrue();
         assertThat(ReplicaUtils.isChanged(Arrays.asList(upstream, replica), Arrays.asList(newslave, newupstream))).isTrue();
     }
+
 }

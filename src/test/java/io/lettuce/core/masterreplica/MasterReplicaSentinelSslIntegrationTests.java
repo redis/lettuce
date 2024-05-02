@@ -56,4 +56,5 @@ class MasterReplicaSentinelSslIntegrationTests extends TestSupport {
 
         FastShutdown.shutdown(client);
     }
+
 }

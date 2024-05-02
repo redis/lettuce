@@ -20,8 +20,11 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 public class MockTcpServer {
 
     private EventLoopGroup bossGroup;
+
     private EventLoopGroup workerGroup;
+
     private Channel channel;
+
     private List<Supplier<? extends ChannelHandler>> handlers = new ArrayList<>();
 
     public void addHandler(Supplier<? extends ChannelHandler> supplier) {
@@ -36,6 +39,7 @@ public class MockTcpServer {
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).option(ChannelOption.SO_BACKLOG, 100)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
+
                     @Override
                     public void initChannel(SocketChannel ch) {
                         ChannelPipeline p = ch.pipeline();
@@ -45,6 +49,7 @@ public class MockTcpServer {
                             p.addLast(handler.get());
                         }
                     }
+
                 });
 
         // Start the server.
@@ -60,6 +65,7 @@ public class MockTcpServer {
     private static class Resources {
 
         private static final EventLoopGroup bossGroup;
+
         private static final EventLoopGroup workerGroup;
 
         static {
@@ -74,4 +80,5 @@ public class MockTcpServer {
         }
 
     }
+
 }

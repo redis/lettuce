@@ -34,6 +34,7 @@ import io.lettuce.test.settings.TestSettings;
 class RedisCommandsIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -95,8 +96,8 @@ class RedisCommandsIntegrationTests extends TestSupport {
     @Test
     void shouldWorkWithPooledConnection() throws Exception {
 
-        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                client::connect, new GenericObjectPoolConfig<>());
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(client::connect, new GenericObjectPoolConfig<>());
 
         try (StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
 
@@ -126,14 +127,21 @@ class RedisCommandsIntegrationTests extends TestSupport {
     }
 
     private interface SimpleCommands extends Commands {
+
         String get(String key);
+
     }
 
     private interface TooFewParameters extends Commands {
+
         String get();
+
     }
 
     private interface WithTypo extends Commands {
+
         String gat(String key);
+
     }
+
 }

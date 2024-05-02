@@ -27,4 +27,5 @@ class ByteCodecClusterIntegrationTests extends TestSupport {
         connection.sync().set(key.getBytes(), value.getBytes());
         assertThat(connection.sync().get(key.getBytes())).isEqualTo(value.getBytes());
     }
+
 }

@@ -16,8 +16,9 @@ import io.lettuce.core.output.ValueStreamingChannel;
  * @param <T> Value-Type.
  * @since 3.0
  */
-public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStreamingChannel<T>,
-        ScoredValueStreamingChannel<T> {
+public class ListStreamingAdapter<T>
+        implements KeyStreamingChannel<T>, ValueStreamingChannel<T>, ScoredValueStreamingChannel<T> {
+
     private final List<T> list = new Vector<>();
 
     @Override
@@ -39,4 +40,5 @@ public class ListStreamingAdapter<T> implements KeyStreamingChannel<T>, ValueStr
     public void onValue(ScoredValue<T> value) {
         list.add(value.getValue());
     }
+
 }

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 class SlotHashUnitTests {
 
     private static final byte[] BYTES = "123456789".getBytes();
+
     private static final byte[] TAGGED = "key{123456789}a".getBytes();
 
     @Test
@@ -42,4 +43,5 @@ class SlotHashUnitTests {
         int result = SlotHash.getSlot((ByteBuffer) ByteBuffer.allocateDirect(TAGGED.length).put(TAGGED).flip());
         assertThat(result).isEqualTo(0x31C3);
     }
+
 }

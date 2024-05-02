@@ -164,11 +164,9 @@ public class KqueueProvider {
         @Override
         public Class<? extends DatagramChannel> datagramChannelClass() {
 
-
             checkForKqueueLibrary();
             return null;
         }
-
 
     }
 
@@ -219,7 +217,6 @@ public class KqueueProvider {
             return KQueueDatagramChannel.class;
         }
 
-
         @Override
         public Class<? extends Channel> domainSocketChannelClass() {
 
@@ -227,7 +224,6 @@ public class KqueueProvider {
 
             return KQueueDomainSocketChannel.class;
         }
-
 
         @Override
         public SocketAddress newSocketAddress(String socketPath) {

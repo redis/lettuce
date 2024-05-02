@@ -49,7 +49,9 @@ import io.lettuce.test.settings.TestSettings;
 public class SentinelServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;
+
     private StatefulRedisSentinelConnection<String, String> connection;
+
     private RedisSentinelCommands<String, String> sentinel;
 
     @Inject

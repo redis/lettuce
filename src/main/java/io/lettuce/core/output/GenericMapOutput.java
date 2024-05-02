@@ -18,6 +18,7 @@ import io.lettuce.core.codec.RedisCodec;
 public class GenericMapOutput<K, V> extends CommandOutput<K, V, Map<K, Object>> {
 
     boolean hasKey;
+
     private K key;
 
     public GenericMapOutput(RedisCodec<K, V> codec) {

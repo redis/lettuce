@@ -35,4 +35,5 @@ class ConstantDelayUnitTests {
         assertThat(delay.createDelay(0)).isEqualTo(Duration.ofMillis(100));
         assertThat(delay.createDelay(5)).isEqualTo(Duration.ofMillis(100));
     }
+
 }

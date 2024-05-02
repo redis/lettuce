@@ -202,4 +202,5 @@ public interface RedisScriptingAsyncCommands<K, V> {
      * @since 6.0
      */
     String digest(byte[] script);
+
 }

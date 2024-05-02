@@ -15,4 +15,5 @@ class SetReactiveCommandIntegrationTests extends SetCommandIntegrationTests {
     SetReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

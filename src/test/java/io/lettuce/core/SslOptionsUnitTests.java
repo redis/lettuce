@@ -82,4 +82,5 @@ class SslOptionsUnitTests {
         SslContext context = options.createSslContextBuilder().build();
         assertThat(context.cipherSuites()).containsOnly("TLS_RSA_WITH_AES_128_CBC_SHA");
     }
+
 }

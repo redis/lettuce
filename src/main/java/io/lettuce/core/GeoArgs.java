@@ -266,6 +266,7 @@ public class GeoArgs implements CompositeArgument {
         public byte[] getBytes() {
             return asBytes;
         }
+
     }
 
     public <K, V> void build(CommandArgs<K, V> args) {

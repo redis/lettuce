@@ -177,8 +177,7 @@ public abstract class ScanStream {
                 });
     }
 
-    private static <K, V> Flux<K> hscanNovalues(RedisHashReactiveCommands<K, V> commands, K key,
-            Optional<ScanArgs> scanArgs) {
+    private static <K, V> Flux<K> hscanNovalues(RedisHashReactiveCommands<K, V> commands, K key, Optional<ScanArgs> scanArgs) {
 
         LettuceAssert.notNull(commands, "RedisHashReactiveCommands must not be null");
         LettuceAssert.notNull(key, "Key must not be null");

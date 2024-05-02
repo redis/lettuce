@@ -75,10 +75,13 @@ import io.netty.util.internal.ConcurrentSet;
 class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
     private static final String KEY_ON_NODE_1 = "a";
+
     private static final String KEY_ON_NODE_2 = "b";
 
     private final RedisClusterClient clusterClient;
+
     private final RedisAdvancedClusterReactiveCommands<String, String> commands;
+
     private final RedisAdvancedClusterCommands<String, String> syncCommands;
 
     @Inject
@@ -498,4 +501,5 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
         }
         return mset;
     }
+
 }

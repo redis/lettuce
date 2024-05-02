@@ -185,8 +185,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
         };
     }
 
-    private static <K, V> ScanIterator<K> hscanNovalues(RedisHashCommands<K, V> commands, K key,
-            Optional<ScanArgs> scanArgs) {
+    private static <K, V> ScanIterator<K> hscanNovalues(RedisHashCommands<K, V> commands, K key, Optional<ScanArgs> scanArgs) {
 
         LettuceAssert.notNull(commands, "RedisKeyCommands must not be null");
         LettuceAssert.notNull(key, "Key must not be null");
@@ -204,7 +203,8 @@ public abstract class ScanIterator<T> implements Iterator<T> {
             private KeyScanCursor<K> getNextScanCursor(ScanCursor scanCursor) {
 
                 if (scanCursor == null) {
-                    return scanArgs.map(scanArgs -> commands.hscanNovalues(key, scanArgs)).orElseGet(() -> commands.hscanNovalues(key));
+                    return scanArgs.map(scanArgs -> commands.hscanNovalues(key, scanArgs))
+                            .orElseGet(() -> commands.hscanNovalues(key));
                 }
 
                 return scanArgs.map((scanArgs) -> commands.hscanNovalues(key, scanCursor, scanArgs))
