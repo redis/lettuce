@@ -2151,7 +2151,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     public Mono<Long> spublish(K shardChannel, V message) {
         return createMono(() -> commandBuilder.spublish(shardChannel, message));
     }
-    
+
     @Override
     public Mono<V> srandmember(K key) {
         return createMono(() -> commandBuilder.srandmember(key));

@@ -75,7 +75,7 @@ public interface RedisClusterPubSubListener<K, V> {
      * @param message Message.
      * @since 7.0
      */
-    default void smessage(RedisClusterNode node, K shardChannel, V message){
+    default void smessage(RedisClusterNode node, K shardChannel, V message) {
         message(node, shardChannel, message);
     }
 
