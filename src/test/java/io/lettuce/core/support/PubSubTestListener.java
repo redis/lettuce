@@ -57,6 +57,12 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
     }
 
     @Override
+    public void smessage(String channel, String message) {
+        shardChannels.add(channel);
+        messages.add(message);
+    }
+
+    @Override
     public void subscribed(String channel, long count) {
         channels.add(channel);
         counts.add(count);

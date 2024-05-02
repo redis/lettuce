@@ -168,6 +168,11 @@ class ClusterPubSubConnectionProvider<K, V> extends PooledClusterConnectionProvi
         }
 
         @Override
+        public void smessage(K shardChannel, V message) {
+            notifications.smessage(getNode(), shardChannel, message);
+        }
+
+        @Override
         public void ssubscribed(K channel, long count) {
             notifications.ssubscribed(getNode(), channel, count);
         }

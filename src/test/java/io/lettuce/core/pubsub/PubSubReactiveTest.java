@@ -270,46 +270,41 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
     @Test
     @EnabledOnCommand("SPUBLISH")
     void pubsubShardChannels() {
-        /// TODO : uncomment after SSUBSCRIBE is implemented
-        // block(pubsub.ssubscribe(channel));
+        block(pubsub.ssubscribe(shardChannel));
         List<String> result = block(pubsub2.pubsubShardChannels().collectList());
-        // assertThat(result).contains(channel);
+        assertThat(result).contains(shardChannel);
     }
 
     @Test
     @EnabledOnCommand("SPUBLISH")
     void pubsubShardMultipleChannels() {
-        /// TODO : uncomment after SSUBSCRIBE is implemented
-        // StepVerifier.create(pubsub.ssubscribe(channel, "channel1", "channel3")).verifyComplete();
+        StepVerifier.create(pubsub.ssubscribe(shardChannel, "channel1", "channel3")).verifyComplete();
 
-        // StepVerifier.create(pubsub2.pubsubShardChannels().collectList())
-        // .consumeNextWith(actual -> assertThat(actual).contains(channel, "channel1", "channel3")).verifyComplete();
+        StepVerifier.create(pubsub2.pubsubShardChannels().collectList())
+                .consumeNextWith(actual -> assertThat(actual).contains(shardChannel, "channel1", "channel3")).verifyComplete();
     }
 
     @Test
     @EnabledOnCommand("SPUBLISH")
     void pubsubShardChannelsWithArg() {
-        /// TODO : uncomment after SSUBSCRIBE is implemented
-        // StepVerifier.create(pubsub.ssubscribe(channel)).verifyComplete();
-        // Wait.untilTrue(() -> mono(pubsub2.pubsubShardChannels(pattern).filter(s -> channel.equals(s))) !=
-        /// null).waitOrTimeout();
 
-        String result = mono(pubsub2.pubsubShardChannels(pattern).filter(s -> channel.equals(s)));
-        // assertThat(result).isEqualToIgnoringCase(channel);
+        StepVerifier.create(pubsub.ssubscribe(shardChannel)).verifyComplete();
+        Wait.untilTrue(() -> mono(pubsub2.pubsubShardChannels(shardChannel).filter(s -> shardChannel.equals(s))) != null)
+                .waitOrTimeout();
+
+        String result = mono(pubsub2.pubsubShardChannels(shardChannel).filter(s -> shardChannel.equals(s)));
+        assertThat(result).isEqualToIgnoringCase(shardChannel);
     }
 
     @Test
     @EnabledOnCommand("SPUBLISH")
     void pubsubShardNumsub() {
-
-        // TODO After we have SSUBSCRIBE implement a step to subscribe to a shard channel
-        // Depends on https://github.com/lettuce-io/lettuce-core/issues/2758
+        StepVerifier.create(pubsub.ssubscribe(shardChannel)).verifyComplete();
 
         Wait.untilEquals(1, () -> block(pubsub2.pubsubShardNumsub(shardChannel)).size()).waitOrTimeout();
 
         Map<String, Long> result = block(pubsub2.pubsubShardNumsub(shardChannel));
-        assertThat(result.getOrDefault(shardChannel, 0L)).isEqualTo(0);
-        // TODO verify that the channel from step 1 is the one returned by the command
+        assertThat(result.getOrDefault(shardChannel, 0L)).isEqualTo(1);
     }
 
     @Test

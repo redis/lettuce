@@ -60,6 +60,11 @@ public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {
     }
 
     @Override
+    public void smessage(K shardChannel, V message) {  
+        // empty adapter method
+    }
+
+    @Override
     public void ssubscribed(K shardChannel, long count) {
         // empty adapter method
     }

@@ -160,6 +160,11 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     }
 
     @Override
+    public Mono<Long> spublish(K shardChannel, V message) {
+        return createMono(() -> commandBuilder.publish(shardChannel, message));
+    }
+
+    @Override
     public Mono<Void> ssubscribe(K... shardChannels) {
         return createFlux(() -> commandBuilder.ssubscribe(shardChannels)).then();
     }

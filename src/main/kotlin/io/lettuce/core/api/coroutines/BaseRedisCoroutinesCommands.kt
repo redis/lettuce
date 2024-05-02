@@ -103,6 +103,16 @@ interface BaseRedisCoroutinesCommands<K : Any, V : Any> {
     suspend fun pubsubNumpat(): Long
 
     /**
+     * Post a message to a shard channel.
+     *
+     * @param shardChannel the shard channel type: key.
+     * @param message the message type: value.
+     * @return Long integer-reply the number of clients that received the message.
+     * @since 7.0
+     */
+    suspend fun spublish(shardChannel: K, message: V): Long?
+
+    /**
      * Echo the given string.
      *
      * @param msg the message type: value.

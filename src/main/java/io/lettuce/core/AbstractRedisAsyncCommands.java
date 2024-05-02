@@ -2070,6 +2070,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> spublish(K shardChannel, V message) {
+        return dispatch(commandBuilder.spublish(shardChannel, message));
+    }
+
+    @Override
     public RedisFuture<V> srandmember(K key) {
         return dispatch(commandBuilder.srandmember(key));
     }

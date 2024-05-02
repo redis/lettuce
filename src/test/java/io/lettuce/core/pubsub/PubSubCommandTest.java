@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +54,7 @@ import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.resource.DefaultRedisClient;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
@@ -74,6 +76,8 @@ class PubSubCommandTest extends AbstractRedisClientTest {
 
     BlockingQueue<String> channels = listener.getChannels();
 
+    BlockingQueue<String> shardChannels = listener.getShardChannels();
+
     BlockingQueue<String> patterns = listener.getPatterns();
 
     BlockingQueue<String> messages = listener.getMessages();
@@ -87,6 +91,8 @@ class PubSubCommandTest extends AbstractRedisClientTest {
     private String pattern = "channel*";
 
     String message = "msg!";
+
+    String shardMessage = "shard msg!";
 
     @BeforeEach
     void openPubSubConnection() {
@@ -219,6 +225,29 @@ class PubSubCommandTest extends AbstractRedisClientTest {
         redis.publish(channel, message);
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void messageToShardChannel() throws Exception {
+        pubsub.ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, shardChannels::poll).waitOrTimeout();
+
+        redis.spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardChannel, shardChannels::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, messages::poll).waitOrTimeout();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void messageToShardChannelViaNewClient() throws Exception {
+        pubsub.ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, shardChannels::poll).waitOrTimeout();
+
+        RedisPubSubAsyncCommands<String, String> redis = DefaultRedisClient.get().connectPubSub().async();
+        redis.spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardMessage, messages::poll).waitOrTimeout();
+        Wait.untilEquals(shardChannel, shardChannels::poll).waitOrTimeout();
     }
 
     @Test
@@ -362,40 +391,35 @@ class PubSubCommandTest extends AbstractRedisClientTest {
     @Test
     @EnabledOnCommand("SPUBLISH")
     void pubsubShardChannels() {
-        /// TODO : uncomment after SSUBSCRIBE is implemented
-        // TestFutures.awaitOrTimeout(pubsub.ssubscribe(channel));
+        TestFutures.awaitOrTimeout(pubsub.ssubscribe(shardChannel));
         List<String> result = redis.pubsubShardChannels();
-        // assertThat(result).contains(channel);
+        assertThat(result).contains(shardChannel);
     }
 
     @Test
     @EnabledOnCommand("SPUBLISH")
     void pubsubMultipleShardChannels() {
-        /// TODO : uncomment after SSUBSCRIBE is implemented
-        // TestFutures.awaitOrTimeout(pubsub.ssubscribe(channel, "channel1", "channel3"));
+        TestFutures.awaitOrTimeout(pubsub.ssubscribe(shardChannel, "channel1", "channel3"));
         List<String> result = redis.pubsubShardChannels();
-        // assertThat(result).contains(channel, "channel1", "channel3");
+        assertThat(result).contains(shardChannel, "channel1", "channel3");
 
     }
 
     @Test
     @EnabledOnCommand("SPUBLISH")
     void pubsubShardChannelsWithArg() {
-        /// TODO : uncomment after SSUBSCRIBE is implemented
-        // TestFutures.awaitOrTimeout(pubsub.ssubscribe(channel));
-        List<String> result = redis.pubsubShardChannels(pattern);
-        // assertThat(result).contains(channel);
+        TestFutures.awaitOrTimeout(pubsub.ssubscribe(shardChannel));
+        List<String> result = redis.pubsubShardChannels(shardChannel);
+        assertThat(result).contains(shardChannel);
     }
 
     @Test
     @EnabledOnCommand("SPUBLISH")
     void pubsubShardNumsub() {
-        // TODO After we have SSUBSCRIBE implement a step to subscribe to a shard channel
-        // Depends on https://github.com/lettuce-io/lettuce-core/issues/2758
+        TestFutures.awaitOrTimeout(pubsub.ssubscribe(shardChannel));
 
         Map<String, Long> result = redis.pubsubShardNumsub(shardChannel);
-        assertThat(result.getOrDefault(shardChannel, 0L)).isEqualTo(0);
-        // TODO verify that the channel from step 1 is the one returned by the command
+        assertThat(result.keySet()).contains(shardChannel);
     }
 
     @Test

@@ -60,6 +60,8 @@ internal class BaseRedisCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun pubsubNumpat(): Long = ops.pubsubNumpat().awaitSingle()
 
+    override suspend fun spublish(shardChannel: K, message: V): Long? = ops.spublish(shardChannel, message).awaitFirstOrNull()
+
     override suspend fun echo(msg: V): V = ops.echo(msg).awaitSingle()
 
     override suspend fun role(): List<Any> = ops.role().asFlow().toList()
