@@ -68,6 +68,18 @@ public interface RedisClusterPubSubListener<K, V> {
     void punsubscribed(RedisClusterNode node, K pattern, long count);
 
     /**
+     * Message received from a shard channel subscription.
+     *
+     * @param node the {@link RedisClusterNode} from which the {@code message} originates.
+     * @param shardChannel shard channel.
+     * @param message Message.
+     * @since 7.0
+     */
+    default void smessage(RedisClusterNode node, K shardChannel, V message){
+        message(node, shardChannel, message);
+    }
+
+    /**
      * Subscribed to a shard channel.
      *
      * @param node the {@link RedisClusterNode} from which the {@code message} originates.

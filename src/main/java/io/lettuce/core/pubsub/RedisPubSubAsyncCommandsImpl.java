@@ -101,6 +101,11 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
     }
 
     @Override
+    public RedisFuture<Long> spublish(K shardChannel, V message) {
+        return dispatch(commandBuilder.spublish(shardChannel, message));
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public RedisFuture<Void> ssubscribe(K... channels) {
         return (RedisFuture<Void>) dispatch(commandBuilder.ssubscribe(channels));

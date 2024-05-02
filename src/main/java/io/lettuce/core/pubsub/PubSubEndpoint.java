@@ -263,6 +263,9 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
                 case unsubscribe:
                     listener.unsubscribed(message.channel(), message.count());
                     break;
+                case smessage:
+                    listener.smessage(message.channel(), message.body());
+                    break;
                 case ssubscribe:
                     listener.ssubscribed(message.channel(), message.count());
                     break;
