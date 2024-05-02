@@ -93,8 +93,7 @@ class MasterReplicaTopologyRefreshUnitTests {
     @Test
     void shouldRetrieveTopology() {
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService,
-                provider);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService, provider);
 
         CompletableFuture<StatefulRedisConnection<String, String>> master = CompletableFuture.completedFuture(connection);
         CompletableFuture<StatefulRedisConnection<String, String>> replica = CompletableFuture.completedFuture(connection);
@@ -112,8 +111,7 @@ class MasterReplicaTopologyRefreshUnitTests {
     @Test
     void shouldRetrieveTopologyWithFailedNode() {
 
-        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService,
-                provider);
+        MasterReplicaTopologyRefresh refresh = new MasterReplicaTopologyRefresh(connectionFactory, executorService, provider);
 
         CompletableFuture<StatefulRedisConnection<String, String>> connected = CompletableFuture.completedFuture(connection);
         CompletableFuture<StatefulRedisConnection<String, String>> pending = new CompletableFuture<>();
@@ -127,4 +125,5 @@ class MasterReplicaTopologyRefreshUnitTests {
 
         assertThat(nodes).hasSize(1).containsOnly(UPSTREAM);
     }
+
 }

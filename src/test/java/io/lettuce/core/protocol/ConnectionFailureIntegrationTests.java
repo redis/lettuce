@@ -60,6 +60,7 @@ import io.netty.channel.local.LocalAddress;
 class ConnectionFailureIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisURI defaultRedisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build();
 
     @Inject
@@ -147,8 +148,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
     @Test
     void failOnReconnectShouldSendEvents() throws Exception {
 
-        client.setOptions(
-                ClientOptions.builder().suspendReconnectOnProtocolFailure(false).build());
+        client.setOptions(ClientOptions.builder().suspendReconnectOnProtocolFailure(false).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -196,8 +196,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
     @Test
     void cancelCommandsOnReconnectFailure() throws Exception {
 
-        client.setOptions(
-                ClientOptions.builder().cancelCommandsOnReconnectFailure(true).build());
+        client.setOptions(ClientOptions.builder().cancelCommandsOnReconnectFailure(true).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -303,10 +302,12 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
         AtomicReference<Channel> ref = new AtomicReference<>();
         ClientResources clientResources = ClientResources.builder().nettyCustomizer(new NettyCustomizer() {
+
             @Override
             public void afterChannelInitialized(Channel channel) {
                 ref.set(channel);
             }
+
         }).build();
 
         // Cluster node with auth
@@ -333,10 +334,12 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
         BlockingQueue<Channel> ref = new LinkedBlockingQueue<>();
         ClientResources clientResources = ClientResources.builder().nettyCustomizer(new NettyCustomizer() {
+
             @Override
             public void afterChannelInitialized(Channel channel) {
                 ref.add(channel);
             }
+
         }).build();
 
         RedisURI redisUri = RedisURI.create(TestSettings.host(), TestSettings.port());
@@ -407,4 +410,5 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         ts.initialize(TestSettings.nonexistentPort());
         return ts;
     }
+
 }

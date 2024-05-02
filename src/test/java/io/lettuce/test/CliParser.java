@@ -66,6 +66,7 @@ public class CliParser {
             if (type == null) {
                 String typeName = buffer.toString();
                 type = new ProtocolKeyword() {
+
                     @Override
                     public byte[] getBytes() {
                         return name().getBytes(StandardCharsets.UTF_8);
@@ -75,6 +76,7 @@ public class CliParser {
                     public String name() {
                         return typeName;
                     }
+
                 };
             } else {
                 args.addKey(buffer.toString());
@@ -85,4 +87,5 @@ public class CliParser {
 
         return new Command<>(type, new ArrayOutput<>(StringCodec.UTF8), args);
     }
+
 }

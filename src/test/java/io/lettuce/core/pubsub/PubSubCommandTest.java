@@ -60,12 +60,17 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
     private RedisPubSubAsyncCommands<String, String> pubsub;
 
     private BlockingQueue<String> channels;
+
     private BlockingQueue<String> patterns;
+
     private BlockingQueue<String> messages;
+
     private BlockingQueue<Long> counts;
 
     private String channel = "channel0";
+
     private String pattern = "channel*";
+
     private String message = "msg!";
 
     @BeforeEach
@@ -446,6 +451,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
         final BlockingQueue<Long> localCounts = LettuceFactories.newBlockingQueue();
 
         RedisPubSubAdapter<String, String> adapter = new RedisPubSubAdapter<String, String>() {
+
             @Override
             public void subscribed(String channel, long count) {
                 super.subscribed(channel, count);
@@ -457,6 +463,7 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
                 super.unsubscribed(channel, count);
                 localCounts.add(count);
             }
+
         };
 
         pubsub.getStatefulConnection().addListener(adapter);
@@ -540,4 +547,5 @@ class PubSubCommandTest extends AbstractRedisClientTest implements RedisPubSubLi
         patterns.add(pattern);
         counts.add(count);
     }
+
 }

@@ -45,7 +45,9 @@ import io.lettuce.test.LettuceExtension;
 class CustomCodecIntegrationTests extends TestSupport {
 
     private final SecretKeySpec secretKey = new SecretKeySpec("1234567890123456".getBytes(), "AES");
+
     private final IvParameterSpec iv = new IvParameterSpec("1234567890123456".getBytes());
+
     // Creates a CryptoCipher instance with the transformation and properties.
     private final String transform = "AES/CBC/PKCS5Padding";
 
@@ -220,9 +222,11 @@ class CustomCodecIntegrationTests extends TestSupport {
                 return null;
             }
         }
+
     }
 
     static class Person implements Serializable {
 
     }
+
 }

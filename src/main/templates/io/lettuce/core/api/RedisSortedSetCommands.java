@@ -420,7 +420,8 @@ public interface RedisSortedSetCommands<K, V> {
      * Return {@code count} random members from the sorted set stored at {@code key}.
      *
      * @param key the key.
-     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct fields.
+     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct
+     *        fields.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of scores and elements.
      * @since 6.1
      */
@@ -439,7 +440,8 @@ public interface RedisSortedSetCommands<K, V> {
      * Return {@code count} random members along their value from the sorted set stored at {@code key}.
      *
      * @param key the key.
-     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct fields.
+     * @param count the number of members to return. If the provided count argument is positive, return an array of distinct
+     *        fields.
      * @return List&lt;ScoredValue&lt;V&gt;&gt; array-reply list of scores and elements.
      * @since 6.1
      */
@@ -841,7 +843,8 @@ public interface RedisSortedSetCommands<K, V> {
     Long zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
-     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
+     * {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -852,7 +855,8 @@ public interface RedisSortedSetCommands<K, V> {
     Long zrangestore(K dstKey, K srcKey, Range<Long> range);
 
     /**
-     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
+     * {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -864,7 +868,8 @@ public interface RedisSortedSetCommands<K, V> {
     Long zrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
     /**
-     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
+     * {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -1331,7 +1336,8 @@ public interface RedisSortedSetCommands<K, V> {
     Long zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
 
     /**
-     * Get the specified range of elements ordered from high to low in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
+     * Get the specified range of elements ordered from high to low in the sorted set stored at {@code srcKey} and stores the
+     * result in the {@code dstKey} destination key.
      *
      * @param dstKey the dst key.
      * @param srcKey the src key.
@@ -1342,7 +1348,8 @@ public interface RedisSortedSetCommands<K, V> {
     Long zrevrangestore(K dstKey, K srcKey, Range<Long> range);
 
     /**
-     * Get the lexicographical range ordered from high to low of elements in the sorted set stored at {@code srcKey} and stores the result in the {@code dstKey} destination key.
+     * Get the lexicographical range ordered from high to low of elements in the sorted set stored at {@code srcKey} and stores
+     * the result in the {@code dstKey} destination key.
      *
      * @param dstKey the src key.
      * @param srcKey the dst key.
@@ -1354,9 +1361,11 @@ public interface RedisSortedSetCommands<K, V> {
     Long zrevrangestorebylex(K dstKey, K srcKey, Range<? extends V> range, Limit limit);
 
     /**
-     * Get the specified range of elements in the sorted set stored at {@code srcKey with scores ordered from high to low and stores the result in the {@code dstKey} destination key.
+     * Get the specified range of elements in the sorted set stored at {@code srcKey with scores ordered from high to low and
+     * stores the result in the {@code dstKey} destination key.
      *
      * @param dstKey the src key.
+     * 
      * @param srcKey the dst key.
      * @param range the score range.
      * @param limit the limit to apply.

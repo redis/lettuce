@@ -85,10 +85,12 @@ public class LMoveArgs implements CompositeArgument {
         public static LMoveArgs rightRight() {
             return new LMoveArgs(CommandKeyword.RIGHT, CommandKeyword.RIGHT);
         }
+
     }
 
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
         args.add(source).add(destination);
     }
+
 }

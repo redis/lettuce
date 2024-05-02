@@ -364,4 +364,5 @@ public interface RedisStreamAsyncCommands<K, V> {
      * @since 6.1
      */
     RedisFuture<Long> xtrim(K key, XTrimArgs args);
+
 }

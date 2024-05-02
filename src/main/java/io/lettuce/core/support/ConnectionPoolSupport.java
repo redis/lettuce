@@ -100,8 +100,8 @@ public abstract class ConnectionPoolSupport {
      * @param connectionSupplier must not be {@code null}.
      * @param config must not be {@code null}.
      * @param wrapConnections {@code false} to return direct connections that need to be returned to the pool using
-     *        {@link ObjectPool#returnObject(Object)}. {@code true} to return wrapped connection that are returned to the
-     *        pool when invoking {@link StatefulConnection#close()}.
+     *        {@link ObjectPool#returnObject(Object)}. {@code true} to return wrapped connection that are returned to the pool
+     *        when invoking {@link StatefulConnection#close()}.
      * @param <T> connection type.
      * @return the connection pool.
      */
@@ -157,8 +157,8 @@ public abstract class ConnectionPoolSupport {
      *
      * @param connectionSupplier must not be {@code null}.
      * @param wrapConnections {@code false} to return direct connections that need to be returned to the pool using
-     *        {@link ObjectPool#returnObject(Object)}. {@code true} to return wrapped connection that are returned to the
-     *        pool when invoking {@link StatefulConnection#close()}.
+     *        {@link ObjectPool#returnObject(Object)}. {@code true} to return wrapped connection that are returned to the pool
+     *        when invoking {@link StatefulConnection#close()}.
      * @param <T> connection type.
      * @return the connection pool.
      */

@@ -190,4 +190,5 @@ class StreamReadOutputUnitTests {
         assertThat(streamMessage2.getStream()).isEqualTo("stream2");
         assertThat(streamMessage2.getBody()).hasSize(1).containsEntry("key2", "value2");
     }
+
 }

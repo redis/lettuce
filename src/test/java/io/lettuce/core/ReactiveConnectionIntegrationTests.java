@@ -57,7 +57,9 @@ import io.lettuce.test.condition.EnabledOnCommand;
 class ReactiveConnectionIntegrationTests extends TestSupport {
 
     private final StatefulRedisConnection<String, String> connection;
+
     private final RedisCommands<String, String> redis;
+
     private final RedisReactiveCommands<String, String> reactive;
 
     @Inject
@@ -304,6 +306,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
             @Override
             public void onNext(String s) {
             }
+
         };
     }
 
@@ -334,5 +337,7 @@ class ReactiveConnectionIntegrationTests extends TestSupport {
         public void onNext(Object o) {
             result.add(o);
         }
+
     }
+
 }

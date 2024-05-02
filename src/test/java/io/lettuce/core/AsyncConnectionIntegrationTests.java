@@ -43,7 +43,9 @@ import io.lettuce.test.TestFutures;
 class AsyncConnectionIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final StatefulRedisConnection<String, String> connection;
+
     private final RedisAsyncCommands<String, String> async;
 
     @Inject
@@ -122,10 +124,12 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         final List<Object> run = new ArrayList<>();
 
         Runnable listener = new Runnable() {
+
             @Override
             public void run() {
                 run.add(new Object());
             }
+
         };
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
@@ -169,4 +173,5 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         Future<KeyValue<String, String>> blpop = async.blpop(1, key);
         assertThat(Futures.await(1, TimeUnit.NANOSECONDS, blpop)).isFalse();
     }
+
 }

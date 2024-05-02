@@ -43,4 +43,5 @@ class LimitUnitTests {
         assertThat(limit.getCount()).isEqualTo(-1);
         assertThat(limit.isLimited()).isFalse();
     }
+
 }

@@ -428,4 +428,5 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */
     AsyncExecutions<Long> strlen(K key);
+
 }

@@ -97,4 +97,5 @@ class GeoModelUnitTests {
         assertThat(sut.toString()).isNotEqualTo(slightlyDifferent.toString());
 
     }
+
 }

@@ -58,9 +58,13 @@ import io.netty.handler.ssl.OpenSsl;
 class SslIntegrationTests extends TestSupport {
 
     private static final String KEYSTORE = "work/keystore.jks";
+
     private static final String TRUSTSTORE = "work/truststore.jks";
+
     private static final File TRUSTSTORE_FILE = new File(TRUSTSTORE);
+
     private static final File CA_CERT_FILE = new File("work/ca/certs/ca.cert.pem");
+
     private static final int MASTER_SLAVE_BASE_PORT_OFFSET = 2000;
 
     private static final RedisURI URI_VERIFY = sslURIBuilder(0) //
@@ -69,8 +73,7 @@ class SslIntegrationTests extends TestSupport {
 
     private static final RedisURI URI_VERIFY_IMPOSSIBLE_TIMEOUT = sslURIBuilder(0) //
             .withVerifyPeer(true) //
-            .withTimeout(Duration.ZERO)
-            .build();
+            .withTimeout(Duration.ZERO).build();
 
     private static final RedisURI URI_NO_VERIFY = sslURIBuilder(1) //
             .withVerifyPeer(false) //
@@ -430,4 +433,5 @@ class SslIntegrationTests extends TestSupport {
             connection.sync().ping();
         }
     }
+
 }

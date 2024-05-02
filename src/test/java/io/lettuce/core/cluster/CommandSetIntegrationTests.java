@@ -63,5 +63,7 @@ public class CommandSetIntegrationTests {
         public byte[] getBytes() {
             return name().getBytes();
         }
+
     }
+
 }

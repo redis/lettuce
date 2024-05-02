@@ -479,4 +479,5 @@ public interface RedisServerAsyncCommands<K, V> {
      *         unix time in seconds. microseconds.
      */
     RedisFuture<List<V>> time();
+
 }

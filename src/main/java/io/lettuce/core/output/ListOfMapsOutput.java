@@ -80,4 +80,5 @@ public class ListOfMapsOutput<K, V> extends CommandOutput<K, V, List<Map<K, V>>>
     public void set(long integer) {
         nested.set(integer);
     }
+
 }

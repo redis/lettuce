@@ -43,7 +43,9 @@ import io.lettuce.test.TestFutures;
 public class AsyncCommandUnitTests {
 
     private RedisCodec<String, String> codec = StringCodec.UTF8;
+
     private Command<String, String, String> internal;
+
     private AsyncCommand<String, String, String> sut;
 
     @BeforeEach
@@ -99,8 +101,7 @@ public class AsyncCommandUnitTests {
     @Test
     void awaitWithCancelledCommand() {
         sut.cancel();
-        assertThatThrownBy(() -> Futures.awaitOrCancel(sut, 5, TimeUnit.SECONDS))
-                .isInstanceOf(CancellationException.class);
+        assertThatThrownBy(() -> Futures.awaitOrCancel(sut, 5, TimeUnit.SECONDS)).isInstanceOf(CancellationException.class);
     }
 
     @Test
@@ -192,10 +193,12 @@ public class AsyncCommandUnitTests {
     @Test
     void outputSubclassOverride1() {
         CommandOutput<String, String, String> output = new CommandOutput<String, String, String>(codec, null) {
+
             @Override
             public String get() throws RedisException {
                 return null;
             }
+
         };
         assertThatThrownBy(() -> output.set(null)).isInstanceOf(UnsupportedOperationException.class);
     }
@@ -203,10 +206,12 @@ public class AsyncCommandUnitTests {
     @Test
     void outputSubclassOverride2() {
         CommandOutput<String, String, String> output = new CommandOutput<String, String, String>(codec, null) {
+
             @Override
             public String get() throws RedisException {
                 return null;
             }
+
         };
         assertThatThrownBy(() -> output.set(0)).isInstanceOf(UnsupportedOperationException.class);
     }
@@ -218,11 +223,14 @@ public class AsyncCommandUnitTests {
     }
 
     private enum MyKeywords implements ProtocolKeyword {
+
         DUMMY;
 
         @Override
         public byte[] getBytes() {
             return name().getBytes();
         }
+
     }
+
 }

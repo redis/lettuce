@@ -51,4 +51,5 @@ class DefaultEventPublisherOptionsUnitTests {
 
         assertThat(sut.eventEmitInterval()).isEqualTo(Duration.ofSeconds(1));
     }
+
 }

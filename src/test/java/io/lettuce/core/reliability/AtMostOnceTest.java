@@ -158,6 +158,7 @@ class AtMostOnceTest extends AbstractRedisClientTest {
             public void encode(ByteBuf buf) {
                 throw new IllegalStateException("I want to break free");
             }
+
         };
 
         channelWriter.write(command);
@@ -205,6 +206,7 @@ class AtMostOnceTest extends AbstractRedisClientTest {
                 }
                 super.encode(buf);
             }
+
         };
 
         channelWriter.write(command);
@@ -319,4 +321,5 @@ class AtMostOnceTest extends AbstractRedisClientTest {
         }
         return null;
     }
+
 }

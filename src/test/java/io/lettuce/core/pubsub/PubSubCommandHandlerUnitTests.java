@@ -331,4 +331,5 @@ class PubSubCommandHandlerUnitTests {
     private static ByteBuf responseBytes(String s) {
         return Unpooled.wrappedBuffer(s.getBytes());
     }
+
 }

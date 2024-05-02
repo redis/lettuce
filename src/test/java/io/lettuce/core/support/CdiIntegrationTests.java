@@ -98,4 +98,5 @@ class CdiIntegrationTests {
 
         injectedClient.pingRedis();
     }
+
 }

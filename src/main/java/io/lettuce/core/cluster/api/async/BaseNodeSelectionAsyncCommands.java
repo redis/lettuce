@@ -164,4 +164,5 @@ public interface BaseNodeSelectionAsyncCommands<K, V> {
      */
     <T> AsyncExecutions<T> dispatch(ProtocolKeyword type, Supplier<CommandOutput<K, V, T>> outputSupplier,
             CommandArgs<K, V> args);
+
 }

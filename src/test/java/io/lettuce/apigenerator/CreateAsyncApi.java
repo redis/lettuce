@@ -38,7 +38,9 @@ import io.lettuce.core.internal.LettuceSets;
  */
 class CreateAsyncApi {
 
-    public static final Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+    public static final Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom",
+            "debugSegfault", "digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection",
+            "setAutoFlushCommands", "flushCommands");
 
     /**
      * Mutate type comment.
@@ -97,4 +99,5 @@ class CreateAsyncApi {
 
         return factory;
     }
+
 }

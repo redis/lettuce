@@ -48,9 +48,11 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
     private StatefulRedisMasterReplicaConnection<String, String> connection;
 
     private RedisURI upstream;
+
     private RedisURI replica;
 
     private RedisCommands<String, String> connection1;
+
     private RedisCommands<String, String> connection2;
 
     @BeforeEach
@@ -223,4 +225,5 @@ class StaticMasterReplicaTest extends AbstractRedisClientTest {
         MasterReplicaChannelWriter writer = ((StatefulRedisMasterReplicaConnectionImpl) connection).getChannelWriter();
         return writer.getUpstreamReplicaConnectionProvider();
     }
+
 }

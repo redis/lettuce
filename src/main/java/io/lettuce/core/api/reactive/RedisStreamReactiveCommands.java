@@ -365,4 +365,5 @@ public interface RedisStreamReactiveCommands<K, V> {
      * @since 6.1
      */
     Mono<Long> xtrim(K key, XTrimArgs args);
+
 }

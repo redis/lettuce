@@ -170,8 +170,7 @@ public interface StatefulRedisClusterPubSubConnection<K, V> extends StatefulRedi
      * <p>
      * Node event propagation is disabled by default.
      *
-     * @param enabled {@code true} to enable node message propagation; {@code false} (default) to disable message
-     *        propagation.
+     * @param enabled {@code true} to enable node message propagation; {@code false} (default) to disable message propagation.
      */
     void setNodeMessagePropagation(boolean enabled);
 

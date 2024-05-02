@@ -30,4 +30,5 @@ class ListReactiveCommandIntegrationTests extends ListCommandIntegrationTests {
     ListReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(ReactiveSyncInvocationHandler.sync(connection));
     }
+
 }

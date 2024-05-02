@@ -113,8 +113,7 @@ class ClusterSetup {
         Wait.untilTrue(clusterHelper::isStable).waitOrTimeout();
 
         TestFutures.awaitOrTimeout(connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port6)
-                .clusterReplicate(
-                node1.clusterMyId()));
+                .clusterReplicate(node1.clusterMyId()));
 
         clusterHelper.getClusterClient().reloadPartitions();
 
@@ -127,8 +126,7 @@ class ClusterSetup {
         Wait.untilEquals(1L, () -> {
             clusterHelper.getClusterClient().reloadPartitions();
             return partitionStream(clusterHelper)
-                    .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA))
-                    .count();
+                    .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA)).count();
         }).waitOrTimeout();
 
         connection.getStatefulConnection().close();

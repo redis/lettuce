@@ -196,4 +196,5 @@ class CommandArgsUnitTests {
 
         assertThat(buffer.toString(StandardCharsets.US_ASCII)).isEqualTo(expected.toString(StandardCharsets.US_ASCII));
     }
+
 }

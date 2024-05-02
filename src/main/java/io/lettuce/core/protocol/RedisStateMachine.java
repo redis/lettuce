@@ -205,6 +205,7 @@ public class RedisStateMachine {
                     Consumer<Exception> errorHandler) {
                 return behavior.handle(rsm, state, buffer, output, errorHandler);
             }
+
         }
 
         enum Result {
@@ -360,8 +361,8 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    static State.Result handleBigNumber(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handleBigNumber(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         ByteBuffer bytes;
 
         if ((bytes = rsm.readLine(buffer)) == null) {
@@ -427,8 +428,8 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    static State.Result handleBulkAndVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handleBulkAndVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         int length;
         int end;
 
@@ -447,8 +448,8 @@ public class RedisStateMachine {
         return State.Result.NORMAL_END;
     }
 
-    static State.Result handleBulkError(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handleBulkError(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         int length;
         int end;
 
@@ -481,8 +482,8 @@ public class RedisStateMachine {
         return returnDependStateCount(rsm, state);
     }
 
-    static State.Result handlePushAndMulti(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handlePushAndMulti(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         int end;
 
         if (state.count == NOT_FOUND) {
@@ -549,8 +550,8 @@ public class RedisStateMachine {
         return State.Result.CONTINUE_LOOP;
     }
 
-    static State.Result handleVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    static State.Result handleVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
+            Consumer<Exception> errorHandler) {
         ByteBuffer bytes;
 
         if ((bytes = rsm.readBytes(buffer, state.count)) == null) {

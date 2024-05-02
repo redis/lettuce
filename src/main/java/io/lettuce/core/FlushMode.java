@@ -47,4 +47,5 @@ public enum FlushMode implements ProtocolKeyword {
     public byte[] getBytes() {
         return bytes;
     }
+
 }

@@ -37,4 +37,5 @@ public class ConnectToRedisCluster {
         connection.close();
         redisClient.shutdown();
     }
+
 }

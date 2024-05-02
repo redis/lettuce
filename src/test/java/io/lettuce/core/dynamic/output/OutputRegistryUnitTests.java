@@ -108,6 +108,7 @@ class OutputRegistryUnitTests {
         IntermediateOutput(RedisCodec<K1, V1> codec, V1 output) {
             super(codec, null);
         }
+
     }
 
     private static class KeyTypedOutput extends IntermediateOutput<ByteBuffer, byte[]> {
@@ -115,5 +116,7 @@ class OutputRegistryUnitTests {
         KeyTypedOutput(RedisCodec<ByteBuffer, byte[]> codec) {
             super(codec, null);
         }
+
     }
+
 }

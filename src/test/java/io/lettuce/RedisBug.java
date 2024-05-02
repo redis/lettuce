@@ -29,5 +29,7 @@ import org.junit.jupiter.api.Disabled;
 @Documented
 @Disabled("Redis Bug")
 public @interface RedisBug {
+
     String value() default "";
+
 }

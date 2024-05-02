@@ -29,20 +29,20 @@ class ExponentialDelayUnitTests {
 
     @Test
     void shouldNotCreateIfLowerBoundIsNegative() {
-        assertThatThrownBy(() -> Delay.exponential(-1, 100, TimeUnit.MILLISECONDS, 10)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> Delay.exponential(-1, 100, TimeUnit.MILLISECONDS, 10))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void shouldNotCreateIfLowerBoundIsSameAsUpperBound() {
-        assertThatThrownBy(() -> Delay.exponential(100, 100, TimeUnit.MILLISECONDS, 10)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> Delay.exponential(100, 100, TimeUnit.MILLISECONDS, 10))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void shouldNotCreateIfPowerIsOne() {
-        assertThatThrownBy(() -> Delay.exponential(100, 1000, TimeUnit.MILLISECONDS, 1)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> Delay.exponential(100, 1000, TimeUnit.MILLISECONDS, 1))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -98,4 +98,5 @@ class ExponentialDelayUnitTests {
         assertThat(delay.createDelay(5).toMillis()).isEqualTo(10000);
         assertThat(delay.createDelay(Integer.MAX_VALUE).toMillis()).isEqualTo(10000);
     }
+
 }

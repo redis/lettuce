@@ -99,4 +99,5 @@ abstract class ConnectionEventSupport implements ConnectionEvent {
         sb.append(']');
         return sb.toString();
     }
+
 }

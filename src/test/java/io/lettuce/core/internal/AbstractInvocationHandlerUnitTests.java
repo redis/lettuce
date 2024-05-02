@@ -72,10 +72,13 @@ class AbstractInvocationHandlerUnitTests {
         protected Object handleInvocation(Object proxy, Method method, Object[] args) {
             return 1;
         }
+
     }
 
     static interface ReturnOne {
+
         int returnOne();
+
     }
 
 }

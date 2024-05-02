@@ -47,10 +47,12 @@ import io.lettuce.core.internal.LettuceSets;
  */
 public class CreateReactiveApi {
 
-    public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+    public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
+            "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
 
     public static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "evalReadOnly",
             "evalshaReadOnly", "dispatch");
+
     public static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield");
 
     private static final Map<String, String> RESULT_SPEC;
@@ -156,8 +158,7 @@ public class CreateReactiveApi {
         };
     }
 
-    private String getResultType(MethodDeclaration method,
-                                 ClassOrInterfaceDeclaration classOfMethod) {
+    private String getResultType(MethodDeclaration method, ClassOrInterfaceDeclaration classOfMethod) {
 
         String declaration = nameAndParameters(method);
         if (RESULT_SPEC.containsKey(declaration)) {
@@ -207,8 +208,8 @@ public class CreateReactiveApi {
             targetPackage = "io.lettuce.core.api.reactive";
         }
 
-        CompilationUnitFactory factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodMutator(), methodDeclaration -> true, importSupplier(), null,
+        CompilationUnitFactory factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName,
+                commentMutator(), methodTypeMutator(), methodMutator(), methodDeclaration -> true, importSupplier(), null,
                 methodCommentMutator());
         factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
         return factory;
@@ -230,4 +231,5 @@ public class CreateReactiveApi {
         sb.append(")");
         return sb.toString();
     }
+
 }

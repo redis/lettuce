@@ -35,9 +35,8 @@ public interface DemandAware {
     interface Sink {
 
         /**
-         * Returns {@code true} if the {@link Sink} has demand or {@code false} if the source has no demand.
-         * {@code false} means either the {@link Sink} has no demand in general because data is not needed or the current
-         * demand is saturated.
+         * Returns {@code true} if the {@link Sink} has demand or {@code false} if the source has no demand. {@code false} means
+         * either the {@link Sink} has no demand in general because data is not needed or the current demand is saturated.
          *
          * @return {@code true} if the {@link Sink} demands data.
          */

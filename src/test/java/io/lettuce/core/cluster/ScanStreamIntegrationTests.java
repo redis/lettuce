@@ -36,6 +36,7 @@ import io.lettuce.test.LettuceExtension;
 class ScanStreamIntegrationTests extends TestSupport {
 
     private final StatefulRedisClusterConnection<String, String> connection;
+
     private final RedisClusterCommands<String, String> redis;
 
     @Inject
@@ -58,4 +59,5 @@ class ScanStreamIntegrationTests extends TestSupport {
                 .verifyComplete();
         StepVerifier.create(ScanStream.scan(reactive)).expectNextCount(1000).verifyComplete();
     }
+
 }

@@ -35,8 +35,7 @@ class PendingParserUnitTests {
     void shouldParseXpendingWithRangeOutput() {
 
         List<PendingMessage> result = PendingParser
-                .parseRange(Collections.singletonList(Arrays.asList("foo", "consumer", 1L,
-                2L)));
+                .parseRange(Collections.singletonList(Arrays.asList("foo", "consumer", 1L, 2L)));
 
         assertThat(result).hasSize(1);
 
@@ -52,11 +51,12 @@ class PendingParserUnitTests {
     @Test
     void shouldParseXpendingOutput() {
 
-        PendingMessages result = PendingParser.parse(Arrays.asList(16L, "from", "to",
-                Collections.singletonList(Arrays.asList("consumer", 17L))));
+        PendingMessages result = PendingParser
+                .parse(Arrays.asList(16L, "from", "to", Collections.singletonList(Arrays.asList("consumer", 17L))));
 
         assertThat(result.getCount()).isEqualTo(16);
         assertThat(result.getMessageIds()).isEqualTo(Range.create("from", "to"));
         assertThat(result.getConsumerMessageCount()).containsEntry("consumer", 17L);
     }
+
 }

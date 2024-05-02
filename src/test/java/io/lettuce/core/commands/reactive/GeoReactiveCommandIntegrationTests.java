@@ -65,4 +65,5 @@ class GeoReactiveCommandIntegrationTests extends GeoCommandIntegrationTests {
     @Override
     public void geoposInTransaction() {
     }
+
 }

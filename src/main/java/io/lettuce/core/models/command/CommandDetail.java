@@ -75,7 +75,8 @@ public class CommandDetail implements Serializable {
      * @param aclCategories command ACL details
      * @since 6.1
      */
-    public CommandDetail(String name, int arity, Set<Flag> flags, int firstKeyPosition, int lastKeyPosition, int keyStepCount, Set<AclCategory> aclCategories) {
+    public CommandDetail(String name, int arity, Set<Flag> flags, int firstKeyPosition, int lastKeyPosition, int keyStepCount,
+            Set<AclCategory> aclCategories) {
         this.name = name;
         this.arity = arity;
         this.flags = flags;
@@ -228,4 +229,5 @@ public class CommandDetail implements Serializable {
          */
         MOVABLEKEYS;
     }
+
 }

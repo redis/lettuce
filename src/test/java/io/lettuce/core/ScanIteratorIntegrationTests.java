@@ -145,8 +145,8 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         List<KeyValue<String, String>> keys = scan.stream().collect(Collectors.toList());
 
-        assertThat(keys).containsAll(
-                KeysAndValues.KEYS.stream().map(s -> KeyValue.fromNullable(s, KeysAndValues.MAP.get(s))).collect(Collectors.toList()));
+        assertThat(keys).containsAll(KeysAndValues.KEYS.stream().map(s -> KeyValue.fromNullable(s, KeysAndValues.MAP.get(s)))
+                .collect(Collectors.toList()));
     }
 
     @Test
@@ -154,8 +154,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         redis.sadd(key, KeysAndValues.VALUES.toArray(new String[0]));
 
-        ScanIterator<String> scan = ScanIterator.sscan(redis, "none",
-                ScanArgs.Builder.limit(50).match("key-foo"));
+        ScanIterator<String> scan = ScanIterator.sscan(redis, "none", ScanArgs.Builder.limit(50).match("key-foo"));
 
         assertThat(scan.hasNext()).isFalse();
         try {
@@ -171,8 +170,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         redis.sadd(key, KeysAndValues.KEYS.toArray(new String[0]));
 
-        ScanIterator<String> scan = ScanIterator.sscan(redis, key,
-                ScanArgs.Builder.limit(50).match("key-11*"));
+        ScanIterator<String> scan = ScanIterator.sscan(redis, key, ScanArgs.Builder.limit(50).match("key-11*"));
 
         assertThat(scan.hasNext()).isTrue();
         assertThat(scan.hasNext()).isTrue();
@@ -204,9 +202,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
             redis.zadd(key, ScoredValue.just(i, KeysAndValues.KEYS.get(i)));
         }
 
-
-        ScanIterator<ScoredValue<String>> scan = ScanIterator.zscan(redis, "none",
-                ScanArgs.Builder.limit(50).match("key-foo"));
+        ScanIterator<ScoredValue<String>> scan = ScanIterator.zscan(redis, "none", ScanArgs.Builder.limit(50).match("key-foo"));
 
         assertThat(scan.hasNext()).isFalse();
         try {
@@ -224,8 +220,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
             redis.zadd(key, ScoredValue.just(i, KeysAndValues.KEYS.get(i)));
         }
 
-        ScanIterator<ScoredValue<String>> scan = ScanIterator.zscan(redis, key,
-                ScanArgs.Builder.limit(50).match("key-11*"));
+        ScanIterator<ScoredValue<String>> scan = ScanIterator.zscan(redis, key, ScanArgs.Builder.limit(50).match("key-11*"));
 
         assertThat(scan.hasNext()).isTrue();
         assertThat(scan.hasNext()).isTrue();
@@ -254,4 +249,5 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         assertThat(values).containsAll(values);
     }
+
 }

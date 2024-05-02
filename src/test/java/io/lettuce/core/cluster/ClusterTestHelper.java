@@ -41,13 +41,15 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 class ClusterTestHelper {
 
     private final RedisClusterClient clusterClient;
+
     private final Map<Integer, RedisAsyncCommands<String, String>> connectionCache = new HashMap<>();
 
     public ClusterTestHelper(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
 
         for (int port : ports) {
-            RedisAsyncCommands<String, String> connection = clusterClient.connectToNode(new InetSocketAddress("localhost", port)).async();
+            RedisAsyncCommands<String, String> connection = clusterClient
+                    .connectToNode(new InetSocketAddress("localhost", port)).async();
             connectionCache.put(port, connection);
         }
     }
@@ -136,8 +138,8 @@ class ClusterTestHelper {
         }
     }
 
-    private void await(List<Future<?>> futures, boolean ignoreExecutionException) throws InterruptedException,
-            java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
+    private void await(List<Future<?>> futures, boolean ignoreExecutionException)
+            throws InterruptedException, java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
         for (Future<?> future : futures) {
             try {
                 future.get(10, TimeUnit.SECONDS);
@@ -148,4 +150,5 @@ class ClusterTestHelper {
             }
         }
     }
+
 }

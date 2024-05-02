@@ -21,8 +21,8 @@ import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 
 /**
- * Client-Resources suitable for testing. Uses {@link TestEventLoopGroupProvider} to preserve the event loop
- * groups between tests. Every time a new {@link TestClientResources} instance is created, shutdown hook is added
+ * Client-Resources suitable for testing. Uses {@link TestEventLoopGroupProvider} to preserve the event loop groups between
+ * tests. Every time a new {@link TestClientResources} instance is created, shutdown hook is added
  * {@link Runtime#addShutdownHook(Thread)}.
  *
  * @author Mark Paluch
@@ -30,6 +30,7 @@ import io.lettuce.core.resource.DefaultClientResources;
 public class TestClientResources {
 
     private static final TestClientResources instance = new TestClientResources();
+
     private ClientResources clientResources = create();
 
     /**
@@ -52,6 +53,7 @@ public class TestClientResources {
                 .eventLoopGroupProvider(new TestEventLoopGroupProvider()).build();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
+
             @Override
             public void run() {
                 try {
@@ -60,6 +62,7 @@ public class TestClientResources {
                     e.printStackTrace();
                 }
             }
+
         });
 
         return resources;

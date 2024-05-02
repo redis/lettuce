@@ -109,8 +109,8 @@ public interface RedisAclAsyncCommands<K, V> {
     RedisFuture<List<String>> aclList();
 
     /**
-     * When Redis is configured to use an ACL file (with the aclfile configuration option), this command
-     * will reload the ACLs from the file, replacing all the current ACL rules with the ones defined in the file.
+     * When Redis is configured to use an ACL file (with the aclfile configuration option), this command will reload the ACLs
+     * from the file, replacing all the current ACL rules with the ones defined in the file.
      *
      * @return String simple-string-reply OK or error message.
      */
@@ -139,8 +139,8 @@ public interface RedisAclAsyncCommands<K, V> {
     RedisFuture<String> aclLogReset();
 
     /**
-     * When Redis is configured to use an ACL file (with the aclfile configuration option),
-     * this command will save the currently defined ACLs from the server memory to the ACL file.
+     * When Redis is configured to use an ACL file (with the aclfile configuration option), this command will save the currently
+     * defined ACLs from the server memory to the ACL file.
      *
      * @return String simple-string-reply OK or error message.
      */
@@ -168,4 +168,5 @@ public interface RedisAclAsyncCommands<K, V> {
      * @return K bulk-string-reply the username of the current connection.
      */
     RedisFuture<String> aclWhoami();
+
 }

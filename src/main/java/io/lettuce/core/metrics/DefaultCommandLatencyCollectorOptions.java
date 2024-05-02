@@ -54,7 +54,6 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
 
     private final Builder builder;
 
-
     protected DefaultCommandLatencyCollectorOptions(Builder builder) {
         this.targetUnit = builder.targetUnit;
         this.targetPercentiles = builder.targetPercentiles;
@@ -205,8 +204,8 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
         }
 
         /**
-         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}.
-         * See {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
+         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}. See
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
          *
          * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
          *        emitted
@@ -275,4 +274,5 @@ public class DefaultCommandLatencyCollectorOptions implements CommandLatencyColl
     public boolean usePauseDetector() {
         return usePauseDetector;
     }
+
 }

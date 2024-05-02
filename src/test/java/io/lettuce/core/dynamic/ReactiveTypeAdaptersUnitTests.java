@@ -259,4 +259,5 @@ class ReactiveTypeAdaptersUnitTests {
         Mono<String> foo = Mono.just("foo");
         assertThat(conversionService.convert(foo, Flux.class)).isInstanceOf(Flux.class);
     }
+
 }

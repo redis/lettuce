@@ -45,6 +45,7 @@ class BatchExecutableCommandLookupStrategyUnitTests {
 
     @Mock
     private RedisCommandsMetadata metadata;
+
     @Mock
     private StatefulRedisConnection<Object, Object> connection;
 
@@ -88,8 +89,8 @@ class BatchExecutableCommandLookupStrategyUnitTests {
 
     @Test
     void shouldNotAllowSynchronousReturnTypes() {
-        assertThatThrownBy(() -> sut.resolveCommandMethod(getMethod("withReturnType"), metadata)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> sut.resolveCommandMethod(getMethod("withReturnType"), metadata))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     private CommandMethod getMethod(String name, Class<?>... parameterTypes) throws NoSuchMethodException {
@@ -105,5 +106,7 @@ class BatchExecutableCommandLookupStrategyUnitTests {
         String withReturnType();
 
         void justVoid();
+
     }
+
 }

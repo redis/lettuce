@@ -812,7 +812,8 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
      */
     @Deprecated
-    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
+    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset,
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -827,7 +828,8 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
      */
     @Deprecated
-    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
+    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset,
+            long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -839,7 +841,8 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @return Long count of elements in the specified score range.
      * @since 4.3
      */
-    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
+    Executions<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit);
 
     /**
      * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
@@ -1303,7 +1306,8 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
      */
     @Deprecated
-    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
+    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -1318,7 +1322,8 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
      */
     @Deprecated
-    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
+    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -1330,7 +1335,8 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @return Long count of elements in the specified range.
      * @since 4.3
      */
-    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
+    Executions<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit);
 
     /**
      * Get the specified range of elements ordered from high to low in the sorted set stored at {@code srcKey} and stores the
@@ -1523,4 +1529,5 @@ public interface NodeSelectionSortedSetCommands<K, V> {
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
     Executions<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
+
 }

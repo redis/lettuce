@@ -165,4 +165,5 @@ public interface BaseRedisCommands<K, V> {
      */
     @Deprecated
     void reset();
+
 }

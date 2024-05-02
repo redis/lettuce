@@ -186,8 +186,8 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
     }
 
     /**
-     * Calculate either the maximum number of bytes a string may occupy in a given character set or
-     * the average number of bytes it may hold.
+     * Calculate either the maximum number of bytes a string may occupy in a given character set or the average number of bytes
+     * it may hold.
      */
     int sizeOf(String value, boolean estimate) {
 
@@ -205,4 +205,5 @@ public class StringCodec implements RedisCodec<String, String>, ToByteBufEncoder
 
         return (int) maxBytesPerChar * value.length();
     }
+
 }

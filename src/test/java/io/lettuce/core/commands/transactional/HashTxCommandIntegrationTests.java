@@ -29,4 +29,5 @@ class HashTxCommandIntegrationTests extends HashCommandIntegrationTests {
     HashTxCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(TxSyncInvocationHandler.sync(connection));
     }
+
 }

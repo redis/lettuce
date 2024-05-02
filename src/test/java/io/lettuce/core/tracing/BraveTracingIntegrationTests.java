@@ -56,8 +56,11 @@ import io.lettuce.test.resource.FastShutdown;
 class BraveTracingIntegrationTests extends TestSupport {
 
     private static ClientResources clientResources;
+
     private static RedisClient client;
+
     private static Tracing clientTracing;
+
     private static Queue<Span> spans = new LinkedBlockingQueue<>();
 
     @BeforeAll
@@ -224,7 +227,8 @@ class BraveTracingIntegrationTests extends TestSupport {
 
         StatefulRedisConnection<String, String> connect = client.connect();
         connect.reactive().set("foo", "bar").then(connect.reactive().get("foo"))
-                .contextWrite(io.lettuce.core.tracing.Tracing.withTraceContextProvider(() -> BraveTracing.BraveTraceContext.create(trace.context()))) //
+                .contextWrite(io.lettuce.core.tracing.Tracing
+                        .withTraceContextProvider(() -> BraveTracing.BraveTraceContext.create(trace.context()))) //
                 .as(StepVerifier::create) //
                 .expectNext("bar").verifyComplete();
 
@@ -237,4 +241,5 @@ class BraveTracingIntegrationTests extends TestSupport {
         assertThat(spans.get(1).name()).isEqualTo("set");
         assertThat(spans.get(2).name()).isEqualTo("get");
     }
+
 }

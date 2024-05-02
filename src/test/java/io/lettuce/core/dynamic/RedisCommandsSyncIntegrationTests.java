@@ -45,6 +45,7 @@ import io.lettuce.test.LettuceExtension;
 class RedisCommandsSyncIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -133,6 +134,7 @@ class RedisCommandsSyncIntegrationTests extends TestSupport {
 
         @Command("MGET")
         List<Value<String>> mgetAsValues(String... keys);
+
     }
 
 }
