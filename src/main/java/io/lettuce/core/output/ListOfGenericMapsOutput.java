@@ -89,4 +89,5 @@ public class ListOfGenericMapsOutput<K, V> extends CommandOutput<K, V, List<Map<
     public void set(double number) {
         nested.set(number);
     }
+
 }

@@ -128,8 +128,8 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
         RedisCommands<String, String> verificationConnection = client.connect().sync();
 
         connection.set(key, "1");
-        AsyncCommand<String, String, String> working = new AsyncCommand<>(new Command<>(CommandType.INCR, new IntegerOutput(
-                StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).addKey(key)));
+        AsyncCommand<String, String, String> working = new AsyncCommand<>(new Command<>(CommandType.INCR,
+                new IntegerOutput(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).addKey(key)));
         channelWriter.write(working);
         assertThat(working.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(connection.get(key)).isEqualTo("2");
@@ -141,6 +141,7 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
             public void encode(ByteBuf buf) {
                 throw new IllegalStateException("I want to break free");
             }
+
         };
 
         channelWriter.write(command);
@@ -258,6 +259,7 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
                 }
                 super.encode(buf);
             }
+
         };
     }
 
@@ -270,8 +272,8 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
 
         connection.set(key, "1");
 
-        AsyncCommand<String, String, String> command = new AsyncCommand(new Command<>(CommandType.INCR, new StatusOutput<>(
-                StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).addKey(key)));
+        AsyncCommand<String, String, String> command = new AsyncCommand(new Command<>(CommandType.INCR,
+                new StatusOutput<>(StringCodec.UTF8), new CommandArgs<>(StringCodec.UTF8).addKey(key)));
 
         channelWriter.write(command);
 

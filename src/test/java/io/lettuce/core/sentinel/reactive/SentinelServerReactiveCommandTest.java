@@ -23,4 +23,5 @@ public class SentinelServerReactiveCommandTest extends SentinelServerCommandInte
             StatefulRedisSentinelConnection<String, String> connection) {
         return ReactiveSyncInvocationHandler.sync(connection);
     }
+
 }

@@ -14,4 +14,5 @@ class SortedSetTxCommandIntegrationTests extends SortedSetCommandIntegrationTest
     SortedSetTxCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(TxSyncInvocationHandler.sync(connection));
     }
+
 }

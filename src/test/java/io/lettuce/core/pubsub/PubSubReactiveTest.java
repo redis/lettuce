@@ -287,6 +287,7 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
     @Test
     @EnabledOnCommand("SPUBLISH")
     void pubsubShardChannelsWithArg() {
+
         StepVerifier.create(pubsub.ssubscribe(shardChannel)).verifyComplete();
         Wait.untilTrue(() -> mono(pubsub2.pubsubShardChannels(shardChannel).filter(s -> shardChannel.equals(s))) != null)
                 .waitOrTimeout();

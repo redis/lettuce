@@ -45,4 +45,5 @@ public class InjectedClient {
             connection.getStatefulConnection().close();
         }
     }
+
 }

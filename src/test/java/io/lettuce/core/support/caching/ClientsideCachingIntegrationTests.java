@@ -68,12 +68,14 @@ public class ClientsideCachingIntegrationTests extends TestSupport {
         commands.clientTracking(TrackingArgs.Builder.enabled().redirect(pubSub.sync().clientId()));
 
         pubSub.addListener(new RedisPubSubAdapter<String, String>() {
+
             @Override
             public void message(String channel, String message) {
                 if (channel.equals("__redis__:invalidate")) {
                     invalidations.add(message);
                 }
             }
+
         });
 
         pubSub.sync().subscribe("__redis__:invalidate");

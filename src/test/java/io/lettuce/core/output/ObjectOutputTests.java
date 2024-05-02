@@ -23,147 +23,70 @@ class ObjectOutputTests {
     void shouldParseHelloWithModules() {
 
         String in = "%7\r\n"
-               // 1
-                + "$6\r\n"
-                + "server\r\n"
-                + "$5\r\n"
-                + "redis\r\n"
+                // 1
+                + "$6\r\n" + "server\r\n" + "$5\r\n" + "redis\r\n"
                 // 2
-                + "$7\r\n"
-                + "version\r\n"
-                + "$5\r\n"
-                + "7.2.0\r\n"
+                + "$7\r\n" + "version\r\n" + "$5\r\n" + "7.2.0\r\n"
 
                 // 3
-                + "$5\r\n"
-                + "proto\r\n"
-                + ":3\r\n"
+                + "$5\r\n" + "proto\r\n" + ":3\r\n"
 
                 // 4
-                + "$2\r\n"
-                + "id\r\n"
-                + ":3\r\n"
+                + "$2\r\n" + "id\r\n" + ":3\r\n"
 
                 // 5
-                + "$4\r\n"
-                + "mode\r\n"
-                + "$7\r\n"
-                + "cluster\r\n"
+                + "$4\r\n" + "mode\r\n" + "$7\r\n" + "cluster\r\n"
 
                 // 6
-                + "$4\r\n"
-                + "role\r\n"
-                + "$6\r\n"
-                + "master\r\n"
+                + "$4\r\n" + "role\r\n" + "$6\r\n" + "master\r\n"
 
                 // 7
-                + "$7\r\n"
-                + "modules\r\n"
+                + "$7\r\n" + "modules\r\n"
                 // list
                 + "*4\r\n"
 
                 // map
                 + "%4\r\n"
 
-                + "$4\r\n"
-                + "name\r\n"
-                + "$10\r\n"
-                + "timeseries\r\n"
+                + "$4\r\n" + "name\r\n" + "$10\r\n" + "timeseries\r\n"
 
-                + "$3\r\n"
-                + "ver\r\n"
-                + ":11001\r\n"
+                + "$3\r\n" + "ver\r\n" + ":11001\r\n"
 
-                + "$4\r\n"
-                + "path\r\n"
-                + "$19\r\n"
-                + "/enterprise-managed\r\n"
+                + "$4\r\n" + "path\r\n" + "$19\r\n" + "/enterprise-managed\r\n"
 
-                + "$4\r\n"
-                + "args\r\n"
-                + "*0\r\n"
+                + "$4\r\n" + "args\r\n" + "*0\r\n"
 
                 // elem 1
                 + "%4\r\n"
 
-                + "$4\r\n"
-                + "name\r\n"
-                + "$11\r\n"
-                + "searchlight\r\n"
+                + "$4\r\n" + "name\r\n" + "$11\r\n" + "searchlight\r\n"
 
-                + "$3\r\n"
-                + "ver\r\n"
-                + ":20803\r\n"
+                + "$3\r\n" + "ver\r\n" + ":20803\r\n"
 
-                + "$4\r\n"
-                + "path\r\n"
-                + "$19\r\n"
-                + "/enterprise-managed\r\n"
+                + "$4\r\n" + "path\r\n" + "$19\r\n" + "/enterprise-managed\r\n"
 
-                + "$4\r\n"
-                + "args\r\n"
+                + "$4\r\n" + "args\r\n"
 
                 + "*10\r\n"
                 // 1
-                + "$23\r\n"
-                + "FORK_GC_CLEAN_THRESHOLD\r\n"
-                + "$3\r\n"
-                + "100\r\n"
+                + "$23\r\n" + "FORK_GC_CLEAN_THRESHOLD\r\n" + "$3\r\n" + "100\r\n"
                 // 2
-                + "$19\r\n"
-                + "MAXAGGREGATERESULTS\r\n"
-                + "$5\r\n"
-                + "10000\r\n"
+                + "$19\r\n" + "MAXAGGREGATERESULTS\r\n" + "$5\r\n" + "10000\r\n"
                 // 3
-                + "$16\r\n"
-                + "MAXSEARCHRESULTS\r\n"
-                + "$5\r\n"
-                + "10000\r\n"
+                + "$16\r\n" + "MAXSEARCHRESULTS\r\n" + "$5\r\n" + "10000\r\n"
 
                 // 4
-                + "$7\r\n"
-                + "MT_MODE\r\n"
-                + "$26\r\n"
-                + "MT_MODE_ONLY_ON_OPERATIONS\r\n"
+                + "$7\r\n" + "MT_MODE\r\n" + "$26\r\n" + "MT_MODE_ONLY_ON_OPERATIONS\r\n"
 
                 // 5
-                + "$14\r\n"
-                + "WORKER_THREADS\r\n"
-                + "$1\r\n"
-                + "4\r\n"
+                + "$14\r\n" + "WORKER_THREADS\r\n" + "$1\r\n" + "4\r\n"
 
                 // 6
-                + "%4\r\n"
-                + "$4\r\n"
-                + "name\r\n"
-                + "$6\r\n"
-                + "ReJSON\r\n"
-                + "$3\r\n"
-                + "ver\r\n"
-                + ":20602\r\n"
-                + "$4\r\n"
-                + "path\r\n"
-                + "$19\r\n"
-                + "/enterprise-managed\r\n"
-                + "$4\r\n"
-                + "args\r\n"
-                + "*0\r\n"
+                + "%4\r\n" + "$4\r\n" + "name\r\n" + "$6\r\n" + "ReJSON\r\n" + "$3\r\n" + "ver\r\n" + ":20602\r\n" + "$4\r\n"
+                + "path\r\n" + "$19\r\n" + "/enterprise-managed\r\n" + "$4\r\n" + "args\r\n" + "*0\r\n"
 
-                + "%4\r\n"
-                + "$4\r\n"
-                + "name\r\n"
-                + "$2\r\n"
-                + "bf\r\n"
-                + "$3\r\n"
-                + "ver\r\n"
-                + ":20601\r\n"
-                + "$4\r\n"
-                + "path\r\n"
-                + "$19\r\n"
-                + "/enterprise-managed\r\n"
-                + "$4\r\n"
-                + "args\r\n"
-                + "*0\r\n";
+                + "%4\r\n" + "$4\r\n" + "name\r\n" + "$2\r\n" + "bf\r\n" + "$3\r\n" + "ver\r\n" + ":20601\r\n" + "$4\r\n"
+                + "path\r\n" + "$19\r\n" + "/enterprise-managed\r\n" + "$4\r\n" + "args\r\n" + "*0\r\n";
 
         RedisStateMachine rsm = new RedisStateMachine(ByteBufAllocator.DEFAULT);
         ObjectOutput<String, String> output = new ObjectOutput<>(StringCodec.UTF8);
@@ -183,4 +106,5 @@ class ObjectOutputTests {
         List<Object> args = (List) searchlight.get("args");
         assertThat(args).containsSequence("MAXSEARCHRESULTS", "10000");
     }
+
 }

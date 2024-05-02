@@ -17,7 +17,9 @@ import io.lettuce.core.internal.LettuceLists;
 class RoleParserUnitTests {
 
     private static final long REPLICATION_OFFSET_1 = 3167038L;
+
     private static final long REPLICATION_OFFSET_2 = 3167039L;
+
     private static final String LOCALHOST = "127.0.0.1";
 
     @Test
@@ -32,8 +34,8 @@ class RoleParserUnitTests {
 
     @Test
     void invalidFirstElement() {
-        assertThatThrownBy(() -> RoleParser.parse(LettuceLists.newList(new Object()))).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> RoleParser.parse(LettuceLists.newList(new Object())))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -90,7 +92,8 @@ class RoleParserUnitTests {
     @Test
     void sentinel() {
 
-        List<?> input = LettuceLists.newList("sentinel", LettuceLists.newList("resque-master", "html-fragments-master", "stats-master"));
+        List<?> input = LettuceLists.newList("sentinel",
+                LettuceLists.newList("resque-master", "html-fragments-master", "stats-master"));
 
         RedisInstance result = RoleParser.parse(input);
 
@@ -152,4 +155,5 @@ class RoleParserUnitTests {
 
         assertThat(partner.toString()).contains(ReplicationPartner.class.getSimpleName());
     }
+
 }

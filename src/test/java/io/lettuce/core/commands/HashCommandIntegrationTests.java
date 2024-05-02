@@ -63,8 +63,11 @@ import static org.awaitility.Awaitility.await;
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class HashCommandIntegrationTests extends TestSupport {
+
     public static final String MY_KEY = "hKey";
+
     public static final String MY_FIELD = "hField";
+
     public static final String MY_VALUE = "hValue";
 
     private final RedisCommands<String, String> redis;
@@ -82,8 +85,8 @@ public class HashCommandIntegrationTests extends TestSupport {
     @AfterEach
     void tearDown() {
         // resets the configuration settings to default, would not be needed once listpack is supported
-        assertThat(redis.configSet("hash-max-listpack-entries","512")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value","64")).isEqualTo("OK");
+        assertThat(redis.configSet("hash-max-listpack-entries", "512")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "64")).isEqualTo("OK");
     }
 
     @Test
@@ -561,8 +564,8 @@ public class HashCommandIntegrationTests extends TestSupport {
     void hexpire() {
         // the below settings are required until the solution is able to support listpack entries
         // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
 
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).isTrue();
@@ -575,8 +578,8 @@ public class HashCommandIntegrationTests extends TestSupport {
     void hexpireExpireArgs() {
         // the below settings are required until the solution is able to support listpack entries
         // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
 
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.nx(), MY_FIELD)).isTrue();
@@ -592,11 +595,11 @@ public class HashCommandIntegrationTests extends TestSupport {
     void hexpireat() {
         // the below settings are required until the solution is able to support listpack entries
         // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
 
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
-        assertThat(redis.hexpireat(MY_KEY,Instant.now().plusSeconds(1) , MY_FIELD)).isTrue();
+        assertThat(redis.hexpireat(MY_KEY, Instant.now().plusSeconds(1), MY_FIELD)).isTrue();
 
         await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
     }
@@ -607,8 +610,8 @@ public class HashCommandIntegrationTests extends TestSupport {
         Date expiration = new Date(System.currentTimeMillis() + 10000);
         // the below settings are required until the solution is able to support listpack entries
         // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
 
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpireat(MY_KEY, expiration, MY_FIELD)).isTrue();
@@ -621,8 +624,8 @@ public class HashCommandIntegrationTests extends TestSupport {
     void persist() {
         // the below settings are required until the solution is able to support listpack entries
         // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries","0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value","0")).isEqualTo("OK");
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
 
         assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isFalse();
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
@@ -638,4 +641,5 @@ public class HashCommandIntegrationTests extends TestSupport {
 
         redis.hmset(key, expect);
     }
+
 }

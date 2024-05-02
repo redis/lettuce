@@ -63,4 +63,5 @@ public interface CommandLatencyCollector
 
         };
     }
+
 }

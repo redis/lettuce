@@ -218,6 +218,7 @@ class RedisCommandsBatchingIntegrationTests extends TestSupport {
 
         @Command("LLEN")
         RedisFuture<Long> llenAsync(String key);
+
     }
 
     static interface SelectiveBatching extends Commands, BatchExecutor {

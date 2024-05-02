@@ -57,5 +57,7 @@ class CommandLatencyIdUnitTests {
         public String name() {
             return name;
         }
+
     }
+
 }

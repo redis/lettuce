@@ -12,7 +12,7 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 class PartitionsConsensusTestSupport {
 
     static RedisClusterNode createNode(int nodeId) {
-        return new RedisClusterNode(RedisURI.create("localhost", 6379-2020 + nodeId), "" + nodeId, true, "", 0, 0, 0,
+        return new RedisClusterNode(RedisURI.create("localhost", 6379 - 2020 + nodeId), "" + nodeId, true, "", 0, 0, 0,
                 Collections.emptyList(), new HashSet<>());
     }
 
@@ -34,4 +34,5 @@ class PartitionsConsensusTestSupport {
 
         return partitionsMap;
     }
+
 }

@@ -47,8 +47,11 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 class ReadFromUnitTests {
 
     private Partitions sut = new Partitions();
+
     private RedisClusterNode nearest = new RedisClusterNode();
+
     private RedisClusterNode master = new RedisClusterNode();
+
     private RedisClusterNode replica = new RedisClusterNode();
 
     @BeforeEach
@@ -259,6 +262,7 @@ class ReadFromUnitTests {
 
     private ReadFrom.Nodes getNodes() {
         return new ReadFrom.Nodes() {
+
             @Override
             public List<RedisNodeDescription> getNodes() {
                 return (List) sut.getPartitions();
@@ -268,6 +272,7 @@ class ReadFromUnitTests {
             public Iterator<RedisNodeDescription> iterator() {
                 return getNodes().iterator();
             }
+
         };
 
     }

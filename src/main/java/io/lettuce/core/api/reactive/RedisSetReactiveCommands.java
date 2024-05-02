@@ -71,7 +71,8 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param channel the channel.
      * @param keys the keys.
      * @return Long count of members of the resulting set.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #sdiff}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sdiff}.
      */
     @Deprecated
     Mono<Long> sdiff(ValueStreamingChannel<V> channel, K... keys);
@@ -99,7 +100,8 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param channel the channel.
      * @param keys the keys.
      * @return Long count of members of the resulting set.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #sinter}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sinter}.
      */
     @Deprecated
     Mono<Long> sinter(ValueStreamingChannel<V> channel, K... keys);
@@ -161,7 +163,8 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param channel the channel.
      * @param key the keys.
      * @return Long count of members of the resulting set.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #smembers}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #smembers}.
      */
     @Deprecated
     Mono<Long> smembers(ValueStreamingChannel<V> channel, K key);
@@ -171,8 +174,8 @@ public interface RedisSetReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param members the member type: value.
-     * @return Boolean array-reply list representing the membership of the given elements, in the same order as they
-     *         are requested.
+     * @return Boolean array-reply list representing the membership of the given elements, in the same order as they are
+     *         requested.
      * @since 6.1
      */
     Flux<Boolean> smismember(K key, V... members);
@@ -221,8 +224,8 @@ public interface RedisSetReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param count the count type: long.
-     * @return V bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply
-     *         with the randomly selected element, or {@code null} when {@code key} does not exist.
+     * @return V bulk-string-reply without the additional {@code count} argument the command returns a Bulk Reply with the
+     *         randomly selected element, or {@code null} when {@code key} does not exist.
      */
     Flux<V> srandmember(K key, long count);
 
@@ -233,7 +236,8 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param key the key.
      * @param count the count.
      * @return Long count of members of the resulting set.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #srandmember}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #srandmember}.
      */
     @Deprecated
     Mono<Long> srandmember(ValueStreamingChannel<V> channel, K key, long count);
@@ -261,7 +265,8 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every value.
      * @param keys the keys.
      * @return Long count of members of the resulting set.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #sunion}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sunion}.
      */
     @Deprecated
     Mono<Long> sunion(ValueStreamingChannel<V> channel, K... keys);
@@ -317,7 +322,8 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every value.
      * @param key the key.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #sscan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key);
@@ -329,7 +335,8 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param key the key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #sscan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
@@ -342,7 +349,8 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #sscan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
@@ -354,8 +362,10 @@ public interface RedisSetReactiveCommands<K, V> {
      * @param key the key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #sscan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #sscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
+
 }

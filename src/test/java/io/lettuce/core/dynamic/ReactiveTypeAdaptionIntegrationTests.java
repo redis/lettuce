@@ -25,7 +25,9 @@ class ReactiveTypeAdaptionIntegrationTests extends TestSupport {
     private final RedisCommands<String, String> redis;
 
     private final RxJava1Types rxjava1;
+
     private final RxJava2Types rxjava2;
+
     private final RxJava3Types rxjava3;
 
     @Inject
@@ -121,6 +123,7 @@ class ReactiveTypeAdaptionIntegrationTests extends TestSupport {
 
         @Command("GET")
         Observable<String> getRxJava1Observable(String key);
+
     }
 
     static interface RxJava2Types extends Commands {
@@ -136,6 +139,7 @@ class ReactiveTypeAdaptionIntegrationTests extends TestSupport {
 
         @Command("GET")
         io.reactivex.Flowable<String> getRxJava2Flowable(String key);
+
     }
 
     static interface RxJava3Types extends Commands {
@@ -151,5 +155,7 @@ class ReactiveTypeAdaptionIntegrationTests extends TestSupport {
 
         @Command("GET")
         io.reactivex.rxjava3.core.Flowable<String> getRxJava3Flowable(String key);
+
     }
+
 }

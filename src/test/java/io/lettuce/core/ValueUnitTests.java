@@ -126,8 +126,8 @@ class ValueUnitTests {
 
         Value<String> value = Value.from(Optional.empty());
 
-        assertThatThrownBy(() -> value.getValueOrElseThrow(IllegalArgumentException::new)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> value.getValueOrElseThrow(IllegalArgumentException::new))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -263,4 +263,5 @@ class ValueUnitTests {
 
         assertThat(empty.stream().count()).isEqualTo(1);
     }
+
 }

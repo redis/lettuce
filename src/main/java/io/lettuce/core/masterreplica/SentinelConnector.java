@@ -94,6 +94,7 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
             public CompletableFuture<Void> closeAsync() {
                 return CompletableFuture.allOf(super.closeAsync(), sentinelTopologyRefresh.closeAsync());
             }
+
         };
 
         StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(

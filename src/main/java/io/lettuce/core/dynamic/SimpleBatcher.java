@@ -184,4 +184,5 @@ class SimpleBatcher implements Batcher {
     private <T> ArrayList<T> newDrainTarget() {
         return new ArrayList<>(Math.max(0, Math.min(batchSize, queue.size())));
     }
+
 }

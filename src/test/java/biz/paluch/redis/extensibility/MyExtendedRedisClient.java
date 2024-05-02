@@ -32,4 +32,5 @@ public class MyExtendedRedisClient extends RedisClient {
             RedisChannelWriter channelWriter, RedisCodec<K, V> codec, Duration timeout) {
         return new MyPubSubConnection<>(endpoint, channelWriter, codec, timeout);
     }
+
 }

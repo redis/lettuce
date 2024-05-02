@@ -22,8 +22,10 @@ import static org.mockito.Mockito.*;
 
 class RedisPubSubAsyncCommandsImplUnitTests {
 
-    private RedisPubSubAsyncCommandsImpl<String,String> commands;
+    private RedisPubSubAsyncCommandsImpl<String, String> commands;
+
     private StatefulRedisPubSubConnection<String, String> mockedConnection;
+
     private final RedisCodec<String, String> codec = StringCodec.UTF8;
 
     @BeforeEach
@@ -35,12 +37,13 @@ class RedisPubSubAsyncCommandsImplUnitTests {
     @Test
     void psubscribe() throws ExecutionException, InterruptedException {
         String pattern = "channelPattern";
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.psubscribe(pattern).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        ;
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(PSUBSCRIBE);
@@ -53,12 +56,13 @@ class RedisPubSubAsyncCommandsImplUnitTests {
     @Test
     void punsubscribe() throws ExecutionException, InterruptedException {
         String pattern = "channelPattern";
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.punsubscribe(pattern).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        ;
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(PUNSUBSCRIBE);
@@ -71,12 +75,13 @@ class RedisPubSubAsyncCommandsImplUnitTests {
     @Test
     void subscribe() throws ExecutionException, InterruptedException {
         String pattern = "channelPattern";
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.subscribe(pattern).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        ;
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(SUBSCRIBE);
@@ -89,12 +94,13 @@ class RedisPubSubAsyncCommandsImplUnitTests {
     @Test
     void unsubscribe() throws ExecutionException, InterruptedException {
         String pattern = "channelPattern";
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.unsubscribe(pattern).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        ;
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(UNSUBSCRIBE);
@@ -109,12 +115,13 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         String channel = "acmeChannel";
         String message = "acmeMessage";
 
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.publish(channel, message).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        ;
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(PUBLISH);
@@ -128,12 +135,13 @@ class RedisPubSubAsyncCommandsImplUnitTests {
     void pubsubChannels() throws ExecutionException, InterruptedException {
         String pattern = "channelPattern";
 
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.pubsubChannels(pattern).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        ;
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(PUBSUB);
@@ -147,12 +155,13 @@ class RedisPubSubAsyncCommandsImplUnitTests {
     void pubsubNumsub() throws ExecutionException, InterruptedException {
         String pattern = "channelPattern";
 
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.pubsubNumsub(pattern).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        ;
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(PUBSUB);
@@ -166,12 +175,13 @@ class RedisPubSubAsyncCommandsImplUnitTests {
     void pubsubShardChannels() throws ExecutionException, InterruptedException {
         String pattern = "channelPattern";
 
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.pubsubShardChannels(pattern).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        ;
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(PUBSUB);
@@ -185,12 +195,13 @@ class RedisPubSubAsyncCommandsImplUnitTests {
     void pubsubShardNumsub() throws ExecutionException, InterruptedException {
         String pattern = "channelPattern";
 
-        AsyncCommand dispachedMock = mock (AsyncCommand.class);
+        AsyncCommand dispachedMock = mock(AsyncCommand.class);
         when(mockedConnection.dispatch((RedisCommand<String, String, Object>) any())).thenReturn(dispachedMock);
 
         commands.pubsubShardNumsub(pattern).get();
 
-        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);;
+        ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
+        ;
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(PUBSUB);
@@ -209,7 +220,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         commands.ssubscribe(pattern).get();
 
         ArgumentCaptor<AsyncCommand> capturedCommand = ArgumentCaptor.forClass(AsyncCommand.class);
-        
+
         verify(mockedConnection).dispatch(capturedCommand.capture());
 
         assertThat(capturedCommand.getValue().getType()).isEqualTo(SSUBSCRIBE);
@@ -218,4 +229,5 @@ class RedisPubSubAsyncCommandsImplUnitTests {
 
         assertNotEquals(capturedCommand.getValue(), dispachedMock);
     }
+
 }

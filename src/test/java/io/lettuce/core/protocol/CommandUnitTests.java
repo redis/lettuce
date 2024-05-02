@@ -113,10 +113,12 @@ public class CommandUnitTests {
     @Test
     void outputSubclassOverride1() {
         CommandOutput<String, String, String> output = new CommandOutput<String, String, String>(StringCodec.UTF8, null) {
+
             @Override
             public String get() throws RedisException {
                 return null;
             }
+
         };
         assertThatThrownBy(() -> output.set(null)).isInstanceOf(UnsupportedOperationException.class);
     }
@@ -124,10 +126,12 @@ public class CommandUnitTests {
     @Test
     void outputSubclassOverride2() {
         CommandOutput<String, String, String> output = new CommandOutput<String, String, String>(StringCodec.UTF8, null) {
+
             @Override
             public String get() throws RedisException {
                 return null;
             }
+
         };
         assertThatThrownBy(() -> output.set(0)).isInstanceOf(UnsupportedOperationException.class);
     }
@@ -139,11 +143,14 @@ public class CommandUnitTests {
     }
 
     private enum MyKeywords implements ProtocolKeyword {
+
         DUMMY;
 
         @Override
         public byte[] getBytes() {
             return name().getBytes();
         }
+
     }
+
 }

@@ -51,4 +51,5 @@ class Utf8StringCodecIntegrationTests extends TestSupport {
         redis.set(key, value);
         assertThat(redis.get(key)).isEqualTo(value);
     }
+
 }

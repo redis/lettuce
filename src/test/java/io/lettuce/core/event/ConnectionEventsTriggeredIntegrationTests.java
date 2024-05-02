@@ -37,4 +37,5 @@ class ConnectionEventsTriggeredIntegrationTests extends TestSupport {
 
         FastShutdown.shutdown(client);
     }
+
 }

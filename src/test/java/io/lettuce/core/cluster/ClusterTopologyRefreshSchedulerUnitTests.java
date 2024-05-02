@@ -273,4 +273,5 @@ class ClusterTopologyRefreshSchedulerUnitTests {
 
         assertThat(capture.getPartitions()).isSameAs(partitions);
     }
+
 }

@@ -368,4 +368,5 @@ public interface RedisStreamCommands<K, V> {
      * @since 6.1
      */
     Long xtrim(K key, XTrimArgs args);
+
 }

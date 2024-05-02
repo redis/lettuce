@@ -22,4 +22,5 @@ class ScanArgsUnitTests {
 
         assertThat(commandArgs.toCommandString()).isEqualTo("MATCH w7Y=");
     }
+
 }

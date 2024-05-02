@@ -24,4 +24,5 @@ public @interface EnabledOnCommand {
      * @return
      */
     String value();
+
 }

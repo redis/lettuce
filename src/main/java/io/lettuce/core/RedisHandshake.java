@@ -283,13 +283,11 @@ class RedisHandshake implements ConnectionInitializer {
         }
 
         if (LettuceStrings.isNotEmpty(metadata.getLibraryName())) {
-            postHandshake.add(
-                    new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-name", metadata.getLibraryName())));
+            postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-name", metadata.getLibraryName())));
         }
 
         if (LettuceStrings.isNotEmpty(metadata.getLibraryVersion())) {
-            postHandshake.add(
-                    new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-ver", metadata.getLibraryVersion())));
+            postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-ver", metadata.getLibraryVersion())));
         }
 
         if (postHandshake.isEmpty()) {

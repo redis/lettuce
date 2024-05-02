@@ -116,4 +116,5 @@ class ClusterSlotsParserUnitTests {
 
         assertThat(range.toString()).contains(ClusterSlotRange.class.getSimpleName());
     }
+
 }

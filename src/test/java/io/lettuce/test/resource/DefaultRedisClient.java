@@ -18,10 +18,12 @@ public class DefaultRedisClient {
     private DefaultRedisClient() {
         redisClient = RedisClient.create(RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build());
         Runtime.getRuntime().addShutdownHook(new Thread() {
+
             @Override
             public void run() {
                 FastShutdown.shutdown(redisClient);
             }
+
         });
     }
 
@@ -34,4 +36,5 @@ public class DefaultRedisClient {
         instance.redisClient.setDefaultTimeout(60, TimeUnit.SECONDS);
         return instance.redisClient;
     }
+
 }

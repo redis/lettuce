@@ -58,12 +58,12 @@ public interface MethodParametersAccessor {
     int resolveParameterIndex(String name);
 
     /**
-     * Return {@code true} if the parameter at {@code index} is a bindable {@code null} value that requires a
-     * {@code null} value instead of being skipped.
+     * Return {@code true} if the parameter at {@code index} is a bindable {@code null} value that requires a {@code null} value
+     * instead of being skipped.
      *
      * @param index parameter index.
-     * @return {@code true} if the parameter at {@code index} is a bindable {@code null} value that requires a
-     *         {@code null} value instead of being skipped.
+     * @return {@code true} if the parameter at {@code index} is a bindable {@code null} value that requires a {@code null}
+     *         value instead of being skipped.
      */
     boolean isBindableNullValue(int index);
 

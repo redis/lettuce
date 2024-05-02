@@ -48,4 +48,5 @@ class ZAggregateArgsUnitTests {
 
         assertThat(args.toString()).doesNotContain("WEIGHTS");
     }
+
 }

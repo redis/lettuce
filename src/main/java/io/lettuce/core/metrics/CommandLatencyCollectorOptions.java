@@ -91,10 +91,10 @@ public interface CommandLatencyCollectorOptions {
     boolean resetLatenciesAfterEvent();
 
     /**
-     * Returns whether to distinct latencies on local level. If {@code true}, multiple connections to the same
-     * host/connection point will be recorded separately which allows to inspect every connection individually. If
-     * {@code false}, multiple connections to the same host/connection point will be recorded together. This allows a
-     * consolidated view on one particular service.
+     * Returns whether to distinct latencies on local level. If {@code true}, multiple connections to the same host/connection
+     * point will be recorded separately which allows to inspect every connection individually. If {@code false}, multiple
+     * connections to the same host/connection point will be recorded together. This allows a consolidated view on one
+     * particular service.
      *
      * @return {@code true} if latencies are recorded distinct on local level (per connection)
      */
@@ -166,8 +166,8 @@ public interface CommandLatencyCollectorOptions {
         Builder localDistinction(boolean localDistinction);
 
         /**
-         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}.
-         * See {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
+         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}. See
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
          *
          * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
          *        emitted.

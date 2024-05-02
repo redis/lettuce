@@ -21,4 +21,5 @@ public class ConnectToRedisSSL {
         connection.close();
         redisClient.shutdown();
     }
+
 }

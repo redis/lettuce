@@ -35,4 +35,5 @@ public class ConnectToRedisClusterWithTopologyRefreshing {
         connection.close();
         redisClient.shutdown();
     }
+
 }

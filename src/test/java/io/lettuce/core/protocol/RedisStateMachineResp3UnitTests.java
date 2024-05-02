@@ -54,8 +54,11 @@ import io.netty.buffer.Unpooled;
 class RedisStateMachineResp3UnitTests {
 
     private RedisCodec<String, String> codec = StringCodec.UTF8;
+
     private Charset charset = StandardCharsets.UTF_8;
+
     private CommandOutput<String, String, String> output;
+
     private RedisStateMachine rsm;
 
     @BeforeAll
@@ -141,11 +144,9 @@ class RedisStateMachineResp3UnitTests {
     @Test
     void hello() {
         CommandOutput<String, String, Map<String, Object>> output = new GenericMapOutput<>(codec);
-        assertThat(
-                rsm.decode(buffer("%7\r\n" + "$6\r\nserver\r\n$5\r\nredis\r\n" + "$7\r\nversion\r\n$11\r\n999.999.999\r\n"
-                        + "$5\r\nproto\r\n:3\r\n" + "$2\r\nid\r\n:184\r\n" + "$4\r\nmode\r\n$10\r\nstandalone\r\n"
-                        + "$4\r\nrole\r\n$6\r\nmaster\r\n" + "$7\r\nmodules\r\n*0\r\n"),
-                        output)).isTrue();
+        assertThat(rsm.decode(buffer("%7\r\n" + "$6\r\nserver\r\n$5\r\nredis\r\n" + "$7\r\nversion\r\n$11\r\n999.999.999\r\n"
+                + "$5\r\nproto\r\n:3\r\n" + "$2\r\nid\r\n:184\r\n" + "$4\r\nmode\r\n$10\r\nstandalone\r\n"
+                + "$4\r\nrole\r\n$6\r\nmaster\r\n" + "$7\r\nmodules\r\n*0\r\n"), output)).isTrue();
         assertThat(output.get()).containsEntry("mode", "standalone");
     }
 
@@ -234,4 +235,5 @@ class RedisStateMachineResp3UnitTests {
     ByteBuf buffer(String content) {
         return Unpooled.copiedBuffer(content, charset);
     }
+
 }

@@ -40,6 +40,7 @@ class CRC16UnitTests {
     static class Fixture {
 
         final byte[] bytes;
+
         final int expected;
 
         Fixture(byte[] bytes, int expected) {
@@ -51,5 +52,7 @@ class CRC16UnitTests {
         public String toString() {
             return "Expects 0x" + Integer.toHexString(expected).toUpperCase();
         }
+
     }
+
 }

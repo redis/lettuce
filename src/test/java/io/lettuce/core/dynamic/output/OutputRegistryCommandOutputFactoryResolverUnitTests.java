@@ -141,8 +141,10 @@ class OutputRegistryCommandOutputFactoryResolverUnitTests {
     CommandOutput<?, ?, ?> getCommandOutput(String methodName) {
 
         OutputSelector outputSelector = getOutputSelector(methodName);
-        CommandOutputFactory factory = resolver.resolveCommandOutput(Publisher.class.isAssignableFrom(outputSelector
-                .getOutputType().getRawClass()) ? unwrapReactiveType(outputSelector) : outputSelector);
+        CommandOutputFactory factory = resolver
+                .resolveCommandOutput(Publisher.class.isAssignableFrom(outputSelector.getOutputType().getRawClass())
+                        ? unwrapReactiveType(outputSelector)
+                        : outputSelector);
 
         return factory.create(new StringCodec());
     }
@@ -196,5 +198,7 @@ class OutputRegistryCommandOutputFactoryResolverUnitTests {
         List<Boolean> boolList();
 
         ListOfMapsOutput<?, ?> listOfMapsOutput();
+
     }
+
 }

@@ -155,8 +155,8 @@ public class RedisCommandFactory {
     /**
      * Enables/disables command verification which checks the command name against Redis {@code COMMAND} and the argument count.
      *
-     * @param verifyCommandMethods {@code true} to enable command verification (default) or {@code false} to disable
-     *        command verification.
+     * @param verifyCommandMethods {@code true} to enable command verification (default) or {@code false} to disable command
+     *        verification.
      */
     public void setVerifyCommandMethods(boolean verifyCommandMethods) {
         this.verifyCommandMethods = verifyCommandMethods;

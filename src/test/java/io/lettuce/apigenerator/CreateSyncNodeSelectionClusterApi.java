@@ -47,9 +47,12 @@ import io.lettuce.core.internal.LettuceSets;
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 public class CreateSyncNodeSelectionClusterApi {
 
-    private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands", "RedisTransactionalCommands");
-    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest",
-            "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch", "setAutoFlushCommands", "flushCommands");
+    private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands",
+            "RedisTransactionalCommands");
+
+    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault",
+            "digest", "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "dispatch", "setAutoFlushCommands",
+            "flushCommands");
 
     /**
      * Mutate type comment.
@@ -99,10 +102,7 @@ public class CreateSyncNodeSelectionClusterApi {
     }
 
     static List<String> arguments() {
-        return Stream
-                .of(Constants.TEMPLATE_NAMES)
-                .filter(t -> !FILTER_TEMPLATES.contains(t))
-                .collect(Collectors.toList());
+        return Stream.of(Constants.TEMPLATE_NAMES).filter(t -> !FILTER_TEMPLATES.contains(t)).collect(Collectors.toList());
     }
 
     private CompilationUnitFactory createFactory(String templateName) {
@@ -116,4 +116,5 @@ public class CreateSyncNodeSelectionClusterApi {
         factory.keepMethodSignaturesFor(FILTER_METHODS);
         return factory;
     }
+
 }

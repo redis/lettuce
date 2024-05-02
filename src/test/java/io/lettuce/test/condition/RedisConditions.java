@@ -25,14 +25,15 @@ import io.lettuce.core.models.command.CommandDetailParser;
 public class RedisConditions {
 
     private final Map<String, Integer> commands;
+
     private final Version version;
 
     private RedisConditions(RedisClusterCommands<String, String> commands) {
 
         List<CommandDetail> result = CommandDetailParser.parse(commands.command());
 
-        this.commands = result.stream().collect(
-                Collectors.toMap(commandDetail -> commandDetail.getName().toUpperCase(), CommandDetail::getArity));
+        this.commands = result.stream()
+                .collect(Collectors.toMap(commandDetail -> commandDetail.getName().toUpperCase(), CommandDetail::getArity));
 
         String info = commands.info("server");
 
@@ -122,8 +123,11 @@ public class RedisConditions {
         private static final String VERSION_PARSE_ERROR = "Invalid version string! Could not parse segment %s within %s.";
 
         private final int major;
+
         private final int minor;
+
         private final int bugfix;
+
         private final int build;
 
         /**
@@ -229,7 +233,6 @@ public class RedisConditions {
 
         /*
          * (non-Javadoc)
-         *
          * @see java.lang.Comparable#compareTo(java.lang.Object)
          */
         public int compareTo(Version that) {
@@ -259,7 +262,6 @@ public class RedisConditions {
 
         /*
          * (non-Javadoc)
-         *
          * @see java.lang.Object#equals(java.lang.Object)
          */
         @Override
@@ -281,7 +283,6 @@ public class RedisConditions {
 
         /*
          * (non-Javadoc)
-         *
          * @see java.lang.Object#hashCode()
          */
         @Override
@@ -297,7 +298,6 @@ public class RedisConditions {
 
         /*
          * (non-Javadoc)
-         *
          * @see java.lang.Object#toString()
          */
         @Override
@@ -317,5 +317,7 @@ public class RedisConditions {
 
             return digits.stream().map(Object::toString).collect(Collectors.joining("."));
         }
+
     }
+
 }

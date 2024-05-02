@@ -243,11 +243,12 @@ public class RedisStateMachine {
          */
         private static State[] createStates(int len) {
             final State[] stack = new State[len];
-            for (int i = 0;i < len; ++i) {
+            for (int i = 0; i < len; ++i) {
                 stack[i] = new State();
             }
             return stack;
         }
+
     }
 
     private final State[] stack = State.createStates(32);

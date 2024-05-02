@@ -127,4 +127,5 @@ class SimpleBatcherUnitTests {
     private static RedisCommand<Object, Object, Object> createCommand() {
         return new AsyncCommand<>(new Command<>(CommandType.COMMAND, null, null));
     }
+
 }
