@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -15,20 +19,8 @@
  */
 package io.lettuce.core.commands;
 
-import static org.assertj.core.api.Assertions.*;
-
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
-
+import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
 import io.lettuce.core.ScanArgs;
@@ -40,6 +32,26 @@ import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.condition.EnabledOnCommand;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import javax.inject.Inject;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisHashCommands}.
@@ -52,6 +64,12 @@ import io.lettuce.test.condition.EnabledOnCommand;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class HashCommandIntegrationTests extends TestSupport {
 
+    public static final String MY_KEY = "hKey";
+
+    public static final String MY_FIELD = "hField";
+
+    public static final String MY_VALUE = "hValue";
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -62,6 +80,13 @@ public class HashCommandIntegrationTests extends TestSupport {
     @BeforeEach
     void setUp() {
         this.redis.flushall();
+    }
+
+    @AfterEach
+    void tearDown() {
+        // resets the configuration settings to default, would not be needed once listpack is supported
+        assertThat(redis.configSet("hash-max-listpack-entries", "512")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "64")).isEqualTo("OK");
     }
 
     @Test
@@ -303,6 +328,16 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNovalues() {
+        redis.hset(key, key, value);
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key);
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).containsExactly(key);
+    }
+
+    @Test
     void hscanWithCursor() {
         redis.hset(key, key, value);
 
@@ -314,6 +349,17 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNoValuesWithCursor() {
+        redis.hset(key, key, value);
+
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanCursor.INITIAL);
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).containsExactly(key);
+    }
+
+    @Test
     void hscanWithCursorAndArgs() {
         redis.hset(key, key, value);
 
@@ -322,6 +368,17 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
         assertThat(cursor.getMap()).isEqualTo(Collections.singletonMap(key, value));
+    }
+
+    @Test
+    void hscanNoValuesWithCursorAndArgs() {
+        redis.hset(key, key, value);
+
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanCursor.INITIAL, ScanArgs.Builder.limit(2));
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(cursor.getKeys()).containsExactly(key);
     }
 
     @Test
@@ -338,6 +395,19 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNoValuesStreaming() {
+        redis.hset(key, key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor cursor = redis.hscanNovalues(adapter, key, ScanArgs.Builder.limit(100).match("*"));
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).containsExactly(key);
+    }
+
+    @Test
     void hscanStreamingWithCursor() {
         redis.hset(key, key, value);
         KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
@@ -347,6 +417,19 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
+    }
+
+    @Test
+    void hscanNoValuesStreamingWithCursor() {
+        redis.hset(key, key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor cursor = redis.hscanNovalues(adapter, key, ScanCursor.INITIAL);
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).containsExactly(key);
     }
 
     @Test
@@ -362,6 +445,19 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNoValuesStreamingWithCursorAndArgs() {
+        redis.hset(key, key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor cursor = redis.hscanNovalues(adapter, key, ScanCursor.INITIAL, ScanArgs.Builder.limit(100).match("*"));
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).containsExactly(key);
+    }
+
+    @Test
     void hscanStreamingWithArgs() {
         redis.hset(key, key, value);
         KeyValueStreamingAdapter<String, String> adapter = new KeyValueStreamingAdapter<>();
@@ -371,6 +467,19 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(cursor.getCount()).isEqualTo(1);
         assertThat(cursor.getCursor()).isEqualTo("0");
         assertThat(cursor.isFinished()).isTrue();
+    }
+
+    @Test
+    void hscanNoValuesStreamingWithArgs() {
+        redis.hset(key, key, value);
+        ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
+
+        StreamScanCursor cursor = redis.hscanNovalues(adapter, key);
+
+        assertThat(cursor.getCount()).isEqualTo(1);
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+        assertThat(adapter.getList()).containsExactly(key);
     }
 
     @Test
@@ -399,6 +508,30 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNoValuesMultiple() {
+
+        Map<String, String> expect = new LinkedHashMap<>();
+        setup100KeyValues(expect);
+
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanArgs.Builder.limit(5));
+
+        assertThat(cursor.getCursor()).isNotNull();
+        assertThat(cursor.getKeys()).hasSize(100);
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+
+        Set<String> check = new HashSet<>(cursor.getKeys());
+
+        while (!cursor.isFinished()) {
+            cursor = redis.hscanNovalues(key, cursor);
+            check.addAll(cursor.getKeys());
+        }
+
+        assertThat(check).isEqualTo(expect.keySet());
+    }
+
+    @Test
     void hscanMatch() {
 
         Map<String, String> expect = new LinkedHashMap<>();
@@ -412,6 +545,95 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(cursor.getMap()).hasSize(11);
     }
 
+    @Test
+    void hscanNoValuesMatch() {
+
+        Map<String, String> expect = new LinkedHashMap<>();
+        setup100KeyValues(expect);
+
+        KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanArgs.Builder.limit(100).match("key1*"));
+
+        assertThat(cursor.getCursor()).isEqualTo("0");
+        assertThat(cursor.isFinished()).isTrue();
+
+        assertThat(cursor.getKeys()).hasSize(11);
+    }
+
+    @Test
+    @EnabledOnCommand("HEXPIRE")
+    void hexpire() {
+        // the below settings are required until the solution is able to support listpack entries
+        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
+
+        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
+        assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).isTrue();
+
+        await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
+    }
+
+    @Test
+    @EnabledOnCommand("HEXPIRE")
+    void hexpireExpireArgs() {
+        // the below settings are required until the solution is able to support listpack entries
+        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
+
+        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
+        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.nx(), MY_FIELD)).isTrue();
+        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.xx(), MY_FIELD)).isTrue();
+        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(10), ExpireArgs.Builder.gt(), MY_FIELD)).isTrue();
+        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.lt(), MY_FIELD)).isTrue();
+
+        await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
+    }
+
+    @Test
+    @EnabledOnCommand("HEXPIREAT")
+    void hexpireat() {
+        // the below settings are required until the solution is able to support listpack entries
+        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
+
+        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
+        assertThat(redis.hexpireat(MY_KEY, Instant.now().plusSeconds(1), MY_FIELD)).isTrue();
+
+        await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
+    }
+
+    @Test
+    @EnabledOnCommand("HEXPIRETIME")
+    void hexpiretime() {
+        Date expiration = new Date(System.currentTimeMillis() + 10000);
+        // the below settings are required until the solution is able to support listpack entries
+        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
+
+        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
+        assertThat(redis.hexpireat(MY_KEY, expiration, MY_FIELD)).isTrue();
+
+        assertThat(redis.hexpiretime(MY_KEY, MY_FIELD)).isEqualTo(expiration.getTime() / 1000);
+    }
+
+    @Test
+    @EnabledOnCommand("HPERSIST")
+    void persist() {
+        // the below settings are required until the solution is able to support listpack entries
+        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
+        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
+        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
+
+        assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isFalse();
+        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
+        assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isFalse();
+        assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).isTrue();
+        assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isTrue();
+    }
+
     void setup100KeyValues(Map<String, String> expect) {
         for (int i = 0; i < 100; i++) {
             expect.put(key + i, value + 1);
@@ -419,4 +641,5 @@ public class HashCommandIntegrationTests extends TestSupport {
 
         redis.hmset(key, expect);
     }
+
 }

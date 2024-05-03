@@ -3,5 +3,5 @@ contact_links:
     url: https://github.com/lettuce-io/lettuce-core/discussions
     about: Use GitHub discussions to discuss an enhancement proposal or if you have a question
    - name: Questions
-    url: https://gitter.im/lettuce-io/Lobby
-    about: Please ask questions on Gitter or StackOverflow.
+    url: https://discord.gg/redis
+    about: Please ask questions on Discord or StackOverflow.

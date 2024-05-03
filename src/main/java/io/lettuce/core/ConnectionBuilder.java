@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -23,6 +27,8 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import jdk.net.ExtendedSocketOptions;
+import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandEncoder;
 import io.lettuce.core.protocol.CommandHandler;
@@ -48,8 +54,6 @@ import io.netty.channel.socket.nio.NioChannelOption;
 import io.netty.util.AttributeKey;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import jdk.net.ExtendedSocketOptions;
-import reactor.core.publisher.Mono;
 
 /**
  * Connection builder for connections. This class is part of the internal API.
@@ -252,7 +256,7 @@ public class ConnectionBuilder {
         if (domainSocket) {
 
             Transports.NativeTransports.assertDomainSocketAvailable();
-            eventLoopGroupClass = Transports.NativeTransports.eventLoopGroupClass();
+            eventLoopGroupClass = Transports.NativeTransports.eventLoopGroupClass(true);
             channelClass = Transports.NativeTransports.domainSocketChannelClass();
         } else {
             bootstrap.resolver(clientResources.addressResolverGroup());

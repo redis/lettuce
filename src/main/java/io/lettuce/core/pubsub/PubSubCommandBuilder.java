@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -37,6 +41,7 @@ import io.lettuce.core.protocol.CommandType;
  *
  * @author Mark Paluch
  * @author Tihomir Mateev
+ * @author Ali Takavci
  * @since 4.2
  */
 @SuppressWarnings("varargs")
@@ -67,6 +72,11 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PUBSUB, new MapOutput<>((RedisCodec) codec), args);
     }
 
+    Command<K, V, List<K>> pubsubShardChannels(K pattern) {
+        CommandArgs<K, V> args = new PubSubCommandArgs<>(codec).add(SHARDCHANNELS).addKey(pattern);
+        return createCommand(PUBSUB, new KeyListOutput<>(codec), args);
+    }
+
     @SafeVarargs
     @SuppressWarnings({ "unchecked", "rawtypes" })
     final Command<K, V, Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
@@ -86,6 +96,19 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     @SafeVarargs
     final Command<K, V, V> punsubscribe(K... patterns) {
         return pubSubCommand(PUNSUBSCRIBE, new PubSubOutput<>(codec), patterns);
+    }
+
+    Command<K, V, Long> spublish(K shardChannel, V message) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(shardChannel).addValue(message);
+        return createCommand(SPUBLISH, new IntegerOutput<>(codec), args);
+    }
+
+    @SafeVarargs
+    final Command<K, V, V> ssubscribe(K... shardChannels) {
+        LettuceAssert.notEmpty(shardChannels, "Shard channels " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(shardChannels);
+        return createCommand(SSUBSCRIBE, new PubSubOutput<>(codec), args);
     }
 
     @SafeVarargs

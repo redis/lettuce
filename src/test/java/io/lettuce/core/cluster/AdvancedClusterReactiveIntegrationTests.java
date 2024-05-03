@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -71,10 +75,13 @@ import io.netty.util.internal.ConcurrentSet;
 class AdvancedClusterReactiveIntegrationTests extends TestSupport {
 
     private static final String KEY_ON_NODE_1 = "a";
+
     private static final String KEY_ON_NODE_2 = "b";
 
     private final RedisClusterClient clusterClient;
+
     private final RedisAdvancedClusterReactiveCommands<String, String> commands;
+
     private final RedisAdvancedClusterCommands<String, String> syncCommands;
 
     @Inject
@@ -494,4 +501,5 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
         }
         return mset;
     }
+
 }

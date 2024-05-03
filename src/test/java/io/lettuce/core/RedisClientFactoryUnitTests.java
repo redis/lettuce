@@ -1,18 +1,3 @@
-/*
- * Copyright 2011-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,6 +15,7 @@ import io.lettuce.test.settings.TestSettings;
 class RedisClientFactoryUnitTests {
 
     private static final String URI = "redis://" + TestSettings.host() + ":" + TestSettings.port();
+
     private static final RedisURI REDIS_URI = RedisURI.create(URI);
 
     @Test
@@ -74,8 +60,8 @@ class RedisClientFactoryUnitTests {
 
     @Test
     void clientResourcesWithStringUriNull() {
-        assertThatThrownBy(() -> RedisClient.create(TestClientResources.get(), (String) null)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> RedisClient.create(TestClientResources.get(), (String) null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -85,17 +71,18 @@ class RedisClientFactoryUnitTests {
 
     @Test
     void clientResourcesWithUri() {
-        FastShutdown.shutdown(RedisClient.create(TestClientResources.get(),  REDIS_URI));
+        FastShutdown.shutdown(RedisClient.create(TestClientResources.get(), REDIS_URI));
     }
 
     @Test
     void clientResourcesWithUriNull() {
-        assertThatThrownBy(() -> RedisClient.create(TestClientResources.get(), (RedisURI) null)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> RedisClient.create(TestClientResources.get(), (RedisURI) null))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void clientResourcesNullWithUri() {
         assertThatThrownBy(() -> RedisClient.create(null, REDIS_URI)).isInstanceOf(IllegalArgumentException.class);
     }
+
 }

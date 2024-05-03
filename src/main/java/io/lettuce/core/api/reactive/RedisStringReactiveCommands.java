@@ -1,7 +1,11 @@
 /*
- * Copyright 2017-2024 the original author or authors.
+ * Copyright 2017-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -292,7 +296,8 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param channel the channel.
      * @param keys the keys.
      * @return Long array-reply list of values at the specified keys.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #mget}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #mget}.
      */
     @Deprecated
     Mono<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys);
@@ -432,4 +437,5 @@ public interface RedisStringReactiveCommands<K, V> {
      * @return Long integer-reply the length of the string at {@code key}, or {@code 0} when {@code key} does not exist.
      */
     Mono<Long> strlen(K key);
+
 }

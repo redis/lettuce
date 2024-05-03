@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -41,9 +45,12 @@ import io.lettuce.core.internal.LettuceSets;
  */
 class CreateAsyncNodeSelectionClusterApi {
 
-    private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands", "RedisTransactionalCommands");
-    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault", "digest", "close",
-            "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "setAutoFlushCommands", "flushCommands");
+    private static final Set<String> FILTER_TEMPLATES = LettuceSets.unmodifiableSet("RedisSentinelCommands",
+            "RedisTransactionalCommands");
+
+    private static final Set<String> FILTER_METHODS = LettuceSets.unmodifiableSet("shutdown", "debugOom", "debugSegfault",
+            "digest", "close", "isOpen", "BaseRedisCommands.reset", "readOnly", "readWrite", "setAutoFlushCommands",
+            "flushCommands");
 
     /**
      * Mutate type comment.
@@ -89,10 +96,7 @@ class CreateAsyncNodeSelectionClusterApi {
     }
 
     static List<String> arguments() {
-        return Stream
-                .of(Constants.TEMPLATE_NAMES)
-                .filter(t -> !FILTER_TEMPLATES.contains(t))
-                .collect(Collectors.toList());
+        return Stream.of(Constants.TEMPLATE_NAMES).filter(t -> !FILTER_TEMPLATES.contains(t)).collect(Collectors.toList());
     }
 
     private CompilationUnitFactory createFactory(String templateName) {
@@ -106,4 +110,5 @@ class CreateAsyncNodeSelectionClusterApi {
 
         return factory;
     }
+
 }

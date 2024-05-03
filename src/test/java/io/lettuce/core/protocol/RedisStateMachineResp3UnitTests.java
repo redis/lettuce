@@ -1,7 +1,11 @@
 /*
- * Copyright 2019-2024 the original author or authors.
+ * Copyright 2019-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -50,8 +54,11 @@ import io.netty.buffer.Unpooled;
 class RedisStateMachineResp3UnitTests {
 
     private RedisCodec<String, String> codec = StringCodec.UTF8;
+
     private Charset charset = StandardCharsets.UTF_8;
+
     private CommandOutput<String, String, String> output;
+
     private RedisStateMachine rsm;
 
     @BeforeAll
@@ -137,11 +144,9 @@ class RedisStateMachineResp3UnitTests {
     @Test
     void hello() {
         CommandOutput<String, String, Map<String, Object>> output = new GenericMapOutput<>(codec);
-        assertThat(
-                rsm.decode(buffer("%7\r\n" + "$6\r\nserver\r\n$5\r\nredis\r\n" + "$7\r\nversion\r\n$11\r\n999.999.999\r\n"
-                        + "$5\r\nproto\r\n:3\r\n" + "$2\r\nid\r\n:184\r\n" + "$4\r\nmode\r\n$10\r\nstandalone\r\n"
-                        + "$4\r\nrole\r\n$6\r\nmaster\r\n" + "$7\r\nmodules\r\n*0\r\n"),
-                        output)).isTrue();
+        assertThat(rsm.decode(buffer("%7\r\n" + "$6\r\nserver\r\n$5\r\nredis\r\n" + "$7\r\nversion\r\n$11\r\n999.999.999\r\n"
+                + "$5\r\nproto\r\n:3\r\n" + "$2\r\nid\r\n:184\r\n" + "$4\r\nmode\r\n$10\r\nstandalone\r\n"
+                + "$4\r\nrole\r\n$6\r\nmaster\r\n" + "$7\r\nmodules\r\n*0\r\n"), output)).isTrue();
         assertThat(output.get()).containsEntry("mode", "standalone");
     }
 
@@ -230,4 +235,5 @@ class RedisStateMachineResp3UnitTests {
     ByteBuf buffer(String content) {
         return Unpooled.copiedBuffer(content, charset);
     }
+
 }

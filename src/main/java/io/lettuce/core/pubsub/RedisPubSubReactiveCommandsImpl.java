@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -22,6 +26,7 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.protocol.Command;
 import io.lettuce.core.pubsub.api.reactive.ChannelMessage;
 import io.lettuce.core.pubsub.api.reactive.PatternMessage;
 import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
@@ -32,6 +37,7 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Ali Takavci
  * @since 5.0
  */
 public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommandsImpl<K, V>
@@ -144,8 +150,23 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     }
 
     @Override
+    public Flux<K> pubsubShardChannels(K channel) {
+        return createDissolvingFlux(() -> commandBuilder.pubsubShardChannels(channel));
+    }
+
+    @Override
     public Mono<Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
         return createMono(() -> commandBuilder.pubsubShardNumsub(shardChannels));
+    }
+
+    @Override
+    public Mono<Long> spublish(K shardChannel, V message) {
+        return createMono(() -> commandBuilder.publish(shardChannel, message));
+    }
+
+    @Override
+    public Mono<Void> ssubscribe(K... shardChannels) {
+        return createFlux(() -> commandBuilder.ssubscribe(shardChannels)).then();
     }
 
     @Override

@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -35,6 +39,7 @@ import io.netty.buffer.Unpooled;
 class StringCodecUnitTests {
 
     private String teststring = "hello üäü~∑†®†ª€∂‚¶¢ Wørld";
+
     private String teststringPlain = "hello uufadsfasdfadssdfadfs";
 
     @Test
@@ -125,10 +130,9 @@ class StringCodecUnitTests {
     void sizeOf() {
 
         assertThat(new StringCodec(StandardCharsets.UTF_8).sizeOf(teststring, false))
-            .isEqualTo(ByteBufUtil.utf8MaxBytes(teststring));
-        assertThat(new StringCodec(StandardCharsets.US_ASCII).sizeOf(teststring, false))
-            .isEqualTo(teststring.length());
-        assertThat(new StringCodec(StandardCharsets.ISO_8859_1).sizeOf(teststring, false))
-            .isEqualTo(teststring.length());
+                .isEqualTo(ByteBufUtil.utf8MaxBytes(teststring));
+        assertThat(new StringCodec(StandardCharsets.US_ASCII).sizeOf(teststring, false)).isEqualTo(teststring.length());
+        assertThat(new StringCodec(StandardCharsets.ISO_8859_1).sizeOf(teststring, false)).isEqualTo(teststring.length());
     }
+
 }

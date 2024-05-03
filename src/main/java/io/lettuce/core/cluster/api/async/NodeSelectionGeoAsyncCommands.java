@@ -1,7 +1,11 @@
 /*
- * Copyright 2017-2024 the original author or authors.
+ * Copyright 2017-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -157,7 +161,8 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      * @param geoArgs args to control the result.
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}.
      */
-    AsyncExecutions<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoArgs geoArgs);
+    AsyncExecutions<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs);
 
     /**
      * Perform a {@link #georadius(Object, double, double, double, GeoArgs.Unit, GeoArgs)} query and store the results in a
@@ -172,7 +177,8 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result.
      */
-    AsyncExecutions<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    AsyncExecutions<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
@@ -211,11 +217,12 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result.
      */
-    AsyncExecutions<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    AsyncExecutions<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
-     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}.
-     * Use {@link GeoSearch} to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
+     * {@link GeoSearch} to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -226,8 +233,8 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
     AsyncExecutions<Set<V>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate);
 
     /**
-     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}.
-     * Use {@link GeoSearch} to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
+     * {@link GeoSearch} to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -236,7 +243,8 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      * @return nested multi-bulk reply. The {@link GeoWithin} contains only fields which were requested by {@link GeoArgs}.
      * @since 6.1
      */
-    AsyncExecutions<List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate, GeoArgs geoArgs);
+    AsyncExecutions<List<GeoWithin<V>>> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs);
 
     /**
      * Perform a {@link #geosearch(Object, GeoSearch.GeoRef, GeoSearch.GeoPredicate, GeoArgs)} query and store the results in a
@@ -247,9 +255,12 @@ public interface NodeSelectionGeoAsyncCommands<K, V> {
      * @param reference the reference member or longitude/latitude coordinates.
      * @param predicate the bounding box or radius to search in.
      * @param geoArgs args to control the result.
-     * @param storeDist  stores the items in a sorted set populated with their distance from the center of the circle or box, as a floating-point number, in the same unit specified for that shape.
+     * @param storeDist stores the items in a sorted set populated with their distance from the center of the circle or box, as
+     *        a floating-point number, in the same unit specified for that shape.
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */
-    AsyncExecutions<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate, GeoArgs geoArgs, boolean storeDist);
+    AsyncExecutions<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs, boolean storeDist);
+
 }

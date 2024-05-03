@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -132,7 +136,7 @@ class RedisClientConnectIntegrationTests extends TestSupport {
         CompletableFuture<String> f = connection.async().get("key1").whenComplete((result, e) -> {
             connection.close();
             redisClient.shutdown(0, 0, SECONDS); // deadlock expected.
-            }).toCompletableFuture();
+        }).toCompletableFuture();
 
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(f)).isInstanceOf(TimeoutException.class);
     }
@@ -196,8 +200,7 @@ class RedisClientConnectIntegrationTests extends TestSupport {
     @Test
     void connectPubSubAsync() {
         RedisURI redisURI = redis(host, port).build();
-        ConnectionFuture<StatefulRedisPubSubConnection<String, String>> future = client.connectPubSubAsync(
-UTF8, redisURI);
+        ConnectionFuture<StatefulRedisPubSubConnection<String, String>> future = client.connectPubSubAsync(UTF8, redisURI);
         StatefulRedisPubSubConnection<String, String> connection = future.join();
         assertThat(connection.getTimeout()).isEqualTo(redisURI.getTimeout());
         connection.close();
@@ -274,4 +277,5 @@ UTF8, redisURI);
 
         return redisURI;
     }
+
 }

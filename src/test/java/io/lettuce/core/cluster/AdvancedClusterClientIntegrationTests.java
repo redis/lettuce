@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -66,11 +70,15 @@ import io.lettuce.test.settings.TestSettings;
 class AdvancedClusterClientIntegrationTests extends TestSupport {
 
     private static final String KEY_ON_NODE_1 = "a";
+
     private static final String KEY_ON_NODE_2 = "b";
 
     private final RedisClusterClient clusterClient;
+
     private final StatefulRedisClusterConnection<String, String> clusterConnection;
+
     private final RedisAdvancedClusterAsyncCommands<String, String> async;
+
     private final RedisAdvancedClusterCommands<String, String> sync;
 
     @Inject
@@ -133,8 +141,8 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
         for (RedisClusterNode redisClusterNode : clusterClient.getPartitions()) {
 
             StatefulRedisConnection<String, String> nodeId = statefulConnection.getConnection(redisClusterNode.getNodeId());
-            StatefulRedisConnection<String, String> hostAndPort = statefulConnection.getConnection(redisClusterNode.getUri()
-                    .getHost(), redisClusterNode.getUri().getPort());
+            StatefulRedisConnection<String, String> hostAndPort = statefulConnection
+                    .getConnection(redisClusterNode.getUri().getHost(), redisClusterNode.getUri().getPort());
 
             assertThat(nodeId).isNotSameAs(hostAndPort);
         }
@@ -322,10 +330,10 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         writeKeysToTwoNodes();
 
-        RedisClusterCommands<String, String> nodeConnection1 = clusterConnection.getConnection(ClusterTestSettings.host,
-                ClusterTestSettings.port1).sync();
-        RedisClusterCommands<String, String> nodeConnection2 = clusterConnection.getConnection(ClusterTestSettings.host,
-                ClusterTestSettings.port1).sync();
+        RedisClusterCommands<String, String> nodeConnection1 = clusterConnection
+                .getConnection(ClusterTestSettings.host, ClusterTestSettings.port1).sync();
+        RedisClusterCommands<String, String> nodeConnection2 = clusterConnection
+                .getConnection(ClusterTestSettings.host, ClusterTestSettings.port1).sync();
 
         assertThat(nodeConnection1.dbsize()).isEqualTo(1);
         assertThat(nodeConnection2.dbsize()).isEqualTo(1);
@@ -648,8 +656,8 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
             }
         } while (!scanCursor.isFinished());
 
-        assertThat(adapter.getList()).containsAll(
-                KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
+        assertThat(adapter.getList())
+                .containsAll(KeysAndValues.KEYS.stream().filter(k -> k.startsWith("a")).collect(Collectors.toList()));
 
     }
 

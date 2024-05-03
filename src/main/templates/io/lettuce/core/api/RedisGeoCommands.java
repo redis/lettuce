@@ -1,18 +1,3 @@
-/*
- * Copyright 2017-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core;
 
 import io.lettuce.core.*;
@@ -206,8 +191,8 @@ public interface RedisGeoCommands<K, V> {
     Long georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
-     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}.
-     * Use {@link GeoSearch} to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
+     * {@link GeoSearch} to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -218,8 +203,8 @@ public interface RedisGeoCommands<K, V> {
     Set<V> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate);
 
     /**
-     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}.
-     * Use {@link GeoSearch} to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
+     * {@link GeoSearch} to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -239,7 +224,8 @@ public interface RedisGeoCommands<K, V> {
      * @param reference the reference member or longitude/latitude coordinates.
      * @param predicate the bounding box or radius to search in.
      * @param geoArgs args to control the result.
-     * @param storeDist  stores the items in a sorted set populated with their distance from the center of the circle or box, as a floating-point number, in the same unit specified for that shape.
+     * @param storeDist stores the items in a sorted set populated with their distance from the center of the circle or box, as
+     *        a floating-point number, in the same unit specified for that shape.
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */

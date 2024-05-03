@@ -1,7 +1,11 @@
 /*
- * Copyright 2017-2024 the original author or authors.
+ * Copyright 2017-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -56,8 +60,11 @@ import io.netty.channel.ConnectTimeoutException;
 class AsyncConnectionProviderIntegrationTests {
 
     private final ClientResources resources;
+
     private RedisClusterClient client;
+
     private ServerSocket serverSocket;
+
     private CountDownLatch connectInitiated = new CountDownLatch(1);
 
     private AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<String, String>, ConnectionFuture<StatefulRedisConnection<String, String>>> sut;
@@ -75,6 +82,7 @@ class AsyncConnectionProviderIntegrationTests {
         client = RedisClusterClient.create(resources, "redis://localhost");
         client.setOptions(ClusterClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build());
         sut = new AsyncConnectionProvider<>(new AbstractClusterNodeConnectionFactory<String, String>(resources) {
+
             @Override
             public ConnectionFuture<StatefulRedisConnection<String, String>> apply(ConnectionKey connectionKey) {
 
@@ -88,6 +96,7 @@ class AsyncConnectionProviderIntegrationTests {
 
                 return future;
             }
+
         });
     }
 
@@ -99,8 +108,7 @@ class AsyncConnectionProviderIntegrationTests {
     @Test
     void shouldCloseConnectionByKey() throws IOException {
 
-        ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, TestSettings.host(),
-                TestSettings.port());
+        ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, TestSettings.host(), TestSettings.port());
 
         sut.getConnection(connectionKey);
         sut.close(connectionKey);
@@ -114,8 +122,7 @@ class AsyncConnectionProviderIntegrationTests {
     @Test
     void shouldCloseConnections() throws IOException {
 
-        ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, TestSettings.host(),
-                TestSettings.port());
+        ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, TestSettings.host(), TestSettings.port());
 
         sut.getConnection(connectionKey);
         TestFutures.awaitOrTimeout(sut.close());
@@ -141,14 +148,12 @@ class AsyncConnectionProviderIntegrationTests {
         StopWatch stopWatch = new StopWatch();
 
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(sut.getConnection(connectionKey)))
-                .hasCauseInstanceOf(
-                ConnectTimeoutException.class);
+                .hasCauseInstanceOf(ConnectTimeoutException.class);
 
         stopWatch.start();
 
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(sut.getConnection(connectionKey)))
-                .hasCauseInstanceOf(
-                ConnectTimeoutException.class);
+                .hasCauseInstanceOf(ConnectTimeoutException.class);
 
         stopWatch.stop();
 
@@ -203,4 +208,5 @@ class AsyncConnectionProviderIntegrationTests {
         sut.close();
         socket.close();
     }
+
 }

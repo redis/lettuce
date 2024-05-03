@@ -1,0 +1,26 @@
+name: "Close stale issues"
+on:
+  schedule:
+    - cron: "0 0 * * *"          # once a day at midnight
+
+permissions: {}
+jobs:
+  stale:
+    permissions:
+      issues: write              # to close stale issues (actions/stale)
+      pull-requests: write       # to close stale PRs (actions/stale)
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v3
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: 'If you would like us to look at this issue, please provide the requested information. If the information is not provided within the next 30 days this issue will be closed.'
+          stale-pr-message: 'Closing due to lack of requested feedback. If you would like us to look at this issue, please provide the requested information and we will re-open the issue.'
+          days-before-stale: 365
+          days-before-close: 30
+          stale-issue-label: "status: feedback-reminder"
+          stale-pr-label: "status: feedback-reminder"
+          operations-per-run: 10
+          remove-stale-when-updated: false
+          only-labels: "status: waiting-for-feedback"

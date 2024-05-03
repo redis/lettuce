@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -47,20 +51,30 @@ import io.lettuce.test.resource.TestClientResources;
 
 /**
  * @author Mark Paluch
+ * @author Ali Takavci
  */
 class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
     private RedisPubSubReactiveCommands<String, String> pubsub;
+
     private RedisPubSubReactiveCommands<String, String> pubsub2;
 
     private BlockingQueue<String> channels;
+
+    private BlockingQueue<String> shardChannels;
+
     private BlockingQueue<String> patterns;
+
     private BlockingQueue<String> messages;
+
     private BlockingQueue<Long> counts;
 
     private String shardChannel = "shard-channel";
+
     private String channel = "channel0";
+
     private String pattern = "channel*";
+
     private String message = "msg!";
 
     @BeforeEach
@@ -70,6 +84,7 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
         pubsub2 = client.connectPubSub().reactive();
         pubsub.getStatefulConnection().addListener(this);
         channels = LettuceFactories.newBlockingQueue();
+        shardChannels = LettuceFactories.newBlockingQueue();
         patterns = LettuceFactories.newBlockingQueue();
         messages = LettuceFactories.newBlockingQueue();
         counts = LettuceFactories.newBlockingQueue();
@@ -254,16 +269,42 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
 
     @Test
     @EnabledOnCommand("SPUBLISH")
-    void pubsubShardNumsub() {
+    void pubsubShardChannels() {
+        block(pubsub.ssubscribe(shardChannel));
+        List<String> result = block(pubsub2.pubsubShardChannels().collectList());
+        assertThat(result).contains(shardChannel);
+    }
 
-        // TODO After we have SSUBSCRIBE implement a step to subscribe to a shard channel
-        // Depends on https://github.com/lettuce-io/lettuce-core/issues/2758
+    @Test
+    @EnabledOnCommand("SPUBLISH")
+    void pubsubShardMultipleChannels() {
+        StepVerifier.create(pubsub.ssubscribe(shardChannel, "channel1", "channel3")).verifyComplete();
+
+        StepVerifier.create(pubsub2.pubsubShardChannels().collectList())
+                .consumeNextWith(actual -> assertThat(actual).contains(shardChannel, "channel1", "channel3")).verifyComplete();
+    }
+
+    @Test
+    @EnabledOnCommand("SPUBLISH")
+    void pubsubShardChannelsWithArg() {
+
+        StepVerifier.create(pubsub.ssubscribe(shardChannel)).verifyComplete();
+        Wait.untilTrue(() -> mono(pubsub2.pubsubShardChannels(shardChannel).filter(s -> shardChannel.equals(s))) != null)
+                .waitOrTimeout();
+
+        String result = mono(pubsub2.pubsubShardChannels(shardChannel).filter(s -> shardChannel.equals(s)));
+        assertThat(result).isEqualToIgnoringCase(shardChannel);
+    }
+
+    @Test
+    @EnabledOnCommand("SPUBLISH")
+    void pubsubShardNumsub() {
+        StepVerifier.create(pubsub.ssubscribe(shardChannel)).verifyComplete();
 
         Wait.untilEquals(1, () -> block(pubsub2.pubsubShardNumsub(shardChannel)).size()).waitOrTimeout();
 
         Map<String, Long> result = block(pubsub2.pubsubShardNumsub(shardChannel));
-        assertThat(result.getOrDefault(shardChannel, 0L)).isEqualTo(0);
-        // TODO verify that the channel from step 1 is the one returned by the command
+        assertThat(result.getOrDefault(shardChannel, 0L)).isEqualTo(1);
     }
 
     @Test
@@ -277,6 +318,7 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
         Long result = block(pubsub2.pubsubNumpat());
         assertThat(result.longValue()).isGreaterThan(0);
     }
+
     @Test
     void punsubscribe() throws Exception {
 
@@ -306,6 +348,13 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
         assertThat(channels).isEmpty();
         assertThat(patterns).isEmpty();
 
+    }
+
+    @Test
+    void ssubscribe() throws Exception {
+        StepVerifier.create(pubsub.ssubscribe(channel)).verifyComplete();
+        assertThat(shardChannels.take()).isEqualTo(channel);
+        assertThat((long) counts.take()).isGreaterThan(0);
     }
 
     @Test
@@ -376,6 +425,7 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
         final BlockingQueue<Long> localCounts = LettuceFactories.newBlockingQueue();
 
         RedisPubSubAdapter<String, String> adapter = new RedisPubSubAdapter<String, String>() {
+
             @Override
             public void subscribed(String channel, long count) {
                 super.subscribed(channel, count);
@@ -387,6 +437,7 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
                 super.unsubscribed(channel, count);
                 localCounts.add(count);
             }
+
         };
 
         pubsub.getStatefulConnection().addListener(adapter);
@@ -458,6 +509,12 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
         counts.add(count);
     }
 
+    @Override
+    public void ssubscribed(String shardChannel, long count) {
+        shardChannels.add(shardChannel);
+        counts.add(count);
+    }
+
     <T> T block(Mono<T> mono) {
         return mono.block();
     }
@@ -469,4 +526,5 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
     <T> List<T> all(Flux<T> flux) {
         return flux.collectList().block();
     }
+
 }

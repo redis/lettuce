@@ -1,18 +1,3 @@
-/*
- * Copyright 2017-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.test.server;
 
 import java.util.ArrayList;
@@ -35,8 +20,11 @@ import io.netty.util.concurrent.DefaultThreadFactory;
 public class MockTcpServer {
 
     private EventLoopGroup bossGroup;
+
     private EventLoopGroup workerGroup;
+
     private Channel channel;
+
     private List<Supplier<? extends ChannelHandler>> handlers = new ArrayList<>();
 
     public void addHandler(Supplier<? extends ChannelHandler> supplier) {
@@ -51,6 +39,7 @@ public class MockTcpServer {
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).option(ChannelOption.SO_BACKLOG, 100)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
+
                     @Override
                     public void initChannel(SocketChannel ch) {
                         ChannelPipeline p = ch.pipeline();
@@ -60,6 +49,7 @@ public class MockTcpServer {
                             p.addLast(handler.get());
                         }
                     }
+
                 });
 
         // Start the server.
@@ -75,6 +65,7 @@ public class MockTcpServer {
     private static class Resources {
 
         private static final EventLoopGroup bossGroup;
+
         private static final EventLoopGroup workerGroup;
 
         static {
@@ -89,4 +80,5 @@ public class MockTcpServer {
         }
 
     }
+
 }

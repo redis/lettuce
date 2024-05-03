@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -113,8 +117,7 @@ class ClusterSetup {
         Wait.untilTrue(clusterHelper::isStable).waitOrTimeout();
 
         TestFutures.awaitOrTimeout(connection.getConnection(ClusterTestSettings.host, ClusterTestSettings.port6)
-                .clusterReplicate(
-                node1.clusterMyId()));
+                .clusterReplicate(node1.clusterMyId()));
 
         clusterHelper.getClusterClient().reloadPartitions();
 
@@ -127,8 +130,7 @@ class ClusterSetup {
         Wait.untilEquals(1L, () -> {
             clusterHelper.getClusterClient().reloadPartitions();
             return partitionStream(clusterHelper)
-                    .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA))
-                    .count();
+                    .filter(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.REPLICA)).count();
         }).waitOrTimeout();
 
         connection.getStatefulConnection().close();

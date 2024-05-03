@@ -1,7 +1,11 @@
 /*
- * Copyright 2019-2024 the original author or authors.
+ * Copyright 2019-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -160,11 +164,9 @@ public class KqueueProvider {
         @Override
         public Class<? extends DatagramChannel> datagramChannelClass() {
 
-
             checkForKqueueLibrary();
             return null;
         }
-
 
     }
 
@@ -215,7 +217,6 @@ public class KqueueProvider {
             return KQueueDatagramChannel.class;
         }
 
-
         @Override
         public Class<? extends Channel> domainSocketChannelClass() {
 
@@ -223,7 +224,6 @@ public class KqueueProvider {
 
             return KQueueDomainSocketChannel.class;
         }
-
 
         @Override
         public SocketAddress newSocketAddress(String socketPath) {

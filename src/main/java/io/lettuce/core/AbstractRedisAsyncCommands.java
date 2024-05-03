@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,15 +18,6 @@
  * limitations under the License.
  */
 package io.lettuce.core;
-
-import static io.lettuce.core.protocol.CommandType.*;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
@@ -46,6 +41,19 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static io.lettuce.core.protocol.CommandType.EXEC;
+import static io.lettuce.core.protocol.CommandType.GEORADIUS;
+import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER;
+import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
+import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
+
 /**
  * An asynchronous and thread-safe API for a Redis connection.
  *
@@ -56,6 +64,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author Tugdual Grall
  * @author dengliming
  * @author Andrey Shlykov
+ * @author Ali Takavci
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
@@ -790,6 +799,27 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Boolean> hexpire(K key, long seconds, K... fields) {
+        return hexpire(key, seconds, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+        return dispatch(commandBuilder.hexpire(key, seconds, expireArgs, fields));
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpire(K key, Duration seconds, K... fields) {
+        return hexpire(key, seconds, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return hexpire(key, seconds.toMillis() / 1000, expireArgs, fields);
+    }
+
+    @Override
     public RedisFuture<Boolean> expireat(K key, long timestamp) {
         return expireat(key, timestamp, null);
     }
@@ -822,8 +852,46 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Boolean> hexpireat(K key, long timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+        return dispatch(commandBuilder.hexpireat(key, timestamp, expireArgs, fields));
+
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, Date timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hexpireat(key, timestamp.getTime() / 1000, expireArgs, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, Instant timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, fields);
+    }
+
+    @Override
     public RedisFuture<Long> expiretime(K key) {
         return dispatch(commandBuilder.expiretime(key));
+    }
+
+    @Override
+    public RedisFuture<Long> hexpiretime(K key, K... fields) {
+        return dispatch(commandBuilder.hexpiretime(key, fields));
     }
 
     @Override
@@ -1165,8 +1233,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<KeyScanCursor<K>> hscanNovalues(K key) {
+        return dispatch(commandBuilder.hscanNovalues(key));
+    }
+
+    @Override
     public RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
         return dispatch(commandBuilder.hscan(key, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> hscanNovalues(K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanNovalues(key, scanArgs));
     }
 
     @Override
@@ -1175,8 +1253,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanNovalues(key, scanCursor, scanArgs));
+    }
+
+    @Override
     public RedisFuture<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
         return dispatch(commandBuilder.hscan(key, scanCursor));
+    }
+
+    @Override
+    public RedisFuture<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.hscanNovalues(key, scanCursor));
     }
 
     @Override
@@ -1185,8 +1273,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key) {
+        return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key));
+    }
+
+    @Override
     public RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
         return dispatch(commandBuilder.hscanStreaming(channel, key, scanArgs));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key, scanArgs));
     }
 
     @Override
@@ -1196,8 +1294,19 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
+        return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor, scanArgs));
+    }
+
+    @Override
     public RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
         return dispatch(commandBuilder.hscanStreaming(channel, key, scanCursor));
+    }
+
+    @Override
+    public RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor) {
+        return dispatch(commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor));
     }
 
     @Override
@@ -1444,6 +1553,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Boolean> hpersist(K key, K... fields) {
+        return dispatch(commandBuilder.hpersist(key, fields));
+    }
+
+    @Override
     public RedisFuture<Boolean> pexpire(K key, long milliseconds) {
         return pexpire(key, milliseconds, null);
     }
@@ -1554,6 +1668,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Map<K, Long>> pubsubNumsub(K... channels) {
         return dispatch(commandBuilder.pubsubNumsub(channels));
+    }
+
+    @Override
+    public RedisFuture<List<K>> pubsubShardChannels() {
+        return dispatch(commandBuilder.pubsubShardChannels());
+    }
+
+    @Override
+    public RedisFuture<List<K>> pubsubShardChannels(K pattern) {
+        return dispatch(commandBuilder.pubsubShardChannels(pattern));
     }
 
     @Override
@@ -1943,6 +2067,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Set<V>> spop(K key, long count) {
         return dispatch(commandBuilder.spop(key, count));
+    }
+
+    @Override
+    public RedisFuture<Long> spublish(K shardChannel, V message) {
+        return dispatch(commandBuilder.spublish(shardChannel, message));
     }
 
     @Override

@@ -1,7 +1,11 @@
 /*
- * Copyright 2017-2024 the original author or authors.
+ * Copyright 2017-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -30,6 +34,7 @@ import io.lettuce.core.output.CommandOutput;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author Tihomir Mateev
+ * @author Ali Takavci
  * @since 4.0
  */
 public interface BaseRedisCommands<K, V> {
@@ -67,6 +72,21 @@ public interface BaseRedisCommands<K, V> {
     Map<K, Long> pubsubNumsub(K... channels);
 
     /**
+     * Lists the currently *active shard channels*.
+     *
+     * @return List&lt;K&gt; array-reply a list of active channels.
+     */
+    List<K> pubsubShardChannels();
+
+    /**
+     * Lists the currently *active shard channels*.
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply a list of active channels, optionally matching the specified pattern.
+     */
+    List<K> pubsubShardChannels(K pattern);
+
+    /**
      * Returns the number of subscribers (not counting clients subscribed to patterns) for the specified shard channels.
      *
      * @param shardChannels channel keys.
@@ -81,6 +101,16 @@ public interface BaseRedisCommands<K, V> {
      * @return Long integer-reply the number of patterns all the clients are subscribed to.
      */
     Long pubsubNumpat();
+
+    /**
+     * Post a message to a shard channel.
+     *
+     * @param shardChannel the shard channel type: key.
+     * @param message the message type: value.
+     * @return Long integer-reply the number of clients that received the message.
+     * @since 7.0
+     */
+    Long spublish(K shardChannel, V message);
 
     /**
      * Echo the given string.
@@ -160,8 +190,8 @@ public interface BaseRedisCommands<K, V> {
 
     /**
      * @return {@code true} if the connection is open (connected and not closed).
-     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#isOpen()} method on the connection
-     * interface. To be removed with Lettuce 7.0.
+     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#isOpen()} method on the
+     *             connection interface. To be removed with Lettuce 7.0.
      */
     @Deprecated
     boolean isOpen();
@@ -169,8 +199,9 @@ public interface BaseRedisCommands<K, V> {
     /**
      * Reset the command state. Queued commands will be canceled and the internal state will be reset. This is useful when the
      * internal state machine gets out of sync with the connection.
-     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#reset()} method on the connection
-     * interface. To be removed with Lettuce 7.0.
+     * 
+     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#reset()} method on the
+     *             connection interface. To be removed with Lettuce 7.0.
      */
     @Deprecated
     void reset();
@@ -181,9 +212,9 @@ public interface BaseRedisCommands<K, V> {
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
      *
      * @param autoFlush state of autoFlush.
-     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#setAutoFlushCommands(boolean)} method on the connection
-     * interface. To be removed with Lettuce 7.0.
-
+     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#setAutoFlushCommands(boolean)}
+     *             method on the connection interface. To be removed with Lettuce 7.0.
+     * 
      */
     @Deprecated
     void setAutoFlushCommands(boolean autoFlush);
@@ -191,9 +222,10 @@ public interface BaseRedisCommands<K, V> {
     /**
      * Flush pending commands. This commands forces a flush on the channel and can be used to buffer ("pipeline") commands to
      * achieve batching. No-op if channel is not connected.
-     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#flushCommands()} method on the connection
-     * interface. To be removed with Lettuce 7.0.
-
+     * 
+     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#flushCommands()} method on the
+     *             connection interface. To be removed with Lettuce 7.0.
+     * 
      */
     @Deprecated
     void flushCommands();

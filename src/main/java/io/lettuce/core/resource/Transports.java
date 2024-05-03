@@ -1,18 +1,3 @@
-/*
- * Copyright 2020-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core.resource;
 
 import io.lettuce.core.internal.LettuceAssert;
@@ -68,6 +53,7 @@ public class Transports {
 
         return NioDatagramChannel.class;
     }
+
     /**
      * Native transport support.
      */
@@ -109,14 +95,29 @@ public class Transports {
          */
         public static Class<? extends Channel> domainSocketChannelClass() {
             assertDomainSocketAvailable();
-            return RESOURCES.domainSocketChannelClass();
+            return EpollProvider.isAvailable() && IOUringProvider.isAvailable()
+                    ? EpollProvider.getResources().domainSocketChannelClass()
+                    : RESOURCES.domainSocketChannelClass();
+        }
+
+        /**
+         * @return the native transport {@link EventLoopGroup} class. Defaults to TCP sockets. See
+         *         {@link #eventLoopGroupClass(boolean)} to request a specific EventLoopGroup for Domain Socket usage.
+         */
+        public static Class<? extends EventLoopGroup> eventLoopGroupClass() {
+            return eventLoopGroupClass(false);
         }
 
         /**
          * @return the native transport {@link EventLoopGroup} class.
+         * @param domainSocket {@code true} to indicate Unix Domain Socket usage, {@code false} otherwise.
+         * @since 6.3.3
          */
-        public static Class<? extends EventLoopGroup> eventLoopGroupClass() {
-            return RESOURCES.eventLoopGroupClass();
+        public static Class<? extends EventLoopGroup> eventLoopGroupClass(boolean domainSocket) {
+
+            return domainSocket && EpollProvider.isAvailable() && IOUringProvider.isAvailable()
+                    ? EpollProvider.getResources().eventLoopGroupClass()
+                    : RESOURCES.eventLoopGroupClass();
         }
 
         public static void assertDomainSocketAvailable() {

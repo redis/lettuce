@@ -1,18 +1,3 @@
-/*
- * Copyright 2018-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core.codec;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,10 +30,13 @@ import io.netty.buffer.Unpooled;
 class CipherCodecUnitTests {
 
     private final SecretKeySpec key = new SecretKeySpec("1234567890123456".getBytes(), "AES");
+
     private final IvParameterSpec iv = new IvParameterSpec("1234567890123456".getBytes());
+
     private final String transform = "AES/CBC/PKCS5Padding";
 
     CipherCodec.CipherSupplier encrypt = new CipherCodec.CipherSupplier() {
+
         @Override
         public Cipher get(CipherCodec.KeyDescriptor keyDescriptor) throws GeneralSecurityException {
 
@@ -61,6 +49,7 @@ class CipherCodecUnitTests {
         public CipherCodec.KeyDescriptor encryptionKey() {
             return CipherCodec.KeyDescriptor.create("foobar", 142);
         }
+
     };
 
     CipherCodec.CipherSupplier decrypt = (CipherCodec.KeyDescriptor keyDescriptor) -> {
@@ -121,8 +110,8 @@ class CipherCodecUnitTests {
 
         RedisCodec<String, String> crypto = CipherCodec.forValues(StringCodec.UTF8, encrypt, decrypt);
 
-        ByteBuffer encrypted = ByteBuffer.wrap(new byte[] { 36, 43, 48, 36, -99, -39, 126, -106, -7, -88, 118, -74, 42, 98,
-                117, 81, 37, -124, 26, -88 });// crypto.encodeValue("foobar");
+        ByteBuffer encrypted = ByteBuffer.wrap(
+                new byte[] { 36, 43, 48, 36, -99, -39, 126, -106, -7, -88, 118, -74, 42, 98, 117, 81, 37, -124, 26, -88 });// crypto.encodeValue("foobar");
 
         String result = crypto.decodeValue(encrypted);
         assertThat(result).isEqualTo("foobar");
@@ -138,6 +127,7 @@ class CipherCodecUnitTests {
     static class CryptoTestArgs {
 
         private final int size;
+
         private final String content;
 
         public CryptoTestArgs(String content) {
@@ -153,5 +143,7 @@ class CipherCodecUnitTests {
             sb.append(']');
             return sb.toString();
         }
+
     }
+
 }

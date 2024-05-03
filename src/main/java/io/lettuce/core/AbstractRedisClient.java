@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -30,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
 import io.lettuce.core.event.connection.ConnectionCreatedEvent;
@@ -60,7 +65,6 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.publisher.Mono;
 
 /**
  * Base Redis client. This class holds the netty infrastructure, {@link ClientOptions} and the basic connection procedure. This
@@ -301,8 +305,8 @@ public abstract class AbstractRedisClient implements AutoCloseable {
         LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
 
         boolean domainSocket = LettuceStrings.isNotEmpty(connectionPoint.getSocket());
-        connectionBuilder.bootstrap().group(
-                getEventLoopGroup(domainSocket ? NativeTransports.eventLoopGroupClass() : Transports.eventLoopGroupClass()));
+        connectionBuilder.bootstrap().group(getEventLoopGroup(
+                domainSocket ? NativeTransports.eventLoopGroupClass(true) : Transports.eventLoopGroupClass()));
 
         if (connectionPoint.getSocket() != null) {
             NativeTransports.assertDomainSocketAvailable();

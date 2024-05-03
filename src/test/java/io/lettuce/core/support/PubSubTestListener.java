@@ -1,7 +1,11 @@
 /*
- * Copyright 2016-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -26,9 +30,16 @@ import io.lettuce.core.pubsub.RedisPubSubListener;
 public class PubSubTestListener implements RedisPubSubListener<String, String> {
 
     private BlockingQueue<String> channels = LettuceFactories.newBlockingQueue();
+
     private BlockingQueue<String> patterns = LettuceFactories.newBlockingQueue();
+
     private BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
+
     private BlockingQueue<Long> counts = LettuceFactories.newBlockingQueue();
+
+    private BlockingQueue<String> shardChannels = LettuceFactories.newBlockingQueue();
+
+    private BlockingQueue<Long> shardCounts = LettuceFactories.newBlockingQueue();
 
     // RedisPubSubListener implementation
 
@@ -46,9 +57,21 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
     }
 
     @Override
+    public void smessage(String channel, String message) {
+        shardChannels.add(channel);
+        messages.add(message);
+    }
+
+    @Override
     public void subscribed(String channel, long count) {
         channels.add(channel);
         counts.add(count);
+    }
+
+    @Override
+    public void ssubscribed(String shardChannel, long count) {
+        shardChannels.add(shardChannel);
+        shardCounts.add(count);
     }
 
     @Override
@@ -73,6 +96,10 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
         return channels;
     }
 
+    public BlockingQueue<String> getShardChannels() {
+        return shardChannels;
+    }
+
     public BlockingQueue<String> getPatterns() {
         return patterns;
     }
@@ -84,4 +111,21 @@ public class PubSubTestListener implements RedisPubSubListener<String, String> {
     public BlockingQueue<Long> getCounts() {
         return counts;
     }
+
+    public BlockingQueue<Long> getShardCounts() {
+        return shardCounts;
+    }
+
+    /**
+     * Clear listener state (i.e. channels, patterns, messages, counts).
+     */
+    public void clear() {
+        channels.clear();
+        shardChannels.clear();
+        patterns.clear();
+        messages.clear();
+        counts.clear();
+        shardCounts.clear();
+    }
+
 }

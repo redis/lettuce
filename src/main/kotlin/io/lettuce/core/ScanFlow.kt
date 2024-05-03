@@ -1,7 +1,11 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -68,6 +72,28 @@ object ScanFlow {
         return when (scanArgs) {
             null -> ScanStream.hscan(ops, key)
             else -> ScanStream.hscan(ops, key, scanArgs)
+        }.asFlow()
+    }
+
+    /**
+     * Sequentially iterate hash key, without associated values.
+     *
+     * @param commands coroutines commands
+     * @param key the key.
+     * @param scanArgs scan arguments.
+     * @return `Flow<KeyValue<K, V>>` flow of key-values.
+     * @since 7.0
+     */
+    fun <K : Any, V : Any> hscanNovalues(commands: RedisHashCoroutinesCommands<K, V>, key: K, scanArgs: ScanArgs? = null): Flow<K> {
+        val ops = when (commands) {
+            is RedisCoroutinesCommandsImpl -> commands.ops
+            is RedisClusterCoroutinesCommandsImpl -> commands.ops
+            is RedisHashCoroutinesCommandsImpl -> commands.ops
+            else -> throw IllegalArgumentException("Cannot access underlying reactive API")
+        }
+        return when (scanArgs) {
+            null -> ScanStream.hscanNovalues(ops, key)
+            else -> ScanStream.hscanNovalues(ops, key, scanArgs)
         }.asFlow()
     }
 

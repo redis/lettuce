@@ -1,7 +1,11 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -22,6 +26,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import java.time.Duration
+import java.time.Instant
+import java.util.*
 
 
 /**
@@ -72,8 +79,14 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun hscan(key: K): MapScanCursor<K, V>? =
         ops.hscan(key).awaitFirstOrNull()
 
+    override suspend fun hscanNovalues(key: K): KeyScanCursor<K>? =
+        ops.hscanNovalues(key).awaitFirstOrNull()
+
     override suspend fun hscan(key: K, scanArgs: ScanArgs): MapScanCursor<K, V>? =
         ops.hscan(key, scanArgs).awaitFirstOrNull()
+
+    override suspend fun hscanNovalues(key: K, scanArgs: ScanArgs): KeyScanCursor<K>? =
+        ops.hscanNovalues(key, scanArgs).awaitFirstOrNull()
 
     override suspend fun hscan(
         key: K,
@@ -81,8 +94,17 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
         scanArgs: ScanArgs
     ): MapScanCursor<K, V>? = ops.hscan(key, scanCursor, scanArgs).awaitFirstOrNull()
 
+    override suspend fun hscanNovalues(
+        key: K,
+        scanCursor: ScanCursor,
+        scanArgs: ScanArgs
+    ): KeyScanCursor<K>? = ops.hscanNovalues(key, scanCursor, scanArgs).awaitFirstOrNull()
+
     override suspend fun hscan(key: K, scanCursor: ScanCursor): MapScanCursor<K, V>? =
         ops.hscan(key, scanCursor).awaitFirstOrNull()
+
+    override suspend fun hscanNovalues(key: K, scanCursor: ScanCursor): KeyScanCursor<K>? =
+        ops.hscanNovalues(key, scanCursor).awaitFirstOrNull()
 
     override suspend fun hset(key: K, field: K, value: V): Boolean? = ops.hset(key, field, value).awaitFirstOrNull()
 
@@ -93,6 +115,61 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun hstrlen(key: K, field: K): Long? = ops.hstrlen(key, field).awaitFirstOrNull()
 
     override fun hvals(key: K): Flow<V> = ops.hvals(key).asFlow()
+
+    override suspend fun hexpire(key: K, seconds: Long, vararg fields: K): Boolean? =
+        ops.hexpire(key, seconds, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpire(key: K, seconds: Long, expireArgs: ExpireArgs, vararg fields: K): Boolean? =
+        ops.hexpire(key, seconds, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpire(key: K, seconds: Duration, vararg fields: K): Boolean? =
+        ops.hexpire(key, seconds, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpire(
+        key: K,
+        seconds: Duration,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hexpire(key, seconds, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(key: K, timestamp: Date, vararg fields: K): Boolean? =
+        ops.hexpireat(key, timestamp, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(
+        key: K,
+        timestamp: Long,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(key: K, timestamp: Instant, vararg fields: K): Boolean? =
+        ops.hexpireat(key, timestamp, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(
+        key: K,
+        timestamp: Instant,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(key: K, timestamp: Long, vararg fields: K): Boolean? =
+        ops.hexpireat(key, timestamp, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpireat(
+        key: K,
+        timestamp: Date,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hexpiretime(key: K, vararg fields: K): Long? =
+        ops.hexpiretime(key).awaitFirstOrNull()
+
+    override suspend fun hpersist(key: K, vararg fields: K): Boolean? = ops.hpersist(key).awaitFirstOrNull()
 
 }
 

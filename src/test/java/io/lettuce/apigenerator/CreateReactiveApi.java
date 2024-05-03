@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -47,10 +51,12 @@ import io.lettuce.core.internal.LettuceSets;
  */
 public class CreateReactiveApi {
 
-    public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+    public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
+            "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
 
     public static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "evalReadOnly",
             "evalshaReadOnly", "fcall", "fcallReadOnly", "dispatch");
+
     public static Set<String> VALUE_WRAP = LettuceSets.unmodifiableSet("geopos", "bitfield");
 
     private static final Map<String, String> RESULT_SPEC;
@@ -156,8 +162,7 @@ public class CreateReactiveApi {
         };
     }
 
-    private String getResultType(MethodDeclaration method,
-                                 ClassOrInterfaceDeclaration classOfMethod) {
+    private String getResultType(MethodDeclaration method, ClassOrInterfaceDeclaration classOfMethod) {
 
         String declaration = nameAndParameters(method);
         if (RESULT_SPEC.containsKey(declaration)) {
@@ -207,8 +212,8 @@ public class CreateReactiveApi {
             targetPackage = "io.lettuce.core.api.reactive";
         }
 
-        CompilationUnitFactory factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName, commentMutator(),
-                methodTypeMutator(), methodMutator(), methodDeclaration -> true, importSupplier(), null,
+        CompilationUnitFactory factory = new CompilationUnitFactory(templateFile, Constants.SOURCES, targetPackage, targetName,
+                commentMutator(), methodTypeMutator(), methodMutator(), methodDeclaration -> true, importSupplier(), null,
                 methodCommentMutator());
         factory.keepMethodSignaturesFor(KEEP_METHOD_RESULT_TYPE);
         return factory;
@@ -230,4 +235,5 @@ public class CreateReactiveApi {
         sb.append(")");
         return sb.toString();
     }
+
 }

@@ -1,7 +1,11 @@
 /*
- * Copyright 2016-2024 the original author or authors.
+ * Copyright 2016-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -118,6 +122,22 @@ class ScanIteratorIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNovaluesShouldThrowNoSuchElementExceptionOnEmpty() {
+
+        redis.mset(KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, "none", ScanArgs.Builder.limit(50).match("key-foo"));
+
+        assertThat(scan.hasNext()).isFalse();
+        try {
+            scan.next();
+            fail("Missing NoSuchElementException");
+        } catch (NoSuchElementException e) {
+            assertThat(e).isInstanceOf(NoSuchElementException.class);
+        }
+    }
+
+    @Test
     void hashSinglePass() {
 
         redis.hmset(key, KeysAndValues.MAP);
@@ -137,6 +157,26 @@ class ScanIteratorIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hashNoValuesSinglePass() {
+
+        redis.hmset(key, KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, key, ScanArgs.Builder.limit(50).match("key-11*"));
+
+        assertThat(scan.hasNext()).isTrue();
+        assertThat(scan.hasNext()).isTrue();
+
+        for (int i = 0; i < 11; i++) {
+            assertThat(scan.hasNext()).isTrue();
+            String next = scan.next();
+            assertThat(next).isNotNull();
+            assertThat(next).startsWith("key-11");
+        }
+
+        assertThat(scan.hasNext()).isFalse();
+    }
+
+    @Test
     void hashMultiPass() {
 
         redis.hmset(key, KeysAndValues.MAP);
@@ -145,8 +185,20 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         List<KeyValue<String, String>> keys = scan.stream().collect(Collectors.toList());
 
-        assertThat(keys).containsAll(
-                KeysAndValues.KEYS.stream().map(s -> KeyValue.fromNullable(s, KeysAndValues.MAP.get(s))).collect(Collectors.toList()));
+        assertThat(keys).containsAll(KeysAndValues.KEYS.stream().map(s -> KeyValue.fromNullable(s, KeysAndValues.MAP.get(s)))
+                .collect(Collectors.toList()));
+    }
+
+    @Test
+    void hashNoValuesMultiPass() {
+
+        redis.hmset(key, KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, key);
+
+        List<String> keys = scan.stream().collect(Collectors.toList());
+
+        assertThat(keys).containsAll(KeysAndValues.KEYS);
     }
 
     @Test
@@ -154,8 +206,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         redis.sadd(key, KeysAndValues.VALUES.toArray(new String[0]));
 
-        ScanIterator<String> scan = ScanIterator.sscan(redis, "none",
-                ScanArgs.Builder.limit(50).match("key-foo"));
+        ScanIterator<String> scan = ScanIterator.sscan(redis, "none", ScanArgs.Builder.limit(50).match("key-foo"));
 
         assertThat(scan.hasNext()).isFalse();
         try {
@@ -171,8 +222,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         redis.sadd(key, KeysAndValues.KEYS.toArray(new String[0]));
 
-        ScanIterator<String> scan = ScanIterator.sscan(redis, key,
-                ScanArgs.Builder.limit(50).match("key-11*"));
+        ScanIterator<String> scan = ScanIterator.sscan(redis, key, ScanArgs.Builder.limit(50).match("key-11*"));
 
         assertThat(scan.hasNext()).isTrue();
         assertThat(scan.hasNext()).isTrue();
@@ -204,9 +254,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
             redis.zadd(key, ScoredValue.just(i, KeysAndValues.KEYS.get(i)));
         }
 
-
-        ScanIterator<ScoredValue<String>> scan = ScanIterator.zscan(redis, "none",
-                ScanArgs.Builder.limit(50).match("key-foo"));
+        ScanIterator<ScoredValue<String>> scan = ScanIterator.zscan(redis, "none", ScanArgs.Builder.limit(50).match("key-foo"));
 
         assertThat(scan.hasNext()).isFalse();
         try {
@@ -224,8 +272,7 @@ class ScanIteratorIntegrationTests extends TestSupport {
             redis.zadd(key, ScoredValue.just(i, KeysAndValues.KEYS.get(i)));
         }
 
-        ScanIterator<ScoredValue<String>> scan = ScanIterator.zscan(redis, key,
-                ScanArgs.Builder.limit(50).match("key-11*"));
+        ScanIterator<ScoredValue<String>> scan = ScanIterator.zscan(redis, key, ScanArgs.Builder.limit(50).match("key-11*"));
 
         assertThat(scan.hasNext()).isTrue();
         assertThat(scan.hasNext()).isTrue();
@@ -254,4 +301,5 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         assertThat(values).containsAll(values);
     }
+
 }
