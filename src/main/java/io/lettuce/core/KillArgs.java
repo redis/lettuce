@@ -172,6 +172,7 @@ public class KillArgs implements CompositeArgument {
         public static KillArgs maxAge(Long maxAge) {
             return new KillArgs().maxAge(maxAge);
         }
+
     }
 
     /**
