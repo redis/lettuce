@@ -167,7 +167,7 @@ public class KillArgs implements CompositeArgument {
          *
          * @return new {@link KillArgs} with {@literal MAXAGE} set.
          * @see KillArgs#maxAge(Long)
-         * @since 6.3
+         * @since 7.0
          */
         public static KillArgs maxAge(Long maxAge) {
             return new KillArgs().maxAge(maxAge);
@@ -258,7 +258,7 @@ public class KillArgs implements CompositeArgument {
      *
      * @param maxAge must not be {@code null}.
      * @return {@code this} {@link KillArgs}.
-     * @since 6.3
+     * @since 7.0
      */
     public KillArgs maxAge(Long maxAge) {
 
