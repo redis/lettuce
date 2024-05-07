@@ -36,9 +36,7 @@ jobs:
           java-version: 8
       - name: Install missing dependencies to container
         run: |
-          : # workaround for apt update issue related to Clearsigned file
-          : # details on https://github.com/orgs/community/discussions/120966#discussioncomment-9211925
-          sudo apt update || true
+          sudo apt update
           sudo apt install -y stunnel make git gcc
       - name: Maven offline
         run: |
