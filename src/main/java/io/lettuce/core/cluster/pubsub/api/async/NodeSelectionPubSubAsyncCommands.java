@@ -51,4 +51,13 @@ public interface NodeSelectionPubSubAsyncCommands<K, V> {
      */
     AsyncExecutions<Void> ssubscribe(K... shardChannels);
 
+    /**
+     * Stop listening for messages posted to the given shard channels.
+     *
+     * @param shardChannels the channels
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
+     * @since 7.0
+     */
+    AsyncExecutions<Void> sunsubscribe(K... shardChannels);
+
 }

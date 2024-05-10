@@ -170,6 +170,11 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
     }
 
     @Override
+    public Mono<Void> sunsubscribe(K... shardChannels) {
+        return createFlux(() -> commandBuilder.sunsubscribe(shardChannels)).then();
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public StatefulRedisPubSubConnection<K, V> getStatefulConnection() {
         return (StatefulRedisPubSubConnection<K, V>) super.getStatefulConnection();

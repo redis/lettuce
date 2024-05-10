@@ -50,6 +50,14 @@ public interface RedisPubSubCommands<K, V> extends RedisCommands<K, V> {
     void ssubscribe(K... shardChannels);
 
     /**
+     * Stop listening for messages posted to the given channels.
+     *
+     * @param shardChannels the channels
+     * @since 7.0
+     */
+    void sunsubscribe(K... shardChannels);
+
+    /**
      * @return the underlying connection.
      */
     StatefulRedisPubSubConnection<K, V> getStatefulConnection();

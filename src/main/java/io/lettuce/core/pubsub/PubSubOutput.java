@@ -38,7 +38,7 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> implements PubSub
 
     public enum Type {
 
-        message, pmessage, psubscribe, punsubscribe, subscribe, unsubscribe, ssubscribe, smessage;
+        message, pmessage, psubscribe, punsubscribe, subscribe, unsubscribe, ssubscribe, smessage, sunsubscribe;
 
         private final static Set<String> names = new HashSet<>();
 
@@ -124,6 +124,7 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> implements PubSub
             case subscribe:
             case unsubscribe:
             case ssubscribe:
+            case sunsubscribe:
                 channel = codec.decodeKey(bytes);
                 break;
             default:

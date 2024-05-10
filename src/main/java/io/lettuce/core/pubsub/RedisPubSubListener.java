@@ -89,6 +89,16 @@ public interface RedisPubSubListener<K, V> {
     }
 
     /**
+     * Unsubscribed from a shard channel.
+     *
+     * @param shardChannel Channel
+     * @param count Subscription count.
+     */
+    default void sunsubscribed(K shardChannel, long count) {
+        unsubscribed(shardChannel, count);
+    }
+
+    /**
      * Message received from a shard channel subscription.
      *
      * @param shardChannel shard channel.
