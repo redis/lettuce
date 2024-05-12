@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -65,14 +69,12 @@ class MicrometerCommandLatencyRecorderUnitTests {
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(2);
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers()).hasSize(1)
                 .element(0).extracting(Timer::takeSnapshot).hasFieldOrPropertyWithValue("count", 3L)
-                .hasFieldOrPropertyWithValue("max", 300.0)
-                .hasFieldOrPropertyWithValue("total", 600.0);
+                .hasFieldOrPropertyWithValue("max", 300.0).hasFieldOrPropertyWithValue("total", 600.0);
 
         assertThat(meterRegistry.find(METRIC_COMPLETION).timers()).hasSize(2);
         assertThat(meterRegistry.find(METRIC_COMPLETION).tag(LABEL_COMMAND, CommandType.BGSAVE.name()).timers()).hasSize(1)
                 .element(0).extracting(Timer::takeSnapshot).hasFieldOrPropertyWithValue("count", 3L)
-                .hasFieldOrPropertyWithValue("max", 1500.0)
-                .hasFieldOrPropertyWithValue("total", 3000.0);
+                .hasFieldOrPropertyWithValue("max", 1500.0).hasFieldOrPropertyWithValue("total", 3000.0);
     }
 
     @Test
@@ -182,7 +184,8 @@ class MicrometerCommandLatencyRecorderUnitTests {
         assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).timers()).hasSize(1);
 
         assertThat(meterRegistry.find(METRIC_COMPLETION).tag(LABEL_COMMAND, CommandType.CLUSTER.name()).timers()).hasSize(1);
-        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.CLUSTER.name()).timers()).hasSize(1);
+        assertThat(meterRegistry.find(METRIC_FIRST_RESPONSE).tag(LABEL_COMMAND, CommandType.CLUSTER.name()).timers())
+                .hasSize(1);
     }
 
 }

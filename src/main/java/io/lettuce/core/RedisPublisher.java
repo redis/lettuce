@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -410,7 +414,8 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
             /*
              * getDemand() maybe is Long.MAX_VALUE，because MonoNext.NextSubscriber#request(long n) inner use the Long.MAX_VALUE,
-             * so maybe "getDemand() + 1" will be overflow，we use "getDemand() > data.size() - 1" replace the "(getDemand() + 1) > data.size()"
+             * so maybe "getDemand() + 1" will be overflow，we use "getDemand() > data.size() - 1" replace the
+             * "(getDemand() + 1) > data.size()"
              */
             if (getDemand() > data.size() - 1) {
                 state().readData(this);

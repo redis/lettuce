@@ -1,7 +1,11 @@
 /*
- * Copyright 2019-2024 the original author or authors.
+ * Copyright 2019-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -34,6 +38,8 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.ConnectionInitializer;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.channel.Channel;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Redis RESP2/RESP3 handshake using the configured {@link ProtocolVersion} and other options for connection initialization and
@@ -45,7 +51,7 @@ import io.netty.channel.Channel;
  */
 class RedisHandshake implements ConnectionInitializer {
 
-    private static final RedisVersion CLIENT_SET_INFO_SINCE = RedisVersion.of("7.2");
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(RedisHandshake.class);
 
     private final RedisCommandBuilder<String, String> commandBuilder = new RedisCommandBuilder<>(StringCodec.UTF8);
 
@@ -95,8 +101,21 @@ class RedisHandshake implements ConnectionInitializer {
                     new RedisConnectionException("Protocol version" + this.requestedProtocolVersion + " not supported"));
         }
 
-        return handshake.thenCompose(
-                ignore -> applyPostHandshake(channel, connectionState.getRedisVersion(), getNegotiatedProtocolVersion()));
+        // post-handshake commands, whose execution failures would cause the connection to be considered
+        // unsuccessfully established
+        CompletableFuture<Void> postHandshake = applyPostHandshake(channel);
+
+        // post-handshake commands, executed in a 'fire and forget' manner, to avoid having to react to different
+        // implementations or versions of the server runtime, and whose execution result (whether a success or a
+        // failure ) should not alter the outcome of the connection attempt
+        CompletableFuture<Void> connectionMetadata = applyConnectionMetadata(channel).handle((result, error) -> {
+            if (error != null) {
+                LOG.debug("Error applying connection metadata", error);
+            }
+            return null;
+        });
+
+        return handshake.thenCompose(ignore -> postHandshake).thenCompose(ignore -> connectionMetadata);
     }
 
     private CompletionStage<?> tryHandshakeResp3(Channel channel) {
@@ -233,34 +252,9 @@ class RedisHandshake implements ConnectionInitializer {
         return dispatch(channel, this.commandBuilder.hello(3, null, null, connectionState.getClientName()));
     }
 
-    private CompletableFuture<Void> applyPostHandshake(Channel channel, String redisVersion,
-            ProtocolVersion negotiatedProtocolVersion) {
+    private CompletableFuture<Void> applyPostHandshake(Channel channel) {
 
         List<AsyncCommand<?, ?, ?>> postHandshake = new ArrayList<>();
-
-        ConnectionMetadata metadata = connectionState.getConnectionMetadata();
-
-        if (metadata.getClientName() != null && negotiatedProtocolVersion == ProtocolVersion.RESP2) {
-            postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetname(connectionState.getClientName())));
-        }
-
-        if (negotiatedProtocolVersion == ProtocolVersion.RESP3) {
-
-            RedisVersion currentVersion = RedisVersion.of(redisVersion);
-
-            if (currentVersion.isGreaterThanOrEqualTo(CLIENT_SET_INFO_SINCE)) {
-
-                if (LettuceStrings.isNotEmpty(metadata.getLibraryName())) {
-                    postHandshake
-                            .add(new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-name", metadata.getLibraryName())));
-                }
-
-                if (LettuceStrings.isNotEmpty(metadata.getLibraryVersion())) {
-                    postHandshake.add(
-                            new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-ver", metadata.getLibraryVersion())));
-                }
-            }
-        }
 
         if (connectionState.getDb() > 0) {
             postHandshake.add(new AsyncCommand<>(this.commandBuilder.select(connectionState.getDb())));
@@ -268,6 +262,32 @@ class RedisHandshake implements ConnectionInitializer {
 
         if (connectionState.isReadOnly()) {
             postHandshake.add(new AsyncCommand<>(this.commandBuilder.readOnly()));
+        }
+
+        if (postHandshake.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return dispatch(channel, postHandshake);
+    }
+
+    private CompletableFuture<Void> applyConnectionMetadata(Channel channel) {
+
+        List<AsyncCommand<?, ?, ?>> postHandshake = new ArrayList<>();
+
+        ConnectionMetadata metadata = connectionState.getConnectionMetadata();
+        ProtocolVersion negotiatedProtocolVersion = getNegotiatedProtocolVersion();
+
+        if (metadata.getClientName() != null && negotiatedProtocolVersion == ProtocolVersion.RESP2) {
+            postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetname(connectionState.getClientName())));
+        }
+
+        if (LettuceStrings.isNotEmpty(metadata.getLibraryName())) {
+            postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-name", metadata.getLibraryName())));
+        }
+
+        if (LettuceStrings.isNotEmpty(metadata.getLibraryVersion())) {
+            postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-ver", metadata.getLibraryVersion())));
         }
 
         if (postHandshake.isEmpty()) {

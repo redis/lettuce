@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -38,6 +42,7 @@ import io.lettuce.test.LettuceExtension;
 public class TransactionCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -136,16 +141,17 @@ public class TransactionCommandIntegrationTests extends TestSupport {
 
     @Test
     void execWithoutMulti() {
-        assertThatThrownBy(redis::exec).isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(
-                "ERR EXEC without MULTI");
+        assertThatThrownBy(redis::exec).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR EXEC without MULTI");
     }
 
     @Test
     void multiCalledTwiceShouldFail() {
 
         redis.multi();
-        assertThatThrownBy(redis::multi).isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining(
-                "ERR MULTI calls can not be nested");
+        assertThatThrownBy(redis::multi).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR MULTI calls can not be nested");
         redis.discard();
     }
+
 }

@@ -1,7 +1,11 @@
 /*
- * Copyright 2016-2024 the original author or authors.
+ * Copyright 2016-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -49,6 +53,7 @@ import io.lettuce.test.LettuceExtension;
 class ScanIteratorIntegrationTests extends TestSupport {
 
     private final StatefulRedisClusterConnection<String, String> connection;
+
     private final RedisClusterCommands<String, String> redis;
 
     @Inject
@@ -141,6 +146,22 @@ class ScanIteratorIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hscanNovaluesShouldThrowNoSuchElementExceptionOnEmpty() {
+
+        redis.mset(KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, "none", ScanArgs.Builder.limit(50).match("key-foo"));
+
+        assertThat(scan.hasNext()).isFalse();
+        try {
+            scan.next();
+            fail("Missing NoSuchElementException");
+        } catch (NoSuchElementException e) {
+            assertThat(e).isInstanceOf(NoSuchElementException.class);
+        }
+    }
+
+    @Test
     void hashSinglePass() {
 
         redis.hmset(key, KeysAndValues.MAP);
@@ -160,6 +181,23 @@ class ScanIteratorIntegrationTests extends TestSupport {
     }
 
     @Test
+    void hashNovaluesSinglePass() {
+
+        redis.hmset(key, KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, key, ScanArgs.Builder.limit(50).match("key-11*"));
+
+        for (int i = 0; i < 11; i++) {
+            assertThat(scan.hasNext()).isTrue();
+            String next = scan.next();
+            assertThat(next).isNotNull();
+            assertThat(next).startsWith("key-11");
+        }
+
+        assertThat(scan.hasNext()).isFalse();
+    }
+
+    @Test
     void hashMultiPass() {
 
         redis.hmset(key, KeysAndValues.MAP);
@@ -170,6 +208,18 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         assertThat(keys).containsAll(KeysAndValues.KEYS.stream().map(s -> KeyValue.fromNullable(s, KeysAndValues.MAP.get(s)))
                 .collect(Collectors.toList()));
+    }
+
+    @Test
+    void hashNovaluesMultiPass() {
+
+        redis.hmset(key, KeysAndValues.MAP);
+
+        ScanIterator<String> scan = ScanIterator.hscanNovalues(redis, key);
+
+        List<String> keys = scan.stream().collect(Collectors.toList());
+
+        assertThat(keys).containsAll(KeysAndValues.KEYS);
     }
 
     @Test
@@ -271,4 +321,5 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
         assertThat(values).containsAll(values);
     }
+
 }

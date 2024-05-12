@@ -1,0 +1,59 @@
+name: CI / CD Pipeline
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
+    branches:
+      - main
+      - '[0-9].*'
+  pull_request:
+    branches:
+      - main
+      - '[0-9].*'
+  schedule:
+    - cron: '0 1 * * *' # nightly build
+  workflow_dispatch:
+
+jobs:
+
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Set Java up in the runner
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Setup Maven
+        uses: s4u/setup-maven-action@v1.8.0
+        with:
+          java-version: 8
+      - name: Install missing dependencies to container
+        run: |
+          sudo apt update
+          sudo apt install -y stunnel make git gcc
+      - name: Maven offline
+        run: |
+          mvn -q dependency:go-offline
+      - name: Clean environment
+        run: |
+          make cleanup
+        env:
+          JVM_OPTS: -Xmx3200m
+          TERM: dumb
+      - name: Run tests
+        run: |
+          make test-coverage
+        env:
+          JVM_OPTS: -Xmx3200m
+          TERM: dumb
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4.0.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

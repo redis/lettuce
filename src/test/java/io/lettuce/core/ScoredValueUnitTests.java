@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -120,4 +124,5 @@ class ScoredValueUnitTests {
         assertThat(value.toString()).contains("ScoredValue[12").contains("340000, hello]");
         assertThat(empty.toString()).contains(String.format("ScoredValue[%f].empty", 0d));
     }
+
 }

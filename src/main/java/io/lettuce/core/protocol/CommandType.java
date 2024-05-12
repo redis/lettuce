@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -42,7 +46,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // Keys
 
-    COPY, DEL, DUMP, EXISTS, EXPIRE, EXPIREAT, EXPIRETIME, KEYS, MIGRATE, MOVE, OBJECT, PERSIST, PEXPIRE, PEXPIREAT, PEXPIRETIME, PTTL, RANDOMKEY, RENAME, RENAMENX, RESTORE, TOUCH, TTL, TYPE, SCAN, UNLINK,
+    COPY, DEL, DUMP, EXISTS, HEXPIRE, EXPIRE, HEXPIREAT, EXPIREAT, HEXPIRETIME, EXPIRETIME, KEYS, MIGRATE, MOVE, OBJECT, HPERSIST, PERSIST, PEXPIRE, PEXPIREAT, PEXPIRETIME, PTTL, RANDOMKEY, RENAME, RENAMENX, RESTORE, TOUCH, TTL, TYPE, SCAN, UNLINK,
 
     // String
 
@@ -70,7 +74,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // Pub/Sub
 
-    PSUBSCRIBE, PUBLISH, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE, PUBSUB,
+    PSUBSCRIBE, PUBLISH, PUNSUBSCRIBE, SUBSCRIBE, UNSUBSCRIBE, PUBSUB, SSUBSCRIBE, SPUBLISH,
 
     // Sets
 

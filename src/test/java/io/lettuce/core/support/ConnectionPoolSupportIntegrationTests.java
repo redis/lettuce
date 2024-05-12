@@ -1,18 +1,3 @@
-/*
- * Copyright 2011-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core.support;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,6 +43,7 @@ import io.netty.channel.group.ChannelGroup;
 class ConnectionPoolSupportIntegrationTests extends TestSupport {
 
     private static RedisClient client;
+
     private static Set<?> channels;
 
     @BeforeAll
@@ -76,8 +62,8 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void genericPoolShouldWorkWithWrappedConnections() throws Exception {
 
-        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                () -> client.connect(), new GenericObjectPoolConfig<>());
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
 
         borrowAndReturn(pool);
         borrowAndClose(pool);
@@ -101,8 +87,8 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
         GenericObjectPoolConfig<StatefulRedisConnection<String, String>> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setMaxIdle(2);
 
-        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                () -> client.connect(), poolConfig);
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), poolConfig);
 
         borrowAndReturn(pool);
         borrowAndClose(pool);
@@ -130,8 +116,8 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void genericPoolShouldWorkWithPlainConnections() throws Exception {
 
-        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                () -> client.connect(), new GenericObjectPoolConfig<>(), false);
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), false);
 
         borrowAndReturn(pool);
 
@@ -161,8 +147,8 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void genericPoolUsingWrappingShouldPropagateExceptionsCorrectly() throws Exception {
 
-        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                () -> client.connect(), new GenericObjectPoolConfig<>());
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
 
         StatefulRedisConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
@@ -182,20 +168,20 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void wrappedConnectionShouldUseWrappers() throws Exception {
 
-        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                () -> client.connect(), new GenericObjectPoolConfig<>());
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
 
         StatefulRedisConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
 
-        assertThat(connection).isInstanceOf(StatefulRedisConnection.class).isNotInstanceOf(
-                StatefulRedisClusterConnectionImpl.class);
+        assertThat(connection).isInstanceOf(StatefulRedisConnection.class)
+                .isNotInstanceOf(StatefulRedisClusterConnectionImpl.class);
         assertThat(Proxy.isProxyClass(connection.getClass())).isTrue();
 
         assertThat(sync).isInstanceOf(RedisCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
-        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class).isNotInstanceOf(
-                RedisReactiveCommandsImpl.class);
+        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class)
+                .isNotInstanceOf(RedisReactiveCommandsImpl.class);
         assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
                 .isNotInstanceOf(StatefulRedisConnectionImpl.class).isSameAs(connection);
 
@@ -218,8 +204,8 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
 
         assertThat(sync).isInstanceOf(RedisCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isNotInstanceOf(RedisAsyncCommandsImpl.class);
-        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class).isNotInstanceOf(
-                RedisReactiveCommandsImpl.class);
+        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class)
+                .isNotInstanceOf(RedisReactiveCommandsImpl.class);
         assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
                 .isNotInstanceOf(StatefulRedisConnectionImpl.class).isSameAs(connection);
 
@@ -233,21 +219,21 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
         RedisClusterClient redisClusterClient = RedisClusterClient.create(TestClientResources.get(),
                 RedisURI.create(TestSettings.host(), 7379));
 
-        GenericObjectPool<StatefulRedisClusterConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                redisClusterClient::connect, new GenericObjectPoolConfig<>());
+        GenericObjectPool<StatefulRedisClusterConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(redisClusterClient::connect, new GenericObjectPoolConfig<>());
 
         StatefulRedisClusterConnection<String, String> connection = pool.borrowObject();
         RedisAdvancedClusterCommands<String, String> sync = connection.sync();
 
-        assertThat(connection).isInstanceOf(StatefulRedisClusterConnection.class).isNotInstanceOf(
-                StatefulRedisClusterConnectionImpl.class);
+        assertThat(connection).isInstanceOf(StatefulRedisClusterConnection.class)
+                .isNotInstanceOf(StatefulRedisClusterConnectionImpl.class);
         assertThat(Proxy.isProxyClass(connection.getClass())).isTrue();
 
         assertThat(sync).isInstanceOf(RedisAdvancedClusterCommands.class);
-        assertThat(connection.async()).isInstanceOf(RedisAdvancedClusterAsyncCommands.class).isNotInstanceOf(
-                RedisAdvancedClusterAsyncCommandsImpl.class);
-        assertThat(connection.reactive()).isInstanceOf(RedisAdvancedClusterReactiveCommands.class).isNotInstanceOf(
-                RedisAdvancedClusterReactiveCommandsImpl.class);
+        assertThat(connection.async()).isInstanceOf(RedisAdvancedClusterAsyncCommands.class)
+                .isNotInstanceOf(RedisAdvancedClusterAsyncCommandsImpl.class);
+        assertThat(connection.reactive()).isInstanceOf(RedisAdvancedClusterReactiveCommands.class)
+                .isNotInstanceOf(RedisAdvancedClusterReactiveCommandsImpl.class);
         assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisClusterConnection.class)
                 .isNotInstanceOf(StatefulRedisClusterConnectionImpl.class).isSameAs(connection);
 
@@ -260,22 +246,22 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void plainConnectionShouldNotUseWrappers() throws Exception {
 
-        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                () -> client.connect(), new GenericObjectPoolConfig<>(), false);
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), false);
 
         StatefulRedisConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
 
-        assertThat(connection).isInstanceOf(StatefulRedisConnection.class).isNotInstanceOf(
-                StatefulRedisClusterConnectionImpl.class);
+        assertThat(connection).isInstanceOf(StatefulRedisConnection.class)
+                .isNotInstanceOf(StatefulRedisClusterConnectionImpl.class);
         assertThat(Proxy.isProxyClass(connection.getClass())).isFalse();
 
         assertThat(sync).isInstanceOf(RedisCommands.class);
         assertThat(connection.async()).isInstanceOf(RedisAsyncCommands.class).isInstanceOf(RedisAsyncCommandsImpl.class);
-        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class).isInstanceOf(
-                RedisReactiveCommandsImpl.class);
-        assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class).isInstanceOf(
-                StatefulRedisConnectionImpl.class);
+        assertThat(connection.reactive()).isInstanceOf(RedisReactiveCommands.class)
+                .isInstanceOf(RedisReactiveCommandsImpl.class);
+        assertThat(sync.getStatefulConnection()).isInstanceOf(StatefulRedisConnection.class)
+                .isInstanceOf(StatefulRedisConnectionImpl.class);
 
         pool.returnObject(connection);
         pool.close();
@@ -305,8 +291,8 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void wrappedObjectClosedAfterReturn() throws Exception {
 
-        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                () -> client.connect(), new GenericObjectPoolConfig<>(), true);
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), true);
 
         StatefulRedisConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
@@ -327,8 +313,8 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     @Test
     void tryWithResourcesReturnsConnectionToPool() throws Exception {
 
-        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport.createGenericObjectPool(
-                () -> client.connect(), new GenericObjectPoolConfig<>());
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
 
         StatefulRedisConnection<String, String> usedConnection = null;
         try (StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
@@ -403,4 +389,5 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
             connection.close();
         }
     }
+
 }

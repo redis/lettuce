@@ -1,18 +1,3 @@
-/*
- * Copyright 2016-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core.cluster;
 
 import java.util.List;
@@ -102,6 +87,12 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
                 break;
             case unsubscribe:
                 multicast.unsubscribed(clusterNode, output.channel(), output.count());
+                break;
+            case smessage:
+                multicast.smessage(clusterNode, output.channel(), output.body());
+                break;
+            case ssubscribe:
+                multicast.ssubscribed(clusterNode, output.channel(), output.count());
                 break;
             default:
                 throw new UnsupportedOperationException("Operation " + output.type() + " not supported");
@@ -202,6 +193,18 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
 
             getListeners().forEach(listener -> listener.punsubscribed(pattern, count));
             clusterListeners.forEach(listener -> listener.punsubscribed(node, pattern, count));
+        }
+
+        @Override
+        public void smessage(RedisClusterNode node, K shardChannel, V message) {
+            getListeners().forEach(listener -> listener.smessage(shardChannel, message));
+            clusterListeners.forEach(listener -> listener.smessage(node, shardChannel, message));
+        }
+
+        @Override
+        public void ssubscribed(RedisClusterNode node, K channel, long count) {
+            getListeners().forEach(listener -> listener.ssubscribed(channel, count));
+            clusterListeners.forEach(listener -> listener.ssubscribed(node, channel, count));
         }
 
     }

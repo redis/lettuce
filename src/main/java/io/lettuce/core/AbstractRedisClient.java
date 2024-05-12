@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -301,9 +305,8 @@ public abstract class AbstractRedisClient implements AutoCloseable {
         LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
 
         boolean domainSocket = LettuceStrings.isNotEmpty(connectionPoint.getSocket());
-        connectionBuilder.bootstrap().group(
-                getEventLoopGroup(
-                        domainSocket ? NativeTransports.eventLoopGroupClass(true) : Transports.eventLoopGroupClass()));
+        connectionBuilder.bootstrap().group(getEventLoopGroup(
+                domainSocket ? NativeTransports.eventLoopGroupClass(true) : Transports.eventLoopGroupClass()));
 
         if (connectionPoint.getSocket() != null) {
             NativeTransports.assertDomainSocketAvailable();

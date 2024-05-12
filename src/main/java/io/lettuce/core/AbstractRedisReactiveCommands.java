@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,16 +18,6 @@
  * limitations under the License.
  */
 package io.lettuce.core;
-
-import static io.lettuce.core.protocol.CommandType.*;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Supplier;
 
 import io.lettuce.core.GeoArgs.Unit;
 import io.lettuce.core.api.StatefulConnection;
@@ -55,6 +49,20 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
+
+import static io.lettuce.core.protocol.CommandType.EXEC;
+import static io.lettuce.core.protocol.CommandType.GEORADIUS;
+import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER;
+import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
+import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
+
 /**
  * A reactive and thread-safe API for a Redis connection.
  *
@@ -65,6 +73,7 @@ import reactor.core.publisher.Mono;
  * @author Tugdual Grall
  * @author dengliming
  * @author Andrey Shlykov
+ * @author Ali Takavci
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>
@@ -850,6 +859,27 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Boolean> hexpire(K key, long seconds, K... fields) {
+        return hexpire(key, seconds, null, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+        return createMono(() -> commandBuilder.hexpire(key, seconds, expireArgs, fields));
+    }
+
+    @Override
+    public Mono<Boolean> hexpire(K key, Duration seconds, K... fields) {
+        return hexpire(key, seconds, null, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(seconds, "Timeout must not be null");
+        return hexpire(key, seconds.toMillis() / 1000, expireArgs, fields);
+    }
+
+    @Override
     public Mono<Boolean> expireat(K key, long timestamp) {
         return expireat(key, timestamp, null);
     }
@@ -882,8 +912,45 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Boolean> hexpireat(K key, long timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+        return createMono(() -> commandBuilder.hexpireat(key, timestamp, expireArgs, fields));
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, Date timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hexpireat(key, timestamp.getTime() / 1000, expireArgs, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, Instant timestamp, K... fields) {
+        return hexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public Mono<Boolean> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, fields);
+    }
+
+    @Override
     public Mono<Long> expiretime(K key) {
         return createMono(() -> commandBuilder.expiretime(key));
+    }
+
+    @Override
+    public Mono<Long> hexpiretime(K key, K... fields) {
+        return createMono(() -> commandBuilder.hexpiretime(key, fields));
     }
 
     @Override
@@ -1228,8 +1295,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<KeyScanCursor<K>> hscanNovalues(K key) {
+        return createMono(() -> commandBuilder.hscanNovalues(key));
+    }
+
+    @Override
     public Mono<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
         return createMono(() -> commandBuilder.hscan(key, scanArgs));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscanNovalues(key, scanArgs));
     }
 
     @Override
@@ -1238,8 +1315,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscanNovalues(key, scanCursor, scanArgs));
+    }
+
+    @Override
     public Mono<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
         return createMono(() -> commandBuilder.hscan(key, scanCursor));
+    }
+
+    @Override
+    public Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.hscanNovalues(key, scanCursor));
     }
 
     @Override
@@ -1248,8 +1335,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key) {
+        return createMono(() -> commandBuilder.hscanNoValuesStreaming(channel, key));
+    }
+
+    @Override
     public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
         return createMono(() -> commandBuilder.hscanStreaming(channel, key, scanArgs));
+    }
+
+    @Override
+    public Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscanNoValuesStreaming(channel, key, scanArgs));
     }
 
     @Override
@@ -1259,8 +1356,19 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
+        return createMono(() -> commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor, scanArgs));
+    }
+
+    @Override
     public Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
         return createMono(() -> commandBuilder.hscanStreaming(channel, key, scanCursor));
+    }
+
+    @Override
+    public Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor) {
+        return createMono(() -> commandBuilder.hscanNoValuesStreaming(channel, key, scanCursor));
     }
 
     @Override
@@ -1511,6 +1619,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Boolean> hpersist(K key, K... fields) {
+        return createMono(() -> commandBuilder.hpersist(key, fields));
+    }
+
+    @Override
     public Mono<Boolean> pexpire(K key, long milliseconds) {
         return pexpire(key, milliseconds, null);
     }
@@ -1633,6 +1746,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Map<K, Long>> pubsubNumsub(K... channels) {
         return createMono(() -> commandBuilder.pubsubNumsub(channels));
+    }
+
+    @Override
+    public Flux<K> pubsubShardChannels() {
+        return createDissolvingFlux(commandBuilder::pubsubShardChannels);
+    }
+
+    @Override
+    public Flux<K> pubsubShardChannels(K pattern) {
+        return createDissolvingFlux(() -> commandBuilder.pubsubShardChannels(pattern));
     }
 
     @Override
@@ -2022,6 +2145,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<V> spop(K key, long count) {
         return createDissolvingFlux(() -> commandBuilder.spop(key, count));
+    }
+
+    @Override
+    public Mono<Long> spublish(K shardChannel, V message) {
+        return createMono(() -> commandBuilder.spublish(shardChannel, message));
     }
 
     @Override

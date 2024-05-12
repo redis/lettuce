@@ -1,7 +1,11 @@
 /*
- * Copyright 2017-2024 the original author or authors.
+ * Copyright 2017-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -15,9 +19,8 @@
  */
 package io.lettuce.core.cluster.api.async;
 
-import java.util.List;
-import java.util.Map;
-
+import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
 import io.lettuce.core.ScanArgs;
@@ -26,6 +29,12 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Asynchronous executed commands on a node selection for Hashes (Key-Value pairs).
@@ -210,6 +219,15 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
     AsyncExecutions<MapScanCursor<K, V>> hscan(K key);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    AsyncExecutions<KeyScanCursor<K>> hscanNovalues(K key);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key.
@@ -217,6 +235,16 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @return MapScanCursor&lt;K, V&gt; map scan cursor.
      */
     AsyncExecutions<MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanArgs scan arguments.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    AsyncExecutions<KeyScanCursor<K>> hscanNovalues(K key, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -229,6 +257,17 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
     AsyncExecutions<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    AsyncExecutions<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param key the key.
@@ -238,6 +277,16 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
     AsyncExecutions<MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @return KeyScanCursor&lt;K&gt; key scan cursor.
+     * @since 7.0
+     */
+    AsyncExecutions<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param channel streaming channel that receives a call for every key-value pair.
@@ -245,6 +294,16 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @return StreamScanCursor scan cursor.
+     * @since 7.0
+     */
+    AsyncExecutions<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -257,6 +316,17 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
     AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs);
 
     /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @param scanArgs scan arguments.
+     * @return StreamScanCursor scan cursor.
+     * @since 7.0
+     */
+    AsyncExecutions<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs);
+
+    /**
      * Incrementally iterate hash fields and associated values.
      *
      * @param channel streaming channel that receives a call for every key-value pair.
@@ -265,7 +335,21 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @param scanArgs scan arguments.
+     * @return StreamScanCursor scan cursor.
+     * @since 7.0
+     */
+    AsyncExecutions<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -276,6 +360,17 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
+
+    /**
+     * Incrementally iterate hash fields, without associated values.
+     *
+     * @param channel streaming channel that receives a call for every key.
+     * @param key the key.
+     * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
+     * @return StreamScanCursor scan cursor.
+     * @since 7.0
+     */
+    AsyncExecutions<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor);
 
     /**
      * Set the string value of a hash field.
@@ -339,4 +434,153 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @return Long count of the keys.
      */
     AsyncExecutions<Long> hvals(ValueStreamingChannel<V> channel, K key);
+
+    /**
+     * Set the time to live (in seconds) for one or more fields, belonging to a certain key.
+     *
+     * @param key the key of the fields.
+     * @param seconds the seconds type: long.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpire(K key, long seconds, K... fields);
+
+    /**
+     * Set the time to live (in seconds) for one or more fields, belonging to a certain key.
+     *
+     * @param key the key of the fields.
+     * @param seconds the seconds type: long.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key.
+     *
+     * @param key the key.
+     * @param seconds the TTL {@link Duration}
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpire(K key, Duration seconds, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key.
+     *
+     * @param key the key.
+     * @param seconds the TTL {@link Duration}
+     * @param expireArgs the {@link ExpireArgs}.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set.
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpireat(K key, long timestamp, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpireat(K key, Date timestamp, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpireat(K key, Instant timestamp, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    AsyncExecutions<Boolean> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Get the time to live for one or more fields in as unix timestamp in seconds.
+     *
+     * @param key the key.
+     * @param fields one or more fields to get the TTL for.
+     * @return Long integer-reply in seconds, or a negative value in order to signal an error. The command returns {@code -1} if
+     *         the key exists but has no associated expiration time. The command returns {@code -2} if the key does not exist.
+     * @since 7.0
+     */
+    AsyncExecutions<Long> hexpiretime(K key, K... fields);
+
+    /**
+     * Remove the expiration from one or more fields.
+     *
+     * @param key the key.
+     * @param fields one or more fields to remove the TTL for.
+     * @return Boolean integer-reply specifically:
+     *
+     *         {@code true} if the timeout was removed. {@code false} if {@code key} does not exist or does not have an
+     *         associated timeout.
+     */
+    AsyncExecutions<Boolean> hpersist(K key, K... fields);
+
 }

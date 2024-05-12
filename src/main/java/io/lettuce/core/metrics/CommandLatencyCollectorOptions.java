@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -87,10 +91,10 @@ public interface CommandLatencyCollectorOptions {
     boolean resetLatenciesAfterEvent();
 
     /**
-     * Returns whether to distinct latencies on local level. If {@code true}, multiple connections to the same
-     * host/connection point will be recorded separately which allows to inspect every connection individually. If
-     * {@code false}, multiple connections to the same host/connection point will be recorded together. This allows a
-     * consolidated view on one particular service.
+     * Returns whether to distinct latencies on local level. If {@code true}, multiple connections to the same host/connection
+     * point will be recorded separately which allows to inspect every connection individually. If {@code false}, multiple
+     * connections to the same host/connection point will be recorded together. This allows a consolidated view on one
+     * particular service.
      *
      * @return {@code true} if latencies are recorded distinct on local level (per connection)
      */
@@ -162,8 +166,8 @@ public interface CommandLatencyCollectorOptions {
         Builder localDistinction(boolean localDistinction);
 
         /**
-         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}.
-         * See {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
+         * Sets whether the recorded latencies should be reset once the metrics event was emitted. Defaults to {@code true}. See
+         * {@link DefaultCommandLatencyCollectorOptions#DEFAULT_RESET_LATENCIES_AFTER_EVENT}.
          *
          * @param resetLatenciesAfterEvent {@code true} if the recorded latencies should be reset once the metrics event was
          *        emitted.

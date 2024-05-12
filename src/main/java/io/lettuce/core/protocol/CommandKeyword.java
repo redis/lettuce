@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -25,6 +29,7 @@ import java.nio.charset.StandardCharsets;
  * @author Zhang Jessey
  * @author dengliming
  * @author Tihomir Mateev
+ * @author Ali Takavci
  */
 public enum CommandKeyword implements ProtocolKeyword {
 
@@ -36,7 +41,7 @@ public enum CommandKeyword implements ProtocolKeyword {
 
     IDLETIME, JUSTID, KILL, KEYSLOT, LEFT, LEN, LIMIT, LIST, LOAD, LOG, MATCH,
 
-    MAX, MAXLEN, MEET, MIN, MINID, MOVED, NO, NOACK, NOCOMMANDS, NODE, NODES, NOMKSTREAM, NOPASS, NOSAVE, NOT, NUMSUB, SHARDNUMSUB, NUMPAT, NX, OFF, ON, ONE, OR, PAUSE,
+    MAX, MAXLEN, MEET, MIN, MINID, MOVED, NO, NOACK, NOCOMMANDS, NODE, NODES, NOMKSTREAM, NOPASS, NOSAVE, NOT, NOVALUES, NUMSUB, SHARDCHANNELS, SHARDNUMSUB, NUMPAT, NX, OFF, ON, ONE, OR, PAUSE,
 
     REFCOUNT, REMOVE, RELOAD, REPLACE, REPLICATE, REPLICAS, REV, RESET, RESETCHANNELS, RESETKEYS, RESETPASS,
 

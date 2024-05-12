@@ -24,14 +24,27 @@ This version of Lettuce has been tested against the latest Redis source-build.
 
 See the [reference documentation](https://lettuce.io/docs/) and [Wiki](https://github.com/lettuce-io/lettuce-core/wiki) for more details.
 
+## How do I Redis?
+
+[Learn for free at Redis University](https://university.redis.com/)
+
+[Build faster with the Redis Launchpad](https://launchpad.redis.com/)
+
+[Try the Redis Cloud](https://redis.com/try-free/)
+
+[Dive in developer tutorials](https://developer.redis.com/)
+
+[Join the Redis community](https://redis.com/community/)
+
+[Work at Redis](https://redis.com/company/careers/jobs/)
 
 Communication
 ---------------
 
 * [GitHub Discussions](https://github.com/lettuce-io/lettuce-core/discussions) (Q&A, Ideas, General discussion)
 * Stack Overflow (Questions): [https://stackoverflow.com/questions/tagged/lettuce](https://stackoverflow.com/questions/tagged/lettuce)
-* Gitter (chat): [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-* Twitter: [@LettuceDriver](https://twitter.com/LettuceDriver)
+* Discord: [![Discord](https://img.shields.io/discord/697882427875393627.svg?style=social&logo=discord)](https://discord.gg/redis)
+* Twitter: [![Twitter](https://img.shields.io/twitter/follow/redisinc?style=social)](https://twitter.com/redisinc)
 * [GitHub Issues](https://github.com/lettuce-io/lettuce-core/issues) (Bug reports, feature requests)
 
 
@@ -140,19 +153,6 @@ connection.getStatefulConnection().addListener(new RedisPubSubListener<String, S
 connection.subscribe("channel")
 ```
 
-Cloud Provider Compatibility
-----------------------------
-
-While we're not actively testing Lettuce against various cloud offerings, we've verified initial compatibility with the following services (or have seen folks using Lettuce there):
-
-* AWS Elasticache (Operated in replica- and Redis Cluster mode)
-* Azure Redis
-* IBM Cloud Databases for Redis
-* Google Cloud Memorystore for Redis
-* RedisLabs Enterprise Redis Cluster
-
-Note: Some providers operate Redis in non-standard modes that aren't fully supported by Lettuce. 
-
 Building
 -----------
 
@@ -182,7 +182,7 @@ For bugs, questions and discussions please use the [GitHub Issues](https://githu
 License
 -------
 
-* [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+* This repository is licensed under the "MIT" license. See [LICENSE](LICENSE).
 * Fork of https://github.com/wg/lettuce
 
 Contributing

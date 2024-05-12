@@ -1,7 +1,11 @@
 /*
- * Copyright 2018-2024 the original author or authors.
+ * Copyright 2018-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -23,8 +27,8 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
 /**
- * Argument list builder for the Redis <a href="https://redis.io/commands/restore">RESTORE</a> command. Static import the methods
- * from {@link RestoreArgs.Builder} and call the methods: {@code ttl(…)} .
+ * Argument list builder for the Redis <a href="https://redis.io/commands/restore">RESTORE</a> command. Static import the
+ * methods from {@link RestoreArgs.Builder} and call the methods: {@code ttl(…)} .
  * <p>
  * {@link RestoreArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
@@ -195,4 +199,5 @@ public class RestoreArgs implements CompositeArgument {
             args.add(FREQ).add(frequency);
         }
     }
+
 }

@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -43,8 +47,11 @@ import io.lettuce.core.models.role.RedisNodeDescription;
 class ReadFromUnitTests {
 
     private Partitions sut = new Partitions();
+
     private RedisClusterNode nearest = new RedisClusterNode();
+
     private RedisClusterNode master = new RedisClusterNode();
+
     private RedisClusterNode replica = new RedisClusterNode();
 
     @BeforeEach
@@ -255,6 +262,7 @@ class ReadFromUnitTests {
 
     private ReadFrom.Nodes getNodes() {
         return new ReadFrom.Nodes() {
+
             @Override
             public List<RedisNodeDescription> getNodes() {
                 return (List) sut.getPartitions();
@@ -264,6 +272,7 @@ class ReadFromUnitTests {
             public Iterator<RedisNodeDescription> iterator() {
                 return getNodes().iterator();
             }
+
         };
 
     }

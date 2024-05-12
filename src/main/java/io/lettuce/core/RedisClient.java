@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -740,28 +744,28 @@ public class RedisClient extends AbstractRedisClient {
         return Mono.usingWhen(
                 Mono.fromCompletionStage(() -> connectSentinelAsync(newStringStringCodec(), sentinelUri, timeout)), c -> {
 
-            String sentinelMasterId = sentinelUri.getSentinelMasterId();
-            return c.reactive().getMasterAddrByName(sentinelMasterId).map(it -> {
+                    String sentinelMasterId = sentinelUri.getSentinelMasterId();
+                    return c.reactive().getMasterAddrByName(sentinelMasterId).map(it -> {
 
-                if (it instanceof InetSocketAddress) {
+                        if (it instanceof InetSocketAddress) {
 
-                    InetSocketAddress isa = (InetSocketAddress) it;
-                    SocketAddress resolved = getResources().socketAddressResolver()
-                            .resolve(RedisURI.create(isa.getHostString(), isa.getPort()));
+                            InetSocketAddress isa = (InetSocketAddress) it;
+                            SocketAddress resolved = getResources().socketAddressResolver()
+                                    .resolve(RedisURI.create(isa.getHostString(), isa.getPort()));
 
-                    logger.debug("Resolved Master {} SocketAddress {}:{} to {}", sentinelMasterId, isa.getHostString(),
-                            isa.getPort(), resolved);
+                            logger.debug("Resolved Master {} SocketAddress {}:{} to {}", sentinelMasterId, isa.getHostString(),
+                                    isa.getPort(), resolved);
 
-                    return resolved;
-                }
+                            return resolved;
+                        }
 
-                return it;
-            }).timeout(timeout) //
+                        return it;
+                    }).timeout(timeout) //
                             .onErrorMap(e -> {
 
-                        RedisCommandTimeoutException ex = ExceptionFactory
-                                .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
-                        ex.addSuppressed(e);
+                                RedisCommandTimeoutException ex = ExceptionFactory
+                                        .createTimeoutException("Cannot obtain master using SENTINEL MASTER", timeout);
+                                ex.addSuppressed(e);
 
                                 return ex;
                             });

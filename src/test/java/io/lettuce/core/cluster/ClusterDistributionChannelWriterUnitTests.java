@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -123,7 +127,8 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldParseMovedTargetCorrectly() {
 
-        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(new Partitions(), "MOVED 1234-2020 127.0.0.1:6381");
+        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(new Partitions(),
+                "MOVED 1234-2020 127.0.0.1:6381");
 
         assertThat(moveTarget.getHostText()).isEqualTo("127.0.0.1");
         assertThat(moveTarget.getPort()).isEqualTo(6381);
@@ -133,7 +138,8 @@ class ClusterDistributionChannelWriterUnitTests {
     void shouldParseMovedTargetWithoutHostnameCorrectly() {
 
         Partitions partitions = new Partitions();
-        partitions.add(new RedisClusterNode(RedisURI.create("redis://1.2.3.4:6381"), "foo", false,null,0,0,0,Collections.emptyList(), Collections.emptySet()));
+        partitions.add(new RedisClusterNode(RedisURI.create("redis://1.2.3.4:6381"), "foo", false, null, 0, 0, 0,
+                Collections.emptyList(), Collections.emptySet()));
         HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(partitions, "MOVED 1234 :6381");
 
         assertThat(moveTarget.getHostText()).isEqualTo("1.2.3.4");
@@ -144,7 +150,8 @@ class ClusterDistributionChannelWriterUnitTests {
     void shouldParseMovedTargetWithoutHostnameUsingSlotFallbackCorrectly() {
 
         Partitions partitions = new Partitions();
-        partitions.add(new RedisClusterNode(RedisURI.create("redis://1.2.3.4:5678"), "foo", false,null,0,0,0, Collections.singletonList(1234), Collections.emptySet()));
+        partitions.add(new RedisClusterNode(RedisURI.create("redis://1.2.3.4:5678"), "foo", false, null, 0, 0, 0,
+                Collections.singletonList(1234), Collections.emptySet()));
         HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(partitions, "MOVED 1234 :6381");
 
         assertThat(moveTarget.getHostText()).isEqualTo("1.2.3.4");
@@ -154,7 +161,8 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldParseIPv6MovedTargetCorrectly() {
 
-        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(new Partitions(), "MOVED 1234-2020 1:2:3:4::6:6381");
+        HostAndPort moveTarget = ClusterDistributionChannelWriter.getMoveTarget(new Partitions(),
+                "MOVED 1234-2020 1:2:3:4::6:6381");
 
         assertThat(moveTarget.getHostText()).isEqualTo("1:2:3:4::6");
         assertThat(moveTarget.getPort()).isEqualTo(6381);
@@ -163,7 +171,8 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldReturnIntentForWriteCommand() {
 
-        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter, clientOptions, clusterEventListener);
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter,
+                clientOptions, clusterEventListener);
 
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mset = new Command<>(CommandType.MSET, null);
@@ -176,7 +185,8 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldReturnDefaultIntentForNoCommands() {
 
-        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter, clientOptions, clusterEventListener);
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter,
+                clientOptions, clusterEventListener);
 
         assertThat(writer.getIntent(Collections.emptyList())).isEqualTo(ConnectionIntent.WRITE);
     }
@@ -184,7 +194,8 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldReturnIntentForReadCommand() {
 
-        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter, clientOptions, clusterEventListener);
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter,
+                clientOptions, clusterEventListener);
 
         RedisCommand<String, String, String> get = new Command<>(CommandType.GET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
@@ -197,7 +208,8 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldReturnIntentForMixedCommands() {
 
-        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter, clientOptions, clusterEventListener);
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(clusterDistributionChannelWriter,
+                clientOptions, clusterEventListener);
 
         RedisCommand<String, String, String> set = new Command<>(CommandType.SET, null);
         RedisCommand<String, String, String> mget = new Command<>(CommandType.MGET, null);
@@ -261,4 +273,5 @@ class ClusterDistributionChannelWriterUnitTests {
             verify(clusterNodeEndpoint, never()).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
         }
     }
+
 }

@@ -1,7 +1,11 @@
 /*
- * Copyright 2018-2024 the original author or authors.
+ * Copyright 2018-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -32,6 +36,7 @@ import javax.inject.Inject;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -58,9 +63,13 @@ import io.netty.handler.ssl.OpenSsl;
 class SslIntegrationTests extends TestSupport {
 
     private static final String KEYSTORE = "work/keystore.jks";
+
     private static final String TRUSTSTORE = "work/truststore.jks";
+
     private static final File TRUSTSTORE_FILE = new File(TRUSTSTORE);
+
     private static final File CA_CERT_FILE = new File("work/ca/certs/ca.cert.pem");
+
     private static final int MASTER_SLAVE_BASE_PORT_OFFSET = 2000;
 
     private static final RedisURI URI_VERIFY = sslURIBuilder(0) //
@@ -69,8 +78,7 @@ class SslIntegrationTests extends TestSupport {
 
     private static final RedisURI URI_VERIFY_IMPOSSIBLE_TIMEOUT = sslURIBuilder(0) //
             .withVerifyPeer(true) //
-            .withTimeout(Duration.ZERO)
-            .build();
+            .withTimeout(Duration.ZERO).build();
 
     private static final RedisURI URI_NO_VERIFY = sslURIBuilder(1) //
             .withVerifyPeer(false) //
@@ -379,20 +387,15 @@ class SslIntegrationTests extends TestSupport {
         RedisPubSubCommands<String, String> connection = redisClient.connectPubSub(URI_NO_VERIFY).sync();
         connection.subscribe("c1");
         connection.subscribe("c2");
-        Delay.delay(Duration.ofMillis(200));
 
         RedisPubSubCommands<String, String> connection2 = redisClient.connectPubSub(URI_NO_VERIFY).sync();
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
         connection.quit();
-        Delay.delay(Duration.ofMillis(200));
-        Wait.untilTrue(connection::isOpen).waitOrTimeout();
-        Wait.untilEquals(2, () -> connection2.pubsubChannels().size()).waitOrTimeout();
+        Wait.untilTrue(connection.getStatefulConnection()::isOpen).waitOrTimeout();
+        Wait.untilEquals(2, () -> connection2.pubsubChannels().size()).during(Duration.ofSeconds(120)).waitOrTimeout();
 
         assertThat(connection2.pubsubChannels()).contains("c1", "c2");
-
-        connection.getStatefulConnection().close();
-        connection2.getStatefulConnection().close();
     }
 
     private static RedisURI.Builder sslURIBuilder(int portOffset) {
@@ -430,4 +433,5 @@ class SslIntegrationTests extends TestSupport {
             connection.sync().ping();
         }
     }
+
 }

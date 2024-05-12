@@ -1,7 +1,11 @@
 /*
- * Copyright 2021-2024 the original author or authors.
+ * Copyright 2021-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -29,75 +33,75 @@ import io.lettuce.core.protocol.CommandKeyword;
  */
 public class CopyArgs implements CompositeArgument {
 
-	private Long destinationDb;
+    private Long destinationDb;
 
     private boolean replace;
 
-	/**
-	 * Builder entry points for {@link CopyArgs}.
-	 */
-	public static class Builder {
+    /**
+     * Builder entry points for {@link CopyArgs}.
+     */
+    public static class Builder {
 
-		/**
-		 * Utility constructor.
-		 */
-		private Builder() {
-		}
+        /**
+         * Utility constructor.
+         */
+        private Builder() {
+        }
 
-		/**
-		 * Creates new {@link CopyArgs} and sets {@literal DB}.
-		 *
-		 * @return new {@link CopyArgs} with {@literal DB} set.
-		 */
-		public static CopyArgs destinationDb(long destinationDb) {
-			return new CopyArgs().destinationDb(destinationDb);
-		}
+        /**
+         * Creates new {@link CopyArgs} and sets {@literal DB}.
+         *
+         * @return new {@link CopyArgs} with {@literal DB} set.
+         */
+        public static CopyArgs destinationDb(long destinationDb) {
+            return new CopyArgs().destinationDb(destinationDb);
+        }
 
-		/**
-		 * Creates new {@link CopyArgs} and sets {@literal REPLACE}.
-		 *
-		 * @return new {@link CopyArgs} with {@literal REPLACE} set.
-		 */
-		public static CopyArgs replace(boolean replace) {
-			return new CopyArgs().replace(replace);
-		}
+        /**
+         * Creates new {@link CopyArgs} and sets {@literal REPLACE}.
+         *
+         * @return new {@link CopyArgs} with {@literal REPLACE} set.
+         */
+        public static CopyArgs replace(boolean replace) {
+            return new CopyArgs().replace(replace);
+        }
 
-	}
+    }
 
-	/**
-	 * Specify an alternative logical database index for the destination key.
-	 *
-	 * @param destinationDb logical database index to apply for {@literal DB}.
-	 * @return {@code this}.
-	 */
-	public CopyArgs destinationDb(long destinationDb) {
+    /**
+     * Specify an alternative logical database index for the destination key.
+     *
+     * @param destinationDb logical database index to apply for {@literal DB}.
+     * @return {@code this}.
+     */
+    public CopyArgs destinationDb(long destinationDb) {
 
-		this.destinationDb = destinationDb;
-		return this;
-	}
+        this.destinationDb = destinationDb;
+        return this;
+    }
 
-	/**
-	 * Hint redis to remove the destination key before copying the value to it.
-	 *
-	 * @param replace remove destination key before copying the value {@literal REPLACE}.
-	 * @return {@code this}.
-	 */
-	public CopyArgs replace(boolean replace) {
+    /**
+     * Hint redis to remove the destination key before copying the value to it.
+     *
+     * @param replace remove destination key before copying the value {@literal REPLACE}.
+     * @return {@code this}.
+     */
+    public CopyArgs replace(boolean replace) {
 
-		this.replace = replace;
-		return this;
-	}
+        this.replace = replace;
+        return this;
+    }
 
     @Override
-	public <K, V> void build(CommandArgs<K, V> args) {
+    public <K, V> void build(CommandArgs<K, V> args) {
 
-		if (destinationDb != null) {
-			args.add(CommandKeyword.DB).add(destinationDb);
-		}
+        if (destinationDb != null) {
+            args.add(CommandKeyword.DB).add(destinationDb);
+        }
 
         if (replace) {
-			args.add(CommandKeyword.REPLACE);
-		}
-	}
+            args.add(CommandKeyword.REPLACE);
+        }
+    }
 
 }

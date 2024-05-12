@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,19 +18,6 @@
  * limitations under the License.
  */
 package io.lettuce.core;
-
-import static io.lettuce.core.internal.LettuceStrings.*;
-import static io.lettuce.core.protocol.CommandKeyword.*;
-import static io.lettuce.core.protocol.CommandType.*;
-import static io.lettuce.core.protocol.CommandType.COPY;
-import static io.lettuce.core.protocol.CommandType.SAVE;
-
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.XReadArgs.StreamOffset;
@@ -44,6 +35,19 @@ import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.RedisCommand;
 
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static io.lettuce.core.internal.LettuceStrings.string;
+import static io.lettuce.core.protocol.CommandKeyword.*;
+import static io.lettuce.core.protocol.CommandType.*;
+import static io.lettuce.core.protocol.CommandType.COPY;
+import static io.lettuce.core.protocol.CommandType.SAVE;
+
 /**
  * @param <K>
  * @param <V>
@@ -53,6 +57,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * @author dengliming
  * @author Mikhael Sokolov
  * @author Tihomir Mateev
+ * @author Ali Takavci
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -973,6 +978,38 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXPIRE, new BooleanOutput<>(codec), args);
     }
 
+    Command<K, V, Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HEXPIRE, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> hexpireat(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HEXPIREAT, new BooleanOutput<>(codec), args);
+    }
+
     Command<K, V, Boolean> expireat(K key, long timestamp, ExpireArgs expireArgs) {
         notNullKey(key);
 
@@ -990,6 +1027,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         return createCommand(EXPIRETIME, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> hexpiretime(K key, K... fields) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(fields.length);
+        args.addKeys(fields);
+        return createCommand(HEXPIRETIME, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, String> flushall() {
@@ -1530,16 +1576,34 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return hscan(key, ScanCursor.INITIAL, null);
     }
 
+    Command<K, V, KeyScanCursor<K>> hscanNovalues(K key) {
+        notNullKey(key);
+
+        return hscanNovalues(key, ScanCursor.INITIAL, null);
+    }
+
     Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor) {
         notNullKey(key);
 
         return hscan(key, scanCursor, null);
     }
 
+    Command<K, V, KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor) {
+        notNullKey(key);
+
+        return hscanNovalues(key, scanCursor, null);
+    }
+
     Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanArgs scanArgs) {
         notNullKey(key);
 
         return hscan(key, ScanCursor.INITIAL, scanArgs);
+    }
+
+    Command<K, V, KeyScanCursor<K>> hscanNovalues(K key, ScanArgs scanArgs) {
+        notNullKey(key);
+
+        return hscanNovalues(key, ScanCursor.INITIAL, scanArgs);
     }
 
     Command<K, V, MapScanCursor<K, V>> hscan(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
@@ -1554,11 +1618,32 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HSCAN, output, args);
     }
 
+    Command<K, V, KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.addKey(key);
+
+        scanArgs(scanCursor, scanArgs, args);
+
+        args.add(NOVALUES);
+
+        KeyScanOutput<K, V> output = new KeyScanOutput<>(codec);
+        return createCommand(HSCAN, output, args);
+    }
+
     Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key) {
         notNullKey(key);
         notNull(channel);
 
         return hscanStreaming(channel, key, ScanCursor.INITIAL, null);
+    }
+
+    Command<K, V, StreamScanCursor> hscanNoValuesStreaming(KeyStreamingChannel<K> channel, K key) {
+        notNullKey(key);
+        notNull(channel);
+
+        return hscanNoValuesStreaming(channel, key, ScanCursor.INITIAL, null);
     }
 
     Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor) {
@@ -1568,11 +1653,25 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return hscanStreaming(channel, key, scanCursor, null);
     }
 
+    Command<K, V, StreamScanCursor> hscanNoValuesStreaming(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor) {
+        notNullKey(key);
+        notNull(channel);
+
+        return hscanNoValuesStreaming(channel, key, scanCursor, null);
+    }
+
     Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs) {
         notNullKey(key);
         notNull(channel);
 
         return hscanStreaming(channel, key, ScanCursor.INITIAL, scanArgs);
+    }
+
+    Command<K, V, StreamScanCursor> hscanNoValuesStreaming(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs) {
+        notNullKey(key);
+        notNull(channel);
+
+        return hscanNoValuesStreaming(channel, key, ScanCursor.INITIAL, scanArgs);
     }
 
     Command<K, V, StreamScanCursor> hscanStreaming(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
@@ -1586,6 +1685,22 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         scanArgs(scanCursor, scanArgs, args);
 
         KeyValueScanStreamingOutput<K, V> output = new KeyValueScanStreamingOutput<>(codec, channel);
+        return createCommand(HSCAN, output, args);
+    }
+
+    Command<K, V, StreamScanCursor> hscanNoValuesStreaming(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs) {
+        notNullKey(key);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+
+        args.addKey(key);
+        scanArgs(scanCursor, scanArgs, args);
+
+        args.add(NOVALUES);
+
+        KeyScanStreamingOutput<K, V> output = new KeyScanStreamingOutput<>(codec, channel);
         return createCommand(HSCAN, output, args);
     }
 
@@ -1969,6 +2084,16 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PERSIST, new BooleanOutput<>(codec), key);
     }
 
+    Command<K, V, Boolean> hpersist(K key, K... fields) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HPERSIST, new BooleanOutput<>(codec), args);
+    }
+
     Command<K, V, Boolean> pexpire(K key, long milliseconds, ExpireArgs expireArgs) {
         notNullKey(key);
 
@@ -2106,6 +2231,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(NUMSUB).addKeys(channels);
         return createCommand(PUBSUB, (MapOutput) new MapOutput<K, Long>((RedisCodec) codec), args);
+    }
+
+    Command<K, V, List<K>> pubsubShardChannels() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SHARDCHANNELS);
+        return createCommand(PUBSUB, new KeyListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<K>> pubsubShardChannels(K pattern) {
+        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(SHARDCHANNELS).addKey(pattern);
+        return createCommand(PUBSUB, new KeyListOutput<>(codec), args);
     }
 
     Command<K, V, Map<K, Long>> pubsubShardNumsub(K... shardChannels) {
@@ -2615,6 +2752,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(count);
         return createCommand(SPOP, new ValueSetOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> spublish(K shardChannel, V message) {
+        LettuceAssert.notNull(shardChannel, "ShardChannel " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(shardChannel).addValue(message);
+        return createCommand(SPUBLISH, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, V> srandmember(K key) {

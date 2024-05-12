@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -86,22 +90,24 @@ class CompilationUnitFactory {
     private CompilationUnit template;
 
     private final CompilationUnit result = new CompilationUnit();
+
     private ClassOrInterfaceDeclaration resultType;
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
-                                  Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
-                                  Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
-                                  Consumer<ClassOrInterfaceDeclaration> typeMutator, Function<Comment, Comment> methodCommentMutator) {
+            Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
+            Predicate<MethodDeclaration> methodFilter, Supplier<List<String>> importSupplier,
+            Consumer<ClassOrInterfaceDeclaration> typeMutator, Function<Comment, Comment> methodCommentMutator) {
         this(templateFile, sources, targetPackage, targetName, typeDocFunction, methodReturnTypeFunction, methodDeclaration -> {
-        }, methodFilter, importSupplier, typeMutator, (m, c) -> methodCommentMutator != null ? methodCommentMutator.apply(c) : c);
+        }, methodFilter, importSupplier, typeMutator,
+                (m, c) -> methodCommentMutator != null ? methodCommentMutator.apply(c) : c);
 
     }
 
     public CompilationUnitFactory(File templateFile, File sources, String targetPackage, String targetName,
-                                  Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
-                                  Consumer<MethodDeclaration> onMethod, Predicate<MethodDeclaration> methodFilter,
-                                  Supplier<List<String>> importSupplier, Consumer<ClassOrInterfaceDeclaration> typeMutator,
-                                  BiFunction<MethodDeclaration, Comment, Comment> methodCommentMutator) {
+            Function<String, String> typeDocFunction, Function<MethodDeclaration, Type> methodReturnTypeFunction,
+            Consumer<MethodDeclaration> onMethod, Predicate<MethodDeclaration> methodFilter,
+            Supplier<List<String>> importSupplier, Consumer<ClassOrInterfaceDeclaration> typeMutator,
+            BiFunction<MethodDeclaration, Comment, Comment> methodCommentMutator) {
 
         this.templateFile = templateFile;
         this.sources = sources;
@@ -135,11 +141,13 @@ class CompilationUnitFactory {
         if (!templateTypeDeclaration.getTypeParameters().isEmpty()) {
             resultType.setTypeParameters(new NodeList<>());
             for (TypeParameter typeParameter : templateTypeDeclaration.getTypeParameters()) {
-                resultType.getTypeParameters().add(new TypeParameter(typeParameter.getName().getIdentifier(), typeParameter.getTypeBound()));
+                resultType.getTypeParameters()
+                        .add(new TypeParameter(typeParameter.getName().getIdentifier(), typeParameter.getTypeBound()));
             }
         }
 
-        resultType.setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().get().getContent())));
+        resultType
+                .setComment(new JavadocComment(typeDocFunction.apply(templateTypeDeclaration.getComment().get().getContent())));
         result.setComment(template.getComment().orElse(null));
 
         result.setImports(new NodeList<>());
@@ -205,24 +213,19 @@ class CompilationUnitFactory {
     public void removeUnusedImports() {
         ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) result.getChildNodes().get(1);
 
-        List<ImportDeclaration> optimizedImports = result
-                .getImports()
-                .stream()
-                .filter(i -> i.isAsterisk()
-                                || i.isStatic()
-                                || declaringClass.findFirst(Type.class, t -> {
-                                    String fullType = t.toString();
-                                    String importIdentifier = i.getName().getIdentifier();
+        List<ImportDeclaration> optimizedImports = result.getImports().stream()
+                .filter(i -> i.isAsterisk() || i.isStatic() || declaringClass.findFirst(Type.class, t -> {
+                    String fullType = t.toString();
+                    String importIdentifier = i.getName().getIdentifier();
 
-                                    return fullType.contains(importIdentifier);
-                                }).isPresent()
-                )
-                .sorted((o1, o2) -> {
-                    if (o1.getNameAsString().startsWith("java")) return -1;
-                    if (o2.getNameAsString().startsWith("java")) return 1;
+                    return fullType.contains(importIdentifier);
+                }).isPresent()).sorted((o1, o2) -> {
+                    if (o1.getNameAsString().startsWith("java"))
+                        return -1;
+                    if (o2.getNameAsString().startsWith("java"))
+                        return 1;
                     return o1.getNameAsString().compareTo(o2.getNameAsString());
-                })
-                .collect(Collectors.toList());
+                }).collect(Collectors.toList());
 
         result.setImports(NodeList.nodeList(optimizedImports));
     }
@@ -259,16 +262,15 @@ class CompilationUnitFactory {
 
         private Type getMethodReturnType(MethodDeclaration parsedDeclaration) {
 
-            List<Map.Entry<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>>> entries = new ArrayList<>(methodReturnTypeMutation.entrySet());
+            List<Map.Entry<Predicate<MethodDeclaration>, Function<MethodDeclaration, Type>>> entries = new ArrayList<>(
+                    methodReturnTypeMutation.entrySet());
 
             Collections.reverse(entries);
 
-            return entries
-                    .stream()
-                    .filter(entry -> entry.getKey().test(parsedDeclaration))
-                    .findFirst()
-                    .map(entry -> entry.getValue().apply(parsedDeclaration))
-                    .orElse(null);
+            return entries.stream().filter(entry -> entry.getKey().test(parsedDeclaration)).findFirst()
+                    .map(entry -> entry.getValue().apply(parsedDeclaration)).orElse(null);
         }
+
     }
+
 }

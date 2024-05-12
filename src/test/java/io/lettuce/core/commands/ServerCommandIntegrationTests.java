@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -204,7 +208,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @EnabledOnCommand("EVAL_RO")   // Redis 7.0
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
     void clientNoEvict() {
         assertThat(redis.clientNoEvict(true)).isEqualTo("OK");
         assertThat(redis.clientNoEvict(false)).isEqualTo("OK");
@@ -334,7 +338,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @EnabledOnCommand("EVAL_RO")    // Redis 7.0
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
     void configGetMultipleParameters() {
         assertThat(redis.configGet("maxmemory", "*max-*-entries*")).containsEntry("maxmemory", "0")
                 .containsEntry("hash-max-listpack-entries", "512");
@@ -357,7 +361,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @EnabledOnCommand("EVAL_RO")    // Redis 7.0
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
     void configSetMultipleParameters() {
         Map<String, String> original = redis.configGet("maxmemory", "hash-max-listpack-entries");
         Map<String, String> config = new HashMap<>();

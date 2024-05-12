@@ -1,18 +1,3 @@
-/*
- * Copyright 2011-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core.dynamic;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -40,6 +25,7 @@ import io.lettuce.core.protocol.CommandType;
 class ParameterBinderUnitTests {
 
     private ParameterBinder binder = new ParameterBinder();
+
     private CommandSegments segments = new CommandSegments(Collections.singletonList(CommandSegment.constant("set")));
 
     @Test
@@ -152,28 +138,27 @@ class ParameterBinderUnitTests {
     @Test
     void bindsValueRangeCorrectly() {
 
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(MyCommands.class, "valueRange",
-                Range.class));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(MyCommands.class, "valueRange", Range.class));
 
         CommandArgs<String, String> args = bind(commandMethod,
                 Range.from(Range.Boundary.including("lower"), Range.Boundary.excluding("upper")));
 
-        assertThat(args.toCommandString()).isEqualTo(
-                String.format("%s %s", Base64.getEncoder().encodeToString("[lower".getBytes()),
+        assertThat(args.toCommandString())
+                .isEqualTo(String.format("%s %s", Base64.getEncoder().encodeToString("[lower".getBytes()),
                         Base64.getEncoder().encodeToString("(upper".getBytes())));
     }
 
     @Test
     void bindsUnboundedValueRangeCorrectly() {
 
-        CommandMethod commandMethod = DeclaredCommandMethod.create(ReflectionUtils.findMethod(MyCommands.class, "valueRange",
-                Range.class));
+        CommandMethod commandMethod = DeclaredCommandMethod
+                .create(ReflectionUtils.findMethod(MyCommands.class, "valueRange", Range.class));
 
         CommandArgs<String, String> args = bind(commandMethod, Range.unbounded());
 
-        assertThat(args.toCommandString()).isEqualTo(
-                String.format("%s %s", Base64.getEncoder().encodeToString("-".getBytes()),
-                        Base64.getEncoder().encodeToString("+".getBytes())));
+        assertThat(args.toCommandString()).isEqualTo(String.format("%s %s", Base64.getEncoder().encodeToString("-".getBytes()),
+                Base64.getEncoder().encodeToString("+".getBytes())));
     }
 
     @Test
@@ -194,8 +179,7 @@ class ParameterBinderUnitTests {
 
     private CommandArgs<String, String> bind(Object object) {
         CommandMethod commandMethod = DeclaredCommandMethod
-                .create(ReflectionUtils.findMethod(MyCommands.class, "justObject",
-                Object.class));
+                .create(ReflectionUtils.findMethod(MyCommands.class, "justObject", Object.class));
         return bind(commandMethod, object);
     }
 
@@ -214,5 +198,7 @@ class ParameterBinderUnitTests {
         void justObject(Object object);
 
         void valueRange(@io.lettuce.core.dynamic.annotation.Value Range<String> value);
+
     }
+
 }

@@ -1,18 +1,3 @@
-/*
- * Copyright 2011-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core.commands;
 
 import static io.lettuce.test.settings.TestSettings.*;
@@ -47,7 +32,9 @@ import io.lettuce.test.settings.TestSettings;
 class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final StatefulRedisConnection<String, String> connection;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
@@ -109,8 +96,8 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
         String result = redis.migrate("localhost", TestSettings.port(2), 0, 10, MigrateArgs.Builder.keys(key).copy().replace());
         assertThat(result).isEqualTo("OK");
 
-        result = redis.migrate("localhost", TestSettings.port(2), 0, 10, MigrateArgs.Builder
-                .keys(Arrays.asList("key1", "key2")).replace());
+        result = redis.migrate("localhost", TestSettings.port(2), 0, 10,
+                MigrateArgs.Builder.keys(Arrays.asList("key1", "key2")).replace());
         assertThat(result).isEqualTo("OK");
     }
 
@@ -137,4 +124,5 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
             commands.getStatefulConnection().close();
         }
     }
+
 }

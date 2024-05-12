@@ -1,18 +1,3 @@
-/*
- * Copyright 2016-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core.cluster.pubsub;
 
 import static org.assertj.core.api.Assertions.*;
@@ -23,6 +8,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,11 +17,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.pubsub.api.async.NodeSelectionPubSubAsyncCommands;
 import io.lettuce.core.cluster.pubsub.api.async.PubSubAsyncNodeSelection;
+import io.lettuce.core.cluster.pubsub.api.async.RedisClusterPubSubAsyncCommands;
 import io.lettuce.core.cluster.pubsub.api.reactive.NodeSelectionPubSubReactiveCommands;
 import io.lettuce.core.cluster.pubsub.api.reactive.PubSubReactiveNodeSelection;
 import io.lettuce.core.cluster.pubsub.api.sync.NodeSelectionPubSubCommands;
@@ -47,14 +35,19 @@ import io.lettuce.core.support.PubSubTestListener;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
+import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
+ * Integration tests for Cluster Pub/Sub.
+ *
  * @author Mark Paluch
  */
 @ExtendWith(LettuceExtension.class)
 class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
     private final RedisClusterClient clusterClient;
+
+    private final RedisClusterClient clusterClientWithNoRedirects;
 
     private final PubSubTestListener connectionListener = new PubSubTestListener();
 
@@ -66,9 +59,18 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
     private StatefulRedisClusterPubSubConnection<String, String> pubSubConnection2;
 
+    String shardChannel = "shard-channel";
+
+    String shardMessage = "shard msg!";
+
+    String shardTestChannel = "shard-test-channel";
+
     @Inject
-    RedisClusterPubSubConnectionIntegrationTests(RedisClusterClient clusterClient) {
+    RedisClusterPubSubConnectionIntegrationTests(RedisClusterClient clusterClient, RedisClusterClient clusterClient2) {
         this.clusterClient = clusterClient;
+        ClusterClientOptions.Builder builder = ClusterClientOptions.builder().maxRedirects(0);
+        clusterClient2.setOptions(builder.build());
+        this.clusterClientWithNoRedirects = clusterClient2;
     }
 
     @BeforeEach
@@ -76,7 +78,7 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         connection = clusterClient.connect();
         pubSubConnection = clusterClient.connectPubSub();
         pubSubConnection2 = clusterClient.connectPubSub();
-
+        pubSubConnection.addListener(connectionListener);
     }
 
     @AfterEach
@@ -84,6 +86,8 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         connection.close();
         pubSubConnection.close();
         pubSubConnection2.close();
+        connectionListener.clear();
+        pubSubConnection.removeListener(connectionListener);
     }
 
     @Test
@@ -98,6 +102,113 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         List<String> channelsOnOtherNode = connection.getConnection(otherNode.getNodeId()).sync().pubsubChannels();
         assertThat(channelsOnOtherNode).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void testRegularClientPubSubShardChannels() {
+
+        pubSubConnection.sync().ssubscribe(shardChannel);
+
+        Integer clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
+        RedisCommands<String, String> rightSlot = connection.sync().nodes(node -> node.getSlots().contains(clusterKeyslot))
+                .commands(0);
+        RedisCommands<String, String> wrongSlot = connection.sync().nodes(node -> !node.getSlots().contains(clusterKeyslot))
+                .commands(0);
+
+        List<String> channelsOnSubscribedNode = rightSlot.pubsubShardChannels();
+        assertThat(channelsOnSubscribedNode).hasSize(1);
+
+        List<String> channelsOnOtherNode = wrongSlot.pubsubShardChannels();
+        assertThat(channelsOnOtherNode).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void subscribeToShardChannel() {
+        pubSubConnection.sync().ssubscribe(shardChannel);
+
+        Wait.untilEquals(1L, connectionListener.getShardCounts()::poll).waitOrTimeout();
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void subscribeToShardChannelViaReplica() {
+        int clusterKeyslot = connection.sync().clusterKeyslot(shardChannel).intValue();
+        String thisNode = connection.getPartitions().getPartitionBySlot(clusterKeyslot).getNodeId();
+
+        RedisPubSubAsyncCommands<String, String> replica = pubSubConnection.async()
+                .nodes(node -> thisNode.equals(node.getSlaveOf())).commands(0);
+        replica.ssubscribe(shardChannel);
+
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void publishToShardChannel() throws Exception {
+        pubSubConnection.addListener(connectionListener);
+        pubSubConnection.async().ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        pubSubConnection.async().spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void publishToShardChannelViaDifferentEndpoints() throws Exception {
+        pubSubConnection.addListener(connectionListener);
+        pubSubConnection.async().ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        pubSubConnection.async().ssubscribe(shardTestChannel);
+        Wait.untilEquals(shardTestChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        pubSubConnection.async().spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+
+        pubSubConnection.async().spublish(shardTestChannel, shardMessage);
+        Wait.untilEquals(shardTestChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void publishToShardChannelViaNewClient() throws Exception {
+        pubSubConnection.addListener(connectionListener);
+        pubSubConnection.async().ssubscribe(shardChannel);
+
+        StatefulRedisClusterPubSubConnection<String, String> newPubsub = clusterClientWithNoRedirects.connectPubSub();
+        newPubsub.async().spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+        newPubsub.close();
+    }
+
+    @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void publishToShardChannelViaNewClientWithNoRedirects() throws Exception {
+        pubSubConnection.addListener(connectionListener);
+        pubSubConnection.async().ssubscribe(shardChannel);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        pubSubConnection.async().ssubscribe(shardTestChannel);
+        Wait.untilEquals(shardTestChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+
+        RedisClusterPubSubAsyncCommands<String, String> cmd = clusterClientWithNoRedirects.connectPubSub().async();
+
+        cmd.spublish(shardChannel, shardMessage);
+        Wait.untilEquals(shardChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+
+        cmd.spublish(shardTestChannel, shardMessage);
+        Wait.untilEquals(shardTestChannel, connectionListener.getShardChannels()::poll).waitOrTimeout();
+        Wait.untilEquals(shardMessage, connectionListener.getMessages()::poll).waitOrTimeout();
+        cmd.getStatefulConnection().close();
     }
 
     @Test
@@ -134,7 +245,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         String nodeId = pubSubConnection.sync().clusterMyId();
         RedisClusterNode otherNode = getOtherThan(nodeId);
         pubSubConnection.sync().subscribe(key);
-        pubSubConnection.addListener(connectionListener);
 
         connection.getConnection(nodeId).sync().publish(key, value);
         assertThat(connectionListener.getMessages().take()).isEqualTo(value);
@@ -148,7 +258,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         String nodeId = pubSubConnection.sync().clusterMyId();
         pubSubConnection.sync().subscribe(key);
-        pubSubConnection.addListener(connectionListener);
 
         assertThat(pubSubConnection2.sync().clusterMyId()).isEqualTo(nodeId);
 
@@ -175,7 +284,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
         String nodeId = pubSubConnection.sync().clusterMyId();
         RedisClusterNode otherNode = getOtherThan(nodeId);
         pubSubConnection.sync().subscribe(key);
-        pubSubConnection.addListener(connectionListener);
 
         List<String> channelsOnSubscribedNode = connection.getConnection(nodeId).sync().pubsubChannels();
         assertThat(channelsOnSubscribedNode).hasSize(1);
@@ -229,7 +337,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
         pubSubConnection.setNodeMessagePropagation(true);
-        pubSubConnection.addListener(connectionListener);
 
         StatefulRedisPubSubConnection<String, String> node = pubSubConnection.getConnection(partition.getNodeId());
         node.sync().subscribe("channel");
@@ -244,7 +351,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         RedisClusterNode partition = pubSubConnection.getPartitions().getPartition(0);
         pubSubConnection.setNodeMessagePropagation(true);
-        pubSubConnection.addListener(connectionListener);
 
         RedisURI uri = partition.getUri();
         StatefulRedisPubSubConnection<String, String> node = pubSubConnection.getConnection(uri.getHost(), uri.getPort());
@@ -259,7 +365,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     void testAsyncSubscription() throws Exception {
 
         pubSubConnection.setNodeMessagePropagation(true);
-        pubSubConnection.addListener(connectionListener);
 
         PubSubAsyncNodeSelection<String, String> masters = pubSubConnection.async().masters();
         NodeSelectionPubSubAsyncCommands<String, String> commands = masters.commands();
@@ -277,7 +382,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     void testSyncSubscription() throws Exception {
 
         pubSubConnection.setNodeMessagePropagation(true);
-        pubSubConnection.addListener(connectionListener);
 
         PubSubNodeSelection<String, String> masters = pubSubConnection.sync().masters();
         NodeSelectionPubSubCommands<String, String> commands = masters.commands();
@@ -295,7 +399,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     void testReactiveSubscription() throws Exception {
 
         pubSubConnection.setNodeMessagePropagation(true);
-        pubSubConnection.addListener(connectionListener);
 
         PubSubReactiveNodeSelection<String, String> masters = pubSubConnection.reactive().masters();
         NodeSelectionPubSubReactiveCommands<String, String> commands = masters.commands();
@@ -315,7 +418,6 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
 
         BlockingQueue<RedisClusterNode> nodes = new LinkedBlockingQueue<>();
         pubSubConnection.setNodeMessagePropagation(true);
-        pubSubConnection.addListener(connectionListener);
         pubSubConnection.addListener(new RedisClusterPubSubAdapter<String, String>() {
 
             @Override

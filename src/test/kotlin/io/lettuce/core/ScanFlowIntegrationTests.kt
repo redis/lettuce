@@ -1,7 +1,11 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -66,6 +70,18 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
 
             assertThat(ScanFlow.hscan(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
             assertThat(ScanFlow.hscan(this, key).count()).isEqualTo(iterations)
+        }
+    }
+
+    @Test
+    fun `should hscanNovalues iteratively`() = runBlocking<Unit> {
+        with(connection.coroutines()) {
+            repeat(iterations) {
+                hset(key, "field-$it", "value-$it")
+            }
+
+            assertThat(ScanFlow.hscanNovalues(this, key, ScanArgs.Builder.limit(200)).take(250).toList()).hasSize(250)
+            assertThat(ScanFlow.hscanNovalues(this, key).count()).isEqualTo(iterations)
         }
     }
 

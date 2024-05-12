@@ -1,18 +1,3 @@
-/*
- * Copyright 2019-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core.masterreplica;
 
 import static org.assertj.core.api.Assertions.*;
@@ -53,9 +38,11 @@ class MasterReplicaTest extends AbstractRedisClientTest {
     private StatefulRedisMasterReplicaConnection<String, String> connection;
 
     private RedisURI upstream;
+
     private RedisURI replica;
 
     private RedisCommands<String, String> connection1;
+
     private RedisCommands<String, String> connection2;
 
     @BeforeEach
@@ -166,10 +153,12 @@ class MasterReplicaTest extends AbstractRedisClientTest {
     void noReplicaForRead() {
 
         connection.setReadFrom(new ReadFrom() {
+
             @Override
             public List<RedisNodeDescription> select(Nodes nodes) {
                 return Collections.emptyList();
             }
+
         });
 
         assertThatThrownBy(() -> replicaCall(connection)).isInstanceOf(RedisException.class);
@@ -203,4 +192,5 @@ class MasterReplicaTest extends AbstractRedisClientTest {
     static String replicaCall(StatefulRedisMasterReplicaConnection<String, String> connection) {
         return connection.sync().info("replication");
     }
+
 }

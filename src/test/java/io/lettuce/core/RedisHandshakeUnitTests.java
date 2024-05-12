@@ -1,24 +1,11 @@
-/*
- * Copyright 2023-2024 the original author or authors.
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
 package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.junit.jupiter.api.Test;
 
@@ -33,6 +20,8 @@ import io.netty.channel.embedded.EmbeddedChannel;
  * @author Mark Paluch
  */
 class RedisHandshakeUnitTests {
+
+    public static final String ERR_UNKNOWN_COMMAND = "ERR unknown command 'CLIENT', with args beginning with: 'SETINFO' 'lib-name' 'Lettuce'";
 
     @Test
     void handshakeWithResp3ShouldPass() {
@@ -84,6 +73,34 @@ class RedisHandshakeUnitTests {
         hello.complete();
 
         assertThat(state.getNegotiatedProtocolVersion()).isEqualTo(ProtocolVersion.RESP2);
+    }
+
+    @Test
+    void handshakeFireAndForgetPostHandshake() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        ConnectionMetadata connectionMetdata = new ConnectionMetadata();
+        connectionMetdata.setLibraryName("library-name");
+        connectionMetdata.setLibraryVersion("library-version");
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
+        state.apply(connectionMetdata);
+        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        CompletionStage<Void> handshakeInit = handshake.initialize(channel);
+
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        List<AsyncCommand<String, String, Map<String, String>>> postHandshake = channel.readOutbound();
+        postHandshake.get(0).getOutput().setError(ERR_UNKNOWN_COMMAND);
+        postHandshake.get(0).completeExceptionally(new RedisException(ERR_UNKNOWN_COMMAND));
+        postHandshake.get(0).complete();
+
+        assertThat(postHandshake.size()).isEqualTo(2);
+        assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
     }
 
     @Test

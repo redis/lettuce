@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -41,13 +45,15 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 class ClusterTestHelper {
 
     private final RedisClusterClient clusterClient;
+
     private final Map<Integer, RedisAsyncCommands<String, String>> connectionCache = new HashMap<>();
 
     public ClusterTestHelper(RedisClusterClient clusterClient, int... ports) {
         this.clusterClient = clusterClient;
 
         for (int port : ports) {
-            RedisAsyncCommands<String, String> connection = clusterClient.connectToNode(new InetSocketAddress("localhost", port)).async();
+            RedisAsyncCommands<String, String> connection = clusterClient
+                    .connectToNode(new InetSocketAddress("localhost", port)).async();
             connectionCache.put(port, connection);
         }
     }
@@ -136,8 +142,8 @@ class ClusterTestHelper {
         }
     }
 
-    private void await(List<Future<?>> futures, boolean ignoreExecutionException) throws InterruptedException,
-            java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
+    private void await(List<Future<?>> futures, boolean ignoreExecutionException)
+            throws InterruptedException, java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException {
         for (Future<?> future : futures) {
             try {
                 future.get(10, TimeUnit.SECONDS);
@@ -148,4 +154,5 @@ class ClusterTestHelper {
             }
         }
     }
+
 }

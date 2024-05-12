@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -43,7 +47,9 @@ import io.lettuce.test.TestFutures;
 class AsyncConnectionIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final StatefulRedisConnection<String, String> connection;
+
     private final RedisAsyncCommands<String, String> async;
 
     @Inject
@@ -122,10 +128,12 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         final List<Object> run = new ArrayList<>();
 
         Runnable listener = new Runnable() {
+
             @Override
             public void run() {
                 run.add(new Object());
             }
+
         };
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
@@ -169,4 +177,5 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         Future<KeyValue<String, String>> blpop = async.blpop(1, key);
         assertThat(Futures.await(1, TimeUnit.NANOSECONDS, blpop)).isFalse();
     }
+
 }

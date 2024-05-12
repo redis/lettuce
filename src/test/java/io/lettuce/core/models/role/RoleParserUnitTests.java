@@ -1,18 +1,3 @@
-/*
- * Copyright 2011-2024 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.lettuce.core.models.role;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,7 +17,9 @@ import io.lettuce.core.internal.LettuceLists;
 class RoleParserUnitTests {
 
     private static final long REPLICATION_OFFSET_1 = 3167038L;
+
     private static final long REPLICATION_OFFSET_2 = 3167039L;
+
     private static final String LOCALHOST = "127.0.0.1";
 
     @Test
@@ -47,8 +34,8 @@ class RoleParserUnitTests {
 
     @Test
     void invalidFirstElement() {
-        assertThatThrownBy(() -> RoleParser.parse(LettuceLists.newList(new Object()))).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> RoleParser.parse(LettuceLists.newList(new Object())))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -105,7 +92,8 @@ class RoleParserUnitTests {
     @Test
     void sentinel() {
 
-        List<?> input = LettuceLists.newList("sentinel", LettuceLists.newList("resque-master", "html-fragments-master", "stats-master"));
+        List<?> input = LettuceLists.newList("sentinel",
+                LettuceLists.newList("resque-master", "html-fragments-master", "stats-master"));
 
         RedisInstance result = RoleParser.parse(input);
 
@@ -167,4 +155,5 @@ class RoleParserUnitTests {
 
         assertThat(partner.toString()).contains(ReplicationPartner.class.getSimpleName());
     }
+
 }

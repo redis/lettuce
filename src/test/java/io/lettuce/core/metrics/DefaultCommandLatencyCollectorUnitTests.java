@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -92,8 +96,7 @@ class DefaultCommandLatencyCollectorUnitTests {
     @Test
     void verifyMetrics() {
 
-        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions
-                .builder().usePauseDetector().build());
+        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.builder().usePauseDetector().build());
 
         setupData();
 
@@ -114,8 +117,8 @@ class DefaultCommandLatencyCollectorUnitTests {
         assertThat(metrics.getFirstResponse().getMax()).isBetween(290000L, 310000L);
         assertThat(metrics.getCompletion().getPercentiles()).containsKey(50.0d);
 
-        assertThat(metrics.getFirstResponse().getPercentiles().get(50d)).isLessThanOrEqualTo(
-                metrics.getCompletion().getPercentiles().get(50d));
+        assertThat(metrics.getFirstResponse().getPercentiles().get(50d))
+                .isLessThanOrEqualTo(metrics.getCompletion().getPercentiles().get(50d));
 
         assertThat(metrics.getTimeUnit()).isEqualTo(MICROSECONDS);
 
@@ -127,9 +130,8 @@ class DefaultCommandLatencyCollectorUnitTests {
     @Test
     void verifyCummulativeMetrics() {
 
-        sut = new DefaultCommandLatencyCollector(DefaultCommandLatencyCollectorOptions.builder()
-                .usePauseDetector()
-                .resetLatenciesAfterEvent(false).build());
+        sut = new DefaultCommandLatencyCollector(
+                DefaultCommandLatencyCollectorOptions.builder().usePauseDetector().resetLatenciesAfterEvent(false).build());
 
         setupData();
 
@@ -147,4 +149,5 @@ class DefaultCommandLatencyCollectorUnitTests {
         sut.recordCommandLatency(LocalAddress.ANY, LocalAddress.ANY, CommandType.BGSAVE, MILLISECONDS.toNanos(300),
                 MILLISECONDS.toNanos(1000));
     }
+
 }

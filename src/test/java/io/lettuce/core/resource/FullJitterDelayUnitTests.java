@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -31,14 +35,14 @@ class FullJitterDelayUnitTests {
 
     @Test
     void shouldNotCreateIfLowerBoundIsNegative() {
-        assertThatThrownBy(() -> Delay.fullJitter(-1, 100, 1, TimeUnit.MILLISECONDS)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> Delay.fullJitter(-1, 100, 1, TimeUnit.MILLISECONDS))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void shouldNotCreateIfLowerBoundIsSameAsUpperBound() {
-        assertThatThrownBy(() -> Delay.fullJitter(100, 100, 1, TimeUnit.MILLISECONDS)).isInstanceOf(
-                IllegalArgumentException.class);
+        assertThatThrownBy(() -> Delay.fullJitter(100, 100, 1, TimeUnit.MILLISECONDS))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -81,4 +85,5 @@ class FullJitterDelayUnitTests {
         assertThat(delay.createDelay(17).toMillis()).isBetween(15000L, 30000L);
         assertThat(delay.createDelay(Integer.MAX_VALUE).toMillis()).isBetween(15000L, 30000L);
     }
+
 }

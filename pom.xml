@@ -22,8 +22,8 @@
 
     <licenses>
         <license>
-            <name>Apache License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <name>MIT</name>
+            <url>https://github.com/redis/lettuce/blob/main/LICENSE</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -89,12 +89,12 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
+            <id>ossrh</id>
             <name>Sonatype Nexus Snapshots</name>
             <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
         </snapshotRepository>
         <repository>
-            <id>sonatype-nexus-staging</id>
+            <id>ossrh</id>
             <name>Nexus Release Repository</name>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
@@ -842,6 +842,27 @@
             </plugin>
 
             <plugin>
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <version>2.16.0</version>
+                <configuration>
+                    <directories>
+                        <directory>${project.build.sourceDirectory}</directory>
+                        <directory>${project.build.testSourceDirectory}</directory>
+                        <directory>${project.basedir}/src/main/templates</directory>
+                    </directories>
+                    <configFile>formatting.xml</configFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>validate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
@@ -862,6 +883,7 @@
                         <phase>integration-test</phase>
                         <goals>
                             <goal>integration-test</goal>
+                            <goal>verify</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -923,7 +945,7 @@
                 </os>
             </activation>
             <properties>
-                <os.detected.classifier>linux-aarch64-fedora</os.detected.classifier>
+                <os.detected.classifier>linux-aarch_64-fedora</os.detected.classifier>
             </properties>
         </profile>
 

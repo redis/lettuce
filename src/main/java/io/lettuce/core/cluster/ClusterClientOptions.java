@@ -1,7 +1,11 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -349,13 +353,11 @@ public class ClusterClientOptions extends ClientOptions {
 
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect())
-                .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .decodeBufferPolicy(getDecodeBufferPolicy())
-                .disconnectedBehavior(getDisconnectedBehavior()).maxRedirects(getMaxRedirects())
-                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
-                .protocolVersion(getConfiguredProtocolVersion()).readOnlyCommands(getReadOnlyCommands())
-                .requestQueueSize(getRequestQueueSize())
+        builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
+                .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
+                .maxRedirects(getMaxRedirects()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
+                .readOnlyCommands(getReadOnlyCommands()).requestQueueSize(getRequestQueueSize())
                 .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
                 .topologyRefreshOptions(getTopologyRefreshOptions())
@@ -405,7 +407,6 @@ public class ClusterClientOptions extends ClientOptions {
     public Duration getRefreshPeriod() {
         return topologyRefreshOptions.getRefreshPeriod();
     }
-
 
     /**
      * The {@link ClusterTopologyRefreshOptions} for detailed control of topology updates.
