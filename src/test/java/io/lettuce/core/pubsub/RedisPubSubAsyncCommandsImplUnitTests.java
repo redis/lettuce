@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 
 import static io.lettuce.core.protocol.CommandType.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -50,7 +49,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(PubSubOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -69,7 +68,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(PubSubOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -88,7 +87,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(PubSubOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -107,7 +106,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(PubSubOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -128,7 +127,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(IntegerOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("key<acmeChannel> value<acmeMessage>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -148,7 +147,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(KeyListOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("CHANNELS key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -168,7 +167,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(MapOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("NUMSUB key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -188,7 +187,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(KeyListOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("SHARDCHANNELS key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -208,7 +207,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(MapOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("SHARDNUMSUB key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -227,7 +226,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(PubSubOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
     @Test
@@ -246,7 +245,7 @@ class RedisPubSubAsyncCommandsImplUnitTests {
         assertInstanceOf(PubSubOutput.class, capturedCommand.getValue().getOutput());
         assertThat(capturedCommand.getValue().getArgs().toCommandString()).isEqualTo("key<channelPattern>");
 
-        assertNotEquals(capturedCommand.getValue(), dispachedMock);
+        assertThat(capturedCommand.getValue()).isNotEqualTo(dispachedMock);
     }
 
 }
