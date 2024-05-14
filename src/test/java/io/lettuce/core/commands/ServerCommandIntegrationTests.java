@@ -35,6 +35,7 @@ import javax.inject.Inject;
 
 import io.lettuce.core.cluster.ClusterReadOnlyCommands;
 import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -186,6 +187,24 @@ public class ServerCommandIntegrationTests extends TestSupport {
         connection2.auth("test_kill", "password1");
         assertThat(redis.clientKill(KillArgs.Builder.user("test_kill"))).isGreaterThan(0);
         redis.aclDeluser("test_kill");
+    }
+
+    @Test
+    void clientKillMaxAge() throws InterruptedException {
+        // can not find other new command to use `@EnabledOnCommand` for now, so check the version
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
+
+        RedisCommands<String, String> connection2 = client.connect().sync();
+        long inactiveId = connection2.clientId();
+        long maxAge = 2L;
+        // sleep for maxAge * 2 seconds, to be sure
+        TimeUnit.SECONDS.sleep(maxAge * 2);
+        RedisCommands<String, String> connection3 = client.connect().sync();
+        long activeId = connection3.clientId();
+        assertThat(redis.clientKill(KillArgs.Builder.maxAge(maxAge))).isGreaterThan(0);
+
+        assertThat(redis.clientList(ClientListArgs.Builder.ids(inactiveId))).isBlank();
+        assertThat(redis.clientList(ClientListArgs.Builder.ids(activeId))).isNotBlank();
     }
 
     @Test
