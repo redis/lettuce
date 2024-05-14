@@ -447,7 +447,9 @@ public class DefaultClientResources implements ClientResources {
          * @param dnsResolver the DNS resolver, must not be {@code null}.
          * @return {@code this} {@link Builder}.
          * @since 4.3
+         * @deprecated since 6.1. Configure {@link AddressResolverGroup} instead.
          */
+        @Deprecated
         @Override
         public Builder dnsResolver(DnsResolver dnsResolver) {
 
