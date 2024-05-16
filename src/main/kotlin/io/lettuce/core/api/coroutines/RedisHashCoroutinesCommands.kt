@@ -433,15 +433,16 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
     suspend fun hexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, vararg fields: K): Boolean?
 
     /**
-     * Get the time to live for one or more fields in as unix timestamp in seconds.
+     * Get the time to live for one or more fields in as UNIX timestamp in seconds.
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return Long integer-reply in seconds, or a negative value in order to signal an error. The command returns `-1` if
-     *         the key exists but has no associated expiration time. The command returns `-2` if the key does not exist.
+     * @return a list of Long integer-reply in seconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
      * @since 7.0
      */
-    suspend fun hexpiretime(key: K, vararg fields: K): Long?
+    suspend fun hexpiretime(key: K, vararg fields: K): List<Long>?
 
     /**
      * Remove the expiration from one or more fields.

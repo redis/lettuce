@@ -890,7 +890,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Long> hexpiretime(K key, K... fields) {
+    public RedisFuture<List<Long>> hexpiretime(K key, K... fields) {
         return dispatch(commandBuilder.hexpiretime(key, fields));
     }
 

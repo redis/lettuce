@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
+import java.util.List;
 
 /**
  * Reactive executed commands for Hashes (Key-Value pairs).
@@ -602,7 +603,7 @@ public interface RedisHashReactiveCommands<K, V> {
      *         the key exists but has no associated expiration time. The command returns {@code -2} if the key does not exist.
      * @since 7.0
      */
-    Mono<Long> hexpiretime(K key, K... fields);
+    Mono<List<Long>> hexpiretime(K key, K... fields);
 
     /**
      * Remove the expiration from one or more fields.

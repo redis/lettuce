@@ -561,15 +561,16 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
     AsyncExecutions<Boolean> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields);
 
     /**
-     * Get the time to live for one or more fields in as unix timestamp in seconds.
+     * Get the time to live for one or more fields in as UNIX timestamp in seconds.
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return Long integer-reply in seconds, or a negative value in order to signal an error. The command returns {@code -1} if
-     *         the key exists but has no associated expiration time. The command returns {@code -2} if the key does not exist.
+     * @return a list of Long integer-reply in seconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
      * @since 7.0
      */
-    AsyncExecutions<Long> hexpiretime(K key, K... fields);
+    AsyncExecutions<List<Long>> hexpiretime(K key, K... fields);
 
     /**
      * Remove the expiration from one or more fields.

@@ -1,22 +1,22 @@
 package io.lettuce.core.commands.reactive;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import reactor.test.StepVerifier;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.Value;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.commands.HashCommandIntegrationTests;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import reactor.test.StepVerifier;
+
+import javax.inject.Inject;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
+ * x
+ * 
  * @author Mark Paluch
  */
 class HashReactiveCommandIntegrationTests extends HashCommandIntegrationTests {
@@ -46,6 +46,12 @@ class HashReactiveCommandIntegrationTests extends HashCommandIntegrationTests {
     @Test
     @Disabled("API differences")
     public void hgetallStreaming() {
+
+    }
+
+    @Test
+    @Disabled("API differences")
+    public void hexpiretime() {
 
     }
 

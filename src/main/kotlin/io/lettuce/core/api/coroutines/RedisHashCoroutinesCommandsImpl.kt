@@ -166,7 +166,7 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     ): Boolean? =
         ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
 
-    override suspend fun hexpiretime(key: K, vararg fields: K): Long? =
+    override suspend fun hexpiretime(key: K, vararg fields: K): List<Long>? =
         ops.hexpiretime(key).awaitFirstOrNull()
 
     override suspend fun hpersist(key: K, vararg fields: K): Boolean? = ops.hpersist(key).awaitFirstOrNull()

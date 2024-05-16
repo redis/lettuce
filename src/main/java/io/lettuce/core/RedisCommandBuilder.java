@@ -1029,13 +1029,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXPIRETIME, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, Long> hexpiretime(K key, K... fields) {
+    Command<K, V, List<Long>> hexpiretime(K key, K... fields) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(fields.length);
         args.addKeys(fields);
-        return createCommand(HEXPIRETIME, new IntegerOutput<>(codec), args);
+        return createCommand(HEXPIRETIME, new IntegerListOutput<>(codec), args);
     }
 
     Command<K, V, String> flushall() {

@@ -32,7 +32,6 @@ import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.condition.EnabledOnCommand;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -68,6 +67,8 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     public static final String MY_FIELD = "hField";
 
+    public static final String MY_SECOND_FIELD = "hSecondField";
+
     public static final String MY_VALUE = "hValue";
 
     private final RedisCommands<String, String> redis;
@@ -80,13 +81,6 @@ public class HashCommandIntegrationTests extends TestSupport {
     @BeforeEach
     void setUp() {
         this.redis.flushall();
-    }
-
-    @AfterEach
-    void tearDown() {
-        // resets the configuration settings to default, would not be needed once listpack is supported
-        assertThat(redis.configSet("hash-max-listpack-entries", "512")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value", "64")).isEqualTo("OK");
     }
 
     @Test
@@ -562,11 +556,6 @@ public class HashCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("HEXPIRE")
     void hexpire() {
-        // the below settings are required until the solution is able to support listpack entries
-        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
-
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).isTrue();
 
@@ -576,11 +565,6 @@ public class HashCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("HEXPIRE")
     void hexpireExpireArgs() {
-        // the below settings are required until the solution is able to support listpack entries
-        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
-
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.nx(), MY_FIELD)).isTrue();
         assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.xx(), MY_FIELD)).isTrue();
@@ -593,11 +577,6 @@ public class HashCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("HEXPIREAT")
     void hexpireat() {
-        // the below settings are required until the solution is able to support listpack entries
-        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
-
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpireat(MY_KEY, Instant.now().plusSeconds(1), MY_FIELD)).isTrue();
 
@@ -607,26 +586,23 @@ public class HashCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("HEXPIRETIME")
     void hexpiretime() {
-        Date expiration = new Date(System.currentTimeMillis() + 10000);
-        // the below settings are required until the solution is able to support listpack entries
-        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
+        Map<String, String> fields = new LinkedHashMap<>();
+        fields.put(MY_FIELD, MY_VALUE);
+        fields.put(MY_SECOND_FIELD, MY_VALUE);
 
-        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
+        Date expiration = new Date(System.currentTimeMillis() + 1000 * 5);
+        Date secondExpiration = new Date(System.currentTimeMillis() + 1000 * 10);
+        assertThat(redis.hset(MY_KEY, fields)).isEqualTo(2);
         assertThat(redis.hexpireat(MY_KEY, expiration, MY_FIELD)).isTrue();
+        assertThat(redis.hexpireat(MY_KEY, secondExpiration, MY_SECOND_FIELD)).isTrue();
 
-        assertThat(redis.hexpiretime(MY_KEY, MY_FIELD)).isEqualTo(expiration.getTime() / 1000);
+        assertThat(redis.hexpiretime(MY_KEY, MY_FIELD, MY_SECOND_FIELD)).containsExactly(expiration.getTime() / 1000,
+                secondExpiration.getTime() / 1000);
     }
 
     @Test
     @EnabledOnCommand("HPERSIST")
     void persist() {
-        // the below settings are required until the solution is able to support listpack entries
-        // see TODOs in https://github.com/redis/redis/pull/13172 for more details
-        assertThat(redis.configSet("hash-max-listpack-entries", "0")).isEqualTo("OK");
-        assertThat(redis.configSet("set-max-listpack-value", "0")).isEqualTo("OK");
-
         assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isFalse();
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isFalse();

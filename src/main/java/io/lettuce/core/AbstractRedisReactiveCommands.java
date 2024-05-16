@@ -949,7 +949,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Long> hexpiretime(K key, K... fields) {
+    public Mono<List<Long>> hexpiretime(K key, K... fields) {
         return createMono(() -> commandBuilder.hexpiretime(key, fields));
     }
 
