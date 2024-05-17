@@ -988,8 +988,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             expireArgs.build(args);
         }
 
-        args.add(fields.length);
-        args.addKeys(fields);
+        args.add(FIELDS).add(fields.length).addKeys(fields);
 
         return createCommand(HEXPIRE, new BooleanOutput<>(codec), args);
     }
@@ -1004,8 +1003,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             expireArgs.build(args);
         }
 
-        args.add(fields.length);
-        args.addKeys(fields);
+        args.add(FIELDS).add(fields.length).addKeys(fields);
 
         return createCommand(HEXPIREAT, new BooleanOutput<>(codec), args);
     }
@@ -1015,8 +1013,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notEmpty(fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        args.add(fields.length);
-        args.addKeys(fields);
+        args.add(FIELDS).add(fields.length).addKeys(fields);
 
         return createCommand(HTTL, new IntegerListOutput<>(codec), args);
     }
@@ -1031,8 +1028,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             expireArgs.build(args);
         }
 
-        args.add(fields.length);
-        args.addKeys(fields);
+        args.add(FIELDS).add(fields.length).addKeys(fields);
 
         return createCommand(HPEXPIRE, new BooleanOutput<>(codec), args);
     }
@@ -1047,8 +1043,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             expireArgs.build(args);
         }
 
-        args.add(fields.length);
-        args.addKeys(fields);
+        args.add(FIELDS).add(fields.length).addKeys(fields);
 
         return createCommand(HPEXPIREAT, new BooleanOutput<>(codec), args);
     }
@@ -1058,8 +1053,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notEmpty(fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        args.add(fields.length);
-        args.addKeys(fields);
+        args.add(FIELDS).add(fields.length).addKeys(fields);
 
         return createCommand(HPEXPIRETIME, new IntegerListOutput<>(codec), args);
     }
@@ -1069,9 +1063,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notEmpty(fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-
-        args.add(fields.length);
-        args.addKeys(fields);
+        args.add(FIELDS).add(fields.length).addKeys(fields);
 
         return createCommand(HPTTL, new IntegerListOutput<>(codec), args);
     }
@@ -1099,8 +1091,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        args.add(fields.length);
-        args.addKeys(fields);
+        args.add(FIELDS).add(fields.length).addKeys(fields);
+
         return createCommand(HEXPIRETIME, new IntegerListOutput<>(codec), args);
     }
 
@@ -2154,8 +2146,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        args.add(fields.length);
-        args.addKeys(fields);
+        args.add(FIELDS).add(fields.length).addKeys(fields);
 
         return createCommand(HPERSIST, new BooleanOutput<>(codec), args);
     }

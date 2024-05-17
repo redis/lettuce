@@ -602,7 +602,7 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("HPERSIST")
-    void persist() {
+    void hpersist() {
         assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isFalse();
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isFalse();
