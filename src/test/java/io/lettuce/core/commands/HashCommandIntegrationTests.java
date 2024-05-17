@@ -616,7 +616,7 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hset(MY_KEY, MY_SECOND_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpire(MY_KEY, 60, MY_FIELD)).isTrue();
-        assertThat(redis.httl(MY_KEY, MY_FIELD, MY_SECOND_FIELD)).containsExactly( 60L, -1L);
+        assertThat(redis.httl(MY_KEY, MY_FIELD, MY_SECOND_FIELD)).containsExactly(60L, -1L);
     }
 
     void setup100KeyValues(Map<String, String> expect) {
