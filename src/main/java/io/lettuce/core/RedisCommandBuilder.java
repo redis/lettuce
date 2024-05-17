@@ -1010,6 +1010,72 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HEXPIREAT, new BooleanOutput<>(codec), args);
     }
 
+    Command<K, V, List<Long>> httl(K key, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HTTL, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(milliseconds);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HPEXPIRE, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
+
+        if (expireArgs != null) {
+            expireArgs.build(args);
+        }
+
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HPEXPIREAT, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> hpexpiretime(K key, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HPEXPIRETIME, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K, V, List<Long>> hpttl(K key, K... fields) {
+        notNullKey(key);
+        notEmpty(fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        args.add(fields.length);
+        args.addKeys(fields);
+
+        return createCommand(HPTTL, new IntegerListOutput<>(codec), args);
+    }
+
     Command<K, V, Boolean> expireat(K key, long timestamp, ExpireArgs expireArgs) {
         notNullKey(key);
 

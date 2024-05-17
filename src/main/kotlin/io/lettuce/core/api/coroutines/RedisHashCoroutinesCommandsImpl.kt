@@ -166,10 +166,73 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     ): Boolean? =
         ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
 
-    override suspend fun hexpiretime(key: K, vararg fields: K): List<Long>? =
-        ops.hexpiretime(key).awaitFirstOrNull()
+    override suspend fun hexpiretime(key: K, vararg fields: K): List<Long> =
+        ops.hexpiretime(key).asFlow().toList()
 
     override suspend fun hpersist(key: K, vararg fields: K): Boolean? = ops.hpersist(key).awaitFirstOrNull()
 
+    override suspend fun hpexpire(key: K, milliseconds: Long, vararg fields: K): Boolean? =
+        ops.hpexpire(key, milliseconds, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpire(
+        key: K,
+        milliseconds: Long,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hpexpire(key, milliseconds, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpire(key: K, milliseconds: Duration, vararg fields: K): Boolean? =
+        ops.hpexpire(key, milliseconds, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpire(
+        key: K,
+        milliseconds: Duration,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hpexpire(key, milliseconds, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpireat(key: K, timestamp: Long, vararg fields: K): Boolean? =
+        ops.hpexpireat(key, timestamp, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpireat(
+        key: K,
+        timestamp: Long,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hpexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpireat(key: K, timestamp: Date, vararg fields: K): Boolean? =
+        ops.hpexpireat(key, timestamp, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpireat(
+        key: K,
+        timestamp: Date,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hpexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpireat(key: K, timestamp: Instant, vararg fields: K): Boolean? =
+        ops.hpexpireat(key, timestamp, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpireat(
+        key: K,
+        timestamp: Instant,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): Boolean? =
+        ops.hpexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+
+    override suspend fun hpexpiretime(key: K, vararg fields: K): List<Long> =
+        ops.hpexpiretime(key, *fields).asFlow().toList()
+
+    override suspend fun httl(key: K, vararg fields: K): List<Long> =
+        ops.httl(key, *fields).asFlow().toList()
+
+    override suspend fun hpttl(key: K, vararg fields: K): List<Long> =
+        ops.hpttl(key, *fields).asFlow().toList()
 }
 

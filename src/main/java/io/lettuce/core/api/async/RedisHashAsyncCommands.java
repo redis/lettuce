@@ -585,4 +585,164 @@ public interface RedisHashAsyncCommands<K, V> {
      */
     RedisFuture<Boolean> hpersist(K key, K... fields);
 
+    /**
+     * Set the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds type: long.
+     * @param fields one or more fields to set the TTL for.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpire(K key, long milliseconds, K... fields);
+
+    /**
+     * Set the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds type: long.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @param fields one or more fields to set the TTL for.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpire(K key, Duration milliseconds, K... fields);
+
+    /**
+     * Set the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
+     *         the timeout could not be set.
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpire(K key, Duration milliseconds, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpireat(K key, long timestamp, K... fields);
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpireat(K key, Date timestamp, K... fields);
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpireat(K key, Instant timestamp, K... fields);
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
+     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @since 7.0
+     */
+    RedisFuture<Boolean> hpexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Get the time to live for one or more fields as UNIX timestamp in milliseconds.
+     *
+     * @param key the key.
+     * @param fields one or more fields to get the TTL for.
+     * @return Long integer-reply in milliseconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
+     * @since 7.0
+     */
+    RedisFuture<List<Long>> hpexpiretime(K key, K... fields);
+
+    /**
+     * Get the time to live for one or more fields.
+     *
+     * @param key the key.
+     * @param fields one or more fields to get the TTL for.
+     * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
+     * @since 7.0
+     */
+    RedisFuture<List<Long>> httl(K key, K... fields);
+
+    /**
+     * Get the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param fields one or more fields to get the TTL for.
+     * @return a list of Long integer-reply in seconds, or a negative value in order to signal an error. The command returns
+     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         does not exist.
+     * @since 7.0
+     */
+    RedisFuture<List<Long>> hpttl(K key, K... fields);
 }

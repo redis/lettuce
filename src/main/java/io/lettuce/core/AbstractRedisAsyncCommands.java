@@ -820,6 +820,74 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<Long>> httl(K key, K... fields) {
+        return dispatch(commandBuilder.httl(key, fields));
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpire(K key, long milliseconds, K... fields) {
+        return hpexpire(key, milliseconds, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields) {
+        return dispatch(commandBuilder.hpexpire(key, milliseconds, expireArgs, fields));
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpire(K key, Duration milliseconds, K... fields) {
+        return hpexpire(key, milliseconds, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpire(K key, Duration milliseconds, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return hpexpire(key, milliseconds.toMillis(), expireArgs, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpireat(K key, Date timestamp, K... fields) {
+        return hpexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hpexpireat(key, timestamp.getTime(), expireArgs, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpireat(K key, Instant timestamp, K... fields) {
+        return hpexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hpexpireat(key, timestamp.toEpochMilli(), expireArgs, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpireat(K key, long timestamp, K... fields) {
+        return hpexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<Boolean> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+        return dispatch(commandBuilder.hpexpireat(key, timestamp, expireArgs, fields));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpiretime(K key, K... fields) {
+        return dispatch(commandBuilder.hpexpiretime(key, fields));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpttl(K key, K... fields) {
+        return dispatch(commandBuilder.hpttl(key, fields));
+    }
+
+    @Override
     public RedisFuture<Boolean> expireat(K key, long timestamp) {
         return expireat(key, timestamp, null);
     }

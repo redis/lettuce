@@ -438,11 +438,11 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
      * @return a list of Long integer-reply in seconds, or a negative value in order to signal an error. The command returns
-     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
+     *         `-1` if the key exists but has no associated expiration time. The command returns `-2` if the key
      *         does not exist.
      * @since 7.0
      */
-    suspend fun hexpiretime(key: K, vararg fields: K): List<Long>?
+    suspend fun hexpiretime(key: K, vararg fields: K): List<Long>
 
     /**
      * Remove the expiration from one or more fields.
@@ -455,6 +455,167 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         associated timeout.
      */
     suspend fun hpersist(key: K, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds type: long.
+     * @param fields one or more fields to set the TTL for.
+     * @return integer-reply, specifically: `true` if the timeout was set. `false` if `key` does not exist or
+     *         the timeout could not be set.
+     * @since 7.0
+     */
+    suspend fun hpexpire(key: K, milliseconds: Long, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds type: long.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return integer-reply, specifically: `true` if the timeout was set. `false` if `key` does not exist or
+     *         the timeout could not be set.
+     * @since 7.0
+     */
+    suspend fun hpexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @param fields one or more fields to set the TTL for.
+     * @return integer-reply, specifically: `true` if the timeout was set. `false` if `key` does not exist or
+     *         the timeout could not be set.
+     * @since 7.0
+     */
+    suspend fun hpexpire(key: K, milliseconds: Duration, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param milliseconds the milliseconds.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return integer-reply, specifically: `true` if the timeout was set. `false` if `key` does not exist or
+     *         the timeout could not be set.
+     * @since 7.0
+     */
+    suspend fun hpexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hpexpireat(key: K, timestamp: Long, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hpexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hpexpireat(key: K, timestamp: Date, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hpexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hpexpireat(key: K, timestamp: Instant, vararg fields: K): Boolean?
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return Boolean integer-reply specifically: `true` if the timeout was set. `false` if `key` does not
+     *         exist or the timeout could not be set (see: `EXPIRE`).
+     * @since 7.0
+     */
+    suspend fun hpexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, vararg fields: K): Boolean?
+
+    /**
+     * Get the time to live for one or more fields as UNIX timestamp in milliseconds.
+     *
+     * @param key the key.
+     * @param fields one or more fields to get the TTL for.
+     * @return Long integer-reply in milliseconds, or a negative value in order to signal an error. The command returns
+     *         `-1` if the key exists but has no associated expiration time. The command returns `-2` if the key
+     *         does not exist.
+     * @since 7.0
+     */
+    suspend fun hpexpiretime(key: K, vararg fields: K): List<Long>
+
+    /**
+     * Get the time to live for one or more fields.
+     *
+     * @param key the key.
+     * @param fields one or more fields to get the TTL for.
+     * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error. The command returns
+     *         `-1` if the key exists but has no associated expiration time. The command returns `-2` if the key
+     *         does not exist.
+     * @since 7.0
+     */
+    suspend fun httl(key: K, vararg fields: K): List<Long>
+
+    /**
+     * Get the time to live for one or more fields in milliseconds.
+     *
+     * @param key the key.
+     * @param fields one or more fields to get the TTL for.
+     * @return a list of Long integer-reply in seconds, or a negative value in order to signal an error. The command returns
+     *         `-1` if the key exists but has no associated expiration time. The command returns `-2` if the key
+     *         does not exist.
+     * @since 7.0
+     */
+    suspend fun hpttl(key: K, vararg fields: K): List<Long>
 
 }
 
