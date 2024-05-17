@@ -777,4 +777,5 @@ public interface RedisHashReactiveCommands<K, V> {
      * @since 7.0
      */
     Flux<Long> hpttl(K key, K... fields);
+
 }

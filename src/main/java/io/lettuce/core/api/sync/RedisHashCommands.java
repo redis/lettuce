@@ -742,4 +742,5 @@ public interface RedisHashCommands<K, V> {
      * @since 7.0
      */
     List<Long> hpttl(K key, K... fields);
+
 }

@@ -744,4 +744,5 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @since 7.0
      */
     AsyncExecutions<List<Long>> hpttl(K key, K... fields);
+
 }

@@ -745,4 +745,5 @@ public interface RedisHashAsyncCommands<K, V> {
      * @since 7.0
      */
     RedisFuture<List<Long>> hpttl(K key, K... fields);
+
 }

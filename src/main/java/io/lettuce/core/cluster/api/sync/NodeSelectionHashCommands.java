@@ -742,4 +742,5 @@ public interface NodeSelectionHashCommands<K, V> {
      * @since 7.0
      */
     Executions<List<Long>> hpttl(K key, K... fields);
+
 }
