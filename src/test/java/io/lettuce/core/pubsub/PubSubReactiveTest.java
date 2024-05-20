@@ -358,6 +358,13 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
     }
 
     @Test
+    void sunsubscribe() throws Exception {
+        StepVerifier.create(pubsub.sunsubscribe(channel)).verifyComplete();
+        assertThat(shardChannels.take()).isEqualTo(channel);
+        assertThat((long) counts.take()).isEqualTo(0);
+    }
+
+    @Test
     void pubsubCloseOnClientShutdown() {
 
         RedisClient redisClient = RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
@@ -511,6 +518,12 @@ class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubL
 
     @Override
     public void ssubscribed(String shardChannel, long count) {
+        shardChannels.add(shardChannel);
+        counts.add(count);
+    }
+
+    @Override
+    public void sunsubscribed(String shardChannel, long count) {
         shardChannels.add(shardChannel);
         counts.add(count);
     }

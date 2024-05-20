@@ -60,4 +60,13 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
      */
     RedisFuture<Void> ssubscribe(K... shardChannels);
 
+    /**
+     * Stop listening for messages posted to the given channels.
+     *
+     * @param shardChannels the shard channels
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
+     * @since 7.0
+     */
+    RedisFuture<Void> sunsubscribe(K... shardChannels);
+
 }

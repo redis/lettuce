@@ -212,6 +212,22 @@ class RedisClusterPubSubConnectionIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("SSUBSCRIBE")
+    void unubscribeFromShardChannel() {
+        pubSubConnection.sync().ssubscribe(shardChannel);
+        pubSubConnection.sync().spublish(shardChannel, "msg1");
+
+        pubSubConnection.sync().sunsubscribe(shardChannel);
+        pubSubConnection.sync().spublish(shardChannel, "msg2");
+
+        pubSubConnection.sync().ssubscribe(shardChannel);
+        pubSubConnection.sync().spublish(shardChannel, "msg3");
+
+        Wait.untilEquals("msg1", connectionListener.getMessages()::poll).waitOrTimeout();
+        Wait.untilEquals("msg3", connectionListener.getMessages()::poll).waitOrTimeout();
+    }
+
+    @Test
     void myIdWorksAfterDisconnect() throws InterruptedException {
 
         BlockingQueue<CommandFailedEvent> failedEvents = new LinkedBlockingQueue<CommandFailedEvent>();

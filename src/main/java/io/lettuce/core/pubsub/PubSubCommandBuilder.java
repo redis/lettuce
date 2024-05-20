@@ -119,6 +119,14 @@ class PubSubCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     @SafeVarargs
+    final Command<K, V, V> sunsubscribe(K... shardChannels) {
+        LettuceAssert.notEmpty(shardChannels, "Shard channels " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(shardChannels);
+        return createCommand(SUNSUBSCRIBE, new PubSubOutput<>(codec), args);
+    }
+
+    @SafeVarargs
     final Command<K, V, V> unsubscribe(K... channels) {
         return pubSubCommand(UNSUBSCRIBE, new PubSubOutput<>(codec), channels);
     }
