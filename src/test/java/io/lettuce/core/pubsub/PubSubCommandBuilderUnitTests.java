@@ -139,4 +139,15 @@ class PubSubCommandBuilderUnitTests {
         assertThat(command.getOutput()).isInstanceOf(PubSubOutput.class);
     }
 
+    @Test
+    void sunsubscribe() {
+        String channel = "channelPattern";
+        Command<String, String, String> command = this.commandBuilder.sunsubscribe(channel);
+
+        assertThat(command.getType()).isEqualTo(SUNSUBSCRIBE);
+        assertThat(command.getArgs()).isInstanceOf(CommandArgs.class);
+        assertThat(command.getArgs().toCommandString()).isEqualTo("key<channelPattern>");
+        assertThat(command.getOutput()).isInstanceOf(PubSubOutput.class);
+    }
+
 }

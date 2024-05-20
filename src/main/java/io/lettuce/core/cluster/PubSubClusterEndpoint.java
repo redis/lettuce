@@ -94,6 +94,9 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
             case ssubscribe:
                 multicast.ssubscribed(clusterNode, output.channel(), output.count());
                 break;
+            case sunsubscribe:
+                multicast.sunsubscribed(clusterNode, output.channel(), output.count());
+                break;
             default:
                 throw new UnsupportedOperationException("Operation " + output.type() + " not supported");
         }
@@ -205,6 +208,12 @@ public class PubSubClusterEndpoint<K, V> extends PubSubEndpoint<K, V> {
         public void ssubscribed(RedisClusterNode node, K channel, long count) {
             getListeners().forEach(listener -> listener.ssubscribed(channel, count));
             clusterListeners.forEach(listener -> listener.ssubscribed(node, channel, count));
+        }
+
+        @Override
+        public void sunsubscribed(RedisClusterNode node, K channel, long count) {
+            getListeners().forEach(listener -> listener.sunsubscribed(channel, count));
+            clusterListeners.forEach(listener -> listener.sunsubscribed(node, channel, count));
         }
 
     }

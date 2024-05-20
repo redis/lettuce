@@ -52,4 +52,9 @@ public class RedisClusterPubSubAdapter<K, V> implements RedisClusterPubSubListen
         // empty adapter method
     }
 
+    @Override
+    public void sunsubscribed(RedisClusterNode node, K channel, long count) {
+        // empty adapter method
+    }
+
 }

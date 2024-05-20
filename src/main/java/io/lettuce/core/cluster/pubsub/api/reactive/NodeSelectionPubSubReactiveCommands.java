@@ -51,4 +51,13 @@ public interface NodeSelectionPubSubReactiveCommands<K, V> {
      */
     ReactiveExecutions<Void> ssubscribe(K... shardCchannels);
 
+    /**
+     * Stop listening for messages posted to the given shard channels.
+     *
+     * @param shardCchannels the channels
+     * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
+     * @since 7.0
+     */
+    ReactiveExecutions<Void> sunsubscribe(K... shardCchannels);
+
 }

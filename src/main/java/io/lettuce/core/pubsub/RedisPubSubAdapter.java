@@ -69,4 +69,9 @@ public class RedisPubSubAdapter<K, V> implements RedisPubSubListener<K, V> {
         // empty adapter method
     }
 
+    @Override
+    public void sunsubscribed(K shardChannel, long count) {
+        // empty adapter method
+    }
+
 }

@@ -269,6 +269,9 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
                 case ssubscribe:
                     listener.ssubscribed(message.channel(), message.count());
                     break;
+                case sunsubscribe:
+                    listener.sunsubscribed(message.channel(), message.count());
+                    break;
                 default:
                     throw new UnsupportedOperationException("Operation " + message.type() + " not supported");
             }
@@ -292,6 +295,9 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
                 break;
             case ssubscribe:
                 shardChannels.add(new Wrapper<>(message.channel()));
+                break;
+            case sunsubscribe:
+                shardChannels.remove(new Wrapper<>(message.channel()));
                 break;
             default:
                 break;
