@@ -17,8 +17,6 @@ import io.lettuce.core.commands.HashCommandIntegrationTests;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
 
 /**
- * x
- * 
  * @author Mark Paluch
  */
 class HashReactiveCommandIntegrationTests extends HashCommandIntegrationTests {
