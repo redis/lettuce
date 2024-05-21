@@ -978,7 +978,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(EXPIRE, new BooleanOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+    Command<K, V, List<Long>> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
         notNullKey(key);
         notEmpty(fields);
 
@@ -990,10 +990,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(FIELDS).add(fields.length).addKeys(fields);
 
-        return createCommand(HEXPIRE, new BooleanOutput<>(codec), args);
+        return createCommand(HEXPIRE, new IntegerListOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> hexpireat(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+    Command<K, V, List<Long>> hexpireat(K key, long seconds, ExpireArgs expireArgs, K... fields) {
         notNullKey(key);
         notEmpty(fields);
 
@@ -1005,7 +1005,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(FIELDS).add(fields.length).addKeys(fields);
 
-        return createCommand(HEXPIREAT, new BooleanOutput<>(codec), args);
+        return createCommand(HEXPIREAT, new IntegerListOutput<>(codec), args);
     }
 
     Command<K, V, List<Long>> httl(K key, K... fields) {
@@ -1018,7 +1018,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HTTL, new IntegerListOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields) {
+    Command<K, V, List<Long>> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields) {
         notNullKey(key);
         notEmpty(fields);
 
@@ -1030,10 +1030,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(FIELDS).add(fields.length).addKeys(fields);
 
-        return createCommand(HPEXPIRE, new BooleanOutput<>(codec), args);
+        return createCommand(HPEXPIRE, new IntegerListOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+    Command<K, V, List<Long>> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
         notNullKey(key);
         notEmpty(fields);
 
@@ -1045,7 +1045,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(FIELDS).add(fields.length).addKeys(fields);
 
-        return createCommand(HPEXPIREAT, new BooleanOutput<>(codec), args);
+        return createCommand(HPEXPIREAT, new IntegerListOutput<>(codec), args);
     }
 
     Command<K, V, List<Long>> hpexpiretime(K key, K... fields) {
@@ -2142,13 +2142,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(PERSIST, new BooleanOutput<>(codec), key);
     }
 
-    Command<K, V, Boolean> hpersist(K key, K... fields) {
+    Command<K, V, List<Long>> hpersist(K key, K... fields) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(FIELDS).add(fields.length).addKeys(fields);
 
-        return createCommand(HPERSIST, new BooleanOutput<>(codec), args);
+        return createCommand(HPERSIST, new IntegerListOutput<>(codec), args);
     }
 
     Command<K, V, Boolean> pexpire(K key, long milliseconds, ExpireArgs expireArgs) {

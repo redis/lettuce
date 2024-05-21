@@ -30,10 +30,4 @@ class HashClusterReactiveCommandIntegrationTests extends HashCommandIntegrationT
 
     }
 
-    @Test
-    @Disabled("API differences")
-    public void hexpiretime() {
-
-    }
-
 }

@@ -49,10 +49,4 @@ class HashReactiveCommandIntegrationTests extends HashCommandIntegrationTests {
 
     }
 
-    @Test
-    @Disabled("API differences")
-    public void hexpiretime() {
-
-    }
-
 }

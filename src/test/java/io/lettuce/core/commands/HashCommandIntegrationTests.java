@@ -557,7 +557,7 @@ public class HashCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("HEXPIRE")
     void hexpire() {
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
-        assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).isTrue();
+        assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).containsExactly(1L);
 
         await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
     }
@@ -566,10 +566,10 @@ public class HashCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("HEXPIRE")
     void hexpireExpireArgs() {
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
-        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.nx(), MY_FIELD)).isTrue();
-        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.xx(), MY_FIELD)).isTrue();
-        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(10), ExpireArgs.Builder.gt(), MY_FIELD)).isTrue();
-        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.lt(), MY_FIELD)).isTrue();
+        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.nx(), MY_FIELD)).containsExactly(1L);
+        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.xx(), MY_FIELD)).containsExactly(1L);
+        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(10), ExpireArgs.Builder.gt(), MY_FIELD)).containsExactly(1L);
+        assertThat(redis.hexpire(MY_KEY, Duration.ofSeconds(1), ExpireArgs.Builder.lt(), MY_FIELD)).containsExactly(1L);
 
         await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
     }
@@ -578,7 +578,7 @@ public class HashCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("HEXPIREAT")
     void hexpireat() {
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
-        assertThat(redis.hexpireat(MY_KEY, Instant.now().plusSeconds(1), MY_FIELD)).isTrue();
+        assertThat(redis.hexpireat(MY_KEY, Instant.now().plusSeconds(1), MY_FIELD)).containsExactly(1L);
 
         await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
     }
@@ -593,8 +593,8 @@ public class HashCommandIntegrationTests extends TestSupport {
         Date expiration = new Date(System.currentTimeMillis() + 1000 * 5);
         Date secondExpiration = new Date(System.currentTimeMillis() + 1000 * 10);
         assertThat(redis.hset(MY_KEY, fields)).isEqualTo(2);
-        assertThat(redis.hexpireat(MY_KEY, expiration, MY_FIELD)).isTrue();
-        assertThat(redis.hexpireat(MY_KEY, secondExpiration, MY_SECOND_FIELD)).isTrue();
+        assertThat(redis.hexpireat(MY_KEY, expiration, MY_FIELD)).containsExactly(1L);
+        assertThat(redis.hexpireat(MY_KEY, secondExpiration, MY_SECOND_FIELD)).containsExactly(1L);
 
         assertThat(redis.hexpiretime(MY_KEY, MY_FIELD, MY_SECOND_FIELD)).containsExactly(expiration.getTime() / 1000,
                 secondExpiration.getTime() / 1000);
@@ -603,11 +603,14 @@ public class HashCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("HPERSIST")
     void hpersist() {
-        assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isFalse();
+        assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isEmpty();
+
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
-        assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isFalse();
-        assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).isTrue();
-        assertThat(redis.hpersist(MY_KEY, MY_FIELD)).isTrue();
+        assertThat(redis.hpersist(MY_KEY, MY_FIELD)).containsExactly(-1L);
+
+        assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).containsExactly(1L);
+
+        assertThat(redis.hpersist(MY_KEY, MY_FIELD)).containsExactly(1L);
     }
 
     @Test
@@ -615,7 +618,7 @@ public class HashCommandIntegrationTests extends TestSupport {
     void httl() {
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hset(MY_KEY, MY_SECOND_FIELD, MY_VALUE)).isTrue();
-        assertThat(redis.hexpire(MY_KEY, 60, MY_FIELD)).isTrue();
+        assertThat(redis.hexpire(MY_KEY, 60, MY_FIELD)).containsExactly(1L);
         assertThat(redis.httl(MY_KEY, MY_FIELD, MY_SECOND_FIELD)).containsExactly(60L, -1L);
     }
 

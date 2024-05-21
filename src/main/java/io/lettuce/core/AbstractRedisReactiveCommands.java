@@ -859,22 +859,22 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Boolean> hexpire(K key, long seconds, K... fields) {
+    public Flux<Long> hexpire(K key, long seconds, K... fields) {
         return hexpire(key, seconds, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
-        return createMono(() -> commandBuilder.hexpire(key, seconds, expireArgs, fields));
+    public Flux<Long> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hexpire(key, seconds, expireArgs, fields));
     }
 
     @Override
-    public Mono<Boolean> hexpire(K key, Duration seconds, K... fields) {
+    public Flux<Long> hexpire(K key, Duration seconds, K... fields) {
         return hexpire(key, seconds, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields) {
+    public Flux<Long> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(seconds, "Timeout must not be null");
         return hexpire(key, seconds.toMillis() / 1000, expireArgs, fields);
     }
@@ -912,33 +912,33 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Boolean> hexpireat(K key, long timestamp, K... fields) {
+    public Flux<Long> hexpireat(K key, long timestamp, K... fields) {
         return hexpireat(key, timestamp, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
-        return createMono(() -> commandBuilder.hexpireat(key, timestamp, expireArgs, fields));
+    public Flux<Long> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hexpireat(key, timestamp, expireArgs, fields));
     }
 
     @Override
-    public Mono<Boolean> hexpireat(K key, Date timestamp, K... fields) {
+    public Flux<Long> hexpireat(K key, Date timestamp, K... fields) {
         return hexpireat(key, timestamp, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
+    public Flux<Long> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return hexpireat(key, timestamp.getTime() / 1000, expireArgs, fields);
     }
 
     @Override
-    public Mono<Boolean> hexpireat(K key, Instant timestamp, K... fields) {
+    public Flux<Long> hexpireat(K key, Instant timestamp, K... fields) {
         return hexpireat(key, timestamp, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
+    public Flux<Long> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return hexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, fields);
     }
@@ -959,56 +959,56 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Boolean> hpexpire(K key, long milliseconds, K... fields) {
+    public Flux<Long> hpexpire(K key, long milliseconds, K... fields) {
         return hpexpire(key, milliseconds, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields) {
-        return createMono(() -> commandBuilder.hpexpire(key, milliseconds, expireArgs, fields));
+    public Flux<Long> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hpexpire(key, milliseconds, expireArgs, fields));
     }
 
     @Override
-    public Mono<Boolean> hpexpire(K key, Duration milliseconds, K... fields) {
+    public Flux<Long> hpexpire(K key, Duration milliseconds, K... fields) {
         return hpexpire(key, milliseconds, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hpexpire(K key, Duration milliseconds, ExpireArgs expireArgs, K... fields) {
+    public Flux<Long> hpexpire(K key, Duration milliseconds, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(milliseconds, "Timeout must not be null");
         return hpexpire(key, milliseconds.toMillis(), expireArgs, fields);
     }
 
     @Override
-    public Mono<Boolean> hpexpireat(K key, Date timestamp, K... fields) {
+    public Flux<Long> hpexpireat(K key, Date timestamp, K... fields) {
         return hpexpireat(key, timestamp, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hpexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
+    public Flux<Long> hpexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return hpexpireat(key, timestamp.getTime(), expireArgs, fields);
     }
 
     @Override
-    public Mono<Boolean> hpexpireat(K key, Instant timestamp, K... fields) {
+    public Flux<Long> hpexpireat(K key, Instant timestamp, K... fields) {
         return hpexpireat(key, timestamp, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hpexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
+    public Flux<Long> hpexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return hpexpireat(key, timestamp.toEpochMilli(), expireArgs, fields);
     }
 
     @Override
-    public Mono<Boolean> hpexpireat(K key, long timestamp, K... fields) {
+    public Flux<Long> hpexpireat(K key, long timestamp, K... fields) {
         return hpexpireat(key, timestamp, null, fields);
     }
 
     @Override
-    public Mono<Boolean> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
-        return createMono(() -> commandBuilder.hpexpireat(key, timestamp, expireArgs, fields));
+    public Flux<Long> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hpexpireat(key, timestamp, expireArgs, fields));
     }
 
     @Override
@@ -1687,8 +1687,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Boolean> hpersist(K key, K... fields) {
-        return createMono(() -> commandBuilder.hpersist(key, fields));
+    public Flux<Long> hpersist(K key, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hpersist(key, fields));
     }
 
     @Override

@@ -439,11 +439,13 @@ public interface RedisHashCommands<K, V> {
      * @param key the key of the fields.
      * @param seconds the seconds type: long.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hexpire(K key, long seconds, K... fields);
+    List<Long> hexpire(K key, long seconds, K... fields);
 
     /**
      * Set the time to live (in seconds) for one or more fields, belonging to a certain key.
@@ -452,11 +454,13 @@ public interface RedisHashCommands<K, V> {
      * @param seconds the seconds type: long.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields);
+    List<Long> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields);
 
     /**
      * Set the time to live for one or more fields, belonging to a certain key.
@@ -464,11 +468,13 @@ public interface RedisHashCommands<K, V> {
      * @param key the key.
      * @param seconds the TTL {@link Duration}
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hexpire(K key, Duration seconds, K... fields);
+    List<Long> hexpire(K key, Duration seconds, K... fields);
 
     /**
      * Set the time to live for one or more fields, belonging to a certain key.
@@ -477,11 +483,13 @@ public interface RedisHashCommands<K, V> {
      * @param seconds the TTL {@link Duration}
      * @param expireArgs the {@link ExpireArgs}.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields);
+    List<Long> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields);
 
     /**
      * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
@@ -489,36 +497,13 @@ public interface RedisHashCommands<K, V> {
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hexpireat(K key, long timestamp, K... fields);
-
-    /**
-     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
-     *
-     * @param key the key.
-     * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expire arguments.
-     * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
-     * @since 7.0
-     */
-    Boolean hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields);
-
-    /**
-     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
-     *
-     * @param key the key.
-     * @param timestamp the timestamp type: posix time.
-     * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
-     * @since 7.0
-     */
-    Boolean hexpireat(K key, Date timestamp, K... fields);
+    List<Long> hexpireat(K key, long timestamp, K... fields);
 
     /**
      * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
@@ -527,11 +512,13 @@ public interface RedisHashCommands<K, V> {
      * @param timestamp the timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields);
+    List<Long> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields);
 
     /**
      * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
@@ -539,11 +526,13 @@ public interface RedisHashCommands<K, V> {
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hexpireat(K key, Instant timestamp, K... fields);
+    List<Long> hexpireat(K key, Date timestamp, K... fields);
 
     /**
      * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
@@ -552,20 +541,50 @@ public interface RedisHashCommands<K, V> {
      * @param timestamp the timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields);
+    List<Long> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
+     * @since 7.0
+     */
+    List<Long> hexpireat(K key, Instant timestamp, K... fields);
+
+    /**
+     * Set the time to live for one or more fields, belonging to a certain key as a UNIX timestamp.
+     *
+     * @param key the key.
+     * @param timestamp the timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
+     * @since 7.0
+     */
+    List<Long> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields);
 
     /**
      * Get the time to live for one or more fields in as UNIX timestamp in seconds.
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return a list of Long integer-reply in seconds, or a negative value in order to signal an error. The command returns
-     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
-     *         does not exist.
+     * @return a {@List} of {@Long} values for each of the fields provided: expiration time as a UNIX timestamp in seconds;
+     *         {@code -1} indicating the field has no expiry time set; {@code -2} indicating there is no such field
      * @since 7.0
      */
     List<Long> hexpiretime(K key, K... fields);
@@ -575,12 +594,10 @@ public interface RedisHashCommands<K, V> {
      *
      * @param key the key.
      * @param fields one or more fields to remove the TTL for.
-     * @return Boolean integer-reply specifically:
-     *
-     *         {@code true} if the timeout was removed. {@code false} if {@code key} does not exist or does not have an
-     *         associated timeout.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 1} indicating expiration time is removed;
+     *         {@code -1} field has no expiration time to be removed; {@code -2} indicating there is no such field
      */
-    Boolean hpersist(K key, K... fields);
+    List<Long> hpersist(K key, K... fields);
 
     /**
      * Set the time to live for one or more fields in milliseconds.
@@ -588,11 +605,13 @@ public interface RedisHashCommands<K, V> {
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
      * @param fields one or more fields to set the TTL for.
-     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
-     *         the timeout could not be set.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hpexpire(K key, long milliseconds, K... fields);
+    List<Long> hpexpire(K key, long milliseconds, K... fields);
 
     /**
      * Set the time to live for one or more fields in milliseconds.
@@ -601,11 +620,13 @@ public interface RedisHashCommands<K, V> {
      * @param milliseconds the milliseconds type: long.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
-     *         the timeout could not be set.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields);
+    List<Long> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields);
 
     /**
      * Set the time to live for one or more fields in milliseconds.
@@ -613,11 +634,13 @@ public interface RedisHashCommands<K, V> {
      * @param key the key.
      * @param milliseconds the milliseconds.
      * @param fields one or more fields to set the TTL for.
-     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
-     *         the timeout could not be set.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hpexpire(K key, Duration milliseconds, K... fields);
+    List<Long> hpexpire(K key, Duration milliseconds, K... fields);
 
     /**
      * Set the time to live for one or more fields in milliseconds.
@@ -626,11 +649,13 @@ public interface RedisHashCommands<K, V> {
      * @param milliseconds the milliseconds.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
-     *         the timeout could not be set.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hpexpire(K key, Duration milliseconds, ExpireArgs expireArgs, K... fields);
+    List<Long> hpexpire(K key, Duration milliseconds, ExpireArgs expireArgs, K... fields);
 
     /**
      * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
@@ -638,36 +663,13 @@ public interface RedisHashCommands<K, V> {
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hpexpireat(K key, long timestamp, K... fields);
-
-    /**
-     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
-     *
-     * @param key the key.
-     * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expire arguments.
-     * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
-     * @since 7.0
-     */
-    Boolean hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields);
-
-    /**
-     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
-     *
-     * @param key the key.
-     * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
-     * @since 7.0
-     */
-    Boolean hpexpireat(K key, Date timestamp, K... fields);
+    List<Long> hpexpireat(K key, long timestamp, K... fields);
 
     /**
      * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
@@ -676,11 +678,13 @@ public interface RedisHashCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hpexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields);
+    List<Long> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields);
 
     /**
      * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
@@ -688,11 +692,13 @@ public interface RedisHashCommands<K, V> {
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hpexpireat(K key, Instant timestamp, K... fields);
+    List<Long> hpexpireat(K key, Date timestamp, K... fields);
 
     /**
      * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
@@ -701,20 +707,50 @@ public interface RedisHashCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
-     *         exist or the timeout could not be set (see: {@code EXPIRE}).
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
      * @since 7.0
      */
-    Boolean hpexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields);
+    List<Long> hpexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields);
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param fields one or more fields to set the TTL for.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
+     * @since 7.0
+     */
+    List<Long> hpexpireat(K key, Instant timestamp, K... fields);
+
+    /**
+     * Set the time to live for one or more fields as a UNIX timestamp specified in milliseconds.
+     *
+     * @param key the key.
+     * @param timestamp the milliseconds-timestamp type: posix time.
+     * @param expireArgs the expire arguments.
+     * @param fields one or more fields to set the TTL for.
+     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); {@code -2} indicating there is no such field
+     * @since 7.0
+     */
+    List<Long> hpexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields);
 
     /**
      * Get the time to live for one or more fields as UNIX timestamp in milliseconds.
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return Long integer-reply in milliseconds, or a negative value in order to signal an error. The command returns
-     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
-     *         does not exist.
+     * @return a {@List} of {@Long} values for each of the fields provided: expiration time as a UNIX timestamp in milliseconds;
+     *         {@code -1} indicating the field has no expiry time set; {@code -2} indicating there is no such field
      * @since 7.0
      */
     List<Long> hpexpiretime(K key, K... fields);
@@ -724,9 +760,9 @@ public interface RedisHashCommands<K, V> {
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return Long integer-reply TTL in seconds, or a negative value in order to signal an error. The command returns
-     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
-     *         does not exist.
+     * @return a {@List} of {@Long} values for each of the fields provided: the time to live in seconds; or a negative value in
+     *         order to signal an error. The command returns {@code -1} if the key exists but has no associated expiration time.
+     *         The command returns {@code -2} if the key does not exist.
      * @since 7.0
      */
     List<Long> httl(K key, K... fields);
@@ -736,9 +772,9 @@ public interface RedisHashCommands<K, V> {
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return a list of Long integer-reply in seconds, or a negative value in order to signal an error. The command returns
-     *         {@code -1} if the key exists but has no associated expiration time. The command returns {@code -2} if the key
-     *         does not exist.
+     * @return a {@List} of {@Long} values for each of the fields provided: the time to live in milliseconds; or a negative
+     *         value in order to signal an error. The command returns {@code -1} if the key exists but has no associated
+     *         expiration time. The command returns {@code -2} if the key does not exist.
      * @since 7.0
      */
     List<Long> hpttl(K key, K... fields);
