@@ -1,12 +1,13 @@
 package io.lettuce.core.cluster.commands.reactive;
 
-import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.commands.HashCommandIntegrationTests;
-import io.lettuce.test.ReactiveSyncInvocationHandler;
+import javax.inject.Inject;
+
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
+import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
+import io.lettuce.core.commands.HashCommandIntegrationTests;
+import io.lettuce.test.ReactiveSyncInvocationHandler;
 
 /**
  * @author Mark Paluch

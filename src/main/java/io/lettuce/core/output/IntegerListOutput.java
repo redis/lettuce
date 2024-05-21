@@ -31,7 +31,9 @@ public class IntegerListOutput<K, V> extends CommandOutput<K, V, List<Long>> imp
         subscriber.onNext(output, integer);
     }
 
+    @Override
     public void set(ByteBuffer bytes) {
+        // ignore empty ByteBuffer, would fail otherwise
         if (bytes != null) {
             super.set(bytes);
         }
