@@ -979,8 +979,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<Long>> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
-        notNullKey(key);
-        notEmpty(fields);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
 
@@ -994,8 +993,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<Long>> hexpireat(K key, long seconds, ExpireArgs expireArgs, K... fields) {
-        notNullKey(key);
-        notEmpty(fields);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(seconds);
 
@@ -1009,8 +1007,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<Long>> httl(K key, K... fields) {
-        notNullKey(key);
-        notEmpty(fields);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(FIELDS).add(fields.length).addKeys(fields);
@@ -1019,8 +1016,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<Long>> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields) {
-        notNullKey(key);
-        notEmpty(fields);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(milliseconds);
 
@@ -1034,8 +1030,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<Long>> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
-        notNullKey(key);
-        notEmpty(fields);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(timestamp);
 
@@ -1049,8 +1044,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<Long>> hpexpiretime(K key, K... fields) {
-        notNullKey(key);
-        notEmpty(fields);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(FIELDS).add(fields.length).addKeys(fields);
@@ -1059,8 +1053,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<Long>> hpttl(K key, K... fields) {
-        notNullKey(key);
-        notEmpty(fields);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
         args.add(FIELDS).add(fields.length).addKeys(fields);
@@ -1460,9 +1453,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, Long> hdel(K key, K... fields) {
-        notNullKey(key);
-        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKeys(fields);
         return createCommand(HDEL, new IntegerOutput<>(codec), args);
@@ -1554,18 +1545,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<V>> hmget(K key, K... fields) {
-        notNullKey(key);
-        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKeys(fields);
         return createCommand(HMGET, new ValueListOutput<>(codec), args);
     }
 
     Command<K, V, Long> hmget(ValueStreamingChannel<V> channel, K key, K... fields) {
-        notNullKey(key);
-        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
+        keyAndFieldsProvided(key, fields);
+
         notNull(channel);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKeys(fields);
@@ -1573,9 +1561,8 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
-        notNullKey(key);
-        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
+        keyAndFieldsProvided(key, fields);
+
         notNull(channel);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKeys(fields);
@@ -1583,9 +1570,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<KeyValue<K, V>>> hmgetKeyValue(K key, K... fields) {
-        notNullKey(key);
-        LettuceAssert.notNull(fields, "Fields " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
+        keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKeys(fields);
         return createCommand(HMGET, new KeyValueListOutput<>(codec, Arrays.asList(fields)), args);
@@ -4559,6 +4544,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     private static void notNullKey(Object key) {
         LettuceAssert.notNull(key, "Key " + MUST_NOT_BE_NULL);
+    }
+
+    private static void keyAndFieldsProvided(Object key, Object[] fields) {
+        LettuceAssert.notNull(key, "Key " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
     }
 
     private static void notNullLimit(Limit limit) {

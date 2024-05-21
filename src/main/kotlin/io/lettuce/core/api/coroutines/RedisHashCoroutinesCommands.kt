@@ -470,6 +470,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param fields one or more fields to remove the TTL for.
      * @return a {@List} of {@Long} values for each of the fields provided: `1` indicating expiration time is removed;
      *         `-1` field has no expiration time to be removed; `-2` indicating there is no such field
+     * @since 7.0
      */
     suspend fun hpersist(key: K, vararg fields: K): List<Long>
 

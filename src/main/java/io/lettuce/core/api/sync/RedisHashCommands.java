@@ -596,6 +596,7 @@ public interface RedisHashCommands<K, V> {
      * @param fields one or more fields to remove the TTL for.
      * @return a {@List} of {@Long} values for each of the fields provided: {@code 1} indicating expiration time is removed;
      *         {@code -1} field has no expiration time to be removed; {@code -2} indicating there is no such field
+     * @since 7.0
      */
     List<Long> hpersist(K key, K... fields);
 
