@@ -33,10 +33,12 @@ public class IntegerListOutput<K, V> extends CommandOutput<K, V, List<Long>> imp
 
     @Override
     public void set(ByteBuffer bytes) {
-        // ignore empty ByteBuffer, would fail otherwise
-        if (bytes != null) {
-            super.set(bytes);
+        // nil results should produce an empty list
+        if (bytes == null) {
+            return;
         }
+
+        super.set(bytes);
     }
 
     @Override

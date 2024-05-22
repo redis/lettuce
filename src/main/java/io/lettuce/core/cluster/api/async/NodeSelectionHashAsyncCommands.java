@@ -441,7 +441,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key of the fields.
      * @param seconds the seconds type: long.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -456,7 +456,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param seconds the seconds type: long.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -470,7 +470,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param seconds the TTL {@link Duration}
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -485,7 +485,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param seconds the TTL {@link Duration}
      * @param expireArgs the {@link ExpireArgs}.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -499,7 +499,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -514,7 +514,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param timestamp the timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -528,7 +528,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -543,7 +543,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param timestamp the timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -557,7 +557,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -572,7 +572,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param timestamp the timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -585,7 +585,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: expiration time as a UNIX timestamp in seconds;
+     * @return a list of {@link Long} values for each of the fields provided: expiration time as a UNIX timestamp in seconds;
      *         {@code -1} indicating the field has no expiry time set; {@code -2} indicating there is no such field
      * @since 7.0
      */
@@ -596,7 +596,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param fields one or more fields to remove the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 1} indicating expiration time is removed;
+     * @return a list of {@link Long} values for each of the fields provided: {@code 1} indicating expiration time is removed;
      *         {@code -1} field has no expiration time to be removed; {@code -2} indicating there is no such field
      * @since 7.0
      */
@@ -608,7 +608,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -623,7 +623,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param milliseconds the milliseconds type: long.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -637,7 +637,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param milliseconds the milliseconds.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -652,7 +652,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param milliseconds the milliseconds.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -666,7 +666,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -681,7 +681,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -695,7 +695,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -710,7 +710,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -724,7 +724,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -739,7 +739,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
+     * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
      *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
@@ -752,8 +752,9 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: expiration time as a UNIX timestamp in milliseconds;
-     *         {@code -1} indicating the field has no expiry time set; {@code -2} indicating there is no such field
+     * @return a list of {@link Long} values for each of the fields provided: expiration time as a UNIX timestamp in
+     *         milliseconds; {@code -1} indicating the field has no expiry time set; {@code -2} indicating there is no such
+     *         field
      * @since 7.0
      */
     AsyncExecutions<List<Long>> hpexpiretime(K key, K... fields);
@@ -763,9 +764,9 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: the time to live in seconds; or a negative value in
-     *         order to signal an error. The command returns {@code -1} if the key exists but has no associated expiration time.
-     *         The command returns {@code -2} if the key does not exist.
+     * @return a list of {@link Long} values for each of the fields provided: the time to live in seconds; or a negative value
+     *         in order to signal an error. The command returns {@code -1} if the key exists but has no associated expiration
+     *         time. The command returns {@code -2} if the key does not exist.
      * @since 7.0
      */
     AsyncExecutions<List<Long>> httl(K key, K... fields);
@@ -775,7 +776,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return a {@List} of {@Long} values for each of the fields provided: the time to live in milliseconds; or a negative
+     * @return a list of {@link Long} values for each of the fields provided: the time to live in milliseconds; or a negative
      *         value in order to signal an error. The command returns {@code -1} if the key exists but has no associated
      *         expiration time. The command returns {@code -2} if the key does not exist.
      * @since 7.0

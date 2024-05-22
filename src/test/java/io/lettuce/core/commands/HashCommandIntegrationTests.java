@@ -557,7 +557,10 @@ public class HashCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("HEXPIRE")
     void hexpire() {
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
-        assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD)).containsExactly(1L);
+        assertThat(redis.hexpire(MY_KEY, 0, MY_FIELD)).containsExactly(2L);
+        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
+        assertThat(redis.hexpire(MY_KEY, 1, MY_FIELD, MY_SECOND_FIELD)).containsExactly(1L, -2L);
+        assertThat(redis.hexpire("invalidKey", 1, MY_FIELD)).isEmpty();
 
         await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
     }
@@ -578,7 +581,10 @@ public class HashCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("HEXPIREAT")
     void hexpireat() {
         assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
+        assertThat(redis.hexpireat(MY_KEY, Instant.now().minusSeconds(1), MY_FIELD)).containsExactly(2L);
+        assertThat(redis.hset(MY_KEY, MY_FIELD, MY_VALUE)).isTrue();
         assertThat(redis.hexpireat(MY_KEY, Instant.now().plusSeconds(1), MY_FIELD)).containsExactly(1L);
+        assertThat(redis.hexpireat("invalidKey", Instant.now().plusSeconds(1), MY_FIELD)).isEmpty();
 
         await().until(() -> redis.hget(MY_KEY, MY_FIELD) == null);
     }
