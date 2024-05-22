@@ -1,10 +1,11 @@
 package io.lettuce.core.output;
 
-import java.util.Collections;
-import java.util.List;
-
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * {@link List} of 64-bit integer output.
@@ -28,6 +29,16 @@ public class IntegerListOutput<K, V> extends CommandOutput<K, V, List<Long>> imp
     @Override
     public void set(long integer) {
         subscriber.onNext(output, integer);
+    }
+
+    @Override
+    public void set(ByteBuffer bytes) {
+        // nil results should produce an empty list
+        if (bytes == null) {
+            return;
+        }
+
+        super.set(bytes);
     }
 
     @Override

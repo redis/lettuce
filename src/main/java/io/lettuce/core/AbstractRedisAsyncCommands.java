@@ -799,24 +799,92 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Boolean> hexpire(K key, long seconds, K... fields) {
+    public RedisFuture<List<Long>> hexpire(K key, long seconds, K... fields) {
         return hexpire(key, seconds, null, fields);
     }
 
     @Override
-    public RedisFuture<Boolean> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
+    public RedisFuture<List<Long>> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields) {
         return dispatch(commandBuilder.hexpire(key, seconds, expireArgs, fields));
     }
 
     @Override
-    public RedisFuture<Boolean> hexpire(K key, Duration seconds, K... fields) {
+    public RedisFuture<List<Long>> hexpire(K key, Duration seconds, K... fields) {
         return hexpire(key, seconds, null, fields);
     }
 
     @Override
-    public RedisFuture<Boolean> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields) {
+    public RedisFuture<List<Long>> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(seconds, "Timeout must not be null");
         return hexpire(key, seconds.toMillis() / 1000, expireArgs, fields);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> httl(K key, K... fields) {
+        return dispatch(commandBuilder.httl(key, fields));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpire(K key, long milliseconds, K... fields) {
+        return hpexpire(key, milliseconds, null, fields);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields) {
+        return dispatch(commandBuilder.hpexpire(key, milliseconds, expireArgs, fields));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpire(K key, Duration milliseconds, K... fields) {
+        return hpexpire(key, milliseconds, null, fields);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpire(K key, Duration milliseconds, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(milliseconds, "Timeout must not be null");
+        return hpexpire(key, milliseconds.toMillis(), expireArgs, fields);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpireat(K key, Date timestamp, K... fields) {
+        return hpexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hpexpireat(key, timestamp.getTime(), expireArgs, fields);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpireat(K key, Instant timestamp, K... fields) {
+        return hpexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
+        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
+        return hpexpireat(key, timestamp.toEpochMilli(), expireArgs, fields);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpireat(K key, long timestamp, K... fields) {
+        return hpexpireat(key, timestamp, null, fields);
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+        return dispatch(commandBuilder.hpexpireat(key, timestamp, expireArgs, fields));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpexpiretime(K key, K... fields) {
+        return dispatch(commandBuilder.hpexpiretime(key, fields));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> hpttl(K key, K... fields) {
+        return dispatch(commandBuilder.hpttl(key, fields));
     }
 
     @Override
@@ -852,34 +920,34 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Boolean> hexpireat(K key, long timestamp, K... fields) {
+    public RedisFuture<List<Long>> hexpireat(K key, long timestamp, K... fields) {
         return hexpireat(key, timestamp, null, fields);
     }
 
     @Override
-    public RedisFuture<Boolean> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
+    public RedisFuture<List<Long>> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields) {
         return dispatch(commandBuilder.hexpireat(key, timestamp, expireArgs, fields));
 
     }
 
     @Override
-    public RedisFuture<Boolean> hexpireat(K key, Date timestamp, K... fields) {
+    public RedisFuture<List<Long>> hexpireat(K key, Date timestamp, K... fields) {
         return hexpireat(key, timestamp, null, fields);
     }
 
     @Override
-    public RedisFuture<Boolean> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
+    public RedisFuture<List<Long>> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return hexpireat(key, timestamp.getTime() / 1000, expireArgs, fields);
     }
 
     @Override
-    public RedisFuture<Boolean> hexpireat(K key, Instant timestamp, K... fields) {
+    public RedisFuture<List<Long>> hexpireat(K key, Instant timestamp, K... fields) {
         return hexpireat(key, timestamp, null, fields);
     }
 
     @Override
-    public RedisFuture<Boolean> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
+    public RedisFuture<List<Long>> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields) {
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
         return hexpireat(key, timestamp.toEpochMilli() / 1000, expireArgs, fields);
     }
@@ -890,7 +958,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Long> hexpiretime(K key, K... fields) {
+    public RedisFuture<List<Long>> hexpiretime(K key, K... fields) {
         return dispatch(commandBuilder.hexpiretime(key, fields));
     }
 
@@ -1553,7 +1621,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Boolean> hpersist(K key, K... fields) {
+    public RedisFuture<List<Long>> hpersist(K key, K... fields) {
         return dispatch(commandBuilder.hpersist(key, fields));
     }
 

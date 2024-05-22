@@ -116,60 +116,123 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override fun hvals(key: K): Flow<V> = ops.hvals(key).asFlow()
 
-    override suspend fun hexpire(key: K, seconds: Long, vararg fields: K): Boolean? =
-        ops.hexpire(key, seconds, *fields).awaitFirstOrNull()
+    override suspend fun hexpire(key: K, seconds: Long, vararg fields: K): List<Long> =
+        ops.hexpire(key, seconds, *fields).asFlow().toList()
 
-    override suspend fun hexpire(key: K, seconds: Long, expireArgs: ExpireArgs, vararg fields: K): Boolean? =
-        ops.hexpire(key, seconds, expireArgs, *fields).awaitFirstOrNull()
+    override suspend fun hexpire(key: K, seconds: Long, expireArgs: ExpireArgs, vararg fields: K): List<Long> =
+        ops.hexpire(key, seconds, expireArgs, *fields).asFlow().toList()
 
-    override suspend fun hexpire(key: K, seconds: Duration, vararg fields: K): Boolean? =
-        ops.hexpire(key, seconds, *fields).awaitFirstOrNull()
+    override suspend fun hexpire(key: K, seconds: Duration, vararg fields: K): List<Long> =
+        ops.hexpire(key, seconds, *fields).asFlow().toList()
 
     override suspend fun hexpire(
         key: K,
         seconds: Duration,
         expireArgs: ExpireArgs,
         vararg fields: K
-    ): Boolean? =
-        ops.hexpire(key, seconds, expireArgs, *fields).awaitFirstOrNull()
+    ): List<Long> =
+        ops.hexpire(key, seconds, expireArgs, *fields).asFlow().toList()
 
-    override suspend fun hexpireat(key: K, timestamp: Date, vararg fields: K): Boolean? =
-        ops.hexpireat(key, timestamp, *fields).awaitFirstOrNull()
+    override suspend fun hexpireat(key: K, timestamp: Date, vararg fields: K): List<Long> =
+        ops.hexpireat(key, timestamp, *fields).asFlow().toList()
 
     override suspend fun hexpireat(
         key: K,
         timestamp: Long,
         expireArgs: ExpireArgs,
         vararg fields: K
-    ): Boolean? =
-        ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+    ): List<Long> =
+        ops.hexpireat(key, timestamp, expireArgs, *fields).asFlow().toList()
 
-    override suspend fun hexpireat(key: K, timestamp: Instant, vararg fields: K): Boolean? =
-        ops.hexpireat(key, timestamp, *fields).awaitFirstOrNull()
+    override suspend fun hexpireat(key: K, timestamp: Instant, vararg fields: K): List<Long> =
+        ops.hexpireat(key, timestamp, *fields).asFlow().toList()
 
     override suspend fun hexpireat(
         key: K,
         timestamp: Instant,
         expireArgs: ExpireArgs,
         vararg fields: K
-    ): Boolean? =
-        ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+    ): List<Long> =
+        ops.hexpireat(key, timestamp, expireArgs, *fields).asFlow().toList()
 
-    override suspend fun hexpireat(key: K, timestamp: Long, vararg fields: K): Boolean? =
-        ops.hexpireat(key, timestamp, *fields).awaitFirstOrNull()
+    override suspend fun hexpireat(key: K, timestamp: Long, vararg fields: K): List<Long> =
+        ops.hexpireat(key, timestamp, *fields).asFlow().toList()
 
     override suspend fun hexpireat(
         key: K,
         timestamp: Date,
         expireArgs: ExpireArgs,
         vararg fields: K
-    ): Boolean? =
-        ops.hexpireat(key, timestamp, expireArgs, *fields).awaitFirstOrNull()
+    ): List<Long> =
+        ops.hexpireat(key, timestamp, expireArgs, *fields).asFlow().toList()
 
-    override suspend fun hexpiretime(key: K, vararg fields: K): Long? =
-        ops.hexpiretime(key).awaitFirstOrNull()
+    override suspend fun hexpiretime(key: K, vararg fields: K): List<Long> =
+        ops.hexpiretime(key).asFlow().toList()
 
-    override suspend fun hpersist(key: K, vararg fields: K): Boolean? = ops.hpersist(key).awaitFirstOrNull()
+    override suspend fun hpersist(key: K, vararg fields: K): List<Long> = ops.hpersist(key).asFlow().toList()
 
+    override suspend fun hpexpire(key: K, milliseconds: Long, vararg fields: K): List<Long> =
+        ops.hpexpire(key, milliseconds, *fields).asFlow().toList()
+
+    override suspend fun hpexpire(
+        key: K,
+        milliseconds: Long,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): List<Long> =
+        ops.hpexpire(key, milliseconds, expireArgs, *fields).asFlow().toList()
+
+    override suspend fun hpexpire(key: K, milliseconds: Duration, vararg fields: K): List<Long> =
+        ops.hpexpire(key, milliseconds, *fields).asFlow().toList()
+
+    override suspend fun hpexpire(
+        key: K,
+        milliseconds: Duration,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): List<Long> =
+        ops.hpexpire(key, milliseconds, expireArgs, *fields).asFlow().toList()
+
+    override suspend fun hpexpireat(key: K, timestamp: Long, vararg fields: K): List<Long> =
+        ops.hpexpireat(key, timestamp, *fields).asFlow().toList()
+
+    override suspend fun hpexpireat(
+        key: K,
+        timestamp: Long,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): List<Long> =
+        ops.hpexpireat(key, timestamp, expireArgs, *fields).asFlow().toList()
+
+    override suspend fun hpexpireat(key: K, timestamp: Date, vararg fields: K): List<Long> =
+        ops.hpexpireat(key, timestamp, *fields).asFlow().toList()
+
+    override suspend fun hpexpireat(
+        key: K,
+        timestamp: Date,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): List<Long> =
+        ops.hpexpireat(key, timestamp, expireArgs, *fields).asFlow().toList()
+
+    override suspend fun hpexpireat(key: K, timestamp: Instant, vararg fields: K): List<Long> =
+        ops.hpexpireat(key, timestamp, *fields).asFlow().toList()
+
+    override suspend fun hpexpireat(
+        key: K,
+        timestamp: Instant,
+        expireArgs: ExpireArgs,
+        vararg fields: K
+    ): List<Long> =
+        ops.hpexpireat(key, timestamp, expireArgs, *fields).asFlow().toList()
+
+    override suspend fun hpexpiretime(key: K, vararg fields: K): List<Long> =
+        ops.hpexpiretime(key, *fields).asFlow().toList()
+
+    override suspend fun httl(key: K, vararg fields: K): List<Long> =
+        ops.httl(key, *fields).asFlow().toList()
+
+    override suspend fun hpttl(key: K, vararg fields: K): List<Long> =
+        ops.hpttl(key, *fields).asFlow().toList()
 }
 
