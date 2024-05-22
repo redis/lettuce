@@ -149,8 +149,7 @@ class Connections {
                 entry.getValue().dispatch(timedCommand);
                 requests.addRequest(entry.getKey(), timedCommand);
             }
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
 

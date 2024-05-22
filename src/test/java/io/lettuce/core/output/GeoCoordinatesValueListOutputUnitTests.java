@@ -52,4 +52,5 @@ class GeoCoordinatesValueListOutputUnitTests {
 
         assertThat(sut.get()).contains(Value.just(new GeoCoordinates(1.234, 4.567)));
     }
+
 }

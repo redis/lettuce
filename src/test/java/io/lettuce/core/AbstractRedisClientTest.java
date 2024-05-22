@@ -30,6 +30,7 @@ import io.lettuce.test.resource.TestClientResources;
 public abstract class AbstractRedisClientTest extends TestSupport {
 
     protected static RedisClient client;
+
     protected RedisCommands<String, String> redis;
 
     @BeforeAll
@@ -77,4 +78,5 @@ public abstract class AbstractRedisClientTest extends TestSupport {
             redis.getStatefulConnection().close();
         }
     }
+
 }

@@ -812,7 +812,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
      */
     @Deprecated
-    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
+    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -827,7 +828,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
      */
     @Deprecated
-    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
+    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score.
@@ -839,7 +841,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return Long count of elements in the specified score range.
      * @since 4.3
      */
-    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
+    RedisFuture<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit);
 
     /**
      * Get the specified range of elements in the sorted set stored at {@code srcKey} and stores the result in the
@@ -1152,7 +1155,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
      */
     @Deprecated
-    RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
+    RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset,
+            long count);
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
@@ -1167,7 +1171,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
      */
     @Deprecated
-    RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
+    RedisFuture<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset,
+            long count);
 
     /**
      * Stream over a range of members in a sorted set, by score, with scores ordered from high to low.
@@ -1303,7 +1308,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
      */
     @Deprecated
-    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
+    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -1318,7 +1324,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
      */
     @Deprecated
-    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
+    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min,
+            long offset, long count);
 
     /**
      * Stream over a range of members with scores in a sorted set, by score, with scores ordered from high to low.
@@ -1330,7 +1337,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return Long count of elements in the specified range.
      * @since 4.3
      */
-    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
+    RedisFuture<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
+            Limit limit);
 
     /**
      * Get the specified range of elements ordered from high to low in the sorted set stored at {@code srcKey} and stores the
@@ -1445,7 +1453,8 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate sorted sets elements and associated scores.
@@ -1523,4 +1532,5 @@ public interface RedisSortedSetAsyncCommands<K, V> {
      * @return Long integer-reply the number of elements in the resulting sorted set at {@code destination}.
      */
     RedisFuture<Long> zunionstore(K destination, ZStoreArgs storeArgs, K... keys);
+
 }

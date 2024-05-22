@@ -36,4 +36,5 @@ public class KeyTxCommandIntegrationTests extends KeyCommandIntegrationTests {
     @Override
     public void move() {
     }
+
 }

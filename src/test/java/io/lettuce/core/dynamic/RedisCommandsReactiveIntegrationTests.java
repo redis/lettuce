@@ -109,5 +109,7 @@ class RedisCommandsReactiveIntegrationTests extends TestSupport {
 
         @Command("GET")
         Maybe<String> getRxJava(String key);
+
     }
+
 }

@@ -51,9 +51,11 @@ class MasterSlaveTest extends AbstractRedisClientTest {
     private StatefulRedisMasterSlaveConnection<String, String> connection;
 
     private RedisURI upstream;
+
     private RedisURI replica;
 
     private RedisCommands<String, String> connection1;
+
     private RedisCommands<String, String> connection2;
 
     @BeforeEach
@@ -164,10 +166,12 @@ class MasterSlaveTest extends AbstractRedisClientTest {
     void noSlaveForRead() {
 
         connection.setReadFrom(new ReadFrom() {
+
             @Override
             public List<RedisNodeDescription> select(Nodes nodes) {
                 return Collections.emptyList();
             }
+
         });
 
         assertThatThrownBy(() -> slaveCall(connection)).isInstanceOf(RedisException.class);

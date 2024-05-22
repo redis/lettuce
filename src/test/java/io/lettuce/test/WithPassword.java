@@ -109,6 +109,9 @@ public class WithPassword {
     }
 
     public interface ThrowingCallable {
+
         void call() throws Throwable;
+
     }
+
 }

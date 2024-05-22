@@ -37,4 +37,5 @@ class PubSubCommandResp2Test extends PubSubCommandTest {
     @Disabled("Push messages are not available with RESP2")
     void messageAsPushMessage() {
     }
+
 }

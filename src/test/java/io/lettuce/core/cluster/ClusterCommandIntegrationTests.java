@@ -54,9 +54,13 @@ import io.lettuce.test.condition.EnabledOnCommand;
 class ClusterCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
+
     private final RedisClusterClient clusterClient;
+
     private final StatefulRedisConnection<String, String> connection;
+
     private final RedisClusterAsyncCommands<String, String> async;
+
     private final RedisClusterCommands<String, String> sync;
 
     @Inject
@@ -201,8 +205,8 @@ class ClusterCommandIntegrationTests extends TestSupport {
         prepareReadonlyTest(key);
 
         // assume cluster node 3 is a replica for the master 1
-        RedisCommands<String, String> connect3 = client
-                .connect(RedisURI.Builder.redis(host, ClusterTestSettings.port3).build()).sync();
+        RedisCommands<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, ClusterTestSettings.port3).build())
+                .sync();
 
         assertThat(connect3.readOnly()).isEqualTo("OK");
         waitUntilValueIsVisible(key, connect3);
@@ -224,8 +228,8 @@ class ClusterCommandIntegrationTests extends TestSupport {
         prepareReadonlyTest(key);
 
         // assume cluster node 3 is a replica for the master 1
-        RedisCommands<String, String> connect3 = client
-                .connect(RedisURI.Builder.redis(host, ClusterTestSettings.port3).build()).sync();
+        RedisCommands<String, String> connect3 = client.connect(RedisURI.Builder.redis(host, ClusterTestSettings.port3).build())
+                .sync();
 
         assertThat(connect3.readOnly()).isEqualTo("OK");
         connect3.quit();
@@ -244,8 +248,8 @@ class ClusterCommandIntegrationTests extends TestSupport {
         prepareReadonlyTest(key);
 
         // assume cluster node 3 is a replica for the master 1
-        final RedisCommands<String, String> connect3 = client.connect(
-                RedisURI.Builder.redis(host, ClusterTestSettings.port3).build()).sync();
+        final RedisCommands<String, String> connect3 = client
+                .connect(RedisURI.Builder.redis(host, ClusterTestSettings.port3).build()).sync();
 
         try {
             connect3.get("b");
@@ -294,4 +298,5 @@ class ClusterCommandIntegrationTests extends TestSupport {
     private static void waitUntilValueIsVisible(String key, RedisCommands<String, String> commands) {
         Wait.untilTrue(() -> commands.get(key) != null).waitOrTimeout();
     }
+
 }

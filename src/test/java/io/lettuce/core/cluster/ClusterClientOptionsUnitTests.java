@@ -41,8 +41,8 @@ class ClusterClientOptionsUnitTests {
         Predicate<RedisClusterNode> nodeFilter = it -> true;
         ClusterClientOptions options = ClusterClientOptions.builder().autoReconnect(false).requestQueueSize(100)
                 .suspendReconnectOnProtocolFailure(true).maxRedirects(1234).validateClusterNodeMembership(false)
-                .readOnlyCommands(command -> command.getType() == CommandType.PING)
-                .protocolVersion(ProtocolVersion.RESP2).nodeFilter(nodeFilter).build();
+                .readOnlyCommands(command -> command.getType() == CommandType.PING).protocolVersion(ProtocolVersion.RESP2)
+                .nodeFilter(nodeFilter).build();
 
         ClusterClientOptions copy = ClusterClientOptions.copyOf(options);
 
@@ -117,4 +117,5 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.PING, null))).isTrue();
         assertThat(options.mutate()).isNotSameAs(copy.mutate());
     }
+
 }

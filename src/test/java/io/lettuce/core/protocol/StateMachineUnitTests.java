@@ -43,8 +43,11 @@ import io.netty.buffer.Unpooled;
  * @author Mark Paluch
  */
 class StateMachineUnitTests {
+
     private RedisCodec<String, String> codec = StringCodec.UTF8;
+
     private CommandOutput<String, String, String> output;
+
     private RedisStateMachine rsm;
 
     @BeforeAll
@@ -185,4 +188,5 @@ class StateMachineUnitTests {
     ByteBuf buffer(String content) {
         return Unpooled.copiedBuffer(content, StandardCharsets.UTF_8);
     }
+
 }

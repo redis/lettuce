@@ -339,4 +339,5 @@ public interface NodeSelectionHashCommands<K, V> {
      * @return Long count of the keys.
      */
     Executions<Long> hvals(ValueStreamingChannel<V> channel, K key);
+
 }

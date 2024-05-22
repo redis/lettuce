@@ -53,4 +53,5 @@ class ScoredValueListOutputUnitTests {
 
         assertThat(sut.get()).contains(ScoredValue.just(4.567, "key"));
     }
+
 }

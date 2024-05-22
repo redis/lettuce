@@ -226,8 +226,11 @@ class RedisClientIntegrationTests extends TestSupport {
     private class TestConnectionListener implements RedisConnectionStateListener {
 
         volatile SocketAddress onConnectedSocketAddress;
+
         volatile RedisChannelHandler<?, ?> onConnected;
+
         volatile RedisChannelHandler<?, ?> onDisconnected;
+
         volatile RedisChannelHandler<?, ?> onException;
 
         @Override
@@ -245,6 +248,7 @@ class RedisClientIntegrationTests extends TestSupport {
         public void onRedisExceptionCaught(RedisChannelHandler<?, ?> connection, Throwable cause) {
             onException = connection;
         }
+
     }
 
     static class TestCommandListener implements CommandListener {
@@ -277,4 +281,5 @@ class RedisClientIntegrationTests extends TestSupport {
         }
 
     }
+
 }

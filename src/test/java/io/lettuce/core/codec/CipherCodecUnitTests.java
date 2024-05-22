@@ -45,10 +45,13 @@ import io.netty.buffer.Unpooled;
 class CipherCodecUnitTests {
 
     private final SecretKeySpec key = new SecretKeySpec("1234567890123456".getBytes(), "AES");
+
     private final IvParameterSpec iv = new IvParameterSpec("1234567890123456".getBytes());
+
     private final String transform = "AES/CBC/PKCS5Padding";
 
     CipherCodec.CipherSupplier encrypt = new CipherCodec.CipherSupplier() {
+
         @Override
         public Cipher get(CipherCodec.KeyDescriptor keyDescriptor) throws GeneralSecurityException {
 
@@ -61,6 +64,7 @@ class CipherCodecUnitTests {
         public CipherCodec.KeyDescriptor encryptionKey() {
             return CipherCodec.KeyDescriptor.create("foobar", 142);
         }
+
     };
 
     CipherCodec.CipherSupplier decrypt = (CipherCodec.KeyDescriptor keyDescriptor) -> {
@@ -121,8 +125,8 @@ class CipherCodecUnitTests {
 
         RedisCodec<String, String> crypto = CipherCodec.forValues(StringCodec.UTF8, encrypt, decrypt);
 
-        ByteBuffer encrypted = ByteBuffer.wrap(new byte[] { 36, 43, 48, 36, -99, -39, 126, -106, -7, -88, 118, -74, 42, 98,
-                117, 81, 37, -124, 26, -88 });// crypto.encodeValue("foobar");
+        ByteBuffer encrypted = ByteBuffer.wrap(
+                new byte[] { 36, 43, 48, 36, -99, -39, 126, -106, -7, -88, 118, -74, 42, 98, 117, 81, 37, -124, 26, -88 });// crypto.encodeValue("foobar");
 
         String result = crypto.decodeValue(encrypted);
         assertThat(result).isEqualTo("foobar");
@@ -138,6 +142,7 @@ class CipherCodecUnitTests {
     static class CryptoTestArgs {
 
         private final int size;
+
         private final String content;
 
         public CryptoTestArgs(String content) {
@@ -153,5 +158,7 @@ class CipherCodecUnitTests {
             sb.append(']');
             return sb.toString();
         }
+
     }
+
 }

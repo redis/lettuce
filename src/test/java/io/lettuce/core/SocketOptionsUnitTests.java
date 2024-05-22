@@ -98,9 +98,11 @@ class SocketOptionsUnitTests {
 
     @Test
     void testConfigTcpUserTimeoutOption() {
-        SocketOptions sut = SocketOptions.builder().tcpUserTimeout(TcpUserTimeoutOptions
-            .builder().enable().tcpUserTimeout(Duration.ofSeconds(60)).build()).build();
+        SocketOptions sut = SocketOptions.builder()
+                .tcpUserTimeout(TcpUserTimeoutOptions.builder().enable().tcpUserTimeout(Duration.ofSeconds(60)).build())
+                .build();
         assertThat(sut.isEnableTcpUserTimeout()).isTrue();
         assertThat(sut.getTcpUserTimeout().getTcpUserTimeout()).isEqualTo(Duration.ofSeconds(60));
     }
+
 }

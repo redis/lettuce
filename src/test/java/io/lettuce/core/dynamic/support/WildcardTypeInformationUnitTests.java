@@ -110,5 +110,7 @@ class WildcardTypeInformationUnitTests {
         List<Float> exactFloat();
 
         List<? extends Number> atLeastNumber();
+
     }
+
 }

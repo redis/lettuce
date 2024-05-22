@@ -109,8 +109,8 @@ public abstract class BasePoolConfig {
          * Validation is performed by the {@link AsyncObjectFactory#validate(Object)} method of the factory associated with the
          * pool. If the object fails to validate, then acquire will fail.
          *
-         * @param testOnCreate {@code true} if newly created objects should be validated before being returned from the
-         *        acquire method. {@code true} to enable test on creation.
+         * @param testOnCreate {@code true} if newly created objects should be validated before being returned from the acquire
+         *        method. {@code true} to enable test on creation.
          *
          * @return {@code this} {@link Builder}.
          */

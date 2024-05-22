@@ -319,8 +319,8 @@ class AsyncPoolWithValidationUnitTests {
 
         mockCreation();
 
-        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(factory, BoundedPoolConfig.builder().maxTotal(20).minIdle(5)
-                .build());
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(factory,
+                BoundedPoolConfig.builder().maxTotal(20).minIdle(5).build());
 
         assertThat(pool.getIdle()).isEqualTo(5);
 
@@ -337,8 +337,8 @@ class AsyncPoolWithValidationUnitTests {
 
         mockCreation();
 
-        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(factory, BoundedPoolConfig.builder().maxTotal(20).maxIdle(5)
-                .minIdle(5).build());
+        BoundedAsyncPool<String> pool = new BoundedAsyncPool<>(factory,
+                BoundedPoolConfig.builder().maxTotal(20).maxIdle(5).minIdle(5).build());
 
         assertThat(pool.getIdle()).isEqualTo(5);
 
@@ -349,4 +349,5 @@ class AsyncPoolWithValidationUnitTests {
 
         verify(factory).destroy(object);
     }
+
 }

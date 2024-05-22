@@ -226,12 +226,12 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     @Test
     void setNegativeEX() {
-        assertThatThrownBy(() -> redis.set(key, value, ex(-10))).isInstanceOf(RedisException. class);
+        assertThatThrownBy(() -> redis.set(key, value, ex(-10))).isInstanceOf(RedisException.class);
     }
 
     @Test
     void setNegativePX() {
-        assertThatThrownBy(() -> redis.set(key, value, px(-1000))).isInstanceOf(RedisException. class);
+        assertThatThrownBy(() -> redis.set(key, value, px(-1000))).isInstanceOf(RedisException.class);
     }
 
     @Test
@@ -305,13 +305,11 @@ public class StringCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("STRALGO")
     void strAlgo() {
 
-        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
-                .strings("ohmytext", "mynewtext"));
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.strings("ohmytext", "mynewtext"));
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
 
         // STRALGO LCS STRINGS a b
-        matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
-                .strings("a", "b").minMatchLen(4).withIdx().withMatchLen());
+        matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.strings("a", "b").minMatchLen(4).withIdx().withMatchLen());
         assertThat(matchResult.getMatchString()).isNullOrEmpty();
         assertThat(matchResult.getLen()).isEqualTo(0);
     }
@@ -336,8 +334,7 @@ public class StringCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("STRALGO")
     void strAlgoJustLen() {
 
-        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
-                .strings("ohmytext", "mynewtext").justLen());
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.strings("ohmytext", "mynewtext").justLen());
 
         assertThat(matchResult.getLen()).isEqualTo(6);
     }
@@ -346,8 +343,7 @@ public class StringCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("STRALGO")
     void strAlgoWithMinMatchLen() {
 
-        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
-                .strings("ohmytext", "mynewtext").minMatchLen(4));
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.strings("ohmytext", "mynewtext").minMatchLen(4));
 
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
     }
@@ -357,8 +353,8 @@ public class StringCommandIntegrationTests extends TestSupport {
     void strAlgoWithIdx() {
 
         // STRALGO LCS STRINGS ohmytext mynewtext IDX MINMATCHLEN 4 WITHMATCHLEN
-        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder
-                .strings("ohmytext", "mynewtext").minMatchLen(4).withIdx().withMatchLen());
+        StringMatchResult matchResult = redis
+                .stralgoLcs(StrAlgoArgs.Builder.strings("ohmytext", "mynewtext").minMatchLen(4).withIdx().withMatchLen());
 
         assertThat(matchResult.getMatches()).hasSize(1);
         assertThat(matchResult.getMatches().get(0).getMatchLen()).isEqualTo(4);
@@ -372,4 +368,5 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(b.getEnd()).isEqualTo(8);
         assertThat(matchResult.getLen()).isEqualTo(6);
     }
+
 }

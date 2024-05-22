@@ -162,17 +162,23 @@ public class Wait {
 
     @FunctionalInterface
     interface WaitCondition {
+
         boolean isSatisfied() throws Exception;
+
     }
 
     @FunctionalInterface
     public interface VoidWaitCondition {
+
         void test();
+
     }
 
     @FunctionalInterface
     public interface Sleeper {
+
         void sleep() throws InterruptedException;
+
     }
 
     static class ThreadSleep implements Sleeper {
@@ -186,6 +192,7 @@ public class Wait {
         public void sleep() throws InterruptedException {
             Thread.sleep(period.toMillis());
         }
+
     }
 
     /**
@@ -197,10 +204,15 @@ public class Wait {
     public static class WaitBuilder<T> {
 
         private Duration duration = Duration.ofSeconds(10);
+
         private Sleeper sleeper = new ThreadSleep(Duration.ofMillis(10));
+
         private Function<T, String> messageFunction;
+
         private Supplier<T> supplier;
+
         private Predicate<T> check;
+
         private WaitCondition waitCondition;
 
         public WaitBuilder<T> during(Duration duration) {
@@ -227,6 +239,7 @@ public class Wait {
                 waiter.waitOrTimeout(supplier, check);
             }
         }
+
     }
 
     /**
@@ -235,7 +248,9 @@ public class Wait {
     private static class Waiter {
 
         private Duration duration;
+
         private Sleeper sleeper;
+
         private Function<Object, String> messageFunction;
 
         private <T> void waitOrTimeout(Supplier<T> supplier, Predicate<T> check) {
@@ -286,11 +301,13 @@ public class Wait {
 
             return false;
         }
+
     }
 
     static class Timeout {
 
         private static final Clock clock = Clock.systemDefaultZone();
+
         private final Instant timeout;
 
         private Timeout(Instant timeout) {
@@ -310,5 +327,7 @@ public class Wait {
         boolean hasExpired() {
             return clock.instant().isAfter(timeout);
         }
+
     }
+
 }

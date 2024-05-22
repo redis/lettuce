@@ -225,4 +225,5 @@ public interface RedisSentinelReactiveCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
 }

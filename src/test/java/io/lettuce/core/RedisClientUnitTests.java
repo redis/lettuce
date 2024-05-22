@@ -103,4 +103,5 @@ class RedisClientUnitTests {
         verify(clientResources).shutdown(anyLong(), anyLong(), any());
         assertThat(future).isDone();
     }
+
 }

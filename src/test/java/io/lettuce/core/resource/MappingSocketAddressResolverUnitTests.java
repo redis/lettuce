@@ -74,4 +74,5 @@ class MappingSocketAddressResolverUnitTests {
         assertThat(resolve.getPort()).isEqualTo(RedisURI.DEFAULT_REDIS_PORT + 100);
         assertThat(resolve.getHostString()).isEqualTo("localhost-foo");
     }
+
 }

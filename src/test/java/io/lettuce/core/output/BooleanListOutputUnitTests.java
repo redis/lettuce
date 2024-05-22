@@ -51,4 +51,5 @@ class BooleanListOutputUnitTests {
         assertThatThrownBy(() -> sut.set(ByteBuffer.wrap("4.567".getBytes())))
                 .isInstanceOf(UnsupportedOperationException.class);
     }
+
 }

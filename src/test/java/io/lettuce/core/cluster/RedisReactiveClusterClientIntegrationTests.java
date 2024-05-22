@@ -39,6 +39,7 @@ import io.lettuce.test.LettuceExtension;
 class RedisReactiveClusterClientIntegrationTests extends TestSupport {
 
     private final RedisAdvancedClusterCommands<String, String> sync;
+
     private final RedisAdvancedClusterReactiveCommands<String, String> reactive;
 
     @Inject
@@ -65,10 +66,10 @@ class RedisReactiveClusterClientIntegrationTests extends TestSupport {
         sync.set(ClusterTestSettings.KEY_A, value);
         sync.set(ClusterTestSettings.KEY_B, value);
 
-        StepVerifier.create(reactive.clusterGetKeysInSlot(ClusterTestSettings.SLOT_A, 10))
-                .expectNext(ClusterTestSettings.KEY_A).verifyComplete();
-        StepVerifier.create(reactive.clusterGetKeysInSlot(ClusterTestSettings.SLOT_B, 10))
-                .expectNext(ClusterTestSettings.KEY_B).verifyComplete();
+        StepVerifier.create(reactive.clusterGetKeysInSlot(ClusterTestSettings.SLOT_A, 10)).expectNext(ClusterTestSettings.KEY_A)
+                .verifyComplete();
+        StepVerifier.create(reactive.clusterGetKeysInSlot(ClusterTestSettings.SLOT_B, 10)).expectNext(ClusterTestSettings.KEY_B)
+                .verifyComplete();
     }
 
     @Test
@@ -112,4 +113,5 @@ class RedisReactiveClusterClientIntegrationTests extends TestSupport {
             assertThat(e).hasMessageContaining("ERR The user can assign a config epoch only");
         }).verify();
     }
+
 }

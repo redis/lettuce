@@ -266,7 +266,8 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -340,4 +341,5 @@ public interface RedisHashAsyncCommands<K, V> {
      * @return Long count of the keys.
      */
     RedisFuture<Long> hvals(ValueStreamingChannel<V> channel, K key);
+
 }

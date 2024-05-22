@@ -35,6 +35,7 @@ import io.netty.buffer.Unpooled;
 class StringCodecUnitTests {
 
     private String teststring = "hello üäü~∑†®†ª€∂‚¶¢ Wørld";
+
     private String teststringPlain = "hello uufadsfasdfadssdfadfs";
 
     @Test
@@ -125,10 +126,9 @@ class StringCodecUnitTests {
     void sizeOf() {
 
         assertThat(new StringCodec(StandardCharsets.UTF_8).sizeOf(teststring, false))
-            .isEqualTo(ByteBufUtil.utf8MaxBytes(teststring));
-        assertThat(new StringCodec(StandardCharsets.US_ASCII).sizeOf(teststring, false))
-            .isEqualTo(teststring.length());
-        assertThat(new StringCodec(StandardCharsets.ISO_8859_1).sizeOf(teststring, false))
-            .isEqualTo(teststring.length());
+                .isEqualTo(ByteBufUtil.utf8MaxBytes(teststring));
+        assertThat(new StringCodec(StandardCharsets.US_ASCII).sizeOf(teststring, false)).isEqualTo(teststring.length());
+        assertThat(new StringCodec(StandardCharsets.ISO_8859_1).sizeOf(teststring, false)).isEqualTo(teststring.length());
     }
+
 }

@@ -66,8 +66,7 @@ public class ReactiveSyncInvocationHandler<K, V> extends ConnectionDecoratingInv
                 Flux<?> flux = (Flux<?>) result;
 
                 if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
-                    if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection)
-                            .isMulti()) {
+                    if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti()) {
                         flux.subscribe();
                         return null;
                     }
@@ -128,4 +127,5 @@ public class ReactiveSyncInvocationHandler<K, V> extends ConnectionDecoratingInv
         return (RedisSentinelCommands<K, V>) Proxy.newProxyInstance(handler.getClass().getClassLoader(),
                 new Class<?>[] { RedisSentinelCommands.class }, handler);
     }
+
 }

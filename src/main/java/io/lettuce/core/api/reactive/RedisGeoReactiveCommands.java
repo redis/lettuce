@@ -171,7 +171,8 @@ public interface RedisGeoReactiveCommands<K, V> {
      *        their locations a sorted set.
      * @return Long integer-reply the number of elements in the result.
      */
-    Mono<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
+    Mono<Long> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
      * Retrieve members selected by distance with the center of {@code member}. The member itself is always contained in the
@@ -213,8 +214,8 @@ public interface RedisGeoReactiveCommands<K, V> {
     Mono<Long> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoRadiusStoreArgs<K> geoRadiusStoreArgs);
 
     /**
-     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}.
-     * Use {@link GeoSearch} to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
+     * {@link GeoSearch} to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -225,8 +226,8 @@ public interface RedisGeoReactiveCommands<K, V> {
     Flux<V> geosearch(K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate);
 
     /**
-     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}.
-     * Use {@link GeoSearch} to create reference and predicate objects.
+     * Retrieve members selected by distance with the center of {@code reference} the search {@code predicate}. Use
+     * {@link GeoSearch} to create reference and predicate objects.
      *
      * @param key the key of the geo set.
      * @param reference the reference member or longitude/latitude coordinates.
@@ -246,9 +247,12 @@ public interface RedisGeoReactiveCommands<K, V> {
      * @param reference the reference member or longitude/latitude coordinates.
      * @param predicate the bounding box or radius to search in.
      * @param geoArgs args to control the result.
-     * @param storeDist  stores the items in a sorted set populated with their distance from the center of the circle or box, as a floating-point number, in the same unit specified for that shape.
+     * @param storeDist stores the items in a sorted set populated with their distance from the center of the circle or box, as
+     *        a floating-point number, in the same unit specified for that shape.
      * @return Long integer-reply the number of elements in the result.
      * @since 6.1
      */
-    Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate, GeoArgs geoArgs, boolean storeDist);
+    Mono<Long> geosearchstore(K destination, K key, GeoSearch.GeoRef<K> reference, GeoSearch.GeoPredicate predicate,
+            GeoArgs geoArgs, boolean storeDist);
+
 }

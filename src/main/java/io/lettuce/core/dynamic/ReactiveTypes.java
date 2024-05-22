@@ -107,8 +107,8 @@ class ReactiveTypes {
     }
 
     /**
-     * Returns {@code true} if reactive support is available. More specifically, whether RxJava1/2 or Project Reactor
-     * libraries are on the class path.
+     * Returns {@code true} if reactive support is available. More specifically, whether RxJava1/2 or Project Reactor libraries
+     * are on the class path.
      *
      * @return {@code true} if reactive support is available.
      */

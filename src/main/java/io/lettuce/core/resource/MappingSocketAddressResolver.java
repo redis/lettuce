@@ -70,8 +70,7 @@ public class MappingSocketAddressResolver extends SocketAddressResolver {
      * @return the {@link MappingSocketAddressResolver}.
      * @since 6.1
      */
-    public static MappingSocketAddressResolver create(
-            Function<HostAndPort, HostAndPort> mappingFunction) {
+    public static MappingSocketAddressResolver create(Function<HostAndPort, HostAndPort> mappingFunction) {
         return new MappingSocketAddressResolver(mappingFunction);
     }
 

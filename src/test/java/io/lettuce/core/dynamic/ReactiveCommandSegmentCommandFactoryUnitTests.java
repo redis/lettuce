@@ -96,5 +96,7 @@ class ReactiveCommandSegmentCommandFactoryUnitTests {
         Mono<String> getOne(String key);
 
         Flux<String> getMany(String key);
+
     }
+
 }

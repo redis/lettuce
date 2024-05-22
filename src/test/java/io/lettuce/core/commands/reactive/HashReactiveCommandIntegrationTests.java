@@ -63,4 +63,5 @@ class HashReactiveCommandIntegrationTests extends HashCommandIntegrationTests {
     public void hgetallStreaming() {
 
     }
+
 }

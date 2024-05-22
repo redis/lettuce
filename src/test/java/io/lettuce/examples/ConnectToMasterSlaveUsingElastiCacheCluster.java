@@ -47,4 +47,5 @@ public class ConnectToMasterSlaveUsingElastiCacheCluster {
         connection.close();
         redisClient.shutdown();
     }
+
 }

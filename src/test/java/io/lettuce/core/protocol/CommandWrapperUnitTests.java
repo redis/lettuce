@@ -36,6 +36,7 @@ import io.lettuce.core.output.StatusOutput;
 class CommandWrapperUnitTests {
 
     private RedisCodec<String, String> codec = StringCodec.UTF8;
+
     private Command<String, String, String> sut;
 
     @BeforeEach
@@ -129,4 +130,5 @@ class CommandWrapperUnitTests {
 
         assertThat(counter).hasValue(1);
     }
+
 }

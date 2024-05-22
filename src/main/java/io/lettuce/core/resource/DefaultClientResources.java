@@ -690,8 +690,8 @@ public class DefaultClientResources implements ClientResources {
                 .commandLatencyPublisherOptions(commandLatencyPublisherOptions()).dnsResolver(dnsResolver())
                 .eventBus(eventBus()).eventExecutorGroup(eventExecutorGroup()).reconnectDelay(reconnectDelay)
                 .socketAddressResolver(socketAddressResolver()).nettyCustomizer(nettyCustomizer())
-                .threadFactoryProvider(threadFactoryProvider).timer(timer())
-                .tracing(tracing()).addressResolverGroup(addressResolverGroup());
+                .threadFactoryProvider(threadFactoryProvider).timer(timer()).tracing(tracing())
+                .addressResolverGroup(addressResolverGroup());
 
         builder.sharedCommandLatencyCollector = sharedEventLoopGroupProvider;
         builder.sharedEventExecutor = sharedEventExecutor;

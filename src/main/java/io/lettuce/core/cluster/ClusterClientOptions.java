@@ -349,13 +349,11 @@ public class ClusterClientOptions extends ClientOptions {
 
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect())
-                .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .decodeBufferPolicy(getDecodeBufferPolicy())
-                .disconnectedBehavior(getDisconnectedBehavior()).maxRedirects(getMaxRedirects())
-                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
-                .protocolVersion(getConfiguredProtocolVersion()).readOnlyCommands(getReadOnlyCommands())
-                .requestQueueSize(getRequestQueueSize())
+        builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
+                .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
+                .maxRedirects(getMaxRedirects()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
+                .readOnlyCommands(getReadOnlyCommands()).requestQueueSize(getRequestQueueSize())
                 .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
                 .topologyRefreshOptions(getTopologyRefreshOptions())
@@ -405,7 +403,6 @@ public class ClusterClientOptions extends ClientOptions {
     public Duration getRefreshPeriod() {
         return topologyRefreshOptions.getRefreshPeriod();
     }
-
 
     /**
      * The {@link ClusterTopologyRefreshOptions} for detailed control of topology updates.

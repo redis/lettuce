@@ -337,4 +337,5 @@ public interface NodeSelectionSetAsyncCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      */
     AsyncExecutions<StreamScanCursor> sscan(ValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);
+
 }

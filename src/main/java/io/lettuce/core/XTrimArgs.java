@@ -20,8 +20,8 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * Argument list builder for the Redis <a href="https://redis.io/commands/xadd">XTRIM</a> command. Static import the methods from
- * {@link Builder} and call the methods: {@code maxlen(…)} .
+ * Argument list builder for the Redis <a href="https://redis.io/commands/xadd">XTRIM</a> command. Static import the methods
+ * from {@link Builder} and call the methods: {@code maxlen(…)} .
  * <p>
  * {@link XTrimArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
@@ -72,6 +72,7 @@ public class XTrimArgs implements CompositeArgument {
         public static XTrimArgs minId(String minid) {
             return new XTrimArgs().minId(minid);
         }
+
     }
 
     /**

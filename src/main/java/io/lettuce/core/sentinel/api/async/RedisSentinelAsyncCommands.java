@@ -225,4 +225,5 @@ public interface RedisSentinelAsyncCommands<K, V> {
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
+
 }

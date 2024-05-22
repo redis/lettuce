@@ -341,4 +341,5 @@ public interface RedisHashCommands<K, V> {
      * @return Long count of the keys.
      */
     Long hvals(ValueStreamingChannel<V> channel, K key);
+
 }

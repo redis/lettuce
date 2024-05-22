@@ -364,4 +364,5 @@ public interface NodeSelectionStreamCommands<K, V> {
      * @since 6.1
      */
     Executions<Long> xtrim(K key, XTrimArgs args);
+
 }

@@ -49,4 +49,5 @@ public class ByteBufferCodec implements RedisCodec<ByteBuffer, ByteBuffer> {
     public ByteBuffer encodeValue(ByteBuffer value) {
         return value.asReadOnlyBuffer();
     }
+
 }

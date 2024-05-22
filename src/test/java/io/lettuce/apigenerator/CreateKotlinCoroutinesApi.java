@@ -40,10 +40,7 @@ public class CreateKotlinCoroutinesApi {
      * @return
      */
     Supplier<List<String>> importSupplier() {
-        return () -> Arrays.asList(
-                "io.lettuce.core.ExperimentalLettuceCoroutinesApi",
-                "kotlinx.coroutines.flow.Flow"
-        );
+        return () -> Arrays.asList("io.lettuce.core.ExperimentalLettuceCoroutinesApi", "kotlinx.coroutines.flow.Flow");
     }
 
     /**
@@ -52,11 +49,8 @@ public class CreateKotlinCoroutinesApi {
      * @return
      */
     Function<String, String> commentInjector() {
-        return s -> s
-                .replaceAll("\\$\\{intent}", "Coroutine executed commands")
-                .replaceAll("\\$\\{author}", "Mikhael Sokolov")
-                .replaceAll("\\$\\{since}", "6.0")
-                .replaceAll("\\$\\{generator}", getClass().getName());
+        return s -> s.replaceAll("\\$\\{intent}", "Coroutine executed commands").replaceAll("\\$\\{author}", "Mikhael Sokolov")
+                .replaceAll("\\$\\{since}", "6.0").replaceAll("\\$\\{generator}", getClass().getName());
     }
 
     @ParameterizedTest
@@ -80,7 +74,8 @@ public class CreateKotlinCoroutinesApi {
             targetPackage = "io.lettuce.core.api.coroutines";
         }
 
-        return new KotlinCompilationUnitFactory(templateFile, KOTLIN_SOURCES, targetPackage,
-                targetName, importSupplier(), commentInjector());
+        return new KotlinCompilationUnitFactory(templateFile, KOTLIN_SOURCES, targetPackage, targetName, importSupplier(),
+                commentInjector());
     }
+
 }

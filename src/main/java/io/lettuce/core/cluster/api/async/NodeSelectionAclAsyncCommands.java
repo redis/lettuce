@@ -108,8 +108,8 @@ public interface NodeSelectionAclAsyncCommands<K, V> {
     AsyncExecutions<List<String>> aclList();
 
     /**
-     * When Redis is configured to use an ACL file (with the aclfile configuration option), this command
-     * will reload the ACLs from the file, replacing all the current ACL rules with the ones defined in the file.
+     * When Redis is configured to use an ACL file (with the aclfile configuration option), this command will reload the ACLs
+     * from the file, replacing all the current ACL rules with the ones defined in the file.
      *
      * @return String simple-string-reply OK or error message.
      */
@@ -138,8 +138,8 @@ public interface NodeSelectionAclAsyncCommands<K, V> {
     AsyncExecutions<String> aclLogReset();
 
     /**
-     * When Redis is configured to use an ACL file (with the aclfile configuration option),
-     * this command will save the currently defined ACLs from the server memory to the ACL file.
+     * When Redis is configured to use an ACL file (with the aclfile configuration option), this command will save the currently
+     * defined ACLs from the server memory to the ACL file.
      *
      * @return String simple-string-reply OK or error message.
      */
@@ -167,4 +167,5 @@ public interface NodeSelectionAclAsyncCommands<K, V> {
      * @return K bulk-string-reply the username of the current connection.
      */
     AsyncExecutions<String> aclWhoami();
+
 }

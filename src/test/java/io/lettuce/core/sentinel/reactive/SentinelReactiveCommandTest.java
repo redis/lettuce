@@ -35,7 +35,9 @@ public class SentinelReactiveCommandTest extends SentinelCommandIntegrationTests
     }
 
     @Override
-    protected RedisSentinelCommands<String, String> getSyncConnection(StatefulRedisSentinelConnection<String, String> connection) {
+    protected RedisSentinelCommands<String, String> getSyncConnection(
+            StatefulRedisSentinelConnection<String, String> connection) {
         return ReactiveSyncInvocationHandler.sync(connection);
     }
+
 }

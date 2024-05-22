@@ -56,4 +56,5 @@ class SortedSetReactiveCommandIntegrationTests extends SortedSetCommandIntegrati
             assertThat(actual).isEqualTo(list(1.0, null, 2.0));
         }).verifyComplete();
     }
+
 }

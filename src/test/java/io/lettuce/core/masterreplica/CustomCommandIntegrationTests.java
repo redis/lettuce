@@ -46,6 +46,7 @@ class CustomCommandIntegrationTests extends TestSupport {
     private final RedisClient redisClient;
 
     private StatefulRedisConnection<String, String> connection;
+
     private RedisCommands<String, String> redis;
 
     @Inject
@@ -156,6 +157,7 @@ class CustomCommandIntegrationTests extends TestSupport {
     }
 
     public enum MyCommands implements ProtocolKeyword {
+
         PING, SET, INFO;
 
         private final byte name[];
@@ -169,5 +171,7 @@ class CustomCommandIntegrationTests extends TestSupport {
         public byte[] getBytes() {
             return name;
         }
+
     }
+
 }

@@ -29,4 +29,5 @@ class SetTxCommandIntegrationTests extends SetCommandIntegrationTests {
     SetTxCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
         super(TxSyncInvocationHandler.sync(connection));
     }
+
 }

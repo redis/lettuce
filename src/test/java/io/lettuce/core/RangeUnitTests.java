@@ -112,4 +112,5 @@ class RangeUnitTests {
         assertThat(lte.getUpper().getValue()).isEqualTo("zero");
         assertThat(lte.toString()).isEqualTo("Range [[unbounded] to [zero]");
     }
+
 }

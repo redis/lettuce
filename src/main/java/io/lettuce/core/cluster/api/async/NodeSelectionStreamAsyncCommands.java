@@ -364,4 +364,5 @@ public interface NodeSelectionStreamAsyncCommands<K, V> {
      * @since 6.1
      */
     AsyncExecutions<Long> xtrim(K key, XTrimArgs args);
+
 }

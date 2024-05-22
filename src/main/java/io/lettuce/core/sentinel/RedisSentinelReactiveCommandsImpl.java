@@ -145,7 +145,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
         return createMono(() -> commandBuilder.info(section));
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output) {
 
@@ -155,7 +155,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
         return (Flux) createFlux(() -> new Command<>(type, output));
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     public <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args) {
 

@@ -109,4 +109,5 @@ class RedisClusterURIUtilUnitTests {
         assertThat(host2.getHost()).isEqualTo("host2");
         assertThat(host2.getPort()).isEqualTo(6380);
     }
+
 }

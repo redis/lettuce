@@ -21,8 +21,8 @@ import io.lettuce.core.FlushMode;
 import io.lettuce.core.ScriptOutputType;
 
 /**
- * Synchronous executed commands on a node selection for Scripting. {@link java.lang.String Lua scripts} are encoded by using the configured
- * {@link io.lettuce.core.ClientOptions#getScriptCharset() charset}.
+ * Synchronous executed commands on a node selection for Scripting. {@link java.lang.String Lua scripts} are encoded by using
+ * the configured {@link io.lettuce.core.ClientOptions#getScriptCharset() charset}.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -179,4 +179,5 @@ public interface NodeSelectionScriptingCommands<K, V> {
      * @since 6.0
      */
     Executions<String> scriptLoad(byte[] script);
+
 }

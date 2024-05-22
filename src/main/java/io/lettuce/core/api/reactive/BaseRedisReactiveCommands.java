@@ -84,8 +84,8 @@ public interface BaseRedisReactiveCommands<K, V> {
     /**
      * Return the role of the instance in the context of replication.
      *
-     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional
-     *         elements are role-specific.
+     * @return Object array-reply where the first element is one of master, slave, sentinel and the additional elements are
+     *         role-specific.
      */
     Flux<Object> role();
 
