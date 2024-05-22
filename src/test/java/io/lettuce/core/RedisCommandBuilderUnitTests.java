@@ -44,9 +44,9 @@ class RedisCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
-                "*8\r\n" + "$7\r\n" + "HEXPIRE\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n" + "NX\r\n"
-                        + "$1\r\n" + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$7\r\n" + "HEXPIRE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "1\r\n" + "$2\r\n" + "NX\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "3\r\n" + "$7\r\n"
+                + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
     }
 
     @Test
@@ -56,9 +56,9 @@ class RedisCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
-                "*8\r\n" + "$9\r\n" + "HEXPIREAT\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n" + "NX\r\n"
-                        + "$1\r\n" + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$9\r\n" + "HEXPIREAT\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "1\r\n" + "$2\r\n" + "NX\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "3\r\n" + "$7\r\n"
+                + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
     }
 
     @Test
@@ -69,8 +69,8 @@ class RedisCommandBuilderUnitTests {
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*6\r\n" + "$11\r\n" + "HEXPIRETIME\r\n" + "$4\r\n" + "hKey\r\n" + "$1\r\n" + "3\r\n" + "$7\r\n"
-                        + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+                .isEqualTo("*7\r\n" + "$11\r\n" + "HEXPIRETIME\r\n" + "$4\r\n" + "hKey\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
     }
 
     @Test
@@ -80,8 +80,70 @@ class RedisCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$8\r\n" + "HPERSIST\r\n" + "$4\r\n" + "hKey\r\n"
-                + "$1\r\n" + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$8\r\n" + "HPERSIST\r\n" + "$4\r\n" + "hKey\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHpexpire() {
+
+        Command<String, String, ?> command = sut.hpexpire(MY_KEY, 1, ExpireArgs.Builder.nx(), MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$8\r\n" + "HPEXPIRE\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$1\r\n" + "1\r\n" + "$2\r\n" + "NX\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "3\r\n" + "$7\r\n"
+                + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHpexpireat() {
+
+        Command<String, String, ?> command = sut.hpexpireat(MY_KEY, 1, ExpireArgs.Builder.nx(), MY_FIELD1, MY_FIELD2,
+                MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$10\r\n" + "HPEXPIREAT\r\n" + "$4\r\n"
+                + "hKey\r\n" + "$1\r\n" + "1\r\n" + "$2\r\n" + "NX\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "3\r\n"
+                + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHpexpiretime() {
+
+        Command<String, String, ?> command = sut.hpexpiretime(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$12\r\n" + "HPEXPIRETIME\r\n" + "$4\r\n" + "hKey\r\n" + "$6\r\n" + "FIELDS\r\n"
+                        + "$1\r\n" + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHttl() {
+
+        Command<String, String, ?> command = sut.httl(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$4\r\n" + "HTTL\r\n" + "$4\r\n" + "hKey\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHpttl() {
+
+        Command<String, String, ?> command = sut.hpttl(MY_KEY, MY_FIELD1, MY_FIELD2, MY_FIELD3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$5\r\n" + "HPTTL\r\n" + "$4\r\n" + "hKey\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n"
+                        + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
     }
 
 }
