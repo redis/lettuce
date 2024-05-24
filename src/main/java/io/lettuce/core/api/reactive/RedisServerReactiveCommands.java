@@ -180,10 +180,12 @@ public interface RedisServerReactiveCommands<K, V> {
     /**
      * Returns information about the current client connection's use of the server assisted client side caching feature.
      *
-     * @return Map&lt;String, String&gt; bulk-string-reply, for more information check the documentation
+     * @return Object array-list-reply, for more information check the documentation
+     * @see io.lettuce.core.cluster.models.tracking.TrackingInfoParser
+     * @see io.lettuce.core.cluster.models.tracking.TrackingInfo
      * @since 7.0
      */
-    Mono<Map<String, String>> clientTrackinginfo();
+    Flux<Object> clientTrackinginfo();
 
     /**
      * Unblock the specified blocked client.

@@ -172,10 +172,12 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     /**
      * Returns information about the current client connection's use of the server assisted client side caching feature.
      *
-     * @return Map<String, String> bulk-string-reply, for more information check the documentation
+     * @return List<Any> array-list-reply, for more information check the documentation
+     * @see io.lettuce.core.cluster.models.tracking.TrackingInfoParser
+     * @see io.lettuce.core.cluster.models.tracking.TrackingInfo
      * @since 7.0
      */
-    suspend fun clientTrackinginfo(): Map<String, String>?
+    suspend fun clientTrackinginfo(): List<Any>
 
     /**
      * Unblock the specified blocked client.
