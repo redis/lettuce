@@ -390,7 +390,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Map<String, String>> clientTrackinginfo() {
+    public RedisFuture<List<Object>> clientTrackinginfo() {
         return dispatch(commandBuilder.clientTrackinginfo());
     }
 

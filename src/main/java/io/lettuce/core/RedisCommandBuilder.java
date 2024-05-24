@@ -528,10 +528,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, Map<String, String>> clientTrackinginfo() {
-        CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(TRACKINGINFO);
+    Command<K, V, List<Object>> clientTrackinginfo() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(TRACKINGINFO);
 
-        return Command.class.cast(new Command<>(CLIENT, new MapOutput<>(StringCodec.UTF8), args));
+        return new Command<>(CLIENT, new ArrayOutput<>(codec), args);
     }
 
     Command<K, V, Long> clientUnblock(long id, UnblockType type) {
