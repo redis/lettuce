@@ -147,6 +147,17 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructClientTrackinginfo() {
+
+        Command<String, String, ?> command = sut.clientTrackinginfo();
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*2\r\n" + "$6\r\n" + "CLIENT\r\n" + "$12\r\n" + "TRACKINGINFO\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructClusterMyshardid() {
 
         Command<String, String, ?> command = sut.clusterMyShardId();

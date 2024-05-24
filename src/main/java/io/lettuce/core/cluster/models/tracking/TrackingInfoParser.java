@@ -1,5 +1,7 @@
 package io.lettuce.core.cluster.models.tracking;
 
+import io.lettuce.core.protocol.CommandKeyword;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -58,8 +60,9 @@ public class TrackingInfoParser {
             throw new IllegalArgumentException("trackinginfoOutput has wrong number of elements");
         }
 
-        if (!trackinginfoOutput.get(0).equals("flags") || !trackinginfoOutput.get(2).equals("redirect")
-                || !trackinginfoOutput.get(4).equals("prefixes")) {
+        if (!CommandKeyword.FLAGS.toString().equalsIgnoreCase(trackinginfoOutput.get(0).toString())
+                || !CommandKeyword.REDIRECT.toString().equalsIgnoreCase(trackinginfoOutput.get(2).toString())
+                || !CommandKeyword.PREFIXES.toString().equalsIgnoreCase(trackinginfoOutput.get(4).toString())) {
             throw new IllegalArgumentException("trackinginfoOutput has unsupported argument order");
         }
 
