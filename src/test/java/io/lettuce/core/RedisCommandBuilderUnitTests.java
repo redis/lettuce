@@ -146,4 +146,15 @@ class RedisCommandBuilderUnitTests {
                         + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
     }
 
+    @Test
+    void shouldCorrectlyConstructClientTrackinginfo() {
+
+        Command<String, String, ?> command = sut.clientTrackinginfo();
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*2\r\n" + "$6\r\n" + "CLIENT\r\n" + "$12\r\n" + "TRACKINGINFO\r\n");
+    }
+
 }

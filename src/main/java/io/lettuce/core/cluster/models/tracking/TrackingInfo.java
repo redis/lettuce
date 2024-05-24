@@ -108,7 +108,7 @@ public class TrackingInfo {
          * @return the resulting {@link TrackingFlag} or {@link IllegalArgumentException} if unrecognized
          */
         public static TrackingFlag from(String flag) {
-            switch (flag) {
+            switch (flag.toLowerCase()) {
                 case "off":
                     return OFF;
                 case "on":
