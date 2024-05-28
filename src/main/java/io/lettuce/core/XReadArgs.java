@@ -1,10 +1,10 @@
 package io.lettuce.core;
 
-import java.time.Duration;
-
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+
+import java.time.Duration;
 
 /**
  * Argument list builder for the Redis <a href="https://redis.io/commands/xread">XREAD</a> and {@literal XREADGROUP} commands.
@@ -171,7 +171,7 @@ public class XReadArgs implements CompositeArgument {
         }
 
         /**
-         * Read all new arriving elements from the stream identified by {@code name}.
+         * Read all new arriving elements from the stream identified by {@code name} excluding any elements before this call
          *
          * @param name must not be {@code null}.
          * @return the {@link StreamOffset} object without a specific offset.
@@ -181,6 +181,21 @@ public class XReadArgs implements CompositeArgument {
             LettuceAssert.notNull(name, "Stream must not be null");
 
             return new StreamOffset<>(name, "$");
+        }
+
+        /**
+         * Read all new arriving elements from the stream identified by {@code name} including the last element added before
+         * this call
+         *
+         * @param name must not be {@code null}.
+         * @return the {@link StreamOffset} object without a specific offset.
+         * @since 7.0
+         */
+        public static <K> StreamOffset<K> last(K name) {
+
+            LettuceAssert.notNull(name, "Stream must not be null");
+
+            return new StreamOffset<>(name, "+");
         }
 
         /**

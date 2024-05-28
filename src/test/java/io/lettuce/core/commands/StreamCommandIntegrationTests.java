@@ -19,25 +19,6 @@
  */
 package io.lettuce.core.commands;
 
-import static io.lettuce.core.protocol.CommandType.*;
-import static org.assertj.core.api.Assertions.*;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
-
 import io.lettuce.core.*;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -49,6 +30,23 @@ import io.lettuce.core.output.NestedMultiOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import javax.inject.Inject;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static io.lettuce.core.protocol.CommandType.XINFO;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisStreamCommands}.
@@ -316,7 +314,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.multi();
         redis.xadd("stream-1", Collections.singletonMap("key3", "value3"));
         redis.xadd("stream-2", Collections.singletonMap("key4", "value4"));
-        redis.xread(StreamOffset.from("stream-1", initial1), XReadArgs.StreamOffset.from("stream-2", initial2));
+        redis.xread(StreamOffset.from("stream-1", initial1), StreamOffset.from("stream-2", initial2));
 
         TransactionResult exec = redis.exec();
 
@@ -335,6 +333,23 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(secondMessage.getId()).isEqualTo(message2);
         assertThat(secondMessage.getStream()).isEqualTo("stream-2");
         assertThat(secondMessage.getBody()).containsEntry("key4", "value4");
+    }
+
+    @Test
+    public void xreadLastVsLatest() {
+        redis.xadd("stream-1", Collections.singletonMap("key1", "value1"));
+        redis.xadd("stream-1", Collections.singletonMap("key2", "value2"));
+
+        List<StreamMessage<String, String>> lastMessages = redis.xread(StreamOffset.last("stream-1"));
+        List<StreamMessage<String, String>> latestMessages = redis.xread(StreamOffset.latest("stream-1"));
+
+        assertThat(lastMessages).hasSize(1);
+        StreamMessage<String, String> lastMessage = lastMessages.get(0);
+
+        assertThat(lastMessage.getStream()).isEqualTo("stream-1");
+        assertThat(lastMessage.getBody()).hasSize(1).containsEntry("key2", "value2");
+
+        assertThat(latestMessages).isEmpty();
     }
 
     @Test
