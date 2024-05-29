@@ -678,7 +678,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             cancelCommands("Connection closed", queuedCommands.drainQueue(), it -> it.completeExceptionally(lazy.get()));
             cancelCommands("Connection closed", drainCommands(), it -> it.completeExceptionally(lazy.get()));
             return;
-        } else if (reliability == Reliability.AT_MOST_ONCE && rejectCommandsWhileDisconnected) {
+        } else if (rejectCommandsWhileDisconnected) {
 
             Lazy<RedisException> lazy = Lazy.of(() -> new RedisException("Connection disconnected"));
             cancelCommands("Connection disconnected", queuedCommands.drainQueue(), it -> it.completeExceptionally(lazy.get()));
