@@ -94,7 +94,7 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
-     * @since 6.4
+     * @since 7.0
      */
     suspend fun <T> evalReadOnly(
         script: String,

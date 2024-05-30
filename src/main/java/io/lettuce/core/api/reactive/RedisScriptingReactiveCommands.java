@@ -93,7 +93,7 @@ public interface RedisScriptingReactiveCommands<K, V> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
-     * @since 6.4
+     * @since 7.0
      */
     <T> Flux<T> evalReadOnly(String script, ScriptOutputType type, K[] keys, V... values);
 
