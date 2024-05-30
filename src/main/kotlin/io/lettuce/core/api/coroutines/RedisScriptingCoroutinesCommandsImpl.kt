@@ -52,6 +52,13 @@ internal class RedisScriptingCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override suspend fun <T> eval(script: ByteArray, type: ScriptOutputType, keys: Array<K>, vararg values: V): T? = ops.eval<T>(script, type, keys, *values).awaitFirstOrNull()
 
     override suspend fun <T> evalReadOnly(
+        script: String,
+        type: ScriptOutputType,
+        keys: Array<K>,
+        vararg values: V
+    ): T? = ops.evalReadOnly<T>(script, type, keys, *values).awaitFirstOrNull()
+
+    override suspend fun <T> evalReadOnly(
         script: ByteArray,
         type: ScriptOutputType,
         keys: Array<K>,
@@ -86,4 +93,3 @@ internal class RedisScriptingCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override suspend fun digest(script: ByteArray): String = ops.digest(script)
 
 }
-

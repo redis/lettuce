@@ -742,6 +742,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public <T> RedisFuture<T> evalReadOnly(String script, ScriptOutputType type, K[] keys, V... values) {
+        return evalReadOnly(encodeScript(script), type, keys, values);
+    }
+
+    @Override
     public <T> RedisFuture<T> evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values) {
         return (RedisFuture<T>) dispatch(commandBuilder.eval(script, type, true, keys, values));
     }

@@ -798,6 +798,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public <T> Flux<T> evalReadOnly(String script, ScriptOutputType type, K[] keys, V... values) {
+        return evalReadOnly(encodeScript(script), type, keys, values);
+    }
+
+    @Override
     public <T> Flux<T> evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values) {
         return createFlux(() -> commandBuilder.eval(script, type, true, keys, values));
     }

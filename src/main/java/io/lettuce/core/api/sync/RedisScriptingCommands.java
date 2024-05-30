@@ -93,6 +93,19 @@ public interface RedisScriptingCommands<K, V> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
+     * @since 6.4
+     */
+    <T> T evalReadOnly(String script, ScriptOutputType type, K[] keys, V... values);
+
+    /**
+     * This is a read-only variant of the EVAL command that cannot execute commands that modify data.
+     *
+     * @param script Lua 5.1 script.
+     * @param type output type.
+     * @param keys the keys.
+     * @param values the values.
+     * @param <T> expected return type.
+     * @return script result.
      * @since 6.2
      */
     <T> T evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values);
