@@ -134,7 +134,7 @@ public class ScriptingCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("EVAL_RO") // Redis 7.0
     void evalReadOnly() {
         String[] keys = new String[] { "key1" };
-        assertThat((String) redis.evalReadOnly("return KEYS[1]".getBytes(), STATUS, keys, "a")).isEqualTo("key1");
+        assertThat((String) redis.evalReadOnly("return KEYS[1]", STATUS, keys, "a")).isEqualTo("key1");
     }
 
     @Test
