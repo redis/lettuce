@@ -93,6 +93,19 @@ public interface NodeSelectionScriptingCommands<K, V> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
+     * @since 7.0
+     */
+    <T> Executions<T> evalReadOnly(String script, ScriptOutputType type, K[] keys, V... values);
+
+    /**
+     * This is a read-only variant of the EVAL command that cannot execute commands that modify data.
+     *
+     * @param script Lua 5.1 script.
+     * @param type the type.
+     * @param keys the keys.
+     * @param values the values.
+     * @param <T> expected return type.
+     * @return script result.
      * @since 6.2
      */
     <T> Executions<T> evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values);

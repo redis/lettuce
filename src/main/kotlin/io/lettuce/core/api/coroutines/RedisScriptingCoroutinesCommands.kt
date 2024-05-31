@@ -94,6 +94,24 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * @param values the values.
      * @param <T> expected return type.
      * @return script result.
+     * @since 7.0
+     */
+    suspend fun <T> evalReadOnly(
+        script: String,
+        type: ScriptOutputType,
+        keys: Array<K>,
+        vararg values: V
+    ): T?
+
+    /**
+     * This is a read-only variant of the EVAL command that cannot execute commands that modify data.
+     *
+     * @param script Lua 5.1 script.
+     * @param type the type.
+     * @param keys the keys.
+     * @param values the values.
+     * @param <T> expected return type.
+     * @return script result.
      * @since 6.2
      */
     suspend fun <T> evalReadOnly(
@@ -214,4 +232,3 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
     suspend fun digest(script: ByteArray): String?
 
 }
-
