@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.HashSet;
 
 import org.junit.jupiter.api.Test;
 
@@ -66,6 +67,42 @@ class RedisClusterNodeUnitTests {
         RedisClusterNode copiedNode = new RedisClusterNode(originalNode);
 
         assertThat(copiedNode.getSlots()).containsExactly(1, 2);
+    }
+
+    @Test
+    public void testHasSameSlotsAs() {
+
+        BitSet slots1 = new BitSet(SlotHash.SLOT_COUNT);
+        slots1.set(1);
+        slots1.set(2);
+
+        BitSet slots2 = new BitSet(SlotHash.SLOT_COUNT);
+        slots2.set(1);
+        slots2.set(2);
+
+        RedisClusterNode node1 = new RedisClusterNode(RedisURI.create("localhost", 6379), "nodeId1", true, "slaveOf", 0L, 0L,
+                0L, slots1, new HashSet<>());
+        RedisClusterNode node2 = new RedisClusterNode(RedisURI.create("localhost", 6379), "nodeId2", true, "slaveOf", 0L, 0L,
+                0L, slots2, new HashSet<>());
+
+        assertThat(node1.hasSameSlotsAs(node2)).isTrue();
+    }
+
+    @Test
+    public void testHasDifferentSlotsAs() {
+
+        BitSet slots1 = new BitSet(SlotHash.SLOT_COUNT);
+        slots1.set(1);
+
+        BitSet slots2 = new BitSet(SlotHash.SLOT_COUNT);
+        slots2.set(2);
+
+        RedisClusterNode node1 = new RedisClusterNode(RedisURI.create("localhost", 6379), "nodeId1", true, "slaveOf", 0L, 0L,
+                0L, slots1, new HashSet<>());
+        RedisClusterNode node2 = new RedisClusterNode(RedisURI.create("localhost", 6379), "nodeId2", true, "slaveOf", 0L, 0L,
+                0L, slots2, new HashSet<>());
+
+        assertThat(node1.hasSameSlotsAs(node2)).isFalse();
     }
 
     @Test
