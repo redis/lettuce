@@ -103,7 +103,11 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.configEpoch = configEpoch;
         this.replOffset = -1;
 
-        this.slots = slots != null ? slots : new BitSet(0);
+        this.slots = new BitSet(SlotHash.SLOT_COUNT);
+
+        if (slots != null) {
+            this.slots.or(slots);
+        }
 
         setFlags(flags);
     }
@@ -122,7 +126,7 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         this.replOffset = redisClusterNode.replOffset;
         this.aliases.addAll(redisClusterNode.aliases);
 
-        this.slots = redisClusterNode.slots != null ? new BitSet(SlotHash.SLOT_COUNT) : new BitSet(0);
+        this.slots = new BitSet(SlotHash.SLOT_COUNT);
 
         if (redisClusterNode.slots != null) {
             this.slots.or(redisClusterNode.slots);
