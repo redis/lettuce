@@ -24,6 +24,7 @@ class RedisClusterNodeUnitTests {
         BitSet slots = new BitSet();
         RedisClusterNode node = new RedisClusterNode(RedisURI.create("localhost", 6379), "1", true, null, 0, 0, 0, slots,
                 Collections.emptySet());
+
         assertThat(node.getSlots()).isEmpty();
         assertThat(node.getSlots()).isNotNull();
     }
