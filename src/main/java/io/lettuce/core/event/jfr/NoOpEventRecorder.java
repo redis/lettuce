@@ -1,7 +1,6 @@
 package io.lettuce.core.event.jfr;
 
 import io.lettuce.core.event.Event;
-import io.lettuce.core.event.RecordableEvent;
 
 /**
  * No-op implementation.
@@ -9,7 +8,7 @@ import io.lettuce.core.event.RecordableEvent;
  * @author Mark Paluch
  * @since 6.1
  */
-public final class NoOpEventRecorder implements EventRecorder, RecordableEvent {
+public final class NoOpEventRecorder implements EventRecorder, EventRecorder.RecordableEvent {
 
     public final static NoOpEventRecorder INSTANCE = new NoOpEventRecorder();
 
@@ -30,11 +29,6 @@ public final class NoOpEventRecorder implements EventRecorder, RecordableEvent {
     @Override
     public RecordableEvent start(Event event) {
         return this;
-    }
-
-    @Override
-    public void publish(Event event) {
-
     }
 
     @Override

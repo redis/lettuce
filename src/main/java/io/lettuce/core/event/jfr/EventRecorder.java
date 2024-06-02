@@ -1,7 +1,6 @@
 package io.lettuce.core.event.jfr;
 
 import io.lettuce.core.event.Event;
-import io.lettuce.core.event.RecordableEvent;
 
 /**
  * Event recorder that can delegate events from the {@link io.lettuce.core.event.EventBus} into a recording facility such as
@@ -39,6 +38,21 @@ public interface EventRecorder {
      */
     RecordableEvent start(Event event);
 
-    void publish(Event event);
+    /**
+     * Interface defining a recordable event that is recorded on calling {@link #record()}.
+     */
+    interface RecordableEvent extends Event {
+
+        /**
+         * Complete the event recording.
+         */
+        void record();
+
+        /**
+         * Get the source event.
+         */
+        Event getSource();
+
+    }
 
 }

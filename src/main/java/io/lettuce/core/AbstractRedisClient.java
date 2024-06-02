@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import reactor.core.publisher.Mono;
-import io.lettuce.core.event.RecordableEvent;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
 import io.lettuce.core.event.connection.ConnectionCreatedEvent;
@@ -401,7 +400,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
         String uriString = connectionBuilder.getRedisURI().toString();
 
         EventRecorder.getInstance().record(new ConnectionCreatedEvent(uriString, connectionBuilder.endpoint().getId()));
-        RecordableEvent event = EventRecorder.getInstance()
+        EventRecorder.RecordableEvent event = EventRecorder.getInstance()
                 .start(new ConnectEvent(uriString, connectionBuilder.endpoint().getId()));
 
         channelReadyFuture.whenComplete((channel, throwable) -> {

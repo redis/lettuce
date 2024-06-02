@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.lettuce.core.event.Event;
-import io.lettuce.core.event.RecordableEvent;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceClassUtils;
 
@@ -31,10 +30,14 @@ class JfrEventRecorder implements EventRecorder {
 
         LettuceAssert.notNull(event, "Event must not be null");
 
-        jdk.jfr.Event jfrEvent = createEvent(event);
+        if (event instanceof RecordableEvent) {
+            ((RecordableEvent) event).record();
+        } else {
+            jdk.jfr.Event jfrEvent = createEvent(event);
 
-        if (jfrEvent != null) {
-            jfrEvent.commit();
+            if (jfrEvent != null) {
+                jfrEvent.commit();
+            }
         }
     }
 
@@ -52,24 +55,6 @@ class JfrEventRecorder implements EventRecorder {
         }
 
         return NoOpEventRecorder.INSTANCE;
-    }
-
-    /**
-     * When the given event is an instance of RecordableEvent, this method works the same as {@link #record}.
-     * Otherwise, do nothing.
-     *
-     * @param event the event to be published
-     */
-    @Override
-    public void publish(Event event) {
-
-        LettuceAssert.notNull(event, "Event must not be null");
-
-        if (event instanceof RecordableEvent) {
-            ((RecordableEvent) event).record();
-        } else {
-            record(event);
-        }
     }
 
     private Constructor<?> getEventConstructor(Event event) throws NoSuchMethodException {
@@ -119,12 +104,12 @@ class JfrEventRecorder implements EventRecorder {
 
     class JfrRecordableEvent implements RecordableEvent {
 
-        private final Event originalEvent;
+        private final Event sourceEvent;
 
         private final jdk.jfr.Event jfrEvent;
 
         public JfrRecordableEvent(Event event) {
-            this.originalEvent = event;
+            this.sourceEvent = event;
             this.jfrEvent = createEvent(event);
         }
 
@@ -136,7 +121,7 @@ class JfrEventRecorder implements EventRecorder {
 
         @Override
         public Event getSource() {
-            return originalEvent;
+            return sourceEvent;
         }
 
         public jdk.jfr.Event getJfrEvent() {
