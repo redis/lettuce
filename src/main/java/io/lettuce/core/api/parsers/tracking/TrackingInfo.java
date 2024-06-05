@@ -1,8 +1,29 @@
-package io.lettuce.core.cluster.models.tracking;
+/*
+ * Copyright 2024, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.lettuce.core.api.parsers.tracking;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.List;
 
@@ -55,6 +76,26 @@ public class TrackingInfo {
      */
     public List<String> getPrefixes() {
         return Collections.unmodifiableList(prefixes);
+    }
+
+    @Override
+    public String toString() {
+        return "TrackingInfo{" + "flags=" + flags + ", redirect=" + redirect + ", prefixes=" + prefixes + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        TrackingInfo that = (TrackingInfo) o;
+        return redirect == that.redirect && Objects.equals(flags, that.flags) && Objects.equals(prefixes, that.prefixes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(flags, redirect, prefixes);
     }
 
     /**

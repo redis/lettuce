@@ -34,6 +34,7 @@ import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
+import io.lettuce.core.output.data.DynamicAggregateData;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
@@ -408,8 +409,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Object> clientTrackinginfo() {
-        return createDissolvingFlux(commandBuilder::clientTrackinginfo);
+    public Mono<DynamicAggregateData> clientTrackinginfo() {
+        return createMono(commandBuilder::clientTrackinginfo);
     }
 
     @Override
