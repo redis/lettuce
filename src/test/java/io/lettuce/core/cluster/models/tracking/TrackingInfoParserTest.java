@@ -1,11 +1,13 @@
 package io.lettuce.core.cluster.models.tracking;
 
+import io.lettuce.core.api.parsers.tracking.TrackingInfo;
+import io.lettuce.core.api.parsers.tracking.TrackingInfoParser;
+import io.lettuce.core.output.data.ArrayAggregateData;
+import io.lettuce.core.output.data.DynamicAggregateData;
+import io.lettuce.core.output.data.MapAggregateData;
+import io.lettuce.core.output.data.SetAggregateData;
 import io.lettuce.core.protocol.CommandKeyword;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -13,14 +15,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TrackingInfoParserTest {
 
     @Test
-    void parse() {
-        List<Object> input = new ArrayList<>();
-        input.add(CommandKeyword.FLAGS.toString());
-        input.add(Arrays.asList(TrackingInfo.TrackingFlag.ON.toString(), TrackingInfo.TrackingFlag.OPTIN.toString()));
-        input.add(CommandKeyword.REDIRECT.toString());
-        input.add(0L);
-        input.add(CommandKeyword.PREFIXES.toString());
-        input.add(new ArrayList<>());
+    void parseResp3() {
+        DynamicAggregateData flags = new SetAggregateData(2);
+        flags.store(TrackingInfo.TrackingFlag.ON.toString());
+        flags.store(TrackingInfo.TrackingFlag.OPTIN.toString());
+
+        DynamicAggregateData prefixes = new ArrayAggregateData(0);
+
+        DynamicAggregateData input = new MapAggregateData(3);
+        input.store(CommandKeyword.FLAGS.toString().toLowerCase());
+        input.storeObject(flags);
+        input.store(CommandKeyword.REDIRECT.toString().toLowerCase());
+        input.store(0L);
+        input.store(CommandKeyword.PREFIXES.toString().toLowerCase());
+        input.storeObject(prefixes);
 
         TrackingInfo info = TrackingInfoParser.parse(input);
 
@@ -31,7 +39,7 @@ class TrackingInfoParserTest {
 
     @Test
     void parseFailEmpty() {
-        List<Object> input = new ArrayList<>();
+        DynamicAggregateData input = new MapAggregateData(0);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             TrackingInfo info = TrackingInfoParser.parse(input);
@@ -40,10 +48,17 @@ class TrackingInfoParserTest {
 
     @Test
     void parseFailNumberOfElements() {
-        List<Object> input = new ArrayList<>();
-        input.add(CommandKeyword.FLAGS.toString());
-        input.add(Arrays.asList(TrackingInfo.TrackingFlag.ON.toString(), TrackingInfo.TrackingFlag.OPTIN.toString()));
-        input.add(CommandKeyword.REDIRECT.toString());
+        DynamicAggregateData flags = new SetAggregateData(2);
+        flags.store(TrackingInfo.TrackingFlag.ON.toString());
+        flags.store(TrackingInfo.TrackingFlag.OPTIN.toString());
+
+        DynamicAggregateData prefixes = new ArrayAggregateData(0);
+
+        DynamicAggregateData input = new MapAggregateData(3);
+        input.store(CommandKeyword.FLAGS.toString().toLowerCase());
+        input.storeObject(flags);
+        input.store(CommandKeyword.REDIRECT.toString().toLowerCase());
+        input.store(-1L);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             TrackingInfo info = TrackingInfoParser.parse(input);
@@ -51,33 +66,26 @@ class TrackingInfoParserTest {
     }
 
     @Test
-    void parseFailOrder() {
-        List<Object> input = new ArrayList<>();
-        input.add(CommandKeyword.FLAGS.toString());
-        input.add(Arrays.asList(TrackingInfo.TrackingFlag.ON.toString(), TrackingInfo.TrackingFlag.OPTIN.toString()));
-        input.add(CommandKeyword.PREFIXES.toString());
-        input.add(new ArrayList<>());
-        input.add(CommandKeyword.REDIRECT.toString());
-        input.add(0L);
+    void parseResp2Compatibility() {
+        DynamicAggregateData flags = new ArrayAggregateData(2);
+        flags.store(TrackingInfo.TrackingFlag.ON.toString());
+        flags.store(TrackingInfo.TrackingFlag.OPTIN.toString());
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            TrackingInfo info = TrackingInfoParser.parse(input);
-        });
-    }
+        DynamicAggregateData prefixes = new ArrayAggregateData(0);
 
-    @Test
-    void parseFailTypes() {
-        List<Object> input = new ArrayList<>();
-        input.add(CommandKeyword.FLAGS.toString());
-        input.add(Arrays.asList(TrackingInfo.TrackingFlag.ON.toString(), TrackingInfo.TrackingFlag.OPTIN.toString()));
-        input.add(CommandKeyword.REDIRECT.toString());
-        input.add(Boolean.FALSE);
-        input.add(CommandKeyword.PREFIXES.toString());
-        input.add(new ArrayList<>());
+        DynamicAggregateData input = new ArrayAggregateData(3);
+        input.store(CommandKeyword.FLAGS.toString().toLowerCase());
+        input.storeObject(flags);
+        input.store(CommandKeyword.REDIRECT.toString().toLowerCase());
+        input.store(0L);
+        input.store(CommandKeyword.PREFIXES.toString().toLowerCase());
+        input.storeObject(prefixes);
 
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            TrackingInfo info = TrackingInfoParser.parse(input);
-        });
+        TrackingInfo info = TrackingInfoParser.parse(input);
+
+        assertThat(info.getFlags()).contains(TrackingInfo.TrackingFlag.ON, TrackingInfo.TrackingFlag.OPTIN);
+        assertThat(info.getRedirect()).isEqualTo(0L);
+        assertThat(info.getPrefixes()).isEmpty();
     }
 
 }

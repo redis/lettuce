@@ -23,13 +23,14 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.cluster.models.tracking.TrackingInfo;
-import io.lettuce.core.cluster.models.tracking.TrackingInfoParser;
+import io.lettuce.core.api.parsers.tracking.TrackingInfo;
+import io.lettuce.core.api.parsers.tracking.TrackingInfoParser;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.command.CommandDetail;
 import io.lettuce.core.models.command.CommandDetailParser;
 import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RoleParser;
+import io.lettuce.core.output.data.DynamicAggregateData;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.Wait;
@@ -120,7 +121,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
     @Test
     void clientTrackinginfoDefaults() {
-        List<Object> rawTrackingInfo = redis.clientTrackinginfo();
+        DynamicAggregateData rawTrackingInfo = redis.clientTrackinginfo();
 
         TrackingInfo info = TrackingInfoParser.parse(rawTrackingInfo);
 
@@ -133,7 +134,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     void clientTrackinginfo() {
         try {
             redis.clientTracking(TrackingArgs.Builder.enabled(true).bcast().prefixes("usr:", "grp:"));
-            List<Object> rawTrackingInfo = redis.clientTrackinginfo();
+            DynamicAggregateData rawTrackingInfo = redis.clientTrackinginfo();
 
             TrackingInfo info = TrackingInfoParser.parse(rawTrackingInfo);
 

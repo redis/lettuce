@@ -28,6 +28,7 @@ import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
+import io.lettuce.core.output.data.DynamicAggregateData;
 import io.lettuce.core.protocol.CommandType;
 
 /**
@@ -178,12 +179,12 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
     /**
      * Returns information about the current client connection's use of the server assisted client side caching feature.
      *
-     * @return List&lt;Object&gt; array-list-reply, for more information check the documentation
-     * @see io.lettuce.core.cluster.models.tracking.TrackingInfoParser
-     * @see io.lettuce.core.cluster.models.tracking.TrackingInfo
+     * @return {@link DynamicAggregateData}, for more information check the documentation
+     * @see io.lettuce.core.api.parsers.tracking.TrackingInfoParser
+     * @see io.lettuce.core.api.parsers.tracking.TrackingInfo
      * @since 7.0
      */
-    AsyncExecutions<List<Object>> clientTrackinginfo();
+    AsyncExecutions<DynamicAggregateData> clientTrackinginfo();
 
     /**
      * Unblock the specified blocked client.

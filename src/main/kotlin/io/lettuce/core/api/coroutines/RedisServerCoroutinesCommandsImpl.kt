@@ -22,6 +22,7 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisServerReactiveCommands
+import io.lettuce.core.output.data.DynamicAggregateData
 import io.lettuce.core.protocol.CommandType
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
@@ -75,7 +76,7 @@ internal class RedisServerCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun clientTracking(args: TrackingArgs): String? = ops.clientTracking(args).awaitFirstOrNull()
 
-    override suspend fun clientTrackinginfo(): List<Any> = ops.clientTrackinginfo().asFlow().toList()
+    override suspend fun clientTrackinginfo(): DynamicAggregateData? = ops.clientTrackinginfo().awaitFirstOrNull()
 
     override suspend fun clientUnblock(id: Long, type: UnblockType): Long? = ops.clientUnblock(id, type).awaitFirstOrNull()
 
