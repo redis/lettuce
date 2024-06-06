@@ -1,0 +1,44 @@
+name-template: '$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+filter-by-commitish: true
+commitish: main
+
+autolabeler:
+  - label: 'type: documentation'
+    files:
+      - '*.md'
+      - '.github/*'
+  - label: 'type: task'
+    files:
+      - '.github/*'
+  - label: 'type: dependency-upgrade'
+    files:
+      - 'pom.xml'
+
+categories:
+  - title: '🔥 Breaking Changes'
+    labels:
+      - 'breakingchange'
+      - 'type: breaking'
+  - title: '🚀 New Features'
+    labels:
+      - 'type: enhancement'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'type: bug'
+  - title: '🧰 Maintenance'
+    labels:
+      - 'type: documentation'
+      - 'type: dependency-upgrade'
+      - 'type: task'
+
+change-template: '- $TITLE (#$NUMBER)'
+exclude-labels:
+  - 'skip-changelog'
+
+template: |
+  # Changes
+  $CHANGES
+  ## Contributors
+  We'd like to thank all the contributors who worked on this release!
+  $CONTRIBUTORS
