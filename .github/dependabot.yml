@@ -1,0 +1,9 @@
+version: 2
+
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    labels:
+      - "type: dependency-upgrade"
+    schedule:
+      interval: "weekly"

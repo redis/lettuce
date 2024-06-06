@@ -1,4 +1,4 @@
-name: "CodeQL analysis"
+name: CodeQL analysis
 
 on:
   push:
