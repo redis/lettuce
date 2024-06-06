@@ -1,4 +1,4 @@
-name: CI / CD Pipeline
+name: Continuous Integration
 on:
   push:
     paths-ignore:

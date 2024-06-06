@@ -1,4 +1,4 @@
-name: Spellcheck Action
+name: Spellcheck
 on:
   pull_request:
 jobs:
