@@ -233,7 +233,7 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key.
      * @return KeyScanCursor&lt;K&gt; key scan cursor.
-     * @since 7.0
+     * @since 6.4
      */
     Mono<KeyScanCursor<K>> hscanNovalues(K key);
 
@@ -252,7 +252,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; key scan cursor.
-     * @since 7.0
+     * @since 6.4
      */
     Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanArgs scanArgs);
 
@@ -273,7 +273,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor&lt;K&gt; key scan cursor.
-     * @since 7.0
+     * @since 6.4
      */
     Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
@@ -292,7 +292,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return KeyScanCursor&lt;K&gt; key scan cursor.
-     * @since 7.0
+     * @since 6.4
      */
     Mono<KeyScanCursor<K>> hscanNovalues(K key, ScanCursor scanCursor);
 
@@ -473,10 +473,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param seconds the seconds type: long.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpire(K key, long seconds, K... fields);
 
@@ -485,13 +485,13 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key of the fields.
      * @param seconds the seconds type: long.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields);
 
@@ -502,10 +502,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param seconds the TTL {@link Duration}
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpire(K key, Duration seconds, K... fields);
 
@@ -517,10 +517,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param expireArgs the {@link ExpireArgs}.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields);
 
@@ -531,10 +531,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpireat(K key, long timestamp, K... fields);
 
@@ -543,13 +543,13 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields);
 
@@ -560,10 +560,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpireat(K key, Date timestamp, K... fields);
 
@@ -572,13 +572,13 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields);
 
@@ -589,10 +589,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpireat(K key, Instant timestamp, K... fields);
 
@@ -601,13 +601,13 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields);
 
@@ -618,7 +618,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param fields one or more fields to get the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: expiration time as a UNIX timestamp in seconds;
      *         {@code -1} indicating the field has no expiry time set; {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hexpiretime(K key, K... fields);
 
@@ -629,7 +629,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param fields one or more fields to remove the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 1} indicating expiration time is removed;
      *         {@code -1} field has no expiration time to be removed; {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpersist(K key, K... fields);
 
@@ -640,10 +640,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param milliseconds the milliseconds type: long.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpire(K key, long milliseconds, K... fields);
 
@@ -652,13 +652,13 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields);
 
@@ -669,10 +669,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param milliseconds the milliseconds.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpire(K key, Duration milliseconds, K... fields);
 
@@ -681,13 +681,13 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param milliseconds the milliseconds.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is 0; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpire(K key, Duration milliseconds, ExpireArgs expireArgs, K... fields);
 
@@ -698,10 +698,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpireat(K key, long timestamp, K... fields);
 
@@ -710,13 +710,13 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpireat(K key, long timestamp, ExpireArgs expireArgs, K... fields);
 
@@ -727,10 +727,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpireat(K key, Date timestamp, K... fields);
 
@@ -739,13 +739,13 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpireat(K key, Date timestamp, ExpireArgs expireArgs, K... fields);
 
@@ -756,10 +756,10 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpireat(K key, Instant timestamp, K... fields);
 
@@ -768,13 +768,13 @@ public interface RedisHashReactiveCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expriry interval is in the past; {@code 1} indicating expiration time is
+     *         already due to expiration, or provided expiry interval is in the past; {@code 1} indicating expiration time is
      *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); {@code -2} indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpireat(K key, Instant timestamp, ExpireArgs expireArgs, K... fields);
 
@@ -786,7 +786,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return a list of {@link Long} values for each of the fields provided: expiration time as a UNIX timestamp in
      *         milliseconds; {@code -1} indicating the field has no expiry time set; {@code -2} indicating there is no such
      *         field
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpexpiretime(K key, K... fields);
 
@@ -798,7 +798,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return a list of {@link Long} values for each of the fields provided: the time to live in seconds; or a negative value
      *         in order to signal an error. The command returns {@code -1} if the key exists but has no associated expiration
      *         time. The command returns {@code -2} if the key does not exist.
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> httl(K key, K... fields);
 
@@ -810,7 +810,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @return a list of {@link Long} values for each of the fields provided: the time to live in milliseconds; or a negative
      *         value in order to signal an error. The command returns {@code -1} if the key exists but has no associated
      *         expiration time. The command returns {@code -2} if the key does not exist.
-     * @since 7.0
+     * @since 6.4
      */
     Flux<Long> hpttl(K key, K... fields);
 
