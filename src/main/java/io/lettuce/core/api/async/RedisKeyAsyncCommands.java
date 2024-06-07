@@ -107,7 +107,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param seconds the seconds type: long.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
      *         exist or the timeout could not be set.
      * @since 6.2
@@ -130,7 +130,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param seconds the seconds.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
      *         exist or the timeout could not be set.
      * @since 6.2
@@ -152,7 +152,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
      *         exist or the timeout could not be set (see: {@code EXPIRE}).
      * @since 6.2
@@ -174,7 +174,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
      *         exist or the timeout could not be set (see: {@code EXPIRE}).
      * @since 6.2
@@ -197,7 +197,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
      *         exist or the timeout could not be set (see: {@code EXPIRE}).
      * @since 6.2
@@ -324,7 +324,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
      *         the timeout could not be set.
      * @since 6.2
@@ -347,7 +347,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param milliseconds the milliseconds.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return integer-reply, specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not exist or
      *         the timeout could not be set.
      * @since 6.2
@@ -369,7 +369,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
      *         exist or the timeout could not be set (see: {@code EXPIRE}).
      * @since 6.2
@@ -391,7 +391,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
      *         exist or the timeout could not be set (see: {@code EXPIRE}).
      * @since 6.2
@@ -413,7 +413,7 @@ public interface RedisKeyAsyncCommands<K, V> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expire arguments.
+     * @param expireArgs the expiry arguments.
      * @return Boolean integer-reply specifically: {@code true} if the timeout was set. {@code false} if {@code key} does not
      *         exist or the timeout could not be set (see: {@code EXPIRE}).
      * @since 6.2
