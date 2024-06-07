@@ -1109,7 +1109,7 @@
                 <dependency>
                     <groupId>org.openjdk.jmh</groupId>
                     <artifactId>jmh-generator-annprocess</artifactId>
-                    <version>1.21</version>
+                    <version>1.37</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
