@@ -73,7 +73,7 @@ public interface RedisClusterPubSubListener<K, V> {
      * @param node the {@link RedisClusterNode} from which the {@code message} originates.
      * @param shardChannel shard channel.
      * @param message Message.
-     * @since 7.0
+     * @since 6.4
      */
     default void smessage(RedisClusterNode node, K shardChannel, V message) {
         message(node, shardChannel, message);
@@ -85,7 +85,7 @@ public interface RedisClusterPubSubListener<K, V> {
      * @param node the {@link RedisClusterNode} from which the {@code message} originates.
      * @param shardChannel Shard channel
      * @param count Subscription count.
-     * @since 7.0
+     * @since 6.4
      */
     default void ssubscribed(RedisClusterNode node, K shardChannel, long count) {
         subscribed(node, shardChannel, count);
@@ -97,7 +97,7 @@ public interface RedisClusterPubSubListener<K, V> {
      * @param node the {@link RedisClusterNode} from which the {@code message} originates.
      * @param shardChannel Shard channel
      * @param count Subscription count.
-     * @since 7.0
+     * @since 6.4
      */
     default void sunsubscribed(RedisClusterNode node, K shardChannel, long count) {
         unsubscribed(node, shardChannel, count);

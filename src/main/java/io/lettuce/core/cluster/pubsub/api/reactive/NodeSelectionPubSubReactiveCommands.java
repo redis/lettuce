@@ -47,7 +47,7 @@ public interface NodeSelectionPubSubReactiveCommands<K, V> {
      *
      * @param shardCchannels the channels
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
-     * @since 7.0
+     * @since 6.4
      */
     ReactiveExecutions<Void> ssubscribe(K... shardCchannels);
 
@@ -56,7 +56,7 @@ public interface NodeSelectionPubSubReactiveCommands<K, V> {
      *
      * @param shardCchannels the channels
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
-     * @since 7.0
+     * @since 6.4
      */
     ReactiveExecutions<Void> sunsubscribe(K... shardCchannels);
 

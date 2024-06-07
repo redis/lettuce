@@ -189,7 +189,7 @@ public class XReadArgs implements CompositeArgument {
          *
          * @param name must not be {@code null}.
          * @return the {@link StreamOffset} object without a specific offset.
-         * @since 7.0
+         * @since 6.4
          */
         public static <K> StreamOffset<K> last(K name) {
 

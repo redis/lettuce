@@ -82,7 +82,7 @@ public interface RedisPubSubListener<K, V> {
      *
      * @param shardChannel Shard channel
      * @param count Subscription count.
-     * @since 7.0
+     * @since 6.4
      */
     default void ssubscribed(K shardChannel, long count) {
         subscribed(shardChannel, count);
@@ -93,7 +93,7 @@ public interface RedisPubSubListener<K, V> {
      *
      * @param shardChannel Channel
      * @param count Subscription count.
-     * @since 7.0
+     * @since 6.4
      */
     default void sunsubscribed(K shardChannel, long count) {
         unsubscribed(shardChannel, count);
@@ -104,7 +104,7 @@ public interface RedisPubSubListener<K, V> {
      *
      * @param shardChannel shard channel.
      * @param message Message.
-     * @since 7.0
+     * @since 6.4
      */
     default void smessage(K shardChannel, V message) {
         message(shardChannel, message);

@@ -91,7 +91,7 @@ public interface BaseRedisAsyncCommands<K, V> {
      *
      * @param shardChannels channel keys.
      * @return array-reply a list of channels and number of subscribers for every channel.
-     * @since 7.0
+     * @since 6.4
      */
     RedisFuture<Map<K, Long>> pubsubShardNumsub(K... shardChannels);
 
@@ -108,7 +108,7 @@ public interface BaseRedisAsyncCommands<K, V> {
      * @param shardChannel the shard channel type: key.
      * @param message the message type: value.
      * @return Long integer-reply the number of clients that received the message.
-     * @since 7.0
+     * @since 6.4
      */
     RedisFuture<Long> spublish(K shardChannel, V message);
 
