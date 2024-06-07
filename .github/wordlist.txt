@@ -73,3 +73,10 @@ github
 runtime
 transactional
 Github
+formatter
+RedisConnectionCommands
+BaseRedisCommands
+DnsResolver
+dnsResolver
+evalReadOnly
+gg
