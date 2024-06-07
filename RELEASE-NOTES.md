@@ -31,7 +31,6 @@ Commands
 * Hash field expiration commands `HEXPIRE`, `HEXPIREAT`, `HEXPIRETIME` and `HPERSIST` #2836
 * Hash field expiration commands `HPEXPIRE`, `HPEXPIREAT`, `HPEXPIRETIME`, `HTTL` and `HPTTL` #2857
 
-
 Enhancements
 ------------
 
@@ -47,7 +46,7 @@ Enhancements
 Fixes
 -----
 
-* Proper creation of `AttributeKey` #2111
+* None
 
 Other
 -----
