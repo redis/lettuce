@@ -114,7 +114,7 @@ public abstract class ScanStream {
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link Flux}.
-     * @since 7.0
+     * @since 6.4
      */
     public static <K, V> Flux<K> hscanNovalues(RedisHashReactiveCommands<K, V> commands, K key) {
         return hscanNovalues(commands, key, Optional.empty());
@@ -148,7 +148,7 @@ public abstract class ScanStream {
      * @param <K> Key type.
      * @param <V> Value type.
      * @return a new {@link Flux}.
-     * @since 7.0
+     * @since 6.4
      */
     public static <K, V> Flux<K> hscanNovalues(RedisHashReactiveCommands<K, V> commands, K key, ScanArgs scanArgs) {
 

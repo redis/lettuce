@@ -56,7 +56,7 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
      *
      * @param shardChannels the shard channels
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code subscribe} completion
-     * @since 7.0
+     * @since 6.4
      */
     RedisFuture<Void> ssubscribe(K... shardChannels);
 
@@ -65,7 +65,7 @@ public interface RedisPubSubAsyncCommands<K, V> extends RedisAsyncCommands<K, V>
      *
      * @param shardChannels the shard channels
      * @return RedisFuture&lt;Void&gt; Future to synchronize {@code unsubscribe} completion.
-     * @since 7.0
+     * @since 6.4
      */
     RedisFuture<Void> sunsubscribe(K... shardChannels);
 

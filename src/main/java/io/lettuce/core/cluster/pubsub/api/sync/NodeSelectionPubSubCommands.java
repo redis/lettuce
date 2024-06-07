@@ -47,7 +47,7 @@ public interface NodeSelectionPubSubCommands<K, V> {
      *
      * @param shardChannels the channels
      * @return Executions Future to synchronize {@code subscribe} completion
-     * @since 7.0
+     * @since 6.4
      */
     Executions<Void> ssubscribe(K... shardChannels);
 
@@ -56,7 +56,7 @@ public interface NodeSelectionPubSubCommands<K, V> {
      *
      * @param shardChannels the channels
      * @return Executions Future to synchronize {@code unsubscribe} completion.
-     * @since 7.0
+     * @since 6.4
      */
     Executions<Void> sunsubscribe(K... shardChannels);
 
