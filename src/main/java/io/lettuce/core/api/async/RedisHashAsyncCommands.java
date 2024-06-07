@@ -443,9 +443,9 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param seconds the seconds type: long.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
-     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
-     *         met); {@code -2} indicating there is no such field
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is set/updated;
+     *         {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
+     *         {@code -2} indicating there is no such field
      * @since 6.4
      */
     RedisFuture<List<Long>> hexpire(K key, long seconds, K... fields);
@@ -458,9 +458,9 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
-     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
-     *         met); {@code -2} indicating there is no such field
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is set/updated;
+     *         {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
+     *         {@code -2} indicating there is no such field
      * @since 6.4
      */
     RedisFuture<List<Long>> hexpire(K key, long seconds, ExpireArgs expireArgs, K... fields);
@@ -472,9 +472,9 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param seconds the TTL {@link Duration}
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
-     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
-     *         met); {@code -2} indicating there is no such field
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is set/updated;
+     *         {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
+     *         {@code -2} indicating there is no such field
      * @since 6.4
      */
     RedisFuture<List<Long>> hexpire(K key, Duration seconds, K... fields);
@@ -487,9 +487,9 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param expireArgs the {@link ExpireArgs}.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
-     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
-     *         met); {@code -2} indicating there is no such field
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is set/updated;
+     *         {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
+     *         {@code -2} indicating there is no such field
      * @since 6.4
      */
     RedisFuture<List<Long>> hexpire(K key, Duration seconds, ExpireArgs expireArgs, K... fields);
@@ -610,9 +610,9 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param milliseconds the milliseconds type: long.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
-     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
-     *         met); {@code -2} indicating there is no such field
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is set/updated;
+     *         {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
+     *         {@code -2} indicating there is no such field
      * @since 6.4
      */
     RedisFuture<List<Long>> hpexpire(K key, long milliseconds, K... fields);
@@ -625,9 +625,9 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
-     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
-     *         met); {@code -2} indicating there is no such field
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is set/updated;
+     *         {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
+     *         {@code -2} indicating there is no such field
      * @since 6.4
      */
     RedisFuture<List<Long>> hpexpire(K key, long milliseconds, ExpireArgs expireArgs, K... fields);
@@ -639,9 +639,9 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param milliseconds the milliseconds.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
-     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
-     *         met); {@code -2} indicating there is no such field
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is set/updated;
+     *         {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
+     *         {@code -2} indicating there is no such field
      * @since 6.4
      */
     RedisFuture<List<Long>> hpexpire(K key, Duration milliseconds, K... fields);
@@ -654,9 +654,9 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param expireArgs the expiry arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of {@link Long} values for each of the fields provided: {@code 2} indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is
-     *         set/updated; {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
-     *         met); {@code -2} indicating there is no such field
+     *         already due to expiration, or provided expiry interval is 0; {@code 1} indicating expiration time is set/updated;
+     *         {@code 0} indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
+     *         {@code -2} indicating there is no such field
      * @since 6.4
      */
     RedisFuture<List<Long>> hpexpire(K key, Duration milliseconds, ExpireArgs expireArgs, K... fields);
