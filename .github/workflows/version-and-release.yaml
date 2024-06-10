@@ -41,7 +41,7 @@ jobs:
           mvn --no-transfer-progress \
             --batch-mode \
             -Dgpg.passphrase='${{ secrets.OSSH_GPG_SECRET_KEY_PASSWORD }}' \
-            deploy -P release
+            deploy -P sonatype-oss-release
         env:
           MAVEN_USERNAME: ${{secrets.OSSH_USERNAME}}
           MAVEN_PASSWORD: ${{secrets.OSSH_TOKEN}}
