@@ -28,6 +28,7 @@ jobs:
           mvn --no-transfer-progress \
             --batch-mode \
             versions:set -DnewVersion=${{ github.event.release.tag_name  }}
+        if: ${{ github.event.release.tag_name  }}
 
       - name: Install GPG key
         run: |
