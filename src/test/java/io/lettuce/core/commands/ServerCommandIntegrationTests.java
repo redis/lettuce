@@ -622,4 +622,5 @@ public class ServerCommandIntegrationTests extends TestSupport {
         CommandDetail detail = details.get(0);
         return detail.getFlags().contains(CommandDetail.Flag.READONLY) && !detail.getFlags().contains(CommandDetail.Flag.WRITE);
     }
+
 }
