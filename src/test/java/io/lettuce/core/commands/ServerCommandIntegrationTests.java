@@ -36,7 +36,6 @@ import javax.inject.Inject;
 import io.lettuce.core.cluster.ClusterReadOnlyCommands;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.test.condition.RedisConditions;
-import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -615,13 +614,13 @@ public class ServerCommandIntegrationTests extends TestSupport {
             throw new IllegalArgumentException("Command not found: " + commandName);
         }
 
-        List<CommandDetail> details = CommandDetailParser.parse(Arrays.asList(commandInfo));
+        List<CommandDetail> details = CommandDetailParser.parse(commandInfo);
         if (details.isEmpty()) {
             throw new IllegalArgumentException("Command details could not be parsed: " + commandName);
         }
 
         CommandDetail detail = details.get(0);
-        return detail.getFlags().contains(CommandDetail.Flag.READONLY) && !detail.getFlags().contains(CommandDetail.Flag.WRITE);
+        return !detail.getFlags().contains(CommandDetail.Flag.WRITE);
     }
 
 }
