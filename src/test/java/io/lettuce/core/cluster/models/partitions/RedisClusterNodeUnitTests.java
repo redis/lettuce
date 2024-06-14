@@ -72,18 +72,14 @@ class RedisClusterNodeUnitTests {
     @Test
     public void testHasSameSlotsAs() {
 
-        BitSet slots1 = new BitSet(SlotHash.SLOT_COUNT);
-        slots1.set(1);
-        slots1.set(2);
-
-        BitSet slots2 = new BitSet(SlotHash.SLOT_COUNT);
-        slots2.set(1);
-        slots2.set(2);
+        BitSet emptySlots = new BitSet(SlotHash.SLOT_COUNT);
+        emptySlots.set(1);
+        emptySlots.set(2);
 
         RedisClusterNode node1 = new RedisClusterNode(RedisURI.create("localhost", 6379), "nodeId1", true, "slaveOf", 0L, 0L,
-                0L, slots1, new HashSet<>());
-        RedisClusterNode node2 = new RedisClusterNode(RedisURI.create("localhost", 6379), "nodeId2", true, "slaveOf", 0L, 0L,
-                0L, slots2, new HashSet<>());
+                0L, emptySlots, new HashSet<>());
+
+        RedisClusterNode node2 = new RedisClusterNode(node1);
 
         assertThat(node1.hasSameSlotsAs(node2)).isTrue();
     }
