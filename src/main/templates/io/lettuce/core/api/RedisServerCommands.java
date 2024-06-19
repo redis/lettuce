@@ -176,6 +176,16 @@ public interface RedisServerCommands<K, V> {
     String clientTracking(TrackingArgs args);
 
     /**
+     * Returns information about the current client connection's use of the server assisted client side caching feature.
+     *
+     * @return {@link DynamicAggregateData}, for more information check the documentation
+     * @see io.lettuce.core.api.parsers.tracking.TrackingInfoParser
+     * @see io.lettuce.core.api.parsers.tracking.TrackingInfo
+     * @since 7.0
+     */
+    DynamicAggregateData clientTrackinginfo();
+
+    /**
      * Unblock the specified blocked client.
      *
      * @param id the client id.
