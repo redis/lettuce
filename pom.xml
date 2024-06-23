@@ -61,7 +61,7 @@
         <log4j2-version>2.17.2</log4j2-version>
         <micrometer.version>1.12.4</micrometer.version>
         <micrometer-tracing.version>1.2.4</micrometer-tracing.version>
-        <mockito.version>4.9.0</mockito.version>
+        <mockito.version>5.12.0</mockito.version>
         <netty.version>4.1.107.Final</netty.version>
         <openwebbeans.version>2.0.27</openwebbeans.version>
         <reactor.version>3.6.4</reactor.version>
