@@ -33,6 +33,8 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.cluster.ClusterReadOnlyCommands;
+import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -592,11 +594,33 @@ public class ServerCommandIntegrationTests extends TestSupport {
         assertThat(redis.clientInfo().contains("lib-name=lettuce")).isTrue();
     }
 
+    @Test
+    void testReadOnlyCommands() {
+        for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
+            assertThat(isCommandReadOnly(readOnlyCommand.name())).isTrue();
+        }
+    }
+
     private boolean noSaveInProgress() {
 
         String info = redis.info();
 
         return !info.contains("aof_rewrite_in_progress:1") && !info.contains("rdb_bgsave_in_progress:1");
+    }
+
+    private boolean isCommandReadOnly(String commandName) {
+        List<Object> commandInfo = redis.commandInfo(commandName);
+        if (commandInfo == null || commandInfo.isEmpty()) {
+            throw new IllegalArgumentException("Command not found: " + commandName);
+        }
+
+        List<CommandDetail> details = CommandDetailParser.parse(commandInfo);
+        if (details.isEmpty()) {
+            throw new IllegalArgumentException("Command details could not be parsed: " + commandName);
+        }
+
+        CommandDetail detail = details.get(0);
+        return !detail.getFlags().contains(CommandDetail.Flag.WRITE);
     }
 
 }
