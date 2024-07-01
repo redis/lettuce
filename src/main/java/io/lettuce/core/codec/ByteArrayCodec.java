@@ -90,9 +90,11 @@ public class ByteArrayCodec implements RedisCodec<byte[], byte[]>, ToByteBufEnco
     }
 
     private static byte[] getBytes(ByteBuffer buffer) {
+        if (buffer == null) {
+            return EMPTY;
+        }
 
         int remaining = buffer.remaining();
-
         if (remaining == 0) {
             return EMPTY;
         }
