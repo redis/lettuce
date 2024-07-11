@@ -213,7 +213,7 @@ public class PubSubCommandHandler<K, V> extends CommandHandler {
 
     private boolean shouldCompleteCommand(PubSubOutput.Type type, RedisCommand<?, ?, ?> command) {
 
-        String commandType = command.getType().name();
+        String commandType = command.getType().toString();
         switch (type) {
             case subscribe:
                 return commandType.equalsIgnoreCase("SUBSCRIBE");

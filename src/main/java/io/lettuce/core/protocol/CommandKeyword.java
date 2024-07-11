@@ -49,11 +49,11 @@ public enum CommandKeyword implements ProtocolKeyword {
 
     MIGRATING, IMPORTING, SAVE, SKIPME, SLAVES, STREAM, STORE, SUM, SEGFAULT, SETUSER, TAKEOVER, TRACKING, TRACKINGINFO, TYPE, UNBLOCK, USERS, USAGE, WEIGHTS, WHOAMI,
 
-    WITHSCORE, WITHSCORES, WITHVALUES, XOR, XX, YES;
+    WITHSCORE, WITHSCORES, WITHVALUES, XOR, XX, YES, INDENT, NEWLINE, SPACE;
 
     public final byte[] bytes;
 
-    private CommandKeyword() {
+    CommandKeyword() {
         bytes = name().getBytes(StandardCharsets.US_ASCII);
     }
 
@@ -61,5 +61,4 @@ public enum CommandKeyword implements ProtocolKeyword {
     public byte[] getBytes() {
         return bytes;
     }
-
 }

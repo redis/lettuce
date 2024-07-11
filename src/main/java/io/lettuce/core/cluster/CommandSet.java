@@ -59,7 +59,7 @@ class CommandSet {
             return availableCommands.contains(commandName);
         }
 
-        return commands.containsKey(commandName.name().toLowerCase());
+        return commands.containsKey(commandName.toString().toLowerCase());
     }
 
 }

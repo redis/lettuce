@@ -24,6 +24,8 @@ import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonElement;
+import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
@@ -1803,6 +1805,22 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNull(channel);
 
         return createCommand(HVALS, new ValueStreamingOutput<>(codec, channel), key);
+    }
+
+    public RedisCommand<K,V, List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonElement[] elements) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if(jsonPath != null && !jsonPath.isRootPath()){
+            args.add(jsonPath.toString());
+        }
+
+        for (JsonElement element : elements) {
+            args.add(element.toString());
+        }
+
+        return createCommand(JSON_ARRAPPEND, new IntegerListOutput<>(codec), args);
     }
 
     Command<K, V, Long> incr(K key) {

@@ -30,7 +30,7 @@ public final class DefaultLettuceObservationConvention implements LettuceObserva
 
         Tracing.Endpoint ep = context.getRequiredEndpoint();
         KeyValues keyValues = KeyValues.of(LowCardinalityCommandKeyNames.DATABASE_SYSTEM.withValue("redis"), //
-                LowCardinalityCommandKeyNames.REDIS_COMMAND.withValue(context.getRequiredCommand().getType().name()));
+                LowCardinalityCommandKeyNames.REDIS_COMMAND.withValue(context.getRequiredCommand().getType().toString()));
 
         if (ep instanceof SocketAddressEndpoint) {
 
@@ -62,7 +62,7 @@ public final class DefaultLettuceObservationConvention implements LettuceObserva
 
             if (command.getArgs() != null) {
                 return KeyValues.of(HighCardinalityCommandKeyNames.STATEMENT
-                        .withValue(command.getType().name() + " " + command.getArgs().toCommandString()));
+                        .withValue(command.getType().toString() + " " + command.getArgs().toCommandString()));
             }
         }
 
@@ -71,7 +71,7 @@ public final class DefaultLettuceObservationConvention implements LettuceObserva
 
     @Override
     public String getContextualName(LettuceObservationContext context) {
-        return context.getRequiredCommand().getType().name().toLowerCase(Locale.ROOT);
+        return context.getRequiredCommand().getType().toString().toLowerCase(Locale.ROOT);
     }
 
     public boolean includeCommandArgsInSpanTags() {

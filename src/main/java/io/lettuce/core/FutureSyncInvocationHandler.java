@@ -107,8 +107,8 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
         if (methodName.equals("dispatch") && args.length > 0 && args[0] instanceof ProtocolKeyword) {
 
             ProtocolKeyword keyword = (ProtocolKeyword) args[0];
-            if (keyword.name().equals(CommandType.MULTI.name()) || keyword.name().equals(CommandType.EXEC.name())
-                    || keyword.name().equals(CommandType.DISCARD.name())) {
+            if (keyword.toString().equals(CommandType.MULTI.name()) || keyword.toString().equals(CommandType.EXEC.name())
+                    || keyword.toString().equals(CommandType.DISCARD.name())) {
                 return true;
             }
         }

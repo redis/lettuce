@@ -31,7 +31,7 @@ public class CommandLatencyId implements Serializable, Comparable<CommandLatency
         this.localAddress = localAddress;
         this.remoteAddress = remoteAddress;
         this.commandType = commandType;
-        this.commandName = commandType.name();
+        this.commandName = commandType.toString();
     }
 
     /**

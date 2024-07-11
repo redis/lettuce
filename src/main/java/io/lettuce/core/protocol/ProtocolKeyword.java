@@ -17,6 +17,6 @@ public interface ProtocolKeyword {
      *
      * @return name of the command.
      */
-    String name();
+    String toString();
 
 }

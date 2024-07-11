@@ -606,7 +606,7 @@ public class AclSetuserArgs implements CompositeArgument {
 
         @Override
         public String toString() {
-            return getClass().getSimpleName() + ": " + value.name();
+            return getClass().getSimpleName() + ": " + value.toString();
         }
 
     }
@@ -716,7 +716,7 @@ public class AclSetuserArgs implements CompositeArgument {
             if (command.getSubCommand() == null) {
                 args.add("+" + command.getCommand().name());
             } else {
-                args.add("+" + command.getCommand().name() + "|" + command.getSubCommand().name());
+                args.add("+" + command.getCommand().name() + "|" + command.getSubCommand().toString());
             }
         }
 
@@ -735,7 +735,7 @@ public class AclSetuserArgs implements CompositeArgument {
             if (command.getSubCommand() == null) {
                 args.add("-" + command.getCommand().name());
             } else {
-                args.add("-" + command.getCommand().name() + "|" + command.getSubCommand().name());
+                args.add("-" + command.getCommand().name() + "|" + command.getSubCommand().toString());
             }
         }
 

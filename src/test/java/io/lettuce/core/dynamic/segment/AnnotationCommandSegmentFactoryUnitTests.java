@@ -28,7 +28,7 @@ class AnnotationCommandSegmentFactoryUnitTests {
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
         assertThat(commandSegments).isEmpty();
-        assertThat(commandSegments.getCommandType().name()).isEqualTo("not.Annotated");
+        assertThat(commandSegments.getCommandType().toString()).isEqualTo("not.Annotated");
     }
 
     @Test
@@ -40,7 +40,7 @@ class AnnotationCommandSegmentFactoryUnitTests {
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
         assertThat(commandSegments).isEmpty();
-        assertThat(commandSegments.getCommandType().name()).isEqualTo("UPPER.CASE");
+        assertThat(commandSegments.getCommandType().toString()).isEqualTo("UPPER.CASE");
     }
 
     @Test
@@ -52,7 +52,7 @@ class AnnotationCommandSegmentFactoryUnitTests {
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
         assertThat(commandSegments).isEmpty();
-        assertThat(commandSegments.getCommandType().name()).isEqualTo("methodName");
+        assertThat(commandSegments.getCommandType().toString()).isEqualTo("methodName");
     }
 
     @Test
@@ -64,7 +64,7 @@ class AnnotationCommandSegmentFactoryUnitTests {
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
         assertThat(commandSegments).hasSize(1).extracting(CommandSegment::asString).contains("Setname");
-        assertThat(commandSegments.getCommandType().name()).isEqualTo("client");
+        assertThat(commandSegments.getCommandType().toString()).isEqualTo("client");
     }
 
     @Test
@@ -76,7 +76,7 @@ class AnnotationCommandSegmentFactoryUnitTests {
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
         assertThat(commandSegments).hasSize(1).extracting(CommandSegment::asString).contains("WORLD");
-        assertThat(commandSegments.getCommandType().name()).isEqualTo("HELLO");
+        assertThat(commandSegments.getCommandType().toString()).isEqualTo("HELLO");
     }
 
     @Test
@@ -88,7 +88,7 @@ class AnnotationCommandSegmentFactoryUnitTests {
         CommandSegments commandSegments = factory.createCommandSegments(commandMethod);
 
         assertThat(commandSegments).hasSize(1).extracting(CommandSegment::asString).contains("SETNAME");
-        assertThat(commandSegments.getCommandType().name()).isEqualTo("CLIENT");
+        assertThat(commandSegments.getCommandType().toString()).isEqualTo("CLIENT");
     }
 
     @CommandNaming(strategy = Strategy.DOT, letterCase = LetterCase.AS_IS)

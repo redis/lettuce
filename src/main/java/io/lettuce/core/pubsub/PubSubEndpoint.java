@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionState;
@@ -151,7 +150,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
             return command;
         }
 
-        if (!subscribeWritten && SUBSCRIBE_COMMANDS.contains(command.getType().name())) {
+        if (!subscribeWritten && SUBSCRIBE_COMMANDS.contains(command.getType().toString())) {
             subscribeWritten = true;
         }
 
@@ -171,7 +170,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
 
         if (!subscribeWritten) {
             for (RedisCommand<?, ?, ?> redisCommand : redisCommands) {
-                if (SUBSCRIBE_COMMANDS.contains(redisCommand.getType().name())) {
+                if (SUBSCRIBE_COMMANDS.contains(redisCommand.getType().toString())) {
                     subscribeWritten = true;
                     break;
                 }
@@ -184,14 +183,14 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
     protected void rejectCommand(RedisCommand<?, ?, ?> command) {
         command.completeExceptionally(
                 new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
-                        command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED)));
+                        command.getType().toString(), ALLOWED_COMMANDS_SUBSCRIBED)));
     }
 
     protected void rejectCommands(Collection<? extends RedisCommand<?, ?, ?>> redisCommands) {
         for (RedisCommand<?, ?, ?> command : redisCommands) {
             command.completeExceptionally(
                     new RedisException(String.format("Command %s not allowed while subscribed. Allowed commands are: %s",
-                            command.getType().name(), ALLOWED_COMMANDS_SUBSCRIBED)));
+                            command.getType().toString(), ALLOWED_COMMANDS_SUBSCRIBED)));
         }
     }
 
@@ -215,7 +214,7 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
             protocolVersion = getProtocolVersion();
         }
 
-        return protocolVersion == ProtocolVersion.RESP3 || ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().name());
+        return protocolVersion == ProtocolVersion.RESP3 || ALLOWED_COMMANDS_SUBSCRIBED.contains(command.getType().toString());
     }
 
     public boolean isSubscribed() {

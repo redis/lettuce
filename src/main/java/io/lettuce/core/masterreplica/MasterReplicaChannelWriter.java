@@ -271,11 +271,11 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
     }
 
     private static boolean isStartTransaction(ProtocolKeyword command) {
-        return command.name().equals("MULTI");
+        return command.toString().equals("MULTI");
     }
 
     private boolean isEndTransaction(ProtocolKeyword command) {
-        return command.name().equals("EXEC") || command.name().equals("DISCARD");
+        return command.toString().equals("EXEC") || command.toString().equals("DISCARD");
     }
 
 }
