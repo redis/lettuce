@@ -23,7 +23,7 @@ class ClusterReadOnlyCommandsUnitTests {
     void testResolvableCommandNames() {
 
         for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
-            assertThat(readOnlyCommand.name()).isEqualTo(CommandType.valueOf(readOnlyCommand.name()).name());
+            assertThat(readOnlyCommand.toString()).isEqualTo(CommandType.valueOf(readOnlyCommand.toString()).name());
         }
     }
 

@@ -235,7 +235,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
         RedisCommand<K, V, T> local = command;
 
-        if (local.getType().name().equals(AUTH.name())) {
+        if (local.getType().toString().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
                 if (status.equals("OK")) {
                     List<char[]> args = CommandArgsAccessor.getCharArrayArguments(command.getArgs());
@@ -252,7 +252,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             });
         }
 
-        if (local.getType().name().equals(READONLY.name())) {
+        if (local.getType().toString().equals(READONLY.name())) {
             local = attachOnComplete(local, status -> {
                 if (status.equals("OK")) {
                     this.connectionState.setReadOnly(true);
@@ -260,7 +260,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
             });
         }
 
-        if (local.getType().name().equals(READWRITE.name())) {
+        if (local.getType().toString().equals(READWRITE.name())) {
             local = attachOnComplete(local, status -> {
                 if (status.equals("OK")) {
                     this.connectionState.setReadOnly(false);

@@ -184,7 +184,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     private void potentiallyEnableMulti(RedisCommand<K, V, ?> command) {
 
-        if (command.getType().name().equals(MULTI.name())) {
+        if (command.getType().toString().equals(MULTI.name())) {
 
             multi = (multi == null ? new MultiOutput<>(codec) : multi);
 
@@ -202,7 +202,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         RedisCommand<K, V, T> local = command;
 
-        if (local.getType().name().equals(AUTH.name())) {
+        if (local.getType().toString().equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
 
@@ -219,7 +219,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             });
         }
 
-        if (local.getType().name().equals(SELECT.name())) {
+        if (local.getType().toString().equals(SELECT.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
                     Long db = CommandArgsAccessor.getFirstInteger(command.getArgs());
@@ -230,7 +230,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             });
         }
 
-        if (local.getType().name().equals(READONLY.name())) {
+        if (local.getType().toString().equals(READONLY.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
                     state.setReadOnly(true);
@@ -238,7 +238,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             });
         }
 
-        if (local.getType().name().equals(READWRITE.name())) {
+        if (local.getType().toString().equals(READWRITE.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
                     state.setReadOnly(false);
@@ -246,14 +246,14 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             });
         }
 
-        if (local.getType().name().equals(DISCARD.name())) {
+        if (local.getType().toString().equals(DISCARD.name())) {
             if (multi != null) {
                 multi.cancel();
                 multi = null;
             }
         }
 
-        if (local.getType().name().equals(EXEC.name())) {
+        if (local.getType().toString().equals(EXEC.name())) {
             MultiOutput<K, V> multiOutput = this.multi;
             this.multi = null;
             if (multiOutput == null) {
@@ -262,7 +262,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             local.setOutput((MultiOutput) multiOutput);
         }
 
-        if (multi != null && !local.getType().name().equals(MULTI.name())) {
+        if (multi != null && !local.getType().toString().equals(MULTI.name())) {
             local = new TransactionalCommand<>(local);
             multi.add(local);
         }

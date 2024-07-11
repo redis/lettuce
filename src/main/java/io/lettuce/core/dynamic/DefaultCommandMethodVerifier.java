@@ -55,10 +55,10 @@ class DefaultCommandMethodVerifier implements CommandMethodVerifier {
     @Override
     public void validate(CommandSegments commandSegments, CommandMethod commandMethod) throws CommandMethodSyntaxException {
 
-        LettuceAssert.notEmpty(commandSegments.getCommandType().name(), "Command name must not be empty");
+        LettuceAssert.notEmpty(commandSegments.getCommandType().toString(), "Command name must not be empty");
 
-        CommandDetail commandDetail = findCommandDetail(commandSegments.getCommandType().name())
-                .orElseThrow(() -> syntaxException(commandSegments.getCommandType().name(), commandMethod));
+        CommandDetail commandDetail = findCommandDetail(commandSegments.getCommandType().toString())
+                .orElseThrow(() -> syntaxException(commandSegments.getCommandType().toString(), commandMethod));
 
         validateParameters(commandDetail, commandSegments, commandMethod);
     }

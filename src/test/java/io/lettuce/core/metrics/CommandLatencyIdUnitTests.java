@@ -54,7 +54,7 @@ class CommandLatencyIdUnitTests {
         }
 
         @Override
-        public String name() {
+        public String toString() {
             return name;
         }
 

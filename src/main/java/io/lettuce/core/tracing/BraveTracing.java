@@ -341,7 +341,7 @@ public class BraveTracing implements Tracing {
         @Override
         public BraveSpan start(RedisCommand<?, ?, ?> command) {
 
-            span.name(command.getType().name());
+            span.name(command.getType().toString());
 
             if (includeCommandArgsInSpanTags && command.getArgs() != null) {
                 span.tag("redis.args", command.getArgs().toCommandString());

@@ -2,7 +2,6 @@ package io.lettuce.core.tracing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -14,7 +13,6 @@ import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.protocol.AsyncCommand;
 import zipkin2.Span;
-import brave.Tag;
 import brave.Tracer;
 import brave.Tracing;
 import brave.handler.MutableSpan;
@@ -102,7 +100,7 @@ class BraveTracingUnitTests extends TestSupport {
     void shouldCustomizeSpan() {
 
         BraveTracing tracing = BraveTracing.builder().tracing(clientTracing)
-                .spanCustomizer((command, span) -> span.tag("cmd", command.getType().name())).build();
+                .spanCustomizer((command, span) -> span.tag("cmd", command.getType().toString())).build();
 
         BraveTracing.BraveSpan span = (BraveTracing.BraveSpan) tracing.getTracerProvider().getTracer().nextSpan();
         span.start(new AsyncCommand<>(new Command<>(CommandType.AUTH, null)));

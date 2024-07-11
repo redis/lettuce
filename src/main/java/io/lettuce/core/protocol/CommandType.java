@@ -103,6 +103,10 @@ public enum CommandType implements ProtocolKeyword {
 
     XACK, XADD, XAUTOCLAIM, XCLAIM, XDEL, XGROUP, XINFO, XLEN, XPENDING, XRANGE, XREVRANGE, XREAD, XREADGROUP, XTRIM,
 
+    // JSON
+
+    JSON_ARRAPPEND("JSON.ARRAPPEND"),
+
     // Others
 
     TIME, WAIT,
@@ -117,8 +121,24 @@ public enum CommandType implements ProtocolKeyword {
 
     public final byte[] bytes;
 
+    private final String command;
+
     CommandType() {
+        command = name();
         bytes = name().getBytes(StandardCharsets.US_ASCII);
+    }
+
+    CommandType(String name) {
+        command = name;
+        bytes = name.getBytes(StandardCharsets.US_ASCII);
+    }
+
+    /**
+     *
+     * @return name of the command.
+     */
+    public String toString(){
+        return command;
     }
 
     @Override

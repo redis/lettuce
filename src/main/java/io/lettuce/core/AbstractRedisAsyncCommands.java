@@ -26,6 +26,12 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonElement;
+import io.lettuce.core.json.JsonGetArgs;
+import io.lettuce.core.json.JsonMsetArgs;
+import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.JsonRangeArgs;
+import io.lettuce.core.json.JsonSetArgs;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
@@ -71,7 +77,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
-        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
+        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -1451,6 +1457,106 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public boolean isOpen() {
         return connection.isOpen();
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonElement... elements) {
+        return dispatch(commandBuilder.jsonArrappend(key, jsonPath, elements));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonElement element, JsonRangeArgs range) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonElement... elements) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrlen(K key, JsonPath jsonPath) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<JsonElement>> jsonArrpop(K key, JsonPath jsonPath, int index) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<Long> jsonClear(K key, JsonPath jsonPath) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<Long> jsonDel(K key, JsonPath jsonPath) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<JsonElement> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<Boolean> jsonMerge(K key, JsonPath jsonPath, JsonElement element) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<JsonElement>> jsonMGet(JsonPath jsonPath, K... keys) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<Boolean> jsonMSet(JsonMsetArgs... arguments) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<JsonElement> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<List<V>>> jsonObjkeys(K key, JsonPath jsonPath) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonObjlen(K key, JsonPath jsonPath) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<Boolean> jsonSet(K key, JsonPath jsonPath, JsonElement element, JsonSetArgs options) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonElement element) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonStrlen(K key, JsonPath jsonPath) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<Boolean>> jsonToggle(K key, JsonPath jsonPath) {
+        return null;
+    }
+
+    @Override
+    public RedisFuture<List<V>> jsonType(K key, JsonPath jsonPath) {
+        return null;
     }
 
     @Override
