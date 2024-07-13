@@ -14,12 +14,6 @@ import io.lettuce.core.json.JsonPath;
 
 public class LettuceGeoDemo {
 
-    String bike = "{\n" + "        \"id\": \"bike:6\",\n" + "        \"model\": \"Mimas\",\n"
-            + "        \"description\": \"A real joy to ride, this bike got very high scores in last years Bike of the year report. The carefully crafted 50-34 tooth chainset and 11-32 tooth cassette give an easy-on-the-legs bottom gear for climbing, and the high-quality Vittoria Zaffiro tires give balance and grip.It includes a low-step frame , our memory foam seat, bump-resistant shocks and conveniently placed thumb throttle. Put it all together and you get a bike that helps redefine what can be done for this price.\",\n"
-            + "        \"price\": 3941,\n" + "        \"specs\": {\n" + "          \"material\": \"alloy\",\n"
-            + "          \"weight\": 11.6\n" + "        }";
-
-
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
         RedisURI redisURI = RedisURI.Builder
@@ -33,7 +27,7 @@ public class LettuceGeoDemo {
         JsonElement element = new JsonElement() {
             @Override
             public String toString() {
-                return "";
+                return "'\"{id:bike:6}\"'";
             }
 
             @Override
@@ -41,9 +35,9 @@ public class LettuceGeoDemo {
                 return null;
             }
         };
-        redis.jsonArrappend("bikes:inventory", JsonPath.of("$..commuter_bikes"), element).get();
-
-
+        //redis.jsonArrappend("bikes:inventory", JsonPath.of("$..commuter_bikes"), element).get();
+        String result = redis.jsonType("bikes:inventory", JsonPath.of("$..commuter_bikes")).get().get(0);
+        System.out.println("Result: " + result);
 //        String key = "my-geo-set";
 //
 //        redis.geoadd(key, 8.6638775, 49.5282537, "Weinheim", 8.3796281, 48.9978127, "Office tower", 8.665351, 49.553302,

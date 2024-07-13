@@ -105,7 +105,7 @@ public enum CommandType implements ProtocolKeyword {
 
     // JSON
 
-    JSON_ARRAPPEND("JSON.ARRAPPEND"),
+    JSON_ARRAPPEND("JSON.ARRAPPEND"), JSON_TYPE("JSON.TYPE"),
 
     // Others
 

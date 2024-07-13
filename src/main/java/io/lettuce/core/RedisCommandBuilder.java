@@ -1807,7 +1807,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HVALS, new ValueStreamingOutput<>(codec, channel), key);
     }
 
-    public RedisCommand<K,V, List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonElement[] elements) {
+    Command<K,V, List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonElement[] elements) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -1821,6 +1821,18 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(JSON_ARRAPPEND, new IntegerListOutput<>(codec), args);
+    }
+
+    Command<K,V, List<V>> jsonType(K key, JsonPath jsonPath) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if(jsonPath != null && !jsonPath.isRootPath()){
+            args.add(jsonPath.toString());
+        }
+
+        return createCommand(JSON_TYPE, new ValueListOutput<>(codec), args);
     }
 
     Command<K, V, Long> incr(K key) {
