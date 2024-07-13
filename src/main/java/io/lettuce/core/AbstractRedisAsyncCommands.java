@@ -1556,7 +1556,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<List<V>> jsonType(K key, JsonPath jsonPath) {
-        return null;
+        return dispatch(commandBuilder.jsonType(key, jsonPath));
     }
 
     @Override
