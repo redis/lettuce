@@ -24,9 +24,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
-import io.lettuce.core.ExpireArgs;
-import io.lettuce.core.KeyScanArgs;
-import io.lettuce.core.RestoreArgs;
+import io.lettuce.core.*;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 

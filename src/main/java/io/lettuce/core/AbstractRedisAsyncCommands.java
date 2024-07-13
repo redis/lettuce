@@ -475,6 +475,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> clusterMyShardId() {
+        return dispatch(commandBuilder.clusterMyShardId());
+    }
+
+    @Override
     public RedisFuture<String> clusterNodes() {
         return dispatch(commandBuilder.clusterNodes());
     }
