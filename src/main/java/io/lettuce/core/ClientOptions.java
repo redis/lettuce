@@ -67,7 +67,7 @@ public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
 
-    public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
+    public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.enabled();
 
     private final boolean autoReconnect;
 
