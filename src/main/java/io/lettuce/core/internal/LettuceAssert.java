@@ -237,4 +237,10 @@ public class LettuceAssert {
         }
     }
 
+    public static void isPositive(int writeSpinCount, String writeSpinCountIsNotPositive) {
+        if (writeSpinCount <= 0) {
+            throw new IllegalArgumentException(writeSpinCountIsNotPositive);
+        }
+    }
+
 }

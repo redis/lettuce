@@ -19,8 +19,6 @@
  */
 package io.lettuce.core.protocol;
 
-import static io.lettuce.core.ConnectionEvents.*;
-
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -28,6 +26,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Queue;
@@ -62,6 +61,8 @@ import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import static io.lettuce.core.ConnectionEvents.Reset;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
@@ -183,6 +184,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     @Override
     public Collection<RedisCommand<?, ?, ?>> drainQueue() {
         return drainCommands(stack);
+    }
+
+    private Deque<RedisCommand<?, ?, ?>> drainStack() {
+        final Deque<RedisCommand<?, ?, ?>> target = new ArrayDeque<>(stack.size());
+
+        RedisCommand<?, ?, ?> cmd;
+        while ((cmd = stack.poll()) != null) {
+            if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
+                target.add(cmd);
+            }
+        }
+
+        return target;
     }
 
     protected LifecycleState getState() {
@@ -358,8 +372,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         setState(LifecycleState.DISCONNECTED);
         setState(LifecycleState.DEACTIVATING);
 
-        endpoint.notifyChannelInactive(ctx.channel());
-        endpoint.notifyDrainQueuedCommands(this);
+        if (endpoint instanceof BatchFlushEndpoint) {
+            ((BatchFlushEndpoint) endpoint).notifyChannelInactive(ctx.channel(), drainStack());
+        } else {
+            endpoint.notifyChannelInactive(ctx.channel());
+            endpoint.notifyDrainQueuedCommands(this);
+        }
 
         setState(LifecycleState.DEACTIVATED);
 
