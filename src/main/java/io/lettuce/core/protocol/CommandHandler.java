@@ -38,6 +38,7 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
+import io.lettuce.core.datastructure.queue.unmodifiabledeque.UnmodifiableDeque;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
@@ -95,6 +96,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final Endpoint endpoint;
 
+    private final boolean supportsBatchFlush;
+
     private final ArrayDeque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
 
     private final long commandHandlerId = COMMAND_HANDLER_COUNTER.incrementAndGet();
@@ -151,6 +154,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
         this.endpoint = endpoint;
+        this.supportsBatchFlush = endpoint instanceof BatchFlushEndpoint;
         this.commandLatencyRecorder = clientResources.commandLatencyRecorder();
         this.latencyMetricsEnabled = commandLatencyRecorder.isEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
@@ -372,10 +376,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         setState(LifecycleState.DISCONNECTED);
         setState(LifecycleState.DEACTIVATING);
 
-        if (endpoint instanceof BatchFlushEndpoint) {
-            ((BatchFlushEndpoint) endpoint).notifyChannelInactive(ctx.channel(), drainStack());
+        endpoint.notifyChannelInactive(ctx.channel());
+        Deque<RedisCommand<?, ?, ?>> batchFlushRetryableDrainQueuedCommands = UnmodifiableDeque.emptyDeque();
+        if (supportsBatchFlush) {
+            batchFlushRetryableDrainQueuedCommands = drainStack();
         } else {
-            endpoint.notifyChannelInactive(ctx.channel());
             endpoint.notifyDrainQueuedCommands(this);
         }
 
@@ -391,6 +396,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         super.channelInactive(ctx);
+
+        if (supportsBatchFlush) {
+            // Needs decision of watchdog
+            ((BatchFlushEndpoint) endpoint).notifyChannelInactiveAfterWatchdogDecision(ctx.channel(),
+                    batchFlushRetryableDrainQueuedCommands);
+        }
     }
 
     /**
