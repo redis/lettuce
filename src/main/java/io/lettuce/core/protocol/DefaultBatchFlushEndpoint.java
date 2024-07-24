@@ -383,13 +383,17 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
     }
 
     @Override
-    public void notifyChannelInactive(Channel channel, Deque<RedisCommand<?, ?, ?>> retryableQueuedCommands) {
+    public void notifyChannelInactive(Channel channel) {
         if (debugEnabled) {
             logger.debug("{} deactivating endpoint handler", logPrefix());
         }
 
         connectionFacade.deactivated();
+    }
 
+    @Override
+    public void notifyChannelInactiveAfterWatchdogDecision(Channel channel,
+            Deque<RedisCommand<?, ?, ?>> retryableQueuedCommands) {
         final ContextualChannel chan = this.channel;
         if (!chan.getContext().getInitialState().isConnected() || chan.getDelegate() != channel) {
             logger.error("[unexpected][{}] notifyChannelInactive: channel not match", logPrefix());

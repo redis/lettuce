@@ -19,6 +19,13 @@
  */
 package io.lettuce.core.protocol;
 
+import java.net.SocketAddress;
+import java.time.Duration;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.ConnectionEvents;
@@ -44,13 +51,6 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
-
-import java.net.SocketAddress;
-import java.time.Duration;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
@@ -104,7 +104,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private volatile Timeout reconnectScheduleTimeout;
 
-    private volatile boolean willReconnect;
+    private boolean willReconnect;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new

@@ -10,11 +10,6 @@ import io.netty.channel.Channel;
 public interface BatchFlushEndpoint extends Endpoint {
 
     @Override
-    default void notifyChannelInactive(Channel channel) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     default void notifyDrainQueuedCommands(HasQueuedCommands queuedCommands) {
         throw new UnsupportedOperationException();
     }
@@ -25,7 +20,7 @@ public interface BatchFlushEndpoint extends Endpoint {
      * @param channel the channel
      * @param retryableQueuedCommands retryable queued commands in command handler
      */
-    void notifyChannelInactive(Channel channel, Deque<RedisCommand<?, ?, ?>> retryableQueuedCommands);
+    void notifyChannelInactiveAfterWatchdogDecision(Channel channel, Deque<RedisCommand<?, ?, ?>> retryableQueuedCommands);
 
     enum AcquireQuiescenceResult {
         SUCCESS, FAILED, TRY_LATER
