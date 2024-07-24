@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
@@ -161,8 +160,6 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     protected final UnboundedMpscOfferFirstQueue<RedisCommand<?, ?, ?>> taskQueue;
 
-    private final AtomicBoolean quiescence;
-
     private final boolean canFire;
 
     private volatile boolean inProtectMode;
@@ -195,7 +192,6 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         long endpointId = ENDPOINT_COUNTER.incrementAndGet();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
         this.taskQueue = new JcToolsUnboundedMpscOfferFirstQueue<>();
-        this.quiescence = new AtomicBoolean();
         this.canFire = false;
         this.callbackOnClose = callbackOnClose;
     }
@@ -394,20 +390,20 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
     @Override
     public void notifyChannelInactiveAfterWatchdogDecision(Channel channel,
             Deque<RedisCommand<?, ?, ?>> retryableQueuedCommands) {
-        final ContextualChannel chan = this.channel;
-        if (!chan.getContext().getInitialState().isConnected() || chan.getDelegate() != channel) {
+        final ContextualChannel prevChan = this.channel;
+        if (!prevChan.getContext().getInitialState().isConnected() || prevChan.getDelegate() != channel) {
             logger.error("[unexpected][{}] notifyChannelInactive: channel not match", logPrefix());
             return;
         }
 
-        if (chan.getContext().isChannelInactiveEventFired()) {
+        if (prevChan.getContext().isChannelInactiveEventFired()) {
             logger.error("[unexpected][{}] notifyChannelInactive: already fired", logPrefix());
             return;
         }
 
-        boolean willReconnect = connectionWatchdog != null && connectionWatchdog.isWillReconnect();
+        boolean willReconnect = connectionWatchdog != null && connectionWatchdog.willReconnect();
         RedisException exception = null;
-        // Unlike DefaultEndpoint, here we don't check reliability since connectionWatchdog.isWillReconnect() already does it.
+        // Unlike DefaultEndpoint, here we don't check reliability since connectionWatchdog.willReconnect() already does it.
         if (isClosed()) {
             exception = new RedisException("endpoint closed");
             willReconnect = false;
@@ -429,33 +425,9 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         if (!willReconnect) {
             CHANNEL.set(this, DummyContextualChannelInstances.CHANNEL_ENDPOINT_CLOSED);
         }
-        chan.getContext().setCloseStatus(new ConnectionContext.CloseStatus(willReconnect, retryableQueuedCommands, exception));
-        trySetEndpointQuiescence(chan);
-    }
-
-    private boolean setEndpointQuiescenceOncePerConnection(ContextualChannel contextualChannel) {
-        if (contextualChannel.getContext().setChannelQuiescentOnce()) {
-            this.quiescence.set(true);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public AcquireQuiescenceResult tryAcquireQuiescence() {
-        if (quiescence.compareAndSet(true, false)) {
-            if (channel.getContext().getInitialState() == ConnectionContext.State.ENDPOINT_CLOSED) {
-                return AcquireQuiescenceResult.FAILED;
-            }
-            if (CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_WILL_RECONNECT,
-                    DummyContextualChannelInstances.CHANNEL_CONNECTING)) {
-                return AcquireQuiescenceResult.SUCCESS;
-            }
-            onUnexpectedState("tryAcquireQuiescence", ConnectionContext.State.WILL_RECONNECT,
-                    this.channel.getContext().getInitialState());
-            return AcquireQuiescenceResult.FAILED;
-        }
-        return AcquireQuiescenceResult.TRY_LATER;
+        prevChan.getContext()
+                .setCloseStatus(new ConnectionContext.CloseStatus(willReconnect, retryableQueuedCommands, exception));
+        trySetEndpointQuiescence(prevChan);
     }
 
     @Override
@@ -811,10 +783,31 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
             } else {
                 onWontReconnect(closeStatus, batchFlushEndPointContext);
             }
-            if (!setEndpointQuiescenceOncePerConnection(chan)) {
+
+            if (chan.getContext().setChannelQuiescentOnce()) {
+                onEndpointQuiescence();
+            } else {
                 ExceptionUtils.maybeFire(logger, canFire, "unexpected: setEndpointQuiescenceOncePerConnection() failed");
             }
         }
+    }
+
+    private void onEndpointQuiescence() {
+        if (channel.getContext().getInitialState() == ConnectionContext.State.ENDPOINT_CLOSED) {
+            return;
+        }
+
+        // Create happens-before with channelActive()
+        if (!CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_WILL_RECONNECT,
+                DummyContextualChannelInstances.CHANNEL_CONNECTING)) {
+
+            onUnexpectedState("onEndpointQuiescence", ConnectionContext.State.WILL_RECONNECT,
+                    this.channel.getContext().getInitialState());
+            return;
+        }
+
+        // neither connectionWatchdog nor doReconnectOnEndpointQuiescence could be null
+        connectionWatchdog.reconnectOnEndpointQuiescence();
     }
 
     private void onWillReconnect(@Nonnull final ConnectionContext.CloseStatus closeStatus,
