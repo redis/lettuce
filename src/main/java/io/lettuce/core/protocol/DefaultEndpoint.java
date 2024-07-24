@@ -758,15 +758,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     private static List<RedisCommand<?, ?, ?>> drainCommands(Queue<? extends RedisCommand<?, ?, ?>> source) {
 
         List<RedisCommand<?, ?, ?>> target = new ArrayList<>(source.size());
-
-        RedisCommand<?, ?, ?> cmd;
-        while ((cmd = source.poll()) != null) {
-
-            if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
-                target.add(cmd);
-            }
-        }
-
         drainCommands(source, target);
         return target;
     }
