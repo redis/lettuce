@@ -19,14 +19,6 @@
  */
 package io.lettuce.core.protocol;
 
-import java.net.SocketAddress;
-import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.ConnectionEvents;
@@ -50,6 +42,15 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+
+import java.net.SocketAddress;
+import java.time.Duration;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
@@ -83,6 +84,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private final String epid;
 
+    private final Endpoint endpoint;
+
     private Channel channel;
 
     private SocketAddress remoteAddress;
@@ -100,6 +103,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     private volatile boolean listenOnChannelInactive;
 
     private volatile Timeout reconnectScheduleTimeout;
+
+    private volatile boolean willReconnect;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -141,6 +146,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.eventBus = eventBus;
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
+        this.endpoint = endpoint;
 
         Mono<SocketAddress> wrappedSocketAddressSupplier = socketAddressSupplier.doOnNext(addr -> remoteAddress = addr)
                 .onErrorResume(t -> {
@@ -195,6 +201,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        willReconnect = false;
 
         logger.debug("{} channelInactive()", logPrefix());
         if (!armed) {
@@ -205,12 +212,43 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         channel = null;
 
         if (listenOnChannelInactive && !reconnectionHandler.isReconnectSuspended()) {
-            scheduleReconnect();
+            if (!isEventLoopGroupActive()) {
+                logger.debug("isEventLoopGroupActive() == false");
+                return;
+            }
+
+            if (!isListenOnChannelInactive()) {
+                logger.debug("Skip reconnect scheduling, listener disabled");
+                return;
+            }
+
+            if (endpoint instanceof BatchFlushEndpoint) {
+                waitQuiescence((BatchFlushEndpoint) endpoint, this::scheduleReconnect);
+            } else {
+                scheduleReconnect();
+            }
+            willReconnect = true;
         } else {
             logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
         }
 
         super.channelInactive(ctx);
+    }
+
+    private void waitQuiescence(BatchFlushEndpoint batchFlushEndpoint, Runnable runnable) {
+        final BatchFlushEndpoint.AcquireQuiescenceResult ret = batchFlushEndpoint.tryAcquireQuiescence();
+        switch (ret) {
+            case SUCCESS:
+                runnable.run();
+                break;
+            case FAILED:
+                logger.error("{} Failed to acquire quiescence", logPrefix());
+                break;
+            case TRY_LATER:
+                // TODO use exponential backoff
+                timer.newTimeout(it -> waitQuiescence(batchFlushEndpoint, runnable), 3, TimeUnit.MILLISECONDS);
+                break;
+        }
     }
 
     /**
@@ -230,11 +268,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         if (!isEventLoopGroupActive()) {
             logger.debug("isEventLoopGroupActive() == false");
+            notifyEndpointFailedToConnectIfNeeded();
             return;
         }
 
         if (!isListenOnChannelInactive()) {
             logger.debug("Skip reconnect scheduling, listener disabled");
+            notifyEndpointFailedToConnectIfNeeded();
             return;
         }
 
@@ -252,6 +292,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
                 if (!isEventLoopGroupActive()) {
                     logger.warn("Cannot execute scheduled reconnect timer, reconnect workers are terminated");
+                    notifyEndpointFailedToConnectIfNeeded();
                     return;
                 }
 
@@ -267,7 +308,19 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             }
         } else {
             logger.debug("{} Skipping scheduleReconnect() because I have an active channel", logPrefix());
+            notifyEndpointFailedToConnectIfNeeded();
         }
+    }
+
+    private void notifyEndpointFailedToConnectIfNeeded() {
+        notifyEndpointFailedToConnectIfNeeded(new CancellationException());
+    }
+
+    private void notifyEndpointFailedToConnectIfNeeded(Exception e) {
+        if (!(endpoint instanceof BatchFlushEndpoint)) {
+            return;
+        }
+        ((BatchFlushEndpoint) endpoint).notifyReconnectFailed(e);
     }
 
     /**
@@ -275,7 +328,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      * the same handler instances contained in the old channel's pipeline.
      *
      * @param attempt attempt counter
-     *
      * @throws Exception when reconnection fails.
      */
     public void run(int attempt) throws Exception {
@@ -288,7 +340,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      *
      * @param attempt attempt counter.
      * @param delay retry delay.
-     *
      * @throws Exception when reconnection fails.
      */
     private void run(int attempt, Duration delay) throws Exception {
@@ -298,16 +349,19 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         if (!isEventLoopGroupActive()) {
             logger.debug("isEventLoopGroupActive() == false");
+            notifyEndpointFailedToConnectIfNeeded();
             return;
         }
 
         if (!isListenOnChannelInactive()) {
             logger.debug("Skip reconnect scheduling, listener disabled");
+            notifyEndpointFailedToConnectIfNeeded();
             return;
         }
 
         if (isReconnectSuspended()) {
             logger.debug("Skip reconnect scheduling, reconnect is suspended");
+            notifyEndpointFailedToConnectIfNeeded();
             return;
         }
 
@@ -363,11 +417,14 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
                 if (!isReconnectSuspended()) {
                     scheduleReconnect();
+                } else {
+                    notifyEndpointFailedToConnectIfNeeded();
                 }
             });
         } catch (Exception e) {
             logger.log(warnLevel, "Cannot reconnect: {}", e.toString());
             eventBus.publish(new ReconnectFailedEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, e, attempt));
+            notifyEndpointFailedToConnectIfNeeded(e);
         }
     }
 
@@ -434,6 +491,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", last known addr=" + remoteAddress + ']';
         return logPrefix = buffer;
+    }
+
+    public boolean isWillReconnect() {
+        return willReconnect;
     }
 
 }

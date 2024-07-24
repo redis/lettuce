@@ -19,10 +19,6 @@
  */
 package io.lettuce.core;
 
-import java.io.Serializable;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
@@ -30,6 +26,10 @@ import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.lettuce.core.resource.ClientResources;
+
+import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -69,6 +69,12 @@ public class ClientOptions implements Serializable {
 
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
 
+    public static final boolean DEFAULT_USE_BATCH_FLUSH = false;
+
+    public static final int DEFAULT_WRITE_SPIN_COUNT = 16;
+
+    public static final int DEFAULT_BATCH_SIZE = 8;
+
     private final boolean autoReconnect;
 
     private final boolean cancelCommandsOnReconnectFailure;
@@ -97,6 +103,12 @@ public class ClientOptions implements Serializable {
 
     private final TimeoutOptions timeoutOptions;
 
+    private final boolean useBatchFlush;
+
+    private final int writeSpinCount;
+
+    private final int batchSize;
+
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
@@ -112,6 +124,9 @@ public class ClientOptions implements Serializable {
         this.sslOptions = builder.sslOptions;
         this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         this.timeoutOptions = builder.timeoutOptions;
+        this.useBatchFlush = builder.useBatchFlush;
+        this.writeSpinCount = builder.writeSpinCount;
+        this.batchSize = builder.batchSize;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -129,6 +144,9 @@ public class ClientOptions implements Serializable {
         this.sslOptions = original.getSslOptions();
         this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
         this.timeoutOptions = original.getTimeoutOptions();
+        this.useBatchFlush = original.useBatchFlush;
+        this.writeSpinCount = original.getWriteSpinCount();
+        this.batchSize = original.batchSize;
     }
 
     /**
@@ -192,6 +210,12 @@ public class ClientOptions implements Serializable {
 
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
 
+        public boolean useBatchFlush = DEFAULT_USE_BATCH_FLUSH;
+
+        private int writeSpinCount = DEFAULT_WRITE_SPIN_COUNT;
+
+        private int batchSize = DEFAULT_BATCH_SIZE;
+
         protected Builder() {
         }
 
@@ -247,8 +271,8 @@ public class ClientOptions implements Serializable {
          *
          * @param policy the policy to use in {@link io.lettuce.core.protocol.CommandHandler}
          * @return {@code this}
-         * @since 6.0
          * @see DecodeBufferPolicies
+         * @since 6.0
          */
         public Builder decodeBufferPolicy(DecodeBufferPolicy policy) {
 
@@ -295,8 +319,8 @@ public class ClientOptions implements Serializable {
          *
          * @param protocolVersion version to use.
          * @return {@code this}
-         * @since 6.0
          * @see ProtocolVersion#newestSupported()
+         * @since 6.0
          */
         public Builder protocolVersion(ProtocolVersion protocolVersion) {
 
@@ -315,9 +339,9 @@ public class ClientOptions implements Serializable {
          *
          * @param publishOnScheduler true/false
          * @return {@code this}
-         * @since 5.2
          * @see org.reactivestreams.Subscriber#onNext(Object)
          * @see ClientResources#eventExecutorGroup()
+         * @since 5.2
          */
         public Builder publishOnScheduler(boolean publishOnScheduler) {
             this.publishOnScheduler = publishOnScheduler;
@@ -422,6 +446,25 @@ public class ClientOptions implements Serializable {
             return this;
         }
 
+        public Builder useBatchFlush(boolean useBatchFlush) {
+            this.useBatchFlush = useBatchFlush;
+            return this;
+        }
+
+        public Builder writeSpinCount(int writeSpinCount) {
+            LettuceAssert.isPositive(writeSpinCount, "writeSpinCount is not positive");
+
+            this.writeSpinCount = writeSpinCount;
+            return this;
+        }
+
+        public Builder batchSize(int batchSize) {
+            LettuceAssert.isPositive(batchSize, "batchSize is not positive");
+
+            this.batchSize = batchSize;
+            return this;
+        }
+
         /**
          * Create a new instance of {@link ClientOptions}.
          *
@@ -439,7 +482,6 @@ public class ClientOptions implements Serializable {
      *
      * @return a {@link ClientOptions.Builder} to create new {@link ClientOptions} whose settings are replicated from the
      *         current {@link ClientOptions}.
-     *
      * @since 5.1
      */
     public ClientOptions.Builder mutate() {
@@ -498,7 +540,6 @@ public class ClientOptions implements Serializable {
      *
      * @return zero.
      * @since 5.2
-     *
      * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
      */
     @Deprecated
@@ -635,6 +676,18 @@ public class ClientOptions implements Serializable {
      */
     public TimeoutOptions getTimeoutOptions() {
         return timeoutOptions;
+    }
+
+    public int getWriteSpinCount() {
+        return writeSpinCount;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public boolean isUseBatchFlush() {
+        return useBatchFlush;
     }
 
     /**

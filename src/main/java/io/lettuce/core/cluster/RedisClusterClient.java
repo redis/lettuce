@@ -63,6 +63,7 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.Endpoint;
 import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
@@ -540,9 +541,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         assertNotEmpty(initialUris);
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
-        ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(getClusterClientOptions(), getResources(), clusterWriter);
+        Endpoint endpoint = getClusterClientOptions().isUseBatchFlush()
+                ? new ClusterNodeBatchFlushEndpoint(getClusterClientOptions(), getResources(), clusterWriter)
+                : new ClusterNodeEndpoint(getClusterClientOptions(), getResources(), clusterWriter);
 
-        RedisChannelWriter writer = endpoint;
+        RedisChannelWriter writer = (RedisChannelWriter) endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
@@ -814,7 +817,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     @SuppressWarnings("unchecked")
     private <K, V, T extends StatefulRedisConnectionImpl<K, V>, S> ConnectionFuture<S> connectStatefulAsync(T connection,
-            DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
+            Endpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder = createConnectionBuilder(connection, connection.getConnectionState(), endpoint,
@@ -826,7 +829,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     private <K, V> ConnectionBuilder createConnectionBuilder(RedisChannelHandler<K, V> connection, ConnectionState state,
-            DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
+            Endpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
