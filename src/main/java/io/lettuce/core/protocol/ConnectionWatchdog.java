@@ -84,6 +84,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private final String epid;
 
+    private final boolean useBatchFlushEndpoint;
+
     private final Endpoint endpoint;
 
     private Channel channel;
@@ -104,7 +106,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private volatile Timeout reconnectScheduleTimeout;
 
-    private boolean willReconnect;
+    private Runnable doReconnectOnEndpointQuiescence;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -147,6 +149,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
         this.endpoint = endpoint;
+        this.useBatchFlushEndpoint = endpoint instanceof BatchFlushEndpoint;
 
         Mono<SocketAddress> wrappedSocketAddressSupplier = socketAddressSupplier.doOnNext(addr -> remoteAddress = addr)
                 .onErrorResume(t -> {
@@ -201,7 +204,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        willReconnect = false;
+        doReconnectOnEndpointQuiescence = null;
 
         logger.debug("{} channelInactive()", logPrefix());
         if (!armed) {
@@ -222,12 +225,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
                 return;
             }
 
-            if (endpoint instanceof BatchFlushEndpoint) {
-                waitQuiescence((BatchFlushEndpoint) endpoint, this::scheduleReconnect);
-            } else {
-                scheduleReconnect();
+            doReconnectOnEndpointQuiescence = this::scheduleReconnect;
+            if (!useBatchFlushEndpoint) {
+                doReconnectOnEndpointQuiescence.run();
             }
-            willReconnect = true;
+            // otherwise, will be called later by BatchFlushEndpoint#onEndpointQuiescence
         } else {
             logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
         }
@@ -235,20 +237,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         super.channelInactive(ctx);
     }
 
-    private void waitQuiescence(BatchFlushEndpoint batchFlushEndpoint, Runnable runnable) {
-        final BatchFlushEndpoint.AcquireQuiescenceResult ret = batchFlushEndpoint.tryAcquireQuiescence();
-        switch (ret) {
-            case SUCCESS:
-                runnable.run();
-                break;
-            case FAILED:
-                logger.error("{} Failed to acquire quiescence", logPrefix());
-                break;
-            case TRY_LATER:
-                // TODO use exponential backoff
-                timer.newTimeout(it -> waitQuiescence(batchFlushEndpoint, runnable), 3, TimeUnit.MILLISECONDS);
-                break;
-        }
+    void reconnectOnEndpointQuiescence() {
+        doReconnectOnEndpointQuiescence.run();
     }
 
     /**
@@ -317,10 +307,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     }
 
     private void notifyEndpointFailedToConnectIfNeeded(Exception e) {
-        if (!(endpoint instanceof BatchFlushEndpoint)) {
-            return;
+        if (useBatchFlushEndpoint) {
+            ((BatchFlushEndpoint) endpoint).notifyReconnectFailed(e);
         }
-        ((BatchFlushEndpoint) endpoint).notifyReconnectFailed(e);
     }
 
     /**
@@ -493,8 +482,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         return logPrefix = buffer;
     }
 
-    public boolean isWillReconnect() {
-        return willReconnect;
+    public boolean willReconnect() {
+        return doReconnectOnEndpointQuiescence != null;
     }
 
 }

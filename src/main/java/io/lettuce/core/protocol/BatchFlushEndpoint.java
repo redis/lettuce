@@ -22,12 +22,6 @@ public interface BatchFlushEndpoint extends Endpoint {
      */
     void notifyChannelInactiveAfterWatchdogDecision(Channel channel, Deque<RedisCommand<?, ?, ?>> retryableQueuedCommands);
 
-    enum AcquireQuiescenceResult {
-        SUCCESS, FAILED, TRY_LATER
-    }
-
-    AcquireQuiescenceResult tryAcquireQuiescence();
-
     void notifyReconnectFailed(Throwable throwable);
 
 }
