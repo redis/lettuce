@@ -1,15 +1,16 @@
 package io.lettuce.core.context;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import io.lettuce.core.datastructure.queue.unmodifiabledeque.UnmodifiableDeque;
 import io.lettuce.core.protocol.RedisCommand;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author chenxiaofan
@@ -42,6 +43,9 @@ public class BatchFlushEndPointContext {
          */
         public boolean tryEnterSafeGetVolatile() {
             while (safe.get() == 0) {
+                // Use deprecated API is okay, since:
+                // In java8, it is weakCompareAndSetVolatile;
+                // In java9 and afterward, it is weakCompareAndSetPlain.
                 if (safe.weakCompareAndSet(0, 1) /* stale read as 0 is acceptable */) {
                     return true;
                 }

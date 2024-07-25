@@ -19,8 +19,6 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.internal.LettuceStrings.*;
-
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Duration;
@@ -55,6 +53,9 @@ import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.publisher.Mono;
+
+import static io.lettuce.core.internal.LettuceStrings.isEmpty;
+import static io.lettuce.core.internal.LettuceStrings.isNotEmpty;
 
 /**
  * A scalable and thread-safe <a href="https://redis.io/">Redis</a> client supporting synchronous, asynchronous and reactive
@@ -172,7 +173,6 @@ public class RedisClient extends AbstractRedisClient {
      *
      * @param clientResources the client resources, must not be {@code null}
      * @param uri the Redis URI, must not be {@code null}
-     *
      * @return a new instance of {@link RedisClient}
      */
     public static RedisClient create(ClientResources clientResources, String uri) {
@@ -276,7 +276,8 @@ public class RedisClient extends AbstractRedisClient {
 
         logger.debug("Trying to get a Redis connection for: {}", redisURI);
 
-        Endpoint endpoint = getOptions().isUseBatchFlush() ? new DefaultBatchFlushEndpoint(getOptions(), getResources())
+        Endpoint endpoint = getOptions().getAutoBatchFlushOptions().isAutoBatchFlushEnabled()
+                ? new DefaultBatchFlushEndpoint(getOptions(), getResources())
                 : new DefaultEndpoint(getOptions(), getResources());
         RedisChannelWriter writer = (RedisChannelWriter) endpoint;
 

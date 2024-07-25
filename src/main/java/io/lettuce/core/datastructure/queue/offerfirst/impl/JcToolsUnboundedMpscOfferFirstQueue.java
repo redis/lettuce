@@ -1,28 +1,26 @@
 package io.lettuce.core.datastructure.queue.offerfirst.impl;
 
-import io.lettuce.core.datastructure.queue.offerfirst.UnboundedMpscOfferFirstQueue;
-import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue;
-import io.netty.util.internal.shaded.org.jctools.queues.atomic.MpscUnboundedAtomicArrayQueue;
-
-import javax.annotation.Nullable;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Queue;
+
+import javax.annotation.Nullable;
+
+import io.lettuce.core.datastructure.queue.offerfirst.UnboundedMpscOfferFirstQueue;
+import io.netty.util.internal.PlatformDependent;
 
 /**
  * @author chenxiaofan
  */
 public class JcToolsUnboundedMpscOfferFirstQueue<E> implements UnboundedMpscOfferFirstQueue<E> {
 
-    private static final int MPSC_CHUNK_SIZE = 1024;
-
     /**
      * The queues can only be manipulated in a single thread env.
      */
     private final LinkedList<Queue<? extends E>> unsafeQueues = new LinkedList<>();
 
-    private final MessagePassingQueue<E> mpscQueue = new MpscUnboundedAtomicArrayQueue<>(MPSC_CHUNK_SIZE);
+    private final Queue<E> mpscQueue = PlatformDependent.newMpscQueue();
 
     @Override
     public void offer(E e) {
