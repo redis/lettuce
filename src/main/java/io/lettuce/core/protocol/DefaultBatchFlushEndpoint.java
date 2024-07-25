@@ -53,7 +53,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.EncoderException;
+import io.netty.util.Recycler;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -619,7 +621,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
             return;
         }
 
-        if (chan.getContext().getFairEndPointContext().getHasOngoingSendLoop().tryEnterSafeGetVolatile()) {
+        if (chan.getContext().getBatchFlushEndPointContext().getHasOngoingSendLoop().tryEnterSafeGetVolatile()) {
             eventLoop.execute(() -> scheduleSendJobInEventLoopIfNeeded(chan));
         }
 
@@ -633,14 +635,14 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     private void scheduleSendJobInEventLoopIfNeeded(final ContextualChannel chan) {
         // Guarantee only 1 send loop.
-        if (chan.getContext().getFairEndPointContext().getHasOngoingSendLoop().tryEnterUnsafe()) {
+        if (chan.getContext().getBatchFlushEndPointContext().getHasOngoingSendLoop().tryEnterUnsafe()) {
             loopSend(chan);
         }
     }
 
     private void loopSend(final ContextualChannel chan) {
         final ConnectionContext connectionContext = chan.getContext();
-        final BatchFlushEndPointContext batchFlushEndPointContext = connectionContext.getFairEndPointContext();
+        final BatchFlushEndPointContext batchFlushEndPointContext = connectionContext.getBatchFlushEndPointContext();
         if (connectionContext.isChannelInactiveEventFired() || batchFlushEndPointContext.hasRetryableFailedToSendTasks()) {
             return;
         }
@@ -687,18 +689,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
             if (cmd == null) {
                 break;
             }
-            channelWrite(chan, cmd).addListener(future -> {
-                QUEUE_SIZE.decrementAndGet(this);
-                batchFlushEndPointContext.done(1);
-
-                final Throwable retryableErr = checkSendResult(future, chan, cmd);
-                if (retryableErr != null && batchFlushEndPointContext.addRetryableFailedToSendTask(cmd, retryableErr)) {
-                    // Close connection on first transient write failure
-                    internalCloseConnectionIfNeeded(chan, retryableErr);
-                }
-
-                trySetEndpointQuiescence(chan);
-            });
+            channelWrite(chan, cmd).addListener(WrittenToChannel.newInstance(this, chan, cmd));
         }
 
         if (count > 0) {
@@ -713,60 +704,12 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         return count;
     }
 
-    /**
-     * Check write result.
-     *
-     * @param sendFuture The future to check.
-     * @param contextualChannel The channel instance associated with the future.
-     * @param cmd The task.
-     * @return The cause of the failure if is a retryable failed task, otherwise null.
-     */
-    private Throwable checkSendResult(Future<?> sendFuture, ContextualChannel contextualChannel, RedisCommand<?, ?, ?> cmd) {
-        if (cmd.isDone()) {
-            ExceptionUtils.logUnexpectedDone(logger, logPrefix(), cmd);
-            return null;
-        }
-
-        final ConnectionContext.CloseStatus closeStatus = contextualChannel.getContext().getCloseStatus();
-        if (closeStatus != null) {
-            logger.warn("[checkSendResult][interesting][{}] callback called after onClose() event, close status: {}",
-                    logPrefix(), contextualChannel.getContext().getCloseStatus());
-            final Throwable err = sendFuture.isSuccess() ? closeStatus.getErr() : sendFuture.cause();
-            if (!closeStatus.isWillReconnect() || shouldNotRetry(err, cmd)) {
-                cmd.completeExceptionally(err);
-                return null;
-            } else {
-                return err;
-            }
-        }
-
-        if (sendFuture.isSuccess()) {
-            return null;
-        }
-
-        final Throwable cause = sendFuture.cause();
-        ExceptionUtils.maybeLogSendError(logger, cause);
-        if (shouldNotRetry(cause, cmd)) {
-            cmd.completeExceptionally(cause);
-            return null;
-        }
-
-        return cause;
-    }
-
-    private boolean shouldNotRetry(Throwable cause, RedisCommand<?, ?, ?> cmd) {
-        return reliability == Reliability.AT_MOST_ONCE || ActivationCommand.isActivationCommand(cmd)
-                || ExceptionUtils.oneOf(cause, SHOULD_NOT_RETRY_EXCEPTION_TYPES);
-    }
-
     private void trySetEndpointQuiescence(ContextualChannel chan) {
-        final EventLoop chanEventLoop = chan.eventLoop();
-        LettuceAssert.isTrue(chanEventLoop.inEventLoop(), "unexpected: not in event loop");
-        LettuceAssert.isTrue(chanEventLoop == lastEventLoop, "unexpected: event loop not match");
+        LettuceAssert.isTrue(chan.eventLoop().inEventLoop(), "unexpected: not in event loop");
 
         final ConnectionContext connectionContext = chan.getContext();
         final @Nullable ConnectionContext.CloseStatus closeStatus = connectionContext.getCloseStatus();
-        final BatchFlushEndPointContext batchFlushEndPointContext = connectionContext.getFairEndPointContext();
+        final BatchFlushEndPointContext batchFlushEndPointContext = connectionContext.getBatchFlushEndPointContext();
         if (batchFlushEndPointContext.isDone() && closeStatus != null) {
             if (closeStatus.isWillReconnect()) {
                 onWillReconnect(closeStatus, batchFlushEndPointContext);
@@ -849,20 +792,6 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         this.taskQueue.offerFirstAll(commands);
     }
 
-    private void internalCloseConnectionIfNeeded(ContextualChannel toCloseChan, Throwable reason) {
-        if (toCloseChan.getContext().isChannelInactiveEventFired() || !toCloseChan.isActive()) {
-            return;
-        }
-
-        logger.error("[internalCloseConnectionIfNeeded][attention][{}] close the connection due to write error, reason: '{}'",
-                logPrefix(), reason.getMessage(), reason);
-        toCloseChan.eventLoop().schedule(() -> {
-            if (toCloseChan.isActive()) {
-                toCloseChan.close();
-            }
-        }, 1, TimeUnit.SECONDS);
-    }
-
     private void cancelCommands(String message) {
         fulfillCommands(message, RedisCommand::cancel);
     }
@@ -904,7 +833,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         }
 
         if (totalCancelledTaskNum > 0) {
-            logger.error("cancel {} pending tasks, reason: '{}'", totalCancelledTaskNum, message);
+            logger.error("{} cancel {} pending tasks, reason: '{}'", logPrefix(), totalCancelledTaskNum, message);
         }
     }
 
@@ -968,7 +897,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     private void onUnexpectedState(String caller, ConnectionContext.State exp) {
         final ConnectionContext.State actual = this.channel.getInitialState();
-        logger.error("[{}][unexpected] {}: unexpected state: exp '{}' got '{}'", caller, logPrefix(), exp, actual);
+        logger.error("{}[{}][unexpected] : unexpected state: exp '{}' got '{}'", logPrefix(), caller, exp, actual);
         cancelCommands(String.format("%s: state not match: expect '%s', got '%s'", caller, exp, actual));
     }
 
@@ -1008,6 +937,140 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     private enum Reliability {
         AT_MOST_ONCE, AT_LEAST_ONCE
+    }
+
+    /**
+     * Add to stack listener. This listener is pooled and must be {@link #recycle() recycled after usage}.
+     */
+    static class WrittenToChannel implements GenericFutureListener<Future<Void>> {
+
+        private static final Recycler<WrittenToChannel> RECYCLER = new Recycler<WrittenToChannel>() {
+
+            @Override
+            protected WrittenToChannel newObject(Recycler.Handle<WrittenToChannel> handle) {
+                return new WrittenToChannel(handle);
+            }
+
+        };
+
+        private final Recycler.Handle<WrittenToChannel> handle;
+
+        private DefaultBatchFlushEndpoint endpoint;
+
+        private RedisCommand<?, ?, ?> command;
+
+        private ContextualChannel chan;
+
+        private WrittenToChannel(Recycler.Handle<WrittenToChannel> handle) {
+            this.handle = handle;
+        }
+
+        /**
+         * Allocate a new instance.
+         *
+         * @return new instance
+         */
+        static WrittenToChannel newInstance(DefaultBatchFlushEndpoint endpoint, ContextualChannel chan,
+                RedisCommand<?, ?, ?> command) {
+
+            WrittenToChannel entry = RECYCLER.get();
+
+            entry.endpoint = endpoint;
+            entry.chan = chan;
+            entry.command = command;
+
+            return entry;
+        }
+
+        @Override
+        public void operationComplete(Future<Void> future) {
+            final BatchFlushEndPointContext batchFlushEndPointContext = chan.getContext().getBatchFlushEndPointContext();
+            try {
+                QUEUE_SIZE.decrementAndGet(endpoint);
+                batchFlushEndPointContext.done(1);
+
+                final Throwable retryableErr = checkSendResult(future, chan, command);
+                if (retryableErr != null && batchFlushEndPointContext.addRetryableFailedToSendTask(command, retryableErr)) {
+                    // Close connection on first transient write failure
+                    internalCloseConnectionIfNeeded(chan, retryableErr);
+                }
+
+                endpoint.trySetEndpointQuiescence(chan);
+            } finally {
+                recycle();
+            }
+        }
+
+        /**
+         * Check write result.
+         *
+         * @param sendFuture The future to check.
+         * @param contextualChannel The channel instance associated with the future.
+         * @param cmd The task.
+         * @return The cause of the failure if is a retryable failed task, otherwise null.
+         */
+        private Throwable checkSendResult(Future<?> sendFuture, ContextualChannel contextualChannel,
+                RedisCommand<?, ?, ?> cmd) {
+            if (cmd.isDone()) {
+                ExceptionUtils.logUnexpectedDone(logger, endpoint.logPrefix(), cmd);
+                return null;
+            }
+
+            final ConnectionContext.CloseStatus closeStatus = contextualChannel.getContext().getCloseStatus();
+            if (closeStatus != null) {
+                logger.warn("[checkSendResult][interesting][{}] callback called after onClose() event, close status: {}",
+                        endpoint.logPrefix(), contextualChannel.getContext().getCloseStatus());
+                final Throwable err = sendFuture.isSuccess() ? closeStatus.getErr() : sendFuture.cause();
+                if (!closeStatus.isWillReconnect() || shouldNotRetry(err, cmd)) {
+                    cmd.completeExceptionally(err);
+                    return null;
+                } else {
+                    return err;
+                }
+            }
+
+            if (sendFuture.isSuccess()) {
+                return null;
+            }
+
+            final Throwable cause = sendFuture.cause();
+            ExceptionUtils.maybeLogSendError(logger, cause);
+            if (shouldNotRetry(cause, cmd)) {
+                cmd.completeExceptionally(cause);
+                return null;
+            }
+
+            return cause;
+        }
+
+        private boolean shouldNotRetry(Throwable cause, RedisCommand<?, ?, ?> cmd) {
+            return endpoint.reliability == Reliability.AT_MOST_ONCE || ActivationCommand.isActivationCommand(cmd)
+                    || ExceptionUtils.oneOf(cause, SHOULD_NOT_RETRY_EXCEPTION_TYPES);
+        }
+
+        private void internalCloseConnectionIfNeeded(ContextualChannel toCloseChan, Throwable reason) {
+            if (toCloseChan.getContext().isChannelInactiveEventFired() || !toCloseChan.isActive()) {
+                return;
+            }
+
+            logger.error(
+                    "[internalCloseConnectionIfNeeded][interesting][{}] close the connection due to write error, reason: '{}'",
+                    endpoint.logPrefix(), reason.getMessage(), reason);
+            toCloseChan.eventLoop().schedule(() -> {
+                if (toCloseChan.isActive()) {
+                    toCloseChan.close();
+                }
+            }, 1, TimeUnit.SECONDS);
+        }
+
+        private void recycle() {
+            this.endpoint = null;
+            this.chan = null;
+            this.command = null;
+
+            handle.recycle(this);
+        }
+
     }
 
 }

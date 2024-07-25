@@ -78,7 +78,7 @@ public class ConnectionContext {
         return initialState;
     }
 
-    public BatchFlushEndPointContext getFairEndPointContext() {
+    public BatchFlushEndPointContext getBatchFlushEndPointContext() {
         return batchFlushEndPointContext;
     }
 
