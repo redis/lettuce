@@ -42,15 +42,7 @@ public class BatchFlushEndPointContext {
          * @return true if entered the loop, false if already have a running loop.
          */
         public boolean tryEnterSafeGetVolatile() {
-            while (safe.get() == 0) {
-                // Use deprecated API is okay, since:
-                // In java8, it is weakCompareAndSetVolatile;
-                // In java9 and afterward, it is weakCompareAndSetPlain.
-                if (safe.weakCompareAndSet(0, 1) /* stale read as 0 is acceptable */) {
-                    return true;
-                }
-            }
-            return false;
+            return safe.get() == 0 && /* rare case if QPS is high */ safe.compareAndSet(0, 1);
         }
 
         /**
