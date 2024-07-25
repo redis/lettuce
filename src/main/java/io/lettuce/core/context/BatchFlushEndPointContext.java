@@ -45,6 +45,10 @@ public class BatchFlushEndPointContext {
             return safe.get() == 0 && /* rare case if QPS is high */ safe.compareAndSet(0, 1);
         }
 
+        public void exitSafe() {
+            safe.set(0);
+        }
+
         /**
          * This method is not thread safe, can only be used from single thread.
          *
@@ -56,10 +60,6 @@ public class BatchFlushEndPointContext {
             }
             unsafe = true;
             return true;
-        }
-
-        public void exitSafe() {
-            safe.set(0);
         }
 
         public void exitUnsafe() {
