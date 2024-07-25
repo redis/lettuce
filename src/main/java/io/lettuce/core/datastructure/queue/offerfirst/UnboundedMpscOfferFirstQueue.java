@@ -1,7 +1,8 @@
 package io.lettuce.core.datastructure.queue.offerfirst;
 
-import javax.annotation.Nullable;
 import java.util.Deque;
+
+import javax.annotation.Nullable;
 
 /**
  * @author chenxiaofan

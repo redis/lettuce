@@ -38,7 +38,20 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClient;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.CommandListenerWriter;
+import io.lettuce.core.ConnectionBuilder;
+import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.ConnectionState;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.SslConnectionBuilder;
+import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -146,12 +159,12 @@ import reactor.core.publisher.Mono;
  * possible.
  *
  * @author Mark Paluch
- * @since 3.0
  * @see RedisURI
  * @see StatefulRedisClusterConnection
  * @see RedisCodec
  * @see ClusterClientOptions
  * @see ClientResources
+ * @since 3.0
  */
 public class RedisClusterClient extends AbstractRedisClient {
 
@@ -541,7 +554,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         assertNotEmpty(initialUris);
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
-        Endpoint endpoint = getClusterClientOptions().isUseBatchFlush()
+        Endpoint endpoint = getClusterClientOptions().getAutoBatchFlushOptions().isAutoBatchFlushEnabled()
                 ? new ClusterNodeBatchFlushEndpoint(getClusterClientOptions(), getResources(), clusterWriter)
                 : new ClusterNodeEndpoint(getClusterClientOptions(), getResources(), clusterWriter);
 

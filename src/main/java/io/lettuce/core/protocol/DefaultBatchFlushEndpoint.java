@@ -168,6 +168,10 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     private volatile EventLoop lastEventLoop = null;
 
+    private final int writeSpinCount;
+
+    private final int batchSize;
+
     /**
      * Create a new {@link BatchFlushEndpoint}.
      *
@@ -194,6 +198,8 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         this.taskQueue = new JcToolsUnboundedMpscOfferFirstQueue<>();
         this.canFire = false;
         this.callbackOnClose = callbackOnClose;
+        this.writeSpinCount = clientOptions.getAutoBatchFlushOptions().getWriteSpinCount();
+        this.batchSize = clientOptions.getAutoBatchFlushOptions().getBatchSize();
     }
 
     @Override
@@ -656,17 +662,17 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         }
 
         LettuceAssert.assertState(channel == chan, "unexpected: channel not match but closeStatus == null");
-        loopSend0(batchFlushEndPointContext, chan, clientOptions.getWriteSpinCount(), clientOptions.getBatchSize(), true);
+        loopSend0(batchFlushEndPointContext, chan, writeSpinCount, true);
     }
 
     private void loopSend0(final BatchFlushEndPointContext batchFlushEndPointContext, final ContextualChannel chan,
-            int remainingSpinnCount, final int maxBatchSize, final boolean firstCall) {
+            int remainingSpinnCount, final boolean firstCall) {
         do {
-            final int count = pollBatch(batchFlushEndPointContext, maxBatchSize, chan);
+            final int count = pollBatch(batchFlushEndPointContext, batchSize, chan);
             if (count < 0) {
                 return;
             }
-            if (count == 0 || (firstCall && count < maxBatchSize)) {
+            if (count == 0 || (firstCall && count < batchSize)) {
                 // queue was empty
                 break;
             }
@@ -682,7 +688,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
             // Don't setUnsafe here because loopSend0() may result in a delayed loopSend() call.
             batchFlushEndPointContext.getHasOngoingSendLoop().exitSafe();
             // Guarantee thread-safety: no dangling tasks in the queue.
-            loopSend0(batchFlushEndPointContext, chan, remainingSpinnCount, maxBatchSize, false);
+            loopSend0(batchFlushEndPointContext, chan, remainingSpinnCount, false);
         } else {
             // In low qps pattern, the send job will be triggered later when a new task is added,
             batchFlushEndPointContext.getHasOngoingSendLoop().exitUnsafe();
