@@ -245,8 +245,8 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
                 command = processActivationCommand(command);
             }
 
-            QUEUE_SIZE.incrementAndGet(this);
             this.taskQueue.offer(command);
+            QUEUE_SIZE.incrementAndGet(this);
 
             if (autoFlushCommands) {
                 flushCommands();
@@ -788,6 +788,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
             }
         });
         this.taskQueue.offerFirstAll(commands);
+        QUEUE_SIZE.addAndGet(this, commands.size());
     }
 
     private void cancelCommands(String message) {
@@ -818,6 +819,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
             }
         }
 
+        int cancelledTaskNumInTaskQueue = 0;
         while (true) {
             RedisCommand<?, ?, ?> cmd = this.taskQueue.poll();
             if (cmd == null) {
@@ -827,9 +829,12 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
                 cmd.getOutput().setError(message);
             }
             commandConsumer.accept(cmd);
+
+            cancelledTaskNumInTaskQueue++;
             totalCancelledTaskNum++;
         }
 
+        QUEUE_SIZE.addAndGet(this, -cancelledTaskNumInTaskQueue);
         if (totalCancelledTaskNum > 0) {
             logger.error("{} cancel {} pending tasks, reason: '{}'", logPrefix(), totalCancelledTaskNum, message);
         }
