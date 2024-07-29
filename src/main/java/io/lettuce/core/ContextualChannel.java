@@ -24,14 +24,10 @@ public class ContextualChannel implements Channel {
 
     private final Channel delegate;
 
-    private final ConnectionContext context;
+    public final ConnectionContext context;
 
     public ConnectionContext getContext() {
         return context;
-    }
-
-    public ConnectionContext.State getInitialState() {
-        return context.getInitialState();
     }
 
     public Channel getDelegate() {
