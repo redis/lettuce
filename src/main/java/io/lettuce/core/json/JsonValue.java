@@ -20,21 +20,31 @@
 
 package io.lettuce.core.json;
 
-public class JsonValue extends JsonElement{
+import java.nio.ByteBuffer;
 
+/**
+ * Representation of a JSON text as per the <a href="https://datatracker.ietf.org/doc/html/rfc8259#section-2"> </a>RFC 8259 -
+ * The JavaScript Object Notation (JSON) Data Interchange Format, Section 2. JSON Grammer</a>
+ * <p>
+ * Implementations of this interface need to make sure parsing of the JSON is not done inside the event loop thread, used to
+ * process the data coming from the Redis server, otherwise larger JSON documents might cause performance degradation that spans
+ * across all threads using the driver.
+ *
+ * @param <V> the type of data this {@link JsonValue} can output as value, depending on the
+ *        {@link io.lettuce.core.codec.RedisCodec} used
+ *
+ * @see JsonObject
+ * @see JsonArray
+ * @see io.lettuce.core.codec.RedisCodec
+ * @see <a href="https://datatracker.ietf.org/doc/html/rfc8259">RFC 8259 - The JavaScript Object Notation (JSON) Data
+ *      Interchange Format</a>
+ */
+public interface JsonValue<V> {
 
-    public void setArrayValue(){
-        // TODO make sure we wrap the value with single quotes as per documentation
-    }
+    V toValue();
 
-    @Override
-    public String toString() {
-        return "";
-    }
+    ByteBuffer getUnprocessedValue();
 
-    @Override
-    public JsonElement fromString(String json) {
-        return null;
-    }
+    void commit();
 
 }

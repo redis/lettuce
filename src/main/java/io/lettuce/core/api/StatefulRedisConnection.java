@@ -4,6 +4,7 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 
 /**
@@ -61,5 +62,9 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      * @since 6.0
      */
     void removeListener(PushListener listener);
+
+    JsonParser<K, V> getJsonParser();
+
+    void setJsonParser(JsonParser<K, V> jsonParser);
 
 }

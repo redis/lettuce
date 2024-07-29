@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package io.lettuce.core.json;
+package io.lettuce.core.json.arguments;
 
 import io.lettuce.core.CompositeArgument;
 import io.lettuce.core.protocol.CommandArgs;
@@ -37,6 +37,7 @@ import io.lettuce.core.protocol.CommandArgs;
 public class JsonRangeArgs implements CompositeArgument {
 
     private long start = 0;
+
     private long stop = 0;
 
     /**
@@ -103,4 +104,5 @@ public class JsonRangeArgs implements CompositeArgument {
             args.add(stop);
         }
     }
+
 }

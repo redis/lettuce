@@ -36,6 +36,8 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.json.JsonParserRegistry;
 import io.lettuce.core.output.MultiOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
@@ -150,6 +152,16 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     @Override
     public void removeListener(PushListener listener) {
         pushHandler.removeListener(listener);
+    }
+
+    @Override
+    public JsonParser<K, V> getJsonParser() {
+        return JsonParserRegistry.getJsonParser(this.codec);
+    }
+
+    @Override
+    public void setJsonParser(JsonParser<K, V> jsonParser) {
+        throw new UnsupportedOperationException("Setting a custom JsonParser is not supported");
     }
 
     @Override

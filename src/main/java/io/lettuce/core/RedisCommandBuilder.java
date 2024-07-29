@@ -24,8 +24,6 @@ import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.json.JsonElement;
-import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
@@ -63,16 +61,6 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
-
-    private static final String MUST_NOT_CONTAIN_NULL_ELEMENTS = "must not contain null elements";
-
-    private static final String MUST_NOT_BE_EMPTY = "must not be empty";
-
-    private static final String MUST_NOT_BE_NULL = "must not be null";
-
-    private static final byte[] MINUS_BYTES = { '-' };
-
-    private static final byte[] PLUS_BYTES = { '+' };
 
     RedisCommandBuilder(RedisCodec<K, V> codec) {
         super(codec);
@@ -1805,34 +1793,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNull(channel);
 
         return createCommand(HVALS, new ValueStreamingOutput<>(codec, channel), key);
-    }
-
-    Command<K,V, List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonElement[] elements) {
-        notNullKey(key);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-
-        if(jsonPath != null && !jsonPath.isRootPath()){
-            args.add(jsonPath.toString());
-        }
-
-        for (JsonElement element : elements) {
-            args.add(element.toString());
-        }
-
-        return createCommand(JSON_ARRAPPEND, new IntegerListOutput<>(codec), args);
-    }
-
-    Command<K,V, List<V>> jsonType(K key, JsonPath jsonPath) {
-        notNullKey(key);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-
-        if(jsonPath != null && !jsonPath.isRootPath()){
-            args.add(jsonPath.toString());
-        }
-
-        return createCommand(JSON_TYPE, new ValueListOutput<>(codec), args);
     }
 
     Command<K, V, Long> incr(K key) {
@@ -4466,148 +4426,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, List<Map<String, Object>>> clusterLinks() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(LINKS);
         return createCommand(CLUSTER, (CommandOutput) new ObjectOutput<>(StringCodec.UTF8), args);
-    }
-
-    private boolean allElementsInstanceOf(Object[] objects, Class<?> expectedAssignableType) {
-
-        for (Object object : objects) {
-            if (!expectedAssignableType.isAssignableFrom(object.getClass())) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private byte[] maxValue(Range<? extends V> range) {
-
-        Boundary<? extends V> upper = range.getUpper();
-
-        if (upper.getValue() == null) {
-            return PLUS_BYTES;
-        }
-
-        ByteBuffer encoded = codec.encodeValue(upper.getValue());
-        ByteBuffer allocated = ByteBuffer.allocate(encoded.remaining() + 1);
-        allocated.put(upper.isIncluding() ? (byte) '[' : (byte) '(').put(encoded);
-
-        return allocated.array();
-    }
-
-    private byte[] minValue(Range<? extends V> range) {
-
-        Boundary<? extends V> lower = range.getLower();
-
-        if (lower.getValue() == null) {
-            return MINUS_BYTES;
-        }
-
-        ByteBuffer encoded = codec.encodeValue(lower.getValue());
-        ByteBuffer allocated = ByteBuffer.allocate(encoded.remaining() + 1);
-        allocated.put(lower.isIncluding() ? (byte) '[' : (byte) '(').put(encoded);
-
-        return allocated.array();
-    }
-
-    static void notNull(ScoredValueStreamingChannel<?> channel) {
-        LettuceAssert.notNull(channel, "ScoredValueStreamingChannel " + MUST_NOT_BE_NULL);
-    }
-
-    static void notNull(KeyStreamingChannel<?> channel) {
-        LettuceAssert.notNull(channel, "KeyValueStreamingChannel " + MUST_NOT_BE_NULL);
-    }
-
-    static void notNull(ValueStreamingChannel<?> channel) {
-        LettuceAssert.notNull(channel, "ValueStreamingChannel " + MUST_NOT_BE_NULL);
-    }
-
-    static void notNull(KeyValueStreamingChannel<?, ?> channel) {
-        LettuceAssert.notNull(channel, "KeyValueStreamingChannel " + MUST_NOT_BE_NULL);
-    }
-
-    static void notNullMinMax(String min, String max) {
-        LettuceAssert.notNull(min, "Min " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(max, "Max " + MUST_NOT_BE_NULL);
-    }
-
-    private static void addLimit(CommandArgs<?, ?> args, Limit limit) {
-
-        if (limit.isLimited()) {
-            args.add(LIMIT).add(limit.getOffset()).add(limit.getCount());
-        }
-    }
-
-    private static void assertNodeId(String nodeId) {
-        LettuceAssert.notNull(nodeId, "NodeId " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(nodeId, "NodeId " + MUST_NOT_BE_EMPTY);
-    }
-
-    private static String max(Range<? extends Number> range) {
-
-        Boundary<? extends Number> upper = range.getUpper();
-
-        if (upper.getValue() == null
-                || upper.getValue() instanceof Double && upper.getValue().doubleValue() == Double.POSITIVE_INFINITY) {
-            return "+inf";
-        }
-
-        if (!upper.isIncluding()) {
-            return "(" + upper.getValue();
-        }
-
-        return upper.getValue().toString();
-    }
-
-    private static String min(Range<? extends Number> range) {
-
-        Boundary<? extends Number> lower = range.getLower();
-
-        if (lower.getValue() == null
-                || lower.getValue() instanceof Double && lower.getValue().doubleValue() == Double.NEGATIVE_INFINITY) {
-            return "-inf";
-        }
-
-        if (!lower.isIncluding()) {
-            return "(" + lower.getValue();
-        }
-
-        return lower.getValue().toString();
-    }
-
-    private static void notEmpty(Object[] keys) {
-        LettuceAssert.notNull(keys, "Keys " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(keys, "Keys " + MUST_NOT_BE_EMPTY);
-    }
-
-    private static void notEmptySlots(int[] slots) {
-        LettuceAssert.notNull(slots, "Slots " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(slots, "Slots " + MUST_NOT_BE_EMPTY);
-    }
-
-    private static void notEmptyValues(Object[] values) {
-        LettuceAssert.notNull(values, "Values " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(values, "Values " + MUST_NOT_BE_EMPTY);
-    }
-
-    private static void notNullKey(Object key) {
-        LettuceAssert.notNull(key, "Key " + MUST_NOT_BE_NULL);
-    }
-
-    private static void keyAndFieldsProvided(Object key, Object[] fields) {
-        LettuceAssert.notNull(key, "Key " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(fields, "Fields " + MUST_NOT_BE_EMPTY);
-    }
-
-    private static void notNullLimit(Limit limit) {
-        LettuceAssert.notNull(limit, "Limit " + MUST_NOT_BE_NULL);
-    }
-
-    private static void notNullRange(Range<?> range) {
-        LettuceAssert.notNull(range, "Range " + MUST_NOT_BE_NULL);
-    }
-
-    private static void notEmptyRanges(Range<?>[] ranges) {
-        LettuceAssert.notEmpty(ranges, "Ranges " + MUST_NOT_BE_NULL);
     }
 
     enum LongCodec implements RedisCodec<Long, Long> {

@@ -18,25 +18,28 @@
  * limitations under the License.
  */
 
-package io.lettuce.core.json;
+package io.lettuce.core.json.arguments;
 
 import io.lettuce.core.CompositeArgument;
+import io.lettuce.core.json.JsonValue;
+import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandKeyword;
 
 /**
- * Argument list builder for the Redis <a href="https://redis.io/commands/acl-setuser">JSON.GET</a> command.
+ * Argument list builder for the Redis <a href="https://redis.io/docs/latest/commands/json.mset/">JSON.MSET</a> command.
  * <p>
- * {@link JsonGetArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
+ * {@link JsonMsetArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Tihomir Mateev
  * @since 6.5
  */
-public class JsonGetArgs implements CompositeArgument {
+public class JsonMsetArgs implements CompositeArgument {
 
-    private String indent;
-    private String newline;
-    private String space;
+    private String key;
+
+    private JsonPath path;
+
+    private JsonValue element;
 
     /**
      * Builder entry points for {@link JsonGetArgs}.
@@ -54,8 +57,8 @@ public class JsonGetArgs implements CompositeArgument {
          *
          * @return new {@link JsonGetArgs} with indentation set.
          */
-        public static JsonGetArgs indent(String indent) {
-            return new JsonGetArgs().indent(indent);
+        public static JsonMsetArgs key(String indent) {
+            return new JsonMsetArgs().key(indent);
         }
 
         /**
@@ -63,8 +66,8 @@ public class JsonGetArgs implements CompositeArgument {
          *
          * @return new {@link JsonGetArgs} with newline set.
          */
-        public static JsonGetArgs newline(String newline) {
-            return new JsonGetArgs().newline(newline);
+        public static JsonMsetArgs path(JsonPath path) {
+            return new JsonMsetArgs().path(path);
         }
 
         /**
@@ -72,8 +75,8 @@ public class JsonGetArgs implements CompositeArgument {
          *
          * @return new {@link JsonGetArgs} with spacing set.
          */
-        public static JsonGetArgs space(String space) {
-            return new JsonGetArgs().space(space);
+        public static JsonMsetArgs element(JsonValue element) {
+            return new JsonMsetArgs().element(element);
         }
 
     }
@@ -83,9 +86,9 @@ public class JsonGetArgs implements CompositeArgument {
      *
      * @return {@code this}.
      */
-    public JsonGetArgs indent(String indent) {
+    public JsonMsetArgs key(String key) {
 
-        this.indent = indent;
+        this.key = key;
         return this;
     }
 
@@ -94,9 +97,9 @@ public class JsonGetArgs implements CompositeArgument {
      *
      * @return {@code this}.
      */
-    public JsonGetArgs newline(String newline) {
+    public JsonMsetArgs path(JsonPath path) {
 
-        this.newline = newline;
+        this.path = path;
         return this;
     }
 
@@ -105,26 +108,26 @@ public class JsonGetArgs implements CompositeArgument {
      *
      * @return {@code this}.
      */
-    public JsonGetArgs space(String space) {
+    public JsonMsetArgs element(JsonValue element) {
 
-        this.space = space;
+        this.element = element;
         return this;
     }
-
 
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
-        if (indent != null) {
-            args.add(CommandKeyword.INDENT).add(indent);
+        if (key != null) {
+            args.add(key);
         }
 
-        if (newline != null) {
-            args.add(CommandKeyword.NEWLINE).add(newline);
+        if (path != null) {
+            args.add(path.toString());
         }
 
-        if (space != null) {
-            args.add(CommandKeyword.SPACE).add(space);
+        if (element != null) {
+            args.add(element.toString());
         }
     }
+
 }

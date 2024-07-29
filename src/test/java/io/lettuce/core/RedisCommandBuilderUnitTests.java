@@ -1,8 +1,6 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.json.JsonElement;
-import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -170,59 +168,6 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*2\r\n" + "$7\r\n" + "CLUSTER\r\n" + "$9\r\n" + "MYSHARDID\r\n");
-    }
-
-    @Test
-    void shouldCorrectlyConstructJsonArrappend() {
-
-        final JsonPath myPath = JsonPath.of("$..commuter_bikes");
-        JsonElement myElement = new JsonElement() {
-            @Override
-            public String toString() {
-                return "'\"{id:bike:6}\"'";
-            }
-
-            @Override
-            public JsonElement fromString(String json) {
-                return null;
-            }
-        };
-
-        Command<String, String, ?> command = sut.jsonArrappend(MY_KEY, myPath, new JsonElement[] { myElement });
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-
-        assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*4\r\n" + "$14\r\n" + "JSON.ARRAPPEND\r\n" + "$4\r\n" + "hKey\r\n" + "$17\r\n"
-                        + "$..commuter_bikes\r\n" + "$15\r\n" + "'\"{id:bike:6}\"'"+"\r\n");
-    }
-
-
-    @Test
-    void shouldCorrectlyConstructJsonType() {
-
-        final JsonPath myPath = JsonPath.of("$..commuter_bikes");
-
-        Command<String, String, ?> command = sut.jsonType(MY_KEY, myPath);
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-
-        assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*3\r\n" + "$9\r\n" + "JSON.TYPE\r\n" + "$4\r\n" + "hKey\r\n" + "$17\r\n"
-                        + "$..commuter_bikes\r\n");
-    }
-
-    @Test
-    void shouldCorrectlyConstructJsonTypeRootPath() {
-
-        final JsonPath myPath = JsonPath.ROOT_PATH;
-
-        Command<String, String, ?> command = sut.jsonType(MY_KEY, myPath);
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-
-        assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$9\r\n" + "JSON.TYPE\r\n" + "$4\r\n" + "hKey\r\n" );
     }
 
     @Test
