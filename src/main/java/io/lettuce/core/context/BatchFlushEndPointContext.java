@@ -96,11 +96,7 @@ public class BatchFlushEndPointContext {
         return total;
     }
 
-    private final HasOngoingSendLoop hasOngoingSendLoop = new HasOngoingSendLoop();
-
-    public HasOngoingSendLoop getHasOngoingSendLoop() {
-        return hasOngoingSendLoop;
-    }
+    public final HasOngoingSendLoop hasOngoingSendLoop = new HasOngoingSendLoop();
 
     public void add(int n) {
         this.total += n;

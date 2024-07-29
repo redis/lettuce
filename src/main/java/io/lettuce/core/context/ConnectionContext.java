@@ -65,21 +65,13 @@ public class ConnectionContext {
 
     }
 
-    private final State initialState;
+    public final State initialState;
 
-    private final BatchFlushEndPointContext batchFlushEndPointContext;
+    public final BatchFlushEndPointContext batchFlushEndPointContext;
 
     public ConnectionContext(State initialState) {
         this.initialState = initialState;
         this.batchFlushEndPointContext = new BatchFlushEndPointContext();
-    }
-
-    public State getInitialState() {
-        return initialState;
-    }
-
-    public BatchFlushEndPointContext getBatchFlushEndPointContext() {
-        return batchFlushEndPointContext;
     }
 
     /* below fields must be accessed by the event loop thread only */
