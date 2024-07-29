@@ -218,6 +218,16 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
     RedisFuture<String> clusterMyId();
 
     /**
+     * Obtain the shard ID for the currently connected node.
+     * <p>
+     * The CLUSTER MYSHARDID command returns the unique, auto-generated identifier that is associated with the shard to which
+     * the connected cluster node belongs.
+     *
+     * @return String simple-string-reply
+     */
+    RedisFuture<String> clusterMyShardId();
+
+    /**
      * Obtain details about all cluster nodes. Can be parsed using
      * {@link io.lettuce.core.cluster.models.partitions.ClusterPartitionParser#parse}
      *

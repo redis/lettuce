@@ -497,6 +497,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> clusterMyShardId() {
+        return createMono(commandBuilder::clusterMyShardId);
+    }
+
+    @Override
     public Mono<String> clusterNodes() {
         return createMono(commandBuilder::clusterNodes);
     }
