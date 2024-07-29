@@ -11,6 +11,7 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.masterreplica.StatefulRedisMasterReplicaConnection;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -77,6 +78,16 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     @Override
     public void removeListener(PushListener listener) {
         delegate.removeListener(listener);
+    }
+
+    @Override
+    public JsonParser<K, V> getJsonParser() {
+        return delegate.getJsonParser();
+    }
+
+    @Override
+    public void setJsonParser(JsonParser<K, V> jsonParser) {
+        delegate.setJsonParser(jsonParser);
     }
 
     @Override

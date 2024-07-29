@@ -105,7 +105,12 @@ public enum CommandType implements ProtocolKeyword {
 
     // JSON
 
-    JSON_ARRAPPEND("JSON.ARRAPPEND"), JSON_TYPE("JSON.TYPE"),
+    JSON_ARRAPPEND("JSON.ARRAPPEND"), JSON_ARRINDEX("JSON.ARRINDEX"), JSON_ARRINSERT("JSON.ARRINSERT"), JSON_ARRLEN(
+            "JSON.ARRLEN"), JSON_ARRPOP("JSON.ARRPOP"), JSON_ARRTRIM("JSON.ARRAPPEND"), JSON_CLEAR("JSON.CLEAR"), JSON_DEL(
+                    "JSON.DEL"), JSON_GET("JSON.GET"), JSON_MERGE("JSON.MERGE"), JSON_MGET("JSON.MGET"), JSON_MSET(
+                            "JSON.MSET"), JSON_NUMINCRBY("JSON.NUMINCRBY"), JSON_OBJKEYS("JSON.OBJKEYS"), JSON_OBJLEN(
+                                    "JSON.OBJLEN"), JSON_SET("JSON.SET"), JSON_STRAPPEND("JSON.STRAPPEND"), JSON_STRLEN(
+                                            "JSON.STRLEN"), JSON_TOGGLE("JSON.TOGGLE"), JSON_TYPE("JSON.TYPE"),
 
     // Others
 
@@ -123,11 +128,19 @@ public enum CommandType implements ProtocolKeyword {
 
     private final String command;
 
+    /**
+     * Simple commands (comprised of only letters) use the name of the enum constant as command name.
+     */
     CommandType() {
         command = name();
         bytes = name().getBytes(StandardCharsets.US_ASCII);
     }
 
+    /**
+     * Complex commands (comprised of other symbols besides letters) get the command name as a parameter.
+     *
+     * @param name the command name, must not be {@literal null}.
+     */
     CommandType(String name) {
         command = name;
         bytes = name.getBytes(StandardCharsets.US_ASCII);
@@ -137,7 +150,7 @@ public enum CommandType implements ProtocolKeyword {
      *
      * @return name of the command.
      */
-    public String toString(){
+    public String toString() {
         return command;
     }
 

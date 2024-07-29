@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package io.lettuce.core.json;
+package io.lettuce.core.json.arguments;
 
 import io.lettuce.core.CompositeArgument;
 import io.lettuce.core.protocol.CommandArgs;
@@ -33,6 +33,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @since 6.5
  */
 public class JsonSetArgs implements CompositeArgument {
+
     private boolean nx;
 
     private boolean xx;
@@ -66,6 +67,14 @@ public class JsonSetArgs implements CompositeArgument {
             return new JsonSetArgs().xx();
         }
 
+        /**
+         * Creates new empty {@link JsonSetArgs}
+         *
+         * @return new {@link JsonSetArgs} with nothing set.
+         */
+        public static JsonSetArgs none() {
+            return new JsonSetArgs().none();
+        }
 
     }
 
@@ -91,6 +100,16 @@ public class JsonSetArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Set the key only if it already exists.
+     *
+     * @return {@code this}.
+     */
+    public JsonSetArgs none() {
+
+        return this;
+    }
+
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
@@ -100,4 +119,5 @@ public class JsonSetArgs implements CompositeArgument {
             args.add(CommandKeyword.NX);
         }
     }
+
 }

@@ -26,6 +26,12 @@ import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.JsonValue;
+import io.lettuce.core.json.arguments.JsonGetArgs;
+import io.lettuce.core.json.arguments.JsonMsetArgs;
+import io.lettuce.core.json.arguments.JsonRangeArgs;
+import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
@@ -81,11 +87,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
         RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
-        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
+        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
     private final RedisCommandBuilder<K, V> commandBuilder;
+
+    private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
 
     private final ClientResources clientResources;
 
@@ -102,6 +110,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
+        this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -1513,6 +1522,106 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public boolean isOpen() {
         return connection.isOpen();
+    }
+
+    @Override
+    public Flux<Long> jsonArrappend(K key, JsonPath jsonPath, JsonValue<V>... values) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<Long> jsonArrindex(K key, JsonPath jsonPath, JsonValue<V> value, JsonRangeArgs range) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<Long> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue<V>... values) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<Long> jsonArrlen(K key, JsonPath jsonPath) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<JsonValue<V>> jsonArrpop(K key, JsonPath jsonPath, int index) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<Long> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Mono<Long> jsonClear(K key, JsonPath jsonPath) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Mono<Long> jsonDel(K key, JsonPath jsonPath) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<JsonValue<V>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Mono<Boolean> jsonMerge(K key, JsonPath jsonPath, JsonValue<V> value) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<JsonValue<V>> jsonMGet(JsonPath jsonPath, K... keys) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Mono<Boolean> jsonMSet(JsonMsetArgs... arguments) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<JsonValue<V>> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<List<V>> jsonObjkeys(K key, JsonPath jsonPath) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<Long> jsonObjlen(K key, JsonPath jsonPath) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Mono<Boolean> jsonSet(K key, JsonPath jsonPath, JsonValue<V> value, JsonSetArgs options) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<Long> jsonStrappend(K key, JsonPath jsonPath, JsonValue<V> value) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<Long> jsonStrlen(K key, JsonPath jsonPath) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<Boolean> jsonToggle(K key, JsonPath jsonPath) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
+    public Flux<V> jsonType(K key, JsonPath jsonPath) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     @Override

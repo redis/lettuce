@@ -21,24 +21,27 @@
 package io.lettuce.core.json;
 
 /**
- * Describes a path to a certain {@link JsonElement} inside a JSON document.<p/>
+ * Describes a path to a certain {@link JsonValue} inside a JSON document.
+ * <p/>
  * <p>
- * The Redis server implements its own JSONPath implementation, based on existing technologies.
- * The generic rules to build a path string are:
+ * The Redis server implements its own JSONPath implementation, based on existing technologies. The generic rules to build a
+ * path string are:
  * <ul>
- *     <li><code>$</code> - The root (outermost JSON element), starts the path.</li>
- *     <li><code>. or []</code> - Selects a child element.</li>
- *     <li><code>..</code> - Recursively descends through the JSON document.</li>
- *     <li><code>*</code> - Wildcard, returns all elements.</li>
- *     <li><code>[]</code> - Subscript operator, accesses an array element.</li>
- *     <li><code>[,]]</code> - Union, selects multiple elements.</li>
- *     <li><code>[start:end:step]</code> - Array slice where start, end, and step are indexes.</li>
- *     <li><code>?()</code> - Filters a JSON object or array. Supports comparison operators (==, !=, <, <=, >, >=, =~), logical operators (&&, ||), and parenthesis ((, )).</li>
- *     <li><code>()</code> - Script expression.</li>
- *     <li><code>@</code> - The current element, used in filter or script expressions.</li>
+ * <li><code>$</code> - The root (outermost JSON element), starts the path.</li>
+ * <li><code>. or []</code> - Selects a child element.</li>
+ * <li><code>..</code> - Recursively descends through the JSON document.</li>
+ * <li><code>*</code> - Wildcard, returns all elements.</li>
+ * <li><code>[]</code> - Subscript operator, accesses an array element.</li>
+ * <li><code>[,]]</code> - Union, selects multiple elements.</li>
+ * <li><code>[start:end:step]</code> - Array slice where start, end, and step are indexes.</li>
+ * <li><code>?()</code> - Filters a JSON object or array. Supports comparison operators (==, !=, <, <=, >, >=, =~), logical
+ * operators (&&, ||), and parenthesis ((, )).</li>
+ * <li><code>()</code> - Script expression.</li>
+ * <li><code>@</code> - The current element, used in filter or script expressions.</li>
  * </ul>
  * <p>
  * For example, given the following JSON document:
+ * 
  * <pre>
  * {
  *     "inventory": {
@@ -70,12 +73,14 @@ public class JsonPath {
     /**
      * The root path {@code $} as defined by the second version of the RedisJSON implementation.
      * <p>
+     * 
      * @since 6.5
      */
     public static final JsonPath ROOT_PATH = new JsonPath("$");
 
     /**
      * The legacy root path {@code .} as defined by the first version of the RedisJSON implementation.
+     * 
      * @deprecated since 6.5, use {@link #ROOT_PATH} instead.
      */
     public static final JsonPath ROOT_PATH_LEGACY = new JsonPath(".");

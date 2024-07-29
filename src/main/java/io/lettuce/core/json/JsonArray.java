@@ -20,9 +20,25 @@
 
 package io.lettuce.core.json;
 
-public abstract class JsonElement {
-    public abstract String toString();
-    public abstract JsonElement fromString(String json);
+import java.util.Iterator;
+import java.util.List;
 
+public interface JsonArray<V> extends JsonValue<V> {
+
+    void add(JsonValue<V> element);
+
+    void addAll(JsonArray<V> element);
+
+    List<JsonValue<V>> asList();
+
+    Iterator<JsonValue<V>> iterator();
+
+    JsonValue<V> remove(int index);
+
+    boolean remove(JsonValue<V> element);
+
+    JsonValue<V> replace(int index, JsonValue<V> newElement);
+
+    int size();
 
 }
