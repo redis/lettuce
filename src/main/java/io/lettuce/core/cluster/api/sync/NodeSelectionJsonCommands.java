@@ -209,10 +209,10 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the value to increment.
      * @param number the increment value.
-     * @return an array of the new values after the increment.
+     * @return a {@link List} of the new values after the increment.
      * @since 6.5
      */
-    Executions<List<JsonValue<V>>> jsonNumincrby(K key, JsonPath jsonPath, Number number);
+    Executions<List<Number>> jsonNumincrby(K key, JsonPath jsonPath, Number number);
 
     /**
      * Return the keys in the JSON document that are referenced by the given {@link JsonPath}

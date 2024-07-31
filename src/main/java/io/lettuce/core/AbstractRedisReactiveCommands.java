@@ -1526,102 +1526,102 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     @Override
     public Flux<Long> jsonArrappend(K key, JsonPath jsonPath, JsonValue<V>... values) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrappend(key, jsonPath, values));
     }
 
     @Override
     public Flux<Long> jsonArrindex(K key, JsonPath jsonPath, JsonValue<V> value, JsonRangeArgs range) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrindex(key, jsonPath, value, range));
     }
 
     @Override
     public Flux<Long> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue<V>... values) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrinsert(key, jsonPath, index, values));
     }
 
     @Override
     public Flux<Long> jsonArrlen(K key, JsonPath jsonPath) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrlen(key, jsonPath));
     }
 
     @Override
     public Flux<JsonValue<V>> jsonArrpop(K key, JsonPath jsonPath, int index) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrpop(key, jsonPath, index));
     }
 
     @Override
     public Flux<Long> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrtrim(key, jsonPath, range));
     }
 
     @Override
     public Mono<Long> jsonClear(K key, JsonPath jsonPath) {
-        throw new RuntimeException("Not yet implemented");
+        return createMono(() -> jsonCommandBuilder.jsonClear(key, jsonPath));
     }
 
     @Override
     public Mono<Long> jsonDel(K key, JsonPath jsonPath) {
-        throw new RuntimeException("Not yet implemented");
+        return createMono(() -> jsonCommandBuilder.jsonDel(key, jsonPath));
     }
 
     @Override
     public Flux<JsonValue<V>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonGet(key, options, jsonPaths));
     }
 
     @Override
     public Mono<Boolean> jsonMerge(K key, JsonPath jsonPath, JsonValue<V> value) {
-        throw new RuntimeException("Not yet implemented");
+        return createMono(() -> jsonCommandBuilder.jsonMerge(key, jsonPath, value));
     }
 
     @Override
     public Flux<JsonValue<V>> jsonMGet(JsonPath jsonPath, K... keys) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonMGet(jsonPath, keys));
     }
 
     @Override
     public Mono<Boolean> jsonMSet(JsonMsetArgs... arguments) {
-        throw new RuntimeException("Not yet implemented");
+        return createMono(() -> jsonCommandBuilder.jsonMSet(arguments));
     }
 
     @Override
-    public Flux<JsonValue<V>> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
-        throw new RuntimeException("Not yet implemented");
+    public Flux<Number> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonNumincrby(key, jsonPath, number));
     }
 
     @Override
     public Flux<List<V>> jsonObjkeys(K key, JsonPath jsonPath) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonObjkeys(key, jsonPath));
     }
 
     @Override
     public Flux<Long> jsonObjlen(K key, JsonPath jsonPath) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonObjlen(key, jsonPath));
     }
 
     @Override
     public Mono<Boolean> jsonSet(K key, JsonPath jsonPath, JsonValue<V> value, JsonSetArgs options) {
-        throw new RuntimeException("Not yet implemented");
+        return createMono(() -> jsonCommandBuilder.jsonSet(key, jsonPath, value, options));
     }
 
     @Override
     public Flux<Long> jsonStrappend(K key, JsonPath jsonPath, JsonValue<V> value) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrappend(key, jsonPath, value));
     }
 
     @Override
     public Flux<Long> jsonStrlen(K key, JsonPath jsonPath) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrlen(key, jsonPath));
     }
 
     @Override
     public Flux<Boolean> jsonToggle(K key, JsonPath jsonPath) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonToggle(key, jsonPath));
     }
 
     @Override
     public Flux<V> jsonType(K key, JsonPath jsonPath) {
-        throw new RuntimeException("Not yet implemented");
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonType(key, jsonPath));
     }
 
     @Override

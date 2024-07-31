@@ -28,7 +28,9 @@ import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.output.IntegerListOutput;
+import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.JsonValueListOutput;
+import io.lettuce.core.output.NumberListOutput;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
@@ -38,7 +40,11 @@ import io.lettuce.core.protocol.RedisCommand;
 import java.util.List;
 
 import static io.lettuce.core.protocol.CommandType.JSON_ARRAPPEND;
+import static io.lettuce.core.protocol.CommandType.JSON_ARRLEN;
 import static io.lettuce.core.protocol.CommandType.JSON_ARRPOP;
+import static io.lettuce.core.protocol.CommandType.JSON_DEL;
+import static io.lettuce.core.protocol.CommandType.JSON_GET;
+import static io.lettuce.core.protocol.CommandType.JSON_NUMINCRBY;
 import static io.lettuce.core.protocol.CommandType.JSON_TYPE;
 
 /**
@@ -70,7 +76,22 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     RedisCommand<K, V, List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue<V> value, JsonRangeArgs range) {
-        return null;
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (jsonPath != null && !jsonPath.isRootPath()) {
+            args.add(jsonPath.toString());
+        }
+
+        args.addValue(value.toValue());
+
+        if (range != null) {
+            // OPTIONAL as per API
+            range.build(args);
+        }
+
+        return createCommand(JSON_ARRLEN, new IntegerListOutput<>(codec), args);
     }
 
     RedisCommand<K, V, List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue<V>[] values) {
@@ -78,7 +99,14 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     RedisCommand<K, V, List<Long>> jsonArrlen(K key, JsonPath jsonPath) {
-        return null;
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (jsonPath != null && !jsonPath.isRootPath()) {
+            args.add(jsonPath.toString());
+        }
+        return createCommand(JSON_ARRLEN, new IntegerListOutput<>(codec), args);
     }
 
     RedisCommand<K, V, List<JsonValue<V>>> jsonArrpop(K key, JsonPath jsonPath, int index) {
@@ -106,7 +134,23 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     RedisCommand<K, V, List<JsonValue<V>>> jsonGet(K key, JsonGetArgs options, JsonPath[] jsonPaths) {
-        return null;
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (options != null) {
+            options.build(args);
+        }
+
+        if (jsonPaths != null) {
+            for (JsonPath jsonPath : jsonPaths) {
+                if (jsonPath != null) {
+                    args.add(jsonPath.toString());
+                }
+            }
+        }
+
+        return createCommand(JSON_GET, new JsonValueListOutput<>(codec), args);
     }
 
     RedisCommand<K, V, Boolean> jsonMerge(K key, JsonPath jsonPath, JsonValue<V> value) {
@@ -114,15 +158,33 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     RedisCommand<K, V, List<JsonValue<V>>> jsonMGet(JsonPath jsonPath, K[] keys) {
-        return null;
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
+
+        if (jsonPath != null) {
+            args.add(jsonPath.toString());
+        }
+
+        return createCommand(JSON_GET, new JsonValueListOutput<>(codec), args);
     }
 
     RedisCommand<K, V, Boolean> jsonMSet(JsonMsetArgs[] arguments) {
         return null;
     }
 
-    RedisCommand<K, V, List<JsonValue<V>>> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
-        return null;
+    RedisCommand<K, V, List<Number>> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (jsonPath != null && !jsonPath.isRootPath()) {
+            args.add(jsonPath.toString());
+        }
+
+        args.add(number.toString());
+
+        return createCommand(JSON_NUMINCRBY, new NumberListOutput<>(codec), args);
     }
 
     RedisCommand<K, V, List<List<V>>> jsonObjkeys(K key, JsonPath jsonPath) {
@@ -150,7 +212,14 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     RedisCommand<K, V, Long> jsonDel(K key, JsonPath jsonPath) {
-        return null;
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (jsonPath != null && !jsonPath.isRootPath()) {
+            args.add(jsonPath.toString());
+        }
+        return createCommand(JSON_DEL, new IntegerOutput<>(codec), args);
     }
 
     Command<K, V, List<V>> jsonType(K key, JsonPath jsonPath) {

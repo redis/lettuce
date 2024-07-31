@@ -1523,7 +1523,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<JsonValue<V>>> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
+    public RedisFuture<List<Number>> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
         return dispatch(jsonCommandBuilder.jsonNumincrby(key, jsonPath, number));
     }
 

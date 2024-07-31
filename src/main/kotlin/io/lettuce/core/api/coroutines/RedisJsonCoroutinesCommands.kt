@@ -159,8 +159,8 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
     suspend fun jsonGet(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<JsonValue<V>>
 
     /**
-     * Merge a given [JsonValue] with the value matching [JsonPath]. Consequently, JSON values at matching
-     * paths are updated, deleted, or expanded with new children.
+     * Merge a given [JsonValue] with the value matching [JsonPath]. Consequently, JSON values at matching paths are
+     * updated, deleted, or expanded with new children.
      * <p>
      * Merging is done according to the following rules per JSON value in the value argument while considering the corresponding
      * original value if it exists:
@@ -212,10 +212,10 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @param key the key holding the JSON document.
      * @param jsonPath the [JsonPath] pointing to the value to increment.
      * @param number the increment value.
-     * @return an array of the new values after the increment.
+     * @return a [List] of the new values after the increment.
      * @since 6.5
      */
-    suspend fun jsonNumincrby(key: K, jsonPath: JsonPath, number: Number): List<JsonValue<V>>
+    suspend fun jsonNumincrby(key: K, jsonPath: JsonPath, number: Number): List<Number>
 
     /**
      * Return the keys in the JSON document that are referenced by the given [JsonPath]
@@ -273,8 +273,8 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key holding the JSON document.
      * @param jsonPath the [JsonPath] pointing to the value(s).
-     * @return Long (in recursive descent) the length of the JSON String at the provided [JsonPath], or null if the
-     *         value ath the desired path is not a string.
+     * @return Long (in recursive descent) the length of the JSON String at the provided [JsonPath], or null if the value
+     *         ath the desired path is not a string.
      * @since 6.5
      */
     suspend fun jsonStrlen(key: K, jsonPath: JsonPath): List<Long>

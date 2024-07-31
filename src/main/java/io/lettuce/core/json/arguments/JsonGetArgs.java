@@ -78,6 +78,15 @@ public class JsonGetArgs implements CompositeArgument {
             return new JsonGetArgs().space(space);
         }
 
+        /**
+         * Creates new {@link JsonGetArgs} empty arguments.
+         *
+         * @return new {@link JsonGetArgs} with empty arguments set.
+         */
+        public static JsonGetArgs none() {
+            return new JsonGetArgs().none();
+        }
+
     }
 
     /**
@@ -110,6 +119,15 @@ public class JsonGetArgs implements CompositeArgument {
     public JsonGetArgs space(String space) {
 
         this.space = space;
+        return this;
+    }
+
+    /**
+     * Set empty arguments.
+     *
+     * @return {@code this}.
+     */
+    public JsonGetArgs none() {
         return this;
     }
 
