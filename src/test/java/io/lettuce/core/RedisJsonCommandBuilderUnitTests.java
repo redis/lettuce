@@ -29,7 +29,7 @@ class RedisJsonCommandBuilderUnitTests {
     void shouldCorrectlyConstructJsonArrappend() {
 
         final JsonPath myPath = JsonPath.of("$..commuter_bikes");
-        JsonValue<String> element = JsonParserRegistry.getJsonParser(StringCodec.UTF8).createJsonValue("{id:bike6}");
+        JsonValue<String, String> element = JsonParserRegistry.getJsonParser(StringCodec.UTF8).createJsonValue("{id:bike6}");
         Command<String, String, List<Long>> command = builder.jsonArrappend(MY_KEY, myPath, new JsonValue[] { element });
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);

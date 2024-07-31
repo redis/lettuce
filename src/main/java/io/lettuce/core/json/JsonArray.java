@@ -23,21 +23,25 @@ package io.lettuce.core.json;
 import java.util.Iterator;
 import java.util.List;
 
-public interface JsonArray<V> extends JsonValue<V> {
+public interface JsonArray<K, V> extends JsonValue<K, V> {
 
-    void add(JsonValue<V> element);
+    void add(JsonValue<K, V> element);
 
-    void addAll(JsonArray<V> element);
+    void addAll(JsonArray<K, V> element);
 
-    List<JsonValue<V>> asList();
+    List<JsonValue<K, V>> asList();
 
-    Iterator<JsonValue<V>> iterator();
+    JsonValue<K, V> get(int index);
 
-    JsonValue<V> remove(int index);
+    JsonValue<K, V> getFirst();
 
-    boolean remove(JsonValue<V> element);
+    Iterator<JsonValue<K, V>> iterator();
 
-    JsonValue<V> replace(int index, JsonValue<V> newElement);
+    JsonValue<K, V> remove(int index);
+
+    boolean remove(JsonValue<K, V> element);
+
+    JsonValue<K, V> replace(int index, JsonValue<K, V> newElement);
 
     int size();
 

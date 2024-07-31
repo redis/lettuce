@@ -17,7 +17,7 @@ import java.util.List;
  * @author Will Glozer
  * @author Mark Paluch
  */
-public class JsonValueListOutput<K, V> extends CommandOutput<K, V, List<JsonValue<V>>> {
+public class JsonValueListOutput<K, V> extends CommandOutput<K, V, List<JsonValue<K, V>>> {
 
     private boolean initialized;
 

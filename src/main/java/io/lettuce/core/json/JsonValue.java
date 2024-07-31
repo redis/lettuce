@@ -39,7 +39,7 @@ import java.nio.ByteBuffer;
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8259">RFC 8259 - The JavaScript Object Notation (JSON) Data
  *      Interchange Format</a>
  */
-public interface JsonValue<V> {
+public interface JsonValue<K, V> {
 
     /**
      * Execute any {@link io.lettuce.core.codec.RedisCodec} decoding and fetch the result.
@@ -51,12 +51,22 @@ public interface JsonValue<V> {
     /**
      * @return the raw JSON text as a {@link ByteBuffer}
      */
-    ByteBuffer getUnprocessedValue();
+    ByteBuffer asByteBuffer();
 
-    /**
-     * Execute any {@link io.lettuce.core.codec.RedisCodec} encoding FIXME should we use this method or should we use
-     * #getUnprocessedValue()?
-     */
-    void commit();
+    boolean isJsonArray();
+
+    JsonArray<K, V> asJsonArray();
+
+    boolean isJsonObject();
+
+    JsonObject<K, V> asJsonObject();
+
+    boolean isString();
+
+    String asString();
+
+    boolean isNumber();
+
+    Number asNumber();
 
 }

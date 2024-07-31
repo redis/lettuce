@@ -51,7 +51,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return Long the resulting size of the arrays after the new data was appended, or null if the path does not exist.
      * @since 6.5
      */
-    suspend fun jsonArrappend(key: K, jsonPath: JsonPath, vararg values: JsonValue<V>): List<Long>
+    suspend fun jsonArrappend(key: K, jsonPath: JsonPath, vararg values: JsonValue<K, V>): List<Long>
 
     /**
      * Search for the first occurrence of a [JsonValue] in an array at a given [JsonPath] and return its index.
@@ -63,7 +63,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
      * @since 6.5
      */
-    suspend fun jsonArrindex(key: K, jsonPath: JsonPath, value: JsonValue<V>, range: JsonRangeArgs): List<Long>
+    suspend fun jsonArrindex(key: K, jsonPath: JsonPath, value: JsonValue<K, V>, range: JsonRangeArgs): List<Long>
 
     /**
      * Insert the [JsonValue]s into the array at a given [JsonPath] before the provided index, shifting the existing
@@ -76,7 +76,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return Long the resulting size of the arrays after the new data was inserted, or null if the path does not exist.
      * @since 6.5
      */
-    suspend fun jsonArrinsert(key: K, jsonPath: JsonPath, index: Int, vararg values: JsonValue<V>): List<Long>
+    suspend fun jsonArrinsert(key: K, jsonPath: JsonPath, index: Int, vararg values: JsonValue<K, V>): List<Long>
 
     /**
      * Report the length of the JSON array at a given [JsonPath]
@@ -98,7 +98,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return List<JsonValue> the removed element, or null if the specified path is not an array.
      * @since 6.5
      */
-    suspend fun jsonArrpop(key: K, jsonPath: JsonPath, index: Int): List<JsonValue<V>>
+    suspend fun jsonArrpop(key: K, jsonPath: JsonPath, index: Int): List<JsonValue<K, V>>
 
     /**
      * Trim an array at a given [JsonPath] so that it contains only the specified inclusive range of elements. All
@@ -156,7 +156,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
      * @since 6.5
      */
-    suspend fun jsonGet(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<JsonValue<V>>
+    suspend fun jsonGet(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<JsonValue<K, V>>
 
     /**
      * Merge a given [JsonValue] with the value matching [JsonPath]. Consequently, JSON values at matching paths are
@@ -180,7 +180,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @since 6.5
      * @see <A href="https://tools.ietf.org/html/rfc7396">RFC7396</a>
      */
-    suspend fun jsonMerge(key: K, jsonPath: JsonPath, value: JsonValue<V>): Boolean?
+    suspend fun jsonMerge(key: K, jsonPath: JsonPath, value: JsonValue<K, V>): Boolean?
 
     /**
      * Return the values at path from multiple key arguments.
@@ -190,7 +190,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return List<JsonValue> the values at path, or null if the path does not exist.
      * @since 6.5
      */
-    suspend fun jsonMGet(jsonPath: JsonPath, vararg keys: K): List<JsonValue<V>>
+    suspend fun jsonMGet(jsonPath: JsonPath, vararg keys: K): List<JsonValue<K, V>>
 
     /**
      * Set or update one or more JSON values according to the specified [JsonMsetArgs]
@@ -255,7 +255,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return Boolean true if the set was successful, false otherwise, null if the [JsonSetArgs] conditions are not met.
      * @since 6.5
      */
-    suspend fun jsonSet(key: K, jsonPath: JsonPath, value: JsonValue<V>, options: JsonSetArgs): Boolean?
+    suspend fun jsonSet(key: K, jsonPath: JsonPath, value: JsonValue<K, V>, options: JsonSetArgs): Boolean?
 
     /**
      * Append the json-string values to the string at the provided [JsonPath] in the JSON document.
@@ -266,7 +266,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return Long the new length of the string, or null if the matching JSON value is not a string.
      * @since 6.5
      */
-    suspend fun jsonStrappend(key: K, jsonPath: JsonPath, value: JsonValue<V>): List<Long>
+    suspend fun jsonStrappend(key: K, jsonPath: JsonPath, value: JsonValue<K, V>): List<Long>
 
     /**
      * Report the length of the JSON String at the provided [JsonPath] in the JSON document.
