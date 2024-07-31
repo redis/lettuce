@@ -24,12 +24,12 @@ import java.nio.ByteBuffer;
 
 public interface JsonParser<K, V> {
 
-    JsonValue<V> createJsonValue(ByteBuffer bytes);
+    JsonValue<K, V> createJsonValue(ByteBuffer bytes);
 
-    JsonValue<V> createJsonValue(V value);
+    JsonValue<K, V> createJsonValue(V value);
 
     JsonObject<K, V> createJsonObject();
 
-    JsonArray<V> createJsonArray();
+    JsonArray<K, V> createJsonArray();
 
 }

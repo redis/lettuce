@@ -47,136 +47,23 @@ public class JsonParserRegistry {
         }
 
         @Override
-        public JsonValue<V> createJsonValue(ByteBuffer bytes) {
-            return new DefaultJsonValue<>(bytes, codec::decodeValue, codec::encodeValue);
+        public JsonValue<K, V> createJsonValue(ByteBuffer bytes) {
+            return new DefaultJsonValue<>(bytes, codec);
         }
 
         @Override
-        public JsonValue<V> createJsonValue(V value) {
-            return new DefaultJsonValue<>(codec.encodeValue(value), codec::decodeValue, codec::encodeValue);
+        public JsonValue<K, V> createJsonValue(V value) {
+            return new DefaultJsonValue<>(codec.encodeValue(value), codec);
         }
 
         @Override
         public JsonObject<K, V> createJsonObject() {
-            return new DefaultJsonObject<K, V>(codec::decodeValue, codec::encodeValue);
+            return new DefaultJsonObject<K, V>(codec);
         }
 
         @Override
-        public JsonArray<V> createJsonArray() {
-            return new DefaultJsonArray<V>(codec::decodeValue, codec::encodeValue);
-        }
-
-    }
-
-    private static class DefaultJsonValue<V> implements JsonValue<V> {
-
-        private final Function<ByteBuffer, V> decodeValue;
-
-        private final Function<V, ByteBuffer> encodeValue;
-
-        private final ByteBuffer unprocessedData;
-
-        private DefaultJsonValue(ByteBuffer bytes, Function<ByteBuffer, V> decodeValue, Function<V, ByteBuffer> encodeValue) {
-            unprocessedData = bytes;
-            this.encodeValue = encodeValue;
-            this.decodeValue = decodeValue;
-        }
-
-        @Override
-        public V toValue() {
-            return decodeValue.apply(unprocessedData);
-        }
-
-        @Override
-        public ByteBuffer getUnprocessedValue() {
-            return unprocessedData;
-        }
-
-        @Override
-        public void commit() {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-    }
-
-    private static class DefaultJsonObject<K, V> extends DefaultJsonValue<V> implements JsonObject<K, V> {
-
-        private DefaultJsonObject(Function<ByteBuffer, V> decodeValue, Function<V, ByteBuffer> encodeValue) {
-            super(ByteBuffer.allocate(0), decodeValue, encodeValue);
-        }
-
-        @Override
-        public void add(K key, JsonValue<V> element) {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public Map<String, JsonValue<V>> asMap() {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public JsonValue<V> get(K key) {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public JsonValue<V> remove(K key) {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public int size() {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-    }
-
-    private static class DefaultJsonArray<V> extends DefaultJsonValue<V> implements JsonArray<V> {
-
-        private DefaultJsonArray(Function<ByteBuffer, V> decodeValue, Function<V, ByteBuffer> encodeValue) {
-            super(ByteBuffer.allocate(0), decodeValue, encodeValue);
-        }
-
-        @Override
-        public void add(JsonValue<V> element) {
-            throw new UnsupportedOperationException("Not implemented yet");
-
-        }
-
-        @Override
-        public void addAll(JsonArray<V> element) {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public List<JsonValue<V>> asList() {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public Iterator<JsonValue<V>> iterator() {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public JsonValue<V> remove(int index) {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public boolean remove(JsonValue<V> element) {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public JsonValue<V> replace(int index, JsonValue<V> newElement) {
-            throw new UnsupportedOperationException("Not implemented yet");
-        }
-
-        @Override
-        public int size() {
-            throw new UnsupportedOperationException("Not implemented yet");
+        public JsonArray<K, V> createJsonArray() {
+            return new DefaultJsonArray<K, V>(codec);
         }
 
     }

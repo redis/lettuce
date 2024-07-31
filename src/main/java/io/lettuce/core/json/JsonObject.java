@@ -33,15 +33,15 @@ import java.util.Map;
  * @see JsonValue
  * @since 6.5
  */
-public interface JsonObject<K, V> extends JsonValue<V> {
+public interface JsonObject<K, V> extends JsonValue<K, V> {
 
-    void add(K key, JsonValue<V> element);
+    void add(K key, JsonValue<K, V> element);
 
-    Map<String, JsonValue<V>> asMap();
+    Map<K, JsonValue<K, V>> asMap();
 
-    JsonValue<V> get(K key);
+    JsonValue<K, V> get(K key);
 
-    JsonValue<V> remove(K key);
+    JsonValue<K, V> remove(K key);
 
     int size();
 
