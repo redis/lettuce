@@ -113,8 +113,9 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonObjkeys(key: K, jsonPath: JsonPath): List<List<V>> =
         ops.jsonObjkeys(key, jsonPath).asFlow().toList()
 
-    override suspend fun jsonNumincrby(key: K, jsonPath: JsonPath, number: Number): List<JsonValue<V>> =
+    override suspend fun jsonNumincrby(key: K, jsonPath: JsonPath, number: Number): List<Number> =
         ops.jsonNumincrby(key, jsonPath, number).asFlow().toList()
+
 
 }
 

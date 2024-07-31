@@ -23,8 +23,8 @@ package io.lettuce.core.json;
 import java.nio.ByteBuffer;
 
 /**
- * Representation of a JSON text as per the <a href="https://datatracker.ietf.org/doc/html/rfc8259#section-2"> </a>RFC 8259 -
- * The JavaScript Object Notation (JSON) Data Interchange Format, Section 2. JSON Grammer</a>
+ * Representation of a JSON text as per the <a href="https://datatracker.ietf.org/doc/html/rfc8259#section-3"> </a>RFC 8259 -
+ * The JavaScript Object Notation (JSON) Data Interchange Format, Section 3. Values</a>
  * <p>
  * Implementations of this interface need to make sure parsing of the JSON is not done inside the event loop thread, used to
  * process the data coming from the Redis server, otherwise larger JSON documents might cause performance degradation that spans
@@ -41,10 +41,22 @@ import java.nio.ByteBuffer;
  */
 public interface JsonValue<V> {
 
+    /**
+     * Execute any {@link io.lettuce.core.codec.RedisCodec} decoding and fetch the result.
+     * 
+     * @return the value representation of this {@link JsonValue} based on the codec used
+     */
     V toValue();
 
+    /**
+     * @return the raw JSON text as a {@link ByteBuffer}
+     */
     ByteBuffer getUnprocessedValue();
 
+    /**
+     * Execute any {@link io.lettuce.core.codec.RedisCodec} encoding FIXME should we use this method or should we use
+     * #getUnprocessedValue()?
+     */
     void commit();
 
 }

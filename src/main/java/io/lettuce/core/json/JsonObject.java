@@ -22,6 +22,17 @@ package io.lettuce.core.json;
 
 import java.util.Map;
 
+/**
+ * Representation of a JSON object as per <a href="https://datatracker.ietf.org/doc/html/rfc8259#section-4"> </a>RFC 8259 - The
+ * JavaScript Object Notation (JSON) Data Interchange Format, Section 4. Objects</a>
+ * <p>
+ *
+ *
+ * @param <K> Key type based on the {@link io.lettuce.core.codec.RedisCodec} used.
+ * @param <V> Value type based on the {@link io.lettuce.core.codec.RedisCodec} used.
+ * @see JsonValue
+ * @since 6.5
+ */
 public interface JsonObject<K, V> extends JsonValue<V> {
 
     void add(K key, JsonValue<V> element);
