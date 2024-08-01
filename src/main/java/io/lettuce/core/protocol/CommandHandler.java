@@ -43,6 +43,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
+import io.lettuce.core.datastructure.queue.HashIndexedQueue;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
@@ -98,7 +99,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final Endpoint endpoint;
 
-    private final ArrayDeque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
+    private final Queue<RedisCommand<?, ?, ?>> stack;
 
     private final long commandHandlerId = COMMAND_HANDLER_COUNTER.incrementAndGet();
 
@@ -157,6 +158,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.commandLatencyRecorder = clientResources.commandLatencyRecorder();
         this.latencyMetricsEnabled = commandLatencyRecorder.isEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
+        this.stack = clientOptions.isUseHashIndexedQueue() ? new HashIndexedQueue<>() : new ArrayDeque<>();
 
         Tracing tracing = clientResources.tracing();
 
@@ -1041,7 +1043,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         private final Recycler.Handle<AddToStack> handle;
 
-        private ArrayDeque<Object> stack;
+        private Queue<RedisCommand<?, ?, ?>> stack;
 
         private RedisCommand<?, ?, ?> command;
 
@@ -1057,11 +1059,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
          * @return
          */
         @SuppressWarnings("unchecked")
-        static AddToStack newInstance(ArrayDeque<?> stack, RedisCommand<?, ?, ?> command) {
+        static AddToStack newInstance(Queue<RedisCommand<?, ?, ?>> stack, RedisCommand<?, ?, ?> command) {
 
             AddToStack entry = RECYCLER.get();
 
-            entry.stack = (ArrayDeque<Object>) stack;
+            entry.stack = stack;
             entry.command = command;
 
             return entry;
