@@ -20,46 +20,49 @@
 
 package io.lettuce.core.json;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.lettuce.core.codec.RedisCodec;
-
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 
 class DefaultJsonObject<K, V> extends DefaultJsonValue<K, V> implements JsonObject<K, V> {
 
-    Map<K, JsonValue<K, V>> fields;
-
     DefaultJsonObject(RedisCodec<K, V> codec) {
-        super(ByteBuffer.allocate(0), codec);
+        super(new ObjectNode(JsonNodeFactory.instance), codec);
+    }
+
+    DefaultJsonObject(JsonNode node, RedisCodec<K, V> codec) {
+        super(node, codec);
     }
 
     @Override
-    public void add(K key, JsonValue<K, V> element) {
-        fields.put(key, element);
-    }
+    public JsonObject<K, V> add(K key, JsonValue<K, V> element) {
+        String keyString = getStringValue(key);
+        JsonNode newNode = ((DefaultJsonValue<K, V>) element).getNode();
 
-    @Override
-    public Map<K, JsonValue<K, V>> asMap() {
-        return Collections.unmodifiableMap(fields);
+        ((ObjectNode) node).replace(keyString, newNode);
+        return this;
     }
 
     @Override
     public JsonValue<K, V> get(K key) {
-        return fields.get(key);
+        String keyString = getStringValue(key);
+        JsonNode value = node.get(keyString);
+
+        return new DefaultJsonValue<>(value, codec);
     }
 
     @Override
     public JsonValue<K, V> remove(K key) {
-        return fields.remove(key);
+        String keyString = getStringValue(key);
+        JsonNode value = ((ObjectNode) node).remove(keyString);
+
+        return new DefaultJsonValue<>(value, codec);
     }
 
     @Override
     public int size() {
-        return fields.size();
+        return node.size();
     }
 
     @Override

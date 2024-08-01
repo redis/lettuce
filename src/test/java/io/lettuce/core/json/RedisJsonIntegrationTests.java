@@ -114,9 +114,9 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         // Verify String parsing
         assertThat(value.get(0).asJsonArray().asList().get(0).isString()).isTrue();
-        assertThat(value.get(0).asJsonArray().asList().get(0).asString()).isEqualTo("\"Phoebe\"");
+        assertThat(value.get(0).asJsonArray().asList().get(0).asString()).isEqualTo("Phoebe");
         assertThat(value.get(0).asJsonArray().asList().get(1).isString()).isTrue();
-        assertThat(value.get(0).asJsonArray().asList().get(1).asString()).isEqualTo("\"Quaoar\"");
+        assertThat(value.get(0).asJsonArray().asList().get(1).asString()).isEqualTo("Quaoar");
     }
 
     @Test
@@ -164,27 +164,27 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     @Test
     void jsonSet() throws ExecutionException, InterruptedException {
         JsonParser<String, String> parser = redis.getStatefulConnection().getJsonParser();
-        JsonObject<String, String> bikeRecord = parser.createJsonObject();
-        JsonObject<String, String> bikeSpecs = parser.createJsonObject();
-        JsonArray<String, String> bikeColors = parser.createJsonArray();
+        JsonObject<String, String> bikeRecord = parser.createEmptyJsonObject();
+        JsonObject<String, String> bikeSpecs = parser.createEmptyJsonObject();
+        JsonArray<String, String> bikeColors = parser.createEmptyJsonArray();
 
-        bikeSpecs.add("material", parser.createJsonValue("composite"));
+        bikeSpecs.add("material", parser.createJsonValue("\"composite\""));
         bikeSpecs.add("weight", parser.createJsonValue("11"));
 
-        bikeColors.add(parser.createJsonValue("yellow"));
-        bikeColors.add(parser.createJsonValue("orange"));
+        bikeColors.add(parser.createJsonValue("\"yellow\""));
+        bikeColors.add(parser.createJsonValue("\"orange\""));
 
-        bikeRecord.add("id", parser.createJsonValue("bike:43"));
-        bikeRecord.add("model", parser.createJsonValue("DesertFox"));
-        bikeRecord.add("description", parser.createJsonValue("The DesertFox is a versatile bike for all terrains"));
-        bikeRecord.add("price", parser.createJsonValue("1299"));
+        bikeRecord.add("id", parser.createJsonValue("\"bike:43\""));
+        bikeRecord.add("model", parser.createJsonValue("\"DesertFox\""));
+        bikeRecord.add("description", parser.createJsonValue("\"The DesertFox is a versatile bike for all terrains\""));
+        bikeRecord.add("price", parser.createJsonValue("\"1299\""));
         bikeRecord.add("specs", bikeSpecs);
         bikeRecord.add("colors", bikeColors);
 
         JsonSetArgs args = JsonSetArgs.Builder.none();
 
-        Boolean result = redis.jsonSet(BIKES_INVENTORY, JsonPath.of("$..xc_bikes"), bikeRecord, args).get();
-        assertThat(result).isTrue();
+        String result = redis.jsonSet(BIKES_INVENTORY, JsonPath.of(COMMUTER_BIKES), bikeRecord, args).get();
+        assertThat(result).isEqualTo("OK");
     }
 
     @Test

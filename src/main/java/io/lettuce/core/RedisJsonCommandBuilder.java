@@ -27,10 +27,13 @@ import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
+import io.lettuce.core.output.BooleanListOutput;
+import io.lettuce.core.output.BooleanOutput;
 import io.lettuce.core.output.IntegerListOutput;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.JsonValueListOutput;
 import io.lettuce.core.output.NumberListOutput;
+import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
@@ -45,6 +48,7 @@ import static io.lettuce.core.protocol.CommandType.JSON_ARRPOP;
 import static io.lettuce.core.protocol.CommandType.JSON_DEL;
 import static io.lettuce.core.protocol.CommandType.JSON_GET;
 import static io.lettuce.core.protocol.CommandType.JSON_NUMINCRBY;
+import static io.lettuce.core.protocol.CommandType.JSON_SET;
 import static io.lettuce.core.protocol.CommandType.JSON_TYPE;
 
 /**
@@ -195,8 +199,22 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return null;
     }
 
-    RedisCommand<K, V, Boolean> jsonSet(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonSetArgs options) {
-        return null;
+    RedisCommand<K, V, String> jsonSet(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonSetArgs options) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (jsonPath != null && !jsonPath.isRootPath()) {
+            args.add(jsonPath.toString());
+        }
+
+        args.addValue(value.toValue());
+
+        if (options != null) {
+            options.build(args);
+        }
+
+        return createCommand(JSON_SET, new StatusOutput<>(codec), args);
     }
 
     RedisCommand<K, V, List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue<K, V> value) {

@@ -38,34 +38,4 @@ public class JsonParserRegistry {
         return new DefaultJsonParser<>(codec);
     }
 
-    private static class DefaultJsonParser<K, V> implements JsonParser<K, V> {
-
-        private final RedisCodec<K, V> codec;
-
-        private DefaultJsonParser(RedisCodec<K, V> codec) {
-            this.codec = codec;
-        }
-
-        @Override
-        public JsonValue<K, V> createJsonValue(ByteBuffer bytes) {
-            return new DefaultJsonValue<>(bytes, codec);
-        }
-
-        @Override
-        public JsonValue<K, V> createJsonValue(V value) {
-            return new DefaultJsonValue<>(codec.encodeValue(value), codec);
-        }
-
-        @Override
-        public JsonObject<K, V> createJsonObject() {
-            return new DefaultJsonObject<K, V>(codec);
-        }
-
-        @Override
-        public JsonArray<K, V> createJsonArray() {
-            return new DefaultJsonArray<K, V>(codec);
-        }
-
-    }
-
 }

@@ -24,83 +24,101 @@ import io.lettuce.core.codec.RedisCodec;
 
 import java.nio.ByteBuffer;
 
-class DefaultJsonValue<K, V> implements JsonValue<K, V> {
+class UnproccessedJsonValue<K, V> implements JsonValue<K, V> {
 
-    protected final RedisCodec<K, V> codec;
+    private JsonValue<K, V> jsonValue;
 
-    protected final ByteBuffer unprocessedData;
+    private final JsonParser<K, V> parser;
 
-    protected boolean deserialized = false;
+    private boolean deserialized = false;
 
-    DefaultJsonValue(ByteBuffer bytes, RedisCodec<K, V> codec) {
+    private final ByteBuffer unprocessedData;
+
+    private final RedisCodec<K, V> codec;
+
+    UnproccessedJsonValue(ByteBuffer bytes, RedisCodec<K, V> theCodec, JsonParser<K, V> theParser) {
         unprocessedData = bytes;
-        this.codec = codec;
+        parser = theParser;
+        codec = theCodec;
     }
 
     @Override
     public V toValue() {
+        if (deserialized) {
+            return jsonValue.toValue();
+        }
+
+        // if no deserialization took place, so no modification took place
+        // in this case we can decode the source data
         return codec.decodeValue(unprocessedData);
     }
 
     @Override
     public ByteBuffer asByteBuffer() {
-        if (unprocessedData == null) {
-            // TODO serialize the value to the buffer
-            throw new RuntimeException("Not implemented");
+        if (deserialized) {
+            return jsonValue.asByteBuffer();
         }
 
+        // if no deserialization took place, so no modification took place
+        // in this case we can decode the source data
         return unprocessedData;
     }
 
     @Override
     public boolean isJsonArray() {
         lazilyDeserialize();
-
-        return false;
+        return jsonValue.isJsonArray();
     }
 
     @Override
     public JsonArray<K, V> asJsonArray() {
         lazilyDeserialize();
-
-        throw new UnsupportedOperationException("The JSON value is not an array");
+        return jsonValue.asJsonArray();
     }
 
     @Override
     public boolean isJsonObject() {
         lazilyDeserialize();
-
-        return false;
+        return jsonValue.isJsonObject();
     }
 
     @Override
     public JsonObject<K, V> asJsonObject() {
         lazilyDeserialize();
-
-        throw new UnsupportedOperationException("The JSON value is not an object");
+        return jsonValue.asJsonObject();
     }
 
     @Override
     public boolean isString() {
-        return false;
+        lazilyDeserialize();
+        return jsonValue.isString();
     }
 
     @Override
     public String asString() {
-        return "";
+        lazilyDeserialize();
+        return jsonValue.asString();
     }
 
     @Override
     public boolean isNumber() {
-        return false;
+        lazilyDeserialize();
+        return jsonValue.isNumber();
     }
 
     @Override
     public Number asNumber() {
-        return null;
+        lazilyDeserialize();
+        return jsonValue.asNumber();
     }
 
     private void lazilyDeserialize() {
+        if (deserialized) {
+            return;
+        }
+
+        jsonValue = parser.parse(unprocessedData);
+        deserialized = true;
     }
 
 }

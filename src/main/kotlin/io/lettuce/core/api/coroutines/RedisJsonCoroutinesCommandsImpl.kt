@@ -104,7 +104,7 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonStrappend(key: K, jsonPath: JsonPath, value: JsonValue<K, V>): List<Long> =
         ops.jsonStrappend(key, jsonPath, value).asFlow().toList()
 
-    override suspend fun jsonSet(key: K, jsonPath: JsonPath, value: JsonValue<K, V>, options: JsonSetArgs): Boolean? =
+    override suspend fun jsonSet(key: K, jsonPath: JsonPath, value: JsonValue<K, V>, options: JsonSetArgs): String? =
         ops.jsonSet(key, jsonPath, value, options).awaitFirstOrNull()
 
     override suspend fun jsonObjlen(key: K, jsonPath: JsonPath): List<Long> =

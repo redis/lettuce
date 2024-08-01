@@ -20,71 +20,91 @@
 
 package io.lettuce.core.json;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.lettuce.core.codec.RedisCodec;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
 
 class DefaultJsonArray<K, V> extends DefaultJsonValue<K, V> implements JsonArray<K, V> {
 
-    List<JsonValue<K, V>> elements = new ArrayList<>();
-
     DefaultJsonArray(RedisCodec<K, V> codec) {
-        super(ByteBuffer.allocate(0), codec);
+        super(new ArrayNode(JsonNodeFactory.instance), codec);
+    }
+
+    DefaultJsonArray(JsonNode node, RedisCodec<K, V> codec) {
+        super(node, codec);
     }
 
     @Override
-    public void add(JsonValue<K, V> element) {
-        elements.add(element);
+    public JsonArray<K, V> add(JsonValue<K, V> element) {
+        JsonNode newNode = ((DefaultJsonValue<K, V>) element).getNode();
+        ((ArrayNode) node).add(newNode);
+
+        return this;
     }
 
     @Override
     public void addAll(JsonArray<K, V> element) {
-        elements.addAll(element.asList());
+        ArrayNode otherArray = (ArrayNode) ((DefaultJsonValue<K, V>) element).getNode();
+        ((ArrayNode) node).addAll(otherArray);
     }
 
     @Override
     public List<JsonValue<K, V>> asList() {
-        return Collections.unmodifiableList(elements);
+        List<JsonValue<K, V>> result = new ArrayList<>();
+
+        for (JsonNode jsonNode : node) {
+            result.add(new DefaultJsonValue<>(jsonNode, codec));
+        }
+
+        return result;
     }
 
     @Override
     public JsonValue<K, V> get(int index) {
-        return elements.get(index);
+        JsonNode jsonNode = node.get(index);
+
+        return new DefaultJsonValue<>(jsonNode, codec);
     }
 
     @Override
     public JsonValue<K, V> getFirst() {
-        return elements.get(0);
+        return get(0);
     }
 
     @Override
     public Iterator<JsonValue<K, V>> iterator() {
-        return elements.iterator();
+        List<JsonValue<K, V>> result = new ArrayList<>();
+        while (node.iterator().hasNext()) {
+            JsonNode jsonNode = node.iterator().next();
+            result.add(new DefaultJsonValue<>(jsonNode, codec));
+        }
+
+        return result.iterator();
     }
 
     @Override
     public JsonValue<K, V> remove(int index) {
-        return elements.remove(index);
-    }
+        JsonNode jsonNode = ((ArrayNode) node).remove(index);
 
-    @Override
-    public boolean remove(JsonValue<K, V> element) {
-        return elements.remove(element);
+        return new DefaultJsonValue<>(jsonNode, codec);
     }
 
     @Override
     public JsonValue<K, V> replace(int index, JsonValue<K, V> newElement) {
-        return elements.set(index, newElement);
+        JsonNode replaceWith = ((DefaultJsonValue<K, V>) newElement).getNode();
+        JsonNode replaced = ((ArrayNode) node).set(index, replaceWith);
+
+        return new DefaultJsonValue<>(replaced, codec);
     }
 
     @Override
     public int size() {
-        return elements.size();
+        return node.size();
     }
 
     @Override
