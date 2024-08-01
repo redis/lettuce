@@ -250,10 +250,10 @@ public interface RedisJsonAsyncCommands<K, V> {
      * @param jsonPath the {@link JsonPath} pointing to the value(s) where we want to set the value.
      * @param value the {@link JsonValue} to set.
      * @param options the {@link JsonSetArgs} the options for setting the value.
-     * @return Boolean true if the set was successful, false otherwise, null if the {@link JsonSetArgs} conditions are not met.
+     * @return String "OK" if the set was successful, null if the {@link JsonSetArgs} conditions are not met.
      * @since 6.5
      */
-    RedisFuture<Boolean> jsonSet(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonSetArgs options);
+    RedisFuture<String> jsonSet(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonSetArgs options);
 
     /**
      * Append the json-string values to the string at the provided {@link JsonPath} in the JSON document.

@@ -20,7 +20,9 @@
 
 package io.lettuce.core.json;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 
 import java.nio.ByteBuffer;
 
@@ -28,79 +30,81 @@ class DefaultJsonValue<K, V> implements JsonValue<K, V> {
 
     protected final RedisCodec<K, V> codec;
 
-    protected final ByteBuffer unprocessedData;
+    protected JsonNode node;
 
-    protected boolean deserialized = false;
-
-    DefaultJsonValue(ByteBuffer bytes, RedisCodec<K, V> codec) {
-        unprocessedData = bytes;
+    DefaultJsonValue(JsonNode node, RedisCodec<K, V> codec) {
         this.codec = codec;
+        this.node = node;
     }
 
     @Override
     public V toValue() {
-        return codec.decodeValue(unprocessedData);
+        byte[] result = node.toString().getBytes();
+        return codec.decodeValue(ByteBuffer.wrap(result));
     }
 
     @Override
     public ByteBuffer asByteBuffer() {
-        if (unprocessedData == null) {
-            // TODO serialize the value to the buffer
-            throw new RuntimeException("Not implemented");
-        }
-
-        return unprocessedData;
+        byte[] result = node.toString().getBytes();
+        return ByteBuffer.wrap(result);
     }
 
     @Override
     public boolean isJsonArray() {
-        lazilyDeserialize();
-
         return false;
     }
 
     @Override
     public JsonArray<K, V> asJsonArray() {
-        lazilyDeserialize();
-
         throw new UnsupportedOperationException("The JSON value is not an array");
     }
 
     @Override
     public boolean isJsonObject() {
-        lazilyDeserialize();
-
         return false;
     }
 
     @Override
     public JsonObject<K, V> asJsonObject() {
-        lazilyDeserialize();
-
         throw new UnsupportedOperationException("The JSON value is not an object");
     }
 
     @Override
     public boolean isString() {
-        return false;
+        return node.isTextual();
     }
 
     @Override
     public String asString() {
-        return "";
+        return node.asText();
     }
 
     @Override
     public boolean isNumber() {
-        return false;
+        return node.isNumber();
     }
 
     @Override
     public Number asNumber() {
-        return null;
+        if (node.isInt()) {
+            return node.asInt();
+        } else if (node.isLong()) {
+            return node.asLong();
+        }
+
+        return node.asDouble();
     }
 
-    private void lazilyDeserialize() {
+    protected JsonNode getNode() {
+        return node;
+    }
+
+    protected String getStringValue(K key) {
+        if (key instanceof String) {
+            return (String) key;
+        }
+
+        return new StringCodec().decodeKey(codec.encodeKey(key));
     }
 
 }

@@ -252,10 +252,10 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @param jsonPath the [JsonPath] pointing to the value(s) where we want to set the value.
      * @param value the [JsonValue] to set.
      * @param options the [JsonSetArgs] the options for setting the value.
-     * @return Boolean true if the set was successful, false otherwise, null if the [JsonSetArgs] conditions are not met.
+     * @return String "OK" if the set was successful, null if the [JsonSetArgs] conditions are not met.
      * @since 6.5
      */
-    suspend fun jsonSet(key: K, jsonPath: JsonPath, value: JsonValue<K, V>, options: JsonSetArgs): Boolean?
+    suspend fun jsonSet(key: K, jsonPath: JsonPath, value: JsonValue<K, V>, options: JsonSetArgs): String?
 
     /**
      * Append the json-string values to the string at the provided [JsonPath] in the JSON document.

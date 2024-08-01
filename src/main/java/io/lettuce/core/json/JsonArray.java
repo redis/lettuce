@@ -25,7 +25,7 @@ import java.util.List;
 
 public interface JsonArray<K, V> extends JsonValue<K, V> {
 
-    void add(JsonValue<K, V> element);
+    JsonArray<K, V> add(JsonValue<K, V> element);
 
     void addAll(JsonArray<K, V> element);
 
@@ -38,8 +38,6 @@ public interface JsonArray<K, V> extends JsonValue<K, V> {
     Iterator<JsonValue<K, V>> iterator();
 
     JsonValue<K, V> remove(int index);
-
-    boolean remove(JsonValue<K, V> element);
 
     JsonValue<K, V> replace(int index, JsonValue<K, V> newElement);
 

@@ -28,8 +28,10 @@ public interface JsonParser<K, V> {
 
     JsonValue<K, V> createJsonValue(V value);
 
-    JsonObject<K, V> createJsonObject();
+    JsonObject<K, V> createEmptyJsonObject();
 
-    JsonArray<K, V> createJsonArray();
+    JsonArray<K, V> createEmptyJsonArray();
+
+    JsonValue<K, V> parse(ByteBuffer byteBuffer);
 
 }

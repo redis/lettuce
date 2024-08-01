@@ -1600,7 +1600,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Boolean> jsonSet(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonSetArgs options) {
+    public Mono<String> jsonSet(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonSetArgs options) {
         return createMono(() -> jsonCommandBuilder.jsonSet(key, jsonPath, value, options));
     }
 
