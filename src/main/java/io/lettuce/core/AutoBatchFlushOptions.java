@@ -2,6 +2,8 @@ package io.lettuce.core;
 
 import java.io.Serializable;
 
+import io.lettuce.core.internal.LettuceAssert;
+
 /**
  * Options for command timeouts. These options configure how and whether commands time out once they were dispatched. Command
  * timeout begins:
@@ -24,16 +26,26 @@ public class AutoBatchFlushOptions implements Serializable {
 
     public static final int DEFAULT_BATCH_SIZE = 8;
 
+    public static final boolean DEFAULT_USE_BUSY_LOOP = false;
+
+    public static final long DEFAULT_BUSY_LOOP_DELAY_IN_NANOS = 400;
+
     private final boolean enableAutoBatchFlush;
 
     private final int writeSpinCount;
 
     private final int batchSize;
 
+    private final boolean busyLoop;
+
+    private final long busyLoopDelayInNanos;
+
     public AutoBatchFlushOptions(AutoBatchFlushOptions.Builder builder) {
         this.enableAutoBatchFlush = builder.enableAutoBatchFlush;
         this.writeSpinCount = builder.writeSpinCount;
         this.batchSize = builder.batchSize;
+        this.busyLoop = builder.busyLoop;
+        this.busyLoopDelayInNanos = builder.busyLoopDelayInNanos;
     }
 
     /**
@@ -61,6 +73,10 @@ public class AutoBatchFlushOptions implements Serializable {
 
         private int batchSize = DEFAULT_BATCH_SIZE;
 
+        private boolean busyLoop = DEFAULT_USE_BUSY_LOOP;
+
+        private long busyLoopDelayInNanos = DEFAULT_BUSY_LOOP_DELAY_IN_NANOS;
+
         /**
          * Enable auto batch flush.
          *
@@ -79,6 +95,8 @@ public class AutoBatchFlushOptions implements Serializable {
          * @return {@code this}
          */
         public Builder writeSpinCount(int writeSpinCount) {
+            LettuceAssert.isPositive(writeSpinCount, "Write spin count must be greater 0");
+
             this.writeSpinCount = writeSpinCount;
             return this;
         }
@@ -90,7 +108,21 @@ public class AutoBatchFlushOptions implements Serializable {
          * @return {@code this}
          */
         public Builder batchSize(int batchSize) {
+            LettuceAssert.isPositive(batchSize, "Batch size must be greater 0");
+
             this.batchSize = batchSize;
+            return this;
+        }
+
+        public Builder busyLoop(boolean busyLoop) {
+            this.busyLoop = busyLoop;
+            return this;
+        }
+
+        public Builder busyLoopDelayInNanos(long busyLoopDelayInNanos) {
+            LettuceAssert.isNonNegative(busyLoopDelayInNanos, "Busy loop delay must be greater 0");
+
+            this.busyLoopDelayInNanos = busyLoopDelayInNanos;
             return this;
         }
 
@@ -124,6 +156,14 @@ public class AutoBatchFlushOptions implements Serializable {
      */
     public int getBatchSize() {
         return batchSize;
+    }
+
+    public boolean isBusyLoop() {
+        return busyLoop;
+    }
+
+    public long getBusyLoopDelayInNanos() {
+        return busyLoopDelayInNanos;
     }
 
 }

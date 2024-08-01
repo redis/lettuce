@@ -169,6 +169,10 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     private final int batchSize;
 
+    private final boolean busyLoop;
+
+    private final long busyLoopDelayInNanos;
+
     /**
      * Create a new {@link BatchFlushEndpoint}.
      *
@@ -197,6 +201,8 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         this.callbackOnClose = callbackOnClose;
         this.writeSpinCount = clientOptions.getAutoBatchFlushOptions().getWriteSpinCount();
         this.batchSize = clientOptions.getAutoBatchFlushOptions().getBatchSize();
+        this.busyLoop = clientOptions.getAutoBatchFlushOptions().isBusyLoop();
+        this.busyLoopDelayInNanos = clientOptions.getAutoBatchFlushOptions().getBusyLoopDelayInNanos();
     }
 
     @Override
@@ -607,6 +613,10 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
     }
 
     private void scheduleSendJobIfNeeded(final ContextualChannel chan) {
+        if (busyLoop) {
+            return;
+        }
+
         final EventLoop eventLoop = chan.eventLoop();
         if (eventLoop.inEventLoop()) {
             scheduleSendJobInEventLoopIfNeeded(chan);
@@ -669,6 +679,13 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
             return;
         }
 
+        if (busyLoop) {
+            // Don't use chan.eventLoop().execute(), otherwise performance will drop, since the event loop
+            // thread will trap within a certain time period.
+            chan.eventLoop().schedule(() -> loopSend(chan), busyLoopDelayInNanos, TimeUnit.NANOSECONDS);
+            return;
+        }
+
         if (firstCall) {
             // // Don't setUnsafe here because loopSend0() may result in a delayed loopSend() call.
             batchFlushEndPointContext.hasOngoingSendLoop.exitSafe();
@@ -683,7 +700,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
     private int pollBatch(final BatchFlushEndPointContext batchFlushEndPointContext, ContextualChannel chan) {
         int count = 0;
         for (; count < batchSize; count++) {
-            final RedisCommand<?, ?, ?> cmd = this.taskQueue.poll(); // relaxed poll is faster and we wil retry later anyway.
+            final RedisCommand<?, ?, ?> cmd = this.taskQueue.poll();
             if (cmd == null) {
                 break;
             }
