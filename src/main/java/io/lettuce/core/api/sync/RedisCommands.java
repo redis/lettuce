@@ -21,6 +21,7 @@ package io.lettuce.core.api.sync;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
+import io.lettuce.core.json.JsonParser;
 
 /**
  *
@@ -79,5 +80,9 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCo
      */
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();
+
+    JsonParser<K, V> getJsonParser();
+
+    void setJsonParser(JsonParser<K, V> jsonParser);
 
 }

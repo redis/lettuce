@@ -35,8 +35,8 @@ package io.lettuce.core.json;
 public interface JsonObject<K, V> extends JsonValue<K, V> {
 
     /**
-     * Add (if there is no value with the same key already) or replace (if there is) a new {@link JsonValue} to the object
-     * under the provided key. Supports chaining of calls.
+     * Add (if there is no value with the same key already) or replace (if there is) a new {@link JsonValue} to the object under
+     * the provided key. Supports chaining of calls.
      *
      * @param key the key of the {@link JsonValue} to add or replace
      * @param element the value to add or replace

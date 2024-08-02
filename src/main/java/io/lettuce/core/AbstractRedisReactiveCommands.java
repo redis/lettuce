@@ -26,6 +26,8 @@ import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.json.JsonParserRegistry;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
@@ -80,6 +82,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author dengliming
  * @author Andrey Shlykov
  * @author Ali Takavci
+ * @author Tihomir Mateev
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>

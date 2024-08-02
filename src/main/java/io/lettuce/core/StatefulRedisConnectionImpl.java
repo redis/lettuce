@@ -155,16 +155,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     @Override
-    public JsonParser<K, V> getJsonParser() {
-        return JsonParserRegistry.getJsonParser(this.codec);
-    }
-
-    @Override
-    public void setJsonParser(JsonParser<K, V> jsonParser) {
-        throw new UnsupportedOperationException("Setting a custom JsonParser is not supported");
-    }
-
-    @Override
     public boolean isMulti() {
         return multi != null;
     }

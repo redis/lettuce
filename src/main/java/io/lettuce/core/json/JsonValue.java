@@ -55,20 +55,48 @@ public interface JsonValue<K, V> {
      */
     ByteBuffer asByteBuffer();
 
+    /**
+     * @return {@code true} if this {@link JsonValue} represents a JSON array
+     */
     boolean isJsonArray();
 
+    /**
+     * @return the {@link JsonArray} representation of this {@link JsonValue}
+     * @see #isJsonArray()
+     */
     JsonArray<K, V> asJsonArray();
 
+    /**
+     * @return {@code true} if this {@link JsonValue} represents a JSON object
+     */
     boolean isJsonObject();
 
+    /**
+     * @return the {@link JsonObject} representation of this {@link JsonValue}
+     * @see #isJsonObject()
+     */
     JsonObject<K, V> asJsonObject();
 
+    /**
+     * @return {@code true} if this {@link JsonValue} represents a JSON string
+     */
     boolean isString();
 
+    /**
+     * @return the {@link String} representation of this {@link JsonValue}
+     * @see #isString()
+     */
     String asString();
 
+    /**
+     * @return {@code true} if this {@link JsonValue} represents a JSON number
+     */
     boolean isNumber();
 
+    /**
+     * @return the {@link Number} representation of this {@link JsonValue}
+     * @see #isNumber()
+     */
     Number asNumber();
 
 }

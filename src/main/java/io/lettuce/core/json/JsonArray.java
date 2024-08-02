@@ -75,7 +75,7 @@ public interface JsonArray<K, V> extends JsonValue<K, V> {
     JsonValue<K, V> getFirst();
 
     /**
-     * Get an {@link Iterator} allowing access to all the  {@link JsonValue}s in the array.
+     * Get an {@link Iterator} allowing access to all the {@link JsonValue}s in the array.
      *
      * @return the last {@link JsonValue} in the array or {@code null} if the array is empty
      */
