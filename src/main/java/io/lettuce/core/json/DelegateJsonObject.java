@@ -25,20 +25,27 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.lettuce.core.codec.RedisCodec;
 
-class DefaultJsonObject<K, V> extends DefaultJsonValue<K, V> implements JsonObject<K, V> {
+/**
+ * Implementation of the {@link DelegateJsonObject} that delegates most of it's dunctionality to the Jackson {@link ObjectNode}.
+ *
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @author Tihomir Mateev
+ */
+class DelegateJsonObject<K, V> extends DelegateJsonValue<K, V> implements JsonObject<K, V> {
 
-    DefaultJsonObject(RedisCodec<K, V> codec) {
+    DelegateJsonObject(RedisCodec<K, V> codec) {
         super(new ObjectNode(JsonNodeFactory.instance), codec);
     }
 
-    DefaultJsonObject(JsonNode node, RedisCodec<K, V> codec) {
+    DelegateJsonObject(JsonNode node, RedisCodec<K, V> codec) {
         super(node, codec);
     }
 
     @Override
-    public JsonObject<K, V> add(K key, JsonValue<K, V> element) {
+    public JsonObject<K, V> put(K key, JsonValue<K, V> element) {
         String keyString = getStringValue(key);
-        JsonNode newNode = ((DefaultJsonValue<K, V>) element).getNode();
+        JsonNode newNode = ((DelegateJsonValue<K, V>) element).getNode();
 
         ((ObjectNode) node).replace(keyString, newNode);
         return this;
@@ -49,7 +56,7 @@ class DefaultJsonObject<K, V> extends DefaultJsonValue<K, V> implements JsonObje
         String keyString = getStringValue(key);
         JsonNode value = node.get(keyString);
 
-        return new DefaultJsonValue<>(value, codec);
+        return new DelegateJsonValue<>(value, codec);
     }
 
     @Override
@@ -57,7 +64,7 @@ class DefaultJsonObject<K, V> extends DefaultJsonValue<K, V> implements JsonObje
         String keyString = getStringValue(key);
         JsonNode value = ((ObjectNode) node).remove(keyString);
 
-        return new DefaultJsonValue<>(value, codec);
+        return new DelegateJsonValue<>(value, codec);
     }
 
     @Override

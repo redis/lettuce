@@ -168,18 +168,18 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         JsonObject<String, String> bikeSpecs = parser.createEmptyJsonObject();
         JsonArray<String, String> bikeColors = parser.createEmptyJsonArray();
 
-        bikeSpecs.add("material", parser.createJsonValue("\"composite\""));
-        bikeSpecs.add("weight", parser.createJsonValue("11"));
+        bikeSpecs.put("material", parser.createJsonValue("\"composite\""));
+        bikeSpecs.put("weight", parser.createJsonValue("11"));
 
         bikeColors.add(parser.createJsonValue("\"yellow\""));
         bikeColors.add(parser.createJsonValue("\"orange\""));
 
-        bikeRecord.add("id", parser.createJsonValue("\"bike:43\""));
-        bikeRecord.add("model", parser.createJsonValue("\"DesertFox\""));
-        bikeRecord.add("description", parser.createJsonValue("\"The DesertFox is a versatile bike for all terrains\""));
-        bikeRecord.add("price", parser.createJsonValue("\"1299\""));
-        bikeRecord.add("specs", bikeSpecs);
-        bikeRecord.add("colors", bikeColors);
+        bikeRecord.put("id", parser.createJsonValue("\"bike:43\""));
+        bikeRecord.put("model", parser.createJsonValue("\"DesertFox\""));
+        bikeRecord.put("description", parser.createJsonValue("\"The DesertFox is a versatile bike for all terrains\""));
+        bikeRecord.put("price", parser.createJsonValue("\"1299\""));
+        bikeRecord.put("specs", bikeSpecs);
+        bikeRecord.put("colors", bikeColors);
 
         JsonSetArgs args = JsonSetArgs.Builder.none();
 
