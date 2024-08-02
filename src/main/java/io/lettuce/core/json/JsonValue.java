@@ -38,6 +38,8 @@ import java.nio.ByteBuffer;
  * @see io.lettuce.core.codec.RedisCodec
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8259">RFC 8259 - The JavaScript Object Notation (JSON) Data
  *      Interchange Format</a>
+ * @author Tihomir Mateev
+ * @since 6.5
  */
 public interface JsonValue<K, V> {
 

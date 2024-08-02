@@ -36,8 +36,8 @@ public class RedisContainerIntegrationTests {
 
     @BeforeAll
     static void setup() {
-        RedisURI redisURI = RedisURI.Builder.redis("redis-19897.c55.eu-central-1-1.ec2.redns.redis-cloud.com").withPort(19897)
-                .withPassword("9CH6niJKjHFzAiPtp9jvoI9OvErZ7urh").withTimeout(Duration.ofSeconds(30)).build();
+        RedisURI redisURI = RedisURI.Builder.redis("").withPort(19897)
+                .withPassword("").withTimeout(Duration.ofSeconds(30)).build();
         redisClient = RedisClient.create(redisURI);
         StatefulRedisConnection<String, String> connect = redisClient.connect();
         redis = connect.async();

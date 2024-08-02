@@ -23,25 +23,33 @@ package io.lettuce.core.json;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.lettuce.core.codec.RedisCodec;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-class DefaultJsonArray<K, V> extends DefaultJsonValue<K, V> implements JsonArray<K, V> {
+/**
+ * Implementation of the {@link DelegateJsonArray} that delegates most of it's dunctionality to the Jackson {@link ArrayNode}.
+ *
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @author Tihomir Mateev
+ */
+class DelegateJsonArray<K, V> extends DelegateJsonValue<K, V> implements JsonArray<K, V> {
 
-    DefaultJsonArray(RedisCodec<K, V> codec) {
+    DelegateJsonArray(RedisCodec<K, V> codec) {
         super(new ArrayNode(JsonNodeFactory.instance), codec);
     }
 
-    DefaultJsonArray(JsonNode node, RedisCodec<K, V> codec) {
+    DelegateJsonArray(JsonNode node, RedisCodec<K, V> codec) {
         super(node, codec);
     }
 
     @Override
     public JsonArray<K, V> add(JsonValue<K, V> element) {
-        JsonNode newNode = ((DefaultJsonValue<K, V>) element).getNode();
+        JsonNode newNode = ((DelegateJsonValue<K, V>) element).getNode();
         ((ArrayNode) node).add(newNode);
 
         return this;
@@ -49,7 +57,7 @@ class DefaultJsonArray<K, V> extends DefaultJsonValue<K, V> implements JsonArray
 
     @Override
     public void addAll(JsonArray<K, V> element) {
-        ArrayNode otherArray = (ArrayNode) ((DefaultJsonValue<K, V>) element).getNode();
+        ArrayNode otherArray = (ArrayNode) ((DelegateJsonValue<K, V>) element).getNode();
         ((ArrayNode) node).addAll(otherArray);
     }
 
@@ -58,7 +66,7 @@ class DefaultJsonArray<K, V> extends DefaultJsonValue<K, V> implements JsonArray
         List<JsonValue<K, V>> result = new ArrayList<>();
 
         for (JsonNode jsonNode : node) {
-            result.add(new DefaultJsonValue<>(jsonNode, codec));
+            result.add(new DelegateJsonValue<>(jsonNode, codec));
         }
 
         return result;
@@ -68,7 +76,7 @@ class DefaultJsonArray<K, V> extends DefaultJsonValue<K, V> implements JsonArray
     public JsonValue<K, V> get(int index) {
         JsonNode jsonNode = node.get(index);
 
-        return new DefaultJsonValue<>(jsonNode, codec);
+        return new DelegateJsonValue<>(jsonNode, codec);
     }
 
     @Override
@@ -81,7 +89,7 @@ class DefaultJsonArray<K, V> extends DefaultJsonValue<K, V> implements JsonArray
         List<JsonValue<K, V>> result = new ArrayList<>();
         while (node.iterator().hasNext()) {
             JsonNode jsonNode = node.iterator().next();
-            result.add(new DefaultJsonValue<>(jsonNode, codec));
+            result.add(new DelegateJsonValue<>(jsonNode, codec));
         }
 
         return result.iterator();
@@ -91,15 +99,15 @@ class DefaultJsonArray<K, V> extends DefaultJsonValue<K, V> implements JsonArray
     public JsonValue<K, V> remove(int index) {
         JsonNode jsonNode = ((ArrayNode) node).remove(index);
 
-        return new DefaultJsonValue<>(jsonNode, codec);
+        return new DelegateJsonValue<>(jsonNode, codec);
     }
 
     @Override
     public JsonValue<K, V> replace(int index, JsonValue<K, V> newElement) {
-        JsonNode replaceWith = ((DefaultJsonValue<K, V>) newElement).getNode();
+        JsonNode replaceWith = ((DelegateJsonValue<K, V>) newElement).getNode();
         JsonNode replaced = ((ArrayNode) node).set(index, replaceWith);
 
-        return new DefaultJsonValue<>(replaced, codec);
+        return new DelegateJsonValue<>(replaced, codec);
     }
 
     @Override

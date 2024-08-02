@@ -26,13 +26,20 @@ import io.lettuce.core.codec.StringCodec;
 
 import java.nio.ByteBuffer;
 
-class DefaultJsonValue<K, V> implements JsonValue<K, V> {
+/**
+ * Implementation of the {@link JsonValue} that delegates most of it's dunctionality to the Jackson {@link JsonNode}.
+ *
+ * @param <K> Key type.
+ * @param <V> Value type.
+ * @author Tihomir Mateev
+ */
+class DelegateJsonValue<K, V> implements JsonValue<K, V> {
 
     protected final RedisCodec<K, V> codec;
 
     protected JsonNode node;
 
-    DefaultJsonValue(JsonNode node, RedisCodec<K, V> codec) {
+    DelegateJsonValue(JsonNode node, RedisCodec<K, V> codec) {
         this.codec = codec;
         this.node = node;
     }
@@ -75,9 +82,7 @@ class DefaultJsonValue<K, V> implements JsonValue<K, V> {
     }
 
     @Override
-    public String asString() {
-        return node.asText();
-    }
+    public String asString() { return node.asText(); }
 
     @Override
     public boolean isNumber() {
@@ -91,7 +96,6 @@ class DefaultJsonValue<K, V> implements JsonValue<K, V> {
         } else if (node.isLong()) {
             return node.asLong();
         }
-
         return node.asDouble();
     }
 

@@ -23,7 +23,6 @@ package io.lettuce.core.json;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.codec.StringCodec;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -48,12 +47,12 @@ class DefaultJsonParser<K, V> implements JsonParser<K, V> {
 
     @Override
     public JsonObject<K, V> createEmptyJsonObject() {
-        return new DefaultJsonObject<K, V>(codec);
+        return new DelegateJsonObject<K, V>(codec);
     }
 
     @Override
     public JsonArray<K, V> createEmptyJsonArray() {
-        return new DefaultJsonArray<K, V>(codec);
+        return new DelegateJsonArray<K, V>(codec);
     }
 
     protected JsonValue<K, V> parse(V value) {
@@ -72,11 +71,11 @@ class DefaultJsonParser<K, V> implements JsonParser<K, V> {
             JsonNode root = mapper.readTree(value);
 
             if (root.isObject()) {
-                return new DefaultJsonObject<>(root, codec);
+                return new DelegateJsonObject<>(root, codec);
             } else if (root.isArray()) {
-                return new DefaultJsonArray<>(root, codec);
+                return new DelegateJsonArray<>(root, codec);
             }
-            return new DefaultJsonValue<>(root, codec);
+            return new DelegateJsonValue<>(root, codec);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -91,11 +90,11 @@ class DefaultJsonParser<K, V> implements JsonParser<K, V> {
             JsonNode root = mapper.readTree(bytes);
 
             if (root.isObject()) {
-                return new DefaultJsonObject<>(root, codec);
+                return new DelegateJsonObject<>(root, codec);
             } else if (root.isArray()) {
-                return new DefaultJsonArray<>(root, codec);
+                return new DelegateJsonArray<>(root, codec);
             }
-            return new DefaultJsonValue<>(root, codec);
+            return new DelegateJsonValue<>(root, codec);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

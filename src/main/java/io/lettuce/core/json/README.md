@@ -18,8 +18,36 @@ event loop.
 ## Default mode
 Best for:
 * Most typical use-cases where the JSON document is parsed and processed
-```java
 
+```java
+RedisURI redisURI = RedisURI.Builder.redis("acme.com").build();
+RedisClient redisClient = RedisClient.create(redisURI);
+try(StatefulRedisConnection<ByteBuffer, ByteBuffer> connect = redisClient.connect()){
+    redis = connect.async();
+    JsonPath path = JsonPath.of("$..mountain_bikes[0:2].model");
+
+    JsonParser<String, String> parser = redis.getStatefulConnection().getJsonParser();
+    JsonObject<String, String> bikeRecord = parser.createEmptyJsonObject();
+    JsonObject<String, String> bikeSpecs = parser.createEmptyJsonObject();
+    JsonArray<String, String> bikeColors = parser.createEmptyJsonArray();
+
+    bikeSpecs.put("material", parser.createJsonValue("\"composite\""));
+    bikeSpecs.put("weight", parser.createJsonValue("11"));
+
+    bikeColors.add(parser.createJsonValue("\"yellow\""));
+    bikeColors.add(parser.createJsonValue("\"orange\""));
+
+    bikeRecord.put("id", parser.createJsonValue("\"bike:43\""));
+    bikeRecord.put("model", parser.createJsonValue("\"DesertFox\""));
+    bikeRecord.put("description", parser.createJsonValue("\"The DesertFox is a versatile bike for all terrains\""));
+    bikeRecord.put("price", parser.createJsonValue("\"1299\""));
+    bikeRecord.put("specs", bikeSpecs);
+    bikeRecord.put("colors", bikeColors);
+
+    JsonSetArgs args = JsonSetArgs.Builder.none();
+
+    String result = redis.jsonSet("bikes:inventory", path, bikeRecord, args).get();
+}
 ```
 
 ## Advanced mode
@@ -37,7 +65,6 @@ Best for:
 Example usage:
 
 ```java
-
 RedisURI redisURI = RedisURI.Builder.redis("acme.com").build();
 RedisClient redisClient = RedisClient.create(redisURI);
 try(StatefulRedisConnection<ByteBuffer, ByteBuffer> connect = redisClient.connect(new ByteBufferCodec())){
