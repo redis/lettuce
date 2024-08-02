@@ -73,7 +73,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         for (JsonValue<K, V> value : jsonValues) {
-            args.addValue(value.toValue());
+            args.add(value.asByteBuffer().array());
         }
 
         return createCommand(JSON_ARRAPPEND, new IntegerListOutput<>(codec), args);
@@ -88,7 +88,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(jsonPath.toString());
         }
 
-        args.addValue(value.toValue());
+        args.add(value.asByteBuffer().array());
 
         if (range != null) {
             // OPTIONAL as per API
@@ -208,7 +208,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(jsonPath.toString());
         }
 
-        args.addValue(value.toValue());
+        args.add(value.asByteBuffer().array());
 
         if (options != null) {
             options.build(args);

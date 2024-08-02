@@ -82,7 +82,9 @@ class DelegateJsonValue<K, V> implements JsonValue<K, V> {
     }
 
     @Override
-    public String asString() { return node.asText(); }
+    public String asString() {
+        return node.asText();
+    }
 
     @Override
     public boolean isNumber() {

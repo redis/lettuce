@@ -63,8 +63,4 @@ public interface StatefulRedisConnection<K, V> extends StatefulConnection<K, V> 
      */
     void removeListener(PushListener listener);
 
-    JsonParser<K, V> getJsonParser();
-
-    void setJsonParser(JsonParser<K, V> jsonParser);
-
 }
