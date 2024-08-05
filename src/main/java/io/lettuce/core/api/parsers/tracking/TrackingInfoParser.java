@@ -50,10 +50,7 @@ public class TrackingInfoParser {
      * @return an {@link TrackingInfo} instance
      */
     public static TrackingInfo parse(DynamicAggregateData trackinginfoOutput) {
-
-        verifyStructure(trackinginfoOutput);
-
-        Map<Object, Object> data = trackinginfoOutput.getDynamicMap();
+        Map<Object, Object> data = verifyStructure(trackinginfoOutput);
         Set<?> flags = ((DynamicAggregateData) data.get(CommandKeyword.FLAGS.toString().toLowerCase())).getDynamicSet();
         Long clientId = (Long) data.get(CommandKeyword.REDIRECT.toString().toLowerCase());
         List<?> prefixes = ((DynamicAggregateData) data.get(CommandKeyword.PREFIXES.toString().toLowerCase())).getDynamicList();
@@ -73,19 +70,25 @@ public class TrackingInfoParser {
         return new TrackingInfo(parsedFlags, clientId, parsedPrefixes);
     }
 
-    private static void verifyStructure(DynamicAggregateData trackinginfoOutput) {
+    private static Map<Object, Object> verifyStructure(DynamicAggregateData trackinginfoOutput) {
 
-        if (trackinginfoOutput == null || trackinginfoOutput.getDynamicMap().isEmpty()) {
-            throw new IllegalArgumentException("trackinginfoOutput must not be null or empty");
+        if (trackinginfoOutput == null) {
+            throw new IllegalArgumentException("Failed while parsing CLIENT TRACKINGINFO: trackinginfoOutput must not be null");
         }
 
         Map<Object, Object> data = trackinginfoOutput.getDynamicMap();
+        if (data == null || data.isEmpty()) {
+            throw new IllegalArgumentException("Failed while parsing CLIENT TRACKINGINFO: data must not be null or empty");
+        }
 
         if (!data.containsKey(CommandKeyword.FLAGS.toString().toLowerCase())
                 || !data.containsKey(CommandKeyword.REDIRECT.toString().toLowerCase())
                 || !data.containsKey(CommandKeyword.PREFIXES.toString().toLowerCase())) {
-            throw new IllegalArgumentException("trackinginfoOutput has missing flags");
+            throw new IllegalArgumentException(
+                    "Failed while parsing CLIENT TRACKINGINFO: trackinginfoOutput has missing flags");
         }
+
+        return data;
     }
 
 }
