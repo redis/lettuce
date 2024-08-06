@@ -3,8 +3,12 @@ package io.lettuce.core.internal;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +58,33 @@ class FuturesUnitTests {
         }
 
         assertThat(Thread.currentThread().isInterrupted()).isTrue();
+    }
+
+    @Test
+    void allOfShouldNotThrow() throws InterruptedException {
+        List<CompletionStage<?>> stages = new ArrayList<>();
+
+        for (int i = 0; i < 50; i++) {
+            stages.add(new CompletableFuture<>());
+        }
+
+        Thread thread1 = new Thread(() -> assertDoesNotThrow(() -> {
+            for (int i = 0; i < 10; i++) {
+                Futures.allOf(stages);
+            }
+        }));
+
+        Thread thread2 = new Thread(() -> {
+            for (int i = 0; i < 10; i++) {
+                stages.remove(0);
+            }
+        });
+
+        thread2.start();
+        thread1.start();
+
+        thread2.join();
+        thread1.join();
     }
 
 }
