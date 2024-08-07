@@ -18,7 +18,27 @@
  * limitations under the License.
  */
 
+package io.lettuce.core.output;
+
 /**
- * Model and parser for the {@code CLIENT TRACKINGINFO} output.
+ * Any usage of the {@link DynamicAggregateOutput} comes hand in hand with a respective {@link DynamicAggregateDataParser} that
+ * is able to parse the data extracted from the server to a meaningful Java object.
+ * 
+ * @param <T> the type of the parsed object
+ * @author Tihomir Mateev
+ * @see DynamicAggregateData
+ * @see DynamicAggregateOutput
+ * @since 6.5
  */
-package io.lettuce.core.api.parsers.tracking;
+public interface DynamicAggregateDataParser<T> {
+
+    /**
+     * Parse the data extracted from the server to a specific domain object.
+     *
+     * @param data the data to parse
+     * @return the parsed object
+     * @since 6.5
+     */
+    T parse(DynamicAggregateData data);
+
+}

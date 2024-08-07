@@ -1,11 +1,11 @@
-package io.lettuce.core.cluster.models.tracking;
+package io.lettuce.core.output;
 
 import io.lettuce.core.api.parsers.tracking.TrackingInfo;
 import io.lettuce.core.api.parsers.tracking.TrackingInfoParser;
-import io.lettuce.core.output.data.ArrayAggregateData;
-import io.lettuce.core.output.data.DynamicAggregateData;
-import io.lettuce.core.output.data.MapAggregateData;
-import io.lettuce.core.output.data.SetAggregateData;
+import io.lettuce.core.output.ArrayAggregateData;
+import io.lettuce.core.output.DynamicAggregateData;
+import io.lettuce.core.output.MapAggregateData;
+import io.lettuce.core.output.SetAggregateData;
 import io.lettuce.core.protocol.CommandKeyword;
 import org.junit.jupiter.api.Test;
 

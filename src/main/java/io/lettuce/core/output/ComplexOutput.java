@@ -23,118 +23,115 @@ package io.lettuce.core.output;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceFactories;
-import io.lettuce.core.output.data.DynamicAggregateData;
-import io.lettuce.core.output.data.ArrayAggregateData;
-import io.lettuce.core.output.data.MapAggregateData;
-import io.lettuce.core.output.data.SetAggregateData;
 
 import java.nio.ByteBuffer;
 import java.util.Deque;
 
 /**
- * An implementation of the {@link CommandOutput} that heuristically attempts to parse any response the Redis server could
- * provide, leaving out the user to provide the knowledge of how this data is to be processed
+ * An implementation of the {@link CommandOutput} that is used in combination with a given {@link DynamicAggregateDataParser} to
+ * produce a domain object from the data extracted from the server. Since there already are implementations of the
+ * {@link CommandOutput} interface for most simple types, this implementation is better suited to parse complex, often nested,
+ * data structures, for example a map containing other maps, arrays or sets as values for one or more of its keys.
  * <p>
- * The Redis server could return, besides the simple types such as boolean, long, String, etc. also aggregations of the former,
- * inside aggregate data structures such as arrays, maps and sets, defined in the specification for both the
- * <a href="https://github.com/redis/redis-specifications/blob/master/protocol/RESP2.md">RESP2</a> and
- * <a href="https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md">RESP3</a> protocol.
- * <p>
- * Commands typically result in simple types, however some of the commands could return complex nested structures. A simple
- * solution to parse such a structure is to have a dynamic data type and leave the user to parse the result to a domain object.
- * If there is some breach of contract then the code consuming the driver could simply stop using the provided parser and start
- * parsing the new dynamic data itself, without having to change the version of the library. This allows a certain degree of
- * stability against change. Consult the members of the {@link io.lettuce.core.api.parsers} package for details on how aggregate
- * Objects could be parsed.
- * <p>
- * The {@link DynamicAggregateOutput} is supposed to be compatible with all Redis commands.
+ * The implementation of the {@link DynamicAggregateDataParser} is responsible for mapping the data from the result to
+ * meaningful properties that the user of the LEttuce driver could then use in a statically typed manner.
  *
- * @see DynamicAggregateData
+ * @see DynamicAggregateDataParser
  * @author Tihomir Mateev
- * @since 7.0
+ * @since 6.5
  */
-public class DynamicAggregateOutput<K, V> extends CommandOutput<K, V, DynamicAggregateData> {
+public class DynamicAggregateOutput<K, V, T> extends CommandOutput<K, V, T> {
 
     private final Deque<DynamicAggregateData> dataStack;
+
+    private final DynamicAggregateDataParser<T> parser;
+
+    private DynamicAggregateData data;
 
     /**
      * Constructs a new instance of the {@link DynamicAggregateOutput}
      * 
      * @param codec the {@link RedisCodec} to be applied
      */
-    public DynamicAggregateOutput(RedisCodec<K, V> codec) {
+    public DynamicAggregateOutput(RedisCodec<K, V> codec, DynamicAggregateDataParser<T> parser) {
         super(codec, null);
         dataStack = LettuceFactories.newSpScQueue();
+        this.parser = parser;
+    }
+
+    @Override
+    public T get() {
+        return parser.parse(data);
     }
 
     @Override
     public void set(long integer) {
-        if (output == null) {
+        if (data == null) {
             throw new RuntimeException("Invalid output received for dynamic aggregate output."
                     + "Integer value should have been preceded by some sort of aggregation.");
         }
 
-        output.store(integer);
+        data.store(integer);
     }
 
     @Override
     public void set(double number) {
-        if (output == null) {
+        if (data == null) {
             throw new RuntimeException("Invalid output received for dynamic aggregate output."
                     + "Double value should have been preceded by some sort of aggregation.");
         }
 
-        output.store(number);
+        data.store(number);
     }
 
     @Override
     public void set(boolean value) {
-        if (output == null) {
+        if (data == null) {
             throw new RuntimeException("Invalid output received for dynamic aggregate output."
                     + "Double value should have been preceded by some sort of aggregation.");
         }
 
-        output.store(value);
+        data.store(value);
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-        if (output == null) {
+        if (data == null) {
             throw new RuntimeException("Invalid output received for dynamic aggregate output."
                     + "ByteBuffer value should have been preceded by some sort of aggregation.");
         }
 
-        output.storeObject(bytes == null ? null : codec.decodeValue(bytes));
+        data.storeObject(bytes == null ? null : codec.decodeValue(bytes));
     }
 
     @Override
     public void setSingle(ByteBuffer bytes) {
-        if (output == null) {
+        if (data == null) {
             throw new RuntimeException("Invalid output received for dynamic aggregate output."
                     + "String value should have been preceded by some sort of aggregation.");
         }
 
-        output.store(bytes == null ? null : StringCodec.UTF8.decodeValue(bytes));
+        data.store(bytes == null ? null : StringCodec.UTF8.decodeValue(bytes));
     }
 
     @Override
     public void complete(int depth) {
         if (!dataStack.isEmpty() && depth == dataStack.size()) {
-            output = dataStack.pop();
+            data = dataStack.pop();
         }
     }
 
-    private void multi(DynamicAggregateData data) {
+    private void multi(DynamicAggregateData newData) {
         // if there is no data set, then we are at the root object
-        if (output == null) {
-            output = data;
+        if (data == null) {
+            data = newData;
             return;
         }
 
         // otherwise we need to nest the provided structure
-        output.storeObject(data);
-        dataStack.push(output);
-        output = data;
+        data.storeObject(newData);
+        dataStack.push(data);
+        data = newData;
     }
 
     @Override

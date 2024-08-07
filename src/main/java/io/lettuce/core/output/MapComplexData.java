@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package io.lettuce.core.output.data;
+package io.lettuce.core.output;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,9 +31,9 @@ import java.util.Map;
  *
  * @see DynamicAggregateData
  * @author Tihomir Mateev
- * @since 7.0
+ * @since 6.5
  */
-public class MapAggregateData extends DynamicAggregateData {
+class MapAggregateData extends DynamicAggregateData {
 
     private final Map<Object, Object> data;
 

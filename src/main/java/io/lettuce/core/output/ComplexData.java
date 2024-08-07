@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package io.lettuce.core.output.data;
+package io.lettuce.core.output;
 
 import java.util.List;
 import java.util.Map;
@@ -57,7 +57,7 @@ import java.util.Set;
  * @see SetAggregateData
  * @see MapAggregateData
  * @author Tihomir Mateev
- * @since 7.0
+ * @since 6.5
  */
 public abstract class DynamicAggregateData {
 

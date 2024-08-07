@@ -32,7 +32,7 @@ import java.util.List;
  * command.
  *
  * @author Tihomir Mateev
- * @since 7.0
+ * @since 6.5
  */
 public class TrackingInfo {
 

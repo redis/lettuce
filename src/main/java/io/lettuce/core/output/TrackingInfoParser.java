@@ -18,9 +18,10 @@
  * limitations under the License.
  */
 
-package io.lettuce.core.api.parsers.tracking;
+package io.lettuce.core.output;
 
-import io.lettuce.core.output.data.DynamicAggregateData;
+import io.lettuce.core.output.DynamicAggregateDataParser;
+import io.lettuce.core.output.DynamicAggregateData;
 import io.lettuce.core.protocol.CommandKeyword;
 
 import java.util.ArrayList;
@@ -35,7 +36,9 @@ import java.util.Set;
  * @author Tihomir Mateev
  * @since 7.0
  */
-public class TrackingInfoParser {
+public class TrackingInfoParser implements DynamicAggregateDataParser<TrackingInfo> {
+
+    public static final TrackingInfoParser INSTANCE = new TrackingInfoParser();
 
     /**
      * Utility constructor.
@@ -46,11 +49,11 @@ public class TrackingInfoParser {
     /**
      * Parse the output of the Redis CLIENT TRACKINGINFO command and convert it to a {@link TrackingInfo}
      *
-     * @param trackinginfoOutput output of CLIENT TRACKINGINFO command
+     * @param dynamicData output of CLIENT TRACKINGINFO command
      * @return an {@link TrackingInfo} instance
      */
-    public static TrackingInfo parse(DynamicAggregateData trackinginfoOutput) {
-        Map<Object, Object> data = verifyStructure(trackinginfoOutput);
+    public TrackingInfo parse(DynamicAggregateData dynamicData) {
+        Map<Object, Object> data = verifyStructure(dynamicData);
         Set<?> flags = ((DynamicAggregateData) data.get(CommandKeyword.FLAGS.toString().toLowerCase())).getDynamicSet();
         Long clientId = (Long) data.get(CommandKeyword.REDIRECT.toString().toLowerCase());
         List<?> prefixes = ((DynamicAggregateData) data.get(CommandKeyword.PREFIXES.toString().toLowerCase())).getDynamicList();
@@ -70,7 +73,7 @@ public class TrackingInfoParser {
         return new TrackingInfo(parsedFlags, clientId, parsedPrefixes);
     }
 
-    private static Map<Object, Object> verifyStructure(DynamicAggregateData trackinginfoOutput) {
+    private Map<Object, Object> verifyStructure(DynamicAggregateData trackinginfoOutput) {
 
         if (trackinginfoOutput == null) {
             throw new IllegalArgumentException("Failed while parsing CLIENT TRACKINGINFO: trackinginfoOutput must not be null");

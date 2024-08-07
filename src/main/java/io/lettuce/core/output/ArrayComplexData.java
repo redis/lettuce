@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package io.lettuce.core.output.data;
+package io.lettuce.core.output;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,9 +41,9 @@ import java.util.Set;
  *
  * @see DynamicAggregateData
  * @author Tihomir Mateev
- * @since 7.0
+ * @since 6.5
  */
-public class ArrayAggregateData extends DynamicAggregateData {
+class ArrayAggregateData extends DynamicAggregateData {
 
     private final List<Object> data;
 
