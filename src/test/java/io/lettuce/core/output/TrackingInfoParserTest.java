@@ -1,11 +1,26 @@
+/*
+ * Copyright 2024, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.lettuce.core.output;
 
-import io.lettuce.core.api.parsers.tracking.TrackingInfo;
-import io.lettuce.core.api.parsers.tracking.TrackingInfoParser;
-import io.lettuce.core.output.ArrayAggregateData;
-import io.lettuce.core.output.DynamicAggregateData;
-import io.lettuce.core.output.MapAggregateData;
-import io.lettuce.core.output.SetAggregateData;
+import io.lettuce.core.TrackingInfo;
 import io.lettuce.core.protocol.CommandKeyword;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +31,13 @@ class TrackingInfoParserTest {
 
     @Test
     void parseResp3() {
-        DynamicAggregateData flags = new SetAggregateData(2);
+        ComplexData flags = new SetComplexData(2);
         flags.store(TrackingInfo.TrackingFlag.ON.toString());
         flags.store(TrackingInfo.TrackingFlag.OPTIN.toString());
 
-        DynamicAggregateData prefixes = new ArrayAggregateData(0);
+        ComplexData prefixes = new ArrayComplexData(0);
 
-        DynamicAggregateData input = new MapAggregateData(3);
+        ComplexData input = new MapComplexData(3);
         input.store(CommandKeyword.FLAGS.toString().toLowerCase());
         input.storeObject(flags);
         input.store(CommandKeyword.REDIRECT.toString().toLowerCase());
@@ -30,7 +45,7 @@ class TrackingInfoParserTest {
         input.store(CommandKeyword.PREFIXES.toString().toLowerCase());
         input.storeObject(prefixes);
 
-        TrackingInfo info = TrackingInfoParser.parse(input);
+        TrackingInfo info = TrackingInfoParser.INSTANCE.parse(input);
 
         assertThat(info.getFlags()).contains(TrackingInfo.TrackingFlag.ON, TrackingInfo.TrackingFlag.OPTIN);
         assertThat(info.getRedirect()).isEqualTo(0L);
@@ -39,41 +54,41 @@ class TrackingInfoParserTest {
 
     @Test
     void parseFailEmpty() {
-        DynamicAggregateData input = new MapAggregateData(0);
+        ComplexData input = new MapComplexData(0);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            TrackingInfo info = TrackingInfoParser.parse(input);
+            TrackingInfo info = TrackingInfoParser.INSTANCE.parse(input);
         });
     }
 
     @Test
     void parseFailNumberOfElements() {
-        DynamicAggregateData flags = new SetAggregateData(2);
+        ComplexData flags = new SetComplexData(2);
         flags.store(TrackingInfo.TrackingFlag.ON.toString());
         flags.store(TrackingInfo.TrackingFlag.OPTIN.toString());
 
-        DynamicAggregateData prefixes = new ArrayAggregateData(0);
+        ComplexData prefixes = new ArrayComplexData(0);
 
-        DynamicAggregateData input = new MapAggregateData(3);
+        ComplexData input = new MapComplexData(3);
         input.store(CommandKeyword.FLAGS.toString().toLowerCase());
         input.storeObject(flags);
         input.store(CommandKeyword.REDIRECT.toString().toLowerCase());
         input.store(-1L);
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            TrackingInfo info = TrackingInfoParser.parse(input);
+            TrackingInfo info = TrackingInfoParser.INSTANCE.parse(input);
         });
     }
 
     @Test
     void parseResp2Compatibility() {
-        DynamicAggregateData flags = new ArrayAggregateData(2);
+        ComplexData flags = new ArrayComplexData(2);
         flags.store(TrackingInfo.TrackingFlag.ON.toString());
         flags.store(TrackingInfo.TrackingFlag.OPTIN.toString());
 
-        DynamicAggregateData prefixes = new ArrayAggregateData(0);
+        ComplexData prefixes = new ArrayComplexData(0);
 
-        DynamicAggregateData input = new ArrayAggregateData(3);
+        ComplexData input = new ArrayComplexData(3);
         input.store(CommandKeyword.FLAGS.toString().toLowerCase());
         input.storeObject(flags);
         input.store(CommandKeyword.REDIRECT.toString().toLowerCase());
@@ -81,7 +96,7 @@ class TrackingInfoParserTest {
         input.store(CommandKeyword.PREFIXES.toString().toLowerCase());
         input.storeObject(prefixes);
 
-        TrackingInfo info = TrackingInfoParser.parse(input);
+        TrackingInfo info = TrackingInfoParser.INSTANCE.parse(input);
 
         assertThat(info.getFlags()).contains(TrackingInfo.TrackingFlag.ON, TrackingInfo.TrackingFlag.OPTIN);
         assertThat(info.getRedirect()).isEqualTo(0L);

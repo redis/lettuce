@@ -27,19 +27,19 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * An implementation of the {@link DynamicAggregateData} that handles maps.
+ * An implementation of the {@link ComplexData} that handles maps.
  * <p>
  * All data structures that the implementation returns are unmodifiable
  *
- * @see DynamicAggregateData
+ * @see ComplexData
  * @author Tihomir Mateev
  * @since 6.5
  */
-public class SetAggregateData extends DynamicAggregateData {
+public class SetComplexData extends ComplexData {
 
     private final Set<Object> data;
 
-    public SetAggregateData(int count) {
+    public SetComplexData(int count) {
         data = new HashSet<>(count);
     }
 

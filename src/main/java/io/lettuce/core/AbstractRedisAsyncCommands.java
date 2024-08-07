@@ -34,7 +34,6 @@ import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ScoredValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
-import io.lettuce.core.output.data.DynamicAggregateData;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -391,7 +390,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<DynamicAggregateData> clientTrackinginfo() {
+    public RedisFuture<TrackingInfo> clientTrackinginfo() {
         return dispatch(commandBuilder.clientTrackinginfo());
     }
 

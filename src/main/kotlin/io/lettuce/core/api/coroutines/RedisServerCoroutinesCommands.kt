@@ -21,7 +21,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
-import io.lettuce.core.output.data.DynamicAggregateData
+import io.lettuce.core.TrackingInfo
 import io.lettuce.core.protocol.CommandType
 import java.util.*
 
@@ -173,12 +173,10 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
     /**
      * Returns information about the current client connection's use of the server assisted client side caching feature.
      *
-     * @return @link DynamicAggregateData}, for more information check the documentation
-     * @see io.lettuce.core.api.parsers.tracking.TrackingInfoParser
-     * @see io.lettuce.core.api.parsers.tracking.TrackingInfo
-     * @since 7.0
+     * @return @link TrackingInfo}, for more information check the documentation
+     * @since 6.5
      */
-    suspend fun clientTrackinginfo(): DynamicAggregateData?
+    suspend fun clientTrackinginfo(): TrackingInfo?
 
     /**
      * Unblock the specified blocked client.

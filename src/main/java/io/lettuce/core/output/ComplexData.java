@@ -25,18 +25,16 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The base type of all aggregate data, collected by a {@link io.lettuce.core.output.DynamicAggregateOutput}
+ * The base type of all complex data, collected by a {@link ComplexOutput}
  * <p>
- * Commands typically result in simple types, however some of the commands could return complex nested structures. A simple
- * solution to parse such a structure is to have a dynamic data type and leave the user to parse the result to a domain object.
- * If there is some breach of contract then the code consuming the driver could simply stop using the provided parser and start
- * parsing the new dynamic data itself, without having to change the version of the library. This allows a certain degree of
- * stability against change. Consult the members of the {@link io.lettuce.core.api.parsers} package for details on how aggregate
- * Objects could be parsed.
+ * Commands typically result in simple types, however some of the commands could return complex nested structures. In these
+ * cases, and with the help of a {@link ComplexDataParser}, the data gathered by the {@link ComplexOutput} could be parsed to a
+ * domain object.
  * <p>
- * An aggregate data object could contain multiple (or no) units of simple data, as per the
+ * An complex data object could only be an aggregate data type as per the
  * <a href="https://github.com/redis/redis-specifications/blob/master/protocol/RESP2.md">RESP2</a> and
- * <a href="https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md">RESP3</a> protocol definitions.
+ * <a href="https://github.com/redis/redis-specifications/blob/master/protocol/RESP3.md">RESP3</a> protocol definitions. Its
+ * contents, however, could be both the simple and aggregate data types.
  * <p>
  * For RESP2 the only possible aggregation is an array. RESP2 commands could also return sets (obviously, by simply making sure
  * the elements of the array are unique) or maps (by sending the keys as odd elements and their values as even elements in the
@@ -45,21 +43,21 @@ import java.util.Set;
  * For RESP3 all the three aggregate types are supported (and indicated with special characters when the result is returned by
  * the server).
  * <p>
- * Aggregate data types could also be nested by using the {@link DynamicAggregateData#storeObject(Object)} call.
+ * Aggregate data types could also be nested by using the {@link ComplexData#storeObject(Object)} call.
  * <p>
- * Implementations of this class override the {@link DynamicAggregateData#getDynamicSet()},
- * {@link DynamicAggregateData#getDynamicList()} and {@link DynamicAggregateData#getDynamicMap()} methods to return the data
- * received in the server in a implementation of the Collections framework. If a given implementation could not do the
- * conversion in a meaningful way an {@link UnsupportedOperationException} would be thrown.
+ * Implementations of this class override the {@link ComplexData#getDynamicSet()}, {@link ComplexData#getDynamicList()} and
+ * {@link ComplexData#getDynamicMap()} methods to return the data received in the server in a implementation of the Collections
+ * framework. If a given implementation could not do the conversion in a meaningful way an {@link UnsupportedOperationException}
+ * would be thrown.
  *
- * @see io.lettuce.core.output.DynamicAggregateOutput
- * @see ArrayAggregateData
- * @see SetAggregateData
- * @see MapAggregateData
+ * @see ComplexOutput
+ * @see ArrayComplexData
+ * @see SetComplexData
+ * @see MapComplexData
  * @author Tihomir Mateev
  * @since 6.5
  */
-public abstract class DynamicAggregateData {
+public abstract class ComplexData {
 
     /**
      * Store a <code>long</code> value in the underlying data structure
@@ -90,7 +88,7 @@ public abstract class DynamicAggregateData {
 
     /**
      * Store an {@link Object} value in the underlying data structure. This method should be used when nesting one instance of
-     * {@link DynamicAggregateData} inside another
+     * {@link ComplexData} inside another
      *
      * @param value the value to store
      */

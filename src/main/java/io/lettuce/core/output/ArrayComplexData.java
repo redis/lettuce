@@ -29,25 +29,25 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * An implementation of the {@link DynamicAggregateData} that handles arrays.
+ * An implementation of the {@link ComplexData} that handles arrays.
  * <p>
- * For RESP2 calling the {@link DynamicAggregateData#getDynamicMap()} would heuristically go over the list of elements assuming
- * every odd element is a key and every even object is the value and then adding them to an {@link Map}. The logic would follow
- * the same order that was used when the elements were added to the {@link ArrayAggregateData}. Similarly calling the
- * {@link DynamicAggregateData#getDynamicSet()} would return a set of all the elements, adding them in the same order. If - for
- * some reason - duplicate elements exist they would be overwritten.
+ * For RESP2 calling the {@link ComplexData#getDynamicMap()} would heuristically go over the list of elements assuming every odd
+ * element is a key and every even object is the value and then adding them to an {@link Map}. The logic would follow the same
+ * order that was used when the elements were added to the {@link ArrayComplexData}. Similarly calling the
+ * {@link ComplexData#getDynamicSet()} would return a set of all the elements, adding them in the same order. If - for some
+ * reason - duplicate elements exist they would be overwritten.
  * <p>
  * All data structures that the implementation returns are unmodifiable
  *
- * @see DynamicAggregateData
+ * @see ComplexData
  * @author Tihomir Mateev
  * @since 6.5
  */
-class ArrayAggregateData extends DynamicAggregateData {
+class ArrayComplexData extends ComplexData {
 
     private final List<Object> data;
 
-    public ArrayAggregateData(int count) {
+    public ArrayComplexData(int count) {
         data = new ArrayList<>(count);
     }
 

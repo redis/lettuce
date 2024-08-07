@@ -28,7 +28,7 @@ import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
-import io.lettuce.core.output.data.DynamicAggregateData;
+import io.lettuce.core.TrackingInfo;
 import io.lettuce.core.protocol.CommandType;
 
 /**
@@ -164,7 +164,7 @@ public interface NodeSelectionServerCommands<K, V> {
      * @return simple-string-reply {@code OK} if the connection name was successfully set.
      * @since 6.3
      */
-    Executions<String> clientSetinfo(String key, V value);
+    Executions<String> clientSetinfo(String key, String value);
 
     /**
      * Enables the tracking feature of the Redis server, that is used for server assisted client side caching. Tracking messages
@@ -179,12 +179,10 @@ public interface NodeSelectionServerCommands<K, V> {
     /**
      * Returns information about the current client connection's use of the server assisted client side caching feature.
      *
-     * @return {@link DynamicAggregateData}, for more information check the documentation
-     * @see io.lettuce.core.api.parsers.tracking.TrackingInfoParser
-     * @see io.lettuce.core.api.parsers.tracking.TrackingInfo
-     * @since 7.0
+     * @return {@link TrackingInfo}, for more information check the documentation
+     * @since 6.5
      */
-    Executions<DynamicAggregateData> clientTrackinginfo();
+    Executions<TrackingInfo> clientTrackinginfo();
 
     /**
      * Unblock the specified blocked client.

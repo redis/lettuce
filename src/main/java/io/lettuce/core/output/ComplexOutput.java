@@ -28,32 +28,32 @@ import java.nio.ByteBuffer;
 import java.util.Deque;
 
 /**
- * An implementation of the {@link CommandOutput} that is used in combination with a given {@link DynamicAggregateDataParser} to
- * produce a domain object from the data extracted from the server. Since there already are implementations of the
- * {@link CommandOutput} interface for most simple types, this implementation is better suited to parse complex, often nested,
- * data structures, for example a map containing other maps, arrays or sets as values for one or more of its keys.
+ * An implementation of the {@link CommandOutput} that is used in combination with a given {@link ComplexDataParser} to produce
+ * a domain object from the data extracted from the server. Since there already are implementations of the {@link CommandOutput}
+ * interface for most simple types, this implementation is better suited to parse complex, often nested, data structures, for
+ * example a map containing other maps, arrays or sets as values for one or more of its keys.
  * <p>
- * The implementation of the {@link DynamicAggregateDataParser} is responsible for mapping the data from the result to
- * meaningful properties that the user of the LEttuce driver could then use in a statically typed manner.
+ * The implementation of the {@link ComplexDataParser} is responsible for mapping the data from the result to meaningful
+ * properties that the user of the LEttuce driver could then use in a statically typed manner.
  *
- * @see DynamicAggregateDataParser
+ * @see ComplexDataParser
  * @author Tihomir Mateev
  * @since 6.5
  */
-public class DynamicAggregateOutput<K, V, T> extends CommandOutput<K, V, T> {
+public class ComplexOutput<K, V, T> extends CommandOutput<K, V, T> {
 
-    private final Deque<DynamicAggregateData> dataStack;
+    private final Deque<ComplexData> dataStack;
 
-    private final DynamicAggregateDataParser<T> parser;
+    private final ComplexDataParser<T> parser;
 
-    private DynamicAggregateData data;
+    private ComplexData data;
 
     /**
-     * Constructs a new instance of the {@link DynamicAggregateOutput}
+     * Constructs a new instance of the {@link ComplexOutput}
      * 
      * @param codec the {@link RedisCodec} to be applied
      */
-    public DynamicAggregateOutput(RedisCodec<K, V> codec, DynamicAggregateDataParser<T> parser) {
+    public ComplexOutput(RedisCodec<K, V> codec, ComplexDataParser<T> parser) {
         super(codec, null);
         dataStack = LettuceFactories.newSpScQueue();
         this.parser = parser;
@@ -121,7 +121,7 @@ public class DynamicAggregateOutput<K, V, T> extends CommandOutput<K, V, T> {
         }
     }
 
-    private void multi(DynamicAggregateData newData) {
+    private void multi(ComplexData newData) {
         // if there is no data set, then we are at the root object
         if (data == null) {
             data = newData;
@@ -136,19 +136,19 @@ public class DynamicAggregateOutput<K, V, T> extends CommandOutput<K, V, T> {
 
     @Override
     public void multiSet(int count) {
-        SetAggregateData dynamicData = new SetAggregateData(count);
+        SetComplexData dynamicData = new SetComplexData(count);
         multi(dynamicData);
     }
 
     @Override
     public void multiArray(int count) {
-        ArrayAggregateData dynamicData = new ArrayAggregateData(count);
+        ArrayComplexData dynamicData = new ArrayComplexData(count);
         multi(dynamicData);
     }
 
     @Override
     public void multiMap(int count) {
-        MapAggregateData dynamicData = new MapAggregateData(count);
+        MapComplexData dynamicData = new MapComplexData(count);
         multi(dynamicData);
     }
 

@@ -28,7 +28,6 @@ import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
 import io.lettuce.core.output.*;
-import io.lettuce.core.output.data.DynamicAggregateData;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -529,10 +528,10 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CLIENT, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, DynamicAggregateData> clientTrackinginfo() {
+    Command<K, V, TrackingInfo> clientTrackinginfo() {
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(TRACKINGINFO);
 
-        return new Command<>(CLIENT, new DynamicAggregateOutput<>(codec), args);
+        return new Command<>(CLIENT, new ComplexOutput<>(codec, TrackingInfoParser.INSTANCE), args);
     }
 
     Command<K, V, Long> clientUnblock(long id, UnblockType type) {

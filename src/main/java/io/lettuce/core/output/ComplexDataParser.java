@@ -21,16 +21,16 @@
 package io.lettuce.core.output;
 
 /**
- * Any usage of the {@link DynamicAggregateOutput} comes hand in hand with a respective {@link DynamicAggregateDataParser} that
- * is able to parse the data extracted from the server to a meaningful Java object.
+ * Any usage of the {@link ComplexOutput} comes hand in hand with a respective {@link ComplexDataParser} that is able to parse
+ * the data extracted from the server to a meaningful Java object.
  * 
  * @param <T> the type of the parsed object
  * @author Tihomir Mateev
- * @see DynamicAggregateData
- * @see DynamicAggregateOutput
+ * @see ComplexData
+ * @see ComplexOutput
  * @since 6.5
  */
-public interface DynamicAggregateDataParser<T> {
+public interface ComplexDataParser<T> {
 
     /**
      * Parse the data extracted from the server to a specific domain object.
@@ -39,6 +39,6 @@ public interface DynamicAggregateDataParser<T> {
      * @return the parsed object
      * @since 6.5
      */
-    T parse(DynamicAggregateData data);
+    T parse(ComplexData data);
 
 }

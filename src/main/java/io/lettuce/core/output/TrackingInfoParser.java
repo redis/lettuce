@@ -20,8 +20,7 @@
 
 package io.lettuce.core.output;
 
-import io.lettuce.core.output.DynamicAggregateDataParser;
-import io.lettuce.core.output.DynamicAggregateData;
+import io.lettuce.core.TrackingInfo;
 import io.lettuce.core.protocol.CommandKeyword;
 
 import java.util.ArrayList;
@@ -34,9 +33,9 @@ import java.util.Set;
  * Parser for Redis <a href="https://redis.io/docs/latest/commands/client-trackinginfo/">CLIENT TRACKINGINFO</a> command output.
  *
  * @author Tihomir Mateev
- * @since 7.0
+ * @since 6.5
  */
-public class TrackingInfoParser implements DynamicAggregateDataParser<TrackingInfo> {
+public class TrackingInfoParser implements ComplexDataParser<TrackingInfo> {
 
     public static final TrackingInfoParser INSTANCE = new TrackingInfoParser();
 
@@ -52,11 +51,11 @@ public class TrackingInfoParser implements DynamicAggregateDataParser<TrackingIn
      * @param dynamicData output of CLIENT TRACKINGINFO command
      * @return an {@link TrackingInfo} instance
      */
-    public TrackingInfo parse(DynamicAggregateData dynamicData) {
+    public TrackingInfo parse(ComplexData dynamicData) {
         Map<Object, Object> data = verifyStructure(dynamicData);
-        Set<?> flags = ((DynamicAggregateData) data.get(CommandKeyword.FLAGS.toString().toLowerCase())).getDynamicSet();
+        Set<?> flags = ((ComplexData) data.get(CommandKeyword.FLAGS.toString().toLowerCase())).getDynamicSet();
         Long clientId = (Long) data.get(CommandKeyword.REDIRECT.toString().toLowerCase());
-        List<?> prefixes = ((DynamicAggregateData) data.get(CommandKeyword.PREFIXES.toString().toLowerCase())).getDynamicList();
+        List<?> prefixes = ((ComplexData) data.get(CommandKeyword.PREFIXES.toString().toLowerCase())).getDynamicList();
 
         Set<TrackingInfo.TrackingFlag> parsedFlags = new HashSet<>();
         List<String> parsedPrefixes = new ArrayList<>();
@@ -73,7 +72,7 @@ public class TrackingInfoParser implements DynamicAggregateDataParser<TrackingIn
         return new TrackingInfo(parsedFlags, clientId, parsedPrefixes);
     }
 
-    private Map<Object, Object> verifyStructure(DynamicAggregateData trackinginfoOutput) {
+    private Map<Object, Object> verifyStructure(ComplexData trackinginfoOutput) {
 
         if (trackinginfoOutput == null) {
             throw new IllegalArgumentException("Failed while parsing CLIENT TRACKINGINFO: trackinginfoOutput must not be null");

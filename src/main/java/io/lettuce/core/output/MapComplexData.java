@@ -25,21 +25,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An implementation of the {@link DynamicAggregateData} that handles maps.
+ * An implementation of the {@link ComplexData} that handles maps.
  * <p>
  * All data structures that the implementation returns are unmodifiable
  *
- * @see DynamicAggregateData
+ * @see ComplexData
  * @author Tihomir Mateev
  * @since 6.5
  */
-class MapAggregateData extends DynamicAggregateData {
+class MapComplexData extends ComplexData {
 
     private final Map<Object, Object> data;
 
     private Object key;
 
-    public MapAggregateData(int count) {
+    public MapComplexData(int count) {
         data = new HashMap<>(count);
     }
 
