@@ -2,6 +2,11 @@
 ===============================
 
  [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core)
+ [![Javadocs](https://www.javadoc.io/badge/io.lettuce/lettuce-core.svg)](https://www.javadoc.io/doc/io.lettuce/lettuce-core)
+ [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.txt)
+ [![Integration](https://github.com/redis/lettuce/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/redis/lettuce/actions/workflows/integration.yml)
+ [![codecov](https://codecov.io/gh/redis/lettuce/branch/main/graph/badge.svg?token=pAstxAAjYo)](https://codecov.io/gh/redis/lettuce)
+ [![Discord](https://img.shields.io/discord/697882427875393627?style=flat-square)](https://discord.gg/redis)
 
 Lettuce is a scalable thread-safe Redis client for synchronous,
 asynchronous and reactive usage. Multiple threads may share one connection if they avoid blocking and transactional
@@ -117,8 +122,8 @@ Asynchronous API
 ```java
 StatefulRedisConnection<String, String> connection = client.connect();
 RedisStringAsyncCommands<String, String> async = connection.async();
-RedisFuture<String> set = async.set("key", "value")
-RedisFuture<String> get = async.get("key")
+RedisFuture<String> set = async.set("key", "value");
+RedisFuture<String> get = async.get("key");
 
 LettuceFutures.awaitAll(set, get) == true
 
@@ -150,7 +155,7 @@ Pub/Sub
 ```java
 RedisPubSubCommands<String, String> connection = client.connectPubSub().sync();
 connection.getStatefulConnection().addListener(new RedisPubSubListener<String, String>() { ... })
-connection.subscribe("channel")
+connection.subscribe("channel");
 ```
 
 Building
@@ -177,7 +182,7 @@ $ make test
 Bugs and Feedback
 -----------
 
-For bugs, questions and discussions please use the [GitHub Issues](https://github.com/lettuce-io/lettuce-core/issues).
+For bugs, questions and discussions please use the [GitHub Issues](https://github.com/redis/lettuce/issues).
 
 License
 -------
