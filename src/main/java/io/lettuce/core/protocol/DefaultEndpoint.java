@@ -48,6 +48,7 @@ import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.EventLoop;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.Recycler;
 import io.netty.util.concurrent.Future;
@@ -379,38 +380,44 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         if (reliability == Reliability.AT_MOST_ONCE) {
             // cancel on exceptions and remove from queue, because there is no housekeeping
             channelFuture.addListener(AtMostOnceWriteListener.newInstance(this, command));
-        }
-
-        if (reliability == Reliability.AT_LEAST_ONCE) {
+        } else if (reliability == Reliability.AT_LEAST_ONCE) {
             // commands are ok to stay within the queue, reconnect will retrigger them
             channelFuture.addListener(RetryListener.newInstance(this, command));
         }
     }
 
     private void writeToChannelAndFlush(Collection<? extends RedisCommand<?, ?, ?>> commands) {
+        final Channel chan = this.channel;
+        final EventLoop eventLoop = chan.eventLoop();
 
         QUEUE_SIZE.addAndGet(this, commands.size());
 
         if (reliability == Reliability.AT_MOST_ONCE) {
-
-            // cancel on exceptions and remove from queue, because there is no housekeeping
-            for (RedisCommand<?, ?, ?> command : commands) {
-                channelWrite(command).addListener(AtMostOnceWriteListener.newInstance(this, command));
-            }
+            executeInEventLoop(eventLoop, () -> {
+                for (RedisCommand<?, ?, ?> command : commands) {
+                    channelWrite(chan, command).addListener(AtMostOnceWriteListener.newInstance(this, command));
+                }
+                channelFlush(chan);
+            });
+        } else if (reliability == Reliability.AT_LEAST_ONCE) {
+            executeInEventLoop(eventLoop, () -> {
+                for (RedisCommand<?, ?, ?> command : commands) {
+                    channelWrite(chan, command).addListener(RetryListener.newInstance(this, command));
+                }
+                channelFlush(chan);
+            });
         }
-
-        if (reliability == Reliability.AT_LEAST_ONCE) {
-
-            // commands are ok to stay within the queue, reconnect will retrigger them
-            for (RedisCommand<?, ?, ?> command : commands) {
-                channelWrite(command).addListener(RetryListener.newInstance(this, command));
-            }
-        }
-
-        channelFlush();
     }
 
-    private void channelFlush() {
+    private void executeInEventLoop(EventLoop eventLoop, Runnable runnable) {
+        if (eventLoop.inEventLoop()) {
+            runnable.run();
+        } else {
+            eventLoop.execute(runnable);
+        }
+    }
+
+    private void channelFlush(Channel channel) {
 
         if (debugEnabled) {
             logger.debug("{} write() channelFlush", logPrefix());
@@ -419,7 +426,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         channel.flush();
     }
 
-    private ChannelFuture channelWrite(RedisCommand<?, ?, ?> command) {
+    private ChannelFuture channelWrite(Channel channel, RedisCommand<?, ?, ?> command) {
 
         if (debugEnabled) {
             logger.debug("{} write() channelWrite command {}", logPrefix(), command);
