@@ -73,16 +73,9 @@ public class AutoBatchFlushEndPointContext {
         return flyingCmdNum;
     }
 
-    private int total = 0;
-
-    public int getTotal() {
-        return total;
-    }
-
     public final HasOngoingSendLoop hasOngoingSendLoop = new HasOngoingSendLoop();
 
     public void add(int n) {
-        this.total += n;
         this.flyingCmdNum += n;
     }
 
@@ -100,7 +93,7 @@ public class AutoBatchFlushEndPointContext {
 
     public boolean isDone() {
         if (this.flyingCmdNum < 0) {
-            logger.error("[unexpected] flyingCmdNum < 0, flyingCmdNum: {}, total: {}", this.flyingCmdNum, this.total);
+            logger.error("[unexpected] flyingCmdNum < 0, flyingCmdNum: {}", this.flyingCmdNum);
             return true;
         }
         return this.flyingCmdNum == 0;

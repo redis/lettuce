@@ -354,7 +354,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
         if (!CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_CONNECTING,
                 DummyContextualChannelInstances.CHANNEL_RECONNECT_FAILED)) {
-            onUnexpectedState("notifyReconnectFailed", ConnectionContext.State.CONNECTING);
+            syncAfterTerminated(() -> onUnexpectedState("notifyReconnectFailed", ConnectionContext.State.CONNECTING));
             return;
         }
 
@@ -741,7 +741,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         // neither connectionWatchdog nor doReconnectOnEndpointQuiescence could be null
-        connectionWatchdog.reconnectOnEndpointQuiescence();
+        connectionWatchdog.reconnectOnAutoBatchFlushEndpointQuiescence();
     }
 
     private void onWillReconnect(@Nonnull final ConnectionContext.CloseStatus closeStatus,

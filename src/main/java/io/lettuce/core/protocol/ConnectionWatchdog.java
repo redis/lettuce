@@ -106,7 +106,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private volatile Timeout reconnectScheduleTimeout;
 
-    private Runnable doReconnectOnEndpointQuiescence;
+    private Runnable doReconnectOnAutoBatchFlushEndpointQuiescence;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -204,7 +204,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        doReconnectOnEndpointQuiescence = null;
+        doReconnectOnAutoBatchFlushEndpointQuiescence = null;
 
         logger.debug("{} channelInactive()", logPrefix());
         if (!armed) {
@@ -225,10 +225,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
                 return;
             }
 
-            doReconnectOnEndpointQuiescence = this::scheduleReconnect;
             if (!useAutoBatchFlushEndpoint) {
-                doReconnectOnEndpointQuiescence.run();
+                this.scheduleReconnect();
             }
+            doReconnectOnAutoBatchFlushEndpointQuiescence = this::scheduleReconnect;
             // otherwise, will be called later by BatchFlushEndpoint#onEndpointQuiescence
         } else {
             logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
@@ -237,8 +237,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         super.channelInactive(ctx);
     }
 
-    void reconnectOnEndpointQuiescence() {
-        doReconnectOnEndpointQuiescence.run();
+    boolean willReconnect() {
+        return doReconnectOnAutoBatchFlushEndpointQuiescence != null;
+    }
+
+    void reconnectOnAutoBatchFlushEndpointQuiescence() {
+        doReconnectOnAutoBatchFlushEndpointQuiescence.run();
     }
 
     /**
@@ -480,10 +484,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", last known addr=" + remoteAddress + ']';
         return logPrefix = buffer;
-    }
-
-    public boolean willReconnect() {
-        return doReconnectOnEndpointQuiescence != null;
     }
 
 }
