@@ -39,7 +39,7 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.masterreplica.MasterReplica;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
-import io.lettuce.core.protocol.DefaultBatchFlushEndpoint;
+import io.lettuce.core.protocol.DefaultAutoBatchFlushEndpoint;
 import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.Endpoint;
 import io.lettuce.core.protocol.PushHandler;
@@ -277,7 +277,7 @@ public class RedisClient extends AbstractRedisClient {
         logger.debug("Trying to get a Redis connection for: {}", redisURI);
 
         Endpoint endpoint = getOptions().getAutoBatchFlushOptions().isAutoBatchFlushEnabled()
-                ? new DefaultBatchFlushEndpoint(getOptions(), getResources())
+                ? new DefaultAutoBatchFlushEndpoint(getOptions(), getResources())
                 : new DefaultEndpoint(getOptions(), getResources());
         RedisChannelWriter writer = (RedisChannelWriter) endpoint;
 

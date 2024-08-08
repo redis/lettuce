@@ -7,7 +7,7 @@ import io.netty.channel.Channel;
 /**
  * @author chenxiaofan
  */
-public interface BatchFlushEndpoint extends Endpoint {
+public interface AutoBatchFlushEndpoint extends Endpoint {
 
     @Override
     default void notifyDrainQueuedCommands(HasQueuedCommands queuedCommands) {

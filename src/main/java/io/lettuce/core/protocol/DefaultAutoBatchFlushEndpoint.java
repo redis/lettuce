@@ -64,20 +64,20 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  */
-public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlushEndpoint, PushHandler {
+public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBatchFlushEndpoint, PushHandler {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(BatchFlushEndpoint.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(AutoBatchFlushEndpoint.class);
 
     private static final AtomicLong ENDPOINT_COUNTER = new AtomicLong();
 
-    private static final AtomicReferenceFieldUpdater<DefaultBatchFlushEndpoint, ContextualChannel> CHANNEL = AtomicReferenceFieldUpdater
-            .newUpdater(DefaultBatchFlushEndpoint.class, ContextualChannel.class, "channel");
+    private static final AtomicReferenceFieldUpdater<DefaultAutoBatchFlushEndpoint, ContextualChannel> CHANNEL = AtomicReferenceFieldUpdater
+            .newUpdater(DefaultAutoBatchFlushEndpoint.class, ContextualChannel.class, "channel");
 
-    private static final AtomicIntegerFieldUpdater<DefaultBatchFlushEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater
-            .newUpdater(DefaultBatchFlushEndpoint.class, "queueSize");
+    private static final AtomicIntegerFieldUpdater<DefaultAutoBatchFlushEndpoint> QUEUE_SIZE = AtomicIntegerFieldUpdater
+            .newUpdater(DefaultAutoBatchFlushEndpoint.class, "queueSize");
 
-    private static final AtomicIntegerFieldUpdater<DefaultBatchFlushEndpoint> STATUS = AtomicIntegerFieldUpdater
-            .newUpdater(DefaultBatchFlushEndpoint.class, "status");
+    private static final AtomicIntegerFieldUpdater<DefaultAutoBatchFlushEndpoint> STATUS = AtomicIntegerFieldUpdater
+            .newUpdater(DefaultAutoBatchFlushEndpoint.class, "status");
 
     private static final int ST_OPEN = 0;
 
@@ -170,16 +170,16 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
     private final int batchSize;
 
     /**
-     * Create a new {@link BatchFlushEndpoint}.
+     * Create a new {@link AutoBatchFlushEndpoint}.
      *
      * @param clientOptions client options for this connection, must not be {@code null}.
      * @param clientResources client resources for this connection, must not be {@code null}.
      */
-    public DefaultBatchFlushEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
-        this(clientOptions, clientResources, DefaultBatchFlushEndpoint::cancelCommandOnEndpointClose);
+    public DefaultAutoBatchFlushEndpoint(ClientOptions clientOptions, ClientResources clientResources) {
+        this(clientOptions, clientResources, DefaultAutoBatchFlushEndpoint::cancelCommandOnEndpointClose);
     }
 
-    protected DefaultBatchFlushEndpoint(ClientOptions clientOptions, ClientResources clientResources,
+    protected DefaultAutoBatchFlushEndpoint(ClientOptions clientOptions, ClientResources clientResources,
             Consumer<RedisCommand<?, ?, ?>> callbackOnClose) {
 
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
@@ -976,7 +976,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
         private final Recycler.Handle<WrittenToChannel> handle;
 
-        private DefaultBatchFlushEndpoint endpoint;
+        private DefaultAutoBatchFlushEndpoint endpoint;
 
         private RedisCommand<?, ?, ?> command;
 
@@ -991,7 +991,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
          *
          * @return new instance
          */
-        static WrittenToChannel newInstance(DefaultBatchFlushEndpoint endpoint, ContextualChannel chan,
+        static WrittenToChannel newInstance(DefaultAutoBatchFlushEndpoint endpoint, ContextualChannel chan,
                 RedisCommand<?, ?, ?> command) {
 
             WrittenToChannel entry = RECYCLER.get();

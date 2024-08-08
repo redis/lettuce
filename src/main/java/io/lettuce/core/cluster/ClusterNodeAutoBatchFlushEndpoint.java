@@ -18,7 +18,7 @@ package io.lettuce.core.cluster;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
-import io.lettuce.core.protocol.DefaultBatchFlushEndpoint;
+import io.lettuce.core.protocol.DefaultAutoBatchFlushEndpoint;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -28,7 +28,7 @@ import io.lettuce.core.resource.ClientResources;
  *
  * @author Mark Paluch
  */
-public class ClusterNodeBatchFlushEndpoint extends DefaultBatchFlushEndpoint {
+public class ClusterNodeAutoBatchFlushEndpoint extends DefaultAutoBatchFlushEndpoint {
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -37,7 +37,7 @@ public class ClusterNodeBatchFlushEndpoint extends DefaultBatchFlushEndpoint {
      * @param clientResources client resources for this connection.
      * @param clusterChannelWriter top-most channel writer.
      */
-    public ClusterNodeBatchFlushEndpoint(ClientOptions clientOptions, ClientResources clientResources,
+    public ClusterNodeAutoBatchFlushEndpoint(ClientOptions clientOptions, ClientResources clientResources,
             RedisChannelWriter clusterChannelWriter) {
         super(clientOptions, clientResources, clusterChannelWriter != null ? cmd -> {
             if (cmd.isDone()) {
@@ -49,7 +49,7 @@ public class ClusterNodeBatchFlushEndpoint extends DefaultBatchFlushEndpoint {
             } catch (RedisException e) {
                 cmd.completeExceptionally(e);
             }
-        } : DefaultBatchFlushEndpoint::cancelCommandOnEndpointClose);
+        } : DefaultAutoBatchFlushEndpoint::cancelCommandOnEndpointClose);
     }
 
 }
