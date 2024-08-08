@@ -2,6 +2,8 @@ package io.lettuce.core;
 
 import java.io.Serializable;
 
+import io.lettuce.core.internal.LettuceAssert;
+
 /**
  * Options for command timeouts. These options configure how and whether commands time out once they were dispatched. Command
  * timeout begins:
@@ -79,6 +81,8 @@ public class AutoBatchFlushOptions implements Serializable {
          * @return {@code this}
          */
         public Builder writeSpinCount(int writeSpinCount) {
+            LettuceAssert.isPositive(writeSpinCount, "Batch size must be greater than 0");
+
             this.writeSpinCount = writeSpinCount;
             return this;
         }
@@ -90,6 +94,8 @@ public class AutoBatchFlushOptions implements Serializable {
          * @return {@code this}
          */
         public Builder batchSize(int batchSize) {
+            LettuceAssert.isPositive(batchSize, "Batch size must be greater than 0");
+
             this.batchSize = batchSize;
             return this;
         }

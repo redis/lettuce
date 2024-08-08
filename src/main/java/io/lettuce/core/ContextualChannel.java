@@ -2,6 +2,8 @@ package io.lettuce.core;
 
 import java.net.SocketAddress;
 
+import javax.annotation.Nonnull;
+
 import io.lettuce.core.context.ConnectionContext;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -15,7 +17,6 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoop;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author chenxiaofan
@@ -250,7 +251,7 @@ public class ContextualChannel implements Channel {
     }
 
     @Override
-    public int compareTo(@NotNull Channel o) {
+    public int compareTo(@Nonnull Channel o) {
         return this == o ? 0 : this.id().compareTo(o.id());
     }
 
