@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-Present, Redis Ltd. and Contributors
+ * Copyright 2017-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
@@ -21,6 +21,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
+import io.lettuce.core.TrackingInfo
 import io.lettuce.core.protocol.CommandType
 import java.util.*
 
@@ -168,6 +169,14 @@ interface RedisServerCoroutinesCommands<K : Any, V : Any> {
      * @since 6.0
      */
     suspend fun clientTracking(args: TrackingArgs): String?
+
+    /**
+     * Returns information about the current client connection's use of the server assisted client side caching feature.
+     *
+     * @return @link TrackingInfo}, for more information check the documentation
+     * @since 6.5
+     */
+    suspend fun clientTrackinginfo(): TrackingInfo?
 
     /**
      * Unblock the specified blocked client.

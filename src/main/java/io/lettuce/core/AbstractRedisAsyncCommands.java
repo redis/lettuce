@@ -390,6 +390,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<TrackingInfo> clientTrackinginfo() {
+        return dispatch(commandBuilder.clientTrackinginfo());
+    }
+
+    @Override
     public RedisFuture<Long> clientUnblock(long id, UnblockType type) {
         return dispatch(commandBuilder.clientUnblock(id, type));
     }

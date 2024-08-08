@@ -30,6 +30,7 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.ShutdownArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
+import io.lettuce.core.TrackingInfo;
 import io.lettuce.core.protocol.CommandType;
 
 /**
@@ -176,6 +177,14 @@ public interface RedisServerAsyncCommands<K, V> {
      * @since 6.0
      */
     RedisFuture<String> clientTracking(TrackingArgs args);
+
+    /**
+     * Returns information about the current client connection's use of the server assisted client side caching feature.
+     *
+     * @return {@link TrackingInfo}, for more information check the documentation
+     * @since 6.5
+     */
+    RedisFuture<TrackingInfo> clientTrackinginfo();
 
     /**
      * Unblock the specified blocked client.

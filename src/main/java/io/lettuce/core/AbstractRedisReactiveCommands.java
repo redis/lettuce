@@ -408,6 +408,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<TrackingInfo> clientTrackinginfo() {
+        return createMono(commandBuilder::clientTrackinginfo);
+    }
+
+    @Override
     public Mono<Long> clientUnblock(long id, UnblockType type) {
         return createMono(() -> commandBuilder.clientUnblock(id, type));
     }

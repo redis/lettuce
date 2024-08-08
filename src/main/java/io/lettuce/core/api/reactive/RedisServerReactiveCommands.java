@@ -28,6 +28,7 @@ import io.lettuce.core.KillArgs;
 import io.lettuce.core.ShutdownArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
+import io.lettuce.core.TrackingInfo;
 import io.lettuce.core.protocol.CommandType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -176,6 +177,14 @@ public interface RedisServerReactiveCommands<K, V> {
      * @since 6.0
      */
     Mono<String> clientTracking(TrackingArgs args);
+
+    /**
+     * Returns information about the current client connection's use of the server assisted client side caching feature.
+     *
+     * @return {@link TrackingInfo}, for more information check the documentation
+     * @since 6.5
+     */
+    Mono<TrackingInfo> clientTrackinginfo();
 
     /**
      * Unblock the specified blocked client.

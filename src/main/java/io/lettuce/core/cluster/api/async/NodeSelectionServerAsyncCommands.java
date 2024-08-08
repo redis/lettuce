@@ -19,15 +19,15 @@
  */
 package io.lettuce.core.cluster.api.async;
 
-import java.util.Date;
-import java.util.List;
 import java.util.Map;
-
+import java.util.List;
+import java.util.Date;
 import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.TrackingArgs;
 import io.lettuce.core.UnblockType;
+import io.lettuce.core.TrackingInfo;
 import io.lettuce.core.protocol.CommandType;
 
 /**
@@ -174,6 +174,14 @@ public interface NodeSelectionServerAsyncCommands<K, V> {
      * @since 6.0
      */
     AsyncExecutions<String> clientTracking(TrackingArgs args);
+
+    /**
+     * Returns information about the current client connection's use of the server assisted client side caching feature.
+     *
+     * @return {@link TrackingInfo}, for more information check the documentation
+     * @since 6.5
+     */
+    AsyncExecutions<TrackingInfo> clientTrackinginfo();
 
     /**
      * Unblock the specified blocked client.
