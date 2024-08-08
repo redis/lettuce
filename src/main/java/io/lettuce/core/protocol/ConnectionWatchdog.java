@@ -84,7 +84,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private final String epid;
 
-    private final boolean useBatchFlushEndpoint;
+    private final boolean useAutoBatchFlushEndpoint;
 
     private final Endpoint endpoint;
 
@@ -149,7 +149,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
         this.endpoint = endpoint;
-        this.useBatchFlushEndpoint = endpoint instanceof AutoBatchFlushEndpoint;
+        this.useAutoBatchFlushEndpoint = endpoint instanceof AutoBatchFlushEndpoint;
 
         Mono<SocketAddress> wrappedSocketAddressSupplier = socketAddressSupplier.doOnNext(addr -> remoteAddress = addr)
                 .onErrorResume(t -> {
@@ -226,7 +226,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             }
 
             doReconnectOnEndpointQuiescence = this::scheduleReconnect;
-            if (!useBatchFlushEndpoint) {
+            if (!useAutoBatchFlushEndpoint) {
                 doReconnectOnEndpointQuiescence.run();
             }
             // otherwise, will be called later by BatchFlushEndpoint#onEndpointQuiescence
@@ -307,7 +307,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     }
 
     private void notifyEndpointFailedToConnectIfNeeded(Exception e) {
-        if (useBatchFlushEndpoint) {
+        if (useAutoBatchFlushEndpoint) {
             ((AutoBatchFlushEndpoint) endpoint).notifyReconnectFailed(e);
         }
     }

@@ -96,7 +96,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final Endpoint endpoint;
 
-    private final boolean supportsBatchFlush;
+    private final boolean supportsAutoBatchFlush;
 
     private final ArrayDeque<RedisCommand<?, ?, ?>> stack = new ArrayDeque<>();
 
@@ -154,7 +154,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
         this.endpoint = endpoint;
-        this.supportsBatchFlush = endpoint instanceof AutoBatchFlushEndpoint;
+        this.supportsAutoBatchFlush = endpoint instanceof AutoBatchFlushEndpoint;
         this.commandLatencyRecorder = clientResources.commandLatencyRecorder();
         this.latencyMetricsEnabled = commandLatencyRecorder.isEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
@@ -377,9 +377,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         setState(LifecycleState.DEACTIVATING);
 
         endpoint.notifyChannelInactive(ctx.channel());
-        Deque<RedisCommand<?, ?, ?>> batchFlushRetryableDrainQueuedCommands = UnmodifiableDeque.emptyDeque();
-        if (supportsBatchFlush) {
-            batchFlushRetryableDrainQueuedCommands = drainStack();
+        Deque<RedisCommand<?, ?, ?>> autoBatchFlushRetryableDrainQueuedCommands = UnmodifiableDeque.emptyDeque();
+        if (supportsAutoBatchFlush) {
+            autoBatchFlushRetryableDrainQueuedCommands = drainStack();
         } else {
             endpoint.notifyDrainQueuedCommands(this);
         }
@@ -397,10 +397,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         super.channelInactive(ctx);
 
-        if (supportsBatchFlush) {
+        if (supportsAutoBatchFlush) {
             // Needs decision of watchdog
             ((AutoBatchFlushEndpoint) endpoint).notifyChannelInactiveAfterWatchdogDecision(ctx.channel(),
-                    batchFlushRetryableDrainQueuedCommands);
+                    autoBatchFlushRetryableDrainQueuedCommands);
         }
     }
 

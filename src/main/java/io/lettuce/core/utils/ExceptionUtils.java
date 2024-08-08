@@ -34,18 +34,6 @@ public class ExceptionUtils {
         }
     }
 
-    public static <T extends Throwable> T castTo(Throwable throwable, Class<T> clazz, Function<Throwable, T> supplier) {
-        if (clazz.isInstance(throwable)) {
-            return clazz.cast(throwable);
-        }
-        return supplier.apply(throwable);
-    }
-
-    public static <T extends Throwable> T clearStackTrace(T throwable) {
-        throwable.setStackTrace(new StackTraceElement[0]);
-        return throwable;
-    }
-
     /**
      * Returns whether the throwable is one of the exception types or one of the cause in the cause chain is one of the
      * exception types

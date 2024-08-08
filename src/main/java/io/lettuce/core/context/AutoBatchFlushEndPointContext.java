@@ -15,9 +15,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 /**
  * @author chenxiaofan
  */
-public class BatchFlushEndPointContext {
+public class AutoBatchFlushEndPointContext {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(BatchFlushEndPointContext.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(AutoBatchFlushEndPointContext.class);
 
     public static class HasOngoingSendLoop {
 
@@ -51,14 +51,14 @@ public class BatchFlushEndPointContext {
 
     }
 
-    BatchFlushEndPointContext() {
+    AutoBatchFlushEndPointContext() {
     }
 
     /**
-     * Tasks that failed to send (probably due to connection errors)
+     * Commands that failed to send (probably due to connection errors)
      */
     @Nullable
-    Deque<RedisCommand<?, ?, ?>> retryableFailedToSendTasks = null;
+    Deque<RedisCommand<?, ?, ?>> retryableFailedToSendCommands = null;
 
     Throwable firstDiscontinueReason = null;
 
@@ -66,11 +66,11 @@ public class BatchFlushEndPointContext {
         return firstDiscontinueReason;
     }
 
-    private int flyingTaskNum;
+    private int flyingCmdNum;
 
     @SuppressWarnings("unused")
-    public int getFlyingTaskNum() {
-        return flyingTaskNum;
+    public int getFlyingCmdNum() {
+        return flyingCmdNum;
     }
 
     private int total = 0;
@@ -83,47 +83,48 @@ public class BatchFlushEndPointContext {
 
     public void add(int n) {
         this.total += n;
-        this.flyingTaskNum += n;
+        this.flyingCmdNum += n;
     }
 
-    public @Nullable Deque<RedisCommand<?, ?, ?>> getAndClearRetryableFailedToSendTasks() {
-        final Deque<RedisCommand<?, ?, ?>> old = this.retryableFailedToSendTasks;
-        // don't set to null so give us a chance to expose potential bugs if there is addRetryableFailedToSendTask() afterwards
-        this.retryableFailedToSendTasks = UnmodifiableDeque.emptyDeque();
+    public @Nullable Deque<RedisCommand<?, ?, ?>> getAndClearRetryableFailedToSendCommands() {
+        final Deque<RedisCommand<?, ?, ?>> old = this.retryableFailedToSendCommands;
+        // don't set to null so give us a chance to expose potential bugs if there is addRetryableFailedToSendCommand()
+        // afterwards
+        this.retryableFailedToSendCommands = UnmodifiableDeque.emptyDeque();
         return old;
     }
 
     public void done(int n) {
-        this.flyingTaskNum -= n;
+        this.flyingCmdNum -= n;
     }
 
     public boolean isDone() {
-        if (this.flyingTaskNum < 0) {
-            logger.error("[unexpected] flyingTaskNum < 0, flyingTaskNum: {}, total: {}", this.flyingTaskNum, this.total);
+        if (this.flyingCmdNum < 0) {
+            logger.error("[unexpected] flyingCmdNum < 0, flyingCmdNum: {}, total: {}", this.flyingCmdNum, this.total);
             return true;
         }
-        return this.flyingTaskNum == 0;
+        return this.flyingCmdNum == 0;
     }
 
-    public boolean hasRetryableFailedToSendTasks() {
-        return retryableFailedToSendTasks != null;
+    public boolean hasRetryableFailedToSendCommands() {
+        return retryableFailedToSendCommands != null;
     }
 
     /**
-     * @param retryableTask retryable task
+     * @param retryableCommand retryable command
      * @param cause fail reason
-     * @return true if this is the first retryable failed task
+     * @return true if this is the first retryable failed command
      */
-    public boolean addRetryableFailedToSendTask(RedisCommand<?, ?, ?> retryableTask, @Nonnull Throwable cause) {
-        if (retryableFailedToSendTasks == null) {
-            retryableFailedToSendTasks = new ArrayDeque<>();
-            retryableFailedToSendTasks.add(retryableTask);
+    public boolean addRetryableFailedToSendCommand(RedisCommand<?, ?, ?> retryableCommand, @Nonnull Throwable cause) {
+        if (retryableFailedToSendCommands == null) {
+            retryableFailedToSendCommands = new ArrayDeque<>();
+            retryableFailedToSendCommands.add(retryableCommand);
 
             firstDiscontinueReason = cause;
             return true;
         }
 
-        retryableFailedToSendTasks.add(retryableTask);
+        retryableFailedToSendCommands.add(retryableCommand);
         return false;
     }
 

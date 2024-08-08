@@ -67,11 +67,11 @@ public class ConnectionContext {
 
     public final State initialState;
 
-    public final BatchFlushEndPointContext batchFlushEndPointContext;
+    public final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext;
 
     public ConnectionContext(State initialState) {
         this.initialState = initialState;
-        this.batchFlushEndPointContext = new BatchFlushEndPointContext();
+        this.autoBatchFlushEndPointContext = new AutoBatchFlushEndPointContext();
     }
 
     /* below fields must be accessed by the event loop thread only */
@@ -91,10 +91,6 @@ public class ConnectionContext {
     }
 
     private boolean channelQuiescent = false;
-
-    public boolean isChannelQuiescent() {
-        return channelQuiescent;
-    }
 
     public boolean setChannelQuiescentOnce() {
         if (channelQuiescent) {

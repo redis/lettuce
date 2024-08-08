@@ -41,7 +41,7 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.constant.DummyContextualChannelInstances;
-import io.lettuce.core.context.BatchFlushEndPointContext;
+import io.lettuce.core.context.AutoBatchFlushEndPointContext;
 import io.lettuce.core.context.ConnectionContext;
 import io.lettuce.core.datastructure.queue.offerfirst.UnboundedMpscOfferFirstQueue;
 import io.lettuce.core.datastructure.queue.offerfirst.impl.JcToolsUnboundedMpscOfferFirstQueue;
@@ -612,7 +612,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             return;
         }
 
-        if (chan.context.batchFlushEndPointContext.hasOngoingSendLoop.tryEnter()) {
+        if (chan.context.autoBatchFlushEndPointContext.hasOngoingSendLoop.tryEnter()) {
             // Benchmark result of using tryEnterSafeGetVolatile() or not (1 thread, async get):
             // 1. uses tryEnterSafeGetVolatile() to avoid unnecessary eventLoop.execute() calls
             // Avg latency: 3.2956217278663s
@@ -633,19 +633,20 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     private void loopSend(final ContextualChannel chan, boolean entered) {
         final ConnectionContext connectionContext = chan.context;
-        final BatchFlushEndPointContext batchFlushEndPointContext = connectionContext.batchFlushEndPointContext;
-        if (connectionContext.isChannelInactiveEventFired() || batchFlushEndPointContext.hasRetryableFailedToSendTasks()) {
+        final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = connectionContext.autoBatchFlushEndPointContext;
+        if (connectionContext.isChannelInactiveEventFired()
+                || autoBatchFlushEndPointContext.hasRetryableFailedToSendCommands()) {
             return;
         }
 
         LettuceAssert.assertState(channel == chan, "unexpected: channel not match but closeStatus == null");
-        loopSend0(batchFlushEndPointContext, chan, writeSpinCount, entered);
+        loopSend0(autoBatchFlushEndPointContext, chan, writeSpinCount, entered);
     }
 
-    private void loopSend0(final BatchFlushEndPointContext batchFlushEndPointContext, final ContextualChannel chan,
+    private void loopSend0(final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext, final ContextualChannel chan,
             int remainingSpinnCount, final boolean entered) {
         do {
-            final int count = pollBatch(batchFlushEndPointContext, chan);
+            final int count = pollBatch(autoBatchFlushEndPointContext, chan);
             if (count < 0) {
                 return;
             }
@@ -664,15 +665,15 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         if (entered) {
             // The send loop will be triggered later when a new task is added,
             // // Don't setUnsafe here because loopSend0() may result in a delayed loopSend() call.
-            batchFlushEndPointContext.hasOngoingSendLoop.exit();
+            autoBatchFlushEndPointContext.hasOngoingSendLoop.exit();
             // // Guarantee thread-safety: no dangling tasks in the queue.
-            loopSend0(batchFlushEndPointContext, chan, remainingSpinnCount, false);
+            loopSend0(autoBatchFlushEndPointContext, chan, remainingSpinnCount, false);
             // chan.eventLoop().schedule(() -> loopSend0(batchFlushEndPointContext, chan, writeSpinCount, false), 100,
             // TimeUnit.NANOSECONDS);
         }
     }
 
-    private int pollBatch(final BatchFlushEndPointContext batchFlushEndPointContext, ContextualChannel chan) {
+    private int pollBatch(final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext, ContextualChannel chan) {
         int count = 0;
         while (count < batchSize) {
             final Object o = this.taskQueue.poll();
@@ -695,10 +696,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         if (count > 0) {
-            batchFlushEndPointContext.add(count);
+            autoBatchFlushEndPointContext.add(count);
 
             channelFlush(chan);
-            if (batchFlushEndPointContext.hasRetryableFailedToSendTasks()) {
+            if (autoBatchFlushEndPointContext.hasRetryableFailedToSendCommands()) {
                 // Wait for onConnectionClose event()
                 return -1;
             }
@@ -711,12 +712,12 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
         final ConnectionContext connectionContext = chan.context;
         final @Nullable ConnectionContext.CloseStatus closeStatus = connectionContext.getCloseStatus();
-        final BatchFlushEndPointContext batchFlushEndPointContext = connectionContext.batchFlushEndPointContext;
-        if (batchFlushEndPointContext.isDone() && closeStatus != null) {
+        final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = connectionContext.autoBatchFlushEndPointContext;
+        if (autoBatchFlushEndPointContext.isDone() && closeStatus != null) {
             if (closeStatus.isWillReconnect()) {
-                onWillReconnect(closeStatus, batchFlushEndPointContext);
+                onWillReconnect(closeStatus, autoBatchFlushEndPointContext);
             } else {
-                onWontReconnect(closeStatus, batchFlushEndPointContext);
+                onWontReconnect(closeStatus, autoBatchFlushEndPointContext);
             }
 
             if (chan.context.setChannelQuiescentOnce()) {
@@ -744,15 +745,15 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     }
 
     private void onWillReconnect(@Nonnull final ConnectionContext.CloseStatus closeStatus,
-            final BatchFlushEndPointContext batchFlushEndPointContext) {
-        final @Nullable Deque<RedisCommand<?, ?, ?>> retryableFailedToSendTasks = batchFlushEndPointContext
-                .getAndClearRetryableFailedToSendTasks();
+            final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext) {
+        final @Nullable Deque<RedisCommand<?, ?, ?>> retryableFailedToSendTasks = autoBatchFlushEndPointContext
+                .getAndClearRetryableFailedToSendCommands();
         if (retryableFailedToSendTasks != null) {
             // Save retryable failed tasks
             logger.info(
                     "[onWillReconnect][{}] compensate {} retryableFailedToSendTasks (write failure) for retrying on reconnecting, first write error: {}",
                     logPrefix(), retryableFailedToSendTasks.size(),
-                    batchFlushEndPointContext.getFirstDiscontinueReason().getMessage());
+                    autoBatchFlushEndPointContext.getFirstDiscontinueReason().getMessage());
             offerFirstAll(retryableFailedToSendTasks);
         }
 
@@ -773,15 +774,15 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     }
 
     private void onWontReconnect(@Nonnull final ConnectionContext.CloseStatus closeStatus,
-            final BatchFlushEndPointContext batchFlushEndPointContext) {
+            final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext) {
         // No need to use syncAfterTerminated() since we are already in the event loop.
         if (isClosed()) {
             onEndpointClosed(closeStatus.getAndClearRetryablePendingCommands(),
-                    batchFlushEndPointContext.getAndClearRetryableFailedToSendTasks());
+                    autoBatchFlushEndPointContext.getAndClearRetryableFailedToSendCommands());
         } else {
             fulfillCommands("onConnectionClose called and won't reconnect",
                     it -> it.completeExceptionally(closeStatus.getErr()), closeStatus.getAndClearRetryablePendingCommands(),
-                    batchFlushEndPointContext.getAndClearRetryableFailedToSendTasks());
+                    autoBatchFlushEndPointContext.getAndClearRetryableFailedToSendCommands());
         }
     }
 
@@ -978,7 +979,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
         private DefaultAutoBatchFlushEndpoint endpoint;
 
-        private RedisCommand<?, ?, ?> command;
+        private RedisCommand<?, ?, ?> cmd;
 
         private ContextualChannel chan;
 
@@ -998,22 +999,22 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
             entry.endpoint = endpoint;
             entry.chan = chan;
-            entry.command = command;
+            entry.cmd = command;
 
             return entry;
         }
 
         @Override
         public void operationComplete(Future<Void> future) {
-            final BatchFlushEndPointContext batchFlushEndPointContext = chan.context.batchFlushEndPointContext;
+            final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = chan.context.autoBatchFlushEndPointContext;
             try {
                 QUEUE_SIZE.decrementAndGet(endpoint);
-                batchFlushEndPointContext.done(1);
+                autoBatchFlushEndPointContext.done(1);
 
-                final Throwable retryableErr = checkSendResult(future, chan, command);
-                if (retryableErr != null && batchFlushEndPointContext.addRetryableFailedToSendTask(command, retryableErr)) {
+                final Throwable retryableErr = checkSendResult(future);
+                if (retryableErr != null && autoBatchFlushEndPointContext.addRetryableFailedToSendCommand(cmd, retryableErr)) {
                     // Close connection on first transient write failure
-                    internalCloseConnectionIfNeeded(chan, retryableErr);
+                    internalCloseConnectionIfNeeded(retryableErr);
                 }
 
                 endpoint.trySetEndpointQuiescence(chan);
@@ -1026,23 +1027,20 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
          * Check write result.
          *
          * @param sendFuture The future to check.
-         * @param contextualChannel The channel instance associated with the future.
-         * @param cmd The task.
          * @return The cause of the failure if is a retryable failed task, otherwise null.
          */
-        private Throwable checkSendResult(Future<?> sendFuture, ContextualChannel contextualChannel,
-                RedisCommand<?, ?, ?> cmd) {
+        private Throwable checkSendResult(Future<?> sendFuture) {
             if (cmd.isDone()) {
                 ExceptionUtils.logUnexpectedDone(logger, endpoint.logPrefix(), cmd);
                 return null;
             }
 
-            final ConnectionContext.CloseStatus closeStatus = contextualChannel.context.getCloseStatus();
+            final ConnectionContext.CloseStatus closeStatus = chan.context.getCloseStatus();
             if (closeStatus != null) {
                 logger.warn("[checkSendResult][interesting][{}] callback called after onClose() event, close status: {}",
-                        endpoint.logPrefix(), contextualChannel.context.getCloseStatus());
+                        endpoint.logPrefix(), chan.context.getCloseStatus());
                 final Throwable err = sendFuture.isSuccess() ? closeStatus.getErr() : sendFuture.cause();
-                if (!closeStatus.isWillReconnect() || shouldNotRetry(err, cmd)) {
+                if (!closeStatus.isWillReconnect() || shouldNotRetry(err)) {
                     cmd.completeExceptionally(err);
                     return null;
                 } else {
@@ -1056,7 +1054,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
             final Throwable cause = sendFuture.cause();
             ExceptionUtils.maybeLogSendError(logger, cause);
-            if (shouldNotRetry(cause, cmd)) {
+            if (shouldNotRetry(cause)) {
                 cmd.completeExceptionally(cause);
                 return null;
             }
@@ -1064,22 +1062,22 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             return cause;
         }
 
-        private boolean shouldNotRetry(Throwable cause, RedisCommand<?, ?, ?> cmd) {
+        private boolean shouldNotRetry(Throwable cause) {
             return endpoint.reliability == Reliability.AT_MOST_ONCE || ActivationCommand.isActivationCommand(cmd)
                     || ExceptionUtils.oneOf(cause, SHOULD_NOT_RETRY_EXCEPTION_TYPES);
         }
 
-        private void internalCloseConnectionIfNeeded(ContextualChannel toCloseChan, Throwable reason) {
-            if (toCloseChan.context.isChannelInactiveEventFired() || !toCloseChan.isActive()) {
+        private void internalCloseConnectionIfNeeded(Throwable reason) {
+            if (chan.context.isChannelInactiveEventFired() || !chan.isActive()) {
                 return;
             }
 
             logger.error(
                     "[internalCloseConnectionIfNeeded][interesting][{}] close the connection due to write error, reason: '{}'",
                     endpoint.logPrefix(), reason.getMessage(), reason);
-            toCloseChan.eventLoop().schedule(() -> {
-                if (toCloseChan.isActive()) {
-                    toCloseChan.close();
+            chan.eventLoop().schedule(() -> {
+                if (chan.isActive()) {
+                    chan.close();
                 }
             }, 1, TimeUnit.SECONDS);
         }
@@ -1087,7 +1085,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         private void recycle() {
             this.endpoint = null;
             this.chan = null;
-            this.command = null;
+            this.cmd = null;
 
             handle.recycle(this);
         }
