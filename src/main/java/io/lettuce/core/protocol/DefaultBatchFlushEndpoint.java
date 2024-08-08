@@ -155,7 +155,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     private final String cachedEndpointId;
 
-    protected final UnboundedMpscOfferFirstQueue<RedisCommand<?, ?, ?>> taskQueue;
+    protected final UnboundedMpscOfferFirstQueue<Object> taskQueue;
 
     private final boolean canFire;
 
@@ -284,9 +284,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
                 commands = processActivationCommands(commands);
             }
 
-            for (RedisCommand<?, ?, ?> command : commands) {
-                this.taskQueue.offer(command);
-            }
+            this.taskQueue.offer(commands);
             QUEUE_SIZE.addAndGet(this, commands.size());
 
             if (autoFlushCommands) {
@@ -703,12 +701,24 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     private int pollBatch(final BatchFlushEndPointContext batchFlushEndPointContext, ContextualChannel chan) {
         int count = 0;
-        for (; count < batchSize; count++) {
-            final RedisCommand<?, ?, ?> cmd = this.taskQueue.poll();
-            if (cmd == null) {
+        while (count < batchSize) {
+            final Object o = this.taskQueue.poll();
+            if (o == null) {
                 break;
             }
-            channelWrite(chan, cmd).addListener(WrittenToChannel.newInstance(this, chan, cmd));
+
+            if (o instanceof RedisCommand<?, ?, ?>) {
+                RedisCommand<?, ?, ?> cmd = (RedisCommand<?, ?, ?>) o;
+                channelWrite(chan, cmd).addListener(WrittenToChannel.newInstance(this, chan, cmd));
+                count++;
+            } else {
+                @SuppressWarnings("unchecked")
+                Collection<? extends RedisCommand<?, ?, ?>> commands = (Collection<? extends RedisCommand<?, ?, ?>>) o;
+                for (RedisCommand<?, ?, ?> cmd : commands) {
+                    channelWrite(chan, cmd).addListener(WrittenToChannel.newInstance(this, chan, cmd));
+                }
+                count += commands.size();
+            }
         }
 
         if (count > 0) {
@@ -842,17 +852,31 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
         int cancelledTaskNumInTaskQueue = 0;
         while (true) {
-            RedisCommand<?, ?, ?> cmd = this.taskQueue.poll();
-            if (cmd == null) {
+            Object o = this.taskQueue.poll();
+            if (o == null) {
                 break;
             }
-            if (cmd.getOutput() != null) {
-                cmd.getOutput().setError(message);
-            }
-            commandConsumer.accept(cmd);
 
-            cancelledTaskNumInTaskQueue++;
-            totalCancelledTaskNum++;
+            if (o instanceof RedisCommand<?, ?, ?>) {
+                RedisCommand<?, ?, ?> cmd = (RedisCommand<?, ?, ?>) o;
+                if (cmd.getOutput() != null) {
+                    cmd.getOutput().setError(message);
+                }
+                commandConsumer.accept(cmd);
+                cancelledTaskNumInTaskQueue++;
+                totalCancelledTaskNum++;
+            } else {
+                @SuppressWarnings("unchecked")
+                Collection<? extends RedisCommand<?, ?, ?>> commands = (Collection<? extends RedisCommand<?, ?, ?>>) o;
+                for (RedisCommand<?, ?, ?> cmd : commands) {
+                    if (cmd.getOutput() != null) {
+                        cmd.getOutput().setError(message);
+                    }
+                    commandConsumer.accept(cmd);
+                }
+                cancelledTaskNumInTaskQueue += commands.size();
+                totalCancelledTaskNum += commands.size();
+            }
         }
 
         QUEUE_SIZE.addAndGet(this, -cancelledTaskNumInTaskQueue);
