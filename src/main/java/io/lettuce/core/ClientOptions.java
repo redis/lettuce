@@ -69,6 +69,8 @@ public class ClientOptions implements Serializable {
 
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
 
+    public static final boolean DEFAULT_USE_HASH_INDEX_QUEUE = false;
+
     private final boolean autoReconnect;
 
     private final boolean cancelCommandsOnReconnectFailure;
@@ -97,6 +99,8 @@ public class ClientOptions implements Serializable {
 
     private final TimeoutOptions timeoutOptions;
 
+    private final boolean useHashIndexedQueue;
+
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
@@ -112,6 +116,7 @@ public class ClientOptions implements Serializable {
         this.sslOptions = builder.sslOptions;
         this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         this.timeoutOptions = builder.timeoutOptions;
+        this.useHashIndexedQueue = builder.useHashIndexedQueue;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -129,6 +134,7 @@ public class ClientOptions implements Serializable {
         this.sslOptions = original.getSslOptions();
         this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
         this.timeoutOptions = original.getTimeoutOptions();
+        this.useHashIndexedQueue = original.isUseHashIndexedQueue();
     }
 
     /**
@@ -192,6 +198,8 @@ public class ClientOptions implements Serializable {
 
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
 
+        private boolean useHashIndexedQueue = DEFAULT_USE_HASH_INDEX_QUEUE;
+
         protected Builder() {
         }
 
@@ -247,8 +255,8 @@ public class ClientOptions implements Serializable {
          *
          * @param policy the policy to use in {@link io.lettuce.core.protocol.CommandHandler}
          * @return {@code this}
-         * @since 6.0
          * @see DecodeBufferPolicies
+         * @since 6.0
          */
         public Builder decodeBufferPolicy(DecodeBufferPolicy policy) {
 
@@ -295,8 +303,8 @@ public class ClientOptions implements Serializable {
          *
          * @param protocolVersion version to use.
          * @return {@code this}
-         * @since 6.0
          * @see ProtocolVersion#newestSupported()
+         * @since 6.0
          */
         public Builder protocolVersion(ProtocolVersion protocolVersion) {
 
@@ -315,9 +323,9 @@ public class ClientOptions implements Serializable {
          *
          * @param publishOnScheduler true/false
          * @return {@code this}
-         * @since 5.2
          * @see org.reactivestreams.Subscriber#onNext(Object)
          * @see ClientResources#eventExecutorGroup()
+         * @since 5.2
          */
         public Builder publishOnScheduler(boolean publishOnScheduler) {
             this.publishOnScheduler = publishOnScheduler;
@@ -423,6 +431,20 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Use hash indexed queue which provides O(1) remove(Object) thus won't cause blocking issues.
+         *
+         * @param useHashIndexedQueue true/false
+         * @return {@code this}
+         * @see io.lettuce.core.protocol.CommandHandler.AddToStack
+         * @since 5.1
+         */
+        @SuppressWarnings("JavadocReference")
+        public Builder useHashIndexQueue(boolean useHashIndexedQueue) {
+            this.useHashIndexedQueue = useHashIndexedQueue;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link ClientOptions}.
          *
          * @return new instance of {@link ClientOptions}
@@ -439,7 +461,6 @@ public class ClientOptions implements Serializable {
      *
      * @return a {@link ClientOptions.Builder} to create new {@link ClientOptions} whose settings are replicated from the
      *         current {@link ClientOptions}.
-     *
      * @since 5.1
      */
     public ClientOptions.Builder mutate() {
@@ -498,7 +519,6 @@ public class ClientOptions implements Serializable {
      *
      * @return zero.
      * @since 5.2
-     *
      * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
      */
     @Deprecated
@@ -635,6 +655,15 @@ public class ClientOptions implements Serializable {
      */
     public TimeoutOptions getTimeoutOptions() {
         return timeoutOptions;
+    }
+
+    /**
+     * Whether we should use hash indexed queue, which provides O(1) remove(Object)
+     *
+     * @return if hash indexed queue should be used
+     */
+    public boolean isUseHashIndexedQueue() {
+        return useHashIndexedQueue;
     }
 
     /**
