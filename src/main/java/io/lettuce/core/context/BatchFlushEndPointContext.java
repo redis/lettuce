@@ -41,29 +41,12 @@ public class BatchFlushEndPointContext {
          *
          * @return true if entered the loop, false if already have a running loop.
          */
-        public boolean tryEnterSafeGetVolatile() {
+        public boolean tryEnter() {
             return safe.get() == 0 && /* rare case if QPS is high */ safe.compareAndSet(0, 1);
         }
 
-        public void exitSafe() {
+        public void exit() {
             safe.set(0);
-        }
-
-        /**
-         * This method is not thread safe, can only be used from single thread.
-         *
-         * @return true if the value was updated
-         */
-        public boolean tryEnterUnsafe() {
-            if (unsafe) {
-                return false;
-            }
-            unsafe = true;
-            return true;
-        }
-
-        public void exitUnsafe() {
-            unsafe = false;
         }
 
     }

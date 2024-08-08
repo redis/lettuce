@@ -601,8 +601,8 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         LettuceAssert.assertState(chan.eventLoop().inEventLoop(), "must be called in event loop thread");
 
         // Schedule directly
-        if (chan.context.batchFlushEndPointContext.hasOngoingSendLoop.tryEnterSafeGetVolatile()) {
-            scheduleSendJobInEventLoopIfNeeded(chan);
+        if (chan.context.batchFlushEndPointContext.hasOngoingSendLoop.tryEnter()) {
+            loopSend(chan);
         }
         // Otherwise:
         // someone will do the job for us
@@ -610,7 +610,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     private void scheduleSendJobIfNeeded(final ContextualChannel chan) {
         final EventLoop eventLoop = chan.eventLoop();
-        if (chan.context.batchFlushEndPointContext.hasOngoingSendLoop.tryEnterSafeGetVolatile()) {
+        if (chan.context.batchFlushEndPointContext.hasOngoingSendLoop.tryEnter()) {
             // Benchmark result of using tryEnterSafeGetVolatile() or not (1 thread, async get):
             // 1. uses tryEnterSafeGetVolatile() to avoid unnecessary eventLoop.execute() calls
             // Avg latency: 3.2956217278663s
@@ -618,7 +618,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
             // 2. uses eventLoop.execute() directly
             // Avg latency: 3.2677197021496998s
             // Avg QPS: 476925.0751855796/s
-            eventLoop.execute(() -> scheduleSendJobInEventLoopIfNeeded(chan));
+            eventLoop.execute(() -> loopSend(chan));
         }
 
         // Otherwise:
@@ -627,16 +627,6 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         // hasOngoingSendLoop.safe.set(0) (volatile write) in first loopSend0()
         // 3. hasOngoingSendLoop.safe.set(0) (volatile write) synchronizes-before
         // second loopSend0(), which will call poll()
-    }
-
-    private void scheduleSendJobInEventLoopIfNeeded(final ContextualChannel chan) {
-        // Guarantee only 1 send loop.
-        BatchFlushEndPointContext.HasOngoingSendLoop hasOngoingSendLoop = chan.context.batchFlushEndPointContext.hasOngoingSendLoop;
-        if (hasOngoingSendLoop.tryEnterUnsafe()) {
-            loopSend(chan);
-        } else {
-            hasOngoingSendLoop.exitSafe();
-        }
     }
 
     private void loopSend(final ContextualChannel chan) {
@@ -651,7 +641,7 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
     }
 
     private void loopSend0(final BatchFlushEndPointContext batchFlushEndPointContext, final ContextualChannel chan,
-            int remainingSpinnCount, final boolean exitedSafe) {
+            int remainingSpinnCount, final boolean exited) {
         do {
             final int count = pollBatch(batchFlushEndPointContext, chan);
             if (count < 0) {
@@ -669,12 +659,10 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
             return;
         }
 
-        if (exitedSafe) {
+        if (!exited) {
             // The send loop will be triggered later when a new task is added,
-            batchFlushEndPointContext.hasOngoingSendLoop.exitUnsafe();
-        } else {
             // // Don't setUnsafe here because loopSend0() may result in a delayed loopSend() call.
-            batchFlushEndPointContext.hasOngoingSendLoop.exitSafe();
+            batchFlushEndPointContext.hasOngoingSendLoop.exit();
             // // Guarantee thread-safety: no dangling tasks in the queue.
             loopSend0(batchFlushEndPointContext, chan, remainingSpinnCount, true);
             // chan.eventLoop().schedule(() -> loopSend0(batchFlushEndPointContext, chan, writeSpinCount, false), 100,
