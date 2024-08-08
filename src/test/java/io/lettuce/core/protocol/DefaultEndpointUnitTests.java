@@ -15,6 +15,10 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.netty.channel.SingleThreadEventLoop;
+import io.netty.channel.nio.NioEventLoop;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -27,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -46,6 +51,7 @@ import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.EventLoop;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import org.mockito.stubbing.Answer;
 
 /**
  * @author Mark Paluch
@@ -63,6 +69,9 @@ class DefaultEndpointUnitTests {
 
     @Mock
     private Channel channel;
+
+    @Mock
+    private EventLoop eventLoop;
 
     @Mock
     private ConnectionFacade connectionFacade;
@@ -116,6 +125,13 @@ class DefaultEndpointUnitTests {
             }
             return promise;
         });
+
+        when(channel.eventLoop()).thenReturn(eventLoop);
+        doAnswer((Answer<Void>) invocation -> {
+            Runnable runnable = (Runnable) invocation.getArguments()[0];
+            runnable.run(); // Directly execute the runnable
+            return null;
+        }).when(eventLoop).execute(any(Runnable.class));
 
         sut = new DefaultEndpoint(ClientOptions.create(), clientResources);
         sut.setConnectionFacade(connectionFacade);
@@ -336,8 +352,6 @@ class DefaultEndpointUnitTests {
     void retryListenerDoesNotRetryCompletedCommands() {
 
         DefaultEndpoint.RetryListener listener = DefaultEndpoint.RetryListener.newInstance(sut, command);
-
-        when(channel.eventLoop()).thenReturn(mock(EventLoop.class));
 
         command.complete();
         promise.tryFailure(new Exception());
