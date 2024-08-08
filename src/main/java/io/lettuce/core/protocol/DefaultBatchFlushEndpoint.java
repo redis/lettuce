@@ -169,10 +169,6 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
 
     private final int batchSize;
 
-    private final boolean busyLoop;
-
-    private final long busyLoopDelayInNanos;
-
     /**
      * Create a new {@link BatchFlushEndpoint}.
      *
@@ -201,8 +197,6 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         this.callbackOnClose = callbackOnClose;
         this.writeSpinCount = clientOptions.getAutoBatchFlushOptions().getWriteSpinCount();
         this.batchSize = clientOptions.getAutoBatchFlushOptions().getBatchSize();
-        this.busyLoop = clientOptions.getAutoBatchFlushOptions().isBusyLoop();
-        this.busyLoopDelayInNanos = clientOptions.getAutoBatchFlushOptions().getBusyLoopDelayInNanos();
     }
 
     @Override
@@ -615,10 +609,6 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
     }
 
     private void scheduleSendJobIfNeeded(final ContextualChannel chan) {
-        if (busyLoop) {
-            return;
-        }
-
         final EventLoop eventLoop = chan.eventLoop();
         if (chan.context.batchFlushEndPointContext.hasOngoingSendLoop.tryEnterSafeGetVolatile()) {
             // Benchmark result of using tryEnterSafeGetVolatile() or not (1 thread, async get):
@@ -676,13 +666,6 @@ public class DefaultBatchFlushEndpoint implements RedisChannelWriter, BatchFlush
         if (remainingSpinnCount <= 0) {
             // Don't need to exitUnsafe since we still have an ongoing consume tasks in this thread.
             chan.eventLoop().execute(() -> loopSend(chan));
-            return;
-        }
-
-        if (busyLoop) {
-            // Don't use chan.eventLoop().execute(), otherwise performance will drop, since the event loop
-            // thread will trap within a certain time period.
-            chan.eventLoop().schedule(() -> loopSend(chan), busyLoopDelayInNanos, TimeUnit.NANOSECONDS);
             return;
         }
 
