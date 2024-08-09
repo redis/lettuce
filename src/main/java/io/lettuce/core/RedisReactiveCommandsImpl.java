@@ -17,7 +17,7 @@ import io.lettuce.core.json.JsonParserRegistry;
 public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveCommands<K, V>
         implements RedisReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
 
-    private final RedisCodec<K,V> codec;
+    private final RedisCodec<K, V> codec;
 
     /**
      * Initialize a new instance.

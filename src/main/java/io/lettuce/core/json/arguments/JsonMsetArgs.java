@@ -39,7 +39,7 @@ public class JsonMsetArgs implements CompositeArgument {
 
     private JsonPath path;
 
-    private JsonValue element;
+    private JsonValue<?, ?> element;
 
     /**
      * Builder entry points for {@link JsonGetArgs}.
@@ -75,7 +75,7 @@ public class JsonMsetArgs implements CompositeArgument {
          *
          * @return new {@link JsonGetArgs} with spacing set.
          */
-        public static JsonMsetArgs element(JsonValue element) {
+        public static JsonMsetArgs element(JsonValue<?, ?> element) {
             return new JsonMsetArgs().element(element);
         }
 
@@ -108,7 +108,7 @@ public class JsonMsetArgs implements CompositeArgument {
      *
      * @return {@code this}.
      */
-    public JsonMsetArgs element(JsonValue element) {
+    public JsonMsetArgs element(JsonValue<?, ?> element) {
 
         this.element = element;
         return this;
@@ -126,7 +126,7 @@ public class JsonMsetArgs implements CompositeArgument {
         }
 
         if (element != null) {
-            args.add(element.toString());
+            args.add(element.asByteBuffer().array());
         }
     }
 

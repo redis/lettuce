@@ -81,16 +81,6 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     }
 
     @Override
-    public JsonParser<K, V> getJsonParser() {
-        return delegate.getJsonParser();
-    }
-
-    @Override
-    public void setJsonParser(JsonParser<K, V> jsonParser) {
-        delegate.setJsonParser(jsonParser);
-    }
-
-    @Override
     public void setTimeout(Duration timeout) {
         delegate.setTimeout(timeout);
     }
