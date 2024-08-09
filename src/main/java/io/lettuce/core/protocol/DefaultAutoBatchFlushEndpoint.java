@@ -390,7 +390,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             return;
         }
 
-        boolean willReconnect = connectionWatchdog != null && connectionWatchdog.willReconnect();
+        boolean willReconnect = connectionWatchdog != null
+                && connectionWatchdog.willReconnectOnAutoBatchFlushEndpointQuiescence();
         RedisException exception = null;
         // Unlike DefaultEndpoint, here we don't check reliability since connectionWatchdog.willReconnect() already does it.
         if (isClosed()) {
