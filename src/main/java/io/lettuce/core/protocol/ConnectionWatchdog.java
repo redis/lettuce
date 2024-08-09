@@ -24,12 +24,13 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.ConnectionEvents;
+import io.lettuce.core.RedisException;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.connection.ReconnectAttemptEvent;
 import io.lettuce.core.event.connection.ReconnectFailedEvent;
@@ -50,6 +51,8 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 /**
  * A netty {@link ChannelHandler} responsible for monitoring the channel and reconnecting when the connection is lost.
@@ -83,6 +86,10 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private final String epid;
 
+    private final boolean useAutoBatchFlush;
+
+    private final Consumer<Supplier<Throwable>> endpointFailedToReconnectNotifier;
+
     private Channel channel;
 
     private SocketAddress remoteAddress;
@@ -100,6 +107,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     private volatile boolean listenOnChannelInactive;
 
     private volatile Timeout reconnectScheduleTimeout;
+
+    private Runnable doReconnectOnAutoBatchFlushEndpointQuiescence;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -141,6 +150,15 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.eventBus = eventBus;
         this.redisUri = (String) bootstrap.config().attrs().get(ConnectionBuilder.REDIS_URI);
         this.epid = endpoint.getId();
+        if (endpoint instanceof AutoBatchFlushEndpoint) {
+            this.useAutoBatchFlush = true;
+            endpointFailedToReconnectNotifier = throwableSupplier -> ((AutoBatchFlushEndpoint) endpoint)
+                    .notifyReconnectFailed(throwableSupplier.get());
+        } else {
+            this.useAutoBatchFlush = false;
+            endpointFailedToReconnectNotifier = ignoredThrowableSupplier -> {
+            };
+        }
 
         Mono<SocketAddress> wrappedSocketAddressSupplier = socketAddressSupplier.doOnNext(addr -> remoteAddress = addr)
                 .onErrorResume(t -> {
@@ -195,6 +213,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        doReconnectOnAutoBatchFlushEndpointQuiescence = null;
 
         logger.debug("{} channelInactive()", logPrefix());
         if (!armed) {
@@ -205,12 +224,25 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         channel = null;
 
         if (listenOnChannelInactive && !reconnectionHandler.isReconnectSuspended()) {
-            scheduleReconnect();
+            if (!useAutoBatchFlush) {
+                this.scheduleReconnect();
+            } else {
+                doReconnectOnAutoBatchFlushEndpointQuiescence = this::scheduleReconnect;
+            }
+            // otherwise, will be called later by BatchFlushEndpoint#onEndpointQuiescence
         } else {
             logger.debug("{} Reconnect scheduling disabled", logPrefix(), ctx);
         }
 
         super.channelInactive(ctx);
+    }
+
+    boolean willReconnectOnAutoBatchFlushEndpointQuiescence() {
+        return doReconnectOnAutoBatchFlushEndpointQuiescence != null;
+    }
+
+    void reconnectOnAutoBatchFlushEndpointQuiescence() {
+        doReconnectOnAutoBatchFlushEndpointQuiescence.run();
     }
 
     /**
@@ -229,12 +261,16 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         logger.debug("{} scheduleReconnect()", logPrefix());
 
         if (!isEventLoopGroupActive()) {
-            logger.debug("isEventLoopGroupActive() == false");
+            final String errMsg = "isEventLoopGroupActive() == false";
+            logger.debug(errMsg);
+            notifyEndpointFailedToReconnect(errMsg);
             return;
         }
 
         if (!isListenOnChannelInactive()) {
-            logger.debug("Skip reconnect scheduling, listener disabled");
+            final String errMsg = "Skip reconnect scheduling, listener disabled";
+            logger.debug(errMsg);
+            notifyEndpointFailedToReconnect(errMsg);
             return;
         }
 
@@ -251,7 +287,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
                 reconnectScheduleTimeout = null;
 
                 if (!isEventLoopGroupActive()) {
-                    logger.warn("Cannot execute scheduled reconnect timer, reconnect workers are terminated");
+                    final String errMsg = "Cannot execute scheduled reconnect timer, reconnect workers are terminated";
+                    logger.warn(errMsg);
+                    notifyEndpointFailedToReconnect(errMsg);
                     return;
                 }
 
@@ -267,7 +305,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             }
         } else {
             logger.debug("{} Skipping scheduleReconnect() because I have an active channel", logPrefix());
+            notifyEndpointFailedToReconnect("Skipping scheduleReconnect() because I have an active channel");
         }
+    }
+
+    void notifyEndpointFailedToReconnect(String msg) {
+        endpointFailedToReconnectNotifier.accept(() -> new RedisException(msg));
     }
 
     /**
@@ -275,7 +318,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      * the same handler instances contained in the old channel's pipeline.
      *
      * @param attempt attempt counter
-     *
      * @throws Exception when reconnection fails.
      */
     public void run(int attempt) throws Exception {
@@ -288,26 +330,31 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
      *
      * @param attempt attempt counter.
      * @param delay retry delay.
-     *
      * @throws Exception when reconnection fails.
      */
-    private void run(int attempt, Duration delay) throws Exception {
+    private void run(int attempt, Duration delay) {
 
         reconnectSchedulerSync.set(false);
         reconnectScheduleTimeout = null;
 
         if (!isEventLoopGroupActive()) {
-            logger.debug("isEventLoopGroupActive() == false");
+            final String errMsg = "isEventLoopGroupActive() == false";
+            logger.debug(errMsg);
+            notifyEndpointFailedToReconnect(errMsg);
             return;
         }
 
         if (!isListenOnChannelInactive()) {
-            logger.debug("Skip reconnect scheduling, listener disabled");
+            final String errMsg = "Skip reconnect scheduling, listener disabled";
+            logger.debug(errMsg);
+            notifyEndpointFailedToReconnect(errMsg);
             return;
         }
 
         if (isReconnectSuspended()) {
-            logger.debug("Skip reconnect scheduling, reconnect is suspended");
+            final String msg = "Skip reconnect scheduling, reconnect is suspended";
+            logger.debug(msg);
+            notifyEndpointFailedToReconnect(msg);
             return;
         }
 
@@ -363,11 +410,15 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
                 if (!isReconnectSuspended()) {
                     scheduleReconnect();
+                } else {
+                    endpointFailedToReconnectNotifier
+                            .accept(() -> new RedisException("got error and then reconnect is suspended", t));
                 }
             });
         } catch (Exception e) {
             logger.log(warnLevel, "Cannot reconnect: {}", e.toString());
             eventBus.publish(new ReconnectFailedEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, e, attempt));
+            endpointFailedToReconnectNotifier.accept(() -> e);
         }
     }
 

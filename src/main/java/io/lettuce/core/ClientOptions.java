@@ -69,6 +69,8 @@ public class ClientOptions implements Serializable {
 
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.create();
 
+    public static final AutoBatchFlushOptions DEFAULT_AUTO_BATCH_FLUSH_OPTIONS = AutoBatchFlushOptions.create();
+
     private final boolean autoReconnect;
 
     private final boolean cancelCommandsOnReconnectFailure;
@@ -97,6 +99,8 @@ public class ClientOptions implements Serializable {
 
     private final TimeoutOptions timeoutOptions;
 
+    private final AutoBatchFlushOptions autoBatchFlushOptions;
+
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
@@ -112,6 +116,7 @@ public class ClientOptions implements Serializable {
         this.sslOptions = builder.sslOptions;
         this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         this.timeoutOptions = builder.timeoutOptions;
+        this.autoBatchFlushOptions = builder.autoBatchFlushOptions;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -129,6 +134,7 @@ public class ClientOptions implements Serializable {
         this.sslOptions = original.getSslOptions();
         this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
         this.timeoutOptions = original.getTimeoutOptions();
+        this.autoBatchFlushOptions = original.getAutoBatchFlushOptions();
     }
 
     /**
@@ -192,6 +198,8 @@ public class ClientOptions implements Serializable {
 
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
 
+        private AutoBatchFlushOptions autoBatchFlushOptions = DEFAULT_AUTO_BATCH_FLUSH_OPTIONS;
+
         protected Builder() {
         }
 
@@ -247,8 +255,8 @@ public class ClientOptions implements Serializable {
          *
          * @param policy the policy to use in {@link io.lettuce.core.protocol.CommandHandler}
          * @return {@code this}
-         * @since 6.0
          * @see DecodeBufferPolicies
+         * @since 6.0
          */
         public Builder decodeBufferPolicy(DecodeBufferPolicy policy) {
 
@@ -295,8 +303,8 @@ public class ClientOptions implements Serializable {
          *
          * @param protocolVersion version to use.
          * @return {@code this}
-         * @since 6.0
          * @see ProtocolVersion#newestSupported()
+         * @since 6.0
          */
         public Builder protocolVersion(ProtocolVersion protocolVersion) {
 
@@ -315,9 +323,9 @@ public class ClientOptions implements Serializable {
          *
          * @param publishOnScheduler true/false
          * @return {@code this}
-         * @since 5.2
          * @see org.reactivestreams.Subscriber#onNext(Object)
          * @see ClientResources#eventExecutorGroup()
+         * @since 5.2
          */
         public Builder publishOnScheduler(boolean publishOnScheduler) {
             this.publishOnScheduler = publishOnScheduler;
@@ -423,6 +431,17 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Sets the {@link AutoBatchFlushOptions}
+         *
+         * @param autoBatchFlushOptions must not be {@code null}.
+         */
+        public Builder autoBatchFlushOptions(AutoBatchFlushOptions autoBatchFlushOptions) {
+            LettuceAssert.notNull(autoBatchFlushOptions, "AutoBatchFlushOptions must not be null");
+            this.autoBatchFlushOptions = autoBatchFlushOptions;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link ClientOptions}.
          *
          * @return new instance of {@link ClientOptions}
@@ -439,7 +458,6 @@ public class ClientOptions implements Serializable {
      *
      * @return a {@link ClientOptions.Builder} to create new {@link ClientOptions} whose settings are replicated from the
      *         current {@link ClientOptions}.
-     *
      * @since 5.1
      */
     public ClientOptions.Builder mutate() {
@@ -498,7 +516,6 @@ public class ClientOptions implements Serializable {
      *
      * @return zero.
      * @since 5.2
-     *
      * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
      */
     @Deprecated
@@ -635,6 +652,10 @@ public class ClientOptions implements Serializable {
      */
     public TimeoutOptions getTimeoutOptions() {
         return timeoutOptions;
+    }
+
+    public AutoBatchFlushOptions getAutoBatchFlushOptions() {
+        return autoBatchFlushOptions;
     }
 
     /**

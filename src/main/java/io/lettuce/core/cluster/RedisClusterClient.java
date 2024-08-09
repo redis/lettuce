@@ -38,7 +38,20 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import io.lettuce.core.*;
+import io.lettuce.core.AbstractRedisClient;
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.CommandListenerWriter;
+import io.lettuce.core.ConnectionBuilder;
+import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.ConnectionState;
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.SslConnectionBuilder;
+import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.NodeSelectionSupport;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -63,6 +76,7 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.DefaultEndpoint;
+import io.lettuce.core.protocol.Endpoint;
 import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.lettuce.core.pubsub.PubSubEndpoint;
@@ -145,12 +159,12 @@ import reactor.core.publisher.Mono;
  * possible.
  *
  * @author Mark Paluch
- * @since 3.0
  * @see RedisURI
  * @see StatefulRedisClusterConnection
  * @see RedisCodec
  * @see ClusterClientOptions
  * @see ClientResources
+ * @since 3.0
  */
 public class RedisClusterClient extends AbstractRedisClient {
 
@@ -540,9 +554,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         assertNotEmpty(initialUris);
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
 
-        ClusterNodeEndpoint endpoint = new ClusterNodeEndpoint(getClusterClientOptions(), getResources(), clusterWriter);
+        Endpoint endpoint = getClusterClientOptions().getAutoBatchFlushOptions().isAutoBatchFlushEnabled()
+                ? new ClusterNodeAutoBatchFlushEndpoint(getClusterClientOptions(), getResources(), clusterWriter)
+                : new ClusterNodeEndpoint(getClusterClientOptions(), getResources(), clusterWriter);
 
-        RedisChannelWriter writer = endpoint;
+        RedisChannelWriter writer = (RedisChannelWriter) endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
             writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
@@ -814,7 +830,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     @SuppressWarnings("unchecked")
     private <K, V, T extends StatefulRedisConnectionImpl<K, V>, S> ConnectionFuture<S> connectStatefulAsync(T connection,
-            DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
+            Endpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder = createConnectionBuilder(connection, connection.getConnectionState(), endpoint,
@@ -826,7 +842,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     private <K, V> ConnectionBuilder createConnectionBuilder(RedisChannelHandler<K, V> connection, ConnectionState state,
-            DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
+            Endpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
             Supplier<CommandHandler> commandHandlerSupplier) {
 
         ConnectionBuilder connectionBuilder;
