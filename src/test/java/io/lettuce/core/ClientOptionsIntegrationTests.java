@@ -92,7 +92,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Test
     void requestQueueSize() {
 
-        client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+        client.setOptions(ClientOptions.builder().requestQueueSize(10)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         StatefulRedisConnection<String, String> connection = client.connect();
         getConnectionWatchdog(connection).setListenOnChannelInactive(false);
@@ -115,7 +116,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Test
     void requestQueueSizeAppliedForReconnect() {
 
-        client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+        client.setOptions(ClientOptions.builder().requestQueueSize(10)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
         testHitRequestQueueLimit(connection);
@@ -127,7 +129,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
         WithPassword.run(client, () -> {
 
             client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false)
-                    .requestQueueSize(10).build());
+                    .requestQueueSize(10).timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
             RedisAsyncCommands<String, String> connection = client.connect().async();
             connection.auth(passwd);
@@ -142,7 +144,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
         WithPassword.run(client, () -> {
 
             client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false)
-                    .requestQueueSize(10).build());
+                    .requestQueueSize(10).timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
             RedisAsyncCommands<String, String> connection = client.connect().async();
             connection.auth(username, passwd);
@@ -154,7 +156,9 @@ class ClientOptionsIntegrationTests extends TestSupport {
     void testHitRequestQueueLimitReconnectWithUriAuth() {
 
         WithPassword.run(client, () -> {
-            client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+            client.setOptions(ClientOptions.builder().requestQueueSize(10)
+                    .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+            ;
 
             RedisURI redisURI = RedisURI.create(host, port);
             redisURI.setPassword(passwd);
@@ -169,7 +173,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
 
         WithPassword.run(client, () -> {
 
-            client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+            client.setOptions(ClientOptions.builder().requestQueueSize(10)
+                    .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
             RedisURI redisURI = RedisURI.create(host, port);
             redisURI.setPassword(passwd);
@@ -207,7 +212,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Test
     void requestQueueSizeOvercommittedReconnect() {
 
-        client.setOptions(ClientOptions.builder().requestQueueSize(10).build());
+        client.setOptions(ClientOptions.builder().requestQueueSize(10)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         StatefulRedisConnection<String, String> connection = client.connect();
         ConnectionWatchdog watchdog = getConnectionWatchdog(connection);
@@ -262,8 +268,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Test
     void disconnectedRejectCommands() {
 
-        client.setOptions(
-                ClientOptions.builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).build());
+        client.setOptions(ClientOptions.builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
 
@@ -471,7 +477,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
 
     @Test
     void pingBeforeConnectWithQueuedCommandsAndReconnect() throws Exception {
-
+        client.setOptions(
+                ClientOptions.builder().timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
         StatefulRedisConnection<String, String> controlConnection = client.connect();
 
         StatefulRedisConnection<String, String> redisConnection = client.connect(RedisURI.create("redis://localhost:6479/5"));
@@ -513,6 +520,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
         WithPassword.run(client, () -> {
 
             RedisURI redisURI = RedisURI.Builder.redis(host, port).withPassword(passwd).withDatabase(5).build();
+            client.setOptions(
+                    ClientOptions.builder().timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
             StatefulRedisConnection<String, String> controlConnection = client.connect(redisURI);
 
             StatefulRedisConnection<String, String> redisConnection = client.connect(redisURI);
