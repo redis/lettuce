@@ -26,6 +26,12 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonValue;
+import io.lettuce.core.json.arguments.JsonGetArgs;
+import io.lettuce.core.json.arguments.JsonMsetArgs;
+import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.arguments.JsonRangeArgs;
+import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
@@ -71,11 +77,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
-        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
+        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
     private final RedisCommandBuilder<K, V> commandBuilder;
+
+    private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
 
     /**
      * Initialize a new instance.
@@ -86,6 +94,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
         this.connection = connection;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
+        this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec);
     }
 
     @Override
@@ -1451,6 +1460,106 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public boolean isOpen() {
         return connection.isOpen();
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue<K, V>... values) {
+        return dispatch(jsonCommandBuilder.jsonArrappend(key, jsonPath, values));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonRangeArgs range) {
+        return dispatch(jsonCommandBuilder.jsonArrindex(key, jsonPath, value, range));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue<K, V>... values) {
+        return dispatch(jsonCommandBuilder.jsonArrinsert(key, jsonPath, index, values));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrlen(K key, JsonPath jsonPath) {
+        return dispatch(jsonCommandBuilder.jsonArrlen(key, jsonPath));
+    }
+
+    @Override
+    public RedisFuture<List<JsonValue<K, V>>> jsonArrpop(K key, JsonPath jsonPath, int index) {
+        return dispatch(jsonCommandBuilder.jsonArrpop(key, jsonPath, index));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range) {
+        return dispatch(jsonCommandBuilder.jsonArrtrim(key, jsonPath, range));
+    }
+
+    @Override
+    public RedisFuture<Long> jsonClear(K key, JsonPath jsonPath) {
+        return dispatch(jsonCommandBuilder.jsonClear(key, jsonPath));
+    }
+
+    @Override
+    public RedisFuture<Long> jsonDel(K key, JsonPath jsonPath) {
+        return dispatch(jsonCommandBuilder.jsonDel(key, jsonPath));
+    }
+
+    @Override
+    public RedisFuture<List<JsonValue<K, V>>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        return dispatch(jsonCommandBuilder.jsonGet(key, options, jsonPaths));
+    }
+
+    @Override
+    public RedisFuture<Boolean> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value) {
+        return dispatch(jsonCommandBuilder.jsonMerge(key, jsonPath, value));
+    }
+
+    @Override
+    public RedisFuture<List<JsonValue<K, V>>> jsonMGet(JsonPath jsonPath, K... keys) {
+        return dispatch(jsonCommandBuilder.jsonMGet(jsonPath, keys));
+    }
+
+    @Override
+    public RedisFuture<String> jsonMSet(JsonMsetArgs... arguments) {
+        return dispatch(jsonCommandBuilder.jsonMSet(arguments));
+    }
+
+    @Override
+    public RedisFuture<List<Number>> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
+        return dispatch(jsonCommandBuilder.jsonNumincrby(key, jsonPath, number));
+    }
+
+    @Override
+    public RedisFuture<List<K>> jsonObjkeys(K key, JsonPath jsonPath) {
+        return dispatch(jsonCommandBuilder.jsonObjkeys(key, jsonPath));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonObjlen(K key, JsonPath jsonPath) {
+        return dispatch(jsonCommandBuilder.jsonObjlen(key, jsonPath));
+    }
+
+    @Override
+    public RedisFuture<String> jsonSet(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonSetArgs options) {
+        return dispatch(jsonCommandBuilder.jsonSet(key, jsonPath, value, options));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue<K, V> value) {
+        return dispatch(jsonCommandBuilder.jsonStrappend(key, jsonPath, value));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonStrlen(K key, JsonPath jsonPath) {
+        return dispatch(jsonCommandBuilder.jsonStrlen(key, jsonPath));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonToggle(K key, JsonPath jsonPath) {
+        return dispatch(jsonCommandBuilder.jsonToggle(key, jsonPath));
+    }
+
+    @Override
+    public RedisFuture<List<V>> jsonType(K key, JsonPath jsonPath) {
+        return dispatch(jsonCommandBuilder.jsonType(key, jsonPath));
     }
 
     @Override

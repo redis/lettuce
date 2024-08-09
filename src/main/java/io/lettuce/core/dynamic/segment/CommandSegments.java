@@ -81,13 +81,8 @@ public class CommandSegments implements Iterable<CommandSegment> {
         }
 
         @Override
-        public String name() {
-            return commandType;
-        }
-
-        @Override
         public String toString() {
-            return name();
+            return commandType;
         }
 
         @Override
@@ -112,7 +107,7 @@ public class CommandSegments implements Iterable<CommandSegment> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(getCommandType().name());
+        sb.append(getCommandType().toString());
 
         for (CommandSegment segment : segments) {
             sb.append(' ').append(segment);

@@ -476,7 +476,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             TraceContext context = provider.getTraceContext();
 
             Tracer.Span span = tracer.nextSpan(context);
-            span.name(command.getType().name());
+            span.name(command.getType().toString());
 
             if (tracedEndpoint != null) {
                 span.remoteEndpoint(tracedEndpoint);

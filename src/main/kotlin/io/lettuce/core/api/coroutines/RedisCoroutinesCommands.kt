@@ -28,6 +28,7 @@ import io.lettuce.core.cluster.api.coroutines.RedisClusterCoroutinesCommands
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mikhael Sokolov
+ * @author Tihomir Mateev
  * @since 6.0
  */
 @ExperimentalLettuceCoroutinesApi
@@ -47,7 +48,8 @@ interface RedisCoroutinesCommands<K : Any, V : Any> :
     RedisStreamCoroutinesCommands<K, V>,
     RedisStringCoroutinesCommands<K, V>,
     RedisTransactionalCoroutinesCommands<K, V>,
-    RedisClusterCoroutinesCommands<K, V> {
+    RedisClusterCoroutinesCommands<K, V>,
+    RedisJsonCoroutinesCommands<K, V>{
 
     /**
      * Authenticate to the server.

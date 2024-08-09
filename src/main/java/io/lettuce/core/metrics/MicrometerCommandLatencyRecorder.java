@@ -115,7 +115,7 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
 
         Timer.Builder timer = Timer.builder(METRIC_COMPLETION)
                 .description("Latency between command send and command completion (complete response received")
-                .tag(LABEL_COMMAND, commandLatencyId.commandType().name())
+                .tag(LABEL_COMMAND, commandLatencyId.commandType().toString())
                 .tag(LABEL_LOCAL, commandLatencyId.localAddress().toString())
                 .tag(LABEL_REMOTE, commandLatencyId.remoteAddress().toString()).tags(options.tags());
 
@@ -131,7 +131,7 @@ public class MicrometerCommandLatencyRecorder implements CommandLatencyRecorder 
 
         Timer.Builder timer = Timer.builder(METRIC_FIRST_RESPONSE)
                 .description("Latency between command send and first response (first response received)")
-                .tag(LABEL_COMMAND, commandLatencyId.commandType().name())
+                .tag(LABEL_COMMAND, commandLatencyId.commandType().toString())
                 .tag(LABEL_LOCAL, commandLatencyId.localAddress().toString())
                 .tag(LABEL_REMOTE, commandLatencyId.remoteAddress().toString()).tags(options.tags());
 

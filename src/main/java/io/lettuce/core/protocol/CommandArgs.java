@@ -441,7 +441,7 @@ public class CommandArgs<K, V> {
 
         @Override
         public String toString() {
-            return protocolKeyword.name();
+            return protocolKeyword.toString();
         }
 
     }

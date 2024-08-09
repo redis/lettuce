@@ -21,6 +21,7 @@ package io.lettuce.core.api.reactive;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
+import io.lettuce.core.json.JsonParser;
 import reactor.core.publisher.Mono;
 
 /**
@@ -36,7 +37,7 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
         RedisHashReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
         RedisListReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>, RedisStreamReactiveCommands<K, V>,
-        RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V> {
+        RedisStringReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V> {
 
     /**
      * Authenticate to the server.
@@ -80,5 +81,9 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
      */
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();
+
+    JsonParser<K, V> getJsonParser();
+
+    void setJsonParser(JsonParser<K, V> jsonParser);
 
 }

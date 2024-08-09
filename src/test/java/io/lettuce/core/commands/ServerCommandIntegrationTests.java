@@ -635,7 +635,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     @Test
     void testReadOnlyCommands() {
         for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
-            assertThat(isCommandReadOnly(readOnlyCommand.name())).isTrue();
+            assertThat(isCommandReadOnly(readOnlyCommand.toString())).isTrue();
         }
     }
 
