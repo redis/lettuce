@@ -52,6 +52,11 @@ public class JcToolsUnboundedMpscOfferFirstQueue<E> implements UnboundedMpscOffe
         return mpscQueue.poll();
     }
 
+    @Override
+    public boolean isEmpty() {
+        return mpscQueue.isEmpty() && unsafeQueues.isEmpty();
+    }
+
     private E pollFromUnsafeQueues() {
         Queue<? extends E> first = unsafeQueues.getFirst();
         E e = first.poll();

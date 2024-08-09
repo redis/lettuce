@@ -42,4 +42,9 @@ public class ConcurrentLinkedMpscOfferFirstQueue<E> implements UnboundedMpscOffe
         return delegate.poll();
     }
 
+    @Override
+    public boolean isEmpty() {
+        return delegate.isEmpty();
+    }
+
 }

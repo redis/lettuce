@@ -33,4 +33,6 @@ public interface UnboundedMpscOfferFirstQueue<E> {
     @Nullable
     E poll();
 
+    boolean isEmpty();
+
 }

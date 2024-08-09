@@ -351,6 +351,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     @Override
     public void notifyReconnectFailed(Throwable t) {
         this.failedToReconnectReason = t;
+        this.logPrefix = null;
 
         if (!CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_CONNECTING,
                 DummyContextualChannelInstances.CHANNEL_RECONNECT_FAILED)) {
@@ -400,6 +401,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         if (willReconnect) {
+            this.logPrefix = null;
             CHANNEL.set(this, DummyContextualChannelInstances.CHANNEL_WILL_RECONNECT);
             // Create a synchronize-before with this.channel = CHANNEL_WILL_RECONNECT
             if (isClosed()) {
@@ -413,6 +415,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         if (!willReconnect) {
+            this.logPrefix = null;
             CHANNEL.set(this, DummyContextualChannelInstances.CHANNEL_ENDPOINT_CLOSED);
         }
         inactiveChan.context
@@ -583,12 +586,19 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     }
 
     protected String logPrefix() {
-
         if (logPrefix != null) {
             return logPrefix;
         }
 
-        String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel.getDelegate()) + ", " + "epid=" + getId() + ']';
+        final ContextualChannel chan = this.channel;
+        if (!chan.context.initialState.isConnected()) {
+            final String buffer = "[" + chan.context.initialState + ", " + "epid=" + getId() + ']';
+            logPrefix = buffer;
+            return buffer;
+        }
+
+        final String buffer = "[CONNECTED, " + ChannelLogDescriptor.logDescriptor(chan.getDelegate()) + ", " + "epid=" + getId()
+                + ']';
         logPrefix = buffer;
         return buffer;
     }
@@ -659,6 +669,9 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
                 // The send loop will be triggered later when a new task is added,
                 // // Don't setUnsafe here because loopSend0() may result in a delayed loopSend() call.
                 autoBatchFlushEndPointContext.hasOngoingSendLoop.exit();
+                if (taskQueue.isEmpty()) {
+                    return;
+                }
                 entered = false;
                 // // Guarantee thread-safety: no dangling tasks in the queue.
             }
@@ -735,6 +748,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             return;
         }
 
+        this.logPrefix = null;
         // Create happens-before with channelActive()
         if (!CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_WILL_RECONNECT,
                 DummyContextualChannelInstances.CHANNEL_CONNECTING)) {
