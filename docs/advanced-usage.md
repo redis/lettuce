@@ -690,23 +690,9 @@ overall-queue limit is
 ## SSL Connections
 
 Lettuce supports SSL connections since version 3.1 on Redis Standalone
-connections and since version 4.2 on Redis Cluster. Redis has no native
-SSL support, SSL is implemented usually by using
-[stunnel](https://www.stunnel.org/index.html).
+connections and since version 4.2 on Redis Cluster. [Redis supports SSL since version 6.0](https://redis.io/docs/latest/operate/oss_and_stack/management/security/encryption/).
 
-An example stunnel configuration can look like:
-
-    cert=/etc/ssl/cert.pem
-    key=/etc/ssl/key.pem
-    capath=/etc/ssl/cert.pem
-    cafile=/etc/ssl/cert.pem
-    delay=yes
-    pid=/etc/ssl/stunnel.pid
-    foreground = no
-
-    [redis]
-    accept = 127.0.0.1:6443
-    connect = 127.0.0.1:6479
+First, you need to [enable SSL on your Redis server](https://redis.io/docs/latest/operate/oss_and_stack/management/security/encryption/).
 
 Next step is connecting lettuce over SSL to Redis.
 
