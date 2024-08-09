@@ -41,7 +41,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
     @Test
     void jsonArrappend() throws ExecutionException, InterruptedException {
-        JsonParser<String, String> parser = redis.getStatefulConnection().getJsonParser();
+        JsonParser<String, String> parser = redis.getJsonParser();
 
         JsonValue<String, String> element = parser.createJsonValue("\"{id:bike6}\"");
         List<Long> appendedElements = redis.jsonArrappend(BIKES_INVENTORY, MOUNTAIN_BIKES_PATH, element).get();
@@ -57,11 +57,10 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
     @Test
     void jsonArrindex() throws ExecutionException, InterruptedException {
-        JsonRangeArgs range = JsonRangeArgs.Builder.start(1).stop(4);
-        JsonParser<String, String> parser = redis.getStatefulConnection().getJsonParser();
-        JsonValue<String, String> element = parser.createJsonValue("\"{id:bike3}\"");
+        JsonParser<String, String> parser = redis.getJsonParser();
+        JsonValue<String, String> element = parser.createJsonValue("\"{id:bike6}\"");
 
-        List<Long> arrayIndex = redis.jsonArrindex(BIKES_INVENTORY, MOUNTAIN_BIKES_PATH, element, range).get();
+        List<Long> arrayIndex = redis.jsonArrindex(BIKES_INVENTORY, MOUNTAIN_BIKES_PATH, element, null).get();
         assertThat(arrayIndex).isNotNull();
         assertThat(arrayIndex.get(0).longValue()).isEqualTo(3L);
     }
@@ -163,7 +162,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
     @Test
     void jsonSet() throws ExecutionException, InterruptedException {
-        JsonParser<String, String> parser = redis.getStatefulConnection().getJsonParser();
+        JsonParser<String, String> parser = redis.getJsonParser();
         JsonObject<String, String> bikeRecord = parser.createEmptyJsonObject();
         JsonObject<String, String> bikeSpecs = parser.createEmptyJsonObject();
         JsonArray<String, String> bikeColors = parser.createEmptyJsonArray();

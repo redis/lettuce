@@ -36,6 +36,16 @@ import io.lettuce.core.protocol.CommandArgs;
  */
 public class JsonRangeArgs implements CompositeArgument {
 
+    /**
+     * Default start index to indicate where to start slicing the array
+     */
+    public static final int DEFAULT_START_INDEX = 0;
+
+    /**
+     * Default end index to indicate where to stop slicing the array
+     */
+    public static final int DEFAULT_END_INDEX = 0;
+
     private long start = 0;
 
     private long stop = 0;
@@ -69,6 +79,17 @@ public class JsonRangeArgs implements CompositeArgument {
             return new JsonRangeArgs().stop(stop);
         }
 
+        /**
+         * Creates new {@link JsonRangeArgs} and sets default values.
+         * <p>
+         * The default start index is 0 and the default end index is 0.
+         *
+         * @return new {@link JsonRangeArgs} with the end index set.
+         */
+        public static JsonRangeArgs defaults() {
+            return new JsonRangeArgs();
+        }
+
     }
 
     /**
@@ -96,11 +117,11 @@ public class JsonRangeArgs implements CompositeArgument {
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
-        if (start != 0) {
+        if (start != DEFAULT_START_INDEX || stop != DEFAULT_END_INDEX) {
             args.add(start);
         }
 
-        if (stop != 0) {
+        if (stop != DEFAULT_END_INDEX) {
             args.add(stop);
         }
     }

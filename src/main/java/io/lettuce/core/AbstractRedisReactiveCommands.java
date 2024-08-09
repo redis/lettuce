@@ -1583,7 +1583,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Boolean> jsonMSet(JsonMsetArgs... arguments) {
+    public Mono<String> jsonMSet(JsonMsetArgs... arguments) {
         return createMono(() -> jsonCommandBuilder.jsonMSet(arguments));
     }
 
@@ -1593,7 +1593,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<List<V>> jsonObjkeys(K key, JsonPath jsonPath) {
+    public Flux<K> jsonObjkeys(K key, JsonPath jsonPath) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonObjkeys(key, jsonPath));
     }
 
@@ -1618,7 +1618,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<Boolean> jsonToggle(K key, JsonPath jsonPath) {
+    public Flux<Long> jsonToggle(K key, JsonPath jsonPath) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonToggle(key, jsonPath));
     }
 

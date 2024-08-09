@@ -89,13 +89,13 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonMGet(jsonPath: JsonPath, vararg keys: K): List<JsonValue<K, V>> =
         ops.jsonMGet(jsonPath, *keys).asFlow().toList()
 
-    override suspend fun jsonMSet(vararg arguments: JsonMsetArgs): Boolean? =
+    override suspend fun jsonMSet(vararg arguments: JsonMsetArgs): String? =
         ops.jsonMSet(*arguments).awaitFirstOrNull()
 
     override suspend fun jsonType(key: K, jsonPath: JsonPath): List<V> =
         ops.jsonType(key, jsonPath).asFlow().toList()
 
-    override suspend fun jsonToggle(key: K, jsonPath: JsonPath): List<Boolean> =
+    override suspend fun jsonToggle(key: K, jsonPath: JsonPath): List<Long> =
         ops.jsonToggle(key, jsonPath).asFlow().toList()
 
     override suspend fun jsonStrlen(key: K, jsonPath: JsonPath): List<Long> =
@@ -110,7 +110,7 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonObjlen(key: K, jsonPath: JsonPath): List<Long> =
         ops.jsonObjlen(key, jsonPath).asFlow().toList()
 
-    override suspend fun jsonObjkeys(key: K, jsonPath: JsonPath): List<List<V>> =
+    override suspend fun jsonObjkeys(key: K, jsonPath: JsonPath): List<K> =
         ops.jsonObjkeys(key, jsonPath).asFlow().toList()
 
     override suspend fun jsonNumincrby(key: K, jsonPath: JsonPath, number: Number): List<Number> =

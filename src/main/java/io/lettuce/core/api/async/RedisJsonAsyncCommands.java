@@ -199,10 +199,10 @@ public interface RedisJsonAsyncCommands<K, V> {
      * A JSON value is a hierarchical structure. If you change a value in a specific path - nested values are affected.
      *
      * @param arguments the {@link JsonMsetArgs} specifying the values to change.
-     * @return Boolean true if the merge was successful, false otherwise.
+     * @return "OK" if the operation was successful, error otherwise
      * @since 6.5
      */
-    RedisFuture<Boolean> jsonMSet(JsonMsetArgs... arguments);
+    RedisFuture<String> jsonMSet(JsonMsetArgs... arguments);
 
     /**
      * Increment the number value stored at the specified {@link JsonPath} in the JSON document by the provided increment.
@@ -220,10 +220,10 @@ public interface RedisJsonAsyncCommands<K, V> {
      *
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the value(s) whose key(s) we want.
-     * @return List<V> the keys in the JSON document that are referenced by the given {@link JsonPath}.
+     * @return List<K> the keys in the JSON document that are referenced by the given {@link JsonPath}.
      * @since 6.5
      */
-    RedisFuture<List<List<V>>> jsonObjkeys(K key, JsonPath jsonPath);
+    RedisFuture<List<K>> jsonObjkeys(K key, JsonPath jsonPath);
 
     /**
      * Report the number of keys in the JSON object at path in key
@@ -282,10 +282,10 @@ public interface RedisJsonAsyncCommands<K, V> {
      *
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the value(s).
-     * @return List<Boolean> the new value after the toggle, or null if the path does not exist.
+     * @return List<Long> the new value after the toggle, 0 for false, 1 for true or null if the path does not exist.
      * @since 6.5
      */
-    RedisFuture<List<Boolean>> jsonToggle(K key, JsonPath jsonPath);
+    RedisFuture<List<Long>> jsonToggle(K key, JsonPath jsonPath);
 
     /**
      * Report the type of JSON value at the provided {@link JsonPath} in the JSON document.

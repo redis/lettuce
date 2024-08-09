@@ -1,9 +1,14 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.JsonParserRegistry;
 import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.arguments.JsonGetArgs;
+import io.lettuce.core.json.arguments.JsonMsetArgs;
+import io.lettuce.core.json.arguments.JsonRangeArgs;
+import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -23,27 +28,221 @@ class RedisJsonCommandBuilderUnitTests {
 
     public static final String MY_KEY = "bikes:inventory";
 
+    public static final String MY_KEY2 = "bikes:repairLog";
+
+    public static final String ID_BIKE_6 = "{\"id\":\"bike6\"}";
+
+    public static final JsonParser<String, String> PARSER = JsonParserRegistry.getJsonParser(StringCodec.UTF8);
+
+    public static final JsonValue<String, String> ELEMENT = PARSER.createJsonValue(ID_BIKE_6);
+
+    public static final JsonPath MY_PATH = JsonPath.of("$..commuter_bikes");
+
     RedisJsonCommandBuilder<String, String> builder = new RedisJsonCommandBuilder<>(StringCodec.UTF8);
 
     @Test
     void shouldCorrectlyConstructJsonArrappend() {
-
-        final JsonPath myPath = JsonPath.of("$..commuter_bikes");
-        JsonValue<String, String> element = JsonParserRegistry.getJsonParser(StringCodec.UTF8).createJsonValue("{id:bike6}");
-        Command<String, String, List<Long>> command = builder.jsonArrappend(MY_KEY, myPath, new JsonValue[] { element });
+        Command<String, String, List<Long>> command = builder.jsonArrappend(MY_KEY, MY_PATH, ELEMENT);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$14\r\n" + "JSON.ARRAPPEND\r\n" + "$15\r\n"
-                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$10\r\n" + "{id:bike6}" + "\r\n");
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrindex() {
+        JsonRangeArgs range = JsonRangeArgs.Builder.start(0).stop(1);
+        Command<String, String, List<Long>> command = builder.jsonArrindex(MY_KEY, MY_PATH, ELEMENT, range);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$13\r\n" + "JSON.ARRINDEX\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$1" + "\r\n"
+                + "0" + "\r\n" + "$1" + "\r\n" + "1" + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrinsert() {
+        Command<String, String, List<Long>> command = builder.jsonArrinsert(MY_KEY, MY_PATH, 1, ELEMENT);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*5\r\n" + "$14\r\n" + "JSON.ARRINSERT\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n"
+                        + "$..commuter_bikes\r\n" + "$1" + "\r\n" + "1" + "\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrlen() {
+        Command<String, String, List<Long>> command = builder.jsonArrlen(MY_KEY, MY_PATH);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$11\r\n" + "JSON.ARRLEN\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrpop() {
+        Command<String, String, List<JsonValue<String, String>>> command = builder.jsonArrpop(MY_KEY, MY_PATH, 3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$1" + "\r\n" + "3" + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrtrim() {
+        JsonRangeArgs range = JsonRangeArgs.Builder.start(0).stop(1);
+        Command<String, String, List<Long>> command = builder.jsonArrtrim(MY_KEY, MY_PATH, range);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*5\r\n" + "$12\r\n" + "JSON.ARRTRIM\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n"
+                        + "$..commuter_bikes\r\n" + "$1" + "\r\n" + "0" + "\r\n" + "$1" + "\r\n" + "1" + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonClear() {
+        Command<String, String, Long> command = builder.jsonClear(MY_KEY, MY_PATH);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$10\r\n" + "JSON.CLEAR\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonGet() {
+        JsonGetArgs args = JsonGetArgs.Builder.indent("   ").newline("\n").space("/");
+        Command<String, String, List<JsonValue<String, String>>> command = builder.jsonGet(MY_KEY, args, MY_PATH);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$8\r\n" + "JSON.GET\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$6\r\n" + "INDENT\r\n" + "$3\r\n" + "   \r\n" + "$7\r\n" + "NEWLINE\r\n" + "$1\r\n"
+                + "\n\r\n" + "$5\r\n" + "SPACE\r\n" + "$1\r\n" + "/\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonMerge() {
+        Command<String, String, Boolean> command = builder.jsonMerge(MY_KEY, MY_PATH, ELEMENT);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$10\r\n" + "JSON.MERGE\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonMget() {
+        Command<String, String, List<JsonValue<String, String>>> command = builder.jsonMGet(MY_PATH, MY_KEY, MY_KEY2);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$9\r\n" + "JSON.MGET\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$15\r\n" + "bikes:repairLog\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonMset() {
+        Command<String, String, String> command = builder
+                .jsonMSet(JsonMsetArgs.Builder.element(ELEMENT).key(MY_KEY).path(MY_PATH));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$9\r\n" + "JSON.MSET\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonNumincrby() {
+        Command<String, String, List<Number>> command = builder.jsonNumincrby(MY_KEY, MY_PATH, 3);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$14\r\n" + "JSON.NUMINCRBY\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$1" + "\r\n" + "3" + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonObjkeys() {
+        Command<String, String, List<String>> command = builder.jsonObjkeys(MY_KEY, MY_PATH);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$12\r\n" + "JSON.OBJKEYS\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonObjlen() {
+        Command<String, String, List<Long>> command = builder.jsonObjlen(MY_KEY, MY_PATH);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$11\r\n" + "JSON.OBJLEN\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonSet() {
+        JsonSetArgs args = JsonSetArgs.Builder.nx();
+        Command<String, String, String> command = builder.jsonSet(MY_KEY, MY_PATH, ELEMENT, args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*5\r\n" + "$8\r\n" + "JSON.SET\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n"
+                        + "$..commuter_bikes\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$2\r\n" + "NX\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonStrappend() {
+        Command<String, String, List<Long>> command = builder.jsonStrappend(MY_KEY, MY_PATH, ELEMENT);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$14\r\n" + "JSON.STRAPPEND\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonStrlen() {
+        Command<String, String, List<Long>> command = builder.jsonStrlen(MY_KEY, MY_PATH);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$11\r\n" + "JSON.STRLEN\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonToggle() {
+        Command<String, String, List<Long>> command = builder.jsonToggle(MY_KEY, MY_PATH);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$11\r\n" + "JSON.TOGGLE\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonDel() {
+        Command<String, String, Long> command = builder.jsonDel(MY_KEY, MY_PATH);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*3\r\n" + "$8\r\n" + "JSON.DEL\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
     }
 
     @Test
     void shouldCorrectlyConstructJsonType() {
-
-        final JsonPath myPath = JsonPath.of("$..commuter_bikes");
-
-        Command<String, String, ?> command = builder.jsonType(MY_KEY, myPath);
+        Command<String, String, ?> command = builder.jsonType(MY_KEY, MY_PATH);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -53,10 +252,7 @@ class RedisJsonCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructJsonTypeRootPath() {
-
-        final JsonPath myPath = JsonPath.ROOT_PATH;
-
-        Command<String, String, ?> command = builder.jsonType(MY_KEY, myPath);
+        Command<String, String, ?> command = builder.jsonType(MY_KEY, JsonPath.ROOT_PATH);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

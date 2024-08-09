@@ -1518,7 +1518,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Boolean> jsonMSet(JsonMsetArgs... arguments) {
+    public RedisFuture<String> jsonMSet(JsonMsetArgs... arguments) {
         return dispatch(jsonCommandBuilder.jsonMSet(arguments));
     }
 
@@ -1528,7 +1528,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<List<V>>> jsonObjkeys(K key, JsonPath jsonPath) {
+    public RedisFuture<List<K>> jsonObjkeys(K key, JsonPath jsonPath) {
         return dispatch(jsonCommandBuilder.jsonObjkeys(key, jsonPath));
     }
 
@@ -1553,7 +1553,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Boolean>> jsonToggle(K key, JsonPath jsonPath) {
+    public RedisFuture<List<Long>> jsonToggle(K key, JsonPath jsonPath) {
         return dispatch(jsonCommandBuilder.jsonToggle(key, jsonPath));
     }
 
