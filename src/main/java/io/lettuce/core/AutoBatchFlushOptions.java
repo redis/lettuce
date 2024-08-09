@@ -24,7 +24,7 @@ public class AutoBatchFlushOptions implements Serializable {
 
     public static final int DEFAULT_WRITE_SPIN_COUNT = 16;
 
-    public static final int DEFAULT_BATCH_SIZE = 8;
+    public static final int DEFAULT_BATCH_SIZE = 20;
 
     private final boolean enableAutoBatchFlush;
 
