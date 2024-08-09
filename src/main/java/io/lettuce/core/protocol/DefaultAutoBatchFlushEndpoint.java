@@ -625,11 +625,11 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         // Otherwise:
-        // 1. offer() (volatile write) synchronizes-before hasOngoingSendLoop.safe.get() == 1 (volatile read)
+        // 1. offer() (volatile write of producerIndex) synchronizes-before hasOngoingSendLoop.safe.get() == 1 (volatile read)
         // 2. hasOngoingSendLoop.safe.get() == 1 (volatile read) synchronizes-before
         // hasOngoingSendLoop.safe.set(0) (volatile write) in first loopSend0()
         // 3. hasOngoingSendLoop.safe.set(0) (volatile write) synchronizes-before
-        // second loopSend0(), which will call poll()
+        // second loopSend0(), which will call poll() (volatile read of producerIndex)
     }
 
     private void loopSend(final ContextualChannel chan, boolean entered) {
@@ -645,33 +645,28 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     }
 
     private void loopSend0(final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext, final ContextualChannel chan,
-            int remainingSpinnCount, final boolean entered) {
+            int remainingSpinnCount, boolean entered) {
         do {
             final int count = pollBatch(autoBatchFlushEndPointContext, chan);
             if (count < 0) {
                 return;
             }
             if (count < batchSize) {
+                if (!entered) {
+                    return;
+                }
                 // queue was empty
-                break;
+                // The send loop will be triggered later when a new task is added,
+                // // Don't setUnsafe here because loopSend0() may result in a delayed loopSend() call.
+                autoBatchFlushEndPointContext.hasOngoingSendLoop.exit();
+                entered = false;
+                // // Guarantee thread-safety: no dangling tasks in the queue.
             }
         } while (--remainingSpinnCount > 0);
 
-        if (remainingSpinnCount <= 0) {
-            // Don't need to exitUnsafe since we still have an ongoing consume tasks in this thread.
-            chan.eventLoop().execute(() -> loopSend(chan, entered));
-            return;
-        }
-
-        if (entered) {
-            // The send loop will be triggered later when a new task is added,
-            // // Don't setUnsafe here because loopSend0() may result in a delayed loopSend() call.
-            autoBatchFlushEndPointContext.hasOngoingSendLoop.exit();
-            // // Guarantee thread-safety: no dangling tasks in the queue.
-            loopSend0(autoBatchFlushEndPointContext, chan, remainingSpinnCount, false);
-            // chan.eventLoop().schedule(() -> loopSend0(batchFlushEndPointContext, chan, writeSpinCount, false), 100,
-            // TimeUnit.NANOSECONDS);
-        }
+        final boolean finalEntered = entered;
+        // Don't need to exitUnsafe since we still have an ongoing consume tasks in this thread.
+        chan.eventLoop().execute(() -> loopSend(chan, finalEntered));
     }
 
     private int pollBatch(final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext, ContextualChannel chan) {
@@ -713,19 +708,25 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
         final ConnectionContext connectionContext = chan.context;
         final @Nullable ConnectionContext.CloseStatus closeStatus = connectionContext.getCloseStatus();
-        final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = connectionContext.autoBatchFlushEndPointContext;
-        if (autoBatchFlushEndPointContext.isDone() && closeStatus != null) {
-            if (closeStatus.isWillReconnect()) {
-                onWillReconnect(closeStatus, autoBatchFlushEndPointContext);
-            } else {
-                onWontReconnect(closeStatus, autoBatchFlushEndPointContext);
-            }
+        if (closeStatus == null) {
+            return;
+        }
 
-            if (chan.context.setChannelQuiescentOnce()) {
-                onEndpointQuiescence();
-            } else {
-                ExceptionUtils.maybeFire(logger, canFire, "unexpected: setEndpointQuiescenceOncePerConnection() failed");
-            }
+        final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = connectionContext.autoBatchFlushEndPointContext;
+        if (!autoBatchFlushEndPointContext.isDone()) {
+            return;
+        }
+
+        if (closeStatus.isWillReconnect()) {
+            onWillReconnect(closeStatus, autoBatchFlushEndPointContext);
+        } else {
+            onWontReconnect(closeStatus, autoBatchFlushEndPointContext);
+        }
+
+        if (chan.context.setChannelQuiescentOnce()) {
+            onEndpointQuiescence();
+        } else {
+            ExceptionUtils.maybeFire(logger, canFire, "unexpected: setEndpointQuiescenceOncePerConnection() failed");
         }
     }
 
