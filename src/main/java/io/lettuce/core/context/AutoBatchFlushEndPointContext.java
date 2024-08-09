@@ -26,14 +26,8 @@ public class AutoBatchFlushEndPointContext {
          */
         final AtomicInteger safe;
 
-        /**
-         * Used in single thread.
-         */
-        boolean unsafe;
-
         public HasOngoingSendLoop() {
             safe = new AtomicInteger();
-            unsafe = false;
         }
 
         /**
