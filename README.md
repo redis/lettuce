@@ -18,7 +18,7 @@ This version of Lettuce has been tested against the latest Redis source-build.
 * [Streaming API](https://redis.github.io/lettuce/advanced-usage/#streaming-api)
 * [CDI](https://redis.github.io/lettuce/integration-extension/#cdi-support)
 * [Codecs](https://redis.github.io/lettuce/integration-extension/#codecss) (for UTF8/bit/JSON etc. representation of your data)
-* multiple [Command Interfaces](https://github.com/lettuce-io/lettuce-core/wiki/Command-Interfaces-%284.0%29)
+* multiple [Command Interfaces](https://github.com/redis/lettuce/wiki/Command-Interfaces-%284.0%29)
 * Support for [Native Transports](https://redis.github.io/lettuce/advanced-usage/#native-transports)
 * Compatible with Java 8++ (implicit automatic module w/o descriptors)
 
@@ -41,27 +41,25 @@ See the [reference documentation](https://redis.github.io/lettuce/) and [API Ref
 Communication
 ---------------
 
-* [GitHub Discussions](https://github.com/lettuce-io/lettuce-core/discussions) (Q&A, Ideas, General discussion)
+* [GitHub Discussions](https://github.com/redis/lettuce/discussions) (Q&A, Ideas, General discussion)
 * Stack Overflow (Questions): [https://stackoverflow.com/questions/tagged/lettuce](https://stackoverflow.com/questions/tagged/lettuce)
 * Discord: [![Discord](https://img.shields.io/discord/697882427875393627.svg?style=social&logo=discord)](https://discord.gg/redis)
 * Twitter: [![Twitter](https://img.shields.io/twitter/follow/redisinc?style=social)](https://twitter.com/redisinc)
-* [GitHub Issues](https://github.com/lettuce-io/lettuce-core/issues) (Bug reports, feature requests)
+* [GitHub Issues](https://github.com/redis/lettuce/issues) (Bug reports, feature requests)
 
 
 Documentation
 ---------------
 
-* [Reference documentation](https://lettuce.io/docs/)
-* [Wiki](https://github.com/lettuce-io/lettuce-core/wiki)
-* [Javadoc](https://lettuce.io/core/release/api/)
-
+* [Reference documentation](https://redis.github.io/lettuce/)
+* [Javadoc](https://www.javadoc.io/doc/io.lettuce/lettuce-core/latest/index.html)
 
 Binaries/Download
 ----------------
 
 Binaries and dependency information for Maven, Ivy, Gradle and others can be found at http://search.maven.org.
 
-Releases of lettuce are available in the Maven Central repository. Take also a look at the [Releases](https://github.com/lettuce-io/lettuce-core/releases).
+Releases of lettuce are available in the Maven Central repository. Take also a look at the [Releases](https://github.com/redis/lettuce/releases).
 
 Example for Maven:
 
@@ -162,7 +160,7 @@ are configured using a ```Makefile```. Tests run by default against Redis `unsta
 To build:
 
 ```
-$ git clone https://github.com/lettuce-io/lettuce-core.git
+$ git clone https://github.com/redis/lettuce.git
 $ cd lettuce/
 $ make prepare ssl-keys
 $ make test
