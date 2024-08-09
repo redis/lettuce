@@ -11,6 +11,11 @@ theme:
     primary: white
     accent: red
 
+plugins:
+  - search
+  - macros:
+      include_dir: .
+
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
@@ -42,3 +47,4 @@ nav:
   - Advanced Usage: advanced-usage.md
   - Integration and Extension: integration-extension.md
   - Frequently Asked Questions: faq.md
+  - API Reference: https://www.javadoc.io/doc/io.lettuce/lettuce-core/latest/index.html

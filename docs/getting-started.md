@@ -12,7 +12,7 @@ Add these lines to file pom.xml:
 <dependency>
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>6.3.2.RELEASE</version>
+    <version>6.4.0.RELEASE</version>
 </dependency>
 ```
 
@@ -23,7 +23,7 @@ Add these lines to file ivy.xml:
 ``` xml
 <ivy-module>
   <dependencies>
-    <dependency org="io.lettuce" name="lettuce-core" rev="6.3.2.RELEASE"/>
+    <dependency org="io.lettuce" name="lettuce-core" rev="6.4.0.RELEASE"/>
   </dependencies>
 </ivy-module>
 ```
@@ -34,7 +34,7 @@ Add these lines to file build.gradle:
 
 ``` groovy
 dependencies {
-  implementation 'io.lettuce:lettuce-core:6.3.2.RELEASE'
+  implementation 'io.lettuce:lettuce-core:6.4.0.RELEASE'
 }
 ```
 
@@ -71,24 +71,17 @@ Done!
 
 Do you want to see working examples?
 
-- [Standalone
-  Redis](https://github.com/redis/lettuce/blob/6.3.2.RELEASE/src/test/java/io/lettuce/examples/ConnectToRedis.java)
+- [Standalone Redis](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToRedis.java)
 
-- [Standalone Redis with
-  SSL](https://github.com/redis/lettuce/blob/6.3.2.RELEASE/src/test/java/io/lettuce/examples/ConnectToRedisSSL.java)
+- [Standalone Redis with SSL](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToRedisSSL.java)
 
-- [Redis
-  Sentinel](https://github.com/redis/lettuce/blob/6.3.2.RELEASE/src/test/java/io/lettuce/examples/ConnectToRedisUsingRedisSentinel.java)
+- [Redis Sentinel](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToRedisUsingRedisSentinel.java)
 
-- [Redis
-  Cluster](https://github.com/redis/lettuce/blob/6.3.2.RELEASE/src/test/java/io/lettuce/examples/ConnectToRedisCluster.java)
+- [Redis Cluster](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToRedisCluster.java)
 
-- [Connecting to a ElastiCache
-  Master](https://github.com/redis/lettuce/blob/6.3.2.RELEASE/src/test/java/io/lettuce/examples/ConnectToElastiCacheMaster.java)
+- [Connecting to a ElastiCache Master](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToElastiCacheMaster.java)
 
-- [Connecting to ElastiCache with
-  Master/Replica](https://github.com/redis/lettuce/blob/6.3.2.RELEASE/src/test/java/io/lettuce/examples/ConnectToMasterSlaveUsingElastiCacheCluster.java)
+- [Connecting to ElastiCache with Master/Replica](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToMasterSlaveUsingElastiCacheCluster.java)
 
-- [Connecting to Azure Redis
-  Cluster](https://github.com/redis/lettuce/blob/6.3.2.RELEASE/src/test/java/io/lettuce/examples/ConnectToRedisClusterSSL.java)
+- [Connecting to Azure Redis Cluster](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToRedisClusterSSL.java)
 

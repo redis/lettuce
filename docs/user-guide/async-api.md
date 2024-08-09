@@ -23,7 +23,7 @@ transmission has finished and the response of the transmission is
 processed. This means, in the context of Lettuce and especially Redis,
 that multiple commands can be issued serially without the need of
 waiting to finish the preceding command. This mode of operation is also
-known as [Pipelining](http://redis.io/topics/pipelining). The following
+known as [Pipelining](https://redis.io/docs/latest/develop/use/pipelining/). The following
 example should give you an impression of the mode of operation:
 
 - Given client *A* and client *B*
@@ -455,8 +455,7 @@ doing blocking calls within the `Runnable`.
 
 Another chaining method worth mentioning is the either-or chaining. A
 couple of `…​Either()` methods are available on a `CompletionStage<T>`,
-see the [Java 8 API
-docs](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html)
+see the [Java 8 API docs](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html)
 for the full reference. The either-or pattern consumes the value from
 the first future that is completed. A good example might be two services
 returning the same data, for instance, a Master-Replica scenario, but

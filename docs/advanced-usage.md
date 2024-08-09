@@ -950,13 +950,13 @@ the command is running and is not yet completed.
 
 There are 4 StreamingChannels accepting different data types:
 
-- [KeyStreamingChannel](http://redis.paluch.biz/docs/api/releases/latest/com/lambdaworks/redis/output/KeyStreamingChannel.html)
+- [KeyStreamingChannel](https://www.javadoc.io/static/io.lettuce/lettuce-core/6.4.0.RELEASE/io/lettuce/core/output/KeyStreamingChannel.html)
 
-- [ValueStreamingChannel](http://redis.paluch.biz/docs/api/releases/latest/com/lambdaworks/redis/output/ValueStreamingChannel.html)
+- [ValueStreamingChannel](https://www.javadoc.io/static/io.lettuce/lettuce-core/6.4.0.RELEASE/io/lettuce/core/output/ValueStreamingChannel.html)
 
-- [KeyValueStreamingChannel](http://redis.paluch.biz/docs/api/releases/latest/com/lambdaworks/redis/output/KeyValueStreamingChannel.html)
+- [KeyValueStreamingChannel](https://www.javadoc.io/static/io.lettuce/lettuce-core/6.4.0.RELEASE/io/lettuce/core/output/KeyValueStreamingChannel.html)
 
-- [ScoredValueStreamingChannel](http://redis.paluch.biz/docs/api/releases/latest/com/lambdaworks/redis/output/ScoredValueStreamingChannel.html)
+- [ScoredValueStreamingChannel](https://www.javadoc.io/static/io.lettuce/lettuce-core/6.4.0.RELEASE/io/lettuce/core/output/ScoredValueStreamingChannel.html)
 
 The result of the steaming methods is the count of keys/values/key-value
 pairs as `long` value.
@@ -1638,7 +1638,7 @@ multiple commands in a batch (size depends on your environment, but
 batches between 50 and 1000 work nice during performance tests) can
 increase the throughput up to a factor of 5x.
 
-Pipelining within the Redis docs: <http://redis.io/topics/pipelining>
+Pipelining within the Redis docs: <https://redis.io/docs/latest/develop/use/pipelining/>
 
 ## Connection Pooling
 
@@ -2577,7 +2577,7 @@ replica yet. If a failover occurs at that moment, a replica takes over,
 and the not yet replicated data is lost. Replication behavior is
 Redis-specific. Further documentation about failover and consistency
 from Redis perspective is available within the Redis docs:
-<http://redis.io/topics/replication>
+<https://redis.io/docs/latest/operate/oss_and_stack/management/replication/>
 
 ### Switching between *at-least-once* and *at-most-once* operations
 

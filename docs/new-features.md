@@ -1,5 +1,11 @@
 # New & Noteworthy
 
+## What’s new in Lettuce 6.4
+
+- [Hash Field Expiration](https://redis.io/docs/latest/develop/data-types/hashes/#field-expiration) is now fully supported
+- [Sharded Pub/Sub](https://redis.io/docs/latest/develop/interact/pubsub/#sharded-pubsub) is now fully supported
+- Support `CLIENT KILL` with `[MAXAGE]` parameter and `HSCAN` with `NOVALUES` parameter
+
 ## What’s new in Lettuce 6.3
 
 - [Redis Function support](user-guide/redis-functions.md) (`fcall` and `FUNCTION`

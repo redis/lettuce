@@ -11,18 +11,18 @@ Supports advanced Redis features such as Sentinel, Cluster, Pipelining, Auto-Rec
 
 This version of Lettuce has been tested against the latest Redis source-build.
 
-* [synchronous](https://github.com/lettuce-io/lettuce-core/wiki/Basic-usage), [asynchronous](https://github.com/lettuce-io/lettuce-core/wiki/Asynchronous-API-%284.0%29) and [reactive](https://github.com/lettuce-io/lettuce-core/wiki/Reactive-API-%285.0%29) usage
-* [Redis Sentinel](https://github.com/lettuce-io/lettuce-core/wiki/Redis-Sentinel)
-* [Redis Cluster](https://github.com/lettuce-io/lettuce-core/wiki/Redis-Cluster)
-* [SSL](https://github.com/lettuce-io/lettuce-core/wiki/SSL-Connections) and [Unix Domain Socket](https://github.com/lettuce-io/lettuce-core/wiki/Unix-Domain-Sockets) connections
-* [Streaming API](https://github.com/lettuce-io/lettuce-core/wiki/Streaming-API)
-* [CDI](https://github.com/lettuce-io/lettuce-core/wiki/CDI-Support) and [Spring](https://github.com/lettuce-io/lettuce-core/wiki/Spring-Support) integration
-* [Codecs](https://github.com/lettuce-io/lettuce-core/wiki/Codecs) (for UTF8/bit/JSON etc. representation of your data)
+* [synchronous](https://redis.github.io/lettuce/user-guide/connecting-redis/#basic-usage), [asynchronous](https://redis.github.io/lettuce/user-guide/async-api/) and [reactive](https://redis.github.io/lettuce/user-guide/reactive-api/) usage
+* [Redis Sentinel](https://redis.github.io/lettuce/ha-sharding/#redis-sentinel_1)
+* [Redis Cluster](https://redis.github.io/lettuce/ha-sharding/#redis-cluster)
+* [SSL](https://redis.github.io/lettuce/advanced-usage/#ssl-connections) and [Unix Domain Socket](https://redis.github.io/lettuce/advanced-usage/#unix-domain-sockets) connections
+* [Streaming API](https://redis.github.io/lettuce/advanced-usage/#streaming-api)
+* [CDI](https://redis.github.io/lettuce/integration-extension/#cdi-support)
+* [Codecs](https://redis.github.io/lettuce/integration-extension/#codecss) (for UTF8/bit/JSON etc. representation of your data)
 * multiple [Command Interfaces](https://github.com/lettuce-io/lettuce-core/wiki/Command-Interfaces-%284.0%29)
-* Support for [Native Transports](https://github.com/lettuce-io/lettuce-core/wiki/Native-Transports)
+* Support for [Native Transports](https://redis.github.io/lettuce/advanced-usage/#native-transports)
 * Compatible with Java 8++ (implicit automatic module w/o descriptors)
 
-See the [reference documentation](https://lettuce.io/docs/) and [Wiki](https://github.com/lettuce-io/lettuce-core/wiki) for more details.
+See the [reference documentation](https://redis.github.io/lettuce/) and [API Reference](https://www.javadoc.io/doc/io.lettuce/lettuce-core/latest/index.html) for more details.
 
 ## How do I Redis?
 
@@ -109,7 +109,7 @@ to the lowercase Redis command name. Complex commands with multiple modifiers
 that change the result type include the CamelCased modifier as part of the
 command name, e.g. zrangebyscore and zrangebyscoreWithScores.
 
-See [Basic usage](https://github.com/lettuce-io/lettuce-core/wiki/Basic-usage) for further details.
+See [Basic usage](https://redis.github.io/lettuce/user-guide/connecting-redis/#basic-usage) for further details.
 
 Asynchronous API
 ------------------------
@@ -126,7 +126,7 @@ set.get() == "OK"
 get.get() == "value"
 ```
 
-See [Asynchronous API](https://github.com/lettuce-io/lettuce-core/wiki/Asynchronous-API-%284.0%29) for further details.
+See [Asynchronous API](https://redis.github.io/lettuce/user-guide/async-api/) for further details.
 
 Reactive API
 ------------------------
@@ -142,7 +142,7 @@ set.subscribe();
 get.block() == "value"
 ```
 
-See [Reactive API](https://github.com/lettuce-io/lettuce-core/wiki/Reactive-API-%285.0%29) for further details.
+See [Reactive API](https://redis.github.io/lettuce/user-guide/reactive-api/) for further details.
 
 Pub/Sub
 -------
@@ -177,7 +177,7 @@ $ make test
 Bugs and Feedback
 -----------
 
-For bugs, questions and discussions please use the [GitHub Issues](https://github.com/lettuce-io/lettuce-core/issues).
+For bugs, questions and discussions please use the [GitHub Issues](https://github.com/redis/lettuce/issues).
 
 License
 -------
@@ -189,4 +189,4 @@ Contributing
 -------
 
 Github is for social coding: if you want to write code, I encourage contributions through pull requests from forks of this repository. 
-Create Github tickets for bugs and new features and comment on the ones that you are interested in and take a look into [CONTRIBUTING.md](https://github.com/lettuce-io/lettuce-core/blob/main/.github/CONTRIBUTING.md)
+Create Github tickets for bugs and new features and comment on the ones that you are interested in and take a look into [CONTRIBUTING.md](https://github.com/redis/lettuce/blob/main/.github/CONTRIBUTING.md)

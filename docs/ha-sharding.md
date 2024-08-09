@@ -176,7 +176,7 @@ following options:
     lookup using the `masterId`. As soon as the Redis Sentinel provides
     an address the connection is restored to the new Redis instance
 
-Read more at <http://redis.io/topics/sentinel>
+Read more at <https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel>
 
 ### Examples
 
@@ -244,10 +244,10 @@ users of the cluster connection might be affected.
 
 ### Command routing
 
-The [concept of Redis Cluster](http://redis.io/topics/cluster-tutorial)
+The [concept of Redis Cluster](https://redis.io/docs/latest/operate/oss_and_stack/management/scaling/)
 bases on sharding. Every master node within the cluster handles one or
 more slots. Slots are the [unit of
-sharding](http://redis.io/topics/cluster-tutorial#redis-cluster-data-sharding)
+sharding](https://redis.io/docs/latest/operate/oss_and_stack/management/scaling/#redis-cluster-data-sharding)
 and calculated from the commands' key using `CRC16 MOD 16384`. Hash
 slots can also be specified using hash tags such as `{user:1000}.foo`.
 
@@ -361,7 +361,7 @@ selections can be constructed by the following presets:
 - all nodes
 
 A custom selection of nodes is available by implementing [custom
-predicates](http://redis.paluch.biz/docs/api/current/com/lambdaworks/redis/cluster/api/async/RedisAdvancedClusterAsyncCommands.html#nodes-java.util.function.Predicate-)
+predicates](https://www.javadoc.io/static/io.lettuce/lettuce-core/6.4.0.RELEASE/io/lettuce/core/cluster/api/async/RedisAdvancedClusterAsyncCommands.html#nodes-java.util.function.Predicate-)
 or lambdas.
 
 The particular results map to a cluster node (`RedisClusterNode`) that
