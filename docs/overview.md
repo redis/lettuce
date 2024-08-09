@@ -56,8 +56,8 @@ unnecessary intermediate buffering or blocking.
 
 Lettuce is a scalable thread-safe Redis client based on
 [netty](https://netty.io) and Reactor. Lettuce provides
-[synchronous](Connecting-Redis.md#basic-usage), [asynchronous](Connecting-Redis.md#asynchronous-api) and
-[reactive](Connecting-Redis.md#reactive-api) APIs to interact with Redis.
+[synchronous](user-guide/connecting-redis.md#basic-usage), [asynchronous](user-guide/async-api.md) and
+[reactive](user-guide/reactive-api.md) APIs to interact with Redis.
 
 ## Requirements
 
@@ -119,24 +119,24 @@ ticket on the lettuce issue
 
 ## Where to go from here
 
-- Head to [Getting Started](Getting-Started.md) if you feel like jumping
+- Head to [Getting Started](getting-started.md) if you feel like jumping
   straight into the code.
 
 - Go to [High-Availability and
-  Sharding](High-Availability-and-Sharding.md) for Master/Replica
+  Sharding](ha-sharding.md) for Master/Replica
   ("Master/Slave"), Redis Sentinel and Redis Cluster topics.
 
 - In order to dig deeper into the core features of Reactor:
 
   - If you’re looking for client configuration options, performance
     related behavior and how to use various transports, go to [Advanced
-    usage](Advanced-usage.md).
+    usage](advanced-usage.md).
 
-  - See [Integration and Extension](Integration-and-Extension.md) for
+  - See [Integration and Extension](integration-extension.md) for
     extending Lettuce with codecs or integrate it in your CDI/Spring
     application.
 
   - You want to know more about **at-least-once** and **at-most-once**?
     Take a look into [Command execution
-    reliability](Advanced-usage.md#command-execution-reliability).
+    reliability](advanced-usage.md#command-execution-reliability).
 

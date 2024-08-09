@@ -1,0 +1,44 @@
+site_name: Lettuce Reference Guide
+theme:
+  name: material
+  logo: static/logo-redis.svg
+  font:
+    text: 'Geist'
+    code: 'Geist Mono'
+  features:
+    - content.code.copy
+  palette:
+    primary: white
+    accent: red
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - admonition
+  - pymdownx.details
+  - toc:
+      permalink: true
+nav:
+  - Overview: overview.md
+  - New & Noteworthy: new-features.md
+  - Getting Started: getting-started.md
+  - User Guide:
+      - Connecting Redis: user-guide/connecting-redis.md
+      - Asynchronous API: user-guide/async-api.md
+      - Reactive API: user-guide/reactive-api.md
+      - Kotlin API: user-guide/kotlin-api.md
+      - Publish/Subscribe: user-guide/pubsub.md
+      - Transactions/Multi: user-guide/transactions-multi.md
+      - Redis programmability:
+          - LUA Scripting: user-guide/lua-scripting.md
+          - Redis Functions: user-guide/redis-functions.md
+  - High-Availability and Sharding: ha-sharding.md
+  - Working with dynamic Redis Command Interfaces: redis-command-interfaces.md
+  - Advanced Usage: advanced-usage.md
+  - Integration and Extension: integration-extension.md
+  - Frequently Asked Questions: faq.md

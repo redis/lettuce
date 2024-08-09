@@ -2,7 +2,7 @@
 
 ## What’s new in Lettuce 6.3
 
-- [Redis Function support](Connecting-Redis.md#redis-functions) (`fcall` and `FUNCTION`
+- [Redis Function support](user-guide/redis-functions.md) (`fcall` and `FUNCTION`
   commands).
 
 - Support for Library Name and Version through `LettuceVersion`.
@@ -14,7 +14,7 @@
 
 ## What’s new in Lettuce 6.2
 
-- [`RedisCredentialsProvider`](Connecting-Redis.md#authentication) abstraction to
+- [`RedisCredentialsProvider`](user-guide/connecting-redis.md#authentication) abstraction to
   externalize credentials and credentials rotation.
 
 - Retrieval of Redis Cluster node connections using `ConnectionIntent`
@@ -31,10 +31,10 @@
 - Command Listener API through
   `RedisClient.addListener(CommandListener)`.
 
-- [Micrometer support](Advanced-usage.md#micrometer) through
+- [Micrometer support](advanced-usage.md#micrometer) through
   `MicrometerCommandLatencyRecorder`.
 
-- [Experimental support for `io_uring`](Advanced-usage.md#native-transports).
+- [Experimental support for `io_uring`](advanced-usage.md#native-transports).
 
 - Configuration of extended Keep-Alive options through
   `KeepAliveOptions` (only available for some transports/Java versions).
@@ -45,7 +45,7 @@
 
 - Add support for Redis ACL commands.
 
-- [Java Flight Recorder Events](Advanced-usage.md#java-flight-recorder-events-since-61)
+- [Java Flight Recorder Events](advanced-usage.md#java-flight-recorder-events-since-61)
 
 ## What’s new in Lettuce 6.0
 
@@ -57,7 +57,7 @@
 
 - Cluster topology refresh is now non-blocking.
 
-- [Kotlin Coroutine Extensions](Connecting-Redis.md#kotlin-api).
+- [Kotlin Coroutine Extensions](user-guide/kotlin-api.md).
 
 - RxJava 3 support.
 
@@ -110,14 +110,14 @@
 - Add support for `ZPOPMIN`, `ZPOPMAX`, `BZPOPMIN`, `BZPOPMAX` commands.
 
 - Add support for Redis Command Tracing through Brave, see [Configuring
-  Client resources](Advanced-usage.md#configuring-client-resources).
+  Client resources](advanced-usage.md#configuring-client-resources).
 
 - Add support for [Redis
   Streams](https://redis.io/topics/streams-intro).
 
 - Asynchronous `connect()` for Master/Replica connections.
 
-- [Asynchronous Connection Pooling](Advanced-usage.md#asynchronous-connection-pooling)
+- [Asynchronous Connection Pooling](advanced-usage.md#asynchronous-connection-pooling)
   through `AsyncConnectionPoolSupport` and `AsyncPool`.
 
 - Dedicated exceptions for Redis `LOADING`, `BUSY`, and `NOSCRIPT`
@@ -127,11 +127,11 @@
   canceled already on disconnect.
 
 - Global command timeouts (also for reactive and asynchronous API usage)
-  configurable through [Client Options](Advanced-usage.md#client-options).
+  configurable through [Client Options](advanced-usage.md#client-options).
 
 - Host and port mappers for Lettuce usage behind connection
   tunnels/proxies through `SocketAddressResolver`, see [Configuring
-  Client resources](Advanced-usage.md#configuring-client-resources).
+  Client resources](advanced-usage.md#configuring-client-resources).
 
 - `SCRIPT LOAD` dispatch to all cluster nodes when issued through
   `RedisAdvancedClusterCommands`.
@@ -147,11 +147,11 @@
 - New artifact coordinates: `io.lettuce:lettuce-core` and packages moved
   from `com.lambdaworks.redis` to `io.lettuce.core`.
 
-- [Reactive API](Connecting-Redis.md#reactive-api) now Reactive Streams-based using
+- [Reactive API](user-guide/reactive-api.md) now Reactive Streams-based using
   [Project Reactor](https://projectreactor.io/).
 
 - [Redis Command
-  Interfaces](Working-with-dynamic-Redis-Command-Interfaces.md) supporting
+  Interfaces](redis-command-interfaces.md) supporting
   dynamic command invocation and Redis Modules.
 
 - Enhanced, immutable Key-Value objects.

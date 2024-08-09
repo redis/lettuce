@@ -16,11 +16,10 @@ by supplying the client, Codec, and one or multiple RedisURIs.
 
 ### Redis Sentinel
 
-Master/Replica using [Redis Sentinel](#redis-sentinel) uses Redis
+Master/Replica using Redis Sentinel uses Redis
 Sentinel as registry and notification source for topology events.
-Details about the master and its replicas are obtained from [Redis
-Sentinel](#redis-sentinel). Lettuce subscribes to [Redis
-Sentinel](#redis-sentinel) events for notifications to all supplied
+Details about the master and its replicas are obtained from Redis
+Sentinel. Lettuce subscribes to Redis Sentinel events for notifications to all supplied
 Sentinels.
 
 ### Standalone Master/Replica
@@ -158,7 +157,7 @@ This is useful for performing administrative tasks using Lettuce. You
 can monitor new master nodes, query master addresses, replicas and much
 more. A connection to a Redis Sentinel node is established by
 `RedisClient.connectSentinel()`. Use a [Publish/Subscribe
-connection](Connecting-Redis.md#publishsubscribe) to subscribe to Sentinel events.
+connection](user-guide/pubsub.md) to subscribe to Sentinel events.
 
 ### Redis discovery using Redis Sentinel
 
@@ -197,11 +196,11 @@ RedisClient client = RedisClient.create(redisUri);
 RedisConnection<String, String> connection = client.connect();
 ```
 
-> [!NOTE]
-> Every time you connect to a Redis instance using Redis Sentinel, the
-> Redis master is looked up using a new connection to a Redis Sentinel.
-> This can be time-consuming, especially when multiple Redis Sentinels
-> are used and one or more of them are not reachable.
+!!! NOTE
+    Every time you connect to a Redis instance using Redis Sentinel, the
+    Redis master is looked up using a new connection to a Redis Sentinel.
+    This can be time-consuming, especially when multiple Redis Sentinels
+    are used and one or more of them are not reachable.
 
 ## Redis Cluster
 
@@ -386,14 +385,14 @@ the same cluster topology view. The view can be updated in three ways:
 
 1.  Either by calling `RedisClusterClient.reloadPartitions`
 
-2.  [Periodic updates](Advanced-usage.md#cluster-specific-options) in the background
+2.  [Periodic updates](advanced-usage.md#cluster-specific-options) in the background
     based on an interval
 
-3.  [Adaptive updates](Advanced-usage.md#cluster-specific-options) in the background
+3.  [Adaptive updates](advanced-usage.md#cluster-specific-options) in the background
     based on persistent disconnects and `MOVED`/`ASK` redirections
 
 By default, commands follow `-ASK` and `-MOVED` redirects [up to 5
-times](Advanced-usage.md#cluster-specific-options) until the command execution is
+times](advanced-usage.md#cluster-specific-options) until the command execution is
 considered to be failed. Background topology updating starts with the
 first connection obtained through `RedisClusterClient`.
 
@@ -430,7 +429,7 @@ and closed after obtaining the topology:
 
 ### Client-options
 
-See [Cluster-specific Client options](Advanced-usage.md#cluster-specific-options).
+See [Cluster-specific Client options](advanced-usage.md#cluster-specific-options).
 
 #### Examples
 
@@ -661,10 +660,10 @@ to ensure that your application can tolerate stale data.
 | `ANY`               | Read from any node of the cluster.                                             |
 | `ANY_REPLICA`       | Read from any replica of the cluster.                                          |
 
-> [!TIP]
-> The latency of the nodes is determined upon the cluster topology
-> refresh. If the topology view is never refreshed, values from the
-> initial cluster nodes read are used.
+!!! TIP
+    The latency of the nodes is determined upon the cluster topology
+    refresh. If the topology view is never refreshed, values from the
+    initial cluster nodes read are used.
 
 Custom read settings can be implemented by extending the
 `io.lettuce.core.ReadFrom` class.

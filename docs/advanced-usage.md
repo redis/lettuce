@@ -125,19 +125,17 @@ not be changed unless there is a truly good reason to do so.
 <tbody>
 <tr>
 <td><strong>Provider for EventLoopGroup</strong></td>
-<td><code>eve ntLoopGroupProvider</code></td>
+<td><code>eventLoopGroupProvider</code></td>
 <td><code>none</code></td>
 </tr>
 <tr>
-<td>For those who want to reuse existing netty infrastructure or the
+<td colspan="3">For those who want to reuse existing netty infrastructure or the
 total control over the thread pools, the
-<code>Eve ntLoopGroupProvider</code> API provides a way to do so.
+<code>EventLoopGroupProvider</code> API provides a way to do so.
 <code>EventLoopGroup</code>s are obtained and managed by an
-<code>Even tLoopGroupProvider</code>. A provided
-<code>Eve ntLoopGroupProvider</code> is not managed by the client and
-needs to be shut down once you do not longer need the resources.</td>
-<td></td>
-<td></td>
+<code>EventLoopGroupProvider</code>. A provided
+<code>EventLoopGroupProvider</code> is not managed by the client and
+needs to be shut down once you no longer need the resources.</td>
 </tr>
 <tr>
 <td><strong>Provided EventExecutorGroup</strong></td>
@@ -145,13 +143,11 @@ needs to be shut down once you do not longer need the resources.</td>
 <td><code>none</code></td>
 </tr>
 <tr>
-<td>For those who want to reuse existing netty infrastructure or the
+<td colspan="3">For those who want to reuse existing netty infrastructure or the
 total control over the thread pools can provide an existing
 <code>EventExecutorGroup</code> to the Client resources. A provided
 <code>EventExecutorGroup</code> is not managed by the client and needs
 to be shut down once you do not longer need the resources.</td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td><strong>Event bus</strong></td>
@@ -159,82 +155,72 @@ to be shut down once you do not longer need the resources.</td>
 <td><code>DefaultEventBus</code></td>
 </tr>
 <tr>
-<td>The event bus system is used to transport events from the client to
+<td colspan="3">The event bus system is used to transport events from the client to
 subscribers. Events are about connection state changes, metrics, and
 more. Events are published using a RxJava subject and the default
-implementation drops events on backpressure. Learn more about the <a href="Connecting-Redis.md#reactive-api">Reactive API</a>. You can also publish your own
+implementation drops events on backpressure. Learn more about the <a href="user-guide/reactive-api.md">Reactive API</a>. You can also publish your own
 events. If you wish to do so, make sure that your events implement the
 <code>Event</code> marker interface.</td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td><strong>Command latency collector options</strong></td>
-<td><code>commandLate ncyCollectorOptions</code></td>
-<td><code>DefaultCommandLat encyCollectorOptions</code></td>
+<td><code>commandLatencyCollectorOptions</code></td>
+<td><code>DefaultCommandLatencyCollectorOptions</code></td>
 </tr>
 <tr>
-<td>The client can collect latency metrics during while dispatching
+<td colspan="3">The client can collect latency metrics during while dispatching
 commands. The options allow configuring the percentiles, level of
 metrics (per connection or server) and whether the metrics are
 cumulative or reset after obtaining these. Command latency collection is
 enabled by default and can be disabled by setting
-<code>commandLatency PublisherOptions(…)</code> to
-<code>D efaultEventPublisher Options.disabled()</code>. Latency
+<code>commandLatencyPublisherOptions(…)</code> to
+<code>DefaultEventPublisherOptions.disabled()</code>. Latency
 collector requires <code>LatencyUtils</code> to be on your class
 path.</td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td><strong>Command latency collector</strong></td>
-<td><code>comm andLatencyCollector</code></td>
-<td><code>DefaultCom mandLatencyCollector</code></td>
+<td><code>commandLatencyCollector</code></td>
+<td><code>DefaultCommandLatencyCollector</code></td>
 </tr>
 <tr>
-<td>The client can collect latency metrics during while dispatching
+<td colspan="3">The client can collect latency metrics during while dispatching
 commands. Command latency metrics is collected on connection or server
 level. Command latency collection is enabled by default and can be
 disabled by setting <code>commandLatency CollectorOptions(…)</code> to
 <code>DefaultCom mandLatencyCollector Options.disabled()</code>.</td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td><strong>Latency event publisher options</strong></td>
-<td><code>commandLate ncyPublisherOptions</code></td>
-<td><code>DefaultE ventPublisherOptions</code></td>
+<td><code>commandLatencyPublisherOptions</code></td>
+<td><code>DefaultEventPublisherOptions</code></td>
 </tr>
 <tr>
-<td>Command latencies can be published using the event bus. Latency
+<td colspan="3">Command latencies can be published using the event bus. Latency
 events are emitted by default every 10 minutes. Event publishing can be
-disabled by setting <code>commandLatency PublisherOptions(…)</code> to
-<code>D efaultEventPublisher Options.disabled()</code>.</td>
-<td></td>
-<td></td>
+disabled by setting <code>commandLatencyPublisherOptions(…)</code> to
+<code>DefaultEventPublisherOptions.disabled()</code>.</td>
 </tr>
 <tr>
 <td><strong>DNS Resolver</strong></td>
 <td><code>dnsResolver</code></td>
-<td><code>DnsRe solvers.JVM_DEFAULT ( or netty if present)</code></td>
+<td><code>DnsResolvers.JVM_DEFAULT ( or netty if present)</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.5, 4.2</p>
+<td colspan="3"><p>Since: 3.5, 4.2</p>
 <p>Configures a DNS resolver to resolve hostnames to a
-<code>ja va.net.InetAddress</code>. Defaults to the JVM DNS resolution
+<code>java.net.InetAddress</code>. Defaults to the JVM DNS resolution
 that uses blocking hostname resolution and caching of lookup results.
 Users of DNS-based Redis-HA setups (e.g. AWS ElastiCache) might want to
 configure a different DNS resolver. Lettuce comes with
-<code>Di rContextDnsResolver</code> that uses Java’s
+<code>DirContextDnsResolver</code> that uses Java’s
 <code>DnsContextFactory</code> to resolve hostnames.
-<code>Di rContextDnsResolver</code> allows using either the system DNS
+<code>DirContextDnsResolver</code> allows using either the system DNS
 or custom DNS servers without caching of results so each hostname lookup
 yields in a DNS lookup.</p>
-<p>Since 4.4: Defaults to <code>DnsR esolvers.UNRESOLVED</code> to use
+<p>Since 4.4: Defaults to <code>DnsResolvers.UNRESOLVED</code> to use
 netty’s <code>AddressResolver</code> that resolves DNS names on
 <code>Bootstrap.connect()</code> (requires netty 4.1)</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td><strong>Reconnect Delay</strong></td>
@@ -242,13 +228,11 @@ netty’s <code>AddressResolver</code> that resolves DNS names on
 <td><code>Delay.exponential()</code></td>
 </tr>
 <tr>
-<td><p>Since: 4.2</p>
+<td colspan="3"><p>Since: 4.2</p>
 <p>Configures a reconnect delay used to delay reconnect attempts.
 Defaults to binary exponential delay with an upper boundary of
 <code>30 SECONDS</code>. See <code>Delay</code> for more delay
 implementations.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td><strong>Netty Customizer</strong></td>
@@ -256,7 +240,7 @@ implementations.</p></td>
 <td><code>none</code></td>
 </tr>
 <tr>
-<td><p>Since: 4.4</p>
+<td colspan="3"><p>Since: 4.4</p>
 <p>Configures a netty customizer to enhance netty components. Allows
 customization of <code>Bootstrap</code> after <code>Bootstrap</code>
 configuration by Lettuce and <code>Channel</code> customization after
@@ -266,8 +250,6 @@ otherwise Lettuce’s configures SSL), adding custom handlers or setting
 customized <code>Bootstrap</code> options. Misconfiguring
 <code>Bootstrap</code> or <code>Channel</code> can cause connection
 failures or undesired behavior.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td><strong>Tracing</strong></td>
@@ -275,15 +257,13 @@ failures or undesired behavior.</p></td>
 <td><code>disabled</code></td>
 </tr>
 <tr>
-<td><p>Since: 5.1</p>
+<td colspan="3"><p>Since: 5.1</p>
 <p>Configures a <code>tracing</code> instance to trace Redis calls.
 Lettuce wraps Brave data models to support tracing in a vendor-agnostic
 way if Brave is on the class path. A Brave <code>tracing</code> instance
-can be created using <code>BraveTracing.crea te(clientTracing);</code>,
+can be created using <code>BraveTracing.create(clientTracing);</code>,
 where <code>clientTracing</code> is a created or existent Brave tracing
 instance .</p></td>
-<td></td>
-<td></td>
 </tr>
 </tbody>
 </table>
@@ -323,7 +303,7 @@ client.setOptions(ClientOptions.builder()
 <td><code>true</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.1, 4.0</p>
+<td colspan="3"><p>Since: 3.1, 4.0</p>
 <p>Perform a lightweight <code>PING</code> connection handshake when
 establishing a Redis connection. If true (default is <code>true</code>),
 every connection and reconnect will issue a <code>PING</code> command
@@ -334,12 +314,10 @@ protocol version. RESP 3/protocol discovery performs a
 <code>HELLO</code> handshake.</p>
 <p>Failed <code>PING</code>'s on reconnect are handled as protocol
 errors and can suspend reconnection if
-<code>suspendReconne ctOnProtocolFailure</code> is enabled.</p>
+<code>suspendReconnectOnProtocolFailure</code> is enabled.</p>
 <p>The <code>PING</code> handshake validates whether the other end of
 the connected socket is a service that behaves like a Redis
 server.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Auto-Reconnect</td>
@@ -347,15 +325,13 @@ server.</p></td>
 <td><code>true</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.1, 4.0</p>
+<td colspan="3"><p>Since: 3.1, 4.0</p>
 <p>Controls auto-reconnect behavior on connections. As soon as a
 connection gets closed/reset without the intention to close it, the
 client will try to reconnect, activate the connection and re-issue any
 queued commands.</p>
 <p>This flag also has the effect that disconnected connections will
 refuse commands and cancel these with an exception.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Cancel commands on reconnect failure</td>
@@ -363,7 +339,7 @@ refuse commands and cancel these with an exception.</p></td>
 <td><code>false</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.1, 4.0</p>
+<td colspan="3"><p>Since: 3.1, 4.0</p>
 <p><strong>This flag is deprecated and should not be used as it can lead
 to race conditions and protocol offsets. SSL is natively supported by
 Lettuce and does no longer requires the use of SSL tunnels where
@@ -376,8 +352,6 @@ connection reset, host lookup fails, this does not affect the
 cancelation of commands. In contrast, where the protocol/connection
 activation fails due to SSL errors or PING before activating connection
 failure, queued commands are canceled.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Policy how to reclaim decode buffer memory</td>
@@ -385,20 +359,18 @@ failure, queued commands are canceled.</p></td>
 <td><code>ratio-based at 75%</code></td>
 </tr>
 <tr>
-<td><p>Since: 6.0</p>
+<td colspan="3"><p>Since: 6.0</p>
 <p>Policy to discard read bytes from the decoding aggregation buffer to
-reclaim memory. See <code>D ecodeBufferPolicies</code> for available
+reclaim memory. See <code>DecodeBufferPolicies</code> for available
 strategies.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Suspend reconnect on protocol failure</td>
-<td><code>suspendReconne ctOnProtocolFailure</code></td>
+<td><code>suspendReconnectOnProtocolFailure</code></td>
 <td><code>false (was introduced in 3. 1 with default true)</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.1, 4.0</p>
+<td colspan="3"><p>Since: 3.1, 4.0</p>
 <p>If this flag is <code>true</code> the reconnect will be suspended on
 protocol errors. The reconnect itself has two phases: Socket connection
 and protocol/connection activation. In case a connect timeout occurs, a
@@ -408,8 +380,6 @@ activation fails due to SSL errors or PING before activating connection
 failure, queued commands are canceled.</p>
 <p>Reconnection can be activated again, but there is no public API to
 obtain the <code>ConnectionWatchdog</code> instance.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Request queue size</td>
@@ -417,7 +387,7 @@ obtain the <code>ConnectionWatchdog</code> instance.</p></td>
 <td><code>2147483647  (Integer#MAX_VALUE)</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.4, 4.1</p>
+<td colspan="3"><p>Since: 3.4, 4.1</p>
 <p>Controls the per-connection request queue size. The command
 invocation will lead to a <code>RedisException</code> if the queue size
 is exceeded. Setting the <code>requestQueueSize</code> to a lower value
@@ -425,16 +395,14 @@ will lead earlier to exceptions during overload or while the connection
 is in a disconnected state. A higher value means hitting the boundary
 will take longer to occur, but more requests will potentially be queued,
 and more heap space is used.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Disconnected behavior</td>
-<td><code>d isconnectedBehavior</code></td>
+<td><code>disconnectedBehavior</code></td>
 <td><code>DEFAULT</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.4, 4.1</p>
+<td colspan="3"><p>Since: 3.4, 4.1</p>
 <p>A connection can behave in a disconnected state in various ways. The
 auto-connect feature allows in particular to retrigger commands that
 have been queued while a connection is disconnected. The disconnected
@@ -446,21 +414,17 @@ reject commands when auto-reconnect is disabled.</p>
 state.</p>
 <p><code>REJECT_COMMANDS</code>: Reject commands in disconnected
 state.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Protocol Version</td>
 <td><code>protocolVersion</code></td>
-<td><code>L atest/Auto-discovery</code></td>
+<td><code>Latest/Auto-discovery</code></td>
 </tr>
 <tr>
-<td><p>Since: 6.0</p>
+<td colspan="3"><p>Since: 6.0</p>
 <p>Configuration of which protocol version (RESP2/RESP3) to use. Leaving
 this option unconfigured performs a protocol discovery to use the
-lastest available protocol.</p></td>
-<td></td>
-<td></td>
+latest available protocol.</p></td>
 </tr>
 <tr>
 <td>Script Charset</td>
@@ -468,10 +432,8 @@ lastest available protocol.</p></td>
 <td><code>UTF-8</code></td>
 </tr>
 <tr>
-<td><p>Since: 6.0</p>
+<td colspan="3"><p>Since: 6.0</p>
 <p>Charset to use for Luascripts.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Socket Options</td>
@@ -479,11 +441,9 @@ lastest available protocol.</p></td>
 <td><code>10 seconds Connecti on-Timeout, no keep-a live, no TCP noDelay</code></td>
 </tr>
 <tr>
-<td><p>Since: 4.3</p>
+<td colspan="3"><p>Since: 4.3</p>
 <p>Options to configure low-level socket options for the connections
 kept to Redis servers.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>SSL Options</td>
@@ -491,11 +451,9 @@ kept to Redis servers.</p></td>
 <td><code>(non e), use JDK defaults</code></td>
 </tr>
 <tr>
-<td><p>Since: 4.3</p>
+<td colspan="3"><p>Since: 4.3</p>
 <p>Configure SSL options regarding SSL providers (JDK/OpenSSL) and key
 store/trust store.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Timeout Options</td>
@@ -503,13 +461,11 @@ store/trust store.</p></td>
 <td><code>Do n ot timeout commands.</code></td>
 </tr>
 <tr>
-<td><p>Since: 5.1</p>
+<td colspan="3"><p>Since: 5.1</p>
 <p>Options to configure command timeouts applied to timeout commands
 after dispatching these (active connections, queued while disconnected,
 batch buffer). By default, the synchronous API times out commands using
-<code>Red isURI.getTimeout()</code>.</p></td>
-<td></td>
-<td></td>
+<code>RedisURI.getTimeout()</code>.</p></td>
 </tr>
 <tr>
 <td>Publish Reactive Signals on Scheduler</td>
@@ -517,7 +473,7 @@ batch buffer). By default, the synchronous API times out commands using
 <td><code>Use I/O thread.</code></td>
 </tr>
 <tr>
-<td><p>Since: 5.1.4</p>
+<td colspan="3"><p>Since: 5.1.4</p>
 <p>Use a dedicated <code>Scheduler</code> to emit reactive data signals.
 Enabling this option can be useful for reactive sequences that require a
 significant amount of processing with a single/a few Redis connections
@@ -526,8 +482,6 @@ option uses <code>EventExecutorGroup</code> configured through
 <code>ClientResources</code> for data/completion signals. The used
 <code>Thread</code> is sticky across all signals for a single
 <code>Publisher</code> instance.</p></td>
-<td></td>
-<td></td>
 </tr>
 </tbody>
 </table>
@@ -572,7 +526,7 @@ client.setOptions(ClusterClientOptions.builder()
 <td><code>false</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.1, 4.0</p>
+<td colspan="3"><p>Since: 3.1, 4.0</p>
 <p>Enables or disables periodic cluster topology refresh. The refresh is
 handled in the background. Partitions, the view on the Redis cluster
 topology, are valid for a whole <code>RedisClusterClient</code>
@@ -583,8 +537,6 @@ can be set with <code>refreshPeriod</code>. The refresh job starts after
 either opening the first connection with the job enabled or by calling
 <code>reloadPartitions</code>. The job can be disabled without
 discarding the full client by setting new client options.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Cluster topology refresh period</td>
@@ -592,12 +544,10 @@ discarding the full client by setting new client options.</p></td>
 <td><code>60 SECONDS</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.1, 4.0</p>
+<td colspan="3"><p>Since: 3.1, 4.0</p>
 <p>Set the period between the refresh job runs. The effective interval
 cannot be changed once the refresh job is active. Changes to the value
 will be ignored.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Adaptive cluster topology refresh</td>
@@ -605,7 +555,7 @@ will be ignored.</p></td>
 <td><code>(none)</code></td>
 </tr>
 <tr>
-<td><p>Since: 4.2</p>
+<td colspan="3"><p>Since: 4.2</p>
 <p>Enables selectively adaptive topology refresh triggers. Adaptive
 refresh triggers initiate topology view updates based on events happened
 during Redis Cluster operations. Adaptive triggers lead to an immediate
@@ -616,8 +566,6 @@ disabled by default. Following triggers can be enabled:</p>
 <code>PER SISTENT_RECONNECTS</code>, <code>UNKNOWN_NODE</code> (since
 5.1), and <code>UNCOVERED_SLOT</code> (since 5.2) (see also reconnect
 attempts for the reconnect trigger)</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Adaptive refresh triggers timeout</td>
@@ -625,14 +573,12 @@ attempts for the reconnect trigger)</p></td>
 <td><code>30 SECONDS</code></td>
 </tr>
 <tr>
-<td><p>Since: 4.2</p>
+<td colspan="3"><p>Since: 4.2</p>
 <p>Set the timeout between the adaptive refresh job runs. Multiple
 triggers within the timeout will be ignored, only the first enabled
 trigger leads to a topology refresh. The effective period cannot be
 changed once the refresh job is active. Changes to the value will be
 ignored.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Reconnect attempts (Adaptive topology refresh trigger)</td>
@@ -640,14 +586,12 @@ ignored.</p></td>
 <td><code>5</code></td>
 </tr>
 <tr>
-<td><p>Since: 4.2</p>
+<td colspan="3"><p>Since: 4.2</p>
 <p>Set the threshold for the <code>PE RSISTENT_RECONNECTS</code> refresh
 trigger. Topology updates based on persistent reconnects lead only to a
 refresh if the reconnect process tries at least the number of specified
 attempts. The first reconnect attempt starts with
 <code>1</code>.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Dynamic topology refresh sources</td>
@@ -655,7 +599,7 @@ attempts. The first reconnect attempt starts with
 <td><code>true</code></td>
 </tr>
 <tr>
-<td><p>Since: 4.2</p>
+<td colspan="3"><p>Since: 4.2</p>
 <p>Discover cluster nodes from the topology and use only the discovered
 nodes as the source for the cluster topology. Using dynamic refresh will
 query all discovered nodes for the cluster topology details. If set to
@@ -666,8 +610,6 @@ with many nodes.</p>
 <p>Note that enabling dynamic topology refresh sources uses node
 addresses reported by Redis <code>CLUSTER NODES</code> output which
 typically contains IP addresses.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Close stale connections</td>
@@ -675,15 +617,13 @@ typically contains IP addresses.</p></td>
 <td><code>true</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.3, 4.1</p>
+<td colspan="3"><p>Since: 3.3, 4.1</p>
 <p>Stale connections are existing connections to nodes which are no
 longer part of the Redis Cluster. If this flag is set to
 <code>true</code>, then stale connections are closed upon topology
 refreshes. It’s strongly advised to close stale connections as open
 connections will attempt to reconnect nodes if the node is no longer
 available and open connections require system resources.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Limitation of cluster redirects</td>
@@ -691,7 +631,7 @@ available and open connections require system resources.</p></td>
 <td><code>5</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.1, 4.0</p>
+<td colspan="3"><p>Since: 3.1, 4.0</p>
 <p>When the assignment of a slot-hash is moved in a Redis Cluster and a
 client requests a key that is located on the moved slot-hash, the
 Cluster node responds with a <code>-MOVED</code> response. In this case,
@@ -702,8 +642,6 @@ redirects can be configured. Once the limit is reached, the
 <code>-MOVED</code> error is returned to the caller. This limit also
 applies for <code>-ASK</code> redirections in case a slot is set to
 <code>MIGRATING</code> state.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Filter nodes from Topology</td>
@@ -711,14 +649,12 @@ applies for <code>-ASK</code> redirections in case a slot is set to
 <td><code>no filter</code></td>
 </tr>
 <tr>
-<td><p>Since: 6.1.6</p>
+<td colspan="3"><p>Since: 6.1.6</p>
 <p>When providing a <code>nodeFilter</code>, then
 <code>RedisClusterNode</code>s can be filtered from the topology view to
 remove unwanted nodes (e.g. failed replicas). Note that the filter is
 applied only after obtaining the topology so the filter does not prevent
 trying to connect the node during topology discovery.</p></td>
-<td></td>
-<td></td>
 </tr>
 <tr>
 <td>Validate cluster node membership</td>
@@ -726,7 +662,7 @@ trying to connect the node during topology discovery.</p></td>
 <td><code>true</code></td>
 </tr>
 <tr>
-<td><p>Since: 3.3, 4.0</p>
+<td colspan="3"><p>Since: 3.3, 4.0</p>
 <p>Validate the cluster node membership before allowing connections to
 that node. The current implementation performs redirects using
 <code>MOVED</code> and <code>ASK</code> and allows obtaining connections
@@ -741,8 +677,6 @@ topology view is stale Connecting to cluster nodes using different
 IP’s/hostnames (e.g. private/public IP’s)</p>
 <p>Connecting to non-cluster members to reconfigure those while using
 the RedisClusterClient connection.</p></td>
-<td></td>
-<td></td>
 </tr>
 </tbody>
 </table>
@@ -1027,12 +961,12 @@ There are 4 StreamingChannels accepting different data types:
 The result of the steaming methods is the count of keys/values/key-value
 pairs as `long` value.
 
-> [!NOTE]
-> Don’t issue blocking calls (includes synchronous API calls to Lettuce)
-> from inside of callbacks such as the streaming API as this would block
-> the EventLoop. If you need to fetch data from Redis from inside a
-> `StreamingChannel` callback, please use the asynchronous API or use
-> the reactive API directly.
+!!! NOTE
+    Don’t issue blocking calls (includes synchronous API calls to Lettuce)
+    from inside of callbacks such as the streaming API as this would block
+    the EventLoop. If you need to fetch data from Redis from inside a
+    `StreamingChannel` callback, please use the asynchronous API or use
+    the reactive API directly.
 
 ``` java
 Long count = redis.hgetall(new KeyValueStreamingChannel<String, String>()
@@ -1611,8 +1545,8 @@ The transport and command execution layer does not block the processing
 until a command is written, processed and while its response is read.
 Lettuce sends commands at the moment they are invoked.
 
-A good example is the [async API](Connecting-Redis.md#asynchronous-api). Every
-invocation on the [async API](Connecting-Redis.md#asynchronous-api) returns a
+A good example is the [async API](user-guide/async-api.md). Every
+invocation on the [async API](user-guide/async-api.md) returns a
 `Future` (response handle) after the command is written to the netty
 pipeline. A write to the pipeline does not mean, the command is written
 to the underlying transport. Multiple commands can be written without
@@ -1632,10 +1566,10 @@ commands can be a reason to use multiple connections.
 
 ### Command flushing
 
-> [!NOTE]
-> Command flushing is an advanced topic and in most cases (i.e. unless
-> your use-case is a single-threaded mass import application) you won’t
-> need it as Lettuce uses pipelining by default.
+!!! NOTE
+    Command flushing is an advanced topic and in most cases (i.e. unless
+    your use-case is a single-threaded mass import application) you won’t
+    need it as Lettuce uses pipelining by default.
 
 The normal operation mode of Lettuce is to flush every command which
 means, that every command is written to the transport after it was
@@ -1662,14 +1596,14 @@ visible to all threads using a shared connection. If you want to omit
 this effect, use dedicated connections. The `AutoFlushCommands` state
 cannot be set on pooled connections by the Lettuce connection pooling.
 
-> [!WARNING]
-> Do not use `setAutoFlushCommands(…)` when sharing a connection across
-> threads, at least not without proper synchronization. According to the
-> many questions and (invalid) bug reports using
-> `setAutoFlushCommands(…)` in a multi-threaded scenario causes a lot of
-> complexity overhead and is very likely to cause issues on your side.
-> `setAutoFlushCommands(…)` can only be reliably used on single-threaded
-> connection usage in scenarios like bulk-loading.
+!!! WARNING
+    Do not use `setAutoFlushCommands(…)` when sharing a connection across
+    threads, at least not without proper synchronization. According to the
+    many questions and (invalid) bug reports using
+    `setAutoFlushCommands(…)` in a multi-threaded scenario causes a lot of
+    complexity overhead and is very likely to cause issues on your side.
+    `setAutoFlushCommands(…)` can only be reliably used on single-threaded
+    connection usage in scenarios like bulk-loading.
 
 ``` java
 StatefulRedisConnection<String, String> connection = client.connect();
@@ -2127,10 +2061,10 @@ StatefulRedisConnection<String, String> connection = redis.getStatefulConnection
 connection.dispatch(CommandType.PING, VoidOutput.create());
 ```
 
-> [!NOTE]
-> `VoidOutput.create()` swallows also Redis error responses. If you want
-> to just avoid response decoding, create a `VoidCodec` instance using
-> its constructor to retain error response decoding.
+!!! NOTE
+    `VoidOutput.create()` swallows also Redis error responses. If you want
+    to just avoid response decoding, create a `VoidCodec` instance using
+    its constructor to retain error response decoding.
 
 #### Asynchronous
 
@@ -2140,7 +2074,7 @@ that extends `CompleteableFuture`. `AsyncCommand` can be synchronized by
 By using the methods from the `CompletionStage` interface (such as
 `handle()` or `thenAccept()`) the response handler will trigger the
 functions ("listeners") on command completion. Lear more about
-asynchronous usage in the [Asynchronous API](Connecting-Redis.md#asynchronous-api) topic.
+asynchronous usage in the [Asynchronous API](user-guide/async-api.md) topic.
 
 ``` java
 StatefulRedisConnection<String, String> connection = redis.getStatefulConnection();
@@ -2162,7 +2096,7 @@ synchronous view.
 #### Reactive
 
 Reactive commands are dispatched at the moment of subscription (see
-[Reactive API](Connecting-Redis.md#reactive-api) for more details on reactive APIs). In the
+[Reactive API](user-guide/reactive-api.md) for more details on reactive APIs). In the
 context of Lettuce this means, you need to start before calling the
 `dispatch()` method. The reactive API uses internally an
 `ObservableCommand`, but that is internal stuff. If you want to dispatch

@@ -149,13 +149,13 @@ public interface MixedCommands extends Commands {
   from "camel humps" that style by placing a dot (`.`) between name
   parts.
 
-> [!NOTE]
-> Command names are attempted to be resolved against `CommandType` to
-> participate in settings for known commands. These are primarily used
-> to determine a command intent (whether a command is a read-only one).
-> Commands are resolved case-sensitive. Use lower-case command names in
-> `@Command` to resolve to an unknown command to e.g. enforce
-> master-routing.
+!!! NOTE
+    Command names are attempted to be resolved against `CommandType` to
+    participate in settings for known commands. These are primarily used
+    to determine a command intent (whether a command is a read-only one).
+    Commands are resolved case-sensitive. Use lower-case command names in
+    `@Command` to resolve to an unknown command to e.g. enforce
+    master-routing.
 
 ### CamelCase in method names
 
@@ -276,9 +276,9 @@ access to parameter names if the code was compiled with
 `@Param`. Please note that all parameters are required to be annotated
 if using `@Param`.
 
-> [!NOTE]
-> The same parameter can be referenced multiple times. Not referenced
-> parameters are appended as arguments after the last command segment.
+!!! NOTE
+    The same parameter can be referenced multiple times. Not referenced
+    parameters are appended as arguments after the last command segment.
 
 #### Keys and values
 
@@ -433,7 +433,7 @@ Each declared command methods requires a synchronization mode, more
 specific an execution model. Lettuce uses an event-driven command
 execution model to send commands, process responses, and signal
 completion. Command methods can execute their commands in a synchronous,
-[asynchronous](Connecting-Redis.md#asynchronous-api) or [reactive](Connecting-Redis.md#reactive-api) way.
+[asynchronous](user-guide/async-api.md) or [reactive](user-guide/reactive-api.md) way.
 
 The choice of a particular execution model is made on return type level,
 more specific on the return type wrapper. Each command method may use a
@@ -496,7 +496,7 @@ Currently supported reactive types:
 
 - RxJava 2 `Single`, `Maybe` and `Flowable` (via `rxjava` 2.0)
 
-See [Reactive API](Connecting-Redis.md#reactive-api) for more details.
+See [Reactive API](user-guide/reactive-api.md) for more details.
 
 ``` java
 interface KeyCommands extends Commands {

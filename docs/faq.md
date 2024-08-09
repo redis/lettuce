@@ -139,7 +139,7 @@ default, the queue is unbounded which can lead to memory exhaustion.
 
 You can configure disconnected behavior and the request queue size
 through `ClientOptions` for your workload profile. See [Client
-Options](Advanced-usage.md#client-options) for further reference.
+Options](advanced-usage.md#client-options) for further reference.
 
 ## Performance Degradation using the Reactive API with a single connection
 
@@ -163,7 +163,7 @@ system leverages a single thread and therefore leads to contention.
 
 You can configure signal multiplexing for the reactive API through
 `ClientOptions` by enabling `publishOnScheduler(true)`. See [Client
-Options](Advanced-usage.md#client-options) for further reference. Alternatively, you can
+Options](advanced-usage.md#client-options) for further reference. Alternatively, you can
 configure `Scheduler` on each result stream through
 `publishOn(Scheduler)`. Note that the asynchronous API features the same
 behavior and you might want to use `then…Async(…)`, `run…Async(…)`,
