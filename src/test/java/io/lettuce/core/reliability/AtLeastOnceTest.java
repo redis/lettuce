@@ -8,6 +8,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.TimeoutOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -44,7 +45,8 @@ class AtLeastOnceTest extends AbstractRedisClientTest {
 
     @BeforeEach
     void before() {
-        client.setOptions(ClientOptions.builder().autoReconnect(true).build());
+        client.setOptions(ClientOptions.builder().autoReconnect(true)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         // needs to be increased on slow systems...perhaps...
         client.setDefaultTimeout(3, TimeUnit.SECONDS);

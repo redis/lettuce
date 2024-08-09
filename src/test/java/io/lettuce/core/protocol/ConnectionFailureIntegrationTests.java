@@ -89,7 +89,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
     @Test
     void failOnReconnect() throws Exception {
 
-        ClientOptions clientOptions = ClientOptions.builder().suspendReconnectOnProtocolFailure(true).build();
+        ClientOptions clientOptions = ClientOptions.builder().suspendReconnectOnProtocolFailure(true)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build();
         client.setOptions(clientOptions);
 
         RandomResponseServer ts = getRandomResponseServer();
@@ -133,7 +134,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
     @Test
     void failOnReconnectShouldSendEvents() throws Exception {
 
-        client.setOptions(ClientOptions.builder().suspendReconnectOnProtocolFailure(false).build());
+        client.setOptions(ClientOptions.builder().suspendReconnectOnProtocolFailure(false)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -181,7 +183,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
     @Test
     void cancelCommandsOnReconnectFailure() throws Exception {
 
-        client.setOptions(ClientOptions.builder().cancelCommandsOnReconnectFailure(true).build());
+        client.setOptions(ClientOptions.builder().cancelCommandsOnReconnectFailure(true)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         RandomResponseServer ts = getRandomResponseServer();
 
@@ -235,7 +238,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
         RedisClient client = RedisClient.create(clientResources);
 
-        client.setOptions(ClientOptions.builder().build());
+        client.setOptions(
+                ClientOptions.builder().timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         try {
             RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
@@ -329,7 +333,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
         RedisURI redisUri = RedisURI.create(TestSettings.host(), TestSettings.port());
         RedisClient client = RedisClient.create(clientResources, redisUri);
-        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true).build());
+        client.setOptions(ClientOptions.builder().pingBeforeActivateConnection(true)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
@@ -365,6 +370,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
     void closingDisconnectedConnectionShouldDisableConnectionWatchdog() {
 
         client.setOptions(ClientOptions.create());
+        client.setOptions(
+                ClientOptions.builder().timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
         RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).withTimeout(Duration.ofMinutes(10))
                 .build();

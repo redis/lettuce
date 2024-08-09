@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.TimeoutOptions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -303,10 +304,12 @@ public class RedisClusterSetupTest extends TestSupport {
     public void disconnectedConnectionRejectTest() throws Exception {
 
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED)
-                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).build());
+                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
-        clusterClient.setOptions(ClusterClientOptions.builder()
-                .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS).build());
+        clusterClient.setOptions(
+                ClusterClientOptions.builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
+                        .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
         ClusterSetup.setup2Masters(clusterHelper);
 
         assertRoutedExecution(clusterConnection);
@@ -330,9 +333,11 @@ public class RedisClusterSetupTest extends TestSupport {
     @Test
     public void atLeastOnceForgetNodeFailover() throws Exception {
 
-        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(PERIODIC_REFRESH_ENABLED)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
         RedisAdvancedClusterAsyncCommands<String, String> clusterConnection = clusterClient.connect().async();
-        clusterClient.setOptions(ClusterClientOptions.create());
+        clusterClient.setOptions(
+                ClusterClientOptions.builder().timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
         ClusterSetup.setup2Masters(clusterHelper);
 
         assertRoutedExecution(clusterConnection);
