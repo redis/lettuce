@@ -62,11 +62,6 @@ public class AutoBatchFlushEndPointContext {
 
     private int flyingCmdNum;
 
-    @SuppressWarnings("unused")
-    public int getFlyingCmdNum() {
-        return flyingCmdNum;
-    }
-
     public final HasOngoingSendLoop hasOngoingSendLoop = new HasOngoingSendLoop();
 
     public void add(int n) {
