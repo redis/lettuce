@@ -295,8 +295,6 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     @Override
     public void notifyChannelActive(Channel channel) {
-        lastEventLoop = channel.eventLoop();
-
         final ContextualChannel contextualChannel = new ContextualChannel(channel, ConnectionContext.State.CONNECTED);
 
         this.logPrefix = null;
@@ -308,11 +306,12 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             return;
         }
 
+        lastEventLoop = channel.eventLoop();
+
         // Created a synchronize-before with set channel to CHANNEL_CONNECTING,
         if (isClosed()) {
             logger.info("{} Closing channel because endpoint is already closed", logPrefix());
             channel.close();
-
             // Cleaning will be done later in notifyChannelInactiveAfterWatchdogDecision, we are happy so far.
             return;
         }
@@ -355,7 +354,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
         if (!CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_CONNECTING,
                 DummyContextualChannelInstances.CHANNEL_RECONNECT_FAILED)) {
-            syncAfterTerminated(() -> onUnexpectedState("notifyReconnectFailed", ConnectionContext.State.CONNECTING));
+            onUnexpectedState("notifyReconnectFailed", ConnectionContext.State.CONNECTING);
             return;
         }
 
@@ -363,7 +362,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             if (isClosed()) {
                 onEndpointClosed();
             } else {
-                cancelCommands("reconnect failed");
+                onReconnectFailed();
             }
         });
     }
@@ -381,8 +380,16 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     public void notifyChannelInactiveAfterWatchdogDecision(Channel channel,
             Deque<RedisCommand<?, ?, ?>> retryableQueuedCommands) {
         final ContextualChannel inactiveChan = this.channel;
-        if (!inactiveChan.context.initialState.isConnected() || inactiveChan.getDelegate() != channel) {
+        if (!inactiveChan.context.initialState.isConnected()) {
+            logger.error("[unexpected][{}] notifyChannelInactive: channel initial state not connected", logPrefix());
+            onUnexpectedState("notifyChannelInactiveAfterWatchdogDecision", ConnectionContext.State.CONNECTED);
+            return;
+        }
+
+        if (inactiveChan.getDelegate() != channel) {
             logger.error("[unexpected][{}] notifyChannelInactive: channel not match", logPrefix());
+            onUnexpectedState("notifyChannelInactiveAfterWatchdogDecision: channel not match",
+                    ConnectionContext.State.CONNECTED);
             return;
         }
 
@@ -453,8 +460,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
                     if (isClosed()) {
                         onEndpointClosed();
                     } else {
-                        fulfillCommands("Reconnect failed",
-                                cmd -> cmd.completeExceptionally(new RedisException("Reconnect failed")));
+                        onReconnectFailed();
                     }
                 });
                 return;
@@ -546,11 +552,9 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             chan.pipeline().fireUserEventTriggered(new ConnectionEvents.Reset());
         }
         // Unsafe to call cancelBufferedCommands() here.
-        // cancelBufferedCommands("Reset");
     }
 
     private void resetInternal() {
-
         if (debugEnabled) {
             logger.debug("{} reset()", logPrefix());
         }
@@ -559,8 +563,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         if (chan.context.initialState.isConnected()) {
             chan.pipeline().fireUserEventTriggered(new ConnectionEvents.Reset());
         }
-        // Unsafe to call cancelBufferedCommands() here.
-        cancelCommands("Reset");
+        LettuceAssert.assertState(lastEventLoop.inEventLoop(), "must be called in lastEventLoop thread");
+        cancelCommands("resetInternal");
     }
 
     /**
@@ -568,10 +572,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
      */
     @Override
     public void initialState() {
-
-        // Thread safe since we are not connected yet.
-        cancelCommands("initialState");
-
+        // Unsafe to call cancelCommands() here.
+        // No need to cancel.
         ContextualChannel currentChannel = this.channel;
         if (currentChannel.context.initialState.isConnected()) {
             ChannelFuture close = currentChannel.close();
@@ -717,7 +719,9 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     }
 
     private void trySetEndpointQuiescence(ContextualChannel chan) {
-        LettuceAssert.isTrue(chan.eventLoop().inEventLoop(), "unexpected: not in event loop");
+        final EventLoop eventLoop = chan.eventLoop();
+        LettuceAssert.isTrue(eventLoop.inEventLoop(), "unexpected: not in event loop");
+        LettuceAssert.isTrue(eventLoop == lastEventLoop, "unexpected: lastEventLoop not match");
 
         final ConnectionContext connectionContext = chan.context;
         final @Nullable ConnectionContext.CloseStatus closeStatus = connectionContext.getCloseStatus();
@@ -821,6 +825,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         fulfillCommands("endpoint closed", callbackOnClose, queues);
     }
 
+    private final void onReconnectFailed() {
+        fulfillCommands("reconnect failed", cmd -> cmd.completeExceptionally(getFailedToReconnectReason()));
+    }
+
     @SafeVarargs
     private final void fulfillCommands(String message, Consumer<RedisCommand<?, ?, ?>> commandConsumer,
             Queue<RedisCommand<?, ?, ?>>... queues) {
@@ -873,6 +881,14 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         if (totalCancelledTaskNum > 0) {
             logger.error("{} cancel {} pending tasks, reason: '{}'", logPrefix(), totalCancelledTaskNum, message);
         }
+    }
+
+    private Throwable getFailedToReconnectReason() {
+        Throwable t = failedToReconnectReason;
+        if (t != null) {
+            return t;
+        }
+        return new Throwable("reconnect failed");
     }
 
     private <K, V, T> RedisCommand<K, V, T> processActivationCommand(RedisCommand<K, V, T> command) {
@@ -936,7 +952,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     private void onUnexpectedState(String caller, ConnectionContext.State exp) {
         final ConnectionContext.State actual = this.channel.context.initialState;
         logger.error("{}[{}][unexpected] : unexpected state: exp '{}' got '{}'", logPrefix(), caller, exp, actual);
-        cancelCommands(String.format("%s: state not match: expect '%s', got '%s'", caller, exp, actual));
+        syncAfterTerminated(
+                () -> cancelCommands(String.format("%s: state not match: expect '%s', got '%s'", caller, exp, actual)));
     }
 
     private void channelFlush(Channel channel) {
