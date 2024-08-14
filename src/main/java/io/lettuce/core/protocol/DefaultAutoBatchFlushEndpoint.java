@@ -170,6 +170,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     private final int batchSize;
 
+    private final boolean usesMpscQueue;
+
     /**
      * Create a new {@link AutoBatchFlushEndpoint}.
      *
@@ -193,8 +195,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
         long endpointId = ENDPOINT_COUNTER.incrementAndGet();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
-        this.taskQueue = clientOptions.getAutoBatchFlushOptions().usesMpscQueue() ? new JcToolsUnboundedMpscOfferFirstQueue<>()
-                : new ConcurrentLinkedOfferFirstQueue<>();
+        this.usesMpscQueue = clientOptions.getAutoBatchFlushOptions().usesMpscQueue();
+        this.taskQueue = usesMpscQueue ? new JcToolsUnboundedMpscOfferFirstQueue<>() : new ConcurrentLinkedOfferFirstQueue<>();
         this.canFire = false;
         this.callbackOnClose = callbackOnClose;
         this.writeSpinCount = clientOptions.getAutoBatchFlushOptions().getWriteSpinCount();
@@ -553,7 +555,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         if (chan.context.initialState.isConnected()) {
             chan.pipeline().fireUserEventTriggered(new ConnectionEvents.Reset());
         }
-        // Unsafe to call cancelBufferedCommands() here.
+        if (!usesMpscQueue) {
+            cancelCommands("reset");
+        }
+        // Otherwise, unsafe to call cancelBufferedCommands() here.
     }
 
     private void resetInternal() {
@@ -574,8 +579,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
      */
     @Override
     public void initialState() {
-        // Unsafe to call cancelCommands() here.
-        // No need to cancel.
+        if (!usesMpscQueue) {
+            cancelCommands("initialState");
+        }
+        // Otherwise, unsafe to call cancelBufferedCommands() here.
         ContextualChannel currentChannel = this.channel;
         if (currentChannel.context.initialState.isConnected()) {
             ChannelFuture close = currentChannel.close();
