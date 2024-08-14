@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 /**
  * @author chenxiaofan
  */
-public interface UnboundedMpscOfferFirstQueue<E> {
+public interface UnboundedOfferFirstQueue<E> {
 
     /**
      * add element to the tail of the queue. The method is concurrent safe.

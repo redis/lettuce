@@ -7,13 +7,13 @@ import java.util.Queue;
 
 import javax.annotation.Nullable;
 
-import io.lettuce.core.datastructure.queue.offerfirst.UnboundedMpscOfferFirstQueue;
+import io.lettuce.core.datastructure.queue.offerfirst.UnboundedOfferFirstQueue;
 import io.netty.util.internal.PlatformDependent;
 
 /**
  * @author chenxiaofan
  */
-public class JcToolsUnboundedMpscOfferFirstQueue<E> implements UnboundedMpscOfferFirstQueue<E> {
+public class JcToolsUnboundedMpscOfferFirstQueue<E> implements UnboundedOfferFirstQueue<E> {
 
     /**
      * The queues can only be manipulated in a single thread env.

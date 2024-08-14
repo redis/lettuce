@@ -26,16 +26,21 @@ public class AutoBatchFlushOptions implements Serializable {
 
     public static final int DEFAULT_BATCH_SIZE = 20;
 
+    public static final boolean DEFAULT_USE_MPSC_QUEUE = true;
+
     private final boolean enableAutoBatchFlush;
 
     private final int writeSpinCount;
 
     private final int batchSize;
 
+    private final boolean useMpscQueue;
+
     public AutoBatchFlushOptions(AutoBatchFlushOptions.Builder builder) {
         this.enableAutoBatchFlush = builder.enableAutoBatchFlush;
         this.writeSpinCount = builder.writeSpinCount;
         this.batchSize = builder.batchSize;
+        this.useMpscQueue = builder.useMpscQueue;
     }
 
     /**
@@ -62,6 +67,8 @@ public class AutoBatchFlushOptions implements Serializable {
         private int writeSpinCount = DEFAULT_WRITE_SPIN_COUNT;
 
         private int batchSize = DEFAULT_BATCH_SIZE;
+
+        private boolean useMpscQueue = DEFAULT_USE_MPSC_QUEUE;
 
         /**
          * Enable auto batch flush.
@@ -101,6 +108,17 @@ public class AutoBatchFlushOptions implements Serializable {
         }
 
         /**
+         * @param useMpscQueue use MPSC queue. If {@code false}, a {@link java.util.concurrent.ConcurrentLinkedQueue} is used,
+         *        which has lower performance but is safer to consume across multiple threads, the option may be removed in the
+         *        future if the mpsc queue is proven to be safe.
+         * @return {@code this}
+         */
+        public Builder useMpscQueue(boolean useMpscQueue) {
+            this.useMpscQueue = useMpscQueue;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link AutoBatchFlushOptions}.
          *
          * @return new instance of {@link AutoBatchFlushOptions}
@@ -130,6 +148,13 @@ public class AutoBatchFlushOptions implements Serializable {
      */
     public int getBatchSize() {
         return batchSize;
+    }
+
+    /**
+     * @return {@code true} if the queue is a MPSC queue
+     */
+    public boolean usesMpscQueue() {
+        return useMpscQueue;
     }
 
 }

@@ -43,7 +43,8 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.constant.DummyContextualChannelInstances;
 import io.lettuce.core.context.AutoBatchFlushEndPointContext;
 import io.lettuce.core.context.ConnectionContext;
-import io.lettuce.core.datastructure.queue.offerfirst.UnboundedMpscOfferFirstQueue;
+import io.lettuce.core.datastructure.queue.offerfirst.UnboundedOfferFirstQueue;
+import io.lettuce.core.datastructure.queue.offerfirst.impl.ConcurrentLinkedOfferFirstQueue;
 import io.lettuce.core.datastructure.queue.offerfirst.impl.JcToolsUnboundedMpscOfferFirstQueue;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
@@ -155,7 +156,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     private final String cachedEndpointId;
 
-    protected final UnboundedMpscOfferFirstQueue<Object> taskQueue;
+    protected final UnboundedOfferFirstQueue<Object> taskQueue;
 
     private final boolean canFire;
 
@@ -192,7 +193,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
         long endpointId = ENDPOINT_COUNTER.incrementAndGet();
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
-        this.taskQueue = new JcToolsUnboundedMpscOfferFirstQueue<>();
+        this.taskQueue = clientOptions.getAutoBatchFlushOptions().usesMpscQueue() ? new JcToolsUnboundedMpscOfferFirstQueue<>()
+                : new ConcurrentLinkedOfferFirstQueue<>();
         this.canFire = false;
         this.callbackOnClose = callbackOnClose;
         this.writeSpinCount = clientOptions.getAutoBatchFlushOptions().getWriteSpinCount();

@@ -5,16 +5,16 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 import javax.annotation.Nullable;
 
-import io.lettuce.core.datastructure.queue.offerfirst.UnboundedMpscOfferFirstQueue;
+import io.lettuce.core.datastructure.queue.offerfirst.UnboundedOfferFirstQueue;
 
 /**
  * @author chenxiaofan
  */
-public class ConcurrentLinkedMpscOfferFirstQueue<E> implements UnboundedMpscOfferFirstQueue<E> {
+public class ConcurrentLinkedOfferFirstQueue<E> implements UnboundedOfferFirstQueue<E> {
 
     private final ConcurrentLinkedDeque<E> delegate;
 
-    public ConcurrentLinkedMpscOfferFirstQueue() {
+    public ConcurrentLinkedOfferFirstQueue() {
         this.delegate = new ConcurrentLinkedDeque<>();
     }
 
