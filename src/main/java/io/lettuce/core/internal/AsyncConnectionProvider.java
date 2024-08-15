@@ -144,7 +144,9 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
 
         for (K k : connections.keySet()) {
             Sync<K, T, F> remove = connections.remove(k);
-            remove.doWithConnection(e -> futures.add(e.closeAsync()));
+            if (remove != null) {
+                remove.doWithConnection(e -> futures.add(e.closeAsync()));
+            }
         }
 
         return Futures.allOf(futures);
