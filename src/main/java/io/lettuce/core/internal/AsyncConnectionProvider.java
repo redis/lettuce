@@ -142,11 +142,10 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        forEach((connectionKey, closeable) -> {
-
-            futures.add(closeable.closeAsync());
-            connections.remove(connectionKey);
-        });
+        for (K k : connections.keySet()) {
+            Sync<K, T, F> remove = connections.remove(k);
+            remove.doWithConnection(e -> futures.add(e.closeAsync()));
+        }
 
         return Futures.allOf(futures);
     }
