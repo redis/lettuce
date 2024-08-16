@@ -26,6 +26,8 @@ class SharedLock {
 
     private final Lock lock = new ReentrantLock();
 
+    private final ThreadLocal<Integer> sharedCnt = ThreadLocal.withInitial(() -> 0);
+
     private volatile long writers = 0;
 
     private volatile Thread exclusiveLockOwner;
@@ -45,6 +47,7 @@ class SharedLock {
 
                 if (WRITERS.get(this) >= 0) {
                     WRITERS.incrementAndGet(this);
+                    sharedCnt.set(sharedCnt.get() + 1);
                     return;
                 }
             }
@@ -63,6 +66,7 @@ class SharedLock {
         }
 
         WRITERS.decrementAndGet(this);
+        sharedCnt.set(sharedCnt.get() - 1);
     }
 
     /**
@@ -125,6 +129,11 @@ class SharedLock {
                     exclusiveLockOwner = Thread.currentThread();
                     return;
                 }
+                // reentrant exclusive lock
+                if (WRITERS.compareAndSet(this, sharedCnt.get(), -1)) {
+                    exclusiveLockOwner = Thread.currentThread();
+                    return;
+                }
             }
         } finally {
             lock.unlock();
@@ -137,7 +146,7 @@ class SharedLock {
     private void unlockWritersExclusive() {
 
         if (exclusiveLockOwner == Thread.currentThread()) {
-            if (WRITERS.incrementAndGet(this) == 0) {
+            if (WRITERS.compareAndSet(this, -1, sharedCnt.get())) {
                 exclusiveLockOwner = null;
             }
         }
