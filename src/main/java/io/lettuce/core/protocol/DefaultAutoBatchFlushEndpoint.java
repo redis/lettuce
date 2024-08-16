@@ -1110,16 +1110,17 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         private void internalCloseConnectionIfNeeded(Throwable reason) {
-            if (chan.context.isChannelInactiveEventFired() || !chan.isActive()) {
+            final ContextualChannel chanLocal = this.chan; // the value may be changed in the future, so save it on stack.
+            if (chanLocal.context.isChannelInactiveEventFired() || !chanLocal.isActive()) {
                 return;
             }
 
             logger.error(
                     "[internalCloseConnectionIfNeeded][interesting][{}] close the connection due to write error, reason: '{}'",
                     endpoint.logPrefix(), reason.getMessage(), reason);
-            chan.eventLoop().schedule(() -> {
-                if (chan.isActive()) {
-                    chan.close();
+            chanLocal.eventLoop().schedule(() -> {
+                if (chanLocal.isActive()) {
+                    chanLocal.close();
                 }
             }, 1, TimeUnit.SECONDS);
         }
