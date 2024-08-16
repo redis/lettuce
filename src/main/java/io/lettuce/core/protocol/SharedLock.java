@@ -146,9 +146,13 @@ class SharedLock {
     private void unlockWritersExclusive() {
 
         if (exclusiveLockOwner == Thread.currentThread()) {
+            // check exclusive look not reentrant first
             if (WRITERS.compareAndSet(this, -1, sharedCnt.get())) {
                 exclusiveLockOwner = null;
+                return;
             }
+            // otherwise unlock until no more reentrant left
+            WRITERS.incrementAndGet(this);
         }
     }
 

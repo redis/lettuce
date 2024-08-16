@@ -27,7 +27,8 @@ public class SharedLockTest {
             sharedLock.decrementWriters();
         }
 
-        cnt.await(1, TimeUnit.SECONDS);
+        boolean await = cnt.await(1, TimeUnit.SECONDS);
+        Assertions.assertTrue(await);
 
         // verify writers won't be negative after finally decrementWriters
         String result = sharedLock.doExclusive(() -> {
@@ -37,6 +38,20 @@ public class SharedLockTest {
         });
 
         Assertions.assertEquals("ok", result);
+
+        // and other writers should be passed after exclusive lock released
+        CountDownLatch cntOtherThread = new CountDownLatch(1);
+        new Thread(() -> {
+            try {
+                sharedLock.incrementWriters();
+                cntOtherThread.countDown();
+            } finally {
+                sharedLock.decrementWriters();
+            }
+        }).start();
+
+        await = cntOtherThread.await(1, TimeUnit.SECONDS);
+        Assertions.assertTrue(await);
     }
 
 }
