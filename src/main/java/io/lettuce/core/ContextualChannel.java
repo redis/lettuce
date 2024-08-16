@@ -27,10 +27,6 @@ public class ContextualChannel implements Channel {
 
     public final ConnectionContext context;
 
-    public ConnectionContext getContext() {
-        return context;
-    }
-
     public Channel getDelegate() {
         return delegate;
     }

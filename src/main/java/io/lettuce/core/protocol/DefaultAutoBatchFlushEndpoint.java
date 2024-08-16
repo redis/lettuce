@@ -65,6 +65,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * @author Mark Paluch
  */
+@SuppressWarnings("DuplicatedCode")
 public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBatchFlushEndpoint, PushHandler {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AutoBatchFlushEndpoint.class);
@@ -235,10 +236,9 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
-
         LettuceAssert.notNull(command, "Command must not be null");
-
-        final Throwable validation = validateWrite(1);
+        final ContextualChannel chan = this.channel;
+        final Throwable validation = validateWrite(chan, 1, inActivation);
         if (validation != null) {
             command.completeExceptionally(validation);
             return command;
@@ -246,16 +246,17 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
         try {
             if (inActivation) {
+                // needs write and flush activation command immediately, cannot queue it.
                 command = processActivationCommand(command);
+                writeAndFlushActivationCommand(chan, command);
+            } else {
+                this.taskQueue.offer(command);
+                QUEUE_SIZE.incrementAndGet(this);
+
+                if (autoFlushCommands) {
+                    flushCommands();
+                }
             }
-
-            this.taskQueue.offer(command);
-            QUEUE_SIZE.incrementAndGet(this);
-
-            if (autoFlushCommands) {
-                flushCommands();
-            }
-
         } finally {
             if (debugEnabled) {
                 logger.debug("{} write() done", logPrefix());
@@ -268,10 +269,10 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     @SuppressWarnings("unchecked")
     @Override
     public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands) {
-
         LettuceAssert.notNull(commands, "Commands must not be null");
 
-        final Throwable validation = validateWrite(commands.size());
+        final ContextualChannel chan = this.channel;
+        final Throwable validation = validateWrite(chan, commands.size(), inActivation);
         if (validation != null) {
             commands.forEach(it -> it.completeExceptionally(validation));
             return (Collection<RedisCommand<K, V, ?>>) commands;
@@ -279,14 +280,16 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
         try {
             if (inActivation) {
+                // needs write and flush activation commands immediately, cannot queue it.
                 commands = processActivationCommands(commands);
-            }
+                writeAndFlushActivationCommands(chan, commands);
+            } else {
+                this.taskQueue.offer(commands);
+                QUEUE_SIZE.addAndGet(this, commands.size());
 
-            this.taskQueue.offer(commands);
-            QUEUE_SIZE.addAndGet(this, commands.size());
-
-            if (autoFlushCommands) {
-                flushCommands();
+                if (autoFlushCommands) {
+                    flushCommands();
+                }
             }
         } finally {
             if (debugEnabled) {
@@ -295,6 +298,19 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         return (Collection<RedisCommand<K, V, ?>>) commands;
+    }
+
+    private <V, K> void writeAndFlushActivationCommand(ContextualChannel chan, RedisCommand<K, V, ?> command) {
+        channelWrite(chan, command).addListener(WrittenToChannel.newInstance(this, chan, command, true));
+        channelFlush(chan);
+    }
+
+    private <V, K> void writeAndFlushActivationCommands(ContextualChannel chan,
+            Collection<? extends RedisCommand<K, V, ?>> commands) {
+        for (RedisCommand<?, ?, ?> command : commands) {
+            channelWrite(chan, command).addListener(WrittenToChannel.newInstance(this, chan, command, true));
+        }
+        channelFlush(chan);
     }
 
     @Override
@@ -494,8 +510,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     }
 
     @Override
+    @SuppressWarnings("java:S125" /* The comments are necessary to prove the correctness code */)
     public CompletableFuture<Void> closeAsync() {
-
         if (debugEnabled) {
             logger.debug("{} closeAsync()", logPrefix());
         }
@@ -650,7 +666,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         // 2. hasOngoingSendLoop.safe.get() == 1 (volatile read) synchronizes-before
         // hasOngoingSendLoop.safe.set(0) (volatile write) in first loopSend0()
         // 3. hasOngoingSendLoop.safe.set(0) (volatile write) synchronizes-before
-        // second loopSend0(), which will call poll() (volatile read of producerIndex)
+        // taskQueue.isEmpty() (volatile read of producerIndex), which guarantees to see the offered task.
     }
 
     private void loopSend(final ContextualChannel chan, boolean entered) {
@@ -703,13 +719,13 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
             if (o instanceof RedisCommand<?, ?, ?>) {
                 RedisCommand<?, ?, ?> cmd = (RedisCommand<?, ?, ?>) o;
-                channelWrite(chan, cmd).addListener(WrittenToChannel.newInstance(this, chan, cmd));
+                channelWrite(chan, cmd).addListener(WrittenToChannel.newInstance(this, chan, cmd, false));
                 count++;
             } else {
                 @SuppressWarnings("unchecked")
                 Collection<? extends RedisCommand<?, ?, ?>> commands = (Collection<? extends RedisCommand<?, ?, ?>>) o;
                 for (RedisCommand<?, ?, ?> cmd : commands) {
-                    channelWrite(chan, cmd).addListener(WrittenToChannel.newInstance(this, chan, cmd));
+                    channelWrite(chan, cmd).addListener(WrittenToChannel.newInstance(this, chan, cmd, false));
                 }
                 count += commands.size();
             }
@@ -770,6 +786,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         // neither connectionWatchdog nor doReconnectOnEndpointQuiescence could be null
+        // noinspection DataFlowIssue
         connectionWatchdog.reconnectOnAutoBatchFlushEndpointQuiescence();
     }
 
@@ -839,6 +856,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     }
 
     @SafeVarargs
+    @SuppressWarnings("java:S3776" /* Suppress cognitive complexity warning */)
     private final void fulfillCommands(String message, Consumer<RedisCommand<?, ?, ?>> commandConsumer,
             Queue<RedisCommand<?, ?, ?>>... queues) {
         int totalCancelledTaskNum = 0;
@@ -901,7 +919,6 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     }
 
     private <K, V, T> RedisCommand<K, V, T> processActivationCommand(RedisCommand<K, V, T> command) {
-
         if (!ActivationCommand.isActivationCommand(command)) {
             return new ActivationCommand<>(command);
         }
@@ -926,7 +943,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         return commandsToReturn;
     }
 
-    private Throwable validateWrite(@SuppressWarnings("unused") int commands) {
+    private Throwable validateWrite(ContextualChannel chan, int commands, boolean isActivationCommand) {
         if (isClosed()) {
             return new RedisException("Connection is closed");
         }
@@ -936,25 +953,29 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             return localConnectionErr;
         }
 
-        if (boundedQueues && queueSize + commands > clientOptions.getRequestQueueSize()) {
+        if (!isActivationCommand /* activation command should never be excluded due to queue full */ && boundedQueues
+                && queueSize + commands > clientOptions.getRequestQueueSize()) {
             return new RedisException("Request queue size exceeded: " + clientOptions.getRequestQueueSize()
                     + ". Commands are not accepted until the queue size drops.");
         }
 
-        final ContextualChannel chan = this.channel;
-        switch (chan.context.initialState) {
+        final ConnectionContext.State initialState = chan.context.initialState;
+        final boolean rejectCommandsWhileDisconnectedLocal = this.rejectCommandsWhileDisconnected || isActivationCommand;
+        switch (initialState) {
             case ENDPOINT_CLOSED:
                 return new RedisException("Connection is closed");
             case RECONNECT_FAILED:
                 return failedToReconnectReason;
             case WILL_RECONNECT:
             case CONNECTING:
-                return rejectCommandsWhileDisconnected ? new RedisException("Currently not connected. Commands are rejected.")
+                return rejectCommandsWhileDisconnectedLocal
+                        ? new RedisException("Currently not connected. Commands are rejected.")
                         : null;
             case CONNECTED:
-                return !chan.isActive() && rejectCommandsWhileDisconnected ? new RedisException("Connection is closed") : null;
+                return !chan.isActive() && rejectCommandsWhileDisconnectedLocal ? new RedisException("Channel is closed")
+                        : null;
             default:
-                throw new IllegalStateException("unexpected state: " + chan.context.initialState);
+                throw new IllegalStateException("unexpected state: " + initialState);
         }
     }
 
@@ -1023,6 +1044,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
         private RedisCommand<?, ?, ?> cmd;
 
+        private boolean isActivationCommand;
+
         private ContextualChannel chan;
 
         private WrittenToChannel(Recycler.Handle<WrittenToChannel> handle) {
@@ -1035,21 +1058,32 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
          * @return new instance
          */
         static WrittenToChannel newInstance(DefaultAutoBatchFlushEndpoint endpoint, ContextualChannel chan,
-                RedisCommand<?, ?, ?> command) {
+                RedisCommand<?, ?, ?> command, boolean isActivationCommand) {
 
             WrittenToChannel entry = RECYCLER.get();
 
             entry.endpoint = endpoint;
             entry.chan = chan;
             entry.cmd = command;
+            entry.isActivationCommand = isActivationCommand;
+
+            LettuceAssert.assertState(isActivationCommand == ActivationCommand.isActivationCommand(command),
+                    "unexpected: isActivationCommand not match");
 
             return entry;
         }
 
         @Override
         public void operationComplete(Future<Void> future) {
-            final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = chan.context.autoBatchFlushEndPointContext;
             try {
+                if (isActivationCommand) {
+                    if (!future.isSuccess()) {
+                        cmd.completeExceptionally(future.cause());
+                    }
+                    return;
+                }
+
+                final AutoBatchFlushEndPointContext autoBatchFlushEndPointContext = chan.context.autoBatchFlushEndPointContext;
                 QUEUE_SIZE.decrementAndGet(endpoint);
                 autoBatchFlushEndPointContext.done(1);
 
@@ -1105,7 +1139,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
         }
 
         private boolean shouldNotRetry(Throwable cause) {
-            return endpoint.reliability == Reliability.AT_MOST_ONCE || ActivationCommand.isActivationCommand(cmd)
+            return endpoint.reliability == Reliability.AT_MOST_ONCE
                     || ExceptionUtils.oneOf(cause, SHOULD_NOT_RETRY_EXCEPTION_TYPES);
         }
 
@@ -1129,6 +1163,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             this.endpoint = null;
             this.chan = null;
             this.cmd = null;
+            this.isActivationCommand = false;
 
             handle.recycle(this);
         }

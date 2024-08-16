@@ -19,8 +19,6 @@
  */
 package io.lettuce.core.cluster;
 
-import static io.lettuce.core.protocol.CommandType.*;
-
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.time.Duration;
@@ -57,6 +55,12 @@ import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisCommand;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import static io.lettuce.core.protocol.CommandType.AUTH;
+import static io.lettuce.core.protocol.CommandType.READONLY;
+import static io.lettuce.core.protocol.CommandType.READWRITE;
 
 /**
  * A thread-safe connection to a Redis Cluster. Multiple threads may share one {@link StatefulRedisClusterConnectionImpl}
@@ -69,6 +73,8 @@ import io.lettuce.core.protocol.RedisCommand;
  */
 public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         implements StatefulRedisClusterConnection<K, V> {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(StatefulRedisClusterConnectionImpl.class);
 
     private final ClusterPushHandler pushHandler;
 
@@ -208,7 +214,13 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     public void activated() {
         super.activated();
 
-        async.clusterMyId().thenAccept(connectionState::setNodeId);
+        async.clusterMyId().whenComplete((nodeId, throwable) -> {
+            if (throwable != null) {
+                logger.warn("Failed to retrieve current cluster node ID: {}", throwable);
+            } else {
+                connectionState.setNodeId(nodeId);
+            }
+        });
     }
 
     ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {

@@ -1,17 +1,17 @@
 package io.lettuce.core.utils;
 
-import io.lettuce.core.output.CommandOutput;
-import io.lettuce.core.protocol.RedisCommand;
-import io.netty.channel.socket.ChannelOutputShutdownException;
-import io.netty.util.internal.logging.InternalLogger;
-
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
+
+import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.protocol.RedisCommand;
+import io.netty.channel.socket.ChannelOutputShutdownException;
+import io.netty.util.internal.logging.InternalLogLevel;
+import io.netty.util.internal.logging.InternalLogger;
 
 public class ExceptionUtils {
 
@@ -26,12 +26,16 @@ public class ExceptionUtils {
             return;
         }
 
+        final String message = "Unexpected exception during request: {}";
+        final InternalLogLevel logLevel;
+
         if (cause instanceof IOException && (SUPPRESS_IO_EXCEPTION_MESSAGES.contains(cause.getMessage())
                 || cause instanceof ChannelOutputShutdownException)) {
-            logger.debug("[maybeLogSendError] error during request: {}", cause.getMessage(), cause);
+            logLevel = InternalLogLevel.DEBUG;
         } else {
-            logger.error("[maybeLogSendError][attention] unexpected exception during request: {}", cause.getMessage(), cause);
+            logLevel = InternalLogLevel.WARN;
         }
+        logger.log(logLevel, message, cause.toString(), cause);
     }
 
     /**
