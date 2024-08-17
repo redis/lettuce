@@ -190,13 +190,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         return drainCommands(stack);
     }
 
-    private Deque<RedisCommand<?, ?, ?>> drainStack() {
+    private Deque<RedisCommand<?, ?, ?>> drainStackUponChannelInactive() {
         final Deque<RedisCommand<?, ?, ?>> target = new ArrayDeque<>(stack.size());
 
         RedisCommand<?, ?, ?> cmd;
         while ((cmd = stack.poll()) != null) {
-            if (!cmd.isDone() && !ActivationCommand.isActivationCommand(cmd)) {
-                target.add(cmd);
+            if (!cmd.isDone()) {
+                if (!ActivationCommand.isActivationCommand(cmd)) {
+                    target.add(cmd);
+                } else {
+                    cmd.completeExceptionally(
+                            new RedisConnectionException("activation command won't be retried upon channel inactive"));
+                }
             }
         }
 
@@ -379,7 +384,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         endpoint.notifyChannelInactive(ctx.channel());
         Deque<RedisCommand<?, ?, ?>> autoBatchFlushRetryableDrainQueuedCommands = UnmodifiableDeque.emptyDeque();
         if (supportsAutoBatchFlush) {
-            autoBatchFlushRetryableDrainQueuedCommands = drainStack();
+            autoBatchFlushRetryableDrainQueuedCommands = drainStackUponChannelInactive();
         } else {
             endpoint.notifyDrainQueuedCommands(this);
         }

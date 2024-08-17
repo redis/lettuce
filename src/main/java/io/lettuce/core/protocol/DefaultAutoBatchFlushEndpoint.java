@@ -133,6 +133,8 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     protected volatile @Nonnull ContextualChannel channel = DummyContextualChannelInstances.CHANNEL_CONNECTING;
 
+    private volatile Throwable failedToReconnectReason;
+
     private final Consumer<RedisCommand<?, ?, ?>> callbackOnClose;
 
     private final boolean rejectCommandsWhileDisconnected;
@@ -153,19 +155,17 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     private ConnectionFacade connectionFacade;
 
-    private volatile Throwable connectionError;
-
     private final String cachedEndpointId;
 
     protected final UnboundedOfferFirstQueue<Object> taskQueue;
 
     private final boolean canFire;
 
-    private volatile boolean inProtectMode;
-
-    private volatile Throwable failedToReconnectReason;
-
     private volatile EventLoop lastEventLoop = null;
+
+    private volatile Throwable connectionError;
+
+    private volatile boolean inProtectMode;
 
     private final int writeSpinCount;
 
@@ -316,17 +316,16 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
     @Override
     public void notifyChannelActive(Channel channel) {
         final ContextualChannel contextualChannel = new ContextualChannel(channel, ConnectionContext.State.CONNECTED);
-
-        this.logPrefix = null;
-        this.connectionError = null;
-
         if (!CHANNEL.compareAndSet(this, DummyContextualChannelInstances.CHANNEL_CONNECTING, contextualChannel)) {
             channel.close();
             onUnexpectedState("notifyChannelActive", ConnectionContext.State.CONNECTING);
             return;
         }
 
-        lastEventLoop = channel.eventLoop();
+        this.lastEventLoop = channel.eventLoop();
+        this.connectionError = null;
+        this.inProtectMode = false;
+        this.logPrefix = null;
 
         // Created a synchronize-before with set channel to CHANNEL_CONNECTING,
         if (isClosed()) {
@@ -398,7 +397,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     @Override
     public void notifyChannelInactiveAfterWatchdogDecision(Channel channel,
-            Deque<RedisCommand<?, ?, ?>> retryableQueuedCommands) {
+            Deque<RedisCommand<?, ?, ?>> retryablePendingCommands) {
         final ContextualChannel inactiveChan = this.channel;
         if (!inactiveChan.context.initialState.isConnected()) {
             logger.error("[unexpected][{}] notifyChannelInactive: channel initial state not connected", logPrefix());
@@ -446,7 +445,7 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
             CHANNEL.set(this, DummyContextualChannelInstances.CHANNEL_ENDPOINT_CLOSED);
         }
         inactiveChan.context
-                .setCloseStatus(new ConnectionContext.CloseStatus(willReconnect, retryableQueuedCommands, exception));
+                .setCloseStatus(new ConnectionContext.CloseStatus(willReconnect, retryablePendingCommands, exception));
         trySetEndpointQuiescence(inactiveChan);
     }
 
@@ -945,11 +944,11 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
     private Throwable validateWrite(ContextualChannel chan, int commands, boolean isActivationCommand) {
         if (isClosed()) {
-            return new RedisException("Connection is closed");
+            return new RedisException("Endpoint is closed");
         }
 
         final Throwable localConnectionErr = connectionError;
-        if (localConnectionErr != null /* different logic of DefaultEndpoint */) {
+        if (localConnectionErr != null /* attention: different logic of DefaultEndpoint */) {
             return localConnectionErr;
         }
 
@@ -961,18 +960,19 @@ public class DefaultAutoBatchFlushEndpoint implements RedisChannelWriter, AutoBa
 
         final ConnectionContext.State initialState = chan.context.initialState;
         final boolean rejectCommandsWhileDisconnectedLocal = this.rejectCommandsWhileDisconnected || isActivationCommand;
+        final String rejectDesc = isActivationCommand ? "isActivationCommand" : "rejectCommandsWhileDisconnected";
         switch (initialState) {
             case ENDPOINT_CLOSED:
                 return new RedisException("Connection is closed");
             case RECONNECT_FAILED:
-                return failedToReconnectReason;
+                return getFailedToReconnectReason();
             case WILL_RECONNECT:
             case CONNECTING:
-                return rejectCommandsWhileDisconnectedLocal
-                        ? new RedisException("Currently not connected. Commands are rejected.")
+                return rejectCommandsWhileDisconnectedLocal ? new RedisException("Currently not connected and " + rejectDesc)
                         : null;
             case CONNECTED:
-                return !chan.isActive() && rejectCommandsWhileDisconnectedLocal ? new RedisException("Channel is closed")
+                return !chan.isActive() && rejectCommandsWhileDisconnectedLocal
+                        ? new RedisException("Channel is inactive and " + rejectDesc)
                         : null;
             default:
                 throw new IllegalStateException("unexpected state: " + initialState);
