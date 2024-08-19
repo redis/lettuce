@@ -52,7 +52,7 @@
         <commons-pool.version>2.12.0</commons-pool.version>
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
-        <junit5.version>5.10.2</junit5.version>
+        <junit5.version>5.11.0</junit5.version>
         <hamcrest-library.version>2.2</hamcrest-library.version>
         <hdr-histogram.version>2.1.12</hdr-histogram.version>
         <kotlin.version>1.7.21</kotlin.version>
