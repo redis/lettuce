@@ -23,6 +23,7 @@ import static io.lettuce.core.StringMatchResult.MatchedPosition;
 import static io.lettuce.core.StringMatchResult.Position;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +38,8 @@ import io.lettuce.core.codec.RedisCodec;
  */
 public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMatchResult> {
 
+    private static final ByteBuffer LEN = StandardCharsets.US_ASCII.encode("len");
+
     private final boolean withIdx;
 
     private String matchString;
@@ -44,6 +47,8 @@ public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMat
     private int len;
 
     private List<Long> positions;
+
+    private boolean readingLen = true;
 
     private final List<MatchedPosition> matchedPositions = new ArrayList<>();
 
@@ -57,18 +62,23 @@ public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMat
 
         if (!withIdx && matchString == null) {
             matchString = (String) codec.decodeKey(bytes);
+        } else {
+            readingLen = LEN.equals(bytes);
         }
     }
 
     @Override
     public void set(long integer) {
 
-        this.len = (int) integer;
-
-        if (positions == null) {
-            positions = new ArrayList<>();
+        if (readingLen) {
+            this.len = (int) integer;
+        } else {
+            if (positions == null) {
+                positions = new ArrayList<>();
+            }
+            positions.add(integer);
         }
-        positions.add(integer);
+
     }
 
     @Override
