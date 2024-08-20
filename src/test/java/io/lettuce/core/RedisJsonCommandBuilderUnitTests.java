@@ -129,7 +129,7 @@ class RedisJsonCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructJsonMerge() {
-        Command<String, String, Boolean> command = builder.jsonMerge(MY_KEY, MY_PATH, ELEMENT);
+        Command<String, String, String> command = builder.jsonMerge(MY_KEY, MY_PATH, ELEMENT);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

@@ -1573,7 +1573,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Boolean> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value) {
+    public Mono<String> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value) {
         return createMono(() -> jsonCommandBuilder.jsonMerge(key, jsonPath, value));
     }
 

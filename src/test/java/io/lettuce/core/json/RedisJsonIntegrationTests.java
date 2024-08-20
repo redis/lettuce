@@ -9,11 +9,12 @@ package io.lettuce.core.json;
 
 import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.json.arguments.JsonGetArgs;
+import io.lettuce.core.json.arguments.JsonMsetArgs;
+import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,10 +24,8 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
     private static final String BIKES_INVENTORY = "bikes:inventory";
 
-    private static final String COMMUTER_BIKES = "$..commuter_bikes";
-
     @Test
-    void jsonArrappend() throws ExecutionException, InterruptedException {
+    void jsonArrappend() {
         JsonParser<String, String> parser = redis.getJsonParser();
 
         JsonValue<String, String> element = parser.createJsonValue("\"{id:bike6}\"");
@@ -36,29 +35,38 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     }
 
     @Test
-    void jsonArrindex() throws ExecutionException, InterruptedException {
+    void jsonArrindex() {
         JsonParser<String, String> parser = redis.getJsonParser();
-        JsonValue<String, String> element = parser.createJsonValue("\"id\": \"bike:2\"");
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1].colors");
+        JsonValue<String, String> element = parser.createJsonValue("\"white\"");
 
-        List<Long> arrayIndex = redis.jsonArrindex(BIKES_INVENTORY, MOUNTAIN_BIKES_PATH, element, null);
+        List<Long> arrayIndex = redis.jsonArrindex(BIKES_INVENTORY, myPath, element, null);
         assertThat(arrayIndex).isNotNull();
-        assertThat(arrayIndex.get(0).longValue()).isEqualTo(3L);
+        assertThat(arrayIndex).hasSize(1);
+        assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);
     }
 
     @Test
     void jsonArrinsert() {
-        throw new RuntimeException("Not implemented");
+        JsonParser<String, String> parser = redis.getJsonParser();
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1].colors");
+        JsonValue<String, String> element = parser.createJsonValue("\"ultramarine\"");
+
+        List<Long> arrayIndex = redis.jsonArrinsert(BIKES_INVENTORY, myPath, 1, element);
+        assertThat(arrayIndex).isNotNull();
+        assertThat(arrayIndex).hasSize(1);
+        assertThat(arrayIndex.get(0).longValue()).isEqualTo(3L);
     }
 
     @Test
-    void jsonArrlen() throws ExecutionException, InterruptedException {
+    void jsonArrlen() {
         List<Long> poppedJson = redis.jsonArrlen(BIKES_INVENTORY, MOUNTAIN_BIKES_PATH);
         assertThat(poppedJson).hasSize(1);
         assertThat(poppedJson.get(0).longValue()).isEqualTo(3);
     }
 
     @Test
-    void jsonArrpop() throws ExecutionException, InterruptedException {
+    void jsonArrpop() {
         List<JsonValue<String, String>> poppedJson = redis.jsonArrpop(BIKES_INVENTORY, MOUNTAIN_BIKES_PATH, -1);
         assertThat(poppedJson).hasSize(1);
         assertThat(poppedJson.get(0).toValue()).contains(
@@ -66,17 +74,27 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     }
 
     @Test
-    void jsonArrtrim() throws ExecutionException, InterruptedException {
-        throw new RuntimeException("Not implemented");
+    void jsonArrtrim() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1].colors");
+        JsonRangeArgs range = JsonRangeArgs.Builder.start(1).stop(2);
+
+        List<Long> arrayIndex = redis.jsonArrtrim(BIKES_INVENTORY, myPath, range);
+        assertThat(arrayIndex).isNotNull();
+        assertThat(arrayIndex).hasSize(1);
+        assertThat(arrayIndex.get(0).longValue()).isEqualTo(1L);
     }
 
     @Test
-    void jsonClear() throws ExecutionException, InterruptedException {
-        throw new RuntimeException("Not implemented");
+    void jsonClear() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1].colors");
+
+        Long result = redis.jsonClear(BIKES_INVENTORY, myPath);
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo(1L);
     }
 
     @Test
-    void jsonGet() throws ExecutionException, InterruptedException {
+    void jsonGet() {
         JsonPath path = JsonPath.of("$..mountain_bikes[0:2].model");
 
         // Verify codec parsing
@@ -98,12 +116,18 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     }
 
     @Test
-    void jsonMerge() throws ExecutionException, InterruptedException {
-        throw new RuntimeException("Not implemented");
+    void jsonMerge() {
+        JsonParser<String, String> parser = redis.getJsonParser();
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1]");
+        JsonValue<String, String> element = parser.createJsonValue("\"ultramarine\"");
+
+        String result = redis.jsonMerge(BIKES_INVENTORY, myPath, element);
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo("OK");
     }
 
     @Test
-    void jsonMGet() throws ExecutionException, InterruptedException {
+    void jsonMGet() {
         JsonPath path = JsonPath.of("$..model");
 
         List<JsonValue<String, String>> value = redis.jsonMGet(path, BIKES_INVENTORY);
@@ -112,12 +136,49 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     }
 
     @Test
-    void jsonMset() throws ExecutionException, InterruptedException {
-        throw new RuntimeException("Not implemented");
+    void jsonMset() {
+        JsonParser<String, String> parser = redis.getJsonParser();
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1]");
+
+        JsonObject<String, String> bikeRecord = parser.createEmptyJsonObject();
+        JsonObject<String, String> bikeSpecs = parser.createEmptyJsonObject();
+        JsonArray<String, String> bikeColors = parser.createEmptyJsonArray();
+        bikeSpecs.put("material", parser.createJsonValue("\"composite\""));
+        bikeSpecs.put("weight", parser.createJsonValue("11"));
+        bikeColors.add(parser.createJsonValue("\"yellow\""));
+        bikeColors.add(parser.createJsonValue("\"orange\""));
+        bikeRecord.put("id", parser.createJsonValue("\"bike:43\""));
+        bikeRecord.put("model", parser.createJsonValue("\"DesertFox\""));
+        bikeRecord.put("description", parser.createJsonValue("\"The DesertFox is a versatile bike for all terrains\""));
+        bikeRecord.put("price", parser.createJsonValue("\"1299\""));
+        bikeRecord.put("specs", bikeSpecs);
+        bikeRecord.put("colors", bikeColors);
+
+        JsonMsetArgs args1 = JsonMsetArgs.Builder.key(BIKES_INVENTORY).path(myPath).element(bikeRecord);
+
+        bikeRecord = parser.createEmptyJsonObject();
+        bikeSpecs = parser.createEmptyJsonObject();
+        bikeColors = parser.createEmptyJsonArray();
+        bikeSpecs.put("material", parser.createJsonValue("\"wood\""));
+        bikeSpecs.put("weight", parser.createJsonValue("19"));
+        bikeColors.add(parser.createJsonValue("\"walnut\""));
+        bikeColors.add(parser.createJsonValue("\"chestnut\""));
+        bikeRecord.put("id", parser.createJsonValue("\"bike:13\""));
+        bikeRecord.put("model", parser.createJsonValue("\"Woody\""));
+        bikeRecord.put("description", parser.createJsonValue("\"The Woody is an environmentally-friendly wooden bike\""));
+        bikeRecord.put("price", parser.createJsonValue("\"1112\""));
+        bikeRecord.put("specs", bikeSpecs);
+        bikeRecord.put("colors", bikeColors);
+
+        JsonMsetArgs args2 = JsonMsetArgs.Builder.key(BIKES_INVENTORY).path(myPath).element(bikeRecord);
+
+        String result = redis.jsonMSet(args1, args2);
+        assertThat(result).isNotNull();
+        assertThat(result).isEqualTo("OK");
     }
 
     @Test
-    void jsonNumincrby() throws ExecutionException, InterruptedException {
+    void jsonNumincrby() {
         JsonPath path = JsonPath.of("$..mountain_bikes[0:1].price");
 
         List<Number> value = redis.jsonNumincrby(BIKES_INVENTORY, path, 5L);
@@ -126,17 +187,27 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     }
 
     @Test
-    void jsonObjkeys() throws ExecutionException, InterruptedException {
-        throw new RuntimeException("Not implemented");
+    void jsonObjkeys() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1]");
+
+        List<String> result = redis.jsonObjkeys(BIKES_INVENTORY, myPath);
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(6);
+        assertThat(result).contains("id", "model", "description", "price", "specs", "colors");
     }
 
     @Test
-    void jsonObjlen() throws ExecutionException, InterruptedException {
-        throw new RuntimeException("Not implemented");
+    void jsonObjlen() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1]");
+
+        List<Long> result = redis.jsonObjlen(BIKES_INVENTORY, myPath);
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isEqualTo(6L);
     }
 
     @Test
-    void jsonSet() throws ExecutionException, InterruptedException {
+    void jsonSet() {
         JsonParser<String, String> parser = redis.getJsonParser();
         JsonObject<String, String> bikeRecord = parser.createEmptyJsonObject();
         JsonObject<String, String> bikeSpecs = parser.createEmptyJsonObject();
@@ -162,22 +233,41 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     }
 
     @Test
-    void jsonStrappend() throws ExecutionException, InterruptedException {
-        throw new RuntimeException("Not implemented");
+    void jsonStrappend() {
+        JsonParser<String, String> parser = redis.getJsonParser();
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1].colors[1]");
+        JsonValue<String, String> element = parser.createJsonValue("\"-light\"");
+
+        List<Long> result = redis.jsonStrappend(BIKES_INVENTORY, myPath, element);
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isEqualTo(11L);
     }
 
     @Test
-    void jsonStrlen() throws ExecutionException, InterruptedException {
-        throw new RuntimeException("Not implemented");
+    void jsonStrlen() {
+        JsonParser<String, String> parser = redis.getJsonParser();
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1].colors[1]");
+
+        List<Long> result = redis.jsonStrlen(BIKES_INVENTORY, myPath);
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isEqualTo(5L);
     }
 
     @Test
-    void jsonToggle() throws ExecutionException, InterruptedException {
-        throw new RuntimeException("Not implemented");
+    void jsonToggle() {
+        JsonParser<String, String> parser = redis.getJsonParser();
+        JsonPath myPath = JsonPath.of("$..complete");
+
+        List<Long> result = redis.jsonToggle(BIKES_INVENTORY, myPath);
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0)).isEqualTo(1L);
     }
 
     @Test
-    void jsonDel() throws ExecutionException, InterruptedException {
+    void jsonDel() {
         JsonPath path = JsonPath.of("$..mountain_bikes[2:3]");
 
         Long value = redis.jsonDel(BIKES_INVENTORY, path);
@@ -185,7 +275,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     }
 
     @Test
-    void jsonType() throws ExecutionException, InterruptedException {
+    void jsonType() {
         String jsonType = redis.jsonType(BIKES_INVENTORY, MOUNTAIN_BIKES_PATH).get(0);
         assertThat(jsonType).isEqualTo("array");
     }

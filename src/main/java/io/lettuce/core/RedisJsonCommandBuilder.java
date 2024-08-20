@@ -171,7 +171,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_GET, new JsonValueListOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value) {
+    Command<K, V, String> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value) {
 
         notNullKey(key);
 
@@ -183,7 +183,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(value.asByteBuffer().array());
 
-        return createCommand(JSON_MERGE, new BooleanOutput<>(codec), args);
+        return createCommand(JSON_MERGE, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, List<JsonValue<K, V>>> jsonMGet(JsonPath jsonPath, K... keys) {

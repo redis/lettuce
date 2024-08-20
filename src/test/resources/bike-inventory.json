@@ -1,5 +1,6 @@
 {
   "inventory": {
+    "complete": false,
     "mountain_bikes": [
       {
         "id": "bike:1",

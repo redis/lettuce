@@ -11,6 +11,7 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonSetArgs;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterAll;
 import org.testcontainers.containers.GenericContainer;
@@ -26,17 +27,17 @@ import java.nio.file.Paths;
 @Testcontainers
 public class RedisContainerIntegrationTests {
 
-    @Container
-    public GenericContainer redisContainer = new GenericContainer(image).withExposedPorts(6379).withReuse(true);;
-
     private static DockerImageName image = DockerImageName.parse("redis/redis-stack:latest");
+
+    @Container
+    public static GenericContainer redisContainer = new GenericContainer(image).withExposedPorts(6379).withReuse(true);;
 
     private static RedisClient client;
 
     protected static RedisCommands<String, String> redis;
 
-    @BeforeEach
-    public void prepare() throws IOException {
+    @BeforeAll
+    public static void setup() {
         if (!redisContainer.isRunning()) {
             redisContainer.start();
         }
@@ -47,7 +48,10 @@ public class RedisContainerIntegrationTests {
 
         client = RedisClient.create(redisURI);
         redis = client.connect().sync();
+    }
 
+    @BeforeEach
+    public void prepare() throws IOException {
         redis.flushall();
 
         Path path = Paths.get("src/test/resources/bike-inventory.json");

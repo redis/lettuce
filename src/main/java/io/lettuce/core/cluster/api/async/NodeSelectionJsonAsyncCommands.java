@@ -173,11 +173,11 @@ public interface NodeSelectionJsonAsyncCommands<K, V> {
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the value to merge.
      * @param value the {@link JsonValue} to merge.
-     * @return Boolean true if the merge was successful, false otherwise.
+     * @return String "OK" if the set was successful, error if the operation failed.
      * @since 6.5
      * @see <A href="https://tools.ietf.org/html/rfc7396">RFC7396</a>
      */
-    AsyncExecutions<Boolean> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value);
+    AsyncExecutions<String> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value);
 
     /**
      * Return the values at path from multiple key arguments.

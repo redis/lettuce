@@ -83,7 +83,7 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonGet(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<JsonValue<K, V>> =
         ops.jsonGet(key, options, *jsonPaths).asFlow().toList()
 
-    override suspend fun jsonMerge(key: K, jsonPath: JsonPath, value: JsonValue<K, V>): Boolean? =
+    override suspend fun jsonMerge(key: K, jsonPath: JsonPath, value: JsonValue<K, V>): String? =
         ops.jsonMerge(key, jsonPath, value).awaitFirstOrNull()
 
     override suspend fun jsonMGet(jsonPath: JsonPath, vararg keys: K): List<JsonValue<K, V>> =

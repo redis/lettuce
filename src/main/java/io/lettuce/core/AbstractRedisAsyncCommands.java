@@ -1508,7 +1508,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Boolean> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value) {
+    public RedisFuture<String> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value) {
         return dispatch(jsonCommandBuilder.jsonMerge(key, jsonPath, value));
     }
 

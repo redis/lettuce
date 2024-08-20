@@ -176,11 +176,11 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @param key the key holding the JSON document.
      * @param jsonPath the [JsonPath] pointing to the value to merge.
      * @param value the [JsonValue] to merge.
-     * @return Boolean true if the merge was successful, false otherwise.
+     * @return String "OK" if the set was successful, error if the operation failed.
      * @since 6.5
      * @see <A href="https://tools.ietf.org/html/rfc7396">RFC7396</a>
      */
-    suspend fun jsonMerge(key: K, jsonPath: JsonPath, value: JsonValue<K, V>): Boolean?
+    suspend fun jsonMerge(key: K, jsonPath: JsonPath, value: JsonValue<K, V>): String?
 
     /**
      * Return the values at path from multiple key arguments.
