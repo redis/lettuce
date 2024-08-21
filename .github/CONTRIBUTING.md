@@ -57,17 +57,16 @@ If you have a question, then check one of the following places first as GitHub i
 
 **Checkout the docs**
 
-* [Reference documentation](https://lettuce.io/docs/)
-* [Wiki](https://github.com/lettuce-io/lettuce-core/wiki)
-* [Javadoc](https://lettuce.io/core/release/api/)
+* [Reference documentation](https://redis.github.io/lettuce/)
+* [Javadoc](https://www.javadoc.io/doc/io.lettuce/lettuce-core/latest/index.html)
 
 **Communication**
 
-* GitHub Discussions (Q&A, Ideas, General discussion): https://github.com/lettuce-io/lettuce-core/discussions 
+* [GitHub Discussions](https://github.com/redis/lettuce/discussions) (Q&A, Ideas, General discussion)
 * Stack Overflow (Questions): [https://stackoverflow.com/questions/tagged/lettuce](https://stackoverflow.com/questions/tagged/lettuce)
-* Gitter (chat): [![Join the chat at https://gitter.im/lettuce-io/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/lettuce-io/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-* Twitter: [@LettuceDriver](https://twitter.com/LettuceDriver)
-* [GitHub Issues](https://github.com/lettuce-io/lettuce-core/issues) (Bug reports, feature requests)
+* Discord: [![Discord](https://img.shields.io/discord/697882427875393627.svg?style=social&logo=discord)](https://discord.gg/redis)
+* Twitter: [![Twitter](https://img.shields.io/twitter/follow/redisinc?style=social)](https://twitter.com/redisinc)
+* [GitHub Issues](https://github.com/redis/lettuce/issues) (Bug reports, feature requests)
 
 
 ### Building from Source
