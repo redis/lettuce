@@ -219,7 +219,7 @@ configure a different DNS resolver. Lettuce comes with
 or custom DNS servers without caching of results so each hostname lookup
 yields in a DNS lookup.</p>
 <p>Since 4.4: Defaults to <code>DnsResolvers.UNRESOLVED</code> to use
-netty’s <code>AddressResolver</code> that resolves DNS names on
+netty's <code>AddressResolver</code> that resolves DNS names on
 <code>Bootstrap.connect()</code> (requires netty 4.1)</p></td>
 </tr>
 <tr>
@@ -674,7 +674,7 @@ output.</p>
 obstruction:</p>
 <p><code>MOVED</code>/<code>ASK</code> redirection but the cluster
 topology view is stale Connecting to cluster nodes using different
-IP’s/hostnames (e.g. private/public IP’s)</p>
+IPs/hostnames (e.g. private/public IPs)</p>
 <p>Connecting to non-cluster members to reconfigure those while using
 the RedisClusterClient connection.</p></td>
 </tr>
@@ -2137,7 +2137,7 @@ less total CPU usage.
 ### Building Native Images
 
 Native images assume a closed world principle in which all code needs to
-be known at the time the native image is built. Graal’s SubstrateVM
+be known at the time the native image is built. Graal's SubstrateVM
 analyzes class files during native image build-time to determine what
 bytecode needs to be translated into a native image. While this task can
 be achieved to a good extent by analyzing static bytecode, it’s harder

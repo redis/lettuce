@@ -111,9 +111,9 @@ Failover
 GZIP
 Graal
 GraalVM
-Graal’s
+Graal's
 HdrHistogram
-IP’s
+IPs
 Iterable
 JDK
 JFR
@@ -193,6 +193,7 @@ extensibility
 failover
 fromExecutor
 gradle
+Graal's
 hasNext
 hostnames
 idempotency
@@ -212,11 +213,11 @@ microservices
 misconfiguration
 multithreaded
 natively
-netty’s
+netty's
 newSingle
 nodeId
 nodeIds
-nodeId’s
+nodeId's
 nullability
 onCompleted
 onError

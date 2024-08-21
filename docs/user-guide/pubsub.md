@@ -4,7 +4,7 @@ Lettuce provides support for Publish/Subscribe on Redis Standalone and
 Redis Cluster connections. The connection is notified on
 message/subscribed/unsubscribed events after subscribing to channels or
 patterns. [Synchronous](connecting-redis.md#basic-usage), [asynchronous](async-api.md)
-and [reactive](reactive-api.md) API’s are provided to interact with Redis
+and [reactive](reactive-api.md) APIs are provided to interact with Redis
 Publish/Subscribe features.
 
 ### Subscribing

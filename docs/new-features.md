@@ -45,7 +45,7 @@
 - Configuration of extended Keep-Alive options through
   `KeepAliveOptions` (only available for some transports/Java versions).
 
-- Configuration of netty’s `AddressResolverGroup` through
+- Configuration of netty's `AddressResolverGroup` through
   `ClientResources`. Uses `DnsAddressResolverGroup` when
   `netty-resolver-dns` is on the classpath.
 

@@ -77,7 +77,7 @@ underlying bytes. The `byte[]` interface of Lettuce 3.x required the
 user to provide an array with the exact data for interchange. So if you
 have an array where you want to use only a subset, you’re required to
 create a new instance of a byte array and copy the data. The same
-applies if you have a different byte source (e.g. netty’s `ByteBuf` or
+applies if you have a different byte source (e.g. netty's `ByteBuf` or
 an NIO `ByteBuffer`). The `ByteBuffer`s for decoding are pointers to the
 underlying data. `ByteBuffer`s for encoding data can be either pure
 pointers or allocated memory. Lettuce does not free any memory (such as
