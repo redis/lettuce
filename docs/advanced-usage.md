@@ -349,7 +349,7 @@ canceled when a reconnect fails within the activation sequence. The
 reconnect itself has two phases: Socket connection and
 protocol/connection activation. In case a connect timeout occurs, a
 connection reset, host lookup fails, this does not affect the
-cancelation of commands. In contrast, where the protocol/connection
+cancellation of commands. In contrast, where the protocol/connection
 activation fails due to SSL errors or PING before activating connection
 failure, queued commands are canceled.</p></td>
 </tr>
@@ -811,7 +811,7 @@ Netty provides three platform-specific JNI transports:
 
 - io_uring on Linux (Incubator)
 
-- kqueue on MacOS/BSD
+- kqueue on macOS/BSD
 
 Lettuce defaults to native transports if the appropriate library is
 available within its runtime. Using a native transport adds features
@@ -850,7 +850,7 @@ Native transports are available with:
   </dependency>
   ```
 
-- MacOS **kqueue** x86_64 systems with a minimum netty version of
+- macOS **kqueue** x86_64 systems with a minimum netty version of
   `4.1.11.Final`, requiring `netty-transport-native-kqueue`, classifier
   `osx-x86_64`
 
@@ -2162,7 +2162,7 @@ Those cover Lettuce operations for `RedisClient` and
 `RedisClusterClient`.
 
 Depending on your configuration you might need additional configuration
-for Netty, HdrHistorgram (metrics collection), Reactive Libraries, and
+for Netty, HdrHistogram (metrics collection), Reactive Libraries, and
 dynamic Redis Command interfaces.
 
 ### HdrHistogram/Command Latency Metrics
@@ -2526,7 +2526,7 @@ already executed; only the result is not available. These errors are
 caused mostly due to a wrong implementation. The result of a command,
 which cannot be *decoded* is that the command gets canceled, and the
 causing `Exception` is available in the result. The command is cleared
-from the response queue, and the connection stays useable.
+from the response queue, and the connection stays usable.
 
 In general, when `Errors` occur while operating on a connection, you
 should close the connection and use a new one. Connections, that

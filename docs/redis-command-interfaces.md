@@ -199,7 +199,7 @@ interface MixedCommands extends Commands {
 }
 ```
 
-You can choose amongst multiple strategies:
+You can choose among multiple strategies:
 
 - `SPLIT`: Splits camel-case method names into multiple command
   segments: `clientSetname` executes `CLIENT SETNAME`. This is the
@@ -329,7 +329,7 @@ Built-in parameter types:
 - types implementing `io.lettuce.core.CompositeParameter` - Lettuce
   comes with a set of command argument types such as `BitFieldArgs`,
   `SetArgs`, `SortArgs`, … that can be used as parameter. Providing
-  `CompositeParameter` will ontribute multiple command arguments by
+  `CompositeParameter` will contribute multiple command arguments by
   invoking the `CompositeParameter.build(CommandArgs)` method.
 
 - `Value`, `KeyValue`, and `ScoredValue` that are encoded to their
@@ -386,7 +386,7 @@ Another aspect of command methods is their response type. Redis command
 responses consist of simple strings, bulk strings (byte streams) or
 arrays with nested elements depending on the issued command.
 
-You can choose amongst various return types that map to a particular
+You can choose among various return types that map to a particular
 {custom-commands-command-output-link}. A command output can return
 either its return type directly (`List<String>` for `StringListOutput`)
 or stream individual elements (`String` for `StringListOutput` as it
