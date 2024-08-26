@@ -54,7 +54,7 @@
         <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
         <junit5.version>5.10.2</junit5.version>
         <hamcrest-library.version>2.2</hamcrest-library.version>
-        <hdr-histogram.version>2.1.12</hdr-histogram.version>
+        <hdr-histogram.version>2.2.2</hdr-histogram.version>
         <kotlin.version>1.7.21</kotlin.version>
         <kotlinx-coroutines.version>1.5.2</kotlinx-coroutines.version>
         <latencyutils.version>2.0.3</latencyutils.version>
