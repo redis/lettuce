@@ -191,13 +191,13 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_MGET, new JsonValueListOutput<>(codec), args);
     }
 
-    Command<K, V, String> jsonMSet(JsonMsetArgs... arguments) {
+    Command<K, V, String> jsonMSet(List<JsonMsetArgs<K, V>> arguments) {
 
-        notEmpty(arguments);
+        notEmpty(arguments.toArray());
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
 
-        for (JsonMsetArgs argument : arguments) {
+        for (JsonMsetArgs<K, V> argument : arguments) {
             argument.build(args);
         }
 

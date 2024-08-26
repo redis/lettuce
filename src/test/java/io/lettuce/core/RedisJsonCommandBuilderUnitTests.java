@@ -1,5 +1,11 @@
 package io.lettuce.core;
 
+/*
+ * Copyright 2024, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonValue;
@@ -15,6 +21,7 @@ import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Unit tests for {@link RedisJsonCommandBuilder}.
  *
- * @author Mark Paluch
+ * @author Tihomir Mateev
  */
 class RedisJsonCommandBuilderUnitTests {
 
@@ -149,8 +156,8 @@ class RedisJsonCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructJsonMset() {
-        Command<String, String, String> command = builder
-                .jsonMSet(JsonMsetArgs.Builder.element(ELEMENT).key(MY_KEY).path(MY_PATH));
+        JsonMsetArgs<String, String> args1 = new JsonMsetArgs<>(MY_KEY, MY_PATH, ELEMENT);
+        Command<String, String, String> command = builder.jsonMSet(Collections.singletonList(args1));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

@@ -26,8 +26,6 @@ import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.json.JsonParser;
-import io.lettuce.core.json.JsonParserRegistry;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
@@ -1583,7 +1581,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> jsonMSet(JsonMsetArgs... arguments) {
+    public Mono<String> jsonMSet(List<JsonMsetArgs<K, V>> arguments) {
         return createMono(() -> jsonCommandBuilder.jsonMSet(arguments));
     }
 

@@ -36,6 +36,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -52,6 +53,11 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.json.JsonParserRegistry;
+import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.JsonValue;
+import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
@@ -67,6 +73,7 @@ import io.lettuce.core.protocol.ConnectionIntent;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author Jon Chambers
+ * @author Tihomir Mateev
  * @since 3.3
  */
 @SuppressWarnings("unchecked")
@@ -283,6 +290,54 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
+    public RedisFuture<List<JsonValue<K, V>>> jsonMGet(JsonPath jsonPath, K... keys) {
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
+
+        if (partitioned.size() < 2) {
+            return super.jsonMGet(jsonPath, keys);
+        }
+
+        // For a given partition, maps the key to its index within the List<K> in partitioned for faster lookups below
+        Map<Integer, Map<K, Integer>> keysToIndexes = mapKeyToIndex(partitioned);
+        Map<K, Integer> slots = SlotHash.getSlots(partitioned);
+        Map<Integer, RedisFuture<List<JsonValue<K, V>>>> executions = new HashMap<>(partitioned.size());
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            K[] partitionKeys = entry.getValue().toArray((K[]) new Object[entry.getValue().size()]);
+            RedisFuture<List<JsonValue<K, V>>> jsonMget = super.jsonMGet(jsonPath, partitionKeys);
+            executions.put(entry.getKey(), jsonMget);
+        }
+
+        // restore order of key
+        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
+            List<JsonValue<K, V>> result = new ArrayList<>(slots.size());
+            for (K opKey : keys) {
+                int slot = slots.get(opKey);
+
+                int position = keysToIndexes.get(slot).get(opKey);
+                RedisFuture<List<JsonValue<K, V>>> listRedisFuture = executions.get(slot);
+                result.add(MultiNodeExecution.execute(() -> listRedisFuture.get().get(position)));
+            }
+
+            return result;
+        });
+    }
+
+    private Map<Integer, Map<K, Integer>> mapKeyToIndex(Map<Integer, List<K>> partitioned) {
+        Map<Integer, Map<K, Integer>> result = new HashMap<>(partitioned.size());
+        for (Integer partition : partitioned.keySet()) {
+            List<K> keysForPartition = partitioned.get(partition);
+            Map<K, Integer> keysToIndexes = new HashMap<>(keysForPartition.size());
+            for (int i = 0; i < keysForPartition.size(); i++) {
+                keysToIndexes.put(keysForPartition.get(i), i);
+            }
+            result.put(partition, keysToIndexes);
+        }
+
+        return result;
+    }
+
+    @Override
     public RedisFuture<List<KeyValue<K, V>>> mget(K... keys) {
         return mget(Arrays.asList(keys));
     }
@@ -296,15 +351,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         // For a given partition, maps the key to its index within the List<K> in partitioned for faster lookups below
-        Map<Integer, Map<K, Integer>> partitionedKeysToIndexes = new HashMap<>(partitioned.size());
-        for (Integer partition : partitioned.keySet()) {
-            List<K> keysForPartition = partitioned.get(partition);
-            Map<K, Integer> keysToIndexes = new HashMap<>(keysForPartition.size());
-            for (int i = 0; i < keysForPartition.size(); i++) {
-                keysToIndexes.put(keysForPartition.get(i), i);
-            }
-            partitionedKeysToIndexes.put(partition, keysToIndexes);
-        }
+        Map<Integer, Map<K, Integer>> partitionedKeysToIndexes = mapKeyToIndex(partitioned);
         Map<K, Integer> slots = SlotHash.getSlots(partitioned);
         Map<Integer, RedisFuture<List<KeyValue<K, V>>>> executions = new HashMap<>(partitioned.size());
 
@@ -349,6 +396,28 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         }
 
         return MultiNodeExecution.aggregateAsync(executions);
+    }
+
+    @Override
+    public RedisFuture<String> jsonMSet(List<JsonMsetArgs<K, V>> arguments) {
+        List<K> keys = arguments.stream().map(JsonMsetArgs::getKey).collect(Collectors.toList());
+        Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
+
+        if (partitioned.size() < 2) {
+            return super.jsonMSet(arguments);
+        }
+
+        Map<Integer, RedisFuture<String>> executions = new HashMap<>();
+
+        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
+            entry.getValue().forEach(k -> {
+                RedisFuture<String> mset = super.jsonMSet(
+                        arguments.stream().filter(args -> args.getKey().equals(k)).collect(Collectors.toList()));
+                executions.put(entry.getKey(), mset);
+            });
+        }
+
+        return MultiNodeExecution.firstOfAsync(executions);
     }
 
     @Override
@@ -690,6 +759,16 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
+    }
+
+    @Override
+    public JsonParser<K, V> getJsonParser() {
+        return JsonParserRegistry.getJsonParser(this.codec);
+    }
+
+    @Override
+    public void setJsonParser(JsonParser<K, V> jsonParser) {
+        throw new UnsupportedOperationException("Setting a custom JsonParser is not supported");
     }
 
 }

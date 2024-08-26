@@ -201,7 +201,7 @@ public interface NodeSelectionJsonAsyncCommands<K, V> {
      * @return "OK" if the operation was successful, error otherwise
      * @since 6.5
      */
-    AsyncExecutions<String> jsonMSet(JsonMsetArgs... arguments);
+    AsyncExecutions<String> jsonMSet(List<JsonMsetArgs<K, V>> arguments);
 
     /**
      * Increment the number value stored at the specified {@link JsonPath} in the JSON document by the provided increment.

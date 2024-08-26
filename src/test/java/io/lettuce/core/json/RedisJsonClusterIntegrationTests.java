@@ -7,10 +7,10 @@
 
 package io.lettuce.core.json;
 
-import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
@@ -30,7 +30,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
+public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationTests {
+
+    protected static RedisClusterClient client;
+
+    protected static RedisAdvancedClusterCommands<String, String> redis;
+
+    public RedisJsonClusterIntegrationTests() {
+        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(26379).build();
+
+        client = RedisClusterClient.create(redisURI);
+        redis = client.connect().sync();
+    }
 
     private static final String BIKES_INVENTORY = "bikes:inventory";
 
@@ -41,17 +52,6 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     private static final String MOUNTAIN_BIKES_V1 = "..mountain_bikes";
 
     private static final String MOUNTAIN_BIKES_V2 = "$..mountain_bikes";
-
-    protected static RedisClient client;
-
-    protected static RedisCommands<String, String> redis;
-
-    public RedisJsonIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
-
-        client = RedisClient.create(redisURI);
-        redis = client.connect().sync();
-    }
 
     @BeforeEach
     public void prepare() throws IOException {
@@ -210,6 +210,36 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         }
     }
 
+    @Test
+    void jsonMGetCrossSlot() {
+        JsonParser<String, String> parser = redis.getJsonParser();
+
+        JsonObject<String, String> bikeRecord = parser.createEmptyJsonObject();
+        JsonObject<String, String> bikeSpecs = parser.createEmptyJsonObject();
+        JsonArray<String, String> bikeColors = parser.createEmptyJsonArray();
+        bikeSpecs.put("material", parser.createJsonValue("\"composite\""));
+        bikeSpecs.put("weight", parser.createJsonValue("11"));
+        bikeColors.add(parser.createJsonValue("\"yellow\""));
+        bikeColors.add(parser.createJsonValue("\"orange\""));
+        bikeRecord.put("id", parser.createJsonValue("\"bike:43\""));
+        bikeRecord.put("model", parser.createJsonValue("\"DesertFox\""));
+        bikeRecord.put("description", parser.createJsonValue("\"The DesertFox is a versatile bike for all terrains\""));
+        bikeRecord.put("price", parser.createJsonValue("\"1299\""));
+        bikeRecord.put("specs", bikeSpecs);
+        bikeRecord.put("colors", bikeColors);
+
+        redis.jsonSet("bikes:service", JsonPath.ROOT_PATH, bikeRecord, JsonSetArgs.Builder.none());
+
+        List<JsonValue<String, String>> value = redis.jsonMGet(JsonPath.ROOT_PATH, BIKES_INVENTORY, "bikes:service");
+        assertThat(value).hasSize(2);
+        JsonValue<String, String> slot1 = value.get(0);
+        JsonValue<String, String> slot2 = value.get(1);
+        assertThat(slot1.toValue()).contains("Quaoar");
+        assertThat(slot2.toValue()).contains("DesertFox");
+        assertThat(slot1.isJsonArray()).isTrue();
+        assertThat(slot2.isJsonArray()).isTrue();
+    }
+
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { MOUNTAIN_BIKES_V1 + "[1]", MOUNTAIN_BIKES_V2 + "[1]" })
     void jsonMset(String path) {
@@ -253,64 +283,6 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo("OK");
-
-        JsonValue<String, String> value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.none(), JsonPath.ROOT_PATH).get(0);
-        assertThat(value).isNotNull();
-        assertThat(value.isJsonArray()).isTrue();
-        assertThat(value.asJsonArray().size()).isEqualTo(1);
-        assertThat(value.asJsonArray().asList().get(0).toValue()).contains(
-                "{\"id\":\"bike:13\",\"model\":\"Woody\",\"description\":\"The Woody is an environmentally-friendly wooden bike\"");
-    }
-
-    @Test
-    void jsonMsetCrossslot() {
-        JsonParser<String, String> parser = redis.getJsonParser();
-        JsonPath myPath = JsonPath.of(BIKES_INVENTORY);
-
-        JsonObject<String, String> bikeRecord = parser.createEmptyJsonObject();
-        JsonObject<String, String> bikeSpecs = parser.createEmptyJsonObject();
-        JsonArray<String, String> bikeColors = parser.createEmptyJsonArray();
-        bikeSpecs.put("material", parser.createJsonValue("\"composite\""));
-        bikeSpecs.put("weight", parser.createJsonValue("11"));
-        bikeColors.add(parser.createJsonValue("\"yellow\""));
-        bikeColors.add(parser.createJsonValue("\"orange\""));
-        bikeRecord.put("id", parser.createJsonValue("\"bike:43\""));
-        bikeRecord.put("model", parser.createJsonValue("\"DesertFox\""));
-        bikeRecord.put("description", parser.createJsonValue("\"The DesertFox is a versatile bike for all terrains\""));
-        bikeRecord.put("price", parser.createJsonValue("\"1299\""));
-        bikeRecord.put("specs", bikeSpecs);
-        bikeRecord.put("colors", bikeColors);
-
-        JsonMsetArgs<String, String> args1 = new JsonMsetArgs<>(BIKES_INVENTORY, myPath, bikeRecord);
-
-        bikeRecord = parser.createEmptyJsonObject();
-        bikeSpecs = parser.createEmptyJsonObject();
-        bikeColors = parser.createEmptyJsonArray();
-        bikeSpecs.put("material", parser.createJsonValue("\"wood\""));
-        bikeSpecs.put("weight", parser.createJsonValue("19"));
-        bikeColors.add(parser.createJsonValue("\"walnut\""));
-        bikeColors.add(parser.createJsonValue("\"chestnut\""));
-        bikeRecord.put("id", parser.createJsonValue("\"bike:13\""));
-        bikeRecord.put("model", parser.createJsonValue("\"Woody\""));
-        bikeRecord.put("description", parser.createJsonValue("\"The Woody is an environmentally-friendly wooden bike\""));
-        bikeRecord.put("price", parser.createJsonValue("\"1112\""));
-        bikeRecord.put("specs", bikeSpecs);
-        bikeRecord.put("colors", bikeColors);
-
-        JsonMsetArgs<String, String> args2 = new JsonMsetArgs<>("bikes:service", JsonPath.ROOT_PATH, bikeRecord);
-
-        List<JsonMsetArgs<String, String>> args = Arrays.asList(args1, args2);
-        String result = redis.jsonMSet(args);
-
-        assertThat(result).isNotNull();
-        assertThat(result).isEqualTo("OK");
-
-        JsonValue<String, String> value = redis.jsonGet("bikes:service", JsonGetArgs.Builder.none(), JsonPath.ROOT_PATH).get(0);
-        assertThat(value).isNotNull();
-        assertThat(value.isJsonArray()).isTrue();
-        assertThat(value.asJsonArray().size()).isEqualTo(1);
-        assertThat(value.asJsonArray().asList().get(0).toValue()).contains(
-                "{\"id\":\"bike:13\",\"model\":\"Woody\",\"description\":\"The Woody is an environmentally-friendly wooden bike\"");
     }
 
     @ParameterizedTest(name = "With {0} as path")

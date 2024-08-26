@@ -1518,7 +1518,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> jsonMSet(JsonMsetArgs... arguments) {
+    public RedisFuture<String> jsonMSet(List<JsonMsetArgs<K, V>> arguments) {
         return dispatch(jsonCommandBuilder.jsonMSet(arguments));
     }
 

@@ -3,19 +3,6 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.lettuce.core.json.arguments;
@@ -28,97 +15,44 @@ import io.lettuce.core.protocol.CommandArgs;
 /**
  * Argument list builder for the Redis <a href="https://redis.io/docs/latest/commands/json.mset/">JSON.MSET</a> command.
  * <p>
- * {@link JsonMsetArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Tihomir Mateev
  * @since 6.5
  */
-public class JsonMsetArgs implements CompositeArgument {
+public class JsonMsetArgs<K, V> implements CompositeArgument {
 
-    private String key;
+    private final K key;
 
-    private JsonPath path;
+    private final JsonPath path;
 
-    private JsonValue<?, ?> element;
-
-    /**
-     * Builder entry points for {@link JsonGetArgs}.
-     */
-    public static class Builder {
-
-        /**
-         * Utility constructor.
-         */
-        private Builder() {
-        }
-
-        /**
-         * Creates new {@link JsonGetArgs} and sets the string used for indentation.
-         *
-         * @return new {@link JsonGetArgs} with indentation set.
-         */
-        public static JsonMsetArgs key(String indent) {
-            return new JsonMsetArgs().key(indent);
-        }
-
-        /**
-         * Creates new {@link JsonGetArgs} and sets the string used for newline.
-         *
-         * @return new {@link JsonGetArgs} with newline set.
-         */
-        public static JsonMsetArgs path(JsonPath path) {
-            return new JsonMsetArgs().path(path);
-        }
-
-        /**
-         * Creates new {@link JsonGetArgs} and sets the string used for spacing.
-         *
-         * @return new {@link JsonGetArgs} with spacing set.
-         */
-        public static JsonMsetArgs element(JsonValue<?, ?> element) {
-            return new JsonMsetArgs().element(element);
-        }
-
-    }
+    private final JsonValue<K, V> element;
 
     /**
-     * Set the string used for indentation.
+     * Creates a new {@link JsonMsetArgs} given a {@code key}, {@code path} and {@code element}.
      *
-     * @return {@code this}.
+     * @param key the key to set the value for
+     * @param path the path to set the value for
+     * @param element the value to set
      */
-    public JsonMsetArgs key(String key) {
-
+    public JsonMsetArgs(K key, JsonPath path, JsonValue<K, V> element) {
         this.key = key;
-        return this;
-    }
-
-    /**
-     * Set the string used for newline.
-     *
-     * @return {@code this}.
-     */
-    public JsonMsetArgs path(JsonPath path) {
-
         this.path = path;
-        return this;
+        this.element = element;
     }
 
     /**
-     * Set the string used for spacing.
-     *
-     * @return {@code this}.
+     * Return the key associated with this {@link JsonMsetArgs}.
      */
-    public JsonMsetArgs element(JsonValue<?, ?> element) {
-
-        this.element = element;
-        return this;
+    public K getKey() {
+        return key;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (key != null) {
-            args.add(key);
+            args.addKey((K) key);
         }
 
         if (path != null) {

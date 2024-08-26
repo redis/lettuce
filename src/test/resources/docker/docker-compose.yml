@@ -1,0 +1,17 @@
+---
+services:
+
+  standalone-stack:
+    image: redis/redis-stack:latest
+    ports:
+      - "16379:6379"
+
+  clustered-stack:
+    image: tihomirmateev339/cae-infra:latest
+    ports:
+      - "26379:26379"
+      - "26380:26380"
+      - "26381:26381"
+      - "26382:26382"
+      - "26383:26383"
+      - "26384:26384"

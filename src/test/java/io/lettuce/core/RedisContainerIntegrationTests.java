@@ -7,65 +7,51 @@
 
 package io.lettuce.core;
 
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.json.JsonPath;
-import io.lettuce.core.json.JsonValue;
-import io.lettuce.core.json.arguments.JsonSetArgs;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.AfterAll;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.containers.ComposeContainer;
+import org.testcontainers.containers.output.BaseConsumer;
+import org.testcontainers.containers.output.OutputFrame;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Testcontainers
 public class RedisContainerIntegrationTests {
 
-    private static DockerImageName image = DockerImageName.parse("redis/redis-stack:latest");
-
-    @Container
-    public static GenericContainer redisContainer = new GenericContainer(image).withExposedPorts(6379).withReuse(true);;
-
-    private static RedisClient client;
-
-    protected static RedisCommands<String, String> redis;
+    public static ComposeContainer CLUSTERED_STACK = new ComposeContainer(
+            new File("src/test/resources/docker/docker-compose.yml")).withExposedService("clustered-stack", 26379)
+                    .withExposedService("clustered-stack", 26380).withExposedService("clustered-stack", 26381)
+                    .withExposedService("clustered-stack", 26382).withExposedService("clustered-stack", 26383)
+                    .withExposedService("clustered-stack", 26384).withExposedService("standalone-stack", 6379);
 
     @BeforeAll
-    public static void setup() {
-        if (!redisContainer.isRunning()) {
-            redisContainer.start();
-        }
+    public static void setup() throws IOException, InterruptedException {
+        // In case you need to debug the container uncomment these lines to redirect the output
+        // CLUSTERED_STACK.withLogConsumer("clustered-stack", new SystemOutputConsumer("clustered"));
+        // CLUSTERED_STACK.withLogConsumer("standalone-stack", new SystemOutputConsumer("standalone"));
 
-        String address = redisContainer.getHost();
-        Integer port = redisContainer.getFirstMappedPort();
-        RedisURI redisURI = RedisURI.Builder.redis(address).withPort(port).build();
+        CLUSTERED_STACK.waitingFor("clustered-stack",
+                Wait.forLogMessage(".*Background RDB transfer terminated with success.*", 1));
+        CLUSTERED_STACK.start();
 
-        client = RedisClient.create(redisURI);
-        redis = client.connect().sync();
     }
 
-    @BeforeEach
-    public void prepare() throws IOException {
-        redis.flushall();
+    static public class SystemOutputConsumer extends BaseConsumer<org.testcontainers.containers.output.ToStringConsumer> {
 
-        Path path = Paths.get("src/test/resources/bike-inventory.json");
-        String read = String.join("", Files.readAllLines(path));
-        JsonValue<String, String> value = redis.getJsonParser().createJsonValue(read);
+        String prefix;
 
-        redis.jsonSet("bikes:inventory", JsonPath.ROOT_PATH, value, JsonSetArgs.Builder.none());
-    }
-
-    @AfterAll
-    static void teardown() {
-        if (client != null) {
-            client.shutdown();
+        public SystemOutputConsumer(String prefix) {
+            this.prefix = prefix;
         }
+
+        @Override
+        public void accept(OutputFrame outputFrame) {
+            String output = String.format("%15s: %s", prefix, outputFrame.getUtf8String());
+            System.out.print(output);
+        }
+
     }
 
 }

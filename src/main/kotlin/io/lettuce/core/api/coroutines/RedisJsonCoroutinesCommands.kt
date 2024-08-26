@@ -21,7 +21,6 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.json.JsonValue
 import io.lettuce.core.json.arguments.JsonGetArgs
 import io.lettuce.core.json.arguments.JsonMsetArgs
@@ -204,7 +203,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return "OK" if the operation was successful, error otherwise
      * @since 6.5
      */
-    suspend fun jsonMSet(vararg arguments: JsonMsetArgs): String?
+    suspend fun jsonMSet(arguments: List<JsonMsetArgs<K, V>>): String?
 
     /**
      * Increment the number value stored at the specified [JsonPath] in the JSON document by the provided increment.

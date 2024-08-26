@@ -3,39 +3,21 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisJsonReactiveCommands
-import io.lettuce.core.api.reactive.RedisKeyReactiveCommands
 import io.lettuce.core.json.JsonPath
 import io.lettuce.core.json.JsonValue
 import io.lettuce.core.json.arguments.JsonGetArgs
 import io.lettuce.core.json.arguments.JsonMsetArgs
 import io.lettuce.core.json.arguments.JsonRangeArgs
 import io.lettuce.core.json.arguments.JsonSetArgs
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
-import java.time.Duration
-import java.time.Instant
-import java.util.*
 
 /**
  * Coroutine executed commands (based on reactive commands) for Keys (Key manipulation/querying).
@@ -89,8 +71,8 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonMGet(jsonPath: JsonPath, vararg keys: K): List<JsonValue<K, V>> =
         ops.jsonMGet(jsonPath, *keys).asFlow().toList()
 
-    override suspend fun jsonMSet(vararg arguments: JsonMsetArgs): String? =
-        ops.jsonMSet(*arguments).awaitFirstOrNull()
+    override suspend fun jsonMSet(arguments: List<JsonMsetArgs<K, V>>): String? =
+        ops.jsonMSet(arguments).awaitFirstOrNull()
 
     override suspend fun jsonType(key: K, jsonPath: JsonPath): List<V> =
         ops.jsonType(key, jsonPath).asFlow().toList()
