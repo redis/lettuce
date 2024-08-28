@@ -15,35 +15,35 @@ import io.lettuce.core.codec.RedisCodec;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-class DefaultJsonParser<K, V> implements JsonParser<K, V> {
+class DefaultJsonParser<V> implements JsonParser<V> {
 
-    private final RedisCodec<K, V> codec;
+    private final RedisCodec<?, V> codec;
 
-    DefaultJsonParser(RedisCodec<K, V> codec) {
+    DefaultJsonParser(RedisCodec<?, V> codec) {
         this.codec = codec;
     }
 
     @Override
-    public JsonValue<K, V> createJsonValue(ByteBuffer bytes) {
+    public JsonValue<V> createJsonValue(ByteBuffer bytes) {
         return new UnproccessedJsonValue<>(bytes, codec, this);
     }
 
     @Override
-    public JsonValue<K, V> createJsonValue(V value) {
+    public JsonValue<V> createJsonValue(V value) {
         return parse(value);
     }
 
     @Override
-    public JsonObject<K, V> createEmptyJsonObject() {
-        return new DelegateJsonObject<K, V>(codec);
+    public JsonObject<V> createEmptyJsonObject() {
+        return new DelegateJsonObject<V>(codec);
     }
 
     @Override
-    public JsonArray<K, V> createEmptyJsonArray() {
-        return new DelegateJsonArray<K, V>(codec);
+    public JsonArray<V> createEmptyJsonArray() {
+        return new DelegateJsonArray<V>(codec);
     }
 
-    protected JsonValue<K, V> parse(V value) {
+    protected JsonValue<V> parse(V value) {
         if (value instanceof String) {
             return parse((String) value);
         } else if (value instanceof ByteBuffer) {
@@ -53,7 +53,7 @@ class DefaultJsonParser<K, V> implements JsonParser<K, V> {
         return parse(codec.encodeValue(value));
     }
 
-    private JsonValue<K, V> parse(String value) {
+    private JsonValue<V> parse(String value) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode root = mapper.readTree(value);
@@ -65,7 +65,7 @@ class DefaultJsonParser<K, V> implements JsonParser<K, V> {
     }
 
     @Override
-    public JsonValue<K, V> parse(ByteBuffer byteBuffer) {
+    public JsonValue<V> parse(ByteBuffer byteBuffer) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             byte[] bytes = new byte[byteBuffer.remaining()];
@@ -78,7 +78,7 @@ class DefaultJsonParser<K, V> implements JsonParser<K, V> {
         }
     }
 
-    private JsonValue<K, V> wrap(JsonNode root) {
+    private JsonValue<V> wrap(JsonNode root) {
         if (root.isObject()) {
             return new DelegateJsonObject<>(root, codec);
         } else if (root.isArray()) {

@@ -3,19 +3,6 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.lettuce.core.json;
@@ -28,31 +15,30 @@ import io.lettuce.core.codec.RedisCodec;
 /**
  * Implementation of the {@link DelegateJsonObject} that delegates most of it's dunctionality to the Jackson {@link ObjectNode}.
  *
- * @param <K> Key type.
  * @param <V> Value type.
  * @author Tihomir Mateev
  */
-class DelegateJsonObject<K, V> extends DelegateJsonValue<K, V> implements JsonObject<K, V> {
+class DelegateJsonObject<V> extends DelegateJsonValue<V> implements JsonObject<V> {
 
-    DelegateJsonObject(RedisCodec<K, V> codec) {
+    DelegateJsonObject(RedisCodec<?, V> codec) {
         super(new ObjectNode(JsonNodeFactory.instance), codec);
     }
 
-    DelegateJsonObject(JsonNode node, RedisCodec<K, V> codec) {
+    DelegateJsonObject(JsonNode node, RedisCodec<?, V> codec) {
         super(node, codec);
     }
 
     @Override
-    public JsonObject<K, V> put(K key, JsonValue<K, V> element) {
+    public JsonObject<V> put(V key, JsonValue<V> element) {
         String keyString = getStringValue(key);
-        JsonNode newNode = ((DelegateJsonValue<K, V>) element).getNode();
+        JsonNode newNode = ((DelegateJsonValue<V>) element).getNode();
 
         ((ObjectNode) node).replace(keyString, newNode);
         return this;
     }
 
     @Override
-    public JsonValue<K, V> get(K key) {
+    public JsonValue<V> get(V key) {
         String keyString = getStringValue(key);
         JsonNode value = node.get(keyString);
 
@@ -60,7 +46,7 @@ class DelegateJsonObject<K, V> extends DelegateJsonValue<K, V> implements JsonOb
     }
 
     @Override
-    public JsonValue<K, V> remove(K key) {
+    public JsonValue<V> remove(V key) {
         String keyString = getStringValue(key);
         JsonNode value = ((ObjectNode) node).remove(keyString);
 
@@ -78,7 +64,7 @@ class DelegateJsonObject<K, V> extends DelegateJsonValue<K, V> implements JsonOb
     }
 
     @Override
-    public JsonObject<K, V> asJsonObject() {
+    public JsonObject<V> asJsonObject() {
         return this;
     }
 

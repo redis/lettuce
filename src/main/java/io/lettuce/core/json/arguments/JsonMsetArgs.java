@@ -25,7 +25,7 @@ public class JsonMsetArgs<K, V> implements CompositeArgument {
 
     private final JsonPath path;
 
-    private final JsonValue<K, V> element;
+    private final JsonValue<V> element;
 
     /**
      * Creates a new {@link JsonMsetArgs} given a {@code key}, {@code path} and {@code element}.
@@ -34,7 +34,7 @@ public class JsonMsetArgs<K, V> implements CompositeArgument {
      * @param path the path to set the value for
      * @param element the value to set
      */
-    public JsonMsetArgs(K key, JsonPath path, JsonValue<K, V> element) {
+    public JsonMsetArgs(K key, JsonPath path, JsonValue<V> element) {
         this.key = key;
         this.path = path;
         this.element = element;

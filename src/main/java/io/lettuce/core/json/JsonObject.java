@@ -12,14 +12,12 @@ package io.lettuce.core.json;
  * JavaScript Object Notation (JSON) Data Interchange Format, Section 4. Objects</a>
  * <p>
  *
- *
- * @param <K> Key type based on the {@link io.lettuce.core.codec.RedisCodec} used.
  * @param <V> Value type based on the {@link io.lettuce.core.codec.RedisCodec} used.
  * @see JsonValue
  * @author Tihomir Mateev
  * @since 6.5
  */
-public interface JsonObject<K, V> extends JsonValue<K, V> {
+public interface JsonObject<V> extends JsonValue<V> {
 
     /**
      * Add (if there is no value with the same key already) or replace (if there is) a new {@link JsonValue} to the object under
@@ -29,7 +27,7 @@ public interface JsonObject<K, V> extends JsonValue<K, V> {
      * @param element the value to add or replace
      * @return the updated {@link JsonObject} to allow call chaining
      */
-    JsonObject<K, V> put(K key, JsonValue<K, V> element);
+    JsonObject<V> put(V key, JsonValue<V> element);
 
     /**
      * Get the {@link JsonValue} under the provided key.
@@ -37,7 +35,7 @@ public interface JsonObject<K, V> extends JsonValue<K, V> {
      * @param key the key to get the value for
      * @return the {@link JsonValue} under the provided key or {@code null} if no value is found
      */
-    JsonValue<K, V> get(K key);
+    JsonValue<V> get(V key);
 
     /**
      * Remove the {@link JsonValue} under the provided key.
@@ -45,7 +43,7 @@ public interface JsonObject<K, V> extends JsonValue<K, V> {
      * @param key the key to remove the value for
      * @return the removed {@link JsonValue} or {@code null} if no value is found
      */
-    JsonValue<K, V> remove(K key);
+    JsonValue<V> remove(V key);
 
     /**
      * @return the number of key-value pairs in this {@link JsonObject}

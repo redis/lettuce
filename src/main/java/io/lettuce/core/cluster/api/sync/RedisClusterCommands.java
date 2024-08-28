@@ -378,8 +378,8 @@ public interface RedisClusterCommands<K, V>
      */
     List<Map<String, Object>> clusterLinks();
 
-    JsonParser<K, V> getJsonParser();
+    JsonParser<V> getJsonParser();
 
-    void setJsonParser(JsonParser<K, V> jsonParser);
+    void setJsonParser(JsonParser<V> jsonParser);
 
 }

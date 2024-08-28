@@ -35,7 +35,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         super(codec);
     }
 
-    Command<K, V, List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue<K, V>... jsonValues) {
+    Command<K, V, List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue<V>... jsonValues) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -44,14 +44,14 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(jsonPath.toString());
         }
 
-        for (JsonValue<K, V> value : jsonValues) {
+        for (JsonValue<V> value : jsonValues) {
             args.add(value.asByteBuffer().array());
         }
 
         return createCommand(JSON_ARRAPPEND, (CommandOutput) new ArrayOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonRangeArgs range) {
+    Command<K, V, List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue<V> value, JsonRangeArgs range) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -70,7 +70,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_ARRINDEX, (CommandOutput) new ArrayOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue<K, V>... values) {
+    Command<K, V, List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue<V>... values) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -81,7 +81,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(index);
 
-        for (JsonValue<K, V> value : values) {
+        for (JsonValue<V> value : values) {
             args.add(value.asByteBuffer().array());
         }
 
@@ -99,7 +99,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_ARRLEN, (CommandOutput) new ArrayOutput<>(codec), args);
     }
 
-    Command<K, V, List<JsonValue<K, V>>> jsonArrpop(K key, JsonPath jsonPath, int index) {
+    Command<K, V, List<JsonValue<V>>> jsonArrpop(K key, JsonPath jsonPath, int index) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -144,7 +144,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_CLEAR, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<JsonValue<K, V>>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+    Command<K, V, List<JsonValue<V>>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -164,7 +164,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_GET, new JsonValueListOutput<>(codec), args);
     }
 
-    Command<K, V, String> jsonMerge(K key, JsonPath jsonPath, JsonValue<K, V> value) {
+    Command<K, V, String> jsonMerge(K key, JsonPath jsonPath, JsonValue<V> value) {
 
         notNullKey(key);
 
@@ -179,7 +179,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_MERGE, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, List<JsonValue<K, V>>> jsonMGet(JsonPath jsonPath, K... keys) {
+    Command<K, V, List<JsonValue<V>>> jsonMGet(JsonPath jsonPath, K... keys) {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
@@ -218,7 +218,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_NUMINCRBY, new NumberListOutput<>(codec), args);
     }
 
-    Command<K, V, List<K>> jsonObjkeys(K key, JsonPath jsonPath) {
+    Command<K, V, List<V>> jsonObjkeys(K key, JsonPath jsonPath) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -227,7 +227,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(jsonPath.toString());
         }
 
-        return createCommand(JSON_OBJKEYS, new KeyListOutput<>(codec), args);
+        return createCommand(JSON_OBJKEYS, new ValueListOutput<>(codec), args);
     }
 
     Command<K, V, List<Long>> jsonObjlen(K key, JsonPath jsonPath) {
@@ -243,7 +243,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_OBJLEN, (CommandOutput) new ArrayOutput<>(codec), args);
     }
 
-    Command<K, V, String> jsonSet(K key, JsonPath jsonPath, JsonValue<K, V> value, JsonSetArgs options) {
+    Command<K, V, String> jsonSet(K key, JsonPath jsonPath, JsonValue<V> value, JsonSetArgs options) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -259,7 +259,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_SET, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue<K, V> value) {
+    Command<K, V, List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue<V> value) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);

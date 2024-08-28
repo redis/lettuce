@@ -41,7 +41,7 @@ import java.nio.ByteBuffer;
  * @author Tihomir Mateev
  * @since 6.5
  */
-public interface JsonValue<K, V> {
+public interface JsonValue<V> {
 
     /**
      * Execute any {@link io.lettuce.core.codec.RedisCodec} decoding and fetch the result.
@@ -64,7 +64,7 @@ public interface JsonValue<K, V> {
      * @return the {@link JsonArray} representation of this {@link JsonValue}
      * @see #isJsonArray()
      */
-    JsonArray<K, V> asJsonArray();
+    JsonArray<V> asJsonArray();
 
     /**
      * @return {@code true} if this {@link JsonValue} represents a JSON object
@@ -75,7 +75,7 @@ public interface JsonValue<K, V> {
      * @return the {@link JsonObject} representation of this {@link JsonValue}
      * @see #isJsonObject()
      */
-    JsonObject<K, V> asJsonObject();
+    JsonObject<V> asJsonObject();
 
     /**
      * @return {@code true} if this {@link JsonValue} represents a JSON string

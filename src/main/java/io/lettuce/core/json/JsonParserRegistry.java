@@ -34,7 +34,7 @@ public class JsonParserRegistry {
     }
 
     // TODO make this configurable with ClientOptions to enable other types of parsers
-    public static <K, V> JsonParser<K, V> getJsonParser(RedisCodec<K, V> codec) {
+    public static <K, V> JsonParser<V> getJsonParser(RedisCodec<K, V> codec) {
         return new DefaultJsonParser<>(codec);
     }
 

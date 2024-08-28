@@ -39,9 +39,9 @@ class RedisJsonCommandBuilderUnitTests {
 
     public static final String ID_BIKE_6 = "{\"id\":\"bike6\"}";
 
-    public static final JsonParser<String, String> PARSER = JsonParserRegistry.getJsonParser(StringCodec.UTF8);
+    public static final JsonParser<String> PARSER = JsonParserRegistry.getJsonParser(StringCodec.UTF8);
 
-    public static final JsonValue<String, String> ELEMENT = PARSER.createJsonValue(ID_BIKE_6);
+    public static final JsonValue<String> ELEMENT = PARSER.createJsonValue(ID_BIKE_6);
 
     public static final JsonPath MY_PATH = JsonPath.of("$..commuter_bikes");
 
@@ -92,7 +92,7 @@ class RedisJsonCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructJsonArrpop() {
-        Command<String, String, List<JsonValue<String, String>>> command = builder.jsonArrpop(MY_KEY, MY_PATH, 3);
+        Command<String, String, List<JsonValue<String>>> command = builder.jsonArrpop(MY_KEY, MY_PATH, 3);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -125,7 +125,7 @@ class RedisJsonCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructJsonGet() {
         JsonGetArgs args = JsonGetArgs.Builder.indent("   ").newline("\n").space("/");
-        Command<String, String, List<JsonValue<String, String>>> command = builder.jsonGet(MY_KEY, args, MY_PATH);
+        Command<String, String, List<JsonValue<String>>> command = builder.jsonGet(MY_KEY, args, MY_PATH);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -146,7 +146,7 @@ class RedisJsonCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructJsonMget() {
-        Command<String, String, List<JsonValue<String, String>>> command = builder.jsonMGet(MY_PATH, MY_KEY, MY_KEY2);
+        Command<String, String, List<JsonValue<String>>> command = builder.jsonMGet(MY_PATH, MY_KEY, MY_KEY2);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

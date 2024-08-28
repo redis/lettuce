@@ -82,8 +82,8 @@ public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, 
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();
 
-    JsonParser<K, V> getJsonParser();
+    JsonParser<V> getJsonParser();
 
-    void setJsonParser(JsonParser<K, V> jsonParser);
+    void setJsonParser(JsonParser<V> jsonParser);
 
 }

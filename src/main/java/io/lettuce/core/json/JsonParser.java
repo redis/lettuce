@@ -22,16 +22,16 @@ package io.lettuce.core.json;
 
 import java.nio.ByteBuffer;
 
-public interface JsonParser<K, V> {
+public interface JsonParser<V> {
 
-    JsonValue<K, V> createJsonValue(ByteBuffer bytes);
+    JsonValue<V> createJsonValue(ByteBuffer bytes);
 
-    JsonValue<K, V> createJsonValue(V value);
+    JsonValue<V> createJsonValue(V value);
 
-    JsonObject<K, V> createEmptyJsonObject();
+    JsonObject<V> createEmptyJsonObject();
 
-    JsonArray<K, V> createEmptyJsonArray();
+    JsonArray<V> createEmptyJsonArray();
 
-    JsonValue<K, V> parse(ByteBuffer byteBuffer);
+    JsonValue<V> parse(ByteBuffer byteBuffer);
 
 }

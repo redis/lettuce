@@ -37,12 +37,12 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
     }
 
     @Override
-    public JsonParser<K, V> getJsonParser() {
+    public JsonParser<V> getJsonParser() {
         return JsonParserRegistry.getJsonParser(this.codec);
     }
 
     @Override
-    public void setJsonParser(JsonParser<K, V> jsonParser) {
+    public void setJsonParser(JsonParser<V> jsonParser) {
         throw new UnsupportedOperationException("Setting a custom JsonParser is not supported");
     }
 

@@ -388,8 +388,8 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      */
     RedisFuture<List<Map<String, Object>>> clusterLinks();
 
-    JsonParser<K, V> getJsonParser();
+    JsonParser<V> getJsonParser();
 
-    void setJsonParser(JsonParser<K, V> jsonParser);
+    void setJsonParser(JsonParser<V> jsonParser);
 
 }

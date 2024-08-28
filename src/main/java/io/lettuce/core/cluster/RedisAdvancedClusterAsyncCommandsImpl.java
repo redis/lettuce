@@ -290,7 +290,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<JsonValue<K, V>>> jsonMGet(JsonPath jsonPath, K... keys) {
+    public RedisFuture<List<JsonValue<V>>> jsonMGet(JsonPath jsonPath, K... keys) {
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
 
         if (partitioned.size() < 2) {
@@ -300,22 +300,22 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         // For a given partition, maps the key to its index within the List<K> in partitioned for faster lookups below
         Map<Integer, Map<K, Integer>> keysToIndexes = mapKeyToIndex(partitioned);
         Map<K, Integer> slots = SlotHash.getSlots(partitioned);
-        Map<Integer, RedisFuture<List<JsonValue<K, V>>>> executions = new HashMap<>(partitioned.size());
+        Map<Integer, RedisFuture<List<JsonValue<V>>>> executions = new HashMap<>(partitioned.size());
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             K[] partitionKeys = entry.getValue().toArray((K[]) new Object[entry.getValue().size()]);
-            RedisFuture<List<JsonValue<K, V>>> jsonMget = super.jsonMGet(jsonPath, partitionKeys);
+            RedisFuture<List<JsonValue<V>>> jsonMget = super.jsonMGet(jsonPath, partitionKeys);
             executions.put(entry.getKey(), jsonMget);
         }
 
         // restore order of key
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            List<JsonValue<K, V>> result = new ArrayList<>(slots.size());
+            List<JsonValue<V>> result = new ArrayList<>(slots.size());
             for (K opKey : keys) {
                 int slot = slots.get(opKey);
 
                 int position = keysToIndexes.get(slot).get(opKey);
-                RedisFuture<List<JsonValue<K, V>>> listRedisFuture = executions.get(slot);
+                RedisFuture<List<JsonValue<V>>> listRedisFuture = executions.get(slot);
                 result.add(MultiNodeExecution.execute(() -> listRedisFuture.get().get(position)));
             }
 
@@ -762,12 +762,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public JsonParser<K, V> getJsonParser() {
+    public JsonParser<V> getJsonParser() {
         return JsonParserRegistry.getJsonParser(this.codec);
     }
 
     @Override
-    public void setJsonParser(JsonParser<K, V> jsonParser) {
+    public void setJsonParser(JsonParser<V> jsonParser) {
         throw new UnsupportedOperationException("Setting a custom JsonParser is not supported");
     }
 

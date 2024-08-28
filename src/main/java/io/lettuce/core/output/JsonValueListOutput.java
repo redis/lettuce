@@ -17,11 +17,11 @@ import java.util.List;
  * @author Will Glozer
  * @author Mark Paluch
  */
-public class JsonValueListOutput<K, V> extends CommandOutput<K, V, List<JsonValue<K, V>>> {
+public class JsonValueListOutput<K, V> extends CommandOutput<K, V, List<JsonValue<V>>> {
 
     private boolean initialized;
 
-    private final JsonParser<K, V> parser;
+    private final JsonParser<V> parser;
 
     public JsonValueListOutput(RedisCodec<K, V> codec) {
         super(codec, Collections.emptyList());
