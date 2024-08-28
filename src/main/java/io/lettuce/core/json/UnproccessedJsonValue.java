@@ -112,6 +112,12 @@ class UnproccessedJsonValue<K, V> implements JsonValue<K, V> {
         return jsonValue.asNumber();
     }
 
+    @Override
+    public boolean isNull() {
+        lazilyDeserialize();
+        return jsonValue.isNull();
+    }
+
     private void lazilyDeserialize() {
         if (deserialized) {
             return;

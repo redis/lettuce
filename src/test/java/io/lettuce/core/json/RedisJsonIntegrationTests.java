@@ -174,6 +174,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
             assertThat(value.get(0).asJsonArray().asList().get(0).isString()).isTrue();
             assertThat(value.get(0).asJsonArray().asList().get(0).asString()).isEqualTo("Phoebe");
             assertThat(value.get(0).asJsonArray().asList().get(1).isString()).isTrue();
+            assertThat(value.get(0).asJsonArray().asList().get(1).isNull()).isFalse();
             assertThat(value.get(0).asJsonArray().asList().get(1).asString()).isEqualTo("Quaoar");
         } else {
             assertThat(value.get(0).toValue()).isEqualTo("\"Phoebe\"");
@@ -182,6 +183,23 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
             assertThat(value.get(0).isString()).isTrue();
             assertThat(value.get(0).asString()).isEqualTo("Phoebe");
         }
+    }
+
+    @Test
+    void jsonGetNull() {
+        JsonPath myPath = JsonPath.of("$..inventory.owner");
+
+        // Verify codec parsing
+        List<JsonValue<String, String>> value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.none(), myPath);
+        assertThat(value).hasSize(1);
+
+        assertThat(value.get(0).toValue()).isEqualTo("[null]");
+
+        // Verify array parsing
+        assertThat(value.get(0).isJsonArray()).isTrue();
+        assertThat(value.get(0).asJsonArray().size()).isEqualTo(1);
+        assertThat(value.get(0).asJsonArray().asList().get(0).toValue()).isEqualTo("null");
+        assertThat(value.get(0).asJsonArray().asList().get(0).isNull()).isTrue();
     }
 
     @ParameterizedTest(name = "With {0} as path")
@@ -355,7 +373,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         JsonObject<String, String> bikeSpecs = parser.createEmptyJsonObject();
         JsonArray<String, String> bikeColors = parser.createEmptyJsonArray();
 
-        bikeSpecs.put("material", parser.createJsonValue("\"composite\""));
+        bikeSpecs.put("material", parser.createJsonValue("null"));
         bikeSpecs.put("weight", parser.createJsonValue("11"));
 
         bikeColors.add(parser.createJsonValue("\"yellow\""));

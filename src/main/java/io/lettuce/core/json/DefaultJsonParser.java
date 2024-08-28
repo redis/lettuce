@@ -3,23 +3,11 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.lettuce.core.json;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.codec.RedisCodec;
@@ -69,15 +57,10 @@ class DefaultJsonParser<K, V> implements JsonParser<K, V> {
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode root = mapper.readTree(value);
-
-            if (root.isObject()) {
-                return new DelegateJsonObject<>(root, codec);
-            } else if (root.isArray()) {
-                return new DelegateJsonArray<>(root, codec);
-            }
-            return new DelegateJsonValue<>(root, codec);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            return wrap(root);
+        } catch (JsonProcessingException e) {
+            throw new RedisJsonException(
+                    "Failed to process the provided value as JSON: " + String.format("%.50s", value) + "...", e);
         }
     }
 
@@ -89,15 +72,20 @@ class DefaultJsonParser<K, V> implements JsonParser<K, V> {
             byteBuffer.get(bytes);
             JsonNode root = mapper.readTree(bytes);
 
-            if (root.isObject()) {
-                return new DelegateJsonObject<>(root, codec);
-            } else if (root.isArray()) {
-                return new DelegateJsonArray<>(root, codec);
-            }
-            return new DelegateJsonValue<>(root, codec);
+            return wrap(root);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private JsonValue<K, V> wrap(JsonNode root) {
+        if (root.isObject()) {
+            return new DelegateJsonObject<>(root, codec);
+        } else if (root.isArray()) {
+            return new DelegateJsonArray<>(root, codec);
+        }
+
+        return new DelegateJsonValue<>(root, codec);
     }
 
 }

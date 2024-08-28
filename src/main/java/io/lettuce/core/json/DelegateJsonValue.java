@@ -91,6 +91,10 @@ class DelegateJsonValue<K, V> implements JsonValue<K, V> {
         return node.isNumber();
     }
 
+    public boolean isNull() {
+        return node.isNull();
+    }
+
     @Override
     public Number asNumber() {
         if (node.isInt()) {

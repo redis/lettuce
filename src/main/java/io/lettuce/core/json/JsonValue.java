@@ -99,4 +99,9 @@ public interface JsonValue<K, V> {
      */
     Number asNumber();
 
+    /**
+     * @return {@code true} if this {@link JsonValue} represents the value of null
+     */
+    boolean isNull();
+
 }

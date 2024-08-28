@@ -145,4 +145,9 @@ class DelegateJsonArray<K, V> extends DelegateJsonValue<K, V> implements JsonArr
         throw new UnsupportedOperationException("The JSON value is not a number");
     }
 
+    @Override
+    public boolean isNull() {
+        return false;
+    }
+
 }
