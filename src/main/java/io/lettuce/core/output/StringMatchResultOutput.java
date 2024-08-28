@@ -19,16 +19,16 @@
  */
 package io.lettuce.core.output;
 
-import static io.lettuce.core.StringMatchResult.MatchedPosition;
-import static io.lettuce.core.StringMatchResult.Position;
+import io.lettuce.core.StringMatchResult;
+import io.lettuce.core.codec.RedisCodec;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.lettuce.core.StringMatchResult;
-import io.lettuce.core.codec.RedisCodec;
+import static io.lettuce.core.StringMatchResult.MatchedPosition;
+import static io.lettuce.core.StringMatchResult.Position;
 
 /**
  * Command output for {@code STRALGO} returning {@link StringMatchResult}.
@@ -40,8 +40,6 @@ public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMat
 
     private static final ByteBuffer LEN = StandardCharsets.US_ASCII.encode("len");
 
-    private final boolean withIdx;
-
     private String matchString;
 
     private int len;
@@ -52,24 +50,18 @@ public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMat
 
     private final List<MatchedPosition> matchedPositions = new ArrayList<>();
 
-    public StringMatchResultOutput(RedisCodec<K, V> codec, boolean withIdx) {
+    public StringMatchResultOutput(RedisCodec<K, V> codec) {
         super(codec, null);
-        this.withIdx = withIdx;
     }
 
     @Override
     public void set(ByteBuffer bytes) {
-
-        if (!withIdx && matchString == null) {
-            matchString = (String) codec.decodeKey(bytes);
-        } else {
-            readingLen = LEN.equals(bytes);
-        }
+        matchString = (String) codec.decodeKey(bytes);
+        readingLen = LEN.equals(bytes);
     }
 
     @Override
     public void set(long integer) {
-
         if (readingLen) {
             this.len = (int) integer;
         } else {
@@ -78,7 +70,7 @@ public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMat
             }
             positions.add(integer);
         }
-
+        matchString = null;
     }
 
     @Override

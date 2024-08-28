@@ -2919,7 +2919,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         strAlgoArgs.build(args);
-        return createCommand(STRALGO, new StringMatchResultOutput<>(codec, strAlgoArgs.isWithIdx()), args);
+        return createCommand(STRALGO, new StringMatchResultOutput<>(codec), args);
     }
 
     Command<K, V, Set<V>> sunion(K... keys) {

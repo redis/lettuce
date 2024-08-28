@@ -20,9 +20,11 @@
 package io.lettuce.core.commands;
 
 import static io.lettuce.core.SetArgs.Builder.*;
-import static io.lettuce.core.StringMatchResult.*;
-import static org.assertj.core.api.Assertions.*;
+import static io.lettuce.core.StringMatchResult.Position;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -31,19 +33,20 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import io.lettuce.core.GetExArgs;
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisException;
-import io.lettuce.core.SetArgs;
-import io.lettuce.core.StrAlgoArgs;
-import io.lettuce.core.StringMatchResult;
-import io.lettuce.core.TestSupport;
+import io.lettuce.core.*;
+import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.dynamic.Commands;
+import io.lettuce.core.dynamic.RedisCommandFactory;
+import io.lettuce.core.dynamic.annotation.Command;
+import io.lettuce.core.dynamic.annotation.Param;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -371,6 +374,119 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(b.getStart()).isEqualTo(5);
         assertThat(b.getEnd()).isEqualTo(8);
         assertThat(matchResult.getLen()).isEqualTo(6);
+    }
+
+    @Test
+    @EnabledOnCommand("LCS")
+    void lcs() {
+        redis.set("key1", "ohmytext");
+        redis.set("key2", "mynewtext");
+
+        // LCS key1 key2
+        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
+        StringMatchResult matchResult = commands.lcs("key1", "key2");
+        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+
+        // LCS a b IDX MINMATCHLEN 4 WITHMATCHLEN
+        // Keys don't exist.
+        matchResult = commands.lcsMinMatchLenWithMatchLen("a", "b", 4);
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getLen()).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("LCS")
+    void lcsUsingKeys() {
+
+        redis.set("key1{k}", "ohmytext");
+        redis.set("key2{k}", "mynewtext");
+
+        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
+
+        StringMatchResult matchResult = commands.lcs("key1{k}", "key2{k}");
+        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+
+        // STRALGO LCS STRINGS a b
+        matchResult = commands.lcsMinMatchLenWithMatchLen("a", "b", 4);
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getLen()).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("LCS")
+    void lcsJustLen() {
+        redis.set("one", "ohmytext");
+        redis.set("two", "mynewtext");
+
+        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
+
+        StringMatchResult matchResult = commands.lcsLen("one", "two");
+
+        assertThat(matchResult.getLen()).isEqualTo(6);
+    }
+
+    @Test
+    @EnabledOnCommand("LCS")
+    void lcsWithMinMatchLen() {
+        redis.set("key1", "ohmytext");
+        redis.set("key2", "mynewtext");
+
+        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
+
+        StringMatchResult matchResult = commands.lcsMinMatchLen("key1", "key2", 4);
+
+        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+    }
+
+    @Test
+    @EnabledOnCommand("LCS")
+    void lcsMinMatchLenIdxMatchLen() {
+        redis.set("key1", "ohmytext");
+        redis.set("key2", "mynewtext");
+
+        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
+
+        // LCS key1 key2 IDX MINMATCHLEN 4 WITHMATCHLEN
+        StringMatchResult matchResult = commands.lcsMinMatchLenWithMatchLen("key1", "key2", 4);
+
+        assertThat(matchResult.getMatches()).hasSize(1);
+        assertThat(matchResult.getMatches().get(0).getMatchLen()).isEqualTo(4);
+
+        Position a = matchResult.getMatches().get(0).getA();
+        Position b = matchResult.getMatches().get(0).getB();
+
+        assertThat(a.getStart()).isEqualTo(4);
+        assertThat(a.getEnd()).isEqualTo(7);
+        assertThat(b.getStart()).isEqualTo(5);
+        assertThat(b.getEnd()).isEqualTo(8);
+        assertThat(matchResult.getLen()).isEqualTo(6);
+    }
+
+    protected StatefulConnection<String, String> getConnection() {
+        StatefulRedisConnection<String, String> src = redis.getStatefulConnection();
+        Assumptions.assumeFalse(Proxy.isProxyClass(src.getClass()), "Redis connection is proxy, skipping.");
+        return src;
+    }
+
+    private interface CustomStringCommands extends Commands {
+
+        @Command("LCS :k1 :k2")
+        StringMatchResult lcs(@Param("k1") String k1, @Param("k2") String k2);
+
+        @Command("LCS :k1 :k2 LEN")
+        StringMatchResult lcsLen(@Param("k1") String k1, @Param("k2") String k2);
+
+        @Command("LCS :k1 :k2 MINMATCHLEN :mml")
+        StringMatchResult lcsMinMatchLen(@Param("k1") String k1, @Param("k2") String k2, @Param("mml") int mml);
+
+        @Command("LCS :k1 :k2 IDX MINMATCHLEN :mml WITHMATCHLEN")
+        StringMatchResult lcsMinMatchLenWithMatchLen(@Param("k1") String k1, @Param("k2") String k2, @Param("mml") int mml);
+
+        static CustomStringCommands instance(StatefulConnection<String, String> conn) {
+            RedisCommandFactory factory = new RedisCommandFactory(conn);
+            return factory.getCommands(CustomStringCommands.class);
+        }
+
     }
 
 }
