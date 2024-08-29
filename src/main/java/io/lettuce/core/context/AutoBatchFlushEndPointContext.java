@@ -106,7 +106,12 @@ public class AutoBatchFlushEndPointContext {
             return true;
         }
 
-        retryableFailedToSendCommands.add(retryableCommand);
+        try {
+            retryableFailedToSendCommands.add(retryableCommand);
+        } catch (Exception e) {
+            logger.error("[unexpected] retryableFailedToSendCommands is empty, but we are adding a command: {}",
+                    retryableCommand);
+        }
         return false;
     }
 
