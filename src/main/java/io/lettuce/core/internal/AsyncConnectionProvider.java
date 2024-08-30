@@ -145,7 +145,9 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
         for (K k : connections.keySet()) {
             Sync<K, T, F> remove = connections.remove(k);
             if (remove != null) {
-                remove.doWithConnection(e -> futures.add(e.closeAsync()));
+                CompletionStage<Void> closeFuture = remove.future.thenAccept(AsyncCloseable::closeAsync);
+                // always synchronously add the future, made it immutably in Futures.allOf()
+                futures.add(closeFuture.toCompletableFuture());
             }
         }
 
@@ -218,7 +220,6 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
 
         @SuppressWarnings("unchecked")
         public Sync(K key, F future) {
-
             this.key = key;
             this.future = (F) future.whenComplete((connection, throwable) -> {
 
