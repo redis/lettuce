@@ -10,6 +10,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.*
 import io.lettuce.core.api.reactive.RedisJsonReactiveCommands
 import io.lettuce.core.json.JsonPath
+import io.lettuce.core.json.JsonType
 import io.lettuce.core.json.JsonValue
 import io.lettuce.core.json.arguments.JsonGetArgs
 import io.lettuce.core.json.arguments.JsonMsetArgs
@@ -74,7 +75,7 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonMSet(arguments: List<JsonMsetArgs<K, V>>): String? =
         ops.jsonMSet(arguments).awaitFirstOrNull()
 
-    override suspend fun jsonType(key: K, jsonPath: JsonPath): List<V> =
+    override suspend fun jsonType(key: K, jsonPath: JsonPath): List<JsonType> =
         ops.jsonType(key, jsonPath).asFlow().toList()
 
     override suspend fun jsonToggle(key: K, jsonPath: JsonPath): List<Long> =

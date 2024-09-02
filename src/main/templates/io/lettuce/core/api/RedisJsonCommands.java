@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.api;
 
+import io.lettuce.core.json.JsonType;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
@@ -281,6 +282,6 @@ public interface RedisJsonCommands<K, V> {
      * @return List<JsonType> the type of JSON value at the provided {@link JsonPath}
      * @since 6.5
      */
-    List<V> jsonType(K key, JsonPath jsonPath);
+    List<JsonType> jsonType(K key, JsonPath jsonPath);
 
 }

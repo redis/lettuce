@@ -447,8 +447,32 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     void jsonType(String path) {
         JsonPath myPath = JsonPath.of(path);
 
-        String jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
-        assertThat(jsonType).isEqualTo("array");
+        JsonType jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
+        assertThat(jsonType).isEqualTo(JsonType.ARRAY);
+    }
+
+    @Test
+    void jsonAllTypes() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1]");
+
+        JsonType jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
+        assertThat(jsonType).isEqualTo(JsonType.OBJECT);
+
+        myPath = JsonPath.of("$..mountain_bikes[0:1].price");
+        jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
+        assertThat(jsonType).isEqualTo(JsonType.INTEGER);
+
+        myPath = JsonPath.of("$..weight");
+        jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
+        assertThat(jsonType).isEqualTo(JsonType.NUMBER);
+
+        myPath = JsonPath.of("$..complete");
+        jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
+        assertThat(jsonType).isEqualTo(JsonType.BOOLEAN);
+
+        myPath = JsonPath.of("$..inventory.owner");
+        jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
+        assertThat(jsonType).isEqualTo(JsonType.UNKNOWN);
     }
 
 }

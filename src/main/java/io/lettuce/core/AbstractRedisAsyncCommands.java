@@ -26,6 +26,7 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonType;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
@@ -1558,7 +1559,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> jsonType(K key, JsonPath jsonPath) {
+    public RedisFuture<List<JsonType>> jsonType(K key, JsonPath jsonPath) {
         return dispatch(jsonCommandBuilder.jsonType(key, jsonPath));
     }
 

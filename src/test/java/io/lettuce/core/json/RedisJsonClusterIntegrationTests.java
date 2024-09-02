@@ -401,7 +401,7 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
     void jsonType(String path) {
         JsonPath myPath = JsonPath.of(path);
 
-        String jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
+        JsonType jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
         assertThat(jsonType).isEqualTo("array");
     }
 

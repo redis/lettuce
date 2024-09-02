@@ -27,6 +27,7 @@ import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.JsonType;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
@@ -1621,7 +1622,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> jsonType(K key, JsonPath jsonPath) {
+    public Flux<JsonType> jsonType(K key, JsonPath jsonPath) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonType(key, jsonPath));
     }
 

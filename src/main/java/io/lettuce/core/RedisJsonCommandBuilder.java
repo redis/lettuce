@@ -8,6 +8,7 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.json.JsonType;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
@@ -309,7 +310,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_DEL, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, List<V>> jsonType(K key, JsonPath jsonPath) {
+    Command<K, V, List<JsonType>> jsonType(K key, JsonPath jsonPath) {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -318,7 +319,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(jsonPath.toString());
         }
 
-        return createCommand(JSON_TYPE, new ValueListOutput<>(codec), args);
+        return createCommand(JSON_TYPE, new JsonTypeListOutput<>(codec), args);
     }
 
 }

@@ -8,6 +8,7 @@ package io.lettuce.core.cluster.api.async;
 
 import java.util.List;
 import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.JsonType;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
@@ -206,7 +207,7 @@ public interface NodeSelectionJsonAsyncCommands<K, V> {
      *
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the value(s) whose key(s) we want.
-     * @return List<K> the keys in the JSON document that are referenced by the given {@link JsonPath}.
+     * @return List<V> the keys in the JSON document that are referenced by the given {@link JsonPath}.
      * @since 6.5
      */
     AsyncExecutions<List<V>> jsonObjkeys(K key, JsonPath jsonPath);
@@ -281,6 +282,6 @@ public interface NodeSelectionJsonAsyncCommands<K, V> {
      * @return List<JsonType> the type of JSON value at the provided {@link JsonPath}
      * @since 6.5
      */
-    AsyncExecutions<List<V>> jsonType(K key, JsonPath jsonPath);
+    AsyncExecutions<List<JsonType>> jsonType(K key, JsonPath jsonPath);
 
 }

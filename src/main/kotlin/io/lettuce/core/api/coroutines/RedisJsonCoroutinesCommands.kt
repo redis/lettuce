@@ -9,6 +9,7 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.json.JsonType
 import io.lettuce.core.json.JsonValue
 import io.lettuce.core.json.arguments.JsonGetArgs
 import io.lettuce.core.json.arguments.JsonMsetArgs
@@ -209,7 +210,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key holding the JSON document.
      * @param jsonPath the [JsonPath] pointing to the value(s) whose key(s) we want.
-     * @return List<K> the keys in the JSON document that are referenced by the given [JsonPath].
+     * @return List<V> the keys in the JSON document that are referenced by the given [JsonPath].
      * @since 6.5
      */
     suspend fun jsonObjkeys(key: K, jsonPath: JsonPath): List<V>
@@ -284,7 +285,7 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @return List<JsonType> the type of JSON value at the provided [JsonPath]
      * @since 6.5
      */
-    suspend fun jsonType(key: K, jsonPath: JsonPath): List<V>
+    suspend fun jsonType(key: K, jsonPath: JsonPath): List<JsonType>
 
 }
 
