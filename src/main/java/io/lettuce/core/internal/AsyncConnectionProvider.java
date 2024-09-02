@@ -163,9 +163,8 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
 
         LettuceAssert.notNull(key, "ConnectionKey must not be null!");
 
-        Sync<K, T, F> sync = connections.get(key);
+        Sync<K, T, F> sync = connections.remove(key);
         if (sync != null) {
-            connections.remove(key);
             sync.doWithConnection(AsyncCloseable::closeAsync);
         }
     }

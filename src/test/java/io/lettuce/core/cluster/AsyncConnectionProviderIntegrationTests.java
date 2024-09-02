@@ -125,7 +125,7 @@ class AsyncConnectionProviderIntegrationTests {
         ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, TestSettings.host(), TestSettings.port());
 
         sut.getConnection(connectionKey);
-        TestFutures.awaitOrTimeout(sut.close());
+        assertThatThrownBy(() -> TestFutures.awaitOrTimeout(sut.close())).hasCauseInstanceOf(IllegalStateException.class);
 
         assertThat(sut.getConnectionCount()).isEqualTo(0);
         TestFutures.awaitOrTimeout(sut.close());
