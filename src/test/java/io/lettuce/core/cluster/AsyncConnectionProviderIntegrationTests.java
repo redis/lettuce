@@ -32,7 +32,9 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import org.apache.commons.lang3.time.StopWatch;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -125,7 +127,7 @@ class AsyncConnectionProviderIntegrationTests {
         ConnectionKey connectionKey = new ConnectionKey(ConnectionIntent.READ, TestSettings.host(), TestSettings.port());
 
         sut.getConnection(connectionKey);
-        assertThatThrownBy(() -> TestFutures.awaitOrTimeout(sut.close())).hasCauseInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> TestFutures.awaitOrTimeout(sut.close())).isInstanceOf(IllegalStateException.class);
 
         assertThat(sut.getConnectionCount()).isEqualTo(0);
         TestFutures.awaitOrTimeout(sut.close());
