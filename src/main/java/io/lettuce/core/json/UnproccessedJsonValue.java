@@ -7,37 +7,48 @@
 
 package io.lettuce.core.json;
 
-import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 
 import java.nio.ByteBuffer;
 
-class UnproccessedJsonValue<V> implements JsonValue<V> {
+/**
+ * A wrapper around any of the implementations of the {@link JsonValue} provided by the implementation of the {@link JsonParser}
+ * that is currently being used. The purpose of this class is to provide a lazy initialization mechanism and avoid any
+ * deserialization in the event loop that processes the data coming from the Redis server.
+ *
+ * @since 6.5
+ * @author Tihomir Mateev
+ */
+class UnproccessedJsonValue implements JsonValue {
 
-    private JsonValue<V> jsonValue;
+    private JsonValue jsonValue;
 
-    private final JsonParser<V> parser;
+    private final JsonParser parser;
 
     private boolean deserialized = false;
 
     private final ByteBuffer unprocessedData;
 
-    private final RedisCodec<?, V> codec;
-
-    UnproccessedJsonValue(ByteBuffer bytes, RedisCodec<?, V> theCodec, JsonParser<V> theParser) {
+    /**
+     * Create a new instance of the {@link UnproccessedJsonValue}.
+     *
+     * @param bytes the raw JSON data
+     * @param theParser the {@link JsonParser} that works with the current instance
+     */
+    public UnproccessedJsonValue(ByteBuffer bytes, JsonParser theParser) {
         unprocessedData = bytes;
         parser = theParser;
-        codec = theCodec;
     }
 
     @Override
-    public V toValue() {
+    public String toValue() {
         if (deserialized) {
             return jsonValue.toValue();
         }
 
         // if no deserialization took place, so no modification took place
         // in this case we can decode the source data
-        return codec.decodeValue(unprocessedData);
+        return StringCodec.UTF8.decodeKey(unprocessedData);
     }
 
     @Override
@@ -58,7 +69,7 @@ class UnproccessedJsonValue<V> implements JsonValue<V> {
     }
 
     @Override
-    public JsonArray<V> asJsonArray() {
+    public JsonArray asJsonArray() {
         lazilyDeserialize();
         return jsonValue.asJsonArray();
     }
@@ -70,7 +81,7 @@ class UnproccessedJsonValue<V> implements JsonValue<V> {
     }
 
     @Override
-    public JsonObject<V> asJsonObject() {
+    public JsonObject asJsonObject() {
         lazilyDeserialize();
         return jsonValue.asJsonObject();
     }
@@ -110,7 +121,7 @@ class UnproccessedJsonValue<V> implements JsonValue<V> {
             return;
         }
 
-        jsonValue = parser.parse(unprocessedData);
+        jsonValue = parser.createJsonValue(unprocessedData);
         deserialized = true;
     }
 

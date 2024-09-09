@@ -81,8 +81,10 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCo
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();
 
-    JsonParser<V> getJsonParser();
-
-    void setJsonParser(JsonParser<V> jsonParser);
+    /**
+     * @return the currently configured instance of the {@link JsonParser}
+     * @since 6.5
+     */
+    JsonParser getJsonParser();
 
 }

@@ -54,7 +54,6 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonParser;
-import io.lettuce.core.json.JsonParserRegistry;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
@@ -87,11 +86,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      *
      * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
-     * @deprecated since 5.1, use {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec)}.
+     * @deprecated since 5.1, use
+     *             {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec, JsonParser)}.
      */
     @Deprecated
-    public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
-        super(connection, codec);
+    public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec,
+            JsonParser parser) {
+        super(connection, codec, parser);
         this.codec = codec;
     }
 
@@ -101,8 +102,9 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
      */
-    public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec) {
-        super(connection, codec);
+    public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec,
+            JsonParser parser) {
+        super(connection, codec, parser);
         this.codec = codec;
     }
 
@@ -290,7 +292,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<JsonValue<V>>> jsonMGet(JsonPath jsonPath, K... keys) {
+    public RedisFuture<List<JsonValue>> jsonMGet(JsonPath jsonPath, K... keys) {
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, Arrays.asList(keys));
 
         if (partitioned.size() < 2) {
@@ -300,22 +302,22 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         // For a given partition, maps the key to its index within the List<K> in partitioned for faster lookups below
         Map<Integer, Map<K, Integer>> keysToIndexes = mapKeyToIndex(partitioned);
         Map<K, Integer> slots = SlotHash.getSlots(partitioned);
-        Map<Integer, RedisFuture<List<JsonValue<V>>>> executions = new HashMap<>(partitioned.size());
+        Map<Integer, RedisFuture<List<JsonValue>>> executions = new HashMap<>(partitioned.size());
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
             K[] partitionKeys = entry.getValue().toArray((K[]) new Object[entry.getValue().size()]);
-            RedisFuture<List<JsonValue<V>>> jsonMget = super.jsonMGet(jsonPath, partitionKeys);
+            RedisFuture<List<JsonValue>> jsonMget = super.jsonMGet(jsonPath, partitionKeys);
             executions.put(entry.getKey(), jsonMget);
         }
 
         // restore order of key
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
-            List<JsonValue<V>> result = new ArrayList<>(slots.size());
+            List<JsonValue> result = new ArrayList<>(slots.size());
             for (K opKey : keys) {
                 int slot = slots.get(opKey);
 
                 int position = keysToIndexes.get(slot).get(opKey);
-                RedisFuture<List<JsonValue<V>>> listRedisFuture = executions.get(slot);
+                RedisFuture<List<JsonValue>> listRedisFuture = executions.get(slot);
                 result.add(MultiNodeExecution.execute(() -> listRedisFuture.get().get(position)));
             }
 
@@ -759,16 +761,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
-    }
-
-    @Override
-    public JsonParser<V> getJsonParser() {
-        return JsonParserRegistry.getJsonParser(this.codec);
-    }
-
-    @Override
-    public void setJsonParser(JsonParser<V> jsonParser) {
-        throw new UnsupportedOperationException("Setting a custom JsonParser is not supported");
     }
 
 }

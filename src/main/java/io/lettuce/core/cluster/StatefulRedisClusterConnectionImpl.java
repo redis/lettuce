@@ -52,6 +52,7 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.CommandArgsAccessor;
 import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.ConnectionIntent;
@@ -74,6 +75,8 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     protected final RedisCodec<K, V> codec;
 
+    protected final JsonParser parser;
+
     protected final RedisAdvancedClusterCommands<K, V> sync;
 
     protected final RedisAdvancedClusterAsyncCommandsImpl<K, V> async;
@@ -93,11 +96,12 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      * @param timeout Maximum time to wait for a response.
      */
     public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
-            Duration timeout) {
+            Duration timeout, JsonParser parser) {
 
         super(writer, timeout);
         this.pushHandler = pushHandler;
         this.codec = codec;
+        this.parser = parser;
 
         this.async = newRedisAdvancedClusterAsyncCommandsImpl();
         this.sync = newRedisAdvancedClusterCommandsImpl();
@@ -105,7 +109,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> newRedisAdvancedClusterReactiveCommandsImpl() {
-        return new RedisAdvancedClusterReactiveCommandsImpl<>((StatefulRedisClusterConnection<K, V>) this, codec);
+        return new RedisAdvancedClusterReactiveCommandsImpl<>((StatefulRedisClusterConnection<K, V>) this, codec, parser);
     }
 
     protected RedisAdvancedClusterCommands<K, V> newRedisAdvancedClusterCommandsImpl() {
@@ -117,7 +121,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
     }
 
     protected RedisAdvancedClusterAsyncCommandsImpl<K, V> newRedisAdvancedClusterAsyncCommandsImpl() {
-        return new RedisAdvancedClusterAsyncCommandsImpl((StatefulRedisClusterConnection<K, V>) this, codec);
+        return new RedisAdvancedClusterAsyncCommandsImpl((StatefulRedisClusterConnection<K, V>) this, codec, parser);
     }
 
     @Override

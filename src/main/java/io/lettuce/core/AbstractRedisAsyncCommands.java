@@ -26,6 +26,7 @@ import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonType;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.arguments.JsonGetArgs;
@@ -86,16 +87,19 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
 
+    private final JsonParser parser;
+
     /**
      * Initialize a new instance.
      *
      * @param connection the connection to operate on
      * @param codec the codec for command encoding
      */
-    public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
+    public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, JsonParser parser) {
+        this.parser = parser;
         this.connection = connection;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
-        this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec);
+        this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
     }
 
     @Override
@@ -1464,17 +1468,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue<V>... values) {
+    public RedisFuture<List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue... values) {
         return dispatch(jsonCommandBuilder.jsonArrappend(key, jsonPath, values));
     }
 
     @Override
-    public RedisFuture<List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue<V> value, JsonRangeArgs range) {
+    public RedisFuture<List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue value, JsonRangeArgs range) {
         return dispatch(jsonCommandBuilder.jsonArrindex(key, jsonPath, value, range));
     }
 
     @Override
-    public RedisFuture<List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue<V>... values) {
+    public RedisFuture<List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue... values) {
         return dispatch(jsonCommandBuilder.jsonArrinsert(key, jsonPath, index, values));
     }
 
@@ -1484,7 +1488,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<JsonValue<V>>> jsonArrpop(K key, JsonPath jsonPath, int index) {
+    public RedisFuture<List<JsonValue>> jsonArrpop(K key, JsonPath jsonPath, int index) {
         return dispatch(jsonCommandBuilder.jsonArrpop(key, jsonPath, index));
     }
 
@@ -1504,17 +1508,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<JsonValue<V>>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+    public RedisFuture<List<JsonValue>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
         return dispatch(jsonCommandBuilder.jsonGet(key, options, jsonPaths));
     }
 
     @Override
-    public RedisFuture<String> jsonMerge(K key, JsonPath jsonPath, JsonValue<V> value) {
+    public RedisFuture<String> jsonMerge(K key, JsonPath jsonPath, JsonValue value) {
         return dispatch(jsonCommandBuilder.jsonMerge(key, jsonPath, value));
     }
 
     @Override
-    public RedisFuture<List<JsonValue<V>>> jsonMGet(JsonPath jsonPath, K... keys) {
+    public RedisFuture<List<JsonValue>> jsonMGet(JsonPath jsonPath, K... keys) {
         return dispatch(jsonCommandBuilder.jsonMGet(jsonPath, keys));
     }
 
@@ -1539,12 +1543,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> jsonSet(K key, JsonPath jsonPath, JsonValue<V> value, JsonSetArgs options) {
+    public RedisFuture<String> jsonSet(K key, JsonPath jsonPath, JsonValue value, JsonSetArgs options) {
         return dispatch(jsonCommandBuilder.jsonSet(key, jsonPath, value, options));
     }
 
     @Override
-    public RedisFuture<List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue<V> value) {
+    public RedisFuture<List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue value) {
         return dispatch(jsonCommandBuilder.jsonStrappend(key, jsonPath, value));
     }
 
@@ -3302,6 +3306,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<Map<String, Object>>> clusterLinks() {
         return dispatch(commandBuilder.clusterLinks());
+    }
+
+    @Override
+    public JsonParser getJsonParser() {
+        return this.parser;
     }
 
     private byte[] encodeFunction(String functionCode) {

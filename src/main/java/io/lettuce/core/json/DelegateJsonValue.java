@@ -16,24 +16,19 @@ import java.nio.ByteBuffer;
 /**
  * Implementation of the {@link JsonValue} that delegates most of it's dunctionality to the Jackson {@link JsonNode}.
  *
- * @param <V> Value type.
  * @author Tihomir Mateev
  */
-class DelegateJsonValue<V> implements JsonValue<V> {
-
-    protected final RedisCodec<?, V> codec;
+class DelegateJsonValue implements JsonValue {
 
     protected JsonNode node;
 
-    DelegateJsonValue(JsonNode node, RedisCodec<?, V> codec) {
-        this.codec = codec;
+    DelegateJsonValue(JsonNode node) {
         this.node = node;
     }
 
     @Override
-    public V toValue() {
-        byte[] result = node.toString().getBytes();
-        return codec.decodeValue(ByteBuffer.wrap(result));
+    public String toValue() {
+        return node.toString();
     }
 
     @Override
@@ -48,7 +43,7 @@ class DelegateJsonValue<V> implements JsonValue<V> {
     }
 
     @Override
-    public JsonArray<V> asJsonArray() {
+    public JsonArray asJsonArray() {
         throw new UnsupportedOperationException("The JSON value is not an array");
     }
 
@@ -58,7 +53,7 @@ class DelegateJsonValue<V> implements JsonValue<V> {
     }
 
     @Override
-    public JsonObject<V> asJsonObject() {
+    public JsonObject asJsonObject() {
         throw new UnsupportedOperationException("The JSON value is not an object");
     }
 
@@ -93,14 +88,6 @@ class DelegateJsonValue<V> implements JsonValue<V> {
 
     protected JsonNode getNode() {
         return node;
-    }
-
-    protected String getStringValue(V key) {
-        if (key instanceof String) {
-            return (String) key;
-        }
-
-        return new StringCodec().decodeKey(codec.encodeValue(key));
     }
 
 }

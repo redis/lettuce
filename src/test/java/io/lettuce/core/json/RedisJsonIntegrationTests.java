@@ -7,10 +7,16 @@
 
 package io.lettuce.core.json;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisContainerIntegrationTests;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
@@ -22,15 +28,18 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
+public class RedisJsonIntegrationTests { // extends RedisContainerIntegrationTests {
 
     private static final String BIKES_INVENTORY = "bikes:inventory";
 
@@ -59,7 +68,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         Path path = Paths.get("src/test/resources/bike-inventory.json");
         String read = String.join("", Files.readAllLines(path));
-        JsonValue<String> value = redis.getJsonParser().createJsonValue(read);
+        JsonValue value = redis.getJsonParser().createJsonValue(read);
 
         redis.jsonSet("bikes:inventory", JsonPath.ROOT_PATH, value, JsonSetArgs.Builder.none());
     }
@@ -74,10 +83,10 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { MOUNTAIN_BIKES_V1, MOUNTAIN_BIKES_V2 })
     void jsonArrappend(String path) {
-        JsonParser<String> parser = redis.getJsonParser();
+        JsonParser parser = redis.getJsonParser();
         JsonPath myPath = JsonPath.of(path);
 
-        JsonValue<String> element = parser.createJsonValue("\"{id:bike6}\"");
+        JsonValue element = parser.createJsonValue("\"{id:bike6}\"");
         List<Long> appendedElements = redis.jsonArrappend(BIKES_INVENTORY, myPath, element);
         assertThat(appendedElements).hasSize(1);
         assertThat(appendedElements.get(0)).isEqualTo(4);
@@ -86,9 +95,9 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
     void jsonArrindex(String path) {
-        JsonParser<String> parser = redis.getJsonParser();
+        JsonParser parser = redis.getJsonParser();
         JsonPath myPath = JsonPath.of(path);
-        JsonValue<String> element = parser.createJsonValue("\"white\"");
+        JsonValue element = parser.createJsonValue("\"white\"");
 
         List<Long> arrayIndex = redis.jsonArrindex(BIKES_INVENTORY, myPath, element, null);
         assertThat(arrayIndex).isNotNull();
@@ -99,9 +108,9 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
     void jsonArrinsert(String path) {
-        JsonParser<String> parser = redis.getJsonParser();
+        JsonParser parser = redis.getJsonParser();
         JsonPath myPath = JsonPath.of(path);
-        JsonValue<String> element = parser.createJsonValue("\"ultramarine\"");
+        JsonValue element = parser.createJsonValue("\"ultramarine\"");
 
         List<Long> arrayIndex = redis.jsonArrinsert(BIKES_INVENTORY, myPath, 1, element);
         assertThat(arrayIndex).isNotNull();
@@ -124,7 +133,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     void jsonArrpop(String path) {
         JsonPath myPath = JsonPath.of(path);
 
-        List<JsonValue<String>> poppedJson = redis.jsonArrpop(BIKES_INVENTORY, myPath, -1);
+        List<JsonValue> poppedJson = redis.jsonArrpop(BIKES_INVENTORY, myPath, -1);
         assertThat(poppedJson).hasSize(1);
         assertThat(poppedJson.get(0).toValue()).contains(
                 "{\"id\":\"bike:3\",\"model\":\"Weywot\",\"description\":\"This bike gives kids aged six years and old");
@@ -158,7 +167,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         JsonPath myPath = JsonPath.of(path);
 
         // Verify codec parsing
-        List<JsonValue<String>> value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.none(), myPath);
+        List<JsonValue> value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.none(), myPath);
         assertThat(value).hasSize(1);
 
         if (path.startsWith("$")) {
@@ -190,7 +199,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         JsonPath myPath = JsonPath.of("$..inventory.owner");
 
         // Verify codec parsing
-        List<JsonValue<String>> value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.none(), myPath);
+        List<JsonValue> value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.none(), myPath);
         assertThat(value).hasSize(1);
 
         assertThat(value.get(0).toValue()).isEqualTo("[null]");
@@ -205,9 +214,9 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { MOUNTAIN_BIKES_V1 + "[1]", MOUNTAIN_BIKES_V2 + "[1]" })
     void jsonMerge(String path) {
-        JsonParser<String> parser = redis.getJsonParser();
+        JsonParser parser = redis.getJsonParser();
         JsonPath myPath = JsonPath.of(path);
-        JsonValue<String> element = parser.createJsonValue("\"ultramarine\"");
+        JsonValue element = parser.createJsonValue("\"ultramarine\"");
 
         String result = redis.jsonMerge(BIKES_INVENTORY, myPath, element);
         assertThat(result).isNotNull();
@@ -219,7 +228,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     void jsonMGet(String path) {
         JsonPath myPath = JsonPath.of(path);
 
-        List<JsonValue<String>> value = redis.jsonMGet(myPath, BIKES_INVENTORY);
+        List<JsonValue> value = redis.jsonMGet(myPath, BIKES_INVENTORY);
         assertThat(value).hasSize(1);
         if (path.startsWith("$")) {
             assertThat(value.get(0).toValue()).isEqualTo("[\"Phoebe\",\"Quaoar\",\"Weywot\"]");
@@ -231,12 +240,12 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { MOUNTAIN_BIKES_V1 + "[1]", MOUNTAIN_BIKES_V2 + "[1]" })
     void jsonMset(String path) {
-        JsonParser<String> parser = redis.getJsonParser();
+        JsonParser parser = redis.getJsonParser();
         JsonPath myPath = JsonPath.of(path);
 
-        JsonObject<String> bikeRecord = parser.createEmptyJsonObject();
-        JsonObject<String> bikeSpecs = parser.createEmptyJsonObject();
-        JsonArray<String> bikeColors = parser.createEmptyJsonArray();
+        JsonObject bikeRecord = parser.createJsonObject();
+        JsonObject bikeSpecs = parser.createJsonObject();
+        JsonArray bikeColors = parser.createJsonArray();
         bikeSpecs.put("material", parser.createJsonValue("\"composite\""));
         bikeSpecs.put("weight", parser.createJsonValue("11"));
         bikeColors.add(parser.createJsonValue("\"yellow\""));
@@ -250,9 +259,9 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         JsonMsetArgs<String, String> args1 = new JsonMsetArgs<>(BIKES_INVENTORY, myPath, bikeRecord);
 
-        bikeRecord = parser.createEmptyJsonObject();
-        bikeSpecs = parser.createEmptyJsonObject();
-        bikeColors = parser.createEmptyJsonArray();
+        bikeRecord = parser.createJsonObject();
+        bikeSpecs = parser.createJsonObject();
+        bikeColors = parser.createJsonArray();
         bikeSpecs.put("material", parser.createJsonValue("\"wood\""));
         bikeSpecs.put("weight", parser.createJsonValue("19"));
         bikeColors.add(parser.createJsonValue("\"walnut\""));
@@ -272,7 +281,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo("OK");
 
-        JsonValue<String> value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.none(), JsonPath.ROOT_PATH).get(0);
+        JsonValue value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.none(), JsonPath.ROOT_PATH).get(0);
         assertThat(value).isNotNull();
         assertThat(value.isJsonArray()).isTrue();
         assertThat(value.asJsonArray().size()).isEqualTo(1);
@@ -282,12 +291,12 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
     @Test
     void jsonMsetCrossslot() {
-        JsonParser<String> parser = redis.getJsonParser();
+        JsonParser parser = redis.getJsonParser();
         JsonPath myPath = JsonPath.of(BIKES_INVENTORY);
 
-        JsonObject<String> bikeRecord = parser.createEmptyJsonObject();
-        JsonObject<String> bikeSpecs = parser.createEmptyJsonObject();
-        JsonArray<String> bikeColors = parser.createEmptyJsonArray();
+        JsonObject bikeRecord = parser.createJsonObject();
+        JsonObject bikeSpecs = parser.createJsonObject();
+        JsonArray bikeColors = parser.createJsonArray();
         bikeSpecs.put("material", parser.createJsonValue("\"composite\""));
         bikeSpecs.put("weight", parser.createJsonValue("11"));
         bikeColors.add(parser.createJsonValue("\"yellow\""));
@@ -301,9 +310,9 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         JsonMsetArgs<String, String> args1 = new JsonMsetArgs<>(BIKES_INVENTORY, myPath, bikeRecord);
 
-        bikeRecord = parser.createEmptyJsonObject();
-        bikeSpecs = parser.createEmptyJsonObject();
-        bikeColors = parser.createEmptyJsonArray();
+        bikeRecord = parser.createJsonObject();
+        bikeSpecs = parser.createJsonObject();
+        bikeColors = parser.createJsonArray();
         bikeSpecs.put("material", parser.createJsonValue("\"wood\""));
         bikeSpecs.put("weight", parser.createJsonValue("19"));
         bikeColors.add(parser.createJsonValue("\"walnut\""));
@@ -323,7 +332,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         assertThat(result).isNotNull();
         assertThat(result).isEqualTo("OK");
 
-        JsonValue<String> value = redis.jsonGet("bikes:service", JsonGetArgs.Builder.none(), JsonPath.ROOT_PATH).get(0);
+        JsonValue value = redis.jsonGet("bikes:service", JsonGetArgs.Builder.none(), JsonPath.ROOT_PATH).get(0);
         assertThat(value).isNotNull();
         assertThat(value.isJsonArray()).isTrue();
         assertThat(value.asJsonArray().size()).isEqualTo(1);
@@ -368,10 +377,10 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     void jsonSet(String path) {
         JsonPath myPath = JsonPath.of(path);
 
-        JsonParser<String> parser = redis.getJsonParser();
-        JsonObject<String> bikeRecord = parser.createEmptyJsonObject();
-        JsonObject<String> bikeSpecs = parser.createEmptyJsonObject();
-        JsonArray<String> bikeColors = parser.createEmptyJsonArray();
+        JsonParser parser = redis.getJsonParser();
+        JsonObject bikeRecord = parser.createJsonObject();
+        JsonObject bikeSpecs = parser.createJsonObject();
+        JsonArray bikeColors = parser.createJsonArray();
 
         bikeSpecs.put("material", parser.createJsonValue("null"));
         bikeSpecs.put("weight", parser.createJsonValue("11"));
@@ -395,9 +404,9 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { "..mountain_bikes[1].colors[1]", "$..mountain_bikes[1].colors[1]" })
     void jsonStrappend(String path) {
-        JsonParser<String> parser = redis.getJsonParser();
+        JsonParser parser = redis.getJsonParser();
         JsonPath myPath = JsonPath.of(path);
-        JsonValue<String> element = parser.createJsonValue("\"-light\"");
+        JsonValue element = parser.createJsonValue("\"-light\"");
 
         List<Long> result = redis.jsonStrappend(BIKES_INVENTORY, myPath, element);
         assertThat(result).isNotNull();
@@ -473,6 +482,64 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         myPath = JsonPath.of("$..inventory.owner");
         jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
         assertThat(jsonType).isEqualTo(JsonType.UNKNOWN);
+    }
+
+    @Test
+    void byteArrayCodec() throws ExecutionException, InterruptedException {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes");
+        byte[] myMountainBikesKey = BIKES_INVENTORY.getBytes();
+        byte[] myServiceBikesKey = "service_bikes".getBytes();
+
+        RedisAsyncCommands<byte[], byte[]> redis = client.connect(ByteArrayCodec.INSTANCE).async();
+        RedisFuture<List<JsonValue>> bikes = redis.jsonGet(myMountainBikesKey, JsonGetArgs.Builder.none(), myPath);
+
+        CompletionStage<RedisFuture<String>> stage = bikes.thenApply(fetchedBikes -> redis.jsonSet(myServiceBikesKey,
+                JsonPath.ROOT_PATH, fetchedBikes.get(0), JsonSetArgs.Builder.none()));
+
+        String result = stage.toCompletableFuture().get().get();
+
+        assertThat(result).isEqualTo("OK");
+    }
+
+    @Test
+    void withCustomParser() {
+        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+
+        try (RedisClient client = RedisClient.create(redisURI)) {
+            client.setOptions(ClientOptions.builder().jsonParser(new CustomParser()).build());
+            StatefulRedisConnection<String, String> connection = client.connect(StringCodec.UTF8);
+            RedisCommands<String, String> redis = connection.sync();
+            assertThat(redis.getJsonParser()).isInstanceOf(CustomParser.class);
+        }
+    }
+
+    static class CustomParser implements JsonParser {
+
+        @Override
+        public JsonValue loadJsonValue(ByteBuffer bytes) {
+            return null;
+        }
+
+        @Override
+        public JsonValue createJsonValue(ByteBuffer bytes) {
+            return null;
+        }
+
+        @Override
+        public JsonValue createJsonValue(String value) {
+            return null;
+        }
+
+        @Override
+        public JsonObject createJsonObject() {
+            return null;
+        }
+
+        @Override
+        public JsonArray createJsonArray() {
+            return null;
+        }
+
     }
 
 }

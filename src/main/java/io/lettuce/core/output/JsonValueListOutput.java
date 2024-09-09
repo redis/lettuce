@@ -9,7 +9,6 @@ package io.lettuce.core.output;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.json.JsonParser;
-import io.lettuce.core.json.JsonParserRegistry;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -20,19 +19,17 @@ import java.util.List;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @author Will Glozer
- * @author Mark Paluch
+ * @author Tihomir Mateev
  */
-public class JsonValueListOutput<K, V> extends CommandOutput<K, V, List<JsonValue<V>>> {
+public class JsonValueListOutput<K, V> extends CommandOutput<K, V, List<JsonValue>> {
 
     private boolean initialized;
 
-    private final JsonParser<V> parser;
+    private final JsonParser parser;
 
-    public JsonValueListOutput(RedisCodec<K, V> codec) {
+    public JsonValueListOutput(RedisCodec<K, V> codec, JsonParser theParser) {
         super(codec, Collections.emptyList());
-
-        parser = JsonParserRegistry.getJsonParser(codec);
+        parser = theParser;
     }
 
     @Override
@@ -41,7 +38,10 @@ public class JsonValueListOutput<K, V> extends CommandOutput<K, V, List<JsonValu
             multi(1);
         }
 
-        output.add(parser.createJsonValue(bytes));
+        ByteBuffer fetched = ByteBuffer.allocate(bytes.remaining());
+        fetched.put(bytes);
+        fetched.flip();
+        output.add(parser.loadJsonValue(fetched));
     }
 
     @Override

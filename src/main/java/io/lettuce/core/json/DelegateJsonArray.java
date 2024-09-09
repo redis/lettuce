@@ -17,82 +17,81 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * Implementation of the {@link DelegateJsonArray} that delegates most of it's dunctionality to the Jackson {@link ArrayNode}.
+ * Implementation of the {@link DelegateJsonArray} that delegates most of its' functionality to the Jackson {@link ArrayNode}.
  *
- * @param <V> Value type.
  * @author Tihomir Mateev
  */
-class DelegateJsonArray<V> extends DelegateJsonValue<V> implements JsonArray<V> {
+class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
 
-    DelegateJsonArray(RedisCodec<?, V> codec) {
-        super(new ArrayNode(JsonNodeFactory.instance), codec);
+    DelegateJsonArray() {
+        super(new ArrayNode(JsonNodeFactory.instance));
     }
 
-    DelegateJsonArray(JsonNode node, RedisCodec<?, V> codec) {
-        super(node, codec);
+    DelegateJsonArray(JsonNode node) {
+        super(node);
     }
 
     @Override
-    public JsonArray<V> add(JsonValue<V> element) {
-        JsonNode newNode = ((DelegateJsonValue<V>) element).getNode();
+    public JsonArray add(JsonValue element) {
+        JsonNode newNode = ((DelegateJsonValue) element).getNode();
         ((ArrayNode) node).add(newNode);
 
         return this;
     }
 
     @Override
-    public void addAll(JsonArray<V> element) {
-        ArrayNode otherArray = (ArrayNode) ((DelegateJsonValue<V>) element).getNode();
+    public void addAll(JsonArray element) {
+        ArrayNode otherArray = (ArrayNode) ((DelegateJsonValue) element).getNode();
         ((ArrayNode) node).addAll(otherArray);
     }
 
     @Override
-    public List<JsonValue<V>> asList() {
-        List<JsonValue<V>> result = new ArrayList<>();
+    public List<JsonValue> asList() {
+        List<JsonValue> result = new ArrayList<>();
 
         for (JsonNode jsonNode : node) {
-            result.add(new DelegateJsonValue<>(jsonNode, codec));
+            result.add(new DelegateJsonValue(jsonNode));
         }
 
         return result;
     }
 
     @Override
-    public JsonValue<V> get(int index) {
+    public JsonValue get(int index) {
         JsonNode jsonNode = node.get(index);
 
-        return new DelegateJsonValue<>(jsonNode, codec);
+        return new DelegateJsonValue(jsonNode);
     }
 
     @Override
-    public JsonValue<V> getFirst() {
+    public JsonValue getFirst() {
         return get(0);
     }
 
     @Override
-    public Iterator<JsonValue<V>> iterator() {
-        List<JsonValue<V>> result = new ArrayList<>();
+    public Iterator<JsonValue> iterator() {
+        List<JsonValue> result = new ArrayList<>();
         while (node.iterator().hasNext()) {
             JsonNode jsonNode = node.iterator().next();
-            result.add(new DelegateJsonValue<>(jsonNode, codec));
+            result.add(new DelegateJsonValue(jsonNode));
         }
 
         return result.iterator();
     }
 
     @Override
-    public JsonValue<V> remove(int index) {
+    public JsonValue remove(int index) {
         JsonNode jsonNode = ((ArrayNode) node).remove(index);
 
-        return new DelegateJsonValue<>(jsonNode, codec);
+        return new DelegateJsonValue(jsonNode);
     }
 
     @Override
-    public JsonValue<V> replace(int index, JsonValue<V> newElement) {
-        JsonNode replaceWith = ((DelegateJsonValue<V>) newElement).getNode();
+    public JsonValue replace(int index, JsonValue newElement) {
+        JsonNode replaceWith = ((DelegateJsonValue) newElement).getNode();
         JsonNode replaced = ((ArrayNode) node).set(index, replaceWith);
 
-        return new DelegateJsonValue<>(replaced, codec);
+        return new DelegateJsonValue(replaced);
     }
 
     @Override
@@ -106,7 +105,7 @@ class DelegateJsonArray<V> extends DelegateJsonValue<V> implements JsonArray<V> 
     }
 
     @Override
-    public JsonArray<V> asJsonArray() {
+    public JsonArray asJsonArray() {
         return this;
     }
 

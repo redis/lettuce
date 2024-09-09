@@ -17,9 +17,6 @@ import java.nio.ByteBuffer;
  * process the data coming from the Redis server, otherwise larger JSON documents might cause performance degradation that spans
  * across all threads using the driver.
  *
- * @param <V> the type of data this {@link JsonValue} can output as value, depending on the
- *        {@link io.lettuce.core.codec.RedisCodec} used
- *
  * @see JsonObject
  * @see JsonArray
  * @see io.lettuce.core.codec.RedisCodec
@@ -28,14 +25,14 @@ import java.nio.ByteBuffer;
  * @author Tihomir Mateev
  * @since 6.5
  */
-public interface JsonValue<V> {
+public interface JsonValue {
 
     /**
      * Execute any {@link io.lettuce.core.codec.RedisCodec} decoding and fetch the result.
      * 
      * @return the value representation of this {@link JsonValue} based on the codec used
      */
-    V toValue();
+    String toValue();
 
     /**
      * @return the raw JSON text as a {@link ByteBuffer}
@@ -51,7 +48,7 @@ public interface JsonValue<V> {
      * @return the {@link JsonArray} representation of this {@link JsonValue}
      * @see #isJsonArray()
      */
-    JsonArray<V> asJsonArray();
+    JsonArray asJsonArray();
 
     /**
      * @return {@code true} if this {@link JsonValue} represents a JSON object
@@ -62,7 +59,7 @@ public interface JsonValue<V> {
      * @return the {@link JsonObject} representation of this {@link JsonValue}
      * @see #isJsonObject()
      */
-    JsonObject<V> asJsonObject();
+    JsonObject asJsonObject();
 
     /**
      * @return {@code true} if this {@link JsonValue} represents a JSON string

@@ -90,7 +90,7 @@ class StaticMasterReplicaConnector<K, V> implements MasterReplicaConnector<K, V>
                 redisClient.getResources(), redisClient.getOptions());
 
         StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
-                channelWriter, codec, seedNode.getTimeout());
+                channelWriter, codec, seedNode.getTimeout(), redisClient.getOptions().getJsonParser());
         connection.setOptions(redisClient.getOptions());
 
         return Mono.just(connection);

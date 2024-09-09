@@ -15,45 +15,47 @@ import io.lettuce.core.codec.RedisCodec;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-class DefaultJsonParser<V> implements JsonParser<V> {
+/**
+ * Default implementation of the {@link JsonParser} that should fit most use cases. Utilizes the Jackson library for maintaining
+ * the JSON tree model and provides the ability to create new instances of the {@link JsonValue}, {@link JsonArray} and
+ * {@link JsonObject}.
+ *
+ * @since 6.5
+ * @author Tihomir Mateev
+ */
+public class DefaultJsonParser implements JsonParser {
 
-    private final RedisCodec<?, V> codec;
+    public static final DefaultJsonParser INSTANCE = new DefaultJsonParser();
 
-    DefaultJsonParser(RedisCodec<?, V> codec) {
-        this.codec = codec;
+    private DefaultJsonParser() {
     }
 
     @Override
-    public JsonValue<V> createJsonValue(ByteBuffer bytes) {
-        return new UnproccessedJsonValue<>(bytes, codec, this);
+    public JsonValue loadJsonValue(ByteBuffer bytes) {
+        return new UnproccessedJsonValue(bytes, this);
     }
 
     @Override
-    public JsonValue<V> createJsonValue(V value) {
+    public JsonValue createJsonValue(ByteBuffer bytes) {
+        return parse(bytes);
+    }
+
+    @Override
+    public JsonValue createJsonValue(String value) {
         return parse(value);
     }
 
     @Override
-    public JsonObject<V> createEmptyJsonObject() {
-        return new DelegateJsonObject<V>(codec);
+    public JsonObject createJsonObject() {
+        return new DelegateJsonObject();
     }
 
     @Override
-    public JsonArray<V> createEmptyJsonArray() {
-        return new DelegateJsonArray<V>(codec);
+    public JsonArray createJsonArray() {
+        return new DelegateJsonArray();
     }
 
-    protected JsonValue<V> parse(V value) {
-        if (value instanceof String) {
-            return parse((String) value);
-        } else if (value instanceof ByteBuffer) {
-            return parse((ByteBuffer) value);
-        }
-
-        return parse(codec.encodeValue(value));
-    }
-
-    private JsonValue<V> parse(String value) {
+    private JsonValue parse(String value) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode root = mapper.readTree(value);
@@ -64,28 +66,26 @@ class DefaultJsonParser<V> implements JsonParser<V> {
         }
     }
 
-    @Override
-    public JsonValue<V> parse(ByteBuffer byteBuffer) {
+    private JsonValue parse(ByteBuffer byteBuffer) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             byte[] bytes = new byte[byteBuffer.remaining()];
             byteBuffer.get(bytes);
             JsonNode root = mapper.readTree(bytes);
-
             return wrap(root);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RedisJsonException("Failed to process the provided value as JSON", e);
         }
     }
 
-    private JsonValue<V> wrap(JsonNode root) {
+    private JsonValue wrap(JsonNode root) {
         if (root.isObject()) {
-            return new DelegateJsonObject<>(root, codec);
+            return new DelegateJsonObject(root);
         } else if (root.isArray()) {
-            return new DelegateJsonArray<>(root, codec);
+            return new DelegateJsonArray(root);
         }
 
-        return new DelegateJsonValue<>(root, codec);
+        return new DelegateJsonValue(root);
     }
 
 }

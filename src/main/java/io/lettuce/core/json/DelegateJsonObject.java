@@ -15,42 +15,38 @@ import io.lettuce.core.codec.RedisCodec;
 /**
  * Implementation of the {@link DelegateJsonObject} that delegates most of it's dunctionality to the Jackson {@link ObjectNode}.
  *
- * @param <V> Value type.
  * @author Tihomir Mateev
  */
-class DelegateJsonObject<V> extends DelegateJsonValue<V> implements JsonObject<V> {
+class DelegateJsonObject extends DelegateJsonValue implements JsonObject {
 
-    DelegateJsonObject(RedisCodec<?, V> codec) {
-        super(new ObjectNode(JsonNodeFactory.instance), codec);
+    DelegateJsonObject() {
+        super(new ObjectNode(JsonNodeFactory.instance));
     }
 
-    DelegateJsonObject(JsonNode node, RedisCodec<?, V> codec) {
-        super(node, codec);
+    DelegateJsonObject(JsonNode node) {
+        super(node);
     }
 
     @Override
-    public JsonObject<V> put(V key, JsonValue<V> element) {
-        String keyString = getStringValue(key);
-        JsonNode newNode = ((DelegateJsonValue<V>) element).getNode();
+    public JsonObject put(String key, JsonValue element) {
+        JsonNode newNode = ((DelegateJsonValue) element).getNode();
 
-        ((ObjectNode) node).replace(keyString, newNode);
+        ((ObjectNode) node).replace(key, newNode);
         return this;
     }
 
     @Override
-    public JsonValue<V> get(V key) {
-        String keyString = getStringValue(key);
-        JsonNode value = node.get(keyString);
+    public JsonValue get(String key) {
+        JsonNode value = node.get(key);
 
-        return new DelegateJsonValue<>(value, codec);
+        return new DelegateJsonValue(value);
     }
 
     @Override
-    public JsonValue<V> remove(V key) {
-        String keyString = getStringValue(key);
-        JsonNode value = ((ObjectNode) node).remove(keyString);
+    public JsonValue remove(String key) {
+        JsonNode value = ((ObjectNode) node).remove(key);
 
-        return new DelegateJsonValue<>(value, codec);
+        return new DelegateJsonValue(value);
     }
 
     @Override
@@ -64,7 +60,7 @@ class DelegateJsonObject<V> extends DelegateJsonValue<V> implements JsonObject<V
     }
 
     @Override
-    public JsonObject<V> asJsonObject() {
+    public JsonObject asJsonObject() {
         return this;
     }
 

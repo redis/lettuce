@@ -27,6 +27,7 @@ import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
@@ -50,14 +51,15 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
 
     private final SentinelConnectionState connectionState = new SentinelConnectionState();
 
-    public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
+    public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout,
+            JsonParser parser) {
 
         super(writer, timeout);
 
         this.codec = codec;
         this.async = new RedisSentinelAsyncCommandsImpl<>(this, codec);
         this.sync = syncHandler(async, RedisSentinelCommands.class);
-        this.reactive = new RedisSentinelReactiveCommandsImpl<>(this, codec);
+        this.reactive = new RedisSentinelReactiveCommandsImpl<>(this, codec, parser);
     }
 
     @Override

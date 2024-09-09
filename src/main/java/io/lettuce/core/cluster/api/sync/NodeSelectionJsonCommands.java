@@ -36,7 +36,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @return Long the resulting size of the arrays after the new data was appended, or null if the path does not exist.
      * @since 6.5
      */
-    Executions<List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue<V>... values);
+    Executions<List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue... values);
 
     /**
      * Search for the first occurrence of a {@link JsonValue} in an array at a given {@link JsonPath} and return its index.
@@ -48,7 +48,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
      * @since 6.5
      */
-    Executions<List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue<V> value, JsonRangeArgs range);
+    Executions<List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue value, JsonRangeArgs range);
 
     /**
      * Insert the {@link JsonValue}s into the array at a given {@link JsonPath} before the provided index, shifting the existing
@@ -61,7 +61,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @return Long the resulting size of the arrays after the new data was inserted, or null if the path does not exist.
      * @since 6.5
      */
-    Executions<List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue<V>... values);
+    Executions<List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue... values);
 
     /**
      * Report the length of the JSON array at a given {@link JsonPath}
@@ -83,7 +83,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @return List<JsonValue> the removed element, or null if the specified path is not an array.
      * @since 6.5
      */
-    Executions<List<JsonValue<V>>> jsonArrpop(K key, JsonPath jsonPath, int index);
+    Executions<List<JsonValue>> jsonArrpop(K key, JsonPath jsonPath, int index);
 
     /**
      * Trim an array at a given {@link JsonPath} so that it contains only the specified inclusive range of elements. All
@@ -141,7 +141,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
      * @since 6.5
      */
-    Executions<List<JsonValue<V>>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths);
+    Executions<List<JsonValue>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths);
 
     /**
      * Merge a given {@link JsonValue} with the value matching {@link JsonPath}. Consequently, JSON values at matching paths are
@@ -165,7 +165,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @since 6.5
      * @see <A href="https://tools.ietf.org/html/rfc7396">RFC7396</a>
      */
-    Executions<String> jsonMerge(K key, JsonPath jsonPath, JsonValue<V> value);
+    Executions<String> jsonMerge(K key, JsonPath jsonPath, JsonValue value);
 
     /**
      * Return the values at path from multiple key arguments.
@@ -175,7 +175,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @return List<JsonValue> the values at path, or null if the path does not exist.
      * @since 6.5
      */
-    Executions<List<JsonValue<V>>> jsonMGet(JsonPath jsonPath, K... keys);
+    Executions<List<JsonValue>> jsonMGet(JsonPath jsonPath, K... keys);
 
     /**
      * Set or update one or more JSON values according to the specified {@link JsonMsetArgs}
@@ -240,7 +240,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @return String "OK" if the set was successful, null if the {@link JsonSetArgs} conditions are not met.
      * @since 6.5
      */
-    Executions<String> jsonSet(K key, JsonPath jsonPath, JsonValue<V> value, JsonSetArgs options);
+    Executions<String> jsonSet(K key, JsonPath jsonPath, JsonValue value, JsonSetArgs options);
 
     /**
      * Append the json-string values to the string at the provided {@link JsonPath} in the JSON document.
@@ -251,7 +251,7 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @return Long the new length of the string, or null if the matching JSON value is not a string.
      * @since 6.5
      */
-    Executions<List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue<V> value);
+    Executions<List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue value);
 
     /**
      * Report the length of the JSON String at the provided {@link JsonPath} in the JSON document.

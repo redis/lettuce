@@ -82,8 +82,4 @@ public interface RedisReactiveCommands<K, V> extends BaseRedisReactiveCommands<K
     @Deprecated
     StatefulRedisConnection<K, V> getStatefulConnection();
 
-    JsonParser<V> getJsonParser();
-
-    void setJsonParser(JsonParser<V> jsonParser);
-
 }

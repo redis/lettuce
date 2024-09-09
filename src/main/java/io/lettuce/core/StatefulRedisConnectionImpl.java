@@ -37,7 +37,6 @@ import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.JsonParser;
-import io.lettuce.core.json.JsonParserRegistry;
 import io.lettuce.core.output.MultiOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
@@ -66,6 +65,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     private final PushHandler pushHandler;
 
+    private final JsonParser parser;
+
     protected MultiOutput<K, V> multi;
 
     /**
@@ -77,12 +78,13 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * @param timeout Maximum time to wait for a response.
      */
     public StatefulRedisConnectionImpl(RedisChannelWriter writer, PushHandler pushHandler, RedisCodec<K, V> codec,
-            Duration timeout) {
+            Duration timeout, JsonParser parser) {
 
         super(writer, timeout);
 
         this.pushHandler = pushHandler;
         this.codec = codec;
+        this.parser = parser;
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
@@ -112,7 +114,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * @return a new instance
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
-        return new RedisAsyncCommandsImpl<>(this, codec);
+        return new RedisAsyncCommandsImpl<>(this, codec, parser);
     }
 
     @Override
@@ -126,7 +128,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * @return a new instance
      */
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisReactiveCommandsImpl<>(this, codec);
+        return new RedisReactiveCommandsImpl<>(this, codec, parser);
     }
 
     @Override

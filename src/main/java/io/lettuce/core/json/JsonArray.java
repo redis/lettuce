@@ -15,12 +15,11 @@ import java.util.List;
  * JavaScript Object Notation (JSON) Data Interchange Format, Section 5. Arrays</a>
  * <p>
  *
- * @param <V> Value type based on the {@link io.lettuce.core.codec.RedisCodec} used.
  * @see JsonValue
  * @author Tihomir Mateev
  * @since 6.5
  */
-public interface JsonArray<V> extends JsonValue<V> {
+public interface JsonArray extends JsonValue {
 
     /**
      * Add a new {@link JsonValue} to the array. Supports chaining of calls.
@@ -28,21 +27,21 @@ public interface JsonArray<V> extends JsonValue<V> {
      * @param element the value to add
      * @return the updated {@link JsonArray} to allow call chaining
      */
-    JsonArray<V> add(JsonValue<V> element);
+    JsonArray add(JsonValue element);
 
     /**
      * Add all elements from the provided {@link JsonArray} to this array.
      *
      * @param element the array to add all elements from
      */
-    void addAll(JsonArray<V> element);
+    void addAll(JsonArray element);
 
     /**
      * Get all the {@link JsonValue}s in the array as a {@link List}.
      *
      * @return the {@link List} of {@link JsonValue}s in the array
      */
-    List<JsonValue<V>> asList();
+    List<JsonValue> asList();
 
     /**
      * Get the {@link JsonValue} at the provided index.
@@ -50,21 +49,21 @@ public interface JsonArray<V> extends JsonValue<V> {
      * @param index the index to get the value for
      * @return the {@link JsonValue} at the provided index or {@code null} if no value is found
      */
-    JsonValue<V> get(int index);
+    JsonValue get(int index);
 
     /**
      * Get the first {@link JsonValue} in the array.
      *
      * @return the first {@link JsonValue} in the array or {@code null} if the array is empty
      */
-    JsonValue<V> getFirst();
+    JsonValue getFirst();
 
     /**
      * Get an {@link Iterator} allowing access to all the {@link JsonValue}s in the array.
      *
      * @return the last {@link JsonValue} in the array or {@code null} if the array is empty
      */
-    Iterator<JsonValue<V>> iterator();
+    Iterator<JsonValue> iterator();
 
     /**
      * Remove the {@link JsonValue} at the provided index.
@@ -72,7 +71,7 @@ public interface JsonArray<V> extends JsonValue<V> {
      * @param index the index to remove the value for
      * @return the removed {@link JsonValue} or {@code null} if no value is found
      */
-    JsonValue<V> remove(int index);
+    JsonValue remove(int index);
 
     /**
      * Replace the {@link JsonValue} at the provided index with the provided new {@link JsonValue}.
@@ -81,7 +80,7 @@ public interface JsonArray<V> extends JsonValue<V> {
      * @param newElement the new value to replace the old one with
      * @return the updated {@link JsonArray} to allow call chaining
      */
-    JsonValue<V> replace(int index, JsonValue<V> newElement);
+    JsonValue replace(int index, JsonValue newElement);
 
     /**
      * @return the number of elements in this {@link JsonArray}
