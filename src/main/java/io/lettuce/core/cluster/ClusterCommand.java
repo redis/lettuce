@@ -81,9 +81,8 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
 
     @Override
     public boolean completeExceptionally(Throwable ex) {
-        boolean result = command.completeExceptionally(ex);
         completed = true;
-        return result;
+        return super.completeExceptionally(ex);
     }
 
     @Override
