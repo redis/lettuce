@@ -70,8 +70,8 @@ public class JsonGetArgs implements CompositeArgument {
          *
          * @return new {@link JsonGetArgs} with empty arguments set.
          */
-        public static JsonGetArgs none() {
-            return new JsonGetArgs().none();
+        public static JsonGetArgs defaults() {
+            return new JsonGetArgs().defaults();
         }
 
     }
@@ -114,7 +114,7 @@ public class JsonGetArgs implements CompositeArgument {
      *
      * @return {@code this}.
      */
-    public JsonGetArgs none() {
+    public JsonGetArgs defaults() {
         return this;
     }
 

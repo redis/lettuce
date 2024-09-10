@@ -41,6 +41,16 @@ public interface RedisJsonReactiveCommands<K, V> {
     Flux<Long> jsonArrappend(K key, JsonPath jsonPath, JsonValue... values);
 
     /**
+     * Append the JSON values into the array at the {@link JsonPath#ROOT_PATH} after the last element in said array.
+     *
+     * @param key the key holding the JSON document.
+     * @param values one or more {@link JsonValue} to be appended.
+     * @return Long the resulting size of the arrays after the new data was appended, or null if the path does not exist.
+     * @since 6.5
+     */
+    Flux<Long> jsonArrappend(K key, JsonValue... values);
+
+    /**
      * Search for the first occurrence of a {@link JsonValue} in an array at a given {@link JsonPath} and return its index.
      *
      * @param key the key holding the JSON document.
@@ -51,6 +61,19 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @since 6.5
      */
     Flux<Long> jsonArrindex(K key, JsonPath jsonPath, JsonValue value, JsonRangeArgs range);
+
+    /**
+     * Search for the first occurrence of a {@link JsonValue} in an array at a given {@link JsonPath} and return its index. This
+     * method uses defaults for the start and end indexes, see {@link JsonRangeArgs#DEFAULT_START_INDEX} and
+     * {@link JsonRangeArgs#DEFAULT_END_INDEX}.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
+     * @param value the {@link JsonValue} to search for.
+     * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
+     * @since 6.5
+     */
+    Flux<Long> jsonArrindex(K key, JsonPath jsonPath, JsonValue value);
 
     /**
      * Insert the {@link JsonValue}s into the array at a given {@link JsonPath} before the provided index, shifting the existing
@@ -76,6 +99,15 @@ public interface RedisJsonReactiveCommands<K, V> {
     Flux<Long> jsonArrlen(K key, JsonPath jsonPath);
 
     /**
+     * Report the length of the JSON array at a the {@link JsonPath#ROOT_PATH}
+     *
+     * @param key the key holding the JSON document.
+     * @return the size of the arrays, or null if the path does not exist.
+     * @since 6.5
+     */
+    Flux<Long> jsonArrlen(K key);
+
+    /**
      * Remove and return {@link JsonValue} at a given index in the array at a given {@link JsonPath}
      *
      * @param key the key holding the JSON document.
@@ -86,6 +118,25 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @since 6.5
      */
     Flux<JsonValue> jsonArrpop(K key, JsonPath jsonPath, int index);
+
+    /**
+     * Remove and return {@link JsonValue} at index -1 (last element) in the array at a given {@link JsonPath}
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
+     * @return List<JsonValue> the removed element, or null if the specified path is not an array.
+     * @since 6.5
+     */
+    Flux<JsonValue> jsonArrpop(K key, JsonPath jsonPath);
+
+    /**
+     * Remove and return {@link JsonValue} at index -1 (last element) in the array at the {@link JsonPath#ROOT_PATH}
+     *
+     * @param key the key holding the JSON document.
+     * @return List<JsonValue> the removed element, or null if the specified path is not an array.
+     * @since 6.5
+     */
+    Flux<JsonValue> jsonArrpop(K key);
 
     /**
      * Trim an array at a given {@link JsonPath} so that it contains only the specified inclusive range of elements. All
@@ -117,6 +168,15 @@ public interface RedisJsonReactiveCommands<K, V> {
     Mono<Long> jsonClear(K key, JsonPath jsonPath);
 
     /**
+     * Clear container values (arrays/objects) and set numeric values to 0 at the {@link JsonPath#ROOT_PATH}
+     *
+     * @param key the key holding the JSON document.
+     * @return Long the number of values removed plus all the matching JSON numerical values that are zeroed.
+     * @since 6.5
+     */
+    Mono<Long> jsonClear(K key);
+
+    /**
      * Deletes a value inside the JSON document at a given {@link JsonPath}
      *
      * @param key the key holding the JSON document.
@@ -125,6 +185,15 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @since 6.5
      */
     Mono<Long> jsonDel(K key, JsonPath jsonPath);
+
+    /**
+     * Deletes a value inside the JSON document at the {@link JsonPath#ROOT_PATH}
+     *
+     * @param key the key holding the JSON document.
+     * @return Long the number of values removed (0 or more).
+     * @since 6.5
+     */
+    Mono<Long> jsonDel(K key);
 
     /**
      * Return the value at path in JSON serialized form.
@@ -144,6 +213,24 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @since 6.5
      */
     Flux<JsonValue> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths);
+
+    /**
+     * Return the value at path in JSON serialized form. Uses defaults for the {@link JsonGetArgs}.
+     * <p>
+     * When using a single JSONPath, the root of the matching values is a JSON string with a top-level array of serialized JSON
+     * value. In contrast, a legacy path returns a single value.
+     * <p>
+     * When using multiple JSONPath arguments, the root of the matching values is a JSON string with a top-level object, with
+     * each object value being a top-level array of serialized JSON value. In contrast, if all paths are legacy paths, each
+     * object value is a single serialized JSON value. If there are multiple paths that include both legacy path and JSONPath,
+     * the returned value conforms to the JSONPath version (an array of values).
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
+     * @return JsonValue the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 6.5
+     */
+    Flux<JsonValue> jsonGet(K key, JsonPath... jsonPaths);
 
     /**
      * Merge a given {@link JsonValue} with the value matching {@link JsonPath}. Consequently, JSON values at matching paths are
@@ -215,7 +302,16 @@ public interface RedisJsonReactiveCommands<K, V> {
     Flux<V> jsonObjkeys(K key, JsonPath jsonPath);
 
     /**
-     * Report the number of keys in the JSON object at path in key
+     * Return the keys in the JSON document that are referenced by the {@link JsonPath#ROOT_PATH}
+     *
+     * @param key the key holding the JSON document.
+     * @return List<V> the keys in the JSON document that are referenced by the given {@link JsonPath}.
+     * @since 6.5
+     */
+    Flux<V> jsonObjkeys(K key);
+
+    /**
+     * Report the number of keys in the JSON object at the specified {@link JsonPath} and for the provided key
      *
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the value(s) whose key(s) we want to count
@@ -223,6 +319,15 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @since 6.5
      */
     Flux<Long> jsonObjlen(K key, JsonPath jsonPath);
+
+    /**
+     * Report the number of keys in the JSON object at the {@link JsonPath#ROOT_PATH} and for the provided key
+     *
+     * @param key the key holding the JSON document.
+     * @return Long the number of keys in the JSON object at the specified path, or null if the path does not exist.
+     * @since 6.5
+     */
+    Flux<Long> jsonObjlen(K key);
 
     /**
      * Sets the JSON value at a given {@link JsonPath} in the JSON document.
@@ -245,6 +350,25 @@ public interface RedisJsonReactiveCommands<K, V> {
     Mono<String> jsonSet(K key, JsonPath jsonPath, JsonValue value, JsonSetArgs options);
 
     /**
+     * Sets the JSON value at a given {@link JsonPath} in the JSON document using defaults for the {@link JsonSetArgs}.
+     * <p>
+     * For new Redis keys the path must be the root. For existing keys, when the entire path exists, the value that it contains
+     * is replaced with the JSON value. For existing keys, when the path exists, except for the last element, a new child is
+     * added with the JSON value.
+     * <p>
+     * Adds a key (with its respective value) to a JSON Object (in a RedisJSON data type key) only if it is the last child in
+     * the path, or it is the parent of a new child being added in the path. Optional arguments NX and XX modify this behavior
+     * for both new RedisJSON data type keys and the JSON Object keys in them.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the {@link JsonPath} pointing to the value(s) where we want to set the value.
+     * @param value the {@link JsonValue} to set.
+     * @return String "OK" if the set was successful, null if the {@link JsonSetArgs} conditions are not met.
+     * @since 6.5
+     */
+    Mono<String> jsonSet(K key, JsonPath jsonPath, JsonValue value);
+
+    /**
      * Append the json-string values to the string at the provided {@link JsonPath} in the JSON document.
      *
      * @param key the key holding the JSON document.
@@ -256,6 +380,16 @@ public interface RedisJsonReactiveCommands<K, V> {
     Flux<Long> jsonStrappend(K key, JsonPath jsonPath, JsonValue value);
 
     /**
+     * Append the json-string values to the string at the {@link JsonPath#ROOT_PATH} in the JSON document.
+     *
+     * @param key the key holding the JSON document.
+     * @param value the {@link JsonValue} to append.
+     * @return Long the new length of the string, or null if the matching JSON value is not a string.
+     * @since 6.5
+     */
+    Flux<Long> jsonStrappend(K key, JsonValue value);
+
+    /**
      * Report the length of the JSON String at the provided {@link JsonPath} in the JSON document.
      *
      * @param key the key holding the JSON document.
@@ -265,6 +399,16 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @since 6.5
      */
     Flux<Long> jsonStrlen(K key, JsonPath jsonPath);
+
+    /**
+     * Report the length of the JSON String at the {@link JsonPath#ROOT_PATH} in the JSON document.
+     *
+     * @param key the key holding the JSON document.
+     * @return Long (in recursive descent) the length of the JSON String at the provided {@link JsonPath}, or null if the value
+     *         ath the desired path is not a string.
+     * @since 6.5
+     */
+    Flux<Long> jsonStrlen(K key);
 
     /**
      * Toggle a Boolean value stored at the provided {@link JsonPath} in the JSON document.
@@ -285,5 +429,14 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @since 6.5
      */
     Flux<JsonType> jsonType(K key, JsonPath jsonPath);
+
+    /**
+     * Report the type of JSON value at the {@link JsonPath#ROOT_PATH} in the JSON document.
+     *
+     * @param key the key holding the JSON document.
+     * @return List<JsonType> the type of JSON value at the provided {@link JsonPath}
+     * @since 6.5
+     */
+    Flux<JsonType> jsonType(K key);
 
 }

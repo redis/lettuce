@@ -61,7 +61,7 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         String read = String.join("", Files.readAllLines(path));
         JsonValue value = redis.getJsonParser().createJsonValue(read);
 
-        redis.jsonSet("bikes:inventory", JsonPath.ROOT_PATH, value, JsonSetArgs.Builder.none());
+        redis.jsonSet("bikes:inventory", JsonPath.ROOT_PATH, value, JsonSetArgs.Builder.defaults());
     }
 
     @AfterAll
@@ -158,7 +158,7 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         JsonPath myPath = JsonPath.of(path);
 
         // Verify codec parsing
-        List<JsonValue> value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.none(), myPath);
+        List<JsonValue> value = redis.jsonGet(BIKES_INVENTORY, JsonGetArgs.Builder.defaults(), myPath);
         assertThat(value).hasSize(1);
 
         if (path.startsWith("$")) {
@@ -228,7 +228,7 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         bikeRecord.put("specs", bikeSpecs);
         bikeRecord.put("colors", bikeColors);
 
-        redis.jsonSet("bikes:service", JsonPath.ROOT_PATH, bikeRecord, JsonSetArgs.Builder.none());
+        redis.jsonSet("bikes:service", JsonPath.ROOT_PATH, bikeRecord, JsonSetArgs.Builder.defaults());
 
         List<JsonValue> value = redis.jsonMGet(JsonPath.ROOT_PATH, BIKES_INVENTORY, "bikes:service");
         assertThat(value).hasSize(2);
@@ -340,7 +340,7 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         bikeRecord.put("specs", bikeSpecs);
         bikeRecord.put("colors", bikeColors);
 
-        JsonSetArgs args = JsonSetArgs.Builder.none();
+        JsonSetArgs args = JsonSetArgs.Builder.defaults();
 
         String result = redis.jsonSet(BIKES_INVENTORY, myPath, bikeRecord, args);
         assertThat(result).isEqualTo("OK");
@@ -402,7 +402,7 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         JsonPath myPath = JsonPath.of(path);
 
         JsonType jsonType = redis.jsonType(BIKES_INVENTORY, myPath).get(0);
-        assertThat(jsonType).isEqualTo("array");
+        assertThat(jsonType).isEqualTo(JsonType.ARRAY);
     }
 
 }

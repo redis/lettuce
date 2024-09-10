@@ -59,8 +59,8 @@ public class JsonSetArgs implements CompositeArgument {
          *
          * @return new {@link JsonSetArgs} with nothing set.
          */
-        public static JsonSetArgs none() {
-            return new JsonSetArgs().none();
+        public static JsonSetArgs defaults() {
+            return new JsonSetArgs().defaults();
         }
 
     }
@@ -92,7 +92,7 @@ public class JsonSetArgs implements CompositeArgument {
      *
      * @return {@code this}.
      */
-    public JsonSetArgs none() {
+    public JsonSetArgs defaults() {
 
         return this;
     }

@@ -33,9 +33,9 @@ public class JsonRangeArgs implements CompositeArgument {
      */
     public static final int DEFAULT_END_INDEX = 0;
 
-    private long start = 0;
+    private long start = DEFAULT_START_INDEX;
 
-    private long stop = 0;
+    private long stop = DEFAULT_END_INDEX;
 
     /**
      * Builder entry points for {@link JsonRangeArgs}.

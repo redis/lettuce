@@ -287,8 +287,7 @@ public class RedisClient extends AbstractRedisClient {
             writer = new CommandListenerWriter(writer, getCommandListeners());
         }
 
-        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout,
-                getOptions().getJsonParser());
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout);
         ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
                 () -> new CommandHandler(getOptions(), getResources(), endpoint));
 

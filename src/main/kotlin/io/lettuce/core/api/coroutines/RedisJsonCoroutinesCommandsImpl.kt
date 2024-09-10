@@ -34,12 +34,18 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonArrappend(key: K, jsonPath: JsonPath, vararg values: JsonValue): List<Long> =
         ops.jsonArrappend(key, jsonPath, *values).asFlow().toList()
 
+    override suspend fun jsonArrappend(key: K, vararg values: JsonValue): List<Long> =
+        ops.jsonArrappend(key, *values).asFlow().toList()
+
     override suspend fun jsonArrindex(
         key: K,
         jsonPath: JsonPath,
         value: JsonValue,
         range: JsonRangeArgs
     ): List<Long> = ops.jsonArrindex(key, jsonPath, value, range).asFlow().toList()
+
+    override suspend fun jsonArrindex(key: K, jsonPath: JsonPath, value: JsonValue): List<Long> =
+        ops.jsonArrindex(key, jsonPath, value).asFlow().toList()
 
     override suspend fun jsonArrinsert(
         key: K,
@@ -51,8 +57,15 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonArrlen(key: K, jsonPath: JsonPath): List<Long> =
         ops.jsonArrlen(key, jsonPath).asFlow().toList()
 
+    override suspend fun jsonArrlen(key: K): List<Long> = ops.jsonArrlen(key).asFlow().toList()
+
     override suspend fun jsonArrpop(key: K, jsonPath: JsonPath, index: Int): List<JsonValue> =
         ops.jsonArrpop(key, jsonPath, index).asFlow().toList()
+
+    override suspend fun jsonArrpop(key: K, jsonPath: JsonPath): List<JsonValue> =
+        ops.jsonArrpop(key, jsonPath).asFlow().toList()
+
+    override suspend fun jsonArrpop(key: K): List<JsonValue> = ops.jsonArrpop(key).asFlow().toList()
 
     override suspend fun jsonArrtrim(key: K, jsonPath: JsonPath, range: JsonRangeArgs): List<Long> =
         ops.jsonArrtrim(key, jsonPath, range).asFlow().toList()
@@ -60,11 +73,18 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonClear(key: K, jsonPath: JsonPath): Long? =
         ops.jsonClear(key, jsonPath).awaitFirstOrNull()
 
+    override suspend fun jsonClear(key: K): Long? = ops.jsonClear(key).awaitFirstOrNull()
+
     override suspend fun jsonDel(key: K, jsonPath: JsonPath): Long? =
         ops.jsonDel(key, jsonPath).awaitFirstOrNull()
 
+    override suspend fun jsonDel(key: K): Long? = ops.jsonDel(key).awaitFirstOrNull()
+
     override suspend fun jsonGet(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<JsonValue> =
         ops.jsonGet(key, options, *jsonPaths).asFlow().toList()
+
+    override suspend fun jsonGet(key: K, vararg jsonPaths: JsonPath): List<JsonValue> =
+        ops.jsonGet(key, *jsonPaths).asFlow().toList()
 
     override suspend fun jsonMerge(key: K, jsonPath: JsonPath, value: JsonValue): String? =
         ops.jsonMerge(key, jsonPath, value).awaitFirstOrNull()
@@ -78,27 +98,39 @@ internal class RedisJsonCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override suspend fun jsonType(key: K, jsonPath: JsonPath): List<JsonType> =
         ops.jsonType(key, jsonPath).asFlow().toList()
 
+    override suspend fun jsonType(key: K): List<JsonType> = ops.jsonType(key).asFlow().toList()
+
     override suspend fun jsonToggle(key: K, jsonPath: JsonPath): List<Long> =
         ops.jsonToggle(key, jsonPath).asFlow().toList()
 
     override suspend fun jsonStrlen(key: K, jsonPath: JsonPath): List<Long> =
         ops.jsonStrlen(key, jsonPath).asFlow().toList()
 
+    override suspend fun jsonStrlen(key: K): List<Long> = ops.jsonStrlen(key).asFlow().toList()
+
     override suspend fun jsonStrappend(key: K, jsonPath: JsonPath, value: JsonValue): List<Long> =
         ops.jsonStrappend(key, jsonPath, value).asFlow().toList()
+
+    override suspend fun jsonStrappend(key: K, value: JsonValue): List<Long> =
+        ops.jsonStrappend(key, value).asFlow().toList()
 
     override suspend fun jsonSet(key: K, jsonPath: JsonPath, value: JsonValue, options: JsonSetArgs): String? =
         ops.jsonSet(key, jsonPath, value, options).awaitFirstOrNull()
 
+    override suspend fun jsonSet(key: K, jsonPath: JsonPath, value: JsonValue): String? =
+        ops.jsonSet(key, jsonPath, value).awaitFirstOrNull()
+
     override suspend fun jsonObjlen(key: K, jsonPath: JsonPath): List<Long> =
         ops.jsonObjlen(key, jsonPath).asFlow().toList()
+
+    override suspend fun jsonObjlen(key: K): List<Long> = ops.jsonObjlen(key).asFlow().toList()
 
     override suspend fun jsonObjkeys(key: K, jsonPath: JsonPath): List<V> =
         ops.jsonObjkeys(key, jsonPath).asFlow().toList()
 
+    override suspend fun jsonObjkeys(key: K): List<V> = ops.jsonObjkeys(key).asFlow().toList()
+
     override suspend fun jsonNumincrby(key: K, jsonPath: JsonPath, number: Number): List<Number> =
         ops.jsonNumincrby(key, jsonPath, number).asFlow().toList()
-
-
 }
 
