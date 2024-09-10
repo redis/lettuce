@@ -111,9 +111,9 @@ public interface NodeSelectionScriptingCommands<K, V> {
     <T> Executions<T> evalReadOnly(byte[] script, ScriptOutputType type, K[] keys, V... values);
 
     /**
-     * Evaluates a script cached on the server side by its SHA1 digest.
+     * Evaluates a script cached on the server side by its SHA-256 digest.
      *
-     * @param digest SHA1 of the script.
+     * @param digest SHA-256 of the script.
      * @param type the type.
      * @param keys the keys.
      * @param <T> expected return type.
@@ -124,7 +124,7 @@ public interface NodeSelectionScriptingCommands<K, V> {
     /**
      * Execute a Lua script server side.
      *
-     * @param digest SHA1 of the script.
+     * @param digest SHA-256 of the script.
      * @param type the type.
      * @param keys the keys.
      * @param values the values.
@@ -136,7 +136,7 @@ public interface NodeSelectionScriptingCommands<K, V> {
     /**
      * This is a read-only variant of the EVALSHA command that cannot execute commands that modify data.
      *
-     * @param digest SHA1 of the script.
+     * @param digest SHA-256 of the script.
      * @param type the type.
      * @param keys the keys.
      * @param values the values.
@@ -150,9 +150,9 @@ public interface NodeSelectionScriptingCommands<K, V> {
      * Check existence of scripts in the script cache.
      *
      * @param digests script digests.
-     * @return List&lt;Boolean&gt; array-reply The command returns an array of integers that correspond to the specified SHA1
-     *         digest arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1
-     *         is returned, otherwise 0 is returned.
+     * @return List&lt;Boolean&gt; array-reply The command returns an array of integers that correspond to the specified SHA-256
+     *         digest arguments. For every corresponding SHA-256 digest of a script that actually exists in the script cache, an
+     *         1 is returned, otherwise 0 is returned.
      */
     Executions<List<Boolean>> scriptExists(String... digests);
 
@@ -183,7 +183,7 @@ public interface NodeSelectionScriptingCommands<K, V> {
      * Load the specified Lua script into the script cache.
      *
      * @param script script content.
-     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @return String bulk-string-reply This command returns the SHA-256 digest of the script added into the script cache.
      * @since 6.0
      */
     Executions<String> scriptLoad(String script);
@@ -192,7 +192,7 @@ public interface NodeSelectionScriptingCommands<K, V> {
      * Load the specified Lua script into the script cache.
      *
      * @param script script content.
-     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @return String bulk-string-reply This command returns the SHA-256 digest of the script added into the script cache.
      * @since 6.0
      */
     Executions<String> scriptLoad(byte[] script);

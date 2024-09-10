@@ -122,9 +122,9 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
     ): T?
 
     /**
-     * Evaluates a script cached on the server side by its SHA1 digest.
+     * Evaluates a script cached on the server side by its SHA-256 digest.
      *
-     * @param digest SHA1 of the script.
+     * @param digest SHA-256 of the script.
      * @param type the type.
      * @param keys the keys.
      * @param <T> expected return type.
@@ -135,7 +135,7 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
     /**
      * Execute a Lua script server side.
      *
-     * @param digest SHA1 of the script.
+     * @param digest SHA-256 of the script.
      * @param type the type.
      * @param keys the keys.
      * @param values the values.
@@ -147,7 +147,7 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
     /**
      * This is a read-only variant of the EVALSHA command that cannot execute commands that modify data.
      *
-     * @param digest SHA1 of the script.
+     * @param digest SHA-256 of the script.
      * @param type the type.
      * @param keys the keys.
      * @param values the values.
@@ -166,8 +166,8 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * Check existence of scripts in the script cache.
      *
      * @param digests script digests.
-     * @return List<Boolean> array-reply The command returns an array of integers that correspond to the specified SHA1
-     *         digest arguments. For every corresponding SHA1 digest of a script that actually exists in the script cache, an 1
+     * @return List<Boolean> array-reply The command returns an array of integers that correspond to the specified SHA-256
+     *         digest arguments. For every corresponding SHA-256 digest of a script that actually exists in the script cache, an 1
      *         is returned, otherwise 0 is returned.
      */
     suspend fun scriptExists(vararg digests: String): List<Boolean>
@@ -199,7 +199,7 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * Load the specified Lua script into the script cache.
      *
      * @param script script content.
-     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @return String bulk-string-reply This command returns the SHA-256 digest of the script added into the script cache.
      * @since 6.0
      */
     suspend fun scriptLoad(script: String): String?
@@ -208,25 +208,25 @@ interface RedisScriptingCoroutinesCommands<K : Any, V : Any> {
      * Load the specified Lua script into the script cache.
      *
      * @param script script content.
-     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @return String bulk-string-reply This command returns the SHA-256 digest of the script added into the script cache.
      * @since 6.0
      */
     suspend fun scriptLoad(script: ByteArray): String?
 
     /**
-     * Create a SHA1 digest from a Lua script.
+     * Create a SHA-256 digest from a Lua script.
      *
      * @param script script content.
-     * @return the SHA1 value.
+     * @return the SHA-256 value.
      * @since 6.0
      */
     suspend fun digest(script: String): String?
 
     /**
-     * Create a SHA1 digest from a Lua script.
+     * Create a SHA-256 digest from a Lua script.
      *
      * @param script script content.
-     * @return the SHA1 value.
+     * @return the SHA-256 value.
      * @since 6.0
      */
     suspend fun digest(script: ByteArray): String?

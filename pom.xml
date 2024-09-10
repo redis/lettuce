@@ -1075,7 +1075,7 @@
                         <configuration>
                             <algorithms>
                                 <algorithm>MD5</algorithm>
-                                <algorithm>SHA-1</algorithm>
+                                <algorithm>SHA-256</algorithm>
                             </algorithms>
                         </configuration>
 

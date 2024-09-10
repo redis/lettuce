@@ -73,28 +73,28 @@ public class Base16 {
     }
 
     /**
-     * Create SHA1 digest from Lua script.
+     * Create SHA-256 digest from Lua script.
      *
      * @param script the script
-     * @return the Base16 encoded SHA1 value
+     * @return the Base16 encoded SHA-256 value
      */
     public static String digest(byte[] script) {
         return digest(ByteBuffer.wrap(script));
     }
 
     /**
-     * Create SHA1 digest from Lua script.
+     * Create SHA-256 digest from Lua script.
      *
      * @param script the script
-     * @return the Base16 encoded SHA1 value
+     * @return the Base16 encoded SHA-256 value
      */
     public static String digest(ByteBuffer script) {
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA1");
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
             md.update(script);
             return new String(Base16.encode(md.digest(), false));
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("JVM does not support SHA1");
+            throw new IllegalStateException("JVM does not support SHA-256");
         }
     }
 

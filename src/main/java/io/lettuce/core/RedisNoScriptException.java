@@ -1,8 +1,8 @@
 package io.lettuce.core;
 
 /**
- * Exception that gets thrown when Redis indicates absence of a Lua script referenced by its SHA1 digest with a {@code NOSCRIPT}
- * error response.
+ * Exception that gets thrown when Redis indicates absence of a Lua script referenced by its SHA-256 digest with a
+ * {@code NOSCRIPT} error response.
  *
  * @author Mark Paluch
  * @since 4.5

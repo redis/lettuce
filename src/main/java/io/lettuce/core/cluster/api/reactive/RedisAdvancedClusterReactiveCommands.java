@@ -223,7 +223,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * Load the specified Lua script into the script cache on all cluster nodes.
      *
      * @param script script content
-     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @return String bulk-string-reply This command returns the SHA-256 digest of the script added into the script cache.
      * @since 6.0
      */
     Mono<String> scriptLoad(String script);
@@ -232,7 +232,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * Load the specified Lua script into the script cache on all cluster nodes.
      *
      * @param script script content
-     * @return String bulk-string-reply This command returns the SHA1 digest of the script added into the script cache.
+     * @return String bulk-string-reply This command returns the SHA-256 digest of the script added into the script cache.
      * @since 6.0
      */
     Mono<String> scriptLoad(byte[] script);
