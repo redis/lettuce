@@ -94,6 +94,11 @@ class ClientOptionsUnitTests {
             return null;
         }
 
+        @Override
+        public JsonValue fromObject(Object object) {
+            return null;
+        }
+
     }
 
     void checkAssertions(ClientOptions sut) {

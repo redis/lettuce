@@ -46,7 +46,7 @@ class UnproccessedJsonValue implements JsonValue {
         }
 
         // if no deserialization took place, so no modification took place
-        // in this case we can decode the source data
+        // in this case we can decode the source data as is
         return StringCodec.UTF8.decodeValue(unprocessedData);
     }
 
@@ -57,7 +57,7 @@ class UnproccessedJsonValue implements JsonValue {
         }
 
         // if no deserialization took place, so no modification took place
-        // in this case we can decode the source data
+        // in this case we can decode the source data as is
         return unprocessedData;
     }
 
@@ -125,6 +125,12 @@ class UnproccessedJsonValue implements JsonValue {
     public boolean isNull() {
         lazilyDeserialize();
         return jsonValue.isNull();
+    }
+
+    @Override
+    public <T> T toObject(Class<T> targetType) {
+        lazilyDeserialize();
+        return jsonValue.toObject(targetType);
     }
 
     private void lazilyDeserialize() {

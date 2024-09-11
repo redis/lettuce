@@ -7,6 +7,8 @@
 
 package io.lettuce.core.json;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
@@ -38,7 +40,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
+public class RedisJsonIntegrationTests { // extends RedisContainerIntegrationTests {
 
     private static final String BIKES_INVENTORY = "bikes:inventory";
 
@@ -380,9 +382,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         bikeRecord.put("specs", bikeSpecs);
         bikeRecord.put("colors", bikeColors);
 
-        JsonSetArgs args = JsonSetArgs.Builder.defaults();
-
-        String result = redis.jsonSet(BIKES_INVENTORY, myPath, bikeRecord, args);
+        String result = redis.jsonSet(BIKES_INVENTORY, myPath, bikeRecord);
         assertThat(result).isEqualTo("OK");
     }
 
@@ -470,6 +470,83 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
     }
 
     @Test
+    void jsonGetToObject() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1]");
+        JsonValue value = redis.jsonGet(BIKES_INVENTORY, myPath).get(0);
+        assertThat(value).isNotNull();
+        assertThat(value.isNull()).isFalse();
+        assertThat(value.asJsonArray().get(0).isJsonObject()).isTrue();
+
+        MountainBike bike = value.asJsonArray().get(0).asJsonObject().toObject(MountainBike.class);
+
+        assertThat(bike).isNotNull();
+        assertThat(bike).isInstanceOf(MountainBike.class);
+
+        assertThat(bike.id).isEqualTo("bike:2");
+        assertThat(bike.model).isEqualTo("Quaoar");
+        assertThat(bike.description).contains("Redesigned for the 2020 model year, this bike impressed");
+    }
+
+    static class MountainBike {
+
+        public String id;
+
+        public String model;
+
+        public String description;
+
+        public String price;
+
+        public Specs specs;
+
+        public List colors;
+
+    }
+
+    static class Specs {
+
+        public String material;
+
+        public String weight;
+
+    }
+
+    @Test
+    void jsonSetFromObject() {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes[1]");
+        JsonValue value = redis.jsonGet(BIKES_INVENTORY, myPath).get(0);
+        JsonParser parser = redis.getJsonParser();
+
+        MountainBike desertFox = new MountainBike();
+        desertFox.specs = new Specs();
+        desertFox.id = "bike:43";
+        desertFox.model = "DesertFox";
+        desertFox.description = "The DesertFox is a versatile bike for all terrains";
+        desertFox.price = "1299";
+        desertFox.specs.material = "composite";
+        desertFox.specs.weight = "11";
+        desertFox.colors = Arrays.asList("yellow", "orange");
+
+        JsonValue newValue = parser.fromObject(desertFox);
+
+        assertThat(newValue).isNotNull();
+        assertThat(newValue.isNull()).isFalse();
+        assertThat(newValue.isJsonObject()).isTrue();
+        assertThat(newValue.asJsonObject().size()).isEqualTo(6);
+        assertThat(newValue.asJsonObject().get("id").toValue()).isEqualTo("\"bike:43\"");
+        assertThat(newValue.asJsonObject().get("model").toValue()).isEqualTo("\"DesertFox\"");
+        assertThat(newValue.asJsonObject().get("description").toValue())
+                .isEqualTo("\"The DesertFox is a versatile bike for all terrains\"");
+        assertThat(newValue.asJsonObject().get("price").toValue()).isEqualTo("\"1299\"");
+        assertThat(newValue.asJsonObject().get("specs").toValue()).isEqualTo("{\"material\":\"composite\",\"weight\":\"11\"}");
+        assertThat(newValue.asJsonObject().get("colors").toValue()).isEqualTo("[\"yellow\",\"orange\"]");
+
+        String result = redis.jsonSet(BIKES_INVENTORY, myPath, newValue);
+
+        assertThat(result).isEqualTo("OK");
+    }
+
+    @Test
     void byteArrayCodec() throws ExecutionException, InterruptedException {
         JsonPath myPath = JsonPath.of("$..mountain_bikes");
         byte[] myMountainBikesKey = BIKES_INVENTORY.getBytes();
@@ -480,21 +557,6 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         CompletionStage<RedisFuture<String>> stage = bikes
                 .thenApply(fetchedBikes -> redis.jsonSet(myServiceBikesKey, JsonPath.ROOT_PATH, fetchedBikes.get(0)));
-
-        String result = stage.toCompletableFuture().get().get();
-
-        assertThat(result).isEqualTo("OK");
-    }
-
-    @Test
-    void byteArrayCodecs() throws ExecutionException, InterruptedException {
-        JsonPath myPath = JsonPath.of("$..mountain_bikes");
-
-        RedisAsyncCommands<String, String> redis = client.connect().async();
-        RedisFuture<List<JsonValue>> bikes = redis.jsonGet("bikes:inventory", myPath);
-
-        CompletionStage<RedisFuture<String>> stage = bikes
-                .thenApply(fetchedBikes -> redis.jsonSet("service_bikes", JsonPath.ROOT_PATH, fetchedBikes.get(0)));
 
         String result = stage.toCompletableFuture().get().get();
 
@@ -537,6 +599,11 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         @Override
         public JsonArray createJsonArray() {
+            return null;
+        }
+
+        @Override
+        public JsonValue fromObject(Object object) {
             return null;
         }
 

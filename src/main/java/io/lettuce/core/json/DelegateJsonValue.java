@@ -7,7 +7,9 @@
 
 package io.lettuce.core.json;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 
@@ -97,6 +99,26 @@ class DelegateJsonValue implements JsonValue {
 
     protected JsonNode getNode() {
         return node;
+    }
+
+    @Override
+    public <T> T toObject(Class<T> type) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            return mapper.treeToValue(node, type);
+        } catch (IllegalArgumentException | JsonProcessingException e) {
+            throw new RedisJsonException("Unable to map the provided JsonValue to " + type.getName(), e);
+        }
+    }
+
+    static JsonValue wrap(JsonNode root) {
+        if (root.isObject()) {
+            return new DelegateJsonObject(root);
+        } else if (root.isArray()) {
+            return new DelegateJsonArray(root);
+        }
+
+        return new DelegateJsonValue(root);
     }
 
 }

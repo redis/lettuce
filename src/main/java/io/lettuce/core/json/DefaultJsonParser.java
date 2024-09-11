@@ -55,11 +55,22 @@ public class DefaultJsonParser implements JsonParser {
         return new DelegateJsonArray();
     }
 
+    @Override
+    public JsonValue fromObject(Object object) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            JsonNode root = objectMapper.valueToTree(object);
+            return DelegateJsonValue.wrap(root);
+        } catch (IllegalArgumentException e) {
+            throw new RedisJsonException("Failed to process the provided object as JSON", e);
+        }
+    }
+
     private JsonValue parse(String value) {
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode root = mapper.readTree(value);
-            return wrap(root);
+            return DelegateJsonValue.wrap(root);
         } catch (JsonProcessingException e) {
             throw new RedisJsonException(
                     "Failed to process the provided value as JSON: " + String.format("%.50s", value) + "...", e);
@@ -72,20 +83,10 @@ public class DefaultJsonParser implements JsonParser {
             byte[] bytes = new byte[byteBuffer.remaining()];
             byteBuffer.get(bytes);
             JsonNode root = mapper.readTree(bytes);
-            return wrap(root);
+            return DelegateJsonValue.wrap(root);
         } catch (IOException e) {
             throw new RedisJsonException("Failed to process the provided value as JSON", e);
         }
-    }
-
-    private JsonValue wrap(JsonNode root) {
-        if (root.isObject()) {
-            return new DelegateJsonObject(root);
-        } else if (root.isArray()) {
-            return new DelegateJsonArray(root);
-        }
-
-        return new DelegateJsonValue(root);
     }
 
 }

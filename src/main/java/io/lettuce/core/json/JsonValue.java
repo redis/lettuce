@@ -99,4 +99,12 @@ public interface JsonValue {
      */
     boolean isNull();
 
+    /**
+     * Given a {@link Class} type, this method will attempt to convert the JSON value to the provided type.
+     * 
+     * @return <T> the newly created instance of the provided type with the data from the JSON value
+     * @throws RedisJsonException if the provided type is not a valid JSON document
+     */
+    <T> T toObject(Class<T> type);
+
 }

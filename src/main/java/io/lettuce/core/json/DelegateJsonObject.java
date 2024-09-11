@@ -39,14 +39,14 @@ class DelegateJsonObject extends DelegateJsonValue implements JsonObject {
     public JsonValue get(String key) {
         JsonNode value = node.get(key);
 
-        return value == null ? null : new DelegateJsonValue(value);
+        return value == null ? null : wrap(value);
     }
 
     @Override
     public JsonValue remove(String key) {
         JsonNode value = ((ObjectNode) node).remove(key);
 
-        return new DelegateJsonValue(value);
+        return wrap(value);
     }
 
     @Override

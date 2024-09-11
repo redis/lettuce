@@ -68,7 +68,7 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
     public JsonValue get(int index) {
         JsonNode jsonNode = node.get(index);
 
-        return jsonNode == null ? null : new DelegateJsonValue(jsonNode);
+        return jsonNode == null ? null : wrap(jsonNode);
     }
 
     @Override
@@ -85,7 +85,7 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
     public JsonValue remove(int index) {
         JsonNode jsonNode = ((ArrayNode) node).remove(index);
 
-        return new DelegateJsonValue(jsonNode);
+        return wrap(jsonNode);
     }
 
     @Override
@@ -93,7 +93,7 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
         JsonNode replaceWith = ((DelegateJsonValue) newElement).getNode();
         JsonNode replaced = ((ArrayNode) node).set(index, replaceWith);
 
-        return new DelegateJsonValue(replaced);
+        return wrap(replaced);
     }
 
     @Override

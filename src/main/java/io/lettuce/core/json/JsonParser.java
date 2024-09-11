@@ -66,4 +66,13 @@ public interface JsonParser {
      */
     JsonArray createJsonArray();
 
+    /**
+     * Create a new {@link JsonValue} from the provided object.
+     *
+     * @param object the object to create the {@link JsonValue} from
+     * @return the created {@link JsonValue}
+     * @throws RedisJsonException if the provided object is not a valid JSON document
+     */
+    JsonValue fromObject(Object object);
+
 }
