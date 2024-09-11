@@ -16,7 +16,6 @@ import java.nio.ByteBuffer;
  * that is currently being used. The purpose of this class is to provide a lazy initialization mechanism and avoid any
  * deserialization in the event loop that processes the data coming from the Redis server.
  *
- * @since 6.5
  * @author Tihomir Mateev
  */
 class UnproccessedJsonValue implements JsonValue {
@@ -48,7 +47,7 @@ class UnproccessedJsonValue implements JsonValue {
 
         // if no deserialization took place, so no modification took place
         // in this case we can decode the source data
-        return StringCodec.UTF8.decodeKey(unprocessedData);
+        return StringCodec.UTF8.decodeValue(unprocessedData);
     }
 
     @Override
@@ -111,6 +110,18 @@ class UnproccessedJsonValue implements JsonValue {
     }
 
     @Override
+    public boolean isBoolean() {
+        lazilyDeserialize();
+        return jsonValue.isBoolean();
+    }
+
+    @Override
+    public Boolean asBoolean() {
+        lazilyDeserialize();
+        return jsonValue.asBoolean();
+    }
+
+    @Override
     public boolean isNull() {
         lazilyDeserialize();
         return jsonValue.isNull();
@@ -122,7 +133,17 @@ class UnproccessedJsonValue implements JsonValue {
         }
 
         jsonValue = parser.createJsonValue(unprocessedData);
+
+        // free up the memory from any unprocessed data
+        unprocessedData.clear();
         deserialized = true;
+    }
+
+    /**
+     * @return {@code true} if the data has been deserialized
+     */
+    boolean isDeserialized() {
+        return deserialized;
     }
 
 }

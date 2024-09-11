@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,7 +34,12 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
 
     @Override
     public JsonArray add(JsonValue element) {
-        JsonNode newNode = ((DelegateJsonValue) element).getNode();
+        JsonNode newNode = null;
+
+        if (element != null) {
+            newNode = ((DelegateJsonValue) element).getNode();
+        }
+
         ((ArrayNode) node).add(newNode);
 
         return this;
@@ -41,6 +47,8 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
 
     @Override
     public void addAll(JsonArray element) {
+        LettuceAssert.notNull(element, "Element must not be null");
+
         ArrayNode otherArray = (ArrayNode) ((DelegateJsonValue) element).getNode();
         ((ArrayNode) node).addAll(otherArray);
     }
@@ -60,7 +68,7 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
     public JsonValue get(int index) {
         JsonNode jsonNode = node.get(index);
 
-        return new DelegateJsonValue(jsonNode);
+        return jsonNode == null ? null : new DelegateJsonValue(jsonNode);
     }
 
     @Override
@@ -70,13 +78,7 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
 
     @Override
     public Iterator<JsonValue> iterator() {
-        List<JsonValue> result = new ArrayList<>();
-        while (node.iterator().hasNext()) {
-            JsonNode jsonNode = node.iterator().next();
-            result.add(new DelegateJsonValue(jsonNode));
-        }
-
-        return result.iterator();
+        return asList().iterator();
     }
 
     @Override
@@ -100,38 +102,8 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
     }
 
     @Override
-    public boolean isJsonArray() {
-        return true;
-    }
-
-    @Override
     public JsonArray asJsonArray() {
         return this;
-    }
-
-    @Override
-    public boolean isString() {
-        return false;
-    }
-
-    @Override
-    public String asString() {
-        throw new UnsupportedOperationException("The JSON value is not a string");
-    }
-
-    @Override
-    public boolean isNumber() {
-        return false;
-    }
-
-    @Override
-    public Number asNumber() {
-        throw new UnsupportedOperationException("The JSON value is not a number");
-    }
-
-    @Override
-    public boolean isNull() {
-        return false;
     }
 
 }

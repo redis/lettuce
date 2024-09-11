@@ -14,7 +14,7 @@ import io.lettuce.core.codec.StringCodec;
 import java.nio.ByteBuffer;
 
 /**
- * Implementation of the {@link JsonValue} that delegates most of it's dunctionality to the Jackson {@link JsonNode}.
+ * Implementation of the {@link JsonValue} that delegates most of its functionality to the Jackson {@link JsonNode}.
  *
  * @author Tihomir Mateev
  */
@@ -39,22 +39,22 @@ class DelegateJsonValue implements JsonValue {
 
     @Override
     public boolean isJsonArray() {
-        return false;
+        return node.isArray();
     }
 
     @Override
     public JsonArray asJsonArray() {
-        throw new UnsupportedOperationException("The JSON value is not an array");
+        return null;
     }
 
     @Override
     public boolean isJsonObject() {
-        return false;
+        return node.isObject();
     }
 
     @Override
     public JsonObject asJsonObject() {
-        throw new UnsupportedOperationException("The JSON value is not an object");
+        return null;
     }
 
     @Override
@@ -64,12 +64,23 @@ class DelegateJsonValue implements JsonValue {
 
     @Override
     public String asString() {
-        return node.asText();
+        return node.isTextual() ? node.asText() : null;
     }
 
     @Override
     public boolean isNumber() {
         return node.isNumber();
+    }
+
+    @Override
+    public Boolean asBoolean() {
+
+        return node.isBoolean() ? node.asBoolean() : null;
+    }
+
+    @Override
+    public boolean isBoolean() {
+        return node.isBoolean();
     }
 
     public boolean isNull() {
@@ -78,12 +89,10 @@ class DelegateJsonValue implements JsonValue {
 
     @Override
     public Number asNumber() {
-        if (node.isInt()) {
-            return node.asInt();
-        } else if (node.isLong()) {
-            return node.asLong();
+        if (node.isNull()) {
+            return null;
         }
-        return node.asDouble();
+        return node.numberValue();
     }
 
     protected JsonNode getNode() {

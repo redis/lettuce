@@ -258,20 +258,6 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         JsonMsetArgs<String, String> args1 = new JsonMsetArgs<>(BIKES_INVENTORY, myPath, bikeRecord);
 
-        bikeRecord = parser.createJsonObject();
-        bikeSpecs = parser.createJsonObject();
-        bikeColors = parser.createJsonArray();
-        bikeSpecs.put("material", parser.createJsonValue("\"wood\""));
-        bikeSpecs.put("weight", parser.createJsonValue("19"));
-        bikeColors.add(parser.createJsonValue("\"walnut\""));
-        bikeColors.add(parser.createJsonValue("\"chestnut\""));
-        bikeRecord.put("id", parser.createJsonValue("\"bike:13\""));
-        bikeRecord.put("model", parser.createJsonValue("\"Woody\""));
-        bikeRecord.put("description", parser.createJsonValue("\"The Woody is an environmentally-friendly wooden bike\""));
-        bikeRecord.put("price", parser.createJsonValue("\"1112\""));
-        bikeRecord.put("specs", bikeSpecs);
-        bikeRecord.put("colors", bikeColors);
-
         JsonMsetArgs<String, String> args2 = new JsonMsetArgs<>(BIKES_INVENTORY, myPath, bikeRecord);
 
         List<JsonMsetArgs<String, String>> args = Arrays.asList(args1, args2);
@@ -494,6 +480,21 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         CompletionStage<RedisFuture<String>> stage = bikes
                 .thenApply(fetchedBikes -> redis.jsonSet(myServiceBikesKey, JsonPath.ROOT_PATH, fetchedBikes.get(0)));
+
+        String result = stage.toCompletableFuture().get().get();
+
+        assertThat(result).isEqualTo("OK");
+    }
+
+    @Test
+    void byteArrayCodecs() throws ExecutionException, InterruptedException {
+        JsonPath myPath = JsonPath.of("$..mountain_bikes");
+
+        RedisAsyncCommands<String, String> redis = client.connect().async();
+        RedisFuture<List<JsonValue>> bikes = redis.jsonGet("bikes:inventory", myPath);
+
+        CompletionStage<RedisFuture<String>> stage = bikes
+                .thenApply(fetchedBikes -> redis.jsonSet("service_bikes", JsonPath.ROOT_PATH, fetchedBikes.get(0)));
 
         String result = stage.toCompletableFuture().get().get();
 

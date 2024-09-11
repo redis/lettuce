@@ -2,8 +2,15 @@ package io.lettuce.core;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import io.lettuce.core.json.DefaultJsonParser;
+import io.lettuce.core.json.JsonArray;
+import io.lettuce.core.json.JsonObject;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.JsonValue;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.protocol.Command;
@@ -30,6 +37,7 @@ class ClientOptionsUnitTests {
         assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.SET, null))).isFalse();
         assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.PUBLISH, null))).isFalse();
         assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.GET, null))).isTrue();
+        assertThat(options.getJsonParser()).isInstanceOf(DefaultJsonParser.class);
     }
 
     @Test
@@ -50,6 +58,42 @@ class ClientOptionsUnitTests {
         assertThat(copy.mutate().build().getScriptCharset()).isEqualTo(StandardCharsets.US_ASCII);
 
         assertThat(original.mutate()).isNotSameAs(copy.mutate());
+    }
+
+    @Test
+    void jsonParser() {
+        JsonParser parser = new CustomJsonParser();
+        ClientOptions options = ClientOptions.builder().jsonParser(parser).build();
+        assertThat(options.getJsonParser()).isInstanceOf(CustomJsonParser.class);
+    }
+
+    static class CustomJsonParser implements JsonParser {
+
+        @Override
+        public JsonValue loadJsonValue(ByteBuffer buffer) {
+            return null;
+        }
+
+        @Override
+        public JsonValue createJsonValue(ByteBuffer bytes) {
+            return null;
+        }
+
+        @Override
+        public JsonValue createJsonValue(String value) {
+            return null;
+        }
+
+        @Override
+        public JsonObject createJsonObject() {
+            return null;
+        }
+
+        @Override
+        public JsonArray createJsonArray() {
+            return null;
+        }
+
     }
 
     void checkAssertions(ClientOptions sut) {

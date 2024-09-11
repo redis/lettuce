@@ -45,7 +45,7 @@ public interface JsonValue {
     boolean isJsonArray();
 
     /**
-     * @return the {@link JsonArray} representation of this {@link JsonValue}
+     * @return the {@link JsonArray} representation of this {@link JsonValue}, null if this is not a JSON array
      * @see #isJsonArray()
      */
     JsonArray asJsonArray();
@@ -56,7 +56,7 @@ public interface JsonValue {
     boolean isJsonObject();
 
     /**
-     * @return the {@link JsonObject} representation of this {@link JsonValue}
+     * @return the {@link JsonObject} representation of this {@link JsonValue}, null if this is not a JSON object
      * @see #isJsonObject()
      */
     JsonObject asJsonObject();
@@ -67,7 +67,7 @@ public interface JsonValue {
     boolean isString();
 
     /**
-     * @return the {@link String} representation of this {@link JsonValue}
+     * @return the {@link String} representation of this {@link JsonValue}, null if this is not a JSON string
      * @see #isString()
      */
     String asString();
@@ -78,10 +78,21 @@ public interface JsonValue {
     boolean isNumber();
 
     /**
-     * @return the {@link Number} representation of this {@link JsonValue}
+     * @return the {@link Number} representation of this {@link JsonValue}, null if this is not a JSON number
      * @see #isNumber()
      */
     Number asNumber();
+
+    /**
+     * @return {@code true} if this {@link JsonValue} represents a JSON boolean value
+     */
+    boolean isBoolean();
+
+    /**
+     * @return the {@link Boolean} representation of this {@link JsonValue}, null if this is not a JSON boolean value
+     * @see #isNumber()
+     */
+    Boolean asBoolean();
 
     /**
      * @return {@code true} if this {@link JsonValue} represents the value of null

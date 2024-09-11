@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.lettuce.core.codec.RedisCodec;
 
 /**
- * Implementation of the {@link DelegateJsonObject} that delegates most of it's dunctionality to the Jackson {@link ObjectNode}.
+ * Implementation of the {@link DelegateJsonObject} that delegates most of its functionality to the Jackson {@link ObjectNode}.
  *
  * @author Tihomir Mateev
  */
@@ -39,7 +39,7 @@ class DelegateJsonObject extends DelegateJsonValue implements JsonObject {
     public JsonValue get(String key) {
         JsonNode value = node.get(key);
 
-        return new DelegateJsonValue(value);
+        return value == null ? null : new DelegateJsonValue(value);
     }
 
     @Override
@@ -55,38 +55,8 @@ class DelegateJsonObject extends DelegateJsonValue implements JsonObject {
     }
 
     @Override
-    public boolean isJsonObject() {
-        return true;
-    }
-
-    @Override
     public JsonObject asJsonObject() {
         return this;
-    }
-
-    @Override
-    public boolean isString() {
-        return false;
-    }
-
-    @Override
-    public String asString() {
-        throw new UnsupportedOperationException("The JSON value is not a string");
-    }
-
-    @Override
-    public boolean isNumber() {
-        return false;
-    }
-
-    @Override
-    public Number asNumber() {
-        throw new UnsupportedOperationException("The JSON value is not a number");
-    }
-
-    @Override
-    public boolean isNull() {
-        return false;
     }
 
 }
