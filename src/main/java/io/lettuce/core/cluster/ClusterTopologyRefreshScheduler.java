@@ -108,6 +108,15 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         }
     }
 
+    /**
+     * Cancel any scheduled or running topology refresh tasks.
+     */
+    public void cancelTopologyRefreshTask() {
+        if (clusterTopologyRefreshTask.get()) {
+            clusterTopologyRefreshTask.cancel();
+        }
+    }
+
     public boolean isTopologyRefreshInProgress() {
         return clusterTopologyRefreshTask.get();
     }
@@ -317,11 +326,17 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         private final Supplier<CompletionStage<?>> reloadTopologyAsync;
 
+        private final AtomicBoolean isCanceled = new AtomicBoolean(false);
+
         ClusterTopologyRefreshTask(Supplier<CompletionStage<?>> reloadTopologyAsync) {
             this.reloadTopologyAsync = reloadTopologyAsync;
         }
 
         public void run() {
+
+            if (isCanceled.get()) {
+                return;
+            }
 
             if (compareAndSet(false, true)) {
                 doRun();
@@ -350,6 +365,10 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
             } catch (Exception e) {
                 logger.warn("Cannot refresh Redis Cluster topology", e);
             }
+        }
+
+        void cancel() {
+            isCanceled.set(true);
         }
 
     }

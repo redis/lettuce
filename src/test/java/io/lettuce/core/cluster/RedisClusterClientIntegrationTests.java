@@ -715,4 +715,21 @@ class RedisClusterClientIntegrationTests extends TestSupport {
 
     }
 
+    @Test
+    void shouldCancelTopologyRefreshTaskOnShutdown() {
+        ClusterTopologyRefreshOptions refreshOptions = ClusterTopologyRefreshOptions.builder()
+                .enablePeriodicRefresh(Duration.ofSeconds(1)).build();
+        RedisClusterClient clusterClient = RedisClusterClient.create(TestClientResources.get(),
+                RedisURI.Builder.redis(TestSettings.host(), ClusterTestSettings.port1).build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(refreshOptions).build());
+        clusterClient.connect().sync();
+        Delay.delay(Duration.ofMillis(1500));
+        assertThat(clusterClient.isTopologyRefreshInProgress()).isTrue();
+
+        clusterClient.shutdownAsync(0, 10, TimeUnit.SECONDS).join();
+
+        assertThat(clusterClient.isTopologyRefreshInProgress()).isFalse();
+        FastShutdown.shutdown(clusterClient);
+    }
+
 }

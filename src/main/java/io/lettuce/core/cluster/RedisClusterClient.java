@@ -973,6 +973,17 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
+     * Cancel any running topology refresh tasks. This method calls
+     * {@link ClusterTopologyRefreshScheduler#cancelTopologyRefreshTask()} to ensure that any ongoing refresh tasks are properly
+     * stopped. It is typically called during the shutdown process to clean up resources and prevent any further topology
+     * refresh operations.
+     *
+     */
+    public void cancelTopologyRefresh() {
+        topologyRefreshScheduler.cancelTopologyRefreshTask();
+    }
+
+    /**
      * Return whether a scheduled or adaptive topology refresh is in progress.
      *
      * @return {@code true} if a topology refresh is in progress.
