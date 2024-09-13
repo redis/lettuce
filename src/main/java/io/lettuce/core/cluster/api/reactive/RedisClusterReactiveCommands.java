@@ -21,6 +21,7 @@ package io.lettuce.core.cluster.api.reactive;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 import io.lettuce.core.Range;
 import io.lettuce.core.api.reactive.*;
@@ -367,5 +368,12 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
      * @return String simple-string-reply
      */
     Mono<String> readWrite();
+
+    /**
+     * Retrieves information about the TCP links between nodes in a Redis Cluster.
+     * 
+     * @return List of maps containing attributes and values for each peer link.
+     */
+    Mono<List<Map<String, Object>>> clusterLinks();
 
 }

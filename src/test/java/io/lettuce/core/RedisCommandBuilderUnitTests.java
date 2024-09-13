@@ -7,6 +7,8 @@ import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -166,6 +168,16 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*2\r\n" + "$7\r\n" + "CLUSTER\r\n" + "$9\r\n" + "MYSHARDID\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructClusterLinks() {
+
+        Command<String, String, List<Map<String, Object>>> command = sut.clusterLinks();
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*2\r\n$7\r\nCLUSTER\r\n$5\r\nLINKS\r\n");
     }
 
 }

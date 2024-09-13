@@ -3,6 +3,7 @@ package io.lettuce.core.cluster;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -95,6 +96,15 @@ class ClusterReactiveCommandIntegrationTests {
         List<String> result = reactive.clusterSlaves(master.getNodeId()).collectList().block();
 
         assertThat(result.size()).isGreaterThan(0);
+    }
+
+    @Test
+    void testClusterLinks() {
+        List<Map<String, Object>> values = reactive.clusterLinks().block();
+        for (Map<String, Object> value : values) {
+            assertThat(value).containsKeys("direction", "node", "create-time", "events", "send-buffer-allocated",
+                    "send-buffer-used");
+        }
     }
 
 }
