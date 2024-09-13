@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -269,6 +270,26 @@ class ClusterCommandIntegrationTests extends TestSupport {
         List<String> result = sync.clusterReplicas(nodeId);
 
         assertThat(result.size()).isGreaterThan(0);
+    }
+
+    @Test
+    void testClusterLinks() {
+        List<Map<String, Object>> values = sync.clusterLinks();
+        assertThat(values).isNotEmpty();
+        for (Map<String, Object> value : values) {
+            assertThat(value).containsKeys("direction", "node", "create-time", "events", "send-buffer-allocated",
+                    "send-buffer-used");
+        }
+    }
+
+    @Test
+    void testClusterLinksAsync() throws Exception {
+        RedisFuture<List<Map<String, Object>>> futureLinks = async.clusterLinks();
+        List<Map<String, Object>> values = futureLinks.get();
+        for (Map<String, Object> value : values) {
+            assertThat(value).containsKeys("direction", "node", "create-time", "events", "send-buffer-allocated",
+                    "send-buffer-used");
+        }
     }
 
     private void prepareReadonlyTest(String key) {

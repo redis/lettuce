@@ -3189,6 +3189,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(commandBuilder.zunionstore(destination, zStoreArgs, keys));
     }
 
+    @Override
+    public RedisFuture<List<Map<String, Object>>> clusterLinks() {
+        return dispatch(commandBuilder.clusterLinks());
+    }
+
     private byte[] encodeFunction(String functionCode) {
         LettuceAssert.notNull(functionCode, "Function code must not be null");
         LettuceAssert.notEmpty(functionCode, "Function code script must not be empty");

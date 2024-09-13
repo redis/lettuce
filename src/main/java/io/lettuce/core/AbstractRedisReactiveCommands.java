@@ -3257,6 +3257,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.zunionstore(destination, zStoreArgs, keys));
     }
 
+    @Override
+    public Mono<List<Map<String, Object>>> clusterLinks() {
+        return createMono(commandBuilder::clusterLinks);
+    }
+
     private byte[] encodeFunction(String functionCode) {
         LettuceAssert.notNull(functionCode, "Function code must not be null");
         LettuceAssert.notEmpty(functionCode, "Function code script must not be empty");

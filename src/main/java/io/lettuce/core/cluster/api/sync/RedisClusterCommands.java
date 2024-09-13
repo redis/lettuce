@@ -21,6 +21,7 @@ package io.lettuce.core.cluster.api.sync;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 import io.lettuce.core.Range;
 import io.lettuce.core.api.sync.*;
@@ -367,5 +368,12 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
      */
     @Override
     String readWrite();
+
+    /**
+     * Retrieves information about the TCP links between nodes in a Redis Cluster.
+     * 
+     * @return List of maps containing attributes and values for each peer link.
+     */
+    List<Map<String, Object>> clusterLinks();
 
 }

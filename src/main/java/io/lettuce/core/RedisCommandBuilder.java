@@ -4433,6 +4433,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(ZUNIONSTORE, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, List<Map<String, Object>>> clusterLinks() {
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(LINKS);
+        return createCommand(CLUSTER, (CommandOutput) new ObjectOutput<>(StringCodec.UTF8), args);
+    }
+
     private boolean allElementsInstanceOf(Object[] objects, Class<?> expectedAssignableType) {
 
         for (Object object : objects) {

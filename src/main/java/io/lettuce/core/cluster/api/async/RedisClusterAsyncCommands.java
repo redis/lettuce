@@ -380,4 +380,11 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      */
     RedisFuture<String> readWrite();
 
+    /**
+     * Retrieves information about the TCP links between nodes in a Redis Cluster.
+     * 
+     * @return List of maps containing attributes and values for each peer link.
+     */
+    RedisFuture<List<Map<String, Object>>> clusterLinks();
+
 }
