@@ -12,6 +12,7 @@ import io.netty.channel.ChannelFuture;
  * without further notice.
  *
  * @author Mark Paluch
+ * @author jinkshower
  * @since 5.1
  */
 public abstract class Futures {

@@ -3,12 +3,14 @@ package io.lettuce.core.internal;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import io.lettuce.core.RedisCommandInterruptedException;
  * Unit tests for {@link Futures}.
  *
  * @author Mark Paluch
+ * @author Tihomir Mateev
  */
 class FuturesUnitTests {
 
@@ -62,29 +65,30 @@ class FuturesUnitTests {
 
     @Test
     void allOfShouldNotThrow() throws InterruptedException {
-        List<CompletionStage<?>> stages = new ArrayList<>();
+        int threadCount = 100;
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        List<Throwable> issues = new ArrayList<>();
+        List<CompletableFuture<Void>> futures = Collections.synchronizedList(new ArrayList<>());
+        // Submit multiple threads to perform concurrent operations
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        for (int i = 0; i < threadCount; i++) {
+            executorService.submit(() -> {
+                try {
+                    for (int y = 0; y < 1000; y++) {
+                        futures.add(new CompletableFuture<>());
+                    }
 
-        for (int i = 0; i < 50; i++) {
-            stages.add(new CompletableFuture<>());
+                    Futures.allOf(futures);
+                } catch (Exception e) {
+                    issues.add(e);
+                } finally {
+                    latch.countDown();
+                } });
         }
 
-        Thread thread1 = new Thread(() -> assertDoesNotThrow(() -> {
-            for (int i = 0; i < 10; i++) {
-                Futures.allOf(stages);
-            }
-        }));
-
-        Thread thread2 = new Thread(() -> {
-            for (int i = 0; i < 10; i++) {
-                stages.remove(0);
-            }
-        });
-
-        thread2.start();
-        thread1.start();
-
-        thread2.join();
-        thread1.join();
+        // wait for all threads to complete
+        latch.await();
+        assertThat(issues).doesNotHaveAnyElementsOfTypes(ArrayIndexOutOfBoundsException.class);
     }
 
 }
