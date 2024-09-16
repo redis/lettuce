@@ -83,7 +83,8 @@ class FuturesUnitTests {
                     issues.add(e);
                 } finally {
                     latch.countDown();
-                } });
+                }
+            });
         }
 
         // wait for all threads to complete
