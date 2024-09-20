@@ -39,19 +39,14 @@ class NumberListOutputUnitTests {
     }
 
     @Test
-    void testSet() {
-    }
+    void setNegative() {
+        NumberListOutput<String, String> sut = new NumberListOutput<>(StringCodec.UTF8);
+        sut.multi(1);
+        sut.set(ByteBuffer.wrap("Not a number".getBytes()));
 
-    @Test
-    void testSet1() {
-    }
-
-    @Test
-    void setBigNumber() {
-    }
-
-    @Test
-    void multi() {
+        assertThat(sut.get().isEmpty()).isFalse();
+        assertThat(sut.get().size()).isEqualTo(1);
+        assertThat(sut.get().get(0)).isEqualTo(0);
     }
 
 }

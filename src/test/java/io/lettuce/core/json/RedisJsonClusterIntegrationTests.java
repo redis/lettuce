@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
@@ -211,16 +213,19 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
     }
 
     @Test
-    void jsonMGetCrossSlot() {
+    void jsonCrossSlot() {
         JsonParser parser = redis.getJsonParser();
 
         JsonObject bikeRecord = parser.createJsonObject();
         JsonObject bikeSpecs = parser.createJsonObject();
         JsonArray bikeColors = parser.createJsonArray();
+
         bikeSpecs.put("material", parser.createJsonValue("\"composite\""));
         bikeSpecs.put("weight", parser.createJsonValue("11"));
+
         bikeColors.add(parser.createJsonValue("\"yellow\""));
         bikeColors.add(parser.createJsonValue("\"orange\""));
+
         bikeRecord.put("id", parser.createJsonValue("\"bike:43\""));
         bikeRecord.put("model", parser.createJsonValue("\"DesertFox\""));
         bikeRecord.put("description", parser.createJsonValue("\"The DesertFox is a versatile bike for all terrains\""));
@@ -228,14 +233,34 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         bikeRecord.put("specs", bikeSpecs);
         bikeRecord.put("colors", bikeColors);
 
-        redis.jsonSet("bikes:service", JsonPath.ROOT_PATH, bikeRecord, JsonSetArgs.Builder.defaults());
+        JsonObject bikeServiceRecord = parser.createJsonObject();
+        String today = "\"" + DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.now()) + "\"";
+        String lastWeek = "\"" + DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDateTime.now().minusDays(7)) + "\"";
 
+        JsonArray serviceHistory = parser.createJsonArray();
+
+        serviceHistory.add(parser.createJsonValue(today));
+        serviceHistory.add(parser.createJsonValue(lastWeek));
+
+        bikeServiceRecord.put("id", parser.createJsonValue("\"bike:43\""));
+        bikeServiceRecord.put("serviceHistory", serviceHistory);
+        bikeServiceRecord.put("purchaseDate", parser.createJsonValue(lastWeek));
+        bikeServiceRecord.put("guarantee", parser.createJsonValue("\"2 years\""));
+
+        // set value on a different slot
+
+        JsonMsetArgs<String, String> args1 = new JsonMsetArgs<>(BIKES_INVENTORY, JsonPath.ROOT_PATH, bikeRecord);
+        JsonMsetArgs<String, String> args2 = new JsonMsetArgs<>("bikes:service", JsonPath.ROOT_PATH, bikeServiceRecord);
+        String result = redis.jsonMSet(Arrays.asList(args1, args2));
+        assertThat(result).isEqualTo("OK");
+
+        // get values from two different slots
         List<JsonValue> value = redis.jsonMGet(JsonPath.ROOT_PATH, BIKES_INVENTORY, "bikes:service");
         assertThat(value).hasSize(2);
         JsonValue slot1 = value.get(0);
         JsonValue slot2 = value.get(1);
-        assertThat(slot1.toValue()).contains("Quaoar");
-        assertThat(slot2.toValue()).contains("DesertFox");
+        assertThat(slot1.toValue()).contains("bike:43");
+        assertThat(slot2.toValue()).contains("bike:43");
         assertThat(slot1.isJsonArray()).isTrue();
         assertThat(slot2.isJsonArray()).isTrue();
     }

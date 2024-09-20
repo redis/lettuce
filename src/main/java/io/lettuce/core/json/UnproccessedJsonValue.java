@@ -15,16 +15,16 @@ import java.nio.ByteBuffer;
  * A wrapper around any of the implementations of the {@link JsonValue} provided by the implementation of the {@link JsonParser}
  * that is currently being used. The purpose of this class is to provide a lazy initialization mechanism and avoid any
  * deserialization in the event loop that processes the data coming from the Redis server.
+ * <p>
+ * This class is thread-safe and can be used in a multi-threaded environment.
  *
  * @author Tihomir Mateev
  */
 class UnproccessedJsonValue implements JsonValue {
 
-    private JsonValue jsonValue;
+    private volatile JsonValue jsonValue;
 
     private final JsonParser parser;
-
-    private boolean deserialized = false;
 
     private final ByteBuffer unprocessedData;
 
@@ -41,7 +41,7 @@ class UnproccessedJsonValue implements JsonValue {
 
     @Override
     public String toValue() {
-        if (deserialized) {
+        if (isDeserialized()) {
             return jsonValue.toValue();
         }
 
@@ -52,7 +52,7 @@ class UnproccessedJsonValue implements JsonValue {
 
     @Override
     public ByteBuffer asByteBuffer() {
-        if (deserialized) {
+        if (isDeserialized()) {
             return jsonValue.asByteBuffer();
         }
 
@@ -134,22 +134,21 @@ class UnproccessedJsonValue implements JsonValue {
     }
 
     private void lazilyDeserialize() {
-        if (deserialized) {
-            return;
+        if (!isDeserialized()) {
+            synchronized (this) {
+                if (!isDeserialized()) {
+                    jsonValue = parser.createJsonValue(unprocessedData);
+                    unprocessedData.clear();
+                }
+            }
         }
-
-        jsonValue = parser.createJsonValue(unprocessedData);
-
-        // free up the memory from any unprocessed data
-        unprocessedData.clear();
-        deserialized = true;
     }
 
     /**
      * @return {@code true} if the data has been deserialized
      */
     boolean isDeserialized() {
-        return deserialized;
+        return jsonValue != null;
     }
 
 }

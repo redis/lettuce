@@ -16,8 +16,6 @@ import io.lettuce.core.json.JsonParser;
 public class RedisAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, V>
         implements RedisAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V> {
 
-    private final RedisCodec<K, V> codec;
-
     /**
      * Initialize a new instance.
      *
@@ -27,7 +25,6 @@ public class RedisAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, 
      */
     public RedisAsyncCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec, JsonParser parser) {
         super(connection, codec, parser);
-        this.codec = codec;
     }
 
     @Override

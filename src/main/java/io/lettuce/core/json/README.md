@@ -33,13 +33,12 @@ try (StatefulRedisConnection<ByteBuffer, ByteBuffer> connect = redisClient.conne
     JsonObject bikeSpecs = parser.createJsonObject();
     JsonArray bikeColors = parser.createJsonArray();
 
-    bikeRecord = parser.createJsonObject();
-    bikeSpecs = parser.createJsonObject();
-    bikeColors = parser.createJsonArray();
     bikeSpecs.put("material", parser.createJsonValue("\"wood\""));
     bikeSpecs.put("weight", parser.createJsonValue("19"));
+    
     bikeColors.add(parser.createJsonValue("\"walnut\""));
     bikeColors.add(parser.createJsonValue("\"chestnut\""));
+    
     bikeRecord.put("id", parser.createJsonValue("\"bike:13\""));
     bikeRecord.put("model", parser.createJsonValue("\"Woody\""));
     bikeRecord.put("description", parser.createJsonValue("\"The Woody is an environmentally-friendly wooden bike\""));

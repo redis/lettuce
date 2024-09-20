@@ -21,7 +21,6 @@ package io.lettuce.core.api.reactive;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
-import io.lettuce.core.json.JsonParser;
 import reactor.core.publisher.Mono;
 
 /**

@@ -7,9 +7,6 @@
 
 package io.lettuce.core.json;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisFuture;
@@ -21,7 +18,6 @@ import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
 import io.lettuce.core.json.arguments.JsonRangeArgs;
-import io.lettuce.core.json.arguments.JsonSetArgs;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -259,6 +255,20 @@ public class RedisJsonIntegrationTests { // extends RedisContainerIntegrationTes
         bikeRecord.put("colors", bikeColors);
 
         JsonMsetArgs<String, String> args1 = new JsonMsetArgs<>(BIKES_INVENTORY, myPath, bikeRecord);
+
+        bikeRecord = parser.createJsonObject();
+        bikeSpecs = parser.createJsonObject();
+        bikeColors = parser.createJsonArray();
+        bikeSpecs.put("material", parser.createJsonValue("\"wood\""));
+        bikeSpecs.put("weight", parser.createJsonValue("19"));
+        bikeColors.add(parser.createJsonValue("\"walnut\""));
+        bikeColors.add(parser.createJsonValue("\"chestnut\""));
+        bikeRecord.put("id", parser.createJsonValue("\"bike:13\""));
+        bikeRecord.put("model", parser.createJsonValue("\"Woody\""));
+        bikeRecord.put("description", parser.createJsonValue("\"The Woody is an environmentally-friendly wooden bike\""));
+        bikeRecord.put("price", parser.createJsonValue("\"1112\""));
+        bikeRecord.put("specs", bikeSpecs);
+        bikeRecord.put("colors", bikeColors);
 
         JsonMsetArgs<String, String> args2 = new JsonMsetArgs<>(BIKES_INVENTORY, myPath, bikeRecord);
 

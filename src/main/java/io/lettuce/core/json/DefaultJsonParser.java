@@ -10,7 +10,6 @@ package io.lettuce.core.json;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.lettuce.core.codec.RedisCodec;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

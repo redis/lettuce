@@ -1,5 +1,6 @@
 package io.lettuce.core.dynamic;
 
+import io.lettuce.core.json.DefaultJsonParser;
 import org.mockito.Mockito;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.Scope;
@@ -30,7 +31,7 @@ public class RedisCommandFactoryBenchmark {
         redisCommandFactory = new RedisCommandFactory(new MockStatefulConnection(EmptyRedisChannelWriter.INSTANCE));
         regularCommands = redisCommandFactory.getCommands(RegularCommands.class);
 
-        asyncCommands = new RedisAsyncCommandsImpl<>(EmptyStatefulRedisConnection.INSTANCE, StringCodec.UTF8);
+        asyncCommands = new RedisAsyncCommandsImpl<>(EmptyStatefulRedisConnection.INSTANCE, StringCodec.UTF8, DefaultJsonParser.INSTANCE);
     }
 
     @Benchmark

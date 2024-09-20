@@ -10,7 +10,6 @@ package io.lettuce.core.json;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.lettuce.core.codec.RedisCodec;
 
 /**
  * Implementation of the {@link DelegateJsonObject} that delegates most of its functionality to the Jackson {@link ObjectNode}.
