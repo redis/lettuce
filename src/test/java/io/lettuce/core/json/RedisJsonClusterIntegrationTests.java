@@ -39,7 +39,7 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
     protected static RedisAdvancedClusterCommands<String, String> redis;
 
     public RedisJsonClusterIntegrationTests() {
-        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(26379).build();
+        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(36379).build();
 
         client = RedisClusterClient.create(redisURI);
         redis = client.connect().sync();

@@ -403,6 +403,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<String> jsonMSet(List<JsonMsetArgs<K, V>> arguments) {
         List<K> keys = arguments.stream().map(JsonMsetArgs::getKey).collect(Collectors.toList());
+        Map<K, List<JsonMsetArgs<K, V>>> argsPerKey = arguments.stream().collect(Collectors.groupingBy(JsonMsetArgs::getKey));
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keys);
 
         if (partitioned.size() < 2) {
@@ -412,11 +413,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         Map<Integer, RedisFuture<String>> executions = new HashMap<>();
 
         for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            entry.getValue().forEach(k -> {
-                RedisFuture<String> mset = super.jsonMSet(
-                        arguments.stream().filter(args -> args.getKey().equals(k)).collect(Collectors.toList()));
-                executions.put(entry.getKey(), mset);
-            });
+
+            List<JsonMsetArgs<K, V>> op = new ArrayList<>();
+            entry.getValue().forEach(k -> op.addAll(argsPerKey.get(k)));
+
+            RedisFuture<String> mset = super.jsonMSet(op);
+            executions.put(entry.getKey(), mset);
         }
 
         return MultiNodeExecution.firstOfAsync(executions);

@@ -9,6 +9,7 @@ package io.lettuce.core.json;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -36,7 +37,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RedisJsonIntegrationTests { // extends RedisContainerIntegrationTests {
+public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
     private static final String BIKES_INVENTORY = "bikes:inventory";
 

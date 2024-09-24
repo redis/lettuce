@@ -45,9 +45,15 @@ class UnproccessedJsonValue implements JsonValue {
             return jsonValue.toValue();
         }
 
-        // if no deserialization took place, so no modification took place
-        // in this case we can decode the source data as is
-        return StringCodec.UTF8.decodeValue(unprocessedData);
+        synchronized (this) {
+            if (isDeserialized()) {
+                return jsonValue.toValue();
+            }
+
+            // if no deserialization took place, so no modification took place
+            // in this case we can decode the source data as is
+            return StringCodec.UTF8.decodeValue(unprocessedData);
+        }
     }
 
     @Override
@@ -56,9 +62,15 @@ class UnproccessedJsonValue implements JsonValue {
             return jsonValue.asByteBuffer();
         }
 
-        // if no deserialization took place, so no modification took place
-        // in this case we can decode the source data as is
-        return unprocessedData;
+        synchronized (this) {
+            if (isDeserialized()) {
+                return jsonValue.asByteBuffer();
+            }
+
+            // if no deserialization took place, so no modification took place
+            // in this case we can decode the source data as is
+            return unprocessedData;
+        }
     }
 
     @Override

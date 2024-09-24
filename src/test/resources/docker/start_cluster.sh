@@ -8,10 +8,10 @@
 #
 
 if [ -z ${START_PORT} ]; then
-    START_PORT=26379
+    START_PORT=36379
 fi
 if [ -z ${END_PORT} ]; then
-    END_PORT=26384
+    END_PORT=36384
 fi
 if [ ! -z "$3" ]; then
     START_PORT=$2
