@@ -14,12 +14,11 @@ import java.nio.ByteBuffer;
  * The JavaScript Object Notation (JSON) Data Interchange Format, Section 3. Values</a>
  * <p>
  * Implementations of this interface need to make sure parsing of the JSON is not done inside the event loop thread, used to
- * process the data coming from the Redis server, otherwise larger JSON documents might cause performance degradation that spans
+ * process the data coming from the Redis server; otherwise larger JSON documents might cause performance degradation that spans
  * across all threads using the driver.
  *
  * @see JsonObject
  * @see JsonArray
- * @see io.lettuce.core.codec.RedisCodec
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc8259">RFC 8259 - The JavaScript Object Notation (JSON) Data
  *      Interchange Format</a>
  * @author Tihomir Mateev
@@ -30,9 +29,9 @@ public interface JsonValue {
     /**
      * Execute any {@link io.lettuce.core.codec.RedisCodec} decoding and fetch the result.
      * 
-     * @return the value representation of this {@link JsonValue} based on the codec used
+     * @return the {@link String} representation of this {@link JsonValue}
      */
-    String toValue();
+    String toString();
 
     /**
      * @return the raw JSON text as a {@link ByteBuffer}

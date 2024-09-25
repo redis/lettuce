@@ -34,7 +34,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 class UnproccessedJsonValueUnitTests {
 
     @Test
-    void toValue() {
+    void asString() {
         final String unprocessed = "{\"a\":1,\"b\":2}";
         final String modified = "{\"a\":1}";
 
@@ -43,13 +43,13 @@ class UnproccessedJsonValueUnitTests {
         UnproccessedJsonValue underTest = new UnproccessedJsonValue(buffer, parser);
 
         String value = StringCodec.UTF8.decodeValue(buffer);
-        assertThat(underTest.toValue()).isEqualTo(value);
+        assertThat(underTest.toString()).isEqualTo(value);
         assertThat(underTest.asByteBuffer()).isEqualTo(ByteBuffer.wrap(unprocessed.getBytes()));
 
         assertThat(underTest.isJsonObject()).isTrue();
         assertThat(underTest.asJsonObject().remove("b")).isNotNull();
 
-        assertThat(underTest.toValue()).isEqualTo(modified);
+        assertThat(underTest.toString()).isEqualTo(modified);
         assertThat(underTest.asByteBuffer()).isEqualTo(ByteBuffer.wrap(modified.getBytes()));
     }
 
@@ -127,7 +127,7 @@ class UnproccessedJsonValueUnitTests {
         UnproccessedJsonValue underTest = new UnproccessedJsonValue(buffer, parser);
 
         assertThat(underTest.isJsonArray()).isTrue();
-        assertThat(underTest.asJsonArray().toValue()).isEqualTo("[1,2,3,4]");
+        assertThat(underTest.asJsonArray().toString()).isEqualTo("[1,2,3,4]");
 
         Assertions.assertThat(underTest.isNumber()).isFalse();
         Assertions.assertThat(underTest.isString()).isFalse();

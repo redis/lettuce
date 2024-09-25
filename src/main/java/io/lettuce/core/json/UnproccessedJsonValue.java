@@ -40,14 +40,14 @@ class UnproccessedJsonValue implements JsonValue {
     }
 
     @Override
-    public String toValue() {
+    public String toString() {
         if (isDeserialized()) {
-            return jsonValue.toValue();
+            return jsonValue.toString();
         }
 
         synchronized (this) {
             if (isDeserialized()) {
-                return jsonValue.toValue();
+                return jsonValue.toString();
             }
 
             // if no deserialization took place, so no modification took place

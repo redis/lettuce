@@ -29,8 +29,8 @@ class JsonValueListOutputUnitTests {
 
         assertThat(sut.get().isEmpty()).isFalse();
         assertThat(sut.get().size()).isEqualTo(2);
-        assertThat(sut.get().get(0).toValue()).isEqualTo("[1,2,3]");
-        assertThat(sut.get().get(1).toValue()).isEqualTo("world");
+        assertThat(sut.get().get(0).toString()).isEqualTo("[1,2,3]");
+        assertThat(sut.get().get(1).toString()).isEqualTo("world");
     }
 
 }

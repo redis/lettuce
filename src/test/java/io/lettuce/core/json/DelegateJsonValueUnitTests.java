@@ -21,7 +21,7 @@ class DelegateJsonValueUnitTests {
         DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
         JsonValue underTest = parser.createJsonValue("\"test\"");
 
-        assertThat(underTest.toValue()).isEqualTo("\"test\"");
+        assertThat(underTest.toString()).isEqualTo("\"test\"");
         assertThat(underTest.asByteBuffer().array()).isEqualTo("\"test\"".getBytes());
 
         assertThat(underTest.isJsonArray()).isFalse();
@@ -47,7 +47,7 @@ class DelegateJsonValueUnitTests {
         DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
         JsonValue underTest = parser.createJsonValue("1");
 
-        assertThat(underTest.toValue()).isEqualTo("1");
+        assertThat(underTest.toString()).isEqualTo("1");
         assertThat(underTest.asByteBuffer().array()).isEqualTo("1".getBytes());
 
         assertThat(underTest.isJsonArray()).isFalse();
@@ -95,7 +95,7 @@ class DelegateJsonValueUnitTests {
         DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
         JsonValue underTest = parser.createJsonValue("true");
 
-        assertThat(underTest.toValue()).isEqualTo("true");
+        assertThat(underTest.toString()).isEqualTo("true");
         assertThat(underTest.asByteBuffer().array()).isEqualTo("true".getBytes());
 
         assertThat(underTest.isJsonArray()).isFalse();
@@ -121,7 +121,7 @@ class DelegateJsonValueUnitTests {
         DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
         JsonValue underTest = parser.createJsonValue("null");
 
-        assertThat(underTest.toValue()).isEqualTo("null");
+        assertThat(underTest.toString()).isEqualTo("null");
         assertThat(underTest.asByteBuffer().array()).isEqualTo("null".getBytes());
 
         assertThat(underTest.isJsonArray()).isFalse();

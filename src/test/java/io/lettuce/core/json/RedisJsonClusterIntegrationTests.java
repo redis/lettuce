@@ -128,7 +128,7 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
 
         List<JsonValue> poppedJson = redis.jsonArrpop(BIKES_INVENTORY, myPath, -1);
         assertThat(poppedJson).hasSize(1);
-        assertThat(poppedJson.get(0).toValue()).contains(
+        assertThat(poppedJson.get(0).toString()).contains(
                 "{\"id\":\"bike:3\",\"model\":\"Weywot\",\"description\":\"This bike gives kids aged six years and old");
     }
 
@@ -164,13 +164,13 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         assertThat(value).hasSize(1);
 
         if (path.startsWith("$")) {
-            assertThat(value.get(0).toValue()).isEqualTo("[\"Phoebe\",\"Quaoar\"]");
+            assertThat(value.get(0).toString()).isEqualTo("[\"Phoebe\",\"Quaoar\"]");
 
             // Verify array parsing
             assertThat(value.get(0).isJsonArray()).isTrue();
             assertThat(value.get(0).asJsonArray().size()).isEqualTo(2);
-            assertThat(value.get(0).asJsonArray().asList().get(0).toValue()).isEqualTo("\"Phoebe\"");
-            assertThat(value.get(0).asJsonArray().asList().get(1).toValue()).isEqualTo("\"Quaoar\"");
+            assertThat(value.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("\"Phoebe\"");
+            assertThat(value.get(0).asJsonArray().asList().get(1).toString()).isEqualTo("\"Quaoar\"");
 
             // Verify String parsing
             assertThat(value.get(0).asJsonArray().asList().get(0).isString()).isTrue();
@@ -178,7 +178,7 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
             assertThat(value.get(0).asJsonArray().asList().get(1).isString()).isTrue();
             assertThat(value.get(0).asJsonArray().asList().get(1).asString()).isEqualTo("Quaoar");
         } else {
-            assertThat(value.get(0).toValue()).isEqualTo("\"Phoebe\"");
+            assertThat(value.get(0).toString()).isEqualTo("\"Phoebe\"");
 
             // Verify array parsing
             assertThat(value.get(0).isString()).isTrue();
@@ -206,9 +206,9 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         List<JsonValue> value = redis.jsonMGet(myPath, BIKES_INVENTORY);
         assertThat(value).hasSize(1);
         if (path.startsWith("$")) {
-            assertThat(value.get(0).toValue()).isEqualTo("[\"Phoebe\",\"Quaoar\",\"Weywot\"]");
+            assertThat(value.get(0).toString()).isEqualTo("[\"Phoebe\",\"Quaoar\",\"Weywot\"]");
         } else {
-            assertThat(value.get(0).toValue()).isEqualTo("\"Phoebe\"");
+            assertThat(value.get(0).toString()).isEqualTo("\"Phoebe\"");
         }
     }
 
@@ -259,8 +259,8 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         assertThat(value).hasSize(2);
         JsonValue slot1 = value.get(0);
         JsonValue slot2 = value.get(1);
-        assertThat(slot1.toValue()).contains("bike:43");
-        assertThat(slot2.toValue()).contains("bike:43");
+        assertThat(slot1.toString()).contains("bike:43");
+        assertThat(slot2.toString()).contains("bike:43");
         assertThat(slot1.isJsonArray()).isTrue();
         assertThat(slot2.isJsonArray()).isTrue();
     }

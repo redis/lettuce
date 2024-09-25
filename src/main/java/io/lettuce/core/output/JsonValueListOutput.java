@@ -20,6 +20,7 @@ import java.util.List;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Tihomir Mateev
+ * @since 6.5
  */
 public class JsonValueListOutput<K, V> extends CommandOutput<K, V, List<JsonValue>> {
 

@@ -133,7 +133,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
 
         List<JsonValue> poppedJson = redis.jsonArrpop(BIKES_INVENTORY, myPath);
         assertThat(poppedJson).hasSize(1);
-        assertThat(poppedJson.get(0).toValue()).contains(
+        assertThat(poppedJson.get(0).toString()).contains(
                 "{\"id\":\"bike:3\",\"model\":\"Weywot\",\"description\":\"This bike gives kids aged six years and old");
     }
 
@@ -169,13 +169,13 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         assertThat(value).hasSize(1);
 
         if (path.startsWith("$")) {
-            assertThat(value.get(0).toValue()).isEqualTo("[\"Phoebe\",\"Quaoar\"]");
+            assertThat(value.get(0).toString()).isEqualTo("[\"Phoebe\",\"Quaoar\"]");
 
             // Verify array parsing
             assertThat(value.get(0).isJsonArray()).isTrue();
             assertThat(value.get(0).asJsonArray().size()).isEqualTo(2);
-            assertThat(value.get(0).asJsonArray().asList().get(0).toValue()).isEqualTo("\"Phoebe\"");
-            assertThat(value.get(0).asJsonArray().asList().get(1).toValue()).isEqualTo("\"Quaoar\"");
+            assertThat(value.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("\"Phoebe\"");
+            assertThat(value.get(0).asJsonArray().asList().get(1).toString()).isEqualTo("\"Quaoar\"");
 
             // Verify String parsing
             assertThat(value.get(0).asJsonArray().asList().get(0).isString()).isTrue();
@@ -184,7 +184,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
             assertThat(value.get(0).asJsonArray().asList().get(1).isNull()).isFalse();
             assertThat(value.get(0).asJsonArray().asList().get(1).asString()).isEqualTo("Quaoar");
         } else {
-            assertThat(value.get(0).toValue()).isEqualTo("\"Phoebe\"");
+            assertThat(value.get(0).toString()).isEqualTo("\"Phoebe\"");
 
             // Verify array parsing
             assertThat(value.get(0).isString()).isTrue();
@@ -200,12 +200,12 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         List<JsonValue> value = redis.jsonGet(BIKES_INVENTORY, myPath);
         assertThat(value).hasSize(1);
 
-        assertThat(value.get(0).toValue()).isEqualTo("[null]");
+        assertThat(value.get(0).toString()).isEqualTo("[null]");
 
         // Verify array parsing
         assertThat(value.get(0).isJsonArray()).isTrue();
         assertThat(value.get(0).asJsonArray().size()).isEqualTo(1);
-        assertThat(value.get(0).asJsonArray().asList().get(0).toValue()).isEqualTo("null");
+        assertThat(value.get(0).asJsonArray().asList().get(0).toString()).isEqualTo("null");
         assertThat(value.get(0).asJsonArray().asList().get(0).isNull()).isTrue();
     }
 
@@ -229,9 +229,9 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         List<JsonValue> value = redis.jsonMGet(myPath, BIKES_INVENTORY);
         assertThat(value).hasSize(1);
         if (path.startsWith("$")) {
-            assertThat(value.get(0).toValue()).isEqualTo("[\"Phoebe\",\"Quaoar\",\"Weywot\"]");
+            assertThat(value.get(0).toString()).isEqualTo("[\"Phoebe\",\"Quaoar\",\"Weywot\"]");
         } else {
-            assertThat(value.get(0).toValue()).isEqualTo("\"Phoebe\"");
+            assertThat(value.get(0).toString()).isEqualTo("\"Phoebe\"");
         }
     }
 
@@ -283,7 +283,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         assertThat(value).isNotNull();
         assertThat(value.isJsonArray()).isTrue();
         assertThat(value.asJsonArray().size()).isEqualTo(1);
-        assertThat(value.asJsonArray().asList().get(0).toValue()).contains(
+        assertThat(value.asJsonArray().asList().get(0).toString()).contains(
                 "{\"id\":\"bike:13\",\"model\":\"Woody\",\"description\":\"The Woody is an environmentally-friendly wooden bike\"");
     }
 
@@ -334,7 +334,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         assertThat(value).isNotNull();
         assertThat(value.isJsonArray()).isTrue();
         assertThat(value.asJsonArray().size()).isEqualTo(1);
-        assertThat(value.asJsonArray().asList().get(0).toValue()).contains(
+        assertThat(value.asJsonArray().asList().get(0).toString()).contains(
                 "{\"id\":\"bike:13\",\"model\":\"Woody\",\"description\":\"The Woody is an environmentally-friendly wooden bike\"");
     }
 
@@ -544,13 +544,13 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         assertThat(newValue.isNull()).isFalse();
         assertThat(newValue.isJsonObject()).isTrue();
         assertThat(newValue.asJsonObject().size()).isEqualTo(6);
-        assertThat(newValue.asJsonObject().get("id").toValue()).isEqualTo("\"bike:43\"");
-        assertThat(newValue.asJsonObject().get("model").toValue()).isEqualTo("\"DesertFox\"");
-        assertThat(newValue.asJsonObject().get("description").toValue())
+        assertThat(newValue.asJsonObject().get("id").toString()).isEqualTo("\"bike:43\"");
+        assertThat(newValue.asJsonObject().get("model").toString()).isEqualTo("\"DesertFox\"");
+        assertThat(newValue.asJsonObject().get("description").toString())
                 .isEqualTo("\"The DesertFox is a versatile bike for all terrains\"");
-        assertThat(newValue.asJsonObject().get("price").toValue()).isEqualTo("\"1299\"");
-        assertThat(newValue.asJsonObject().get("specs").toValue()).isEqualTo("{\"material\":\"composite\",\"weight\":\"11\"}");
-        assertThat(newValue.asJsonObject().get("colors").toValue()).isEqualTo("[\"yellow\",\"orange\"]");
+        assertThat(newValue.asJsonObject().get("price").toString()).isEqualTo("\"1299\"");
+        assertThat(newValue.asJsonObject().get("specs").toString()).isEqualTo("{\"material\":\"composite\",\"weight\":\"11\"}");
+        assertThat(newValue.asJsonObject().get("colors").toString()).isEqualTo("[\"yellow\",\"orange\"]");
 
         String result = redis.jsonSet(BIKES_INVENTORY, myPath, newValue);
 

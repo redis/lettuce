@@ -28,7 +28,7 @@ import io.lettuce.core.json.arguments.JsonSetArgs;
 public interface RedisJsonCommands<K, V> {
 
     /**
-     * Append the JSON values into the array at a given {@link JsonPath} after the last element in said array.
+     * Append the JSON values into the array at a given {@link JsonPath} after the last element in a said array.
      *
      * @param key the key holding the JSON document.
      * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
@@ -39,7 +39,7 @@ public interface RedisJsonCommands<K, V> {
     List<Long> jsonArrappend(K key, JsonPath jsonPath, JsonValue... values);
 
     /**
-     * Append the JSON values into the array at the {@link JsonPath#ROOT_PATH} after the last element in said array.
+     * Append the JSON values into the array at the {@link JsonPath#ROOT_PATH} after the last element in a said array.
      *
      * @param key the key holding the JSON document.
      * @param values one or more {@link JsonValue} to be appended.
@@ -138,7 +138,7 @@ public interface RedisJsonCommands<K, V> {
 
     /**
      * Trim an array at a given {@link JsonPath} so that it contains only the specified inclusive range of elements. All
-     * elements with indexes smaller the start range and all elements with indexes bigger the end range are trimmed.
+     * elements with indexes smaller than the start range and all elements with indexes bigger than the end range are trimmed.
      * <p>
      * Behavior as of RedisJSON v2.0:
      * <ul>
@@ -194,7 +194,7 @@ public interface RedisJsonCommands<K, V> {
     Long jsonDel(K key);
 
     /**
-     * Return the value at path in JSON serialized form.
+     * Return the value at the specified path in JSON serialized form.
      * <p>
      * When using a single JSONPath, the root of the matching values is a JSON string with a top-level array of serialized JSON
      * value. In contrast, a legacy path returns a single value.
@@ -213,7 +213,7 @@ public interface RedisJsonCommands<K, V> {
     List<JsonValue> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths);
 
     /**
-     * Return the value at path in JSON serialized form. Uses defaults for the {@link JsonGetArgs}.
+     * Return the value at the specified path in JSON serialized form. Uses defaults for the {@link JsonGetArgs}.
      * <p>
      * When using a single JSONPath, the root of the matching values is a JSON string with a top-level array of serialized JSON
      * value. In contrast, a legacy path returns a single value.
@@ -255,7 +255,7 @@ public interface RedisJsonCommands<K, V> {
     String jsonMerge(K key, JsonPath jsonPath, JsonValue value);
 
     /**
-     * Return the values at path from multiple key arguments.
+     * Return the values at the specified path from multiple key arguments.
      *
      * @param jsonPath the {@link JsonPath} pointing to the value to fetch.
      * @param keys the keys holding the {@link JsonValue}s to fetch.
@@ -268,7 +268,7 @@ public interface RedisJsonCommands<K, V> {
      * Set or update one or more JSON values according to the specified {@link JsonMsetArgs}
      * <p>
      * JSON.MSET is atomic, hence, all given additions or updates are either applied or not. It is not possible for clients to
-     * see that some of the keys were updated while others are unchanged.
+     * see that some keys were updated while others are unchanged.
      * <p>
      * A JSON value is a hierarchical structure. If you change a value in a specific path - nested values are affected.
      *
@@ -330,7 +330,7 @@ public interface RedisJsonCommands<K, V> {
     /**
      * Sets the JSON value at a given {@link JsonPath} in the JSON document.
      * <p>
-     * For new Redis keys the path must be the root. For existing keys, when the entire path exists, the value that it contains
+     * For new Redis keys, the path must be the root. For existing keys, when the entire path exists, the value that it contains
      * is replaced with the JSON value. For existing keys, when the path exists, except for the last element, a new child is
      * added with the JSON value.
      * <p>

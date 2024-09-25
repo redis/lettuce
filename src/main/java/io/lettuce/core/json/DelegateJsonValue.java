@@ -27,7 +27,7 @@ class DelegateJsonValue implements JsonValue {
     }
 
     @Override
-    public String toValue() {
+    public String toString() {
         return node.toString();
     }
 
