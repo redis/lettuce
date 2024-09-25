@@ -26,6 +26,7 @@ import java.util.Map;
 import io.lettuce.core.Range;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.async.*;
+import io.lettuce.core.json.JsonParser;
 
 /**
  * A complete asynchronous and thread-safe cluster Redis API with 400+ Methods.
@@ -382,9 +383,15 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
 
     /**
      * Retrieves information about the TCP links between nodes in a Redis Cluster.
-     * 
+     *
      * @return List of maps containing attributes and values for each peer link.
      */
     RedisFuture<List<Map<String, Object>>> clusterLinks();
+
+    /**
+     * @return the currently configured instance of the {@link JsonParser}
+     * @since 6.5
+     */
+    JsonParser getJsonParser();
 
 }

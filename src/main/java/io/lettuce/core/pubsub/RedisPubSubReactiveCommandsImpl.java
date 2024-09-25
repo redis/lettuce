@@ -52,7 +52,7 @@ public class RedisPubSubReactiveCommandsImpl<K, V> extends RedisReactiveCommands
      * @param codec Codec used to encode/decode keys and values.
      */
     public RedisPubSubReactiveCommandsImpl(StatefulRedisPubSubConnection<K, V> connection, RedisCodec<K, V> codec) {
-        super(connection, codec);
+        super(connection, codec, null);
         this.commandBuilder = new PubSubCommandBuilder<>(codec);
     }
 

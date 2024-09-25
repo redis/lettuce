@@ -25,6 +25,8 @@ import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.DefaultJsonParser;
+import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
 import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.ProtocolVersion;
@@ -69,6 +71,8 @@ public class ClientOptions implements Serializable {
 
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.enabled();
 
+    public static final JsonParser DEFAULT_JSON_PARSER = DefaultJsonParser.INSTANCE;
+
     private final boolean autoReconnect;
 
     private final boolean cancelCommandsOnReconnectFailure;
@@ -89,6 +93,8 @@ public class ClientOptions implements Serializable {
 
     private final Charset scriptCharset;
 
+    private final JsonParser jsonParser;
+
     private final SocketOptions socketOptions;
 
     private final SslOptions sslOptions;
@@ -108,6 +114,7 @@ public class ClientOptions implements Serializable {
         this.readOnlyCommands = builder.readOnlyCommands;
         this.requestQueueSize = builder.requestQueueSize;
         this.scriptCharset = builder.scriptCharset;
+        this.jsonParser = builder.jsonParser;
         this.socketOptions = builder.socketOptions;
         this.sslOptions = builder.sslOptions;
         this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
@@ -125,6 +132,7 @@ public class ClientOptions implements Serializable {
         this.readOnlyCommands = original.getReadOnlyCommands();
         this.requestQueueSize = original.getRequestQueueSize();
         this.scriptCharset = original.getScriptCharset();
+        this.jsonParser = original.getJsonParser();
         this.socketOptions = original.getSocketOptions();
         this.sslOptions = original.getSslOptions();
         this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
@@ -183,6 +191,8 @@ public class ClientOptions implements Serializable {
         private int requestQueueSize = DEFAULT_REQUEST_QUEUE_SIZE;
 
         private Charset scriptCharset = DEFAULT_SCRIPT_CHARSET;
+
+        private JsonParser jsonParser = DEFAULT_JSON_PARSER;
 
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
 
@@ -370,6 +380,21 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Set a custom implementation for the {@link JsonParser} to use. Defaults to {@link DefaultJsonParser}.
+         *
+         * @param parser must not be {@code null}.
+         * @return {@code this}
+         * @see JsonParser
+         * @since 6.5
+         */
+        public Builder jsonParser(JsonParser parser) {
+
+            LettuceAssert.notNull(parser, "JsonParser must not be null");
+            this.jsonParser = parser;
+            return this;
+        }
+
+        /**
          * Sets the low-level {@link SocketOptions} for the connections kept to Redis servers. See
          * {@link #DEFAULT_SOCKET_OPTIONS}.
          *
@@ -449,9 +474,9 @@ public class ClientOptions implements Serializable {
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
                 .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
                 .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
-                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).socketOptions(getSocketOptions())
-                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
-                .timeoutOptions(getTimeoutOptions());
+                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).jsonParser(getJsonParser())
+                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
@@ -607,6 +632,16 @@ public class ClientOptions implements Serializable {
      */
     public Charset getScriptCharset() {
         return scriptCharset;
+    }
+
+    /**
+     * Returns the currently set up {@link JsonParser}.
+     * 
+     * @return the implementation of the {@link JsonParser} to use.
+     * @since 6.5
+     */
+    public JsonParser getJsonParser() {
+        return jsonParser;
     }
 
     /**

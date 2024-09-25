@@ -47,7 +47,7 @@ public class RedisPubSubAsyncCommandsImpl<K, V> extends RedisAsyncCommandsImpl<K
      * @param codec Codec used to encode/decode keys and values.
      */
     public RedisPubSubAsyncCommandsImpl(StatefulRedisPubSubConnection<K, V> connection, RedisCodec<K, V> codec) {
-        super(connection, codec);
+        super(connection, codec, null);
         this.commandBuilder = new PubSubCommandBuilder<>(codec);
     }
 

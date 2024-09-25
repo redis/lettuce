@@ -21,6 +21,7 @@ package io.lettuce.core.api.reactive;
 
 import java.util.Map;
 
+import io.lettuce.core.json.JsonParser;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.output.CommandOutput;
@@ -227,5 +228,11 @@ public interface BaseRedisReactiveCommands<K, V> {
      */
     @Deprecated
     void flushCommands();
+
+    /**
+     * @return the currently configured instance of the {@link JsonParser}
+     * @since 6.5
+     */
+    JsonParser getJsonParser();
 
 }

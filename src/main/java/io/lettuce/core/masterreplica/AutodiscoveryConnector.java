@@ -134,7 +134,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
                     redisClient.getResources(), redisClient.getOptions());
 
             StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
-                    channelWriter, codec, redisURI.getTimeout());
+                    channelWriter, codec, redisURI.getTimeout(), redisClient.getOptions().getJsonParser());
 
             connection.setOptions(redisClient.getOptions());
 

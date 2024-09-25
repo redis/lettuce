@@ -141,13 +141,13 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
                     clusterEventListener.onMovedRedirection();
                     asking = false;
 
-                    publish(new MovedRedirectionEvent(clusterCommand.getType().name(), keyAsString, slot,
+                    publish(new MovedRedirectionEvent(clusterCommand.getType().toString(), keyAsString, slot,
                             clusterCommand.getError()));
                 } else {
                     target = getAskTarget(clusterCommand.getError());
                     asking = true;
                     clusterEventListener.onAskRedirection();
-                    publish(new AskRedirectionEvent(clusterCommand.getType().name(), keyAsString, slot,
+                    publish(new AskRedirectionEvent(clusterCommand.getType().toString(), keyAsString, slot,
                             clusterCommand.getError()));
                 }
 

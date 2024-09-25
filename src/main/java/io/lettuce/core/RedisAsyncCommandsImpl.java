@@ -4,6 +4,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.json.JsonParser;
 
 /**
  * An asynchronous and thread-safe API for a Redis connection.
@@ -22,8 +23,8 @@ public class RedisAsyncCommandsImpl<K, V> extends AbstractRedisAsyncCommands<K, 
      * @param codec the codec for command encoding
      *
      */
-    public RedisAsyncCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {
-        super(connection, codec);
+    public RedisAsyncCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec, JsonParser parser) {
+        super(connection, codec, parser);
     }
 
     @Override

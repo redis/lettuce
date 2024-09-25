@@ -34,6 +34,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.json.JsonParser;
 import org.reactivestreams.Publisher;
 
 import io.lettuce.core.*;
@@ -75,12 +76,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      *
      * @param connection the stateful connection.
      * @param codec Codec used to encode/decode keys and values.
-     * @deprecated since 5.2, use {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec)}.
+     * @deprecated since 5.2, use
+     *             {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec, JsonParser)}.
      */
     @Deprecated
-    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection,
-            RedisCodec<K, V> codec) {
-        super(connection, codec);
+    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec,
+            JsonParser parser) {
+        super(connection, codec, parser);
         this.codec = codec;
     }
 
@@ -90,8 +92,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param connection the stateful connection.
      * @param codec Codec used to encode/decode keys and values.
      */
-    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec) {
-        super(connection, codec);
+    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec,
+            JsonParser parser) {
+        super(connection, codec, parser);
         this.codec = codec;
     }
 
