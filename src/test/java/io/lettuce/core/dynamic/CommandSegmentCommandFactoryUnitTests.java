@@ -155,7 +155,7 @@ class CommandSegmentCommandFactoryUnitTests {
 
         StringBuilder builder = new StringBuilder();
 
-        builder.append(command.getType().name());
+        builder.append(command.getType().toString());
 
         String commandString = command.getArgs().toCommandString();
 

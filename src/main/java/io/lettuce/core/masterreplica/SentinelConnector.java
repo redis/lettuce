@@ -98,7 +98,7 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
         };
 
         StatefulRedisMasterReplicaConnectionImpl<K, V> connection = new StatefulRedisMasterReplicaConnectionImpl<>(
-                channelWriter, codec, redisURI.getTimeout());
+                channelWriter, codec, redisURI.getTimeout(), redisClient.getOptions().getJsonParser());
         connection.setOptions(redisClient.getOptions());
 
         CompletionStage<Void> bind = sentinelTopologyRefresh.bind(runnable);

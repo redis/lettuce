@@ -26,6 +26,14 @@ import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.Base16;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.json.JsonPath;
+import io.lettuce.core.json.JsonType;
+import io.lettuce.core.json.JsonValue;
+import io.lettuce.core.json.arguments.JsonGetArgs;
+import io.lettuce.core.json.arguments.JsonMsetArgs;
+import io.lettuce.core.json.arguments.JsonRangeArgs;
+import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
@@ -74,6 +82,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author dengliming
  * @author Andrey Shlykov
  * @author Ali Takavci
+ * @author Tihomir Mateev
  * @since 4.0
  */
 public abstract class AbstractRedisReactiveCommands<K, V>
@@ -81,11 +90,15 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
         RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
-        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V> {
+        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
     private final RedisCommandBuilder<K, V> commandBuilder;
+
+    private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
+
+    private final JsonParser parser;
 
     private final ClientResources clientResources;
 
@@ -99,9 +112,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
      * @param connection the connection to operate on.
      * @param codec the codec for command encoding.
      */
-    public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
+    public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, JsonParser parser) {
         this.connection = connection;
+        this.parser = parser;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
+        this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -120,6 +135,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         }
 
         return this.scheduler = schedulerToUse;
+    }
+
+    @Override
+    public JsonParser getJsonParser() {
+        return parser;
     }
 
     @Override
@@ -1513,6 +1533,179 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public boolean isOpen() {
         return connection.isOpen();
+    }
+
+    @Override
+    public Flux<Long> jsonArrappend(K key, JsonPath jsonPath, JsonValue... values) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrappend(key, jsonPath, values));
+    }
+
+    @Override
+    public Flux<Long> jsonArrappend(K key, JsonValue... values) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrappend(key, JsonPath.ROOT_PATH, values));
+    }
+
+    @Override
+    public Flux<Long> jsonArrindex(K key, JsonPath jsonPath, JsonValue value, JsonRangeArgs range) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrindex(key, jsonPath, value, range));
+    }
+
+    @Override
+    public Flux<Long> jsonArrindex(K key, JsonPath jsonPath, JsonValue value) {
+        final JsonRangeArgs args = JsonRangeArgs.Builder.defaults();
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrindex(key, jsonPath, value, args));
+    }
+
+    @Override
+    public Flux<Long> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue... values) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrinsert(key, jsonPath, index, values));
+    }
+
+    @Override
+    public Flux<Long> jsonArrlen(K key, JsonPath jsonPath) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrlen(key, jsonPath));
+    }
+
+    @Override
+    public Flux<Long> jsonArrlen(K key) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrlen(key, JsonPath.ROOT_PATH));
+    }
+
+    @Override
+    public Flux<JsonValue> jsonArrpop(K key, JsonPath jsonPath, int index) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrpop(key, jsonPath, index));
+    }
+
+    @Override
+    public Flux<JsonValue> jsonArrpop(K key, JsonPath jsonPath) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrpop(key, jsonPath, -1));
+    }
+
+    @Override
+    public Flux<JsonValue> jsonArrpop(K key) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrpop(key, JsonPath.ROOT_PATH, -1));
+    }
+
+    @Override
+    public Flux<Long> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrtrim(key, jsonPath, range));
+    }
+
+    @Override
+    public Mono<Long> jsonClear(K key, JsonPath jsonPath) {
+        return createMono(() -> jsonCommandBuilder.jsonClear(key, jsonPath));
+    }
+
+    @Override
+    public Mono<Long> jsonClear(K key) {
+        return createMono(() -> jsonCommandBuilder.jsonClear(key, JsonPath.ROOT_PATH));
+    }
+
+    @Override
+    public Mono<Long> jsonDel(K key, JsonPath jsonPath) {
+        return createMono(() -> jsonCommandBuilder.jsonDel(key, jsonPath));
+    }
+
+    @Override
+    public Mono<Long> jsonDel(K key) {
+        return createMono(() -> jsonCommandBuilder.jsonDel(key, JsonPath.ROOT_PATH));
+    }
+
+    @Override
+    public Flux<JsonValue> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonGet(key, options, jsonPaths));
+    }
+
+    @Override
+    public Flux<JsonValue> jsonGet(K key, JsonPath... jsonPaths) {
+        final JsonGetArgs args = JsonGetArgs.Builder.defaults();
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonGet(key, args, jsonPaths));
+    }
+
+    @Override
+    public Mono<String> jsonMerge(K key, JsonPath jsonPath, JsonValue value) {
+        return createMono(() -> jsonCommandBuilder.jsonMerge(key, jsonPath, value));
+    }
+
+    @Override
+    public Flux<JsonValue> jsonMGet(JsonPath jsonPath, K... keys) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonMGet(jsonPath, keys));
+    }
+
+    @Override
+    public Mono<String> jsonMSet(List<JsonMsetArgs<K, V>> arguments) {
+        return createMono(() -> jsonCommandBuilder.jsonMSet(arguments));
+    }
+
+    @Override
+    public Flux<Number> jsonNumincrby(K key, JsonPath jsonPath, Number number) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonNumincrby(key, jsonPath, number));
+    }
+
+    @Override
+    public Flux<V> jsonObjkeys(K key, JsonPath jsonPath) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonObjkeys(key, jsonPath));
+    }
+
+    @Override
+    public Flux<V> jsonObjkeys(K key) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonObjkeys(key, JsonPath.ROOT_PATH));
+    }
+
+    @Override
+    public Flux<Long> jsonObjlen(K key, JsonPath jsonPath) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonObjlen(key, jsonPath));
+    }
+
+    @Override
+    public Flux<Long> jsonObjlen(K key) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonObjlen(key, JsonPath.ROOT_PATH));
+    }
+
+    @Override
+    public Mono<String> jsonSet(K key, JsonPath jsonPath, JsonValue value, JsonSetArgs options) {
+        return createMono(() -> jsonCommandBuilder.jsonSet(key, jsonPath, value, options));
+    }
+
+    @Override
+    public Mono<String> jsonSet(K key, JsonPath jsonPath, JsonValue value) {
+        final JsonSetArgs args = JsonSetArgs.Builder.defaults();
+        return createMono(() -> jsonCommandBuilder.jsonSet(key, jsonPath, value, args));
+    }
+
+    @Override
+    public Flux<Long> jsonStrappend(K key, JsonPath jsonPath, JsonValue value) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrappend(key, jsonPath, value));
+    }
+
+    @Override
+    public Flux<Long> jsonStrappend(K key, JsonValue value) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrappend(key, JsonPath.ROOT_PATH, value));
+    }
+
+    @Override
+    public Flux<Long> jsonStrlen(K key, JsonPath jsonPath) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrlen(key, jsonPath));
+    }
+
+    @Override
+    public Flux<Long> jsonStrlen(K key) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrlen(key, JsonPath.ROOT_PATH));
+    }
+
+    @Override
+    public Flux<Long> jsonToggle(K key, JsonPath jsonPath) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonToggle(key, jsonPath));
+    }
+
+    @Override
+    public Flux<JsonType> jsonType(K key, JsonPath jsonPath) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonType(key, jsonPath));
+    }
+
+    @Override
+    public Flux<JsonType> jsonType(K key) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonType(key, JsonPath.ROOT_PATH));
     }
 
     @Override

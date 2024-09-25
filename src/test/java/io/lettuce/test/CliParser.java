@@ -54,11 +54,11 @@ public class CliParser {
 
                     @Override
                     public byte[] getBytes() {
-                        return name().getBytes(StandardCharsets.UTF_8);
+                        return this.toString().getBytes(StandardCharsets.UTF_8);
                     }
 
                     @Override
-                    public String name() {
+                    public String toString() {
                         return typeName;
                     }
 

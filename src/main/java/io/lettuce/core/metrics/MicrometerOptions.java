@@ -217,7 +217,7 @@ public class MicrometerOptions {
                 enabledCommands.add(enabledCommand.name());
             }
 
-            return metricsFilter(command -> enabledCommands.contains(command.getType().name()));
+            return metricsFilter(command -> enabledCommands.contains(command.getType().toString()));
         }
 
         /**

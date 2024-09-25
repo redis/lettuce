@@ -28,6 +28,7 @@ import io.lettuce.core.KillArgs;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -50,8 +51,8 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
 
-    public RedisSentinelReactiveCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
-        super(connection, codec);
+    public RedisSentinelReactiveCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, JsonParser parser) {
+        super(connection, codec, parser);
         commandBuilder = new SentinelCommandBuilder<K, V>(codec);
     }
 

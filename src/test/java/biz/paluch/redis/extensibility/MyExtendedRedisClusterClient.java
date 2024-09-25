@@ -29,6 +29,7 @@ import io.lettuce.core.cluster.ClusterPushHandler;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.StatefulRedisClusterConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -48,8 +49,9 @@ public class MyExtendedRedisClusterClient extends RedisClusterClient {
 
     @Override
     protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(
-            RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
-        return new MyRedisClusterConnection<>(channelWriter, pushHandler, codec, timeout);
+            RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout,
+            JsonParser parser) {
+        return new MyRedisClusterConnection<>(channelWriter, pushHandler, codec, timeout, parser);
     }
 
 }
