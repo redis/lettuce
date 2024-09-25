@@ -21,16 +21,16 @@ import java.io.IOException;
 public class RedisContainerIntegrationTests {
 
     public static ComposeContainer CLUSTERED_STACK = new ComposeContainer(
-            new File("src/test/resources/docker/docker-compose.yml")).withExposedService("clustered-stack", 26379)
-                    .withExposedService("clustered-stack", 26380).withExposedService("clustered-stack", 26381)
-                    .withExposedService("clustered-stack", 26382).withExposedService("clustered-stack", 26383)
-                    .withExposedService("clustered-stack", 26384).withExposedService("standalone-stack", 6379);
+            new File("src/test/resources/docker/docker-compose.yml")).withExposedService("clustered-stack", 36379)
+                    .withExposedService("clustered-stack", 36380).withExposedService("clustered-stack", 36381)
+                    .withExposedService("clustered-stack", 36382).withExposedService("clustered-stack", 36383)
+                    .withExposedService("clustered-stack", 36384).withExposedService("standalone-stack", 6379);
 
     @BeforeAll
     public static void setup() throws IOException, InterruptedException {
         // In case you need to debug the container uncomment these lines to redirect the output
-        // CLUSTERED_STACK.withLogConsumer("clustered-stack", new SystemOutputConsumer("clustered"));
-        // CLUSTERED_STACK.withLogConsumer("standalone-stack", new SystemOutputConsumer("standalone"));
+        CLUSTERED_STACK.withLogConsumer("clustered-stack", new SystemOutputConsumer("clustered"));
+        CLUSTERED_STACK.withLogConsumer("standalone-stack", new SystemOutputConsumer("standalone"));
 
         CLUSTERED_STACK.waitingFor("clustered-stack",
                 Wait.forLogMessage(".*Background RDB transfer terminated with success.*", 1));
