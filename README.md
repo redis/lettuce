@@ -1,12 +1,16 @@
 <img src="https://avatars2.githubusercontent.com/u/25752188?v=4" width="50" height="50"> Lettuce - Advanced Java Redis client
 ===============================
 
- [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core)
- [![Javadocs](https://www.javadoc.io/badge/io.lettuce/lettuce-core.svg)](https://www.javadoc.io/doc/io.lettuce/lettuce-core)
- [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.txt)
  [![Integration](https://github.com/redis/lettuce/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/redis/lettuce/actions/workflows/integration.yml)
  [![codecov](https://codecov.io/gh/redis/lettuce/branch/main/graph/badge.svg?token=pAstxAAjYo)](https://codecov.io/gh/redis/lettuce)
- [![Discord](https://img.shields.io/discord/697882427875393627?style=flat-square)](https://discord.gg/redis)
+ [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.txt)
+ [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core)
+ [![Javadocs](https://www.javadoc.io/badge/io.lettuce/lettuce-core.svg)](https://www.javadoc.io/doc/io.lettuce/lettuce-core)
+
+[![Discord](https://img.shields.io/discord/697882427875393627.svg?style=social&logo=discord)](https://discord.gg/redis)
+[![Twitch](https://img.shields.io/twitch/status/redisinc?style=social)](https://www.twitch.tv/redisinc)
+[![YouTube](https://img.shields.io/youtube/channel/views/UCD78lHSwYqMlyetR0_P4Vig?style=social)](https://www.youtube.com/redisinc)
+[![Twitter](https://img.shields.io/twitter/follow/redisinc?style=social)](https://twitter.com/redisinc)
 
 Lettuce is a scalable thread-safe Redis client for synchronous,
 asynchronous and reactive usage. Multiple threads may share one connection if they avoid blocking and transactional
@@ -42,16 +46,6 @@ See the [reference documentation](https://redis.github.io/lettuce/) and [API Ref
 [Join the Redis community](https://redis.com/community/)
 
 [Work at Redis](https://redis.com/company/careers/jobs/)
-
-Communication
----------------
-
-* [GitHub Discussions](https://github.com/redis/lettuce/discussions) (Q&A, Ideas, General discussion)
-* Stack Overflow (Questions): [https://stackoverflow.com/questions/tagged/lettuce](https://stackoverflow.com/questions/tagged/lettuce)
-* Discord: [![Discord](https://img.shields.io/discord/697882427875393627.svg?style=social&logo=discord)](https://discord.gg/redis)
-* Twitter: [![Twitter](https://img.shields.io/twitter/follow/redisinc?style=social)](https://twitter.com/redisinc)
-* [GitHub Issues](https://github.com/redis/lettuce/issues) (Bug reports, feature requests)
-
 
 Documentation
 ---------------

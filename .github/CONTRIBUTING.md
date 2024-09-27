@@ -1,6 +1,6 @@
 # Contributing to Lettuce
 
-Lettuce is released under the Apache 2.0 license. If you would like to contribute something, or simply want to hack on the code this document should help you get started.
+Lettuce is released under the MIT license. If you would like to contribute something, or simply want to hack on the code this document should help you get started.
 
 ## Code of Conduct
 

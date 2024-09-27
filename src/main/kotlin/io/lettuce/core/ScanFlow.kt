@@ -82,7 +82,7 @@ object ScanFlow {
      * @param key the key.
      * @param scanArgs scan arguments.
      * @return `Flow<KeyValue<K, V>>` flow of key-values.
-     * @since 7.0
+     * @since 6.4
      */
     fun <K : Any, V : Any> hscanNovalues(commands: RedisHashCoroutinesCommands<K, V>, key: K, scanArgs: ScanArgs? = null): Flow<K> {
         val ops = when (commands) {
