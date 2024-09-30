@@ -39,7 +39,7 @@ class RedisJsonCommandBuilderUnitTests {
 
     public static final String ID_BIKE_6 = "{\"id\":\"bike6\"}";
 
-    public static final JsonParser PARSER = DefaultJsonParser.INSTANCE;
+    public static final JsonParser PARSER = new DefaultJsonParser();
 
     public static final JsonValue ELEMENT = PARSER.createJsonValue(ID_BIKE_6);
 

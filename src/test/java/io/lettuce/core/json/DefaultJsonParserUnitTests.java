@@ -23,7 +23,7 @@ class DefaultJsonParserUnitTests {
     void loadJsonValue() {
         final String unprocessed = "{\"a\":1,\"b\":2}";
 
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         JsonValue jsonValue = parser.loadJsonValue(ByteBuffer.wrap(unprocessed.getBytes()));
 
         assertThat(jsonValue).isNotNull();
@@ -35,7 +35,7 @@ class DefaultJsonParserUnitTests {
     void createJsonValue() {
         final String unprocessed = "\"someValue\"";
 
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         JsonValue jsonValue = parser.createJsonValue(ByteBuffer.wrap(unprocessed.getBytes()));
 
         assertThat(jsonValue).isNotNull();
@@ -47,14 +47,14 @@ class DefaultJsonParserUnitTests {
     void createJsonObject() {
         final String unprocessed = "{\"a\":1,\"b\":2}";
 
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         JsonValue jsonValue = parser.createJsonObject();
 
         assertThat(jsonValue).isNotNull();
         assertThat(jsonValue.isJsonObject()).isTrue();
         assertThat(jsonValue.asJsonObject().size()).isZero();
 
-        parser = DefaultJsonParser.INSTANCE;
+        parser = new DefaultJsonParser();
         jsonValue = parser.createJsonValue(ByteBuffer.wrap(unprocessed.getBytes()));
 
         assertThat(jsonValue).isNotNull();
@@ -72,7 +72,7 @@ class DefaultJsonParserUnitTests {
 
     @Test
     void createJsonArray() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         JsonValue jsonValue = parser.createJsonArray();
 
         assertThat(jsonValue).isNotNull();
@@ -93,7 +93,7 @@ class DefaultJsonParserUnitTests {
     void parsingIssues() {
         final String unprocessed = "{a\":1,\"b\":2}";
 
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
 
         assertThatThrownBy(() -> parser.createJsonValue(unprocessed)).isInstanceOf(RedisJsonException.class);
         assertThatThrownBy(() -> parser.createJsonValue(ByteBuffer.wrap(unprocessed.getBytes())))

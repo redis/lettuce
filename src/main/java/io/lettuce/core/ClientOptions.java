@@ -22,10 +22,11 @@ package io.lettuce.core;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.json.DefaultJsonParser;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
 import io.lettuce.core.protocol.DecodeBufferPolicy;
@@ -70,8 +71,6 @@ public class ClientOptions implements Serializable {
     public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
 
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.enabled();
-
-    public static final JsonParser DEFAULT_JSON_PARSER = DefaultJsonParser.INSTANCE;
 
     private final boolean autoReconnect;
 
@@ -192,7 +191,7 @@ public class ClientOptions implements Serializable {
 
         private Charset scriptCharset = DEFAULT_SCRIPT_CHARSET;
 
-        private JsonParser jsonParser = DEFAULT_JSON_PARSER;
+        private JsonParser jsonParser;
 
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
 
@@ -203,6 +202,8 @@ public class ClientOptions implements Serializable {
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
 
         protected Builder() {
+            Iterator<JsonParser> services = ServiceLoader.load(JsonParser.class).iterator();
+            jsonParser = services.hasNext() ? services.next() : null;
         }
 
         /**

@@ -1,11 +1,9 @@
 Lettuce 6.4.0 RELEASE NOTES
 ==============================
 
-The Redis team is delighted to announce general availability of Lettuce 6.4.
+The Redis team is delighted to announce the general availability of Lettuce 6.5.
 
-This Lettuce driver is now going to be shipped under the MIT licensing scheme. The `CLIENT SETINFO`
-is now working in a fire-and-forget mode to allow better compatibility with Redis servers that do
-not support this command.
+Great news everybody! Lettuce 6.5.0 comes with RedisJSON support enabled. For more on that please consult with the [RedisJSON documentation](https://redis.io/docs/latest/develop/data-types/json/) and the . 
 
 Lettuce 6 supports Redis 2.6+ up to Redis 7.x. In terms of Java runtime, Lettuce requires
 at least Java 8 and works with Java 21.
