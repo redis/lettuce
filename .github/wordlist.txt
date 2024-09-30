@@ -251,3 +251,5 @@ unix
 uring
 whitespace
 xml
+RedisJSON
+MkDocs

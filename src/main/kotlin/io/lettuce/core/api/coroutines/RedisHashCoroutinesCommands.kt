@@ -190,7 +190,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @return KeyScanCursor<K> key scan cursor.
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hscanNovalues(key: K): KeyScanCursor<K>?
 
@@ -209,7 +209,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor<K> key scan cursor.
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hscanNovalues(key: K, scanArgs: ScanArgs): KeyScanCursor<K>?
 
@@ -230,7 +230,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param scanCursor cursor to resume from a previous scan, must not be `null`.
      * @param scanArgs scan arguments.
      * @return KeyScanCursor<K> key scan cursor.
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hscanNovalues(key: K, scanCursor: ScanCursor, scanArgs: ScanArgs): KeyScanCursor<K>?
 
@@ -249,7 +249,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @param scanCursor cursor to resume from a previous scan, must not be `null`.
      * @return KeyScanCursor<K> key scan cursor.
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hscanNovalues(key: K, scanCursor: ScanCursor): KeyScanCursor<K>?
 
@@ -317,7 +317,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpire(key: K, seconds: Long, vararg fields: K): List<Long>
 
@@ -332,7 +332,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpire(key: K, seconds: Long, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -346,7 +346,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpire(key: K, seconds: Duration, vararg fields: K): List<Long>
 
@@ -361,7 +361,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -375,7 +375,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpireat(key: K, timestamp: Long, vararg fields: K): List<Long>
 
@@ -390,7 +390,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -404,7 +404,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpireat(key: K, timestamp: Date, vararg fields: K): List<Long>
 
@@ -419,7 +419,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -433,7 +433,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpireat(key: K, timestamp: Instant, vararg fields: K): List<Long>
 
@@ -448,7 +448,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -459,7 +459,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param fields one or more fields to get the TTL for.
      * @return a list of [Long] values for each of the fields provided: expiration time as a UNIX timestamp in seconds;
      *         `-1` indicating the field has no expiry time set; `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hexpiretime(key: K, vararg fields: K): List<Long>
 
@@ -470,7 +470,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param fields one or more fields to remove the TTL for.
      * @return a list of [Long] values for each of the fields provided: `1` indicating expiration time is removed;
      *         `-1` field has no expiration time to be removed; `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpersist(key: K, vararg fields: K): List<Long>
 
@@ -484,7 +484,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpire(key: K, milliseconds: Long, vararg fields: K): List<Long>
 
@@ -499,7 +499,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -513,7 +513,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpire(key: K, milliseconds: Duration, vararg fields: K): List<Long>
 
@@ -528,7 +528,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -542,7 +542,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpireat(key: K, timestamp: Long, vararg fields: K): List<Long>
 
@@ -557,7 +557,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpireat(key: K, timestamp: Long, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -571,7 +571,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpireat(key: K, timestamp: Date, vararg fields: K): List<Long>
 
@@ -586,7 +586,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpireat(key: K, timestamp: Date, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -600,7 +600,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpireat(key: K, timestamp: Instant, vararg fields: K): List<Long>
 
@@ -615,7 +615,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpireat(key: K, timestamp: Instant, expireArgs: ExpireArgs, vararg fields: K): List<Long>
 
@@ -626,7 +626,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param fields one or more fields to get the TTL for.
      * @return a list of [Long] values for each of the fields provided: expiration time as a UNIX timestamp in milliseconds;
      *         `-1` indicating the field has no expiry time set; `-2` indicating there is no such field
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpexpiretime(key: K, vararg fields: K): List<Long>
 
@@ -638,7 +638,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @return a list of [Long] values for each of the fields provided: the time to live in seconds; or a negative value in
      *         order to signal an error. The command returns `-1` if the key exists but has no associated expiration time.
      *         The command returns `-2` if the key does not exist.
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun httl(key: K, vararg fields: K): List<Long>
 
@@ -650,7 +650,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @return a list of [Long] values for each of the fields provided: the time to live in milliseconds; or a negative
      *         value in order to signal an error. The command returns `-1` if the key exists but has no associated
      *         expiration time. The command returns `-2` if the key does not exist.
-     * @since 7.0
+     * @since 6.4
      */
     suspend fun hpttl(key: K, vararg fields: K): List<Long>
 

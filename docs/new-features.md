@@ -1,5 +1,12 @@
 # New & Noteworthy
 
+## What’s new in Lettuce 6.5
+
+- [RedisJSON support](user-guide/redis-json.md) through `RedisJSONCommands` and the respective reactive, async and Kotlin APIs
+- Complete support for all `CLUSTER` commands (added `CLUSTER MYSHARDID` and `CLUSTER LINKS`)
+- Added support for the `CLIENT TRACKING` command
+- Migrated the documentation to [MkDocs](https://www.mkdocs.org/)
+
 ## What’s new in Lettuce 6.4
 
 - [Hash Field Expiration](https://redis.io/docs/latest/develop/data-types/hashes/#field-expiration) is now fully supported
