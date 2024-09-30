@@ -7,19 +7,20 @@ The driver generally allows three distinct ways of working with the RedisJSON mo
 * (Advanced mode) - custom JSON parsing using a user-provided JSON parser
 * (Power-user mode) - unprocessed JSON documents that have not gone through any process of deserialization or serialization
 
-> [!IMPORTANT]\
-> In all the above modes, the driver would refrain from processing the JSON document in the main event loop and instead
-delegate this to the user thread. This behaviour is consistent when both receiving and sending JSON documents - when
-receiving the parsing is done lazily whenever a method is called that requires the JSON to be parsed; when sending the
-JSON is serialized immediately after it is passed to any of the commands, but before dispatching the command to the
-event loop.
+!!! NOTE
+    In all the above modes, the driver would refrain from processing the JSON document in the main event loop and instead
+    delegate this to the user thread. This behaviour is consistent when both receiving and sending JSON documents - when
+    receiving the parsing is done lazily whenever a method is called that requires the JSON to be parsed; when sending the
+    JSON is serialized immediately after it is passed to any of the commands, but before dispatching the command to the
+    event loop.
 
 
 ## Default mode
 Best for:
+
 * Most typical use-cases where the JSON document is parsed and processed
 
-### Example usage:
+### Example usage
 
 ```java
 RedisURI redisURI = RedisURI.Builder.redis("acme.com").build();
@@ -52,9 +53,10 @@ try (StatefulRedisConnection<ByteBuffer, ByteBuffer> connect = redisClient.conne
 
 ## Advanced mode
 Best for:
+
 * Applications that want to handle parsing manually - either by using another library or by implementing their own parser
 
-### Example usage:
+### Example usage
 
 ```java
 RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
@@ -68,9 +70,10 @@ try (RedisClient client = RedisClient.create(redisURI)) {
 
 ## Power-user mode
 Best for:
+
 * Applications that do little to no processing on the Java layer
 
-### Example usage:
+### Example usage   
 
 ```java
 JsonPath myPath = JsonPath.of("$..mountain_bikes");
