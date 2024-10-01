@@ -4,7 +4,8 @@
  [![Integration](https://github.com/redis/lettuce/actions/workflows/integration.yml/badge.svg?branch=main)](https://github.com/redis/lettuce/actions/workflows/integration.yml)
  [![codecov](https://codecov.io/gh/redis/lettuce/branch/main/graph/badge.svg?token=pAstxAAjYo)](https://codecov.io/gh/redis/lettuce)
  [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE.txt)
- [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core)
+ [![Maven Central](https://img.shields.io/maven-central/v/io.lettuce/lettuce-core?versionSuffix=RELEASE&logo=redis
+ )](https://maven-badges.herokuapp.com/maven-central/io.lettuce/lettuce-core)
  [![Javadocs](https://www.javadoc.io/badge/io.lettuce/lettuce-core.svg)](https://www.javadoc.io/doc/io.lettuce/lettuce-core)
 
 [![Discord](https://img.shields.io/discord/697882427875393627.svg?style=social&logo=discord)](https://discord.gg/redis)
@@ -35,17 +36,15 @@ See the [reference documentation](https://redis.github.io/lettuce/) and [API Ref
 
 ## How do I Redis?
 
-[Learn for free at Redis University](https://university.redis.com/)
+[Learn for free at Redis University](https://university.redis.io/academy)
 
-[Build faster with the Redis Launchpad](https://launchpad.redis.com/)
+[Try the Redis Cloud](https://redis.io/try-free/)
 
-[Try the Redis Cloud](https://redis.com/try-free/)
+[Dive in developer tutorials](https://redis.io/learn/)
 
-[Dive in developer tutorials](https://developer.redis.com/)
+[Join the Redis community](https://redis.io/community/)
 
-[Join the Redis community](https://redis.com/community/)
-
-[Work at Redis](https://redis.com/company/careers/jobs/)
+[Work at Redis](https://redis.io/careers/jobs/)
 
 Documentation
 ---------------
