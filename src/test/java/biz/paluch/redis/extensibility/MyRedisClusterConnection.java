@@ -26,6 +26,7 @@ import io.lettuce.core.cluster.ClusterPushHandler;
 import io.lettuce.core.cluster.StatefulRedisClusterConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonParser;
+import reactor.core.publisher.Mono;
 
 /**
  * Demo code for extending a @{@link StatefulRedisClusterConnectionImpl}
@@ -36,7 +37,7 @@ import io.lettuce.core.json.JsonParser;
 class MyRedisClusterConnection<K, V> extends StatefulRedisClusterConnectionImpl<K, V> {
 
     public MyRedisClusterConnection(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
-            Duration timeout, JsonParser parser) {
+            Duration timeout, Mono<JsonParser> parser) {
         super(writer, pushHandler, codec, timeout, parser);
     }
 

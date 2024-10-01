@@ -98,7 +98,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
 
-    private final JsonParser parser;
+    private final Mono<JsonParser> parser;
 
     private final ClientResources clientResources;
 
@@ -112,7 +112,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
      * @param connection the connection to operate on.
      * @param codec the codec for command encoding.
      */
-    public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, JsonParser parser) {
+    public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, Mono<JsonParser> parser) {
         this.connection = connection;
         this.parser = parser;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
@@ -139,7 +139,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     @Override
     public JsonParser getJsonParser() {
-        return parser;
+        return parser.block();
     }
 
     @Override

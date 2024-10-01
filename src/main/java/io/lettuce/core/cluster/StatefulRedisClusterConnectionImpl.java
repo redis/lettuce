@@ -58,6 +58,7 @@ import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisCommand;
+import reactor.core.publisher.Mono;
 
 /**
  * A thread-safe connection to a Redis Cluster. Multiple threads may share one {@link StatefulRedisClusterConnectionImpl}
@@ -75,7 +76,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     protected final RedisCodec<K, V> codec;
 
-    protected final JsonParser parser;
+    protected final Mono<JsonParser> parser;
 
     protected final RedisAdvancedClusterCommands<K, V> sync;
 
@@ -96,7 +97,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      * @param timeout Maximum time to wait for a response.
      */
     public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
-            Duration timeout, JsonParser parser) {
+            Duration timeout, Mono<JsonParser> parser) {
 
         super(writer, timeout);
         this.pushHandler = pushHandler;

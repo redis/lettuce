@@ -64,6 +64,7 @@ import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionIntent;
+import reactor.core.publisher.Mono;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
@@ -87,11 +88,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
      * @deprecated since 5.1, use
-     *             {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec, JsonParser)}.
+     *             {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
      */
     @Deprecated
     public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec,
-            JsonParser parser) {
+            Mono<JsonParser> parser) {
         super(connection, codec, parser);
         this.codec = codec;
     }
@@ -103,7 +104,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * @param codec Codec used to encode/decode keys and values.
      */
     public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec,
-            JsonParser parser) {
+            Mono<JsonParser> parser) {
         super(connection, codec, parser);
         this.codec = codec;
     }

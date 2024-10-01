@@ -51,7 +51,8 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
 
     private final SentinelCommandBuilder<K, V> commandBuilder;
 
-    public RedisSentinelReactiveCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, JsonParser parser) {
+    public RedisSentinelReactiveCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec,
+            Mono<JsonParser> parser) {
         super(connection, codec, parser);
         commandBuilder = new SentinelCommandBuilder<K, V>(codec);
     }

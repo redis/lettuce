@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -579,7 +580,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
 
         try (RedisClient client = RedisClient.create(redisURI)) {
-            client.setOptions(ClientOptions.builder().jsonParser(new CustomParser()).build());
+            client.setOptions(ClientOptions.builder().jsonParser(Mono.just(new CustomParser())).build());
             StatefulRedisConnection<String, String> connection = client.connect(StringCodec.UTF8);
             RedisCommands<String, String> redis = connection.sync();
             assertThat(redis.getJsonParser()).isInstanceOf(CustomParser.class);
