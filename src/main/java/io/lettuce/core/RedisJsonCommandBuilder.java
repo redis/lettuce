@@ -186,7 +186,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     Command<K, V, List<JsonValue>> jsonMGet(JsonPath jsonPath, K... keys) {
-        notEmpty(keys);parser.block()
+        notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
 
