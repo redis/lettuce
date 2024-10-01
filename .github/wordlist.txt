@@ -270,3 +270,5 @@ hdrhistogram
 bom
 ubuntu
 behaviour
+databind
+jackson
