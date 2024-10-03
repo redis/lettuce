@@ -30,13 +30,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.internal.LettuceAssert;
@@ -477,6 +481,13 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
             Tracer.Span span = tracer.nextSpan(context);
             span.name(command.getType().name());
+
+            String redisUriStr = ctx.channel().attr(ConnectionBuilder.REDIS_URI).get();
+            RedisURI redisURI = RedisURI.create(redisUriStr);
+            span.tag("db.uri", redisURI.toString());
+            span.tag("db.number", String.valueOf(redisURI.getDatabase()));
+            span.tag("db.user", Optional.ofNullable(redisURI.getCredentialsProvider().resolveCredentials().block())
+                    .map(RedisCredentials::getUsername).orElse(""));
 
             if (tracedEndpoint != null) {
                 span.remoteEndpoint(tracedEndpoint);
