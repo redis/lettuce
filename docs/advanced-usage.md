@@ -201,7 +201,6 @@ events are emitted by default every 10 minutes. Event publishing can be
 disabled by setting <code>commandLatencyPublisherOptions(…)</code> to
 <code>DefaultEventPublisherOptions.disabled()</code>.</td>
 </tr>
-
 <tr>
 <td><strong>DNS Resolver</strong></td>
 <td><code>dnsResolver</code></td>
@@ -235,7 +234,7 @@ netty's <code>AddressResolver</code> that resolves DNS names on
 <code>io.netty.resolver.DefaultAddressResolverGroup#INSTANCE</code> if <code>netty-dns-resolver</code>
 is not available, otherwise defaults to <code>io.netty.resolver.dns.DnsAddressResolverGroup</code></p>
 <p>Users of DNS-based Redis-HA setups (e.g. AWS ElastiCache) might want to configure a different DNS 
-resolver. For example: <pre>
+resolver group. For example: <pre>
 DnsNameResolverBuilder builder = new DnsNameResolverBuilder();
 builder.resolveCache(NoopDnsCache.INSTANCE);
 builder.cnameCache(NoopDnsCnameCache.INSTANCE);
