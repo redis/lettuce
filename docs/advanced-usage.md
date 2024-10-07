@@ -235,12 +235,13 @@ netty's <code>AddressResolver</code> that resolves DNS names on
 is not available, otherwise defaults to <code>io.netty.resolver.dns.DnsAddressResolverGroup</code></p>
 <p>Users of DNS-based Redis-HA setups (e.g. AWS ElastiCache) might want to configure a different DNS 
 resolver group. For example: <pre>
-DnsNameResolverBuilder builder = new DnsNameResolverBuilder();
-builder.resolveCache(NoopDnsCache.INSTANCE);
-builder.cnameCache(NoopDnsCnameCache.INSTANCE);
-builder.authoritativeDnsServerCache(NoopAuthoritativeDnsServerCache.INSTANCE);
-builder.consolidateCacheSize(0);
-new DnsAddressResolverGroup(builder);
+new DnsAddressResolverGroup(
+	new DnsNameResolverBuilder()
+		.resolveCache(NoopDnsCache.INSTANCE)
+		.cnameCache(NoopDnsCnameCache.INSTANCE)
+		.authoritativeDnsServerCache(NoopAuthoritativeDnsServerCache.INSTANCE)
+		.consolidateCacheSize(0)
+);
 </pre></p>
 </td>
 </tr>
