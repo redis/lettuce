@@ -482,12 +482,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             Tracer.Span span = tracer.nextSpan(context);
             span.name(command.getType().name());
 
-            String redisUriStr = ctx.channel().attr(ConnectionBuilder.REDIS_URI).get();
-            RedisURI redisURI = RedisURI.create(redisUriStr);
-            span.tag("db.uri", redisURI.toString());
-            span.tag("db.number", String.valueOf(redisURI.getDatabase()));
-            span.tag("db.user", Optional.ofNullable(redisURI.getCredentialsProvider().resolveCredentials().block())
-                    .map(RedisCredentials::getUsername).orElse(""));
+            if (channel.hasAttr(ConnectionBuilder.REDIS_URI)) {
+                String redisUriStr = channel.attr(ConnectionBuilder.REDIS_URI).get();
+                RedisURI redisURI = RedisURI.create(redisUriStr);
+                span.tag("server.address", redisURI.toString());
+                span.tag("db.namespace", String.valueOf(redisURI.getDatabase()));
+            }
 
             if (tracedEndpoint != null) {
                 span.remoteEndpoint(tracedEndpoint);
