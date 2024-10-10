@@ -31,6 +31,7 @@ import io.lettuce.core.cluster.StatefulRedisClusterConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.resource.ClientResources;
+import reactor.core.publisher.Mono;
 
 /**
  * Demo code for extending a RedisClusterClient.
@@ -50,7 +51,7 @@ public class MyExtendedRedisClusterClient extends RedisClusterClient {
     @Override
     protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(
             RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout,
-            JsonParser parser) {
+            Mono<JsonParser> parser) {
         return new MyRedisClusterConnection<>(channelWriter, pushHandler, codec, timeout, parser);
     }
 

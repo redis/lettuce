@@ -18,7 +18,7 @@ class DelegateJsonObjectUnitTests {
 
     @Test
     void put() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonObject underTest = new DelegateJsonObject();
 
         underTest.put("test", parser.createJsonValue("\"test\"")).put("test2", parser.createJsonValue("1")).put("test2",
@@ -31,7 +31,7 @@ class DelegateJsonObjectUnitTests {
 
     @Test
     void remove() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonObject underTest = new DelegateJsonObject();
 
         underTest.put("test", parser.createJsonValue("\"test\"")).put("test2", parser.createJsonValue("1")).remove("test");

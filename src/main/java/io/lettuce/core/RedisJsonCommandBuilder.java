@@ -20,6 +20,7 @@ import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -33,9 +34,9 @@ import static io.lettuce.core.protocol.CommandType.*;
  */
 class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
-    private final JsonParser parser;
+    private final Mono<JsonParser> parser;
 
-    RedisJsonCommandBuilder(RedisCodec<K, V> codec, JsonParser theParser) {
+    RedisJsonCommandBuilder(RedisCodec<K, V> codec, Mono<JsonParser> theParser) {
         super(codec);
         parser = theParser;
     }
@@ -117,7 +118,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             }
         }
 
-        return createCommand(JSON_ARRPOP, new JsonValueListOutput<>(codec, parser), args);
+        return createCommand(JSON_ARRPOP, new JsonValueListOutput<>(codec, parser.block()), args);
     }
 
     Command<K, V, List<Long>> jsonArrtrim(K key, JsonPath jsonPath, JsonRangeArgs range) {
@@ -166,7 +167,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             }
         }
 
-        return createCommand(JSON_GET, new JsonValueListOutput<>(codec, parser), args);
+        return createCommand(JSON_GET, new JsonValueListOutput<>(codec, parser.block()), args);
     }
 
     Command<K, V, String> jsonMerge(K key, JsonPath jsonPath, JsonValue value) {
@@ -193,7 +194,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             args.add(jsonPath.toString());
         }
 
-        return createCommand(JSON_MGET, new JsonValueListOutput<>(codec, parser), args);
+        return createCommand(JSON_MGET, new JsonValueListOutput<>(codec, parser.block()), args);
     }
 
     Command<K, V, String> jsonMSet(List<JsonMsetArgs<K, V>> arguments) {

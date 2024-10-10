@@ -7,19 +7,24 @@ The driver generally allows three distinct ways of working with the RedisJSON mo
 * (Advanced mode) - custom JSON parsing using a user-provided JSON parser
 * (Power-user mode) - unprocessed JSON documents that have not gone through any process of deserialization or serialization
 
-> [!IMPORTANT]\
-> In all the above modes, the driver would refrain from processing the JSON document in the main event loop and instead
-delegate this to the user thread. This behaviour is consistent when both receiving and sending JSON documents - when
-receiving the parsing is done lazily whenever a method is called that requires the JSON to be parsed; when sending the
-JSON is serialized immediately after it is passed to any of the commands, but before dispatching the command to the
-event loop.
+!!! INFO
+    In all the above modes, the driver would refrain from processing the JSON document in the main event loop and instead
+    delegate this to the user thread. This behaviour is consistent when both receiving and sending JSON documents - when
+    receiving the parsing is done lazily whenever a method is called that requires the JSON to be parsed; when sending the
+    JSON is serialized immediately after it is passed to any of the commands, but before dispatching the command to the
+    event loop.
 
+!!! WARNING
+    Unless you are using a custom JSON parser you would need to add a dependency to the 
+    [jackson-databind](https://github.com/FasterXML/jackson-databind) library in your project. This is because the
+    default JSON parser uses Jackson to parse JSON documents to and from string representations.
 
 ## Default mode
 Best for:
+
 * Most typical use-cases where the JSON document is parsed and processed
 
-### Example usage:
+### Example usage
 
 ```java
 RedisURI redisURI = RedisURI.Builder.redis("acme.com").build();
@@ -52,25 +57,29 @@ try (StatefulRedisConnection<ByteBuffer, ByteBuffer> connect = redisClient.conne
 
 ## Advanced mode
 Best for:
+
 * Applications that want to handle parsing manually - either by using another library or by implementing their own parser
 
-### Example usage:
+### Example usage
 
 ```java
 RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
 
 try (RedisClient client = RedisClient.create(redisURI)) {
-    client.setOptions(ClientOptions.builder().jsonParser(new CustomParser()).build());
+    client.setOptions(ClientOptions.builder().jsonParser(Mono.just(new CustomParser())).build());
     StatefulRedisConnection<String, String> connection = client.connect(StringCodec.UTF8);
     RedisCommands<String, String> redis = connection.sync();
 }
 ```
 
+
+
 ## Power-user mode
 Best for:
+
 * Applications that do little to no processing on the Java layer
 
-### Example usage:
+### Example usage   
 
 ```java
 JsonPath myPath = JsonPath.of("$..mountain_bikes");
@@ -85,3 +94,6 @@ try (RedisClient client = RedisClient.create(redisURI)) {
     String result = stage.toCompletableFuture().get().get();
 }    
 ```
+!!! NOTE
+    The power-user mode is not exclusive to using a custom parser (Advanced mode), as long as the custom parser follows
+    the API contract of the `JsonParser`, `JsonValue`, `JsonArray` and `JsonObject` interfaces.

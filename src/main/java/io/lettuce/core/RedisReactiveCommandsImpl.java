@@ -5,6 +5,7 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonParser;
+import reactor.core.publisher.Mono;
 
 /**
  * A reactive and thread-safe API for a Redis Sentinel connection.
@@ -23,7 +24,8 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
      * @param codec the codec for command encoding.
      *
      */
-    public RedisReactiveCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec, JsonParser parser) {
+    public RedisReactiveCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec,
+            Mono<JsonParser> parser) {
         super(connection, codec, parser);
     }
 

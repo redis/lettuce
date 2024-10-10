@@ -21,7 +21,7 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void add() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonArray underTest = new DelegateJsonArray();
         underTest.add(parser.createJsonValue("\"test\"")).add(parser.createJsonValue("\"test2\""))
                 .add(parser.createJsonValue("\"test3\""));
@@ -37,7 +37,7 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void addCornerCases() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonArray underTest = new DelegateJsonArray();
         underTest.add(null).add(parser.createJsonValue("null")).add(parser.createJsonValue("\"test3\""));
 
@@ -52,7 +52,7 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void getCornerCases() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonArray underTest = new DelegateJsonArray();
         underTest.add(parser.createJsonValue("\"test\"")).add(parser.createJsonValue("\"test2\""))
                 .add(parser.createJsonValue("\"test3\""));
@@ -63,7 +63,7 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void addAll() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonArray array = new DelegateJsonArray();
         array.add(parser.createJsonValue("\"test\"")).add(parser.createJsonValue("\"test2\""))
                 .add(parser.createJsonValue("\"test3\""));
@@ -83,7 +83,7 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void asList() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonArray underTest = new DelegateJsonArray();
         underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2")).add(parser.createJsonValue("3"));
 
@@ -95,7 +95,7 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void getFirst() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonArray underTest = new DelegateJsonArray();
         underTest.add(parser.createJsonValue("\"test\"")).add(parser.createJsonValue("\"test2\""))
                 .add(parser.createJsonValue("\"test3\""));
@@ -107,7 +107,7 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void iterator() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonArray underTest = new DelegateJsonArray();
         underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2")).add(parser.createJsonValue("3"));
 
@@ -120,7 +120,7 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void remove() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonArray underTest = new DelegateJsonArray();
         underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2")).add(parser.createJsonValue("3"));
 
@@ -132,7 +132,7 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void replace() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonArray underTest = new DelegateJsonArray();
         underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2")).add(parser.createJsonValue("3"));
         underTest.replace(1, parser.createJsonValue("4"));

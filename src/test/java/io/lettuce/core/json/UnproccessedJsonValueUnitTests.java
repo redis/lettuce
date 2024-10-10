@@ -38,7 +38,7 @@ class UnproccessedJsonValueUnitTests {
         final String unprocessed = "{\"a\":1,\"b\":2}";
         final String modified = "{\"a\":1}";
 
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         ByteBuffer buffer = ByteBuffer.wrap(unprocessed.getBytes());
         UnproccessedJsonValue underTest = new UnproccessedJsonValue(buffer, parser);
 
@@ -55,7 +55,7 @@ class UnproccessedJsonValueUnitTests {
 
     @Test
     void asTextual() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         ByteBuffer buffer = ByteBuffer.wrap("\"textual\"".getBytes());
         UnproccessedJsonValue underTest = new UnproccessedJsonValue(buffer, parser);
 
@@ -72,7 +72,7 @@ class UnproccessedJsonValueUnitTests {
     @Test
     void asNull() {
 
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         ByteBuffer buffer = ByteBuffer.wrap("null".getBytes());
         UnproccessedJsonValue underTest = new UnproccessedJsonValue(buffer, parser);
 
@@ -88,7 +88,7 @@ class UnproccessedJsonValueUnitTests {
     @Test
     void asNumber() {
 
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         ByteBuffer buffer = ByteBuffer.wrap("1".getBytes());
         UnproccessedJsonValue underTest = new UnproccessedJsonValue(buffer, parser);
 
@@ -105,7 +105,7 @@ class UnproccessedJsonValueUnitTests {
     @Test
     void asBoolean() {
 
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         ByteBuffer buffer = ByteBuffer.wrap("true".getBytes());
         UnproccessedJsonValue underTest = new UnproccessedJsonValue(buffer, parser);
 
@@ -122,7 +122,7 @@ class UnproccessedJsonValueUnitTests {
     @Test
     void asArray() {
 
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         ByteBuffer buffer = ByteBuffer.wrap("[1,2,3,4]".getBytes());
         UnproccessedJsonValue underTest = new UnproccessedJsonValue(buffer, parser);
 

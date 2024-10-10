@@ -40,6 +40,7 @@ import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.output.MultiOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import reactor.core.publisher.Mono;
 
 /**
  * A thread-safe connection to a Redis server. Multiple threads may share one {@link StatefulRedisConnectionImpl}
@@ -65,7 +66,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     private final PushHandler pushHandler;
 
-    private final JsonParser parser;
+    private final Mono<JsonParser> parser;
 
     protected MultiOutput<K, V> multi;
 
@@ -78,7 +79,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * @param timeout Maximum time to wait for a response.
      */
     public StatefulRedisConnectionImpl(RedisChannelWriter writer, PushHandler pushHandler, RedisCodec<K, V> codec,
-            Duration timeout, JsonParser parser) {
+            Duration timeout, Mono<JsonParser> parser) {
 
         super(writer, timeout);
 

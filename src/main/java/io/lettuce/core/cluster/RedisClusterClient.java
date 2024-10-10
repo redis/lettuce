@@ -576,12 +576,13 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param pushHandler the handler for push notifications
      * @param codec codec
      * @param timeout default timeout
+     * @param parser the JSON parser to be used
      * @param <K> Key-Type
      * @param <V> Value Type
      * @return new instance of StatefulRedisConnectionImpl
      */
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
-            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout, JsonParser parser) {
+            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout, Mono<JsonParser> parser) {
         return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout, parser);
     }
 
@@ -700,13 +701,14 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @param pushHandler the handler for push notifications
      * @param codec codec
      * @param timeout default timeout
+     * @param parser the Json parser to be used
      * @param <K> Key-Type
      * @param <V> Value Type
      * @return new instance of StatefulRedisClusterConnectionImpl
      */
     protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(
             RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout,
-            JsonParser parser) {
+            Mono<JsonParser> parser) {
         return new StatefulRedisClusterConnectionImpl(channelWriter, pushHandler, codec, timeout, parser);
     }
 

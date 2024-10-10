@@ -34,6 +34,7 @@ import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
+import reactor.core.publisher.Mono;
 
 /**
  * @author Mark Paluch
@@ -52,7 +53,7 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
     private final SentinelConnectionState connectionState = new SentinelConnectionState();
 
     public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout,
-            JsonParser parser) {
+            Mono<JsonParser> parser) {
 
         super(writer, timeout);
 

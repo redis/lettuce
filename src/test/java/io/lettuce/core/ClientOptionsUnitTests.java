@@ -9,13 +9,13 @@ import io.lettuce.core.json.DefaultJsonParser;
 import io.lettuce.core.json.JsonArray;
 import io.lettuce.core.json.JsonObject;
 import io.lettuce.core.json.JsonParser;
-import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolVersion;
+import reactor.core.publisher.Mono;
 
 /**
  * Unit tests for {@link ClientOptions}.
@@ -37,7 +37,7 @@ class ClientOptionsUnitTests {
         assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.SET, null))).isFalse();
         assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.PUBLISH, null))).isFalse();
         assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.GET, null))).isTrue();
-        assertThat(options.getJsonParser()).isInstanceOf(DefaultJsonParser.class);
+        assertThat(options.getJsonParser().block()).isInstanceOf(DefaultJsonParser.class);
     }
 
     @Test
@@ -63,8 +63,8 @@ class ClientOptionsUnitTests {
     @Test
     void jsonParser() {
         JsonParser parser = new CustomJsonParser();
-        ClientOptions options = ClientOptions.builder().jsonParser(parser).build();
-        assertThat(options.getJsonParser()).isInstanceOf(CustomJsonParser.class);
+        ClientOptions options = ClientOptions.builder().jsonParser(Mono.justOrEmpty(parser)).build();
+        assertThat(options.getJsonParser().block()).isInstanceOf(CustomJsonParser.class);
     }
 
     static class CustomJsonParser implements JsonParser {

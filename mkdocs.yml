@@ -40,6 +40,7 @@ nav:
       - Kotlin API: user-guide/kotlin-api.md
       - Publish/Subscribe: user-guide/pubsub.md
       - Transactions/Multi: user-guide/transactions-multi.md
+      - Redis JSON: user-guide/redis-json.md
       - Redis programmability:
           - LUA Scripting: user-guide/lua-scripting.md
           - Redis Functions: user-guide/redis-functions.md

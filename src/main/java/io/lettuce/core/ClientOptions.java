@@ -22,16 +22,20 @@ package io.lettuce.core;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.json.DefaultJsonParser;
 import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.json.RedisJsonException;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
 import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.lettuce.core.resource.ClientResources;
+import reactor.core.publisher.Mono;
 
 /**
  * Client Options to control the behavior of {@link RedisClient}.
@@ -65,13 +69,21 @@ public class ClientOptions implements Serializable {
 
     public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
 
+    public static final Mono<JsonParser> DEFAULT_JSON_PARSER = Mono.defer(() -> Mono.fromCallable(() -> {
+        try {
+            Iterator<JsonParser> services = ServiceLoader.load(JsonParser.class).iterator();
+            return services.hasNext() ? services.next() : null;
+        } catch (ServiceConfigurationError e) {
+            throw new RedisJsonException("Could not load JsonParser, please consult the guide"
+                    + "at https://redis.github.io/lettuce/user-guide/redis-json/", e);
+        }
+    }));
+
     public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
 
     public static final boolean DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL = false;
 
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.enabled();
-
-    public static final JsonParser DEFAULT_JSON_PARSER = DefaultJsonParser.INSTANCE;
 
     private final boolean autoReconnect;
 
@@ -93,7 +105,7 @@ public class ClientOptions implements Serializable {
 
     private final Charset scriptCharset;
 
-    private final JsonParser jsonParser;
+    private final Mono<JsonParser> jsonParser;
 
     private final SocketOptions socketOptions;
 
@@ -192,7 +204,7 @@ public class ClientOptions implements Serializable {
 
         private Charset scriptCharset = DEFAULT_SCRIPT_CHARSET;
 
-        private JsonParser jsonParser = DEFAULT_JSON_PARSER;
+        private Mono<JsonParser> jsonParser = DEFAULT_JSON_PARSER;
 
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
 
@@ -380,14 +392,14 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Set a custom implementation for the {@link JsonParser} to use. Defaults to {@link DefaultJsonParser}.
+         * Set a custom implementation for the {@link JsonParser} to use.
          *
-         * @param parser must not be {@code null}.
+         * @param parser a {@link Mono} that emits the {@link JsonParser} to use.
          * @return {@code this}
          * @see JsonParser
          * @since 6.5
          */
-        public Builder jsonParser(JsonParser parser) {
+        public Builder jsonParser(Mono<JsonParser> parser) {
 
             LettuceAssert.notNull(parser, "JsonParser must not be null");
             this.jsonParser = parser;
@@ -640,7 +652,7 @@ public class ClientOptions implements Serializable {
      * @return the implementation of the {@link JsonParser} to use.
      * @since 6.5
      */
-    public JsonParser getJsonParser() {
+    public Mono<JsonParser> getJsonParser() {
         return jsonParser;
     }
 

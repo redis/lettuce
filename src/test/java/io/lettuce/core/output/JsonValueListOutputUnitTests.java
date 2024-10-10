@@ -22,7 +22,7 @@ class JsonValueListOutputUnitTests {
 
     @Test
     void set() {
-        JsonValueListOutput<String, String> sut = new JsonValueListOutput<>(StringCodec.UTF8, DefaultJsonParser.INSTANCE);
+        JsonValueListOutput<String, String> sut = new JsonValueListOutput<>(StringCodec.UTF8, new DefaultJsonParser());
         sut.multi(2);
         sut.set(ByteBuffer.wrap("[1,2,3]".getBytes()));
         sut.set(ByteBuffer.wrap("world".getBytes()));
