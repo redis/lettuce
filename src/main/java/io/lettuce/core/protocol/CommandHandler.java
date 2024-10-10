@@ -487,6 +487,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 RedisURI redisURI = RedisURI.create(redisUriStr);
                 span.tag("server.address", redisURI.toString());
                 span.tag("db.namespace", String.valueOf(redisURI.getDatabase()));
+                span.tag("db.user", Optional.ofNullable(redisURI.getCredentialsProvider().resolveCredentials().block())
+                        .map(RedisCredentials::getUsername).orElse(""));
             }
 
             if (tracedEndpoint != null) {
