@@ -1,4 +1,5 @@
 site_name: Lettuce Reference Guide
+repo_url: https://github.com/redis/lettuce
 theme:
   name: material
   logo: static/logo-redis.svg
