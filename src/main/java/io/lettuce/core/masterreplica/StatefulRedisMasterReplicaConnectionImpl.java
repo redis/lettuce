@@ -6,6 +6,7 @@ import io.lettuce.core.ReadFrom;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonParser;
+import reactor.core.publisher.Mono;
 
 /**
  * @author Mark Paluch
@@ -19,9 +20,10 @@ class StatefulRedisMasterReplicaConnectionImpl<K, V> extends StatefulRedisConnec
      * @param writer the channel writer
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
+     * @param parser the JSON parser to use
      */
     StatefulRedisMasterReplicaConnectionImpl(MasterReplicaChannelWriter writer, RedisCodec<K, V> codec, Duration timeout,
-            JsonParser parser) {
+            Mono<JsonParser> parser) {
         super(writer, NoOpPushHandler.INSTANCE, codec, timeout, parser);
     }
 

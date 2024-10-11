@@ -18,7 +18,7 @@ class DelegateJsonValueUnitTests {
 
     @Test
     void testString() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         JsonValue underTest = parser.createJsonValue("\"test\"");
 
         assertThat(underTest.toString()).isEqualTo("\"test\"");
@@ -44,7 +44,7 @@ class DelegateJsonValueUnitTests {
 
     @Test
     void testNumber() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         JsonValue underTest = parser.createJsonValue("1");
 
         assertThat(underTest.toString()).isEqualTo("1");
@@ -70,7 +70,7 @@ class DelegateJsonValueUnitTests {
 
     @Test
     void testNumberExtended() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         JsonValue underTest = parser.createJsonValue("1");
 
         assertThat(underTest.isNumber()).isTrue();
@@ -92,7 +92,7 @@ class DelegateJsonValueUnitTests {
 
     @Test
     void testBoolean() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         JsonValue underTest = parser.createJsonValue("true");
 
         assertThat(underTest.toString()).isEqualTo("true");
@@ -118,7 +118,7 @@ class DelegateJsonValueUnitTests {
 
     @Test
     void testNull() {
-        DefaultJsonParser parser = DefaultJsonParser.INSTANCE;
+        DefaultJsonParser parser = new DefaultJsonParser();
         JsonValue underTest = parser.createJsonValue("null");
 
         assertThat(underTest.toString()).isEqualTo("null");

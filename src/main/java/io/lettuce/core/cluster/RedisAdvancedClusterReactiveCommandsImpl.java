@@ -77,11 +77,11 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param connection the stateful connection.
      * @param codec Codec used to encode/decode keys and values.
      * @deprecated since 5.2, use
-     *             {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec, JsonParser)}.
+     *             {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
      */
     @Deprecated
     public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec,
-            JsonParser parser) {
+            Mono<JsonParser> parser) {
         super(connection, codec, parser);
         this.codec = codec;
     }
@@ -93,7 +93,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param codec Codec used to encode/decode keys and values.
      */
     public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec,
-            JsonParser parser) {
+            Mono<JsonParser> parser) {
         super(connection, codec, parser);
         this.codec = codec;
     }

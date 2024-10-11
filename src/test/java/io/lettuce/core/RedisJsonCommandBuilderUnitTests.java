@@ -19,6 +19,7 @@ import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -39,13 +40,13 @@ class RedisJsonCommandBuilderUnitTests {
 
     public static final String ID_BIKE_6 = "{\"id\":\"bike6\"}";
 
-    public static final JsonParser PARSER = DefaultJsonParser.INSTANCE;
+    public static final JsonParser PARSER = new DefaultJsonParser();
 
     public static final JsonValue ELEMENT = PARSER.createJsonValue(ID_BIKE_6);
 
     public static final JsonPath MY_PATH = JsonPath.of("$..commuter_bikes");
 
-    RedisJsonCommandBuilder<String, String> builder = new RedisJsonCommandBuilder<>(StringCodec.UTF8, PARSER);
+    RedisJsonCommandBuilder<String, String> builder = new RedisJsonCommandBuilder<>(StringCodec.UTF8, Mono.just(PARSER));
 
     @Test
     void shouldCorrectlyConstructJsonArrappend() {

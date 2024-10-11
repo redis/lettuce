@@ -24,11 +24,6 @@ import java.nio.ByteBuffer;
  */
 public class DefaultJsonParser implements JsonParser {
 
-    public static final DefaultJsonParser INSTANCE = new DefaultJsonParser();
-
-    private DefaultJsonParser() {
-    }
-
     @Override
     public JsonValue loadJsonValue(ByteBuffer bytes) {
         return new UnproccessedJsonValue(bytes, this);

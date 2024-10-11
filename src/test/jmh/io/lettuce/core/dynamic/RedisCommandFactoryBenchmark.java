@@ -12,6 +12,7 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.dynamic.batch.BatchSize;
+import reactor.core.publisher.Mono;
 
 /**
  * Benchmark for commands executed through {@link RedisCommandFactory}.
@@ -31,7 +32,7 @@ public class RedisCommandFactoryBenchmark {
         redisCommandFactory = new RedisCommandFactory(new MockStatefulConnection(EmptyRedisChannelWriter.INSTANCE));
         regularCommands = redisCommandFactory.getCommands(RegularCommands.class);
 
-        asyncCommands = new RedisAsyncCommandsImpl<>(EmptyStatefulRedisConnection.INSTANCE, StringCodec.UTF8, DefaultJsonParser.INSTANCE);
+        asyncCommands = new RedisAsyncCommandsImpl<>(EmptyStatefulRedisConnection.INSTANCE, StringCodec.UTF8, Mono.just(new DefaultJsonParser()));
     }
 
     @Benchmark
