@@ -1,5 +1,6 @@
 package io.lettuce.core.support.caching;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -33,6 +35,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
  *
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 @EnabledOnCommand("ACL")
 public class ClientsideCachingIntegrationTests extends TestSupport {

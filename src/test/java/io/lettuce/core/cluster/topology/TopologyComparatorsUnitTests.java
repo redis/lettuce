@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.cluster.topology;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.cluster.topology.TopologyComparators.isChanged;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,6 +27,7 @@ import static org.assertj.core.util.Lists.newArrayList;
 
 import java.util.*;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
@@ -40,6 +42,7 @@ import io.lettuce.core.internal.LettuceLists;
  * @author Mark Paluch
  * @author Alessandro Simi
  */
+@Tag(UNIT_TEST)
 class TopologyComparatorsUnitTests {
 
     private RedisClusterNodeSnapshot node1 = createNode("1");

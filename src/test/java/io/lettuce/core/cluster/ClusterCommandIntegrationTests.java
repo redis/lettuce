@@ -1,5 +1,6 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.cluster.ClusterTestUtil.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -10,6 +11,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -36,6 +38,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class ClusterCommandIntegrationTests extends TestSupport {
 

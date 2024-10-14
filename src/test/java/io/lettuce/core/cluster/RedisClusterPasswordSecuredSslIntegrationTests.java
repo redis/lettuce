@@ -1,5 +1,6 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.settings.TestSettings.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
@@ -9,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisCommandExecutionException;
@@ -27,6 +29,7 @@ import io.lettuce.test.resource.TestClientResources;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class RedisClusterPasswordSecuredSslIntegrationTests extends TestSupport {
 
     private static final int CLUSTER_PORT_SSL_1 = 7442;

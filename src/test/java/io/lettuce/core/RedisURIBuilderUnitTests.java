@@ -19,12 +19,14 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -35,6 +37,7 @@ import org.junit.jupiter.api.condition.OS;
  * @author Mark Paluch
  * @author Guy Korland
  */
+@Tag(UNIT_TEST)
 class RedisURIBuilderUnitTests {
 
     @Test

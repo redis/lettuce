@@ -1,5 +1,6 @@
 package io.lettuce.core.commands.reactive;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.BitFieldArgs.offset;
 import static io.lettuce.core.BitFieldArgs.signed;
 import static io.lettuce.core.BitFieldArgs.typeWidthBasedOffset;
@@ -8,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import reactor.test.StepVerifier;
@@ -22,6 +24,7 @@ import io.lettuce.test.ReactiveSyncInvocationHandler;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class BitReactiveCommandIntegrationTests extends BitCommandIntegrationTests {
 
     private RedisStringReactiveCommands<String, String> reactive;

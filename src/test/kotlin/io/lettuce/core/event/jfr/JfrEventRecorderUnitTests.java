@@ -1,5 +1,7 @@
 package io.lettuce.core.event.jfr;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
@@ -12,6 +14,7 @@ import jdk.jfr.Recording;
 import jdk.jfr.consumer.RecordedEvent;
 import jdk.jfr.consumer.RecordingFile;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.event.connection.ConnectionActivatedEvent;
@@ -23,6 +26,7 @@ import io.netty.channel.unix.DomainSocketAddress;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class JfrEventRecorderUnitTests {
 
     @Test

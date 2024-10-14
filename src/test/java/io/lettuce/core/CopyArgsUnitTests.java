@@ -2,8 +2,10 @@ package io.lettuce.core;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.CommandArgs;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -11,6 +13,7 @@ import static org.assertj.core.api.Assertions.*;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class CopyArgsUnitTests {
 
     @Test

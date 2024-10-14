@@ -19,11 +19,13 @@
  */
 package io.lettuce.core.cluster.topology;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.Set;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
@@ -33,6 +35,7 @@ import io.lettuce.core.RedisURI;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class NodeTopologyViewsUnitTests {
 
     @Test

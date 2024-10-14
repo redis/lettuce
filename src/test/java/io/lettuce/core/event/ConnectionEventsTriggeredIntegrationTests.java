@@ -1,10 +1,12 @@
 package io.lettuce.core.event;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import reactor.core.publisher.Flux;
@@ -19,6 +21,7 @@ import io.lettuce.test.resource.TestClientResources;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class ConnectionEventsTriggeredIntegrationTests extends TestSupport {
 
     @Test

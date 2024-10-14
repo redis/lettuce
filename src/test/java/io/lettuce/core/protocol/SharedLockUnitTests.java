@@ -1,12 +1,16 @@
 package io.lettuce.core.protocol;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class SharedLockTest {
+import static io.lettuce.TestTags.UNIT_TEST;
+
+@Tag(UNIT_TEST)
+public class SharedLockUnitTests {
 
     @Test
     public void safety_on_reentrant_lock_exclusive_on_writers() throws InterruptedException {

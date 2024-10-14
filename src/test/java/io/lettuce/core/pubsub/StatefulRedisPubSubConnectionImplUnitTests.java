@@ -8,8 +8,10 @@ import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.*;
@@ -19,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+@Tag(UNIT_TEST)
 class StatefulRedisPubSubConnectionImplUnitTests {
 
     private StatefulRedisPubSubConnectionImpl connection;

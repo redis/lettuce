@@ -7,12 +7,16 @@ import org.junit.jupiter.api.Disabled;
 import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.commands.GeoCommandIntegrationTests;
+import org.junit.jupiter.api.Tag;
+
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisGeoCommands} using Redis Cluster.
  *
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class GeoClusterCommandIntegrationTests extends GeoCommandIntegrationTests {
 
     @Inject

@@ -19,6 +19,7 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.ConnectionTestUtil.getChannel;
 import static io.lettuce.test.ConnectionTestUtil.getConnectionWatchdog;
 import static io.lettuce.test.ConnectionTestUtil.getStack;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -60,6 +62,7 @@ import io.netty.channel.Channel;
  *
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class ClientOptionsIntegrationTests extends TestSupport {
 

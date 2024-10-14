@@ -1,5 +1,6 @@
 package io.lettuce.core.protocol;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
@@ -8,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisCommandExecutionException;
@@ -25,6 +27,7 @@ import io.lettuce.test.TestFutures;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 public class AsyncCommandUnitTests {
 
     private RedisCodec<String, String> codec = StringCodec.UTF8;

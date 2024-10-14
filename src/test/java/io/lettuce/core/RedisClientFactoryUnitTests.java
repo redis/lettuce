@@ -1,7 +1,9 @@
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.resource.ClientResources;
@@ -12,6 +14,7 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class RedisClientFactoryUnitTests {
 
     private static final String URI = "redis://" + TestSettings.host() + ":" + TestSettings.port();

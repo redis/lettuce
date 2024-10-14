@@ -16,18 +16,21 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.Value.just;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Will Glozer
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class KeyValueUnitTests {
 
     @Test

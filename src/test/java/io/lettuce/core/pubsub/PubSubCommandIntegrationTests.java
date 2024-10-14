@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.pubsub;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
@@ -32,9 +33,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.AbstractRedisClientTest;
@@ -68,7 +69,8 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Tihomir Mateev
  * @author Ali Takavci
  */
-class PubSubCommandTest extends AbstractRedisClientTest {
+@Tag(INTEGRATION_TEST)
+class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
 
     RedisPubSubAsyncCommands<String, String> pubsub;
 

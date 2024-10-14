@@ -1,5 +1,6 @@
 package io.lettuce.core.cluster.models.partitions;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
 
 import java.util.Arrays;
@@ -7,6 +8,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
@@ -16,6 +18,7 @@ import io.lettuce.core.RedisURI;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class PartitionsUnitTests {
 
     private RedisClusterNode node1 = new RedisClusterNode(RedisURI.create("localhost", 6379), "a", true, "", 0, 0, 0,

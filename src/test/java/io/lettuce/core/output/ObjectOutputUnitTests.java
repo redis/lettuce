@@ -1,10 +1,12 @@
 package io.lettuce.core.output;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.codec.StringCodec;
@@ -17,7 +19,8 @@ import io.netty.buffer.Unpooled;
  *
  * @author Mark Paluch
  */
-class ObjectOutputTests {
+@Tag(UNIT_TEST)
+class ObjectOutputUnitTests {
 
     @Test
     void shouldParseHelloWithModules() {

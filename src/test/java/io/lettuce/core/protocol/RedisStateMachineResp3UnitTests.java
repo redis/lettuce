@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.protocol;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.protocol.RedisStateMachine.State;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -51,6 +52,7 @@ import io.netty.buffer.Unpooled;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class RedisStateMachineResp3UnitTests {
 
     private RedisCodec<String, String> codec = StringCodec.UTF8;

@@ -1,5 +1,6 @@
 package io.lettuce.core.cluster.commands;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.LinkedHashMap;
@@ -7,6 +8,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.cluster.ClusterTestUtil;
@@ -20,6 +22,7 @@ import io.lettuce.test.KeyValueStreamingAdapter;
  *
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class StringClusterCommandIntegrationTests extends StringCommandIntegrationTests {
 
     private final RedisClusterCommands<String, String> redis;

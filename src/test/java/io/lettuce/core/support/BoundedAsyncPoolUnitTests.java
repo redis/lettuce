@@ -1,5 +1,6 @@
 package io.lettuce.core.support;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisException;
@@ -19,6 +21,7 @@ import io.lettuce.test.TestFutures;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class BoundedAsyncPoolUnitTests {
 
     private AtomicInteger counter = new AtomicInteger();

@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -12,6 +13,7 @@ import java.lang.reflect.Field;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -29,6 +31,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
  */
 @SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
+@Tag(UNIT_TEST)
 class RedisClientUnitTests {
 
     @Mock

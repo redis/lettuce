@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.metrics;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.metrics.MicrometerCommandLatencyRecorder.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -27,6 +28,7 @@ import java.util.Arrays;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.assertj.core.api.InstanceOfAssertFactories;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -46,6 +48,7 @@ import io.netty.channel.local.LocalAddress;
  *
  * @author Steven Sheehy
  */
+@Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
 class MicrometerCommandLatencyRecorderUnitTests {
 

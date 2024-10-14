@@ -1,7 +1,9 @@
 package io.lettuce.core.dynamic.segment;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.dynamic.CommandMethod;
@@ -15,6 +17,7 @@ import io.lettuce.core.dynamic.support.ReflectionUtils;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class AnnotationCommandSegmentFactoryUnitTests {
 
     private AnnotationCommandSegmentFactory factory = new AnnotationCommandSegmentFactory();

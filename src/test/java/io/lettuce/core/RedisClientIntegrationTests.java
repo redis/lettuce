@@ -15,6 +15,7 @@ import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
 import io.netty.util.concurrent.EventExecutorGroup;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -32,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class RedisClientIntegrationTests extends TestSupport {
 
     private final ClientResources clientResources = TestClientResources.get();

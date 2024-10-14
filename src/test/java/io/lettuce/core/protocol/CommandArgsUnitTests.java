@@ -1,11 +1,13 @@
 package io.lettuce.core.protocol;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.codec.ByteArrayCodec;
@@ -18,6 +20,7 @@ import io.netty.buffer.Unpooled;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class CommandArgsUnitTests {
 
     @Test

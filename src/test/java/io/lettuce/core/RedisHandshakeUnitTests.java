@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.output.CommandOutput;
@@ -19,6 +21,7 @@ import io.netty.channel.embedded.EmbeddedChannel;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class RedisHandshakeUnitTests {
 
     public static final String ERR_UNKNOWN_COMMAND = "ERR unknown command 'CLIENT', with args beginning with: 'SETINFO' 'lib-name' 'Lettuce'";

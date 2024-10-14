@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.cluster.ClusterTestUtil.*;
 import static org.assertj.core.api.Assertions.*;
 
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
@@ -51,10 +53,11 @@ import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
 
+@Tag(INTEGRATION_TEST)
 @TestMethodOrder(MethodOrderer.MethodName.class)
 @SuppressWarnings("unchecked")
 @SlowTests
-public class RedisClusterStressScenariosTest extends TestSupport {
+public class RedisClusterStressScenariosIntegrationTests extends TestSupport {
 
     private static final String host = TestSettings.hostAddr();
 

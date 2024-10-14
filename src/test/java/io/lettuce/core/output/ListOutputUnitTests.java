@@ -1,5 +1,6 @@
 package io.lettuce.core.output;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
@@ -7,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -15,6 +17,7 @@ import io.lettuce.core.codec.StringCodec;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class ListOutputUnitTests {
 
     static Collection<Fixture> parameters() {

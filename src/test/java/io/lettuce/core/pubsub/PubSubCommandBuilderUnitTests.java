@@ -9,14 +9,17 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.protocol.CommandType.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag(UNIT_TEST)
 class PubSubCommandBuilderUnitTests {
 
     private PubSubCommandBuilder<String, String> commandBuilder;

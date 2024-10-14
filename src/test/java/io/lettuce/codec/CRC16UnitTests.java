@@ -1,10 +1,12 @@
 package io.lettuce.codec;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -13,6 +15,7 @@ import io.lettuce.core.codec.CRC16;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class CRC16UnitTests {
 
     static List<Fixture> parameters() {

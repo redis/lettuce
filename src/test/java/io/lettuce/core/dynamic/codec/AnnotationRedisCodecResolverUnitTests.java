@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.dynamic.codec;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.Range;
@@ -46,6 +48,7 @@ import io.lettuce.core.dynamic.support.ReflectionUtils;
  * @author Mark Paluch
  * @author Manyanda Chitimbo
  */
+@Tag(UNIT_TEST)
 class AnnotationRedisCodecResolverUnitTests {
 
     private List<RedisCodec<?, ?>> codecs = Arrays.asList(new StringCodec(), new ByteArrayCodec());

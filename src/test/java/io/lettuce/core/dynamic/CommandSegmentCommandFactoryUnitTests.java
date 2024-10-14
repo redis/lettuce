@@ -1,10 +1,12 @@
 package io.lettuce.core.dynamic;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.util.concurrent.Future;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ScanArgs;
@@ -28,6 +30,7 @@ import io.lettuce.core.protocol.RedisCommand;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class CommandSegmentCommandFactoryUnitTests {
 
     @Test

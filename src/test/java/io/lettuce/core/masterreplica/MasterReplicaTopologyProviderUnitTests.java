@@ -19,11 +19,13 @@
  */
 package io.lettuce.core.masterreplica;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
@@ -37,6 +39,7 @@ import io.lettuce.test.settings.TestSettings;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class MasterReplicaTopologyProviderUnitTests {
 
     private StatefulRedisConnection<String, String> connectionMock = mock(StatefulRedisConnection.class);

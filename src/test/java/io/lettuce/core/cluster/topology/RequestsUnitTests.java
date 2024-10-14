@@ -19,10 +19,12 @@
  */
 package io.lettuce.core.cluster.topology;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
@@ -35,6 +37,7 @@ import io.lettuce.core.protocol.CommandType;
  * @author Mark Paluch
  * @author Xujs
  */
+@Tag(UNIT_TEST)
 class RequestsUnitTests {
 
     @Test

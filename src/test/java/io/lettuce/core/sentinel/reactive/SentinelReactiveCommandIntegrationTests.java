@@ -3,18 +3,22 @@ package io.lettuce.core.sentinel.reactive;
 import javax.inject.Inject;
 
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.sentinel.SentinelServerCommandIntegrationTests;
+import io.lettuce.core.sentinel.SentinelCommandIntegrationTests;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
+import org.junit.jupiter.api.Tag;
+
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 
 /**
  * @author Mark Paluch
  */
-public class SentinelServerReactiveCommandTest extends SentinelServerCommandIntegrationTests {
+@Tag(INTEGRATION_TEST)
+public class SentinelReactiveCommandIntegrationTests extends SentinelCommandIntegrationTests {
 
     @Inject
-    public SentinelServerReactiveCommandTest(RedisClient redisClient) {
+    public SentinelReactiveCommandIntegrationTests(RedisClient redisClient) {
         super(redisClient);
     }
 

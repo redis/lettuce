@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.pubsub;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import reactor.core.Disposable;
@@ -53,7 +55,8 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Mark Paluch
  * @author Ali Takavci
  */
-class PubSubReactiveTest extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
+@Tag(INTEGRATION_TEST)
+class PubSubReactiveIntegrationTests extends AbstractRedisClientTest implements RedisPubSubListener<String, String> {
 
     private RedisPubSubReactiveCommands<String, String> pubsub;
 

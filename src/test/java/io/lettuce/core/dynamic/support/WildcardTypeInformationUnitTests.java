@@ -1,5 +1,6 @@
 package io.lettuce.core.dynamic.support;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.dynamic.support.ClassTypeInformation.from;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -7,11 +8,13 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class WildcardTypeInformationUnitTests {
 
     @Test

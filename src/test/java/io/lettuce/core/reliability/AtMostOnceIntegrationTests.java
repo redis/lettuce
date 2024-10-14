@@ -1,5 +1,6 @@
 package io.lettuce.core.reliability;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.ConnectionTestUtil.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
@@ -11,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.TimeoutOptions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.AbstractRedisClientTest;
@@ -40,8 +42,9 @@ import io.netty.util.Version;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @SuppressWarnings("rawtypes")
-class AtMostOnceTest extends AbstractRedisClientTest {
+class AtMostOnceIntegrationTests extends AbstractRedisClientTest {
 
     private String key = "key";
 

@@ -2,6 +2,7 @@ package io.lettuce.core.masterreplica;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -18,11 +19,14 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+
 /**
  * Integration test for Master/Replica using Redis Sentinel over SSL.
  *
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class MasterReplicaSentinelSslIntegrationTests extends TestSupport {
 

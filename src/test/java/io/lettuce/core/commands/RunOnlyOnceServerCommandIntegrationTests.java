@@ -1,5 +1,6 @@
 package io.lettuce.core.commands;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.settings.TestSettings.*;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
@@ -9,6 +10,7 @@ import java.util.Arrays;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -28,6 +30,7 @@ import io.lettuce.test.settings.TestSettings;
  * @author Will Glozer
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
 

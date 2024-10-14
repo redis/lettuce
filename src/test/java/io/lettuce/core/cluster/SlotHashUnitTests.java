@@ -1,15 +1,18 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Mark Paluch
  * @since 3.0
  */
+@Tag(UNIT_TEST)
 class SlotHashUnitTests {
 
     private static final byte[] BYTES = "123456789".getBytes();

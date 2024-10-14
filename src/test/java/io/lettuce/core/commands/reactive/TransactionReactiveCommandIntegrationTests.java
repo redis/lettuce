@@ -1,9 +1,11 @@
 package io.lettuce.core.commands.reactive;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.KeyValue;
@@ -18,6 +20,7 @@ import reactor.test.StepVerifier;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 public class TransactionReactiveCommandIntegrationTests extends TransactionCommandIntegrationTests {
 
     private final RedisClient client;

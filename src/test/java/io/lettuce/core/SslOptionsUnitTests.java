@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
@@ -7,6 +8,7 @@ import java.util.Collections;
 
 import javax.net.ssl.SSLParameters;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.netty.handler.ssl.SslContext;
@@ -16,6 +18,7 @@ import io.netty.handler.ssl.SslContext;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class SslOptionsUnitTests {
 
     @Test

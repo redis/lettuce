@@ -7,13 +7,16 @@
 
 package io.lettuce.core.json;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link DelegateJsonValue}.
  */
+@Tag(UNIT_TEST)
 class DelegateJsonValueUnitTests {
 
     @Test

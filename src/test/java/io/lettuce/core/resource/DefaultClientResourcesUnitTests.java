@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.resource;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import reactor.test.StepVerifier;
@@ -50,6 +52,7 @@ import io.netty.util.concurrent.Future;
  * @author Mark Paluch
  * @author Yohei Ueki
  */
+@Tag(UNIT_TEST)
 class DefaultClientResourcesUnitTests {
 
     @Test

@@ -1,5 +1,6 @@
 package io.lettuce.core.support;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -10,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.*;
@@ -30,6 +32,7 @@ import io.netty.channel.group.ChannelGroup;
  *
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class AsyncConnectionPoolSupportIntegrationTests extends TestSupport {
 
     private static RedisClient client;

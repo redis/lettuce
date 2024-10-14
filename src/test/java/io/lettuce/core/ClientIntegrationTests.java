@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.net.SocketAddress;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.enterprise.inject.New;
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -28,6 +30,7 @@ import io.netty.channel.Channel;
  * @author Will Glozer
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class ClientIntegrationTests extends TestSupport {
 

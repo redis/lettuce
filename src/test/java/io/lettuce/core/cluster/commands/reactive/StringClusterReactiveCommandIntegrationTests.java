@@ -1,5 +1,6 @@
 package io.lettuce.core.cluster.commands.reactive;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.LinkedHashMap;
@@ -7,6 +8,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import reactor.core.publisher.Flux;
@@ -21,6 +23,7 @@ import io.lettuce.test.ReactiveSyncInvocationHandler;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class StringClusterReactiveCommandIntegrationTests extends StringCommandIntegrationTests {
 
     private final StatefulRedisClusterConnection<String, String> connection;
