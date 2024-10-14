@@ -1,10 +1,12 @@
 package io.lettuce.core.dynamic.output;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ScoredValue;
@@ -18,6 +20,7 @@ import io.lettuce.core.output.*;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class OutputRegistryUnitTests {
 
     @Test

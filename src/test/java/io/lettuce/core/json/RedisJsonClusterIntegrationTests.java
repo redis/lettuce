@@ -17,6 +17,7 @@ import io.lettuce.core.json.arguments.JsonRangeArgs;
 import io.lettuce.core.json.arguments.JsonSetArgs;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -30,8 +31,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag(INTEGRATION_TEST)
 public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationTests {
 
     protected static RedisClusterClient client;

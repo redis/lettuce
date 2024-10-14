@@ -9,12 +9,15 @@ package io.lettuce.core.output;
 
 import io.lettuce.core.TrackingInfo;
 import io.lettuce.core.protocol.CommandKeyword;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class TrackingInfoParserTest {
+@Tag(UNIT_TEST)
+class TrackingInfoParserUnitTests {
 
     @Test
     void parseResp3() {

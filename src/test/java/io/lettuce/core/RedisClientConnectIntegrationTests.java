@@ -19,6 +19,8 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.RedisURI.Builder.redis;
 import static io.lettuce.core.codec.StringCodec.UTF8;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -33,6 +35,7 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -47,6 +50,7 @@ import io.lettuce.test.LettuceExtension;
  * @author Jongyeol Choi
  */
 @ExtendWith(LettuceExtension.class)
+@Tag(INTEGRATION_TEST)
 class RedisClientConnectIntegrationTests extends TestSupport {
 
     private static final Duration EXPECTED_TIMEOUT = Duration.ofMillis(500);

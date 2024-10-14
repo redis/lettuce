@@ -28,6 +28,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -35,6 +36,8 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.type.Type;
 
 import io.lettuce.core.internal.LettuceSets;
+
+import static io.lettuce.TestTags.API_GENERATOR;
 
 /**
  * Create sync API based on the templates.
@@ -84,6 +87,7 @@ class CreateSyncApi {
 
     @ParameterizedTest
     @MethodSource("arguments")
+    @Tag(API_GENERATOR)
     void createInterface(String argument) throws Exception {
         createFactory(argument).createInterface();
     }

@@ -1,11 +1,13 @@
 package io.lettuce.core.dynamic;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Fail.fail;
 
 import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.GeoCoordinates;
@@ -24,6 +26,7 @@ import io.lettuce.core.models.command.CommandDetail;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class DefaultCommandMethodVerifierUnitTests {
 
     private DefaultCommandMethodVerifier sut;

@@ -1,11 +1,13 @@
 package io.lettuce.core
 
+import io.lettuce.TestTags
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.coroutines
 import io.lettuce.test.LettuceExtension
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.Timeout
@@ -17,6 +19,7 @@ import javax.inject.Inject
  *
  * @author Mark Paluch
  */
+@Tag(TestTags.INTEGRATION_TEST)
 @ExtendWith(LettuceExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @OptIn(ExperimentalLettuceCoroutinesApi::class)

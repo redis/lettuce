@@ -19,6 +19,7 @@
  */
 package io.lettuce.apigenerator;
 
+import static io.lettuce.TestTags.API_GENERATOR;
 import static io.lettuce.apigenerator.Constants.KOTLIN_SOURCES;
 import static io.lettuce.apigenerator.Constants.TEMPLATES;
 
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -59,6 +61,7 @@ public class CreateKotlinCoroutinesApi {
 
     @ParameterizedTest
     @MethodSource("arguments")
+    @Tag(API_GENERATOR)
     void createInterface(String argument) throws Exception {
         createFactory(argument).create();
     }

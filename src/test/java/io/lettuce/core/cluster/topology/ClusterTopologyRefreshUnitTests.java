@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.cluster.topology;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -40,6 +41,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -71,6 +73,7 @@ import io.netty.util.concurrent.EventExecutorGroup;
  * @author Mark Paluch
  * @author Christian Weitendorf
  */
+@Tag(UNIT_TEST)
 @SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)

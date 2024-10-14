@@ -1,5 +1,6 @@
 package io.lettuce.core.support;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.function.BiConsumer;
@@ -7,6 +8,7 @@ import java.util.function.Function;
 
 import org.apache.commons.pool2.impl.BaseObjectPoolConfig;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -14,6 +16,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class CommonsPool2ConfigConverterUnitTests {
 
     @Test

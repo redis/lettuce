@@ -1,14 +1,17 @@
 package io.lettuce.core.metrics;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class DefaultCommandLatencyCollectorOptionsUnitTests {
 
     @Test

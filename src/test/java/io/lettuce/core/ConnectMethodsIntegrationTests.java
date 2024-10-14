@@ -2,6 +2,7 @@ package io.lettuce.core;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -10,9 +11,13 @@ import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.AsyncNodeSelection;
 import io.lettuce.test.LettuceExtension;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static io.lettuce.TestTags.UNIT_TEST;
+
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class ConnectMethodsIntegrationTests {
 

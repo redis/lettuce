@@ -1,5 +1,6 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
@@ -8,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -22,6 +24,7 @@ import io.lettuce.test.LettuceExtension;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class ClusterClientOptionsIntegrationTests extends TestSupport {
 

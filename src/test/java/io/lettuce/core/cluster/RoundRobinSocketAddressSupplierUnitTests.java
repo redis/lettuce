@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -46,6 +48,7 @@ import io.lettuce.core.resource.SocketAddressResolver;
  * @author Mark Paluch
  * @author Christian Lang
  */
+@Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
 class RoundRobinSocketAddressSupplierUnitTests {
 

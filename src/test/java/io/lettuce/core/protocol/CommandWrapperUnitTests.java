@@ -1,11 +1,13 @@
 package io.lettuce.core.protocol;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.codec.RedisCodec;
@@ -18,6 +20,7 @@ import io.lettuce.core.output.StatusOutput;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class CommandWrapperUnitTests {
 
     private RedisCodec<String, String> codec = StringCodec.UTF8;

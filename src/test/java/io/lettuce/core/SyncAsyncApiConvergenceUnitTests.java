@@ -1,11 +1,13 @@
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -17,6 +19,7 @@ import io.lettuce.core.api.sync.RedisCommands;
  * @author Mark Paluch
  * @since 3.0
  */
+@Tag(UNIT_TEST)
 class SyncAsyncApiConvergenceUnitTests {
 
     @SuppressWarnings("rawtypes")

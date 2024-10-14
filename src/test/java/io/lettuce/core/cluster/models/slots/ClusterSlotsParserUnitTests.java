@@ -1,5 +1,6 @@
 package io.lettuce.core.cluster.models.slots;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -7,12 +8,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.internal.LettuceLists;
 
 @SuppressWarnings("unchecked")
+@Tag(UNIT_TEST)
 class ClusterSlotsParserUnitTests {
 
     @Test

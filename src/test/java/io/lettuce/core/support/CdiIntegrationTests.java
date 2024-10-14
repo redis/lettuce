@@ -1,5 +1,6 @@
 package io.lettuce.core.support;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
@@ -9,6 +10,7 @@ import javax.enterprise.inject.se.SeContainerInitializer;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.AbstractRedisClientTest;
@@ -22,6 +24,7 @@ import io.lettuce.test.resource.TestClientResources;
  * @author Mark Paluch
  * @since 3.0
  */
+@Tag(INTEGRATION_TEST)
 class CdiIntegrationTests {
 
     private static SeContainer container;

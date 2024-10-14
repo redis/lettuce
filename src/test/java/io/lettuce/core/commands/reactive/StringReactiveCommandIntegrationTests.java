@@ -2,6 +2,7 @@ package io.lettuce.core.commands.reactive;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import reactor.core.publisher.Flux;
@@ -13,9 +14,12 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.commands.StringCommandIntegrationTests;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class StringReactiveCommandIntegrationTests extends StringCommandIntegrationTests {
 
     private final RedisCommands<String, String> redis;

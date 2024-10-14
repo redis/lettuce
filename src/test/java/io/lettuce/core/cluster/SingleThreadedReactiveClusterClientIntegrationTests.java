@@ -1,11 +1,13 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
@@ -19,6 +21,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class SingleThreadedReactiveClusterClientIntegrationTests {
 
     private RedisClusterClient client;

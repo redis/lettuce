@@ -35,6 +35,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,6 +55,7 @@ import io.lettuce.test.Wait;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -67,6 +69,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author Zhang Jessey
  * @author dengliming
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ServerCommandIntegrationTests extends TestSupport {

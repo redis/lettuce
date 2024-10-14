@@ -1,16 +1,19 @@
 package io.lettuce.core.dynamic.support;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class ParametrizedTypeInformationUnitTests {
 
     @Test

@@ -1,5 +1,6 @@
 package io.lettuce.core.resource;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -13,6 +14,7 @@ import java.util.Properties;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 @Disabled("Tests require an internet connection")
 class DirContextDnsResolverTests {
 

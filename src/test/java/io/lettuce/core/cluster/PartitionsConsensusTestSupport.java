@@ -5,10 +5,14 @@ import java.util.*;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import org.junit.jupiter.api.Tag;
+
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class PartitionsConsensusTestSupport {
 
     static RedisClusterNode createNode(int nodeId) {

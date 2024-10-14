@@ -9,15 +9,18 @@ package io.lettuce.core.output;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.DefaultJsonParser;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Unit tests for {@link JsonValueListOutput}.
  */
+@Tag(UNIT_TEST)
 class JsonValueListOutputUnitTests {
 
     @Test

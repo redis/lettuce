@@ -7,16 +7,19 @@
 
 package io.lettuce.core.json;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link DelegateJsonArray}.
  */
+@Tag(UNIT_TEST)
 class DelegateJsonArrayUnitTests {
 
     @Test

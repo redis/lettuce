@@ -1,5 +1,6 @@
 package io.lettuce.core.tracing;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Queue;
@@ -8,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import io.lettuce.test.ReflectionTestUtils;
 
@@ -28,6 +30,7 @@ import io.netty.channel.unix.DomainSocketAddress;
  * @author Mark Paluch
  * @author Daniel Albuquerque
  */
+@Tag(UNIT_TEST)
 class BraveTracingUnitTests extends TestSupport {
 
     private static Tracing clientTracing;

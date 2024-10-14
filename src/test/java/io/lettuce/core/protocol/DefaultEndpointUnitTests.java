@@ -1,5 +1,6 @@
 package io.lettuce.core.protocol;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -50,6 +52,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class DefaultEndpointUnitTests {

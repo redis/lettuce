@@ -1,5 +1,6 @@
 package io.lettuce.core.internal;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -13,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisCommandExecutionException;
@@ -24,6 +26,7 @@ import io.lettuce.core.RedisCommandInterruptedException;
  * @author Mark Paluch
  * @author Tihomir Mateev
  */
+@Tag(UNIT_TEST)
 class FuturesUnitTests {
 
     @BeforeEach

@@ -1,5 +1,6 @@
 package io.lettuce.core.dynamic;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -8,6 +9,7 @@ import java.util.Collections;
 import java.util.concurrent.Future;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -26,6 +28,7 @@ import io.lettuce.core.dynamic.output.CommandOutputFactoryResolver;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
+@Tag(UNIT_TEST)
 class BatchExecutableCommandLookupStrategyUnitTests {
 
     @Mock

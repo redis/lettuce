@@ -19,10 +19,12 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -31,6 +33,7 @@ import org.junit.jupiter.api.Test;
  * @author Will Glozer
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class ScoredValueUnitTests {
 
     @Test

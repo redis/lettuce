@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -9,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -24,7 +26,8 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 /**
  * @author Mark Paluch
  */
-class ProtectedModeTests {
+@Tag(INTEGRATION_TEST)
+class ProtectedModeIntegrationTests {
 
     private static MockTcpServer server;
 

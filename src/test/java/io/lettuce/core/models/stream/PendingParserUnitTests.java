@@ -1,5 +1,6 @@
 package io.lettuce.core.models.stream;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
@@ -7,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.Range;
@@ -14,6 +16,7 @@ import io.lettuce.core.Range;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class PendingParserUnitTests {
 
     @Test

@@ -1,11 +1,14 @@
 package io.lettuce.core.codec;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag(UNIT_TEST)
 class ByteArrayCodecUnitTests {
 
     @Test

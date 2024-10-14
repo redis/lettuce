@@ -1,10 +1,12 @@
 package io.lettuce.core.codec;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class CompressionCodecUnitTests {
 
     private String key = "key";

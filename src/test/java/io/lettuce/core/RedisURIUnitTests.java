@@ -19,6 +19,7 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.UnsupportedEncodingException;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.internal.LettuceSets;
@@ -42,6 +44,7 @@ import reactor.core.publisher.Mono;
  * @author Lei Zhang
  * @author Jacob Halsey
  */
+@Tag(UNIT_TEST)
 class RedisURIUnitTests {
 
     @Test

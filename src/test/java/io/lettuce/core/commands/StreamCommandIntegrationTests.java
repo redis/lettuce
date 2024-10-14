@@ -31,6 +31,7 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +46,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.protocol.CommandType.XINFO;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -57,6 +60,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledOnCommand("XADD")
+@Tag(INTEGRATION_TEST)
 public class StreamCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;

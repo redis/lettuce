@@ -3,6 +3,7 @@ package io.lettuce.core.dynamic;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -15,9 +16,12 @@ import io.lettuce.core.dynamic.annotation.Command;
 import io.lettuce.test.LettuceExtension;
 import io.reactivex.Maybe;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class RedisCommandsReactiveIntegrationTests extends TestSupport {
 

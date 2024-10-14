@@ -1,9 +1,11 @@
 package io.lettuce.core.event;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -16,6 +18,7 @@ import reactor.test.StepVerifier;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
 class DefaultEventBusUnitTests {
 
