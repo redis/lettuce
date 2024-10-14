@@ -1,7 +1,6 @@
 package io.lettuce.core;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
-import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;

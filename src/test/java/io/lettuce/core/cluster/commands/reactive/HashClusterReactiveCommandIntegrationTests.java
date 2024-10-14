@@ -11,7 +11,6 @@ import io.lettuce.core.commands.HashCommandIntegrationTests;
 import io.lettuce.test.ReactiveSyncInvocationHandler;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
-import static io.lettuce.TestTags.UNIT_TEST;
 
 /**
  * @author Mark Paluch

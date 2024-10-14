@@ -1,7 +1,6 @@
 package io.lettuce.core.cluster;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
-import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.cluster.ClusterTestUtil.*;
 import static org.assertj.core.api.Assertions.*;
 

@@ -32,7 +32,6 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 @SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
 @Tag(UNIT_TEST)
-
 class RedisClientUnitTests {
 
     @Mock

@@ -12,7 +12,6 @@ import io.lettuce.core.cluster.api.async.AsyncNodeSelection;
 import io.lettuce.test.LettuceExtension;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
-import static io.lettuce.TestTags.UNIT_TEST;
 
 /**
  * @author Mark Paluch
