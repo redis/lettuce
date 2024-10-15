@@ -45,6 +45,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  *
  * @author Mark Paluch
  * @author Alessandro Simi
+ * @author Tony Zhang
  * @since 3.0
  */
 @SuppressWarnings("serial")
@@ -292,6 +293,15 @@ public class RedisClusterNode implements Serializable, RedisNodeDescription {
         }
 
         return slots;
+    }
+
+    /**
+     * Checks if the node has no slots assigned.
+     *
+     * @return {@code true} if the slots field is null or empty, {@code false} otherwise.
+     */
+    public boolean hasNoSlots() {
+        return slots == null || slots.isEmpty();
     }
 
     /**
