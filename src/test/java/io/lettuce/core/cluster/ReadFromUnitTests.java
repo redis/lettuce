@@ -31,6 +31,8 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisURI;
@@ -220,44 +222,133 @@ class ReadFromUnitTests {
         assertThatThrownBy(() -> ReadFrom.valueOf("unknown")).isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test
-    void valueOfNearest() {
-        assertThat(ReadFrom.valueOf("nearest")).isEqualTo(ReadFrom.NEAREST);
+    @ParameterizedTest
+    @ValueSource(strings = { "NEAREST", "nearest", "Nearest" })
+    void valueOfNearest(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.NEAREST);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "lowestLatency", "lowestlatency", "LOWESTLATENCY" })
+    void valueOfLowestLatency(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.LOWEST_LATENCY);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "MASTER", "master", "Master" })
+    void valueOfMaster(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.UPSTREAM);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "masterPreferred", "masterpreferred", "MASTERPREFERRED" })
+    void valueOfMasterPreferred(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.UPSTREAM_PREFERRED);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "slave", "SLAVE", "Slave" })
+    void valueOfSlave(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.REPLICA);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "slavePreferred", "slavepreferred", "SLAVEPREFERRED" })
+    void valueOfSlavePreferred(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.REPLICA_PREFERRED);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "replicaPreferred", "replicapreferred", "REPLICAPREFERRED" })
+    void valueOfReplicaPreferred(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.REPLICA_PREFERRED);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "anyReplica", "anyreplica", "ANYREPLICA" })
+    void valueOfAnyReplica(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.ANY_REPLICA);
     }
 
     @Test
-    void valueOfMaster() {
-        assertThat(ReadFrom.valueOf("master")).isEqualTo(ReadFrom.UPSTREAM);
-    }
-
-    @Test
-    void valueOfMasterPreferred() {
-        assertThat(ReadFrom.valueOf("masterPreferred")).isEqualTo(ReadFrom.UPSTREAM_PREFERRED);
-    }
-
-    @Test
-    void valueOfSlave() {
-        assertThat(ReadFrom.valueOf("slave")).isEqualTo(ReadFrom.REPLICA);
-    }
-
-    @Test
-    void valueOfSlavePreferred() {
-        assertThat(ReadFrom.valueOf("slavePreferred")).isEqualTo(ReadFrom.REPLICA_PREFERRED);
-    }
-
-    @Test
-    void valueOfAnyReplica() {
-        assertThat(ReadFrom.valueOf("anyReplica")).isEqualTo(ReadFrom.ANY_REPLICA);
-    }
-
-    @Test
-    void valueOfSubnet() {
+    void valueOfSubnetWithEmptyCidrNotations() {
         assertThatThrownBy(() -> ReadFrom.valueOf("subnet")).isInstanceOf(IllegalArgumentException.class);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "subnet:192.0.2.0/24,2001:db8:abcd:0000::/52", "SUBNET:192.0.2.0/24,2001:db8:abcd:0000::/52" })
+    void valueOfSubnet(String name) {
+        RedisClusterNode nodeInSubnetIpv4 = createNodeWithHost("192.0.2.1");
+        RedisClusterNode nodeNotInSubnetIpv4 = createNodeWithHost("198.51.100.1");
+        RedisClusterNode nodeInSubnetIpv6 = createNodeWithHost("2001:db8:abcd:0000::1");
+        RedisClusterNode nodeNotInSubnetIpv6 = createNodeWithHost("2001:db8:abcd:1000::");
+        ReadFrom sut = ReadFrom.valueOf(name);
+        List<RedisNodeDescription> result = sut
+                .select(getNodes(nodeInSubnetIpv4, nodeNotInSubnetIpv4, nodeInSubnetIpv6, nodeNotInSubnetIpv6));
+        assertThat(result).hasSize(2).containsExactly(nodeInSubnetIpv4, nodeInSubnetIpv6);
+    }
+
     @Test
-    void valueOfRegex() {
+    void valueOfRegexWithEmptyRegexValue() {
         assertThatThrownBy(() -> ReadFrom.valueOf("regex")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "regex:.*region-1.*", "REGEX:.*region-1.*" })
+    void valueOfRegex(String name) {
+        ReadFrom sut = ReadFrom.valueOf(name);
+
+        RedisClusterNode node1 = createNodeWithHost("redis-node-1.region-1.example.com");
+        RedisClusterNode node2 = createNodeWithHost("redis-node-2.region-1.example.com");
+        RedisClusterNode node3 = createNodeWithHost("redis-node-1.region-2.example.com");
+        RedisClusterNode node4 = createNodeWithHost("redis-node-2.region-2.example.com");
+
+        List<RedisNodeDescription> result = sut.select(getNodes(node1, node2, node3, node4));
+
+        assertThat(sut).hasFieldOrPropertyWithValue("orderSensitive", false);
+        assertThat(result).hasSize(2).containsExactly(node1, node2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "REPLICA", "replica", "Replica" })
+    void valueOfReplica(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.REPLICA);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "UPSTREAM", "upstream", "Upstream" })
+    void valueOfUpstream(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.UPSTREAM);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "upstreamPreferred", "UPSTREAMPREFERRED", "UpstreamPreferred" })
+    void valueOfUpstreamPreferred(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.UPSTREAM_PREFERRED);
+    }
+
+    @Test
+    void valueOfWhenNameIsPresentButValueIsAbsent() {
+        assertThatThrownBy(() -> ReadFrom.valueOf("subnet:")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Value must not be empty for the type 'subnet'");
+    }
+
+    @Test
+    void valueOfWhenNameIsEmptyButValueIsPresent() {
+        assertThatThrownBy(() -> ReadFrom.valueOf(":192.0.2.0/24")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("ReadFrom :192.0.2.0/24 not supported");
+    }
+
+    @Test
+    void valueOfRegexWithInvalidPatternShouldThrownIllegalArgumentException() {
+        assertThatThrownBy(() -> ReadFrom.valueOf("regex:\\")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("is not a valid regular expression");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ANY", "any", "Any" })
+    void valueOfAny(String name) {
+        assertThat(ReadFrom.valueOf(name)).isEqualTo(ReadFrom.ANY);
     }
 
     private ReadFrom.Nodes getNodes() {
