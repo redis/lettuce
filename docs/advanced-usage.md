@@ -238,12 +238,12 @@ resolver group. For example:
 
 ```java
 new DnsAddressResolverGroup(
-	new DnsNameResolverBuilder(dnsEventLoop)
-			.channelType(NioDatagramChannel.class)
-			.resolveCache(NoopDnsCache.INSTANCE)
-			.cnameCache(NoopDnsCnameCache.INSTANCE)
-			.authoritativeDnsServerCache(NoopAuthoritativeDnsServerCache.INSTANCE)
-			.consolidateCacheSize(0)
+  new DnsNameResolverBuilder(dnsEventLoop)
+      .channelType(NioDatagramChannel.class)
+      .resolveCache(NoopDnsCache.INSTANCE)
+      .cnameCache(NoopDnsCnameCache.INSTANCE)
+      .authoritativeDnsServerCache(NoopAuthoritativeDnsServerCache.INSTANCE)
+      .consolidateCacheSize(0)
 );
 ```
 
