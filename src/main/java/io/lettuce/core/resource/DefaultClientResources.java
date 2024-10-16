@@ -442,7 +442,7 @@ public class DefaultClientResources implements ClientResources {
 
         /**
          * Sets the {@link DnsResolver} that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
-         * {@link DnsResolvers#JVM_DEFAULT}
+         * {@link DnsResolvers#UNRESOLVED}
          *
          * @param dnsResolver the DNS resolver, must not be {@code null}.
          * @return {@code this} {@link Builder}.

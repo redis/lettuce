@@ -207,7 +207,7 @@ disabled by setting <code>commandLatencyPublisherOptions(…)</code> to
 <td><code>DnsResolvers.JVM_DEFAULT ( or netty if present)</code></td>
 </tr>
 <tr>
-<td colspan="3"><p>Since: 3.5, 4.2</p>
+<td colspan="3"><p>Since: 3.5, 4.2. Deprecated: 6.4</p>
 <p>Configures a DNS resolver to resolve hostnames to a
 <code>java.net.InetAddress</code>. Defaults to the JVM DNS resolution
 that uses blocking hostname resolution and caching of lookup results.
@@ -221,6 +221,34 @@ yields in a DNS lookup.</p>
 <p>Since 4.4: Defaults to <code>DnsResolvers.UNRESOLVED</code> to use
 netty's <code>AddressResolver</code> that resolves DNS names on
 <code>Bootstrap.connect()</code> (requires netty 4.1)</p></td>
+</tr>
+<tr>
+<td><strong>Address Resolver Group</strong></td>
+<td><code>addressResolverGroup</code></td>
+<td><code>DefaultAddressResolverGroup.INSTANCE ( or netty DnsAddressResolverGroup if present)</code></td>
+</tr>
+<tr>
+<td colspan="3"><p>Since: 6.1</p>
+<p>Sets the <code>AddressResolverGroup</code> for DNS resolution. This option is only effective if
+<code>DnsResolvers#UNRESOLVED</code> is used as <code>DnsResolver</code>. Defaults to
+<code>io.netty.resolver.DefaultAddressResolverGroup#INSTANCE</code> if <code>netty-dns-resolver</code>
+is not available, otherwise defaults to <code>io.netty.resolver.dns.DnsAddressResolverGroup</code></p>
+<p>Users of DNS-based Redis-HA setups (e.g. AWS ElastiCache) might want to configure a different DNS 
+resolver group. For example:
+
+```java
+new DnsAddressResolverGroup(
+  new DnsNameResolverBuilder(dnsEventLoop)
+      .channelType(NioDatagramChannel.class)
+      .resolveCache(NoopDnsCache.INSTANCE)
+      .cnameCache(NoopDnsCnameCache.INSTANCE)
+      .authoritativeDnsServerCache(NoopAuthoritativeDnsServerCache.INSTANCE)
+      .consolidateCacheSize(0)
+);
+```
+
+</p>
+</td>
 </tr>
 <tr>
 <td><strong>Reconnect Delay</strong></td>
