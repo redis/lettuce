@@ -234,15 +234,18 @@ netty's <code>AddressResolver</code> that resolves DNS names on
 <code>io.netty.resolver.DefaultAddressResolverGroup#INSTANCE</code> if <code>netty-dns-resolver</code>
 is not available, otherwise defaults to <code>io.netty.resolver.dns.DnsAddressResolverGroup</code></p>
 <p>Users of DNS-based Redis-HA setups (e.g. AWS ElastiCache) might want to configure a different DNS 
-resolver group. For example: <pre>
-new DnsAddressResolverGroup(
-	new DnsNameResolverBuilder()
-		.resolveCache(NoopDnsCache.INSTANCE)
-		.cnameCache(NoopDnsCnameCache.INSTANCE)
-		.authoritativeDnsServerCache(NoopAuthoritativeDnsServerCache.INSTANCE)
-		.consolidateCacheSize(0)
-);
-</pre></p>
+resolver group. For example:
+
+```java
+new DnsNameResolverBuilder(dnsEventLoop)
+    .channelType(NioDatagramChannel.class)
+    .resolveCache(NoopDnsCache.INSTANCE)
+    .cnameCache(NoopDnsCnameCache.INSTANCE)
+    .authoritativeDnsServerCache(NoopAuthoritativeDnsServerCache.INSTANCE)
+    .consolidateCacheSize(0);
+```
+
+</p>
 </td>
 </tr>
 <tr>
