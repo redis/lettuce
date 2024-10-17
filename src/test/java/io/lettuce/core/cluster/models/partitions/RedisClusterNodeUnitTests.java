@@ -140,4 +140,35 @@ class RedisClusterNodeUnitTests {
         assertThat(node.toString()).contains(RedisClusterNode.class.getSimpleName());
     }
 
+    @Test
+    void shouldReturnTrueWhenSlotsAreNull() {
+
+        BitSet emptySlots = null;
+        RedisClusterNode node = new RedisClusterNode(RedisURI.create("localhost", 6379), "1", true, null, 0, 0, 0, emptySlots,
+                Collections.emptySet());
+
+        assertThat(node.hasNoSlots()).isTrue();
+    }
+
+    @Test
+    void shouldReturnTrueWhenSlotsAreEmpty() {
+
+        BitSet emptySlots = new BitSet(); // Empty BitSet
+        RedisClusterNode node = new RedisClusterNode(RedisURI.create("localhost", 6379), "1", true, null, 0, 0, 0, emptySlots,
+                Collections.emptySet());
+
+        assertThat(node.hasNoSlots()).isTrue();
+    }
+
+    @Test
+    void shouldReturnFalseWhenSlotsAreAssigned() {
+
+        BitSet slots = new BitSet();
+        slots.set(1); // Assign a slot
+        RedisClusterNode node = new RedisClusterNode(RedisURI.create("localhost", 6379), "1", true, null, 0, 0, 0, slots,
+                Collections.emptySet());
+
+        assertThat(node.hasNoSlots()).isFalse();
+    }
+
 }
