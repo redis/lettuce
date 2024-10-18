@@ -341,7 +341,7 @@ public abstract class ScanIterator<T> implements Iterator<T> {
      * @return a {@link Stream} for this {@link ScanIterator}.
      */
     public Stream<T> stream() {
-        return StreamSupport.stream(Spliterators.spliterator(this, 0, 0), false);
+        return StreamSupport.stream(Spliterators.spliterator(this, -1, 0), false);
     }
 
     /**
