@@ -21,6 +21,7 @@ package io.lettuce.core;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import io.lettuce.core.internal.LettuceStrings;
 import io.lettuce.core.models.role.RedisNodeDescription;
@@ -181,9 +182,10 @@ public abstract class ReadFrom {
     }
 
     /**
-     * Retrieve the {@link ReadFrom} preset by name.
+     * Retrieve the {@link ReadFrom} preset by name. For complex types like {@code subnet} or {@code regex}, the following
+     * syntax could be used {@code subnet:192.168.0.0/16,2001:db8:abcd:0000::/52} and {@code regex:.*region-1.*} respectively.
      *
-     * @param name the name of the read from setting
+     * @param name the case-insensitive name of the read from setting
      * @return the {@link ReadFrom} preset
      * @throws IllegalArgumentException if {@code name} is empty, {@code null} or the {@link ReadFrom} preset is unknown.
      */
@@ -191,6 +193,25 @@ public abstract class ReadFrom {
 
         if (LettuceStrings.isEmpty(name)) {
             throw new IllegalArgumentException("Name must not be empty");
+        }
+
+        int index = name.indexOf(':');
+        if (index != -1) {
+            String type = name.substring(0, index);
+            String value = name.substring(index + 1);
+            if (LettuceStrings.isEmpty(value)) {
+                throw new IllegalArgumentException("Value must not be empty for the type '" + type + "'");
+            }
+            if (type.equalsIgnoreCase("subnet")) {
+                return subnet(value.split(","));
+            }
+            if (type.equalsIgnoreCase("regex")) {
+                try {
+                    return regex(Pattern.compile(value));
+                } catch (PatternSyntaxException ex) {
+                    throw new IllegalArgumentException("Value '" + value + "' is not a valid regular expression", ex);
+                }
+            }
         }
 
         if (name.equalsIgnoreCase("master")) {
@@ -227,14 +248,6 @@ public abstract class ReadFrom {
 
         if (name.equalsIgnoreCase("anyReplica")) {
             return ANY_REPLICA;
-        }
-
-        if (name.equalsIgnoreCase("subnet")) {
-            throw new IllegalArgumentException("subnet must be created via ReadFrom#subnet");
-        }
-
-        if (name.equalsIgnoreCase("regex")) {
-            throw new IllegalArgumentException("regex must be created via ReadFrom#regex");
         }
 
         throw new IllegalArgumentException("ReadFrom " + name + " not supported");
