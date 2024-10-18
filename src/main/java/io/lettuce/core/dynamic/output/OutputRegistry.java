@@ -56,6 +56,8 @@ public class OutputRegistry {
         register(registry, StringListOutput.class, StringListOutput::new);
         register(registry, VoidOutput.class, VoidOutput::new);
 
+        register(registry, StringMatchResultOutput.class, StringMatchResultOutput::new);
+
         BUILTIN.putAll(registry);
     }
 
