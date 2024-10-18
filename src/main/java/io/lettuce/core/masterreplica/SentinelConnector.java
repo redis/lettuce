@@ -120,7 +120,8 @@ class SentinelConnector<K, V> implements MasterReplicaConnector<K, V> {
                     EventRecorder.getInstance().record(new MasterReplicaTopologyChangedEvent(redisURI, nodes));
 
                     if (nodes.isEmpty()) {
-                        LOG.warn("Topology refresh returned no nodes from {}", redisURI);
+                        LOG.warn("Topology refresh returned no nodes from {}, skip refresh Known nodes", redisURI);
+                        return;
                     }
 
                     LOG.debug("New topology: {}", nodes);
