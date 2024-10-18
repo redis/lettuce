@@ -19,11 +19,13 @@
  */
 package io.lettuce.core.metrics;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.Map;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -36,6 +38,7 @@ import io.netty.channel.local.LocalAddress;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
 class DefaultCommandLatencyCollectorUnitTests {
 

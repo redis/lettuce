@@ -19,9 +19,11 @@
  */
 package io.lettuce.core.pubsub;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ClientOptions;
@@ -35,7 +37,8 @@ import io.lettuce.test.Wait;
  *
  * @author Mark Paluch
  */
-class PubSubCommandResp2Test extends PubSubCommandTest {
+@Tag(INTEGRATION_TEST)
+class PubSubCommandResp2IntegrationTests extends PubSubCommandIntegrationTests {
 
     @Override
     protected ClientOptions getOptions() {

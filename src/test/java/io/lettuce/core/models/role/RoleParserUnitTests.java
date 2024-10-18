@@ -1,11 +1,13 @@
 package io.lettuce.core.models.role;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.internal.HostAndPort;
@@ -14,6 +16,7 @@ import io.lettuce.core.internal.LettuceLists;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class RoleParserUnitTests {
 
     private static final long REPLICATION_OFFSET_1 = 3167038L;

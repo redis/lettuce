@@ -1,10 +1,12 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.function.Predicate;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ClientOptions;
@@ -18,6 +20,7 @@ import io.lettuce.core.protocol.ProtocolVersion;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class ClusterClientOptionsUnitTests {
 
     @Test

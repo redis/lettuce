@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.commands;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.BitFieldArgs.offset;
 import static io.lettuce.core.BitFieldArgs.signed;
 import static io.lettuce.core.BitFieldArgs.typeWidthBasedOffset;
@@ -33,6 +34,7 @@ import javax.inject.Inject;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,6 +50,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
  * @author Will Glozer
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BitCommandIntegrationTests extends TestSupport {

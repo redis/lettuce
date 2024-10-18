@@ -19,10 +19,12 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.internal.ExceptionFactory;
@@ -33,6 +35,7 @@ import io.lettuce.core.internal.ExceptionFactory;
  * @author Mark Paluch
  * @author Tobias Nehrlich
  */
+@Tag(UNIT_TEST)
 class ExceptionFactoryUnitTests {
 
     @Test

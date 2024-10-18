@@ -1,10 +1,12 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
@@ -16,7 +18,8 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Mark Paluch
  */
-class RedisClusterClientFactoryTests {
+@Tag(UNIT_TEST)
+class RedisClusterClientFactoryUnitTests {
 
     private static final String URI = "redis://" + TestSettings.host() + ":" + TestSettings.port();
 

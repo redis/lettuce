@@ -1,5 +1,6 @@
 package io.lettuce.core.masterslave;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
@@ -9,6 +10,7 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.AbstractRedisClientTest;
@@ -25,7 +27,8 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Mark Paluch
  */
-class StaticMasterSlaveTest extends AbstractRedisClientTest {
+@Tag(INTEGRATION_TEST)
+class StaticMasterSlaveIntegrationTests extends AbstractRedisClientTest {
 
     private StatefulRedisMasterSlaveConnection<String, String> connection;
 

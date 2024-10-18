@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.tracing;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import brave.ScopedSpan;
@@ -56,6 +58,7 @@ import zipkin2.Span;
  * @author Daniel Albuquerque
  * @author Anuraag Agrawal
  */
+@Tag(INTEGRATION_TEST)
 @EnabledOnCommand("HELLO")
 class BraveTracingIntegrationTests extends TestSupport {
 

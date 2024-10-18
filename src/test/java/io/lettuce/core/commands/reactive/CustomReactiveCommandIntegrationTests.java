@@ -2,6 +2,7 @@ package io.lettuce.core.commands.reactive;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -18,9 +19,12 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class CustomReactiveCommandIntegrationTests extends TestSupport {
 

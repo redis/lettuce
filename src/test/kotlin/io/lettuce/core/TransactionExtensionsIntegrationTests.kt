@@ -19,6 +19,7 @@
  */
 package io.lettuce.core;
 
+import io.lettuce.TestTags
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.async.multi
 import io.lettuce.core.api.sync.multi
@@ -27,6 +28,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import javax.inject.Inject
@@ -37,6 +39,7 @@ import javax.inject.Inject
  * @author Mark Paluch
  * @author Mikhael Sokolov
  */
+@Tag(TestTags.INTEGRATION_TEST)
 @ExtendWith(LettuceExtension::class)
 class TransactionExtensionsIntegrationTests : TestSupport() {
 

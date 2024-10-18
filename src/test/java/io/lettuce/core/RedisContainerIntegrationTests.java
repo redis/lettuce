@@ -7,9 +7,10 @@
 
 package io.lettuce.core;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.ComposeContainer;
-import org.testcontainers.containers.output.BaseConsumer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -20,38 +21,27 @@ import java.io.IOException;
 @Testcontainers
 public class RedisContainerIntegrationTests {
 
+    private static final Logger LOGGER = LogManager.getLogger(RedisContainerIntegrationTests.class);
+
+    private static final String REDIS_STACK_STANDALONE = "standalone-stack";
+
+    private static final String REDIS_STACK_CLUSTER = "clustered-stack";
+
     public static ComposeContainer CLUSTERED_STACK = new ComposeContainer(
-            new File("src/test/resources/docker/docker-compose.yml")).withExposedService("clustered-stack", 36379)
-                    .withExposedService("clustered-stack", 36380).withExposedService("clustered-stack", 36381)
-                    .withExposedService("clustered-stack", 36382).withExposedService("clustered-stack", 36383)
-                    .withExposedService("clustered-stack", 36384).withExposedService("standalone-stack", 6379);
+            new File("src/test/resources/docker/docker-compose.yml")).withExposedService(REDIS_STACK_CLUSTER, 36379)
+                    .withExposedService(REDIS_STACK_CLUSTER, 36380).withExposedService(REDIS_STACK_CLUSTER, 36381)
+                    .withExposedService(REDIS_STACK_CLUSTER, 36382).withExposedService(REDIS_STACK_CLUSTER, 36383)
+                    .withExposedService(REDIS_STACK_CLUSTER, 36384).withExposedService(REDIS_STACK_STANDALONE, 6379);
 
     @BeforeAll
     public static void setup() throws IOException, InterruptedException {
         // In case you need to debug the container uncomment these lines to redirect the output
-        CLUSTERED_STACK.withLogConsumer("clustered-stack", new SystemOutputConsumer("clustered"));
-        CLUSTERED_STACK.withLogConsumer("standalone-stack", new SystemOutputConsumer("standalone"));
+        CLUSTERED_STACK.withLogConsumer(REDIS_STACK_CLUSTER, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
+        CLUSTERED_STACK.withLogConsumer(REDIS_STACK_STANDALONE, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
 
-        CLUSTERED_STACK.waitingFor("clustered-stack",
+        CLUSTERED_STACK.waitingFor(REDIS_STACK_CLUSTER,
                 Wait.forLogMessage(".*Background RDB transfer terminated with success.*", 1));
         CLUSTERED_STACK.start();
-
-    }
-
-    static public class SystemOutputConsumer extends BaseConsumer<org.testcontainers.containers.output.ToStringConsumer> {
-
-        String prefix;
-
-        public SystemOutputConsumer(String prefix) {
-            this.prefix = prefix;
-        }
-
-        @Override
-        public void accept(OutputFrame outputFrame) {
-            String output = String.format("%15s: %s", prefix, outputFrame.getUtf8String());
-            System.out.print(output);
-        }
-
     }
 
 }

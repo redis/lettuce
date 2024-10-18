@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -25,6 +27,7 @@ import io.netty.util.internal.SystemPropertyUtil;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class UnixDomainSocketIntegrationTests {
 
     private static final String MASTER_ID = "mymaster";

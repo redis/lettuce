@@ -19,12 +19,14 @@
  */
 package io.lettuce.core.models.command;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.internal.LettuceLists;
@@ -35,6 +37,7 @@ import io.lettuce.core.internal.LettuceLists;
  * @author Mark Paluch
  * @author Mikhael Sokolov
  */
+@Tag(UNIT_TEST)
 class CommandDetailParserUnitTests {
 
     @Test

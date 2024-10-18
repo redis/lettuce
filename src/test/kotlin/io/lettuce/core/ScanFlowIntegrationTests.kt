@@ -19,6 +19,7 @@
  */
 package io.lettuce.core
 
+import io.lettuce.TestTags
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.coroutines
 import io.lettuce.test.LettuceExtension
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
@@ -39,6 +41,7 @@ import javax.inject.Inject
  * @author Mikhael Sokolov
  * @author Mark Paluch
  */
+@Tag(TestTags.INTEGRATION_TEST)
 @ExtendWith(LettuceExtension::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class ScanFlowIntegrationTests @Inject constructor(private val connection: StatefulRedisConnection<String, String>) : TestSupport() {

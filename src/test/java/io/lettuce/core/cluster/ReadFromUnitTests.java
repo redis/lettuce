@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -46,6 +48,7 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  * @author Omer Cilingir
  * @author Yohei Ueki
  */
+@Tag(UNIT_TEST)
 class ReadFromUnitTests {
 
     private Partitions sut = new Partitions();

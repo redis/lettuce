@@ -1,5 +1,6 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisConnectionException;
@@ -27,6 +29,7 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class ClusterPartiallyDownIntegrationTests extends TestSupport {
 
     private static ClientResources clientResources;

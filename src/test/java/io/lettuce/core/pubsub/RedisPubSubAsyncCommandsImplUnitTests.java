@@ -8,17 +8,20 @@ import io.lettuce.core.output.MapOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.RedisCommand;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.concurrent.ExecutionException;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.core.protocol.CommandType.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@Tag(UNIT_TEST)
 class RedisPubSubAsyncCommandsImplUnitTests {
 
     private RedisPubSubAsyncCommandsImpl<String, String> commands;

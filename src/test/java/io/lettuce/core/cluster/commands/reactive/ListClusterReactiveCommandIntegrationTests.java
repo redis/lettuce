@@ -1,9 +1,11 @@
 package io.lettuce.core.cluster.commands.reactive;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -15,6 +17,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 class ListClusterReactiveCommandIntegrationTests extends ListCommandIntegrationTests {
 
     private final RedisClusterCommands<String, String> redis;

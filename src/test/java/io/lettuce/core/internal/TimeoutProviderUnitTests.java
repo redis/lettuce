@@ -1,11 +1,13 @@
 package io.lettuce.core.internal;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.TimeoutOptions;
@@ -16,6 +18,7 @@ import io.lettuce.core.protocol.RedisCommand;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class TimeoutProviderUnitTests {
 
     @Test

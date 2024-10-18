@@ -1,9 +1,11 @@
 package io.lettuce.core.output;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.ScoredValue;
@@ -12,6 +14,7 @@ import io.lettuce.core.codec.StringCodec;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class ScoredValueListOutputUnitTests {
 
     private ScoredValueListOutput<String, String> sut = new ScoredValueListOutput<>(StringCodec.UTF8);

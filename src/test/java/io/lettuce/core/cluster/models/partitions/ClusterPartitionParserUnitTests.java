@@ -1,11 +1,13 @@
 package io.lettuce.core.cluster.models.partitions;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
@@ -14,6 +16,7 @@ import io.lettuce.core.internal.LettuceLists;
 /**
  * Unit tests for {@link ClusterPartitionParser}.
  */
+@Tag(UNIT_TEST)
 class ClusterPartitionParserUnitTests {
 
     private static String nodes = "c37ab8396be428403d4e55c0d317348be27ed973 127.0.0.1:7381 master - 111 1401258245007 222 connected 7000 12000 12002-16383\n"

@@ -1,5 +1,6 @@
 package io.lettuce.core.api.coroutines
 
+import io.lettuce.TestTags
 import io.lettuce.core.RedisClient
 import io.lettuce.core.TestSupport
 import io.lettuce.core.api.StatefulRedisConnection
@@ -12,6 +13,7 @@ import io.lettuce.test.LettuceExtension
 import io.lettuce.test.condition.EnabledOnCommand
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import javax.inject.Inject
@@ -21,6 +23,7 @@ import javax.inject.Inject
  *
  * @author Mark Paluch
  */
+@Tag(TestTags.INTEGRATION_TEST)
 @ExtendWith(LettuceExtension::class)
 class CoroutinesIntegrationTests : TestSupport() {
 

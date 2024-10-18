@@ -19,10 +19,12 @@
  */
 package io.lettuce.core.protocol;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -35,8 +37,9 @@ import io.netty.buffer.ByteBuf;
  *
  * @author Shaphan
  */
+@Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
-class RatioDecodeBufferPolicyTest {
+class RatioDecodeBufferPolicyUnitTests {
 
     @Mock
     ByteBuf buffer;

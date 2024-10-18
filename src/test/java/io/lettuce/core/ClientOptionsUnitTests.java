@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
@@ -10,6 +11,7 @@ import io.lettuce.core.json.JsonArray;
 import io.lettuce.core.json.JsonObject;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonValue;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.protocol.Command;
@@ -22,6 +24,7 @@ import reactor.core.publisher.Mono;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class ClientOptionsUnitTests {
 
     @Test

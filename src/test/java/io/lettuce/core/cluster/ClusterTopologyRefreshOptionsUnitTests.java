@@ -1,10 +1,12 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions.RefreshTrigger;
@@ -14,6 +16,7 @@ import io.lettuce.core.cluster.ClusterTopologyRefreshOptions.RefreshTrigger;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class ClusterTopologyRefreshOptionsUnitTests {
 
     @Test

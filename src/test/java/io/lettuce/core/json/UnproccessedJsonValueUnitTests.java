@@ -22,15 +22,18 @@ package io.lettuce.core.json;
 
 import io.lettuce.core.codec.StringCodec;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
  * Unit tests for {@link UnproccessedJsonValue}.
  */
+@Tag(UNIT_TEST)
 class UnproccessedJsonValueUnitTests {
 
     @Test

@@ -1,6 +1,7 @@
 package io.lettuce.core.masterslave;
 
-import static io.lettuce.core.masterslave.MasterSlaveTest.slaveCall;
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static io.lettuce.core.masterslave.MasterSlaveIntegrationTests.slaveCall;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -10,6 +11,7 @@ import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -24,6 +26,7 @@ import io.netty.channel.group.ChannelGroup;
 /**
  * @author Mark Paluch
  */
+@Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class MasterSlaveSentinelIntegrationTests extends TestSupport {
 

@@ -18,6 +18,7 @@ import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
 
@@ -25,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -32,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Tihomir Mateev
  */
+@Tag(UNIT_TEST)
 class RedisJsonCommandBuilderUnitTests {
 
     public static final String MY_KEY = "bikes:inventory";

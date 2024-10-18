@@ -1,9 +1,11 @@
 package io.lettuce.core.cluster;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.test.TestFutures;
@@ -11,6 +13,7 @@ import io.lettuce.test.TestFutures;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class PipelinedRedisFutureUnitTests {
 
     private PipelinedRedisFuture<String> sut;

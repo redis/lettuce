@@ -10,16 +10,19 @@ package io.lettuce.core.output;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.DefaultJsonParser;
 import io.lettuce.core.json.JsonType;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for {@link JsonTypeListOutput}.
  */
+@Tag(UNIT_TEST)
 class JsonTypeListOutputUnitTests {
 
     @Test

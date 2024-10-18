@@ -1,10 +1,12 @@
 package io.lettuce.core.dynamic;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Future;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import reactor.core.publisher.Flux;
@@ -12,6 +14,7 @@ import reactor.core.publisher.Flux;
 /**
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class DeclaredCommandMethodUnitTests {
 
     @Test

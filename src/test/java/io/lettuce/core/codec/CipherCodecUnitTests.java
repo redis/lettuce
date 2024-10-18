@@ -1,5 +1,6 @@
 package io.lettuce.core.codec;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -14,6 +15,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -27,6 +29,7 @@ import io.netty.buffer.Unpooled;
  *
  * @author Mark Paluch
  */
+@Tag(UNIT_TEST)
 class CipherCodecUnitTests {
 
     private final SecretKeySpec key = new SecretKeySpec("1234567890123456".getBytes(), "AES");
