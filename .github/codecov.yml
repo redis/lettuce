@@ -1,5 +1,5 @@
 codecov:                                    # see https://docs.codecov.com/docs/codecovyml-reference
-  branch: stable
+  branch: main
 
 coverage:
   status:                                   # see https://docs.codecov.com/docs/commit-status
