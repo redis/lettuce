@@ -58,4 +58,5 @@ jobs:
         with:
           fail_ci_if_error: false
           files: ./target/surefire-reports/TEST*,./target/failsafe-reports/TEST*
+          codecov_yml_path: ./.github/codecov.yml
           token: ${{ secrets.CODECOV_TOKEN }}
