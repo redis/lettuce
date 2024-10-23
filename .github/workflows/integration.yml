@@ -54,6 +54,10 @@ jobs:
           JVM_OPTS: -Xmx3200m
           TERM: dumb
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4.0.1
+        uses: codecov/test-results-action@v1
         with:
+          fail_ci_if_error: false
+          files: ./target/surefire-reports/TEST*,./target/failsafe-reports/TEST*
+          codecov_yml_path: ./.github/codecov.yml
+          verbose: ${{ runner.debug }}
           token: ${{ secrets.CODECOV_TOKEN }}

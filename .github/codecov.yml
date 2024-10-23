@@ -1,0 +1,65 @@
+codecov:                                    # see https://docs.codecov.com/docs/codecovyml-reference
+  branch: main
+
+coverage:
+  status:                                   # see https://docs.codecov.com/docs/commit-status
+    project:
+      default:
+        target: auto                        # minimum coverage ratio that the commit must meet to be considered a success
+        threshold: 5                        # Allow the coverage to drop by <number>%, and posting a success status
+        branches:
+          - main
+          - '[0-9].*'
+
+comment:                                    # see https://docs.codecov.com/docs/pull-request-comments
+  layout: "condensed_header, condensed_files, condensed_footer"
+  behavior: new
+  require_changes: true                     # Only post comment if there are changes in coverage (positive or negative)
+
+component_management:                       # see https://docs.codecov.com/docs/components
+  individual_components:
+    - component_id: module_json
+      name: Lettuce JSON
+      paths:
+        - src/main/java/**/json/**
+    - component_id: module_api
+      name: Lettuce API
+      paths:
+        - src/main/java/**/api/**
+    - component_id: module_sentinel
+      name: Lettuce Sentinel
+      paths:
+        - src/main/java/**/sentinel/**
+    - component_id: module_cluster
+      name: Lettuce Cluster
+      paths:
+        - src/main/java/**/cluster/**
+    - component_id: module_pubsub
+      name: Lettuce PubSub
+      paths:
+        - src/main/java/**/pubsub/**
+    - component_id: module_masterreplica
+      name: Lettuce Master/Replica
+      paths:
+        - src/main/java/**/masterreplica/**
+        - src/main/java/**/masterslave/**
+    - component_id: module_metrics
+      name: Lettuce Metrics & Tracing
+      paths:
+        - src/main/java/**/metrics/**
+        - src/main/java/**/tracing/**
+    - component_id: module_core
+      name: Lettuce Core
+      paths:
+        - src/main/java/**/core/*
+        - src/main/java/**/codec/**
+        - src/main/java/**/dynamic/**
+        - src/main/java/**/event/**
+        - src/main/java/**/internal/**
+        - src/main/java/**/protocol/**
+        - src/main/java/**/resource/**
+        - src/main/java/**/support/**
+    - component_id: module_kotlin
+      name: Lettuce Kotlin
+      paths:
+        - src/main/kotlin/**
