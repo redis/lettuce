@@ -84,6 +84,8 @@ class PubSubCommandTest extends AbstractRedisClientTest {
 
     BlockingQueue<Long> counts = listener.getCounts();
 
+    BlockingQueue<Long> shardCounts = listener.getShardCounts();
+
     String channel = "channel0";
 
     String shardChannel = "shard-channel";
@@ -519,6 +521,24 @@ class PubSubCommandTest extends AbstractRedisClientTest {
         redis.publish(channel, message);
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
+    }
+
+    @Test
+    void resubscribeShardChannelsOnReconnect() throws Exception {
+        pubsub.ssubscribe(shardChannel);
+        assertThat(shardChannels.take()).isEqualTo(shardChannel);
+        assertThat((long) shardCounts.take()).isEqualTo(1);
+
+        pubsub.quit();
+
+        assertThat(shardChannels.take()).isEqualTo(shardChannel);
+        assertThat((long) shardCounts.take()).isEqualTo(1);
+
+        Wait.untilTrue(pubsub::isOpen).waitOrTimeout();
+
+        redis.spublish(shardChannel, shardMessage);
+        assertThat(shardChannels.take()).isEqualTo(shardChannel);
+        assertThat(messages.take()).isEqualTo(shardMessage);
     }
 
     @Test
