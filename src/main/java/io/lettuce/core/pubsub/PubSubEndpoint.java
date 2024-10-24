@@ -128,6 +128,14 @@ public class PubSubEndpoint<K, V> extends DefaultEndpoint {
         return unwrap(this.channels);
     }
 
+    public boolean hasShardChannelSubscriptions() {
+        return !shardChannels.isEmpty();
+    }
+
+    public Set<K> getShardChannels() {
+        return unwrap(this.shardChannels);
+    }
+
     public boolean hasPatternSubscriptions() {
         return !patterns.isEmpty();
     }
