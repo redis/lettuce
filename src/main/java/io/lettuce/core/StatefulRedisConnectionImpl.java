@@ -166,9 +166,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
 
         RedisCommand<K, V, T> toSend = preProcessCommand(command);
-
-        potentiallyEnableMulti(command);
-
         return super.dispatch(toSend);
     }
 
@@ -179,35 +176,21 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         commands.forEach(o -> {
             RedisCommand<K, V, ?> command = preProcessCommand(o);
-
             sentCommands.add(command);
-            potentiallyEnableMulti(command);
         });
 
         return super.dispatch(sentCommands);
     }
 
-    private void potentiallyEnableMulti(RedisCommand<K, V, ?> command) {
-
-        if (command.getType().toString().equals(MULTI.name())) {
-
-            multi = (multi == null ? new MultiOutput<>(codec) : multi);
-
-            if (command instanceof CompleteableCommand) {
-                ((CompleteableCommand<?>) command).onComplete((ignored, e) -> {
-                    if (e != null) {
-                        multi = null;
-                    }
-                });
-            }
-        }
-    }
-
+    // TODO [tihomir.mateev] Refactor to include as part of the Command interface
+    // All these if statements clearly indicate this is a problem best solve by each command
+    // (defining a pre and post processing behaviour of the command)
     protected <T> RedisCommand<K, V, T> preProcessCommand(RedisCommand<K, V, T> command) {
 
         RedisCommand<K, V, T> local = command;
+        String commandType = command.getType().toString();
 
-        if (local.getType().toString().equals(AUTH.name())) {
+        if (commandType.equals(AUTH.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
 
@@ -224,7 +207,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             });
         }
 
-        if (local.getType().toString().equals(SELECT.name())) {
+        if (commandType.equals(SELECT.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
                     Long db = CommandArgsAccessor.getFirstInteger(command.getArgs());
@@ -235,7 +218,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             });
         }
 
-        if (local.getType().toString().equals(READONLY.name())) {
+        if (commandType.equals(READONLY.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
                     state.setReadOnly(true);
@@ -243,7 +226,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             });
         }
 
-        if (local.getType().toString().equals(READWRITE.name())) {
+        if (commandType.equals(READWRITE.name())) {
             local = attachOnComplete(local, status -> {
                 if ("OK".equals(status)) {
                     state.setReadOnly(false);
@@ -251,14 +234,14 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             });
         }
 
-        if (local.getType().toString().equals(DISCARD.name())) {
+        if (commandType.equals(DISCARD.name())) {
             if (multi != null) {
                 multi.cancel();
                 multi = null;
             }
         }
 
-        if (local.getType().toString().equals(EXEC.name())) {
+        if (commandType.equals(EXEC.name())) {
             MultiOutput<K, V> multiOutput = this.multi;
             this.multi = null;
             if (multiOutput == null) {
@@ -267,10 +250,25 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             local.setOutput((MultiOutput) multiOutput);
         }
 
-        if (multi != null && !local.getType().toString().equals(MULTI.name())) {
+        if (multi != null && !commandType.equals(MULTI.name()) && !commandType.equals(WATCH.name())) {
+            // ignore MULTI and WATCH commands nested in another MULTI
             local = new TransactionalCommand<>(local);
             multi.add(local);
         }
+
+        if (commandType.equals(MULTI.name())) {
+
+            multi = (multi == null ? new MultiOutput<>(codec) : multi);
+
+            if (command instanceof CompleteableCommand) {
+                ((CompleteableCommand<?>) command).onComplete((ignored, e) -> {
+                    if (e != null) {
+                        multi = null;
+                    }
+                });
+            }
+        }
+
         return local;
     }
 

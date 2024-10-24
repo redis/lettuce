@@ -143,6 +143,30 @@ public class TransactionCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    void errorWhileWatchInsideMulti() {
+        assertThat(redis.multi()).isEqualTo("OK");
+        assertThat(redis.set(key, value)).isEqualTo(null);
+        assertThatThrownBy(() -> redis.watch(key)).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR WATCH inside MULTI is not allowed");
+        assertThat(redis.get(key)).isEqualTo(null);
+        TransactionResult values = redis.exec();
+        assertThat(values.wasDiscarded()).isFalse();
+        assertThat((String) values.get(0)).isEqualTo("OK");
+        assertThat((String) values.get(1)).isEqualTo(value);
+    }
+
+    @Test
+    void errorWhileMultiInsideMulti() {
+        assertThat(redis.multi()).isEqualTo("OK");
+        assertThat(redis.set(key, value)).isEqualTo(null);
+        assertThatThrownBy(redis::multi).isInstanceOf(RedisCommandExecutionException.class)
+                .hasMessageContaining("ERR MULTI calls can not be nested");
+        assertThat(redis.get(key)).isEqualTo(null);
+        TransactionResult values = redis.exec();
+        assertThat(values.wasDiscarded()).isFalse();
+    }
+
+    @Test
     void execWithoutMulti() {
         assertThatThrownBy(redis::exec).isInstanceOf(RedisCommandExecutionException.class)
                 .hasMessageContaining("ERR EXEC without MULTI");
