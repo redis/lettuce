@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static io.lettuce.TestTags.UNIT_TEST;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.mockito.Mockito.*;
 
@@ -81,6 +81,7 @@ class StatefulRedisPubSubConnectionImplUnitTests {
         when(mockedEndpoint.hasChannelSubscriptions()).thenReturn(true);
         when(mockedEndpoint.getChannels()).thenReturn(new HashSet<>(Arrays.asList(new String[] { "channel1", "channel2" })));
         when(mockedEndpoint.hasPatternSubscriptions()).thenReturn(false);
+        when(mockedEndpoint.hasShardChannelSubscriptions()).thenReturn(false);
 
         List<RedisFuture<Void>> subscriptions = connection.resubscribe();
         RedisFuture<Void> commandFuture = subscriptions.get(0);
@@ -90,16 +91,34 @@ class StatefulRedisPubSubConnectionImplUnitTests {
     }
 
     @Test
-    void resubscribeChannelAndPatternSubscription() {
-        when(mockedEndpoint.hasChannelSubscriptions()).thenReturn(true);
-        when(mockedEndpoint.getChannels()).thenReturn(new HashSet<>(Arrays.asList(new String[] { "channel1", "channel2" })));
-        when(mockedEndpoint.hasPatternSubscriptions()).thenReturn(true);
-        when(mockedEndpoint.getPatterns()).thenReturn(new HashSet<>(Arrays.asList(new String[] { "bcast*", "echo" })));
+    void resubscribeShardChannelSubscription() {
+        when(mockedEndpoint.hasShardChannelSubscriptions()).thenReturn(true);
+        when(mockedEndpoint.getShardChannels())
+                .thenReturn(new HashSet<>(Arrays.asList(new String[] { "shard_channel1", "shard_channel2" })));
+        when(mockedEndpoint.hasChannelSubscriptions()).thenReturn(false);
+        when(mockedEndpoint.hasPatternSubscriptions()).thenReturn(false);
 
         List<RedisFuture<Void>> subscriptions = connection.resubscribe();
+        RedisFuture<Void> commandFuture = subscriptions.get(0);
 
-        assertEquals(2, subscriptions.size());
+        assertEquals(1, subscriptions.size());
+        assertInstanceOf(AsyncCommand.class, commandFuture);
+    }
+
+    @Test
+    void resubscribeChannelAndPatternAndShardChanelSubscription() {
+        when(mockedEndpoint.hasChannelSubscriptions()).thenReturn(true);
+        when(mockedEndpoint.hasPatternSubscriptions()).thenReturn(true);
+        when(mockedEndpoint.hasShardChannelSubscriptions()).thenReturn(true);
+        when(mockedEndpoint.getChannels()).thenReturn(new HashSet<>(Arrays.asList(new String[] { "channel1", "channel2" })));
+        when(mockedEndpoint.getPatterns()).thenReturn(new HashSet<>(Arrays.asList(new String[] { "bcast*", "echo" })));
+        when(mockedEndpoint.getShardChannels())
+                .thenReturn(new HashSet<>(Arrays.asList(new String[] { "shard_channel1", "shard_channel2" })));
+        List<RedisFuture<Void>> subscriptions = connection.resubscribe();
+
+        assertEquals(3, subscriptions.size());
         assertInstanceOf(AsyncCommand.class, subscriptions.get(0));
+        assertInstanceOf(AsyncCommand.class, subscriptions.get(1));
         assertInstanceOf(AsyncCommand.class, subscriptions.get(1));
     }
 

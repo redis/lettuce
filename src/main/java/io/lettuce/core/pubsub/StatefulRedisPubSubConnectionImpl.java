@@ -130,6 +130,10 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
             result.add(async().subscribe(toArray(endpoint.getChannels())));
         }
 
+        if (endpoint.hasShardChannelSubscriptions()) {
+            result.add(async().ssubscribe(toArray(endpoint.getShardChannels())));
+        }
+
         if (endpoint.hasPatternSubscriptions()) {
             result.add(async().psubscribe(toArray(endpoint.getPatterns())));
         }
