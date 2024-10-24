@@ -100,7 +100,8 @@ class FutureSyncInvocationHandler extends AbstractInvocationHandler {
 
     private static boolean isTxControlMethod(String methodName, Object[] args) {
 
-        if (methodName.equals("exec") || methodName.equals("multi") || methodName.equals("discard")) {
+        if (methodName.equals("exec") || methodName.equals("multi") || methodName.equals("discard")
+                || methodName.equals("watch")) {
             return true;
         }
 
