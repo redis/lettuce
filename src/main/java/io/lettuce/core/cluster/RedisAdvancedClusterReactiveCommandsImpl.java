@@ -236,27 +236,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-        return super.georadius_ro(key, longitude, latitude, distance, unit);
-    }
-
-    @Override
-    public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
-            GeoArgs geoArgs) {
-        return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
-    }
-
-    @Override
-    public Flux<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-        return super.georadiusbymember_ro(key, member, distance, unit);
-    }
-
-    @Override
-    public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
-        return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
-    }
-
-    @Override
     public Flux<K> keys(K pattern) {
 
         Map<String, Publisher<K>> publishers = executeOnUpstream(commands -> commands.keys(pattern));
