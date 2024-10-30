@@ -47,6 +47,9 @@ public class GeoMasterReplicaIntegrationTests extends AbstractRedisClientTest {
         connection1 = client.connect(node1).sync();
         connection2 = client.connect(node2).sync();
 
+        connection1.flushall();
+        connection2.flushall();
+
         RedisInstance node1Instance = RoleParser.parse(this.connection1.role());
         RedisInstance node2Instance = RoleParser.parse(this.connection2.role());
 
