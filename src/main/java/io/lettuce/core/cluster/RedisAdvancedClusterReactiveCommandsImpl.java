@@ -284,7 +284,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             publishers.add(super.mget(entry.getValue()));
         }
 
-        Flux<KeyValue<K, V>> fluxes = Flux.concat(publishers);
+        Flux<KeyValue<K, V>> fluxes = Flux.mergeSequential(publishers);
 
         Mono<List<KeyValue<K, V>>> map = fluxes.collectList().map(vs -> {
 
@@ -333,7 +333,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             publishers.add(super.mget(channel, entry.getValue()));
         }
 
-        return Flux.merge(publishers).reduce((accu, next) -> accu + next);
+        return Flux.merge(publishers).reduce(Long::sum);
     }
 
     @Override
