@@ -114,12 +114,4 @@ public class GeoMasterReplicaIntegrationTests extends AbstractRedisClientTest {
         redis.geoadd(key, 8.3796281, 48.9978127, "EFS9", 8.665351, 49.553302, "Bahn");
     }
 
-    private static double getY(List<GeoWithin<String>> georadius, int i) {
-        return georadius.get(i).getCoordinates().getY().doubleValue();
-    }
-
-    private static double getX(List<GeoWithin<String>> georadius, int i) {
-        return georadius.get(i).getCoordinates().getX().doubleValue();
-    }
-
 }
