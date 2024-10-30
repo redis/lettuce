@@ -50,6 +50,11 @@ public class BooleanListOutput<K, V> extends CommandOutput<K, V, List<Boolean>> 
     }
 
     @Override
+    public void set(boolean value) {
+        subscriber.onNext(output, value);
+    }
+
+    @Override
     public void multi(int count) {
 
         if (!initialized) {
