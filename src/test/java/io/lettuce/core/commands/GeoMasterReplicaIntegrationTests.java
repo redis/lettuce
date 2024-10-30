@@ -47,9 +47,6 @@ public class GeoMasterReplicaIntegrationTests extends AbstractRedisClientTest {
         connection1 = client.connect(node1).sync();
         connection2 = client.connect(node2).sync();
 
-        connection1.flushall();
-        connection2.flushall();
-
         RedisInstance node1Instance = RoleParser.parse(this.connection1.role());
         RedisInstance node2Instance = RoleParser.parse(this.connection2.role());
 
@@ -62,9 +59,11 @@ public class GeoMasterReplicaIntegrationTests extends AbstractRedisClientTest {
                     String.format("Cannot run the test because I don't have a distinct master and replica but %s and %s",
                             node1Instance, node2Instance));
         }
+        upstream.flushall();
 
         masterReplica = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(node1, node2));
         masterReplica.setReadFrom(ReadFrom.REPLICA);
+
     }
 
     @AfterEach
@@ -100,6 +99,19 @@ public class GeoMasterReplicaIntegrationTests extends AbstractRedisClientTest {
     }
 
     @Test
+    void georadiusWithArgsReadFromReplica() {
+
+        prepareGeo(upstream);
+
+        upstream.waitForReplication(1, 1000);
+
+        GeoArgs geoArgs = new GeoArgs().withHash().withCoordinates().withDistance().withCount(1).desc();
+
+        List<GeoWithin<String>> result = masterReplica.sync().georadius(key, 8.665351, 49.553302, 5, GeoArgs.Unit.km, geoArgs);
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
     void georadiusbymemberReadFromReplica() {
 
         prepareGeo(upstream);
@@ -107,6 +119,17 @@ public class GeoMasterReplicaIntegrationTests extends AbstractRedisClientTest {
 
         Set<String> empty = masterReplica.sync().georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km);
         assertThat(empty).hasSize(1).contains("Bahn");
+    }
+
+    @Test
+    void georadiusbymemberWithArgsReadFromReplica() {
+
+        prepareGeo(upstream);
+        upstream.waitForReplication(1, 100);
+
+        List<GeoWithin<String>> empty = masterReplica.sync().georadiusbymember(key, "Bahn", 1, GeoArgs.Unit.km,
+                new GeoArgs().withHash().withCoordinates().withDistance().desc());
+        assertThat(empty).isNotEmpty();
     }
 
     protected void prepareGeo(RedisCommands<String, String> redis) {
