@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  release:
+    types: [published]                                      # once a release is published in the GitHub UI
+  workflow_dispatch:                                        # or manually, by clicking the button
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Set up Java with Maven cache
+
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'maven'
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+
+      - name: Update version in Maven configuration
+        run: |
+          mvn --no-transfer-progress \
+            --batch-mode \
+            versions:set -DnewVersion=${{ github.event.release.tag_name  }}
+        if: ${{ github.event.release.tag_name  }}
+
+      - name: Install GPG key
+
+        run: |
+          cat <(echo -e "${{ secrets.OSSH_GPG_SECRET_KEY }}") | gpg --batch --import
+          gpg --list-secret-keys --keyid-format LONG
+
+      - name: Publish to Maven
+
+        run: |
+          mvn --no-transfer-progress \
+            --batch-mode \
+            -Dgpg.passphrase='${{ secrets.OSSH_GPG_SECRET_KEY_PASSWORD }}' \
+            deploy -P sonatype-oss-release
+
+        env:
+          MAVEN_USERNAME: ${{secrets.OSSH_USERNAME}}
+          MAVEN_PASSWORD: ${{secrets.OSSH_TOKEN}}
