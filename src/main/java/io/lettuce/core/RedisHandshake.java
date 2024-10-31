@@ -101,21 +101,14 @@ class RedisHandshake implements ConnectionInitializer {
                     new RedisConnectionException("Protocol version" + this.requestedProtocolVersion + " not supported"));
         }
 
-        // post-handshake commands, whose execution failures would cause the connection to be considered
-        // unsuccessfully established
-        CompletableFuture<Void> postHandshake = applyPostHandshake(channel);
-
-        // post-handshake commands, executed in a 'fire and forget' manner, to avoid having to react to different
-        // implementations or versions of the server runtime, and whose execution result (whether a success or a
-        // failure ) should not alter the outcome of the connection attempt
-        CompletableFuture<Void> connectionMetadata = applyConnectionMetadata(channel).handle((result, error) -> {
-            if (error != null) {
-                LOG.debug("Error applying connection metadata", error);
-            }
-            return null;
-        });
-
-        return handshake.thenCompose(ignore -> postHandshake).thenCompose(ignore -> connectionMetadata);
+        return handshake
+                // post-handshake commands, whose execution failures would cause the connection to be considered
+                // unsuccessfully established
+                .thenCompose(ignore -> applyPostHandshake(channel))
+                // post-handshake commands, executed in a 'fire and forget' manner, to avoid having to react to different
+                // implementations or versions of the server runtime, and whose execution result (whether a success or a
+                // failure ) should not alter the outcome of the connection attempt
+                .thenCompose(ignore -> applyConnectionMetadataSafely(channel));
     }
 
     private CompletionStage<?> tryHandshakeResp3(Channel channel) {
@@ -269,6 +262,15 @@ class RedisHandshake implements ConnectionInitializer {
         }
 
         return dispatch(channel, postHandshake);
+    }
+
+    private CompletionStage<Void> applyConnectionMetadataSafely(Channel channel) {
+        return applyConnectionMetadata(channel).handle((result, error) -> {
+            if (error != null) {
+                LOG.debug("Error applying connection metadata", error);
+            }
+            return null;
+        });
     }
 
     private CompletableFuture<Void> applyConnectionMetadata(Channel channel) {
