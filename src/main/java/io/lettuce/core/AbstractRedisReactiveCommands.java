@@ -2500,6 +2500,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<StringMatchResult> lcs(LcsArgs lcsArgs) {
+        return createMono(() -> commandBuilder.lcs(lcsArgs));
+    }
+
+    @Override
     public Flux<V> sunion(K... keys) {
         return createDissolvingFlux(() -> commandBuilder.sunion(keys));
     }

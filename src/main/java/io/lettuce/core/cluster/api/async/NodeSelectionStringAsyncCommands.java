@@ -28,6 +28,7 @@ import io.lettuce.core.KeyValue;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.StrAlgoArgs;
 import io.lettuce.core.StringMatchResult;
+import io.lettuce.core.LcsArgs;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 
 /**
@@ -424,6 +425,23 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
      * @since 6.0
      */
     AsyncExecutions<StringMatchResult> stralgoLcs(StrAlgoArgs strAlgoArgs);
+
+    /**
+     * The LCS command implements the longest common subsequence algorithm.
+     *
+     * <ul>
+     * <li>Without modifiers the string representing the longest common substring is returned.</li>
+     * <li>When {@link LcsArgs#justLen() LEN} is given the command returns the length of the longest common substring.</li>
+     * <li>When {@link LcsArgs#withIdx() IDX} is given the command returns an array with the LCS length and all the ranges in
+     * both the strings, start and end offset for each string, where there are matches. When {@link LcsArgs#withMatchLen()
+     * WITHMATCHLEN} is given each array representing a match will also have the length of the match.</li>
+     * </ul>
+     *
+     * @param lcsArgs command arguments.
+     * @return StringMatchResult.
+     * @since 6.6
+     */
+    AsyncExecutions<StringMatchResult> lcs(LcsArgs lcsArgs);
 
     /**
      * Get the length of the value stored in a key.
