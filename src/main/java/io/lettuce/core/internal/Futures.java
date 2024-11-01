@@ -12,6 +12,7 @@ import io.netty.channel.ChannelFuture;
  * without further notice.
  *
  * @author Mark Paluch
+ * @author jinkshower
  * @since 5.1
  */
 public abstract class Futures {
@@ -21,7 +22,7 @@ public abstract class Futures {
     }
 
     /**
-     * Create a composite {@link CompletableFuture} is composed from the given {@code stages}.
+     * Create a composite {@link CompletableFuture} that is composed of the given {@code stages}.
      *
      * @param stages must not be {@code null}.
      * @return the composed {@link CompletableFuture}.
@@ -32,10 +33,11 @@ public abstract class Futures {
 
         LettuceAssert.notNull(stages, "Futures must not be null");
 
-        CompletableFuture[] futures = new CompletableFuture[stages.size()];
+        CompletionStage[] copies = stages.toArray(new CompletionStage[0]);
+        CompletableFuture[] futures = new CompletableFuture[copies.length];
 
         int index = 0;
-        for (CompletionStage<?> stage : stages) {
+        for (CompletionStage<?> stage : copies) {
             futures[index++] = stage.toCompletableFuture();
         }
 
