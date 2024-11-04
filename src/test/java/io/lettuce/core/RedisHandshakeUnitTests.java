@@ -1,6 +1,7 @@
 package io.lettuce.core;
 
 import static io.lettuce.TestTags.UNIT_TEST;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
@@ -8,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,8 @@ import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.channel.embedded.EmbeddedChannel;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 /**
  * Unit tests for {@link RedisHandshake}.
@@ -107,6 +111,42 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
+    void handshakeDelayedCredentialProvider() {
+
+        DelayedRedisCredentialsProvider cp = new DelayedRedisCredentialsProvider();
+        // RedisCredentialsProvider cp = () -> Mono.just(RedisCredentials.just("foo",
+        // "bar")).delayElement(Duration.ofMillis(3));
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        ConnectionMetadata connectionMetdata = new ConnectionMetadata();
+        connectionMetdata.setLibraryName("library-name");
+        connectionMetdata.setLibraryVersion("library-version");
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(cp);
+        state.apply(connectionMetdata);
+        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        CompletionStage<Void> handshakeInit = handshake.initialize(channel);
+        cp.completeCredentials(RedisCredentials.just("foo", "bar"));
+
+        Awaitility.await().atMost(50, MILLISECONDS) // Wait up to 5 seconds
+                .pollInterval(5, MILLISECONDS) // Poll every 50 milliseconds
+                .until(() -> !channel.outboundMessages().isEmpty());
+
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        List<AsyncCommand<String, String, Map<String, String>>> postHandshake = channel.readOutbound();
+        postHandshake.get(0).getOutput().setError(ERR_UNKNOWN_COMMAND);
+        postHandshake.get(0).completeExceptionally(new RedisException(ERR_UNKNOWN_COMMAND));
+        postHandshake.get(0).complete();
+
+        assertThat(postHandshake.size()).isEqualTo(2);
+        assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isFalse();
+    }
+
+    @Test
     void shouldParseVersionWithCharacters() {
 
         assertThat(RedisHandshake.RedisVersion.of("1.2.3").toString()).isEqualTo("1.2.3");
@@ -134,6 +174,21 @@ class RedisHandshakeUnitTests {
 
         output.set(ByteBuffer.wrap("version".getBytes()));
         output.set(ByteBuffer.wrap("1.2.3".getBytes()));
+    }
+
+    static class DelayedRedisCredentialsProvider implements RedisCredentialsProvider {
+
+        private final Sinks.One<RedisCredentials> credentialsSink = Sinks.one();
+
+        @Override
+        public Mono<RedisCredentials> resolveCredentials() {
+            return credentialsSink.asMono();
+        }
+
+        public void completeCredentials(RedisCredentials credentials) {
+            credentialsSink.tryEmitValue(credentials);
+        }
+
     }
 
 }
