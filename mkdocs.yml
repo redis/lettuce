@@ -3,14 +3,30 @@ repo_url: https://github.com/redis/lettuce
 theme:
   name: material
   logo: static/logo-redis.svg
+  favicon: static/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
   font:
     text: 'Geist'
     code: 'Geist Mono'
   features:
     - content.code.copy
+    - navigation.footer
   palette:
     primary: white
     accent: red
+extra_css:
+  - css/extra.css
+extra:
+  social:
+    - icon: fontawesome/brands/x-twitter
+      link: https://twitter.com/redisinc
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/redis
+    - icon: fontawesome/brands/youtube
+      link: https://www.youtube.com/redisinc
+    - icon: fontawesome/brands/twitch
+      link: https://www.twitch.tv/redisinc
 
 plugins:
   - search

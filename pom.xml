@@ -45,6 +45,7 @@
     </developers>
 
     <properties>
+        <awaitility.version>4.2.2</awaitility.version>
         <assertj-core.version>3.25.3</assertj-core.version>
         <cdi-api.version>2.0.SP1</cdi-api.version>
         <brave.version>5.13.11</brave.version>
@@ -103,7 +104,12 @@
 
     <dependencyManagement>
         <dependencies>
-
+            <dependency>
+                <groupId>org.awaitility</groupId>
+                <artifactId>awaitility</artifactId>
+                <version>${awaitility.version}</version>
+                <scope>test</scope>
+            </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-bom</artifactId>
@@ -324,6 +330,12 @@
         <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-tracing-integration-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
             <scope>test</scope>
         </dependency>
 
