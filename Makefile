@@ -282,6 +282,24 @@ work/stunnel.conf:
 	@echo accept = 127.0.0.1:6443 >> $@
 	@echo connect = 127.0.0.1:6479 >> $@
 
+	@echo [redis-sni-vritual] >> $@
+	@echo accept = 127.0.0.1:36443 >> $@
+	@echo cert=$(ROOT_DIR)/work/ca/certs/foo-host.cert.pem >> $@
+	@echo key=$(ROOT_DIR)/work/ca/private/foo-host.decrypted.key.pem >> $@
+	@echo connect = unavailable.internal.mydomain.com:6666 >> $@
+
+	@echo [redis-sni1] >> $@
+	@echo sni = redis-sni-vritual:redis-sni1.local >> $@
+	@echo key=$(ROOT_DIR)/work/ca/private/localhost.decrypted.key.pem >> $@
+	@echo cert=$(ROOT_DIR)/work/ca/certs/localhost.cert.pem >> $@
+	@echo connect = localhost:6480 >> $@
+
+	@echo [redis-sni2] >> $@
+	@echo sni = redis-sni-vritual:redis-sni2.local >> $@
+	@echo connect = localhost:6479 >> $@
+	@echo cert=$(ROOT_DIR)/work/ca/certs/foo-host.cert.pem >> $@
+	@echo key=$(ROOT_DIR)/work/ca/private/foo-host.decrypted.key.pem >> $@
+
 	@echo [foo-host] >> $@
 	@echo accept = 127.0.0.1:6444 >> $@
 	@echo connect = 127.0.0.1:6479 >> $@
