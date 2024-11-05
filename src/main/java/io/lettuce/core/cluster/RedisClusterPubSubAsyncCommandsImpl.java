@@ -66,28 +66,6 @@ public class RedisClusterPubSubAsyncCommandsImpl<K, V> extends RedisPubSubAsyncC
     }
 
     @Override
-    public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-        return super.georadius_ro(key, longitude, latitude, distance, unit);
-    }
-
-    @Override
-    public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
-            GeoArgs.Unit unit, GeoArgs geoArgs) {
-        return super.georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
-    }
-
-    @Override
-    public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-        return super.georadiusbymember_ro(key, member, distance, unit);
-    }
-
-    @Override
-    public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
-            GeoArgs geoArgs) {
-        return super.georadiusbymember_ro(key, member, distance, unit, geoArgs);
-    }
-
-    @Override
     public StatefulRedisClusterPubSubConnectionImpl<K, V> getStatefulConnection() {
         return (StatefulRedisClusterPubSubConnectionImpl<K, V>) super.getStatefulConnection();
     }

@@ -58,8 +58,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.lettuce.core.protocol.CommandType.EXEC;
-import static io.lettuce.core.protocol.CommandType.GEORADIUS;
-import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER;
 import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
 import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
 
@@ -1140,13 +1138,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Set<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
-        return dispatch(commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name()));
+        return georadius_ro(key, longitude, latitude, distance, unit);
     }
 
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadius(K key, double longitude, double latitude, double distance,
             GeoArgs.Unit unit, GeoArgs geoArgs) {
-        return dispatch(commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name(), geoArgs));
+        return georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
     }
 
     @Override
@@ -1166,13 +1164,13 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Set<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
-        return dispatch(commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance, unit.name()));
+        return georadiusbymember_ro(key, member, distance, unit);
     }
 
     @Override
     public RedisFuture<List<GeoWithin<V>>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit,
             GeoArgs geoArgs) {
-        return dispatch(commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance, unit.name(), geoArgs));
+        return georadiusbymember_ro(key, member, distance, unit, geoArgs);
     }
 
     @Override
