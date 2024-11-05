@@ -31,7 +31,8 @@ public class RedisContainerIntegrationTests {
             new File("src/test/resources/docker/docker-compose.yml")).withExposedService(REDIS_STACK_CLUSTER, 36379)
                     .withExposedService(REDIS_STACK_CLUSTER, 36380).withExposedService(REDIS_STACK_CLUSTER, 36381)
                     .withExposedService(REDIS_STACK_CLUSTER, 36382).withExposedService(REDIS_STACK_CLUSTER, 36383)
-                    .withExposedService(REDIS_STACK_CLUSTER, 36384).withExposedService(REDIS_STACK_STANDALONE, 6379);
+                    .withExposedService(REDIS_STACK_CLUSTER, 36384).withExposedService(REDIS_STACK_STANDALONE, 6379)
+                    .withLocalCompose(true);
 
     @BeforeAll
     public static void setup() throws IOException, InterruptedException {
