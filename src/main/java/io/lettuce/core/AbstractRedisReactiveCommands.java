@@ -66,8 +66,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 import static io.lettuce.core.protocol.CommandType.EXEC;
-import static io.lettuce.core.protocol.CommandType.GEORADIUS;
-import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER;
 import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
 import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
 
@@ -1203,14 +1201,14 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> georadius(K key, double longitude, double latitude, double distance, Unit unit) {
-        return createDissolvingFlux(() -> commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name()));
+    public Flux<V> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit) {
+        return georadius_ro(key, longitude, latitude, distance, unit);
     }
 
     @Override
-    public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, Unit unit, GeoArgs geoArgs) {
-        return createDissolvingFlux(
-                () -> commandBuilder.georadius(GEORADIUS, key, longitude, latitude, distance, unit.name(), geoArgs));
+    public Flux<GeoWithin<V>> georadius(K key, double longitude, double latitude, double distance, GeoArgs.Unit unit,
+            GeoArgs geoArgs) {
+        return georadius_ro(key, longitude, latitude, distance, unit, geoArgs);
     }
 
     @Override
@@ -1231,15 +1229,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> georadiusbymember(K key, V member, double distance, Unit unit) {
-        return createDissolvingFlux(
-                () -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance, unit.name()));
+    public Flux<V> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit) {
+        return georadiusbymember_ro(key, member, distance, unit);
     }
 
     @Override
-    public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, Unit unit, GeoArgs geoArgs) {
-        return createDissolvingFlux(
-                () -> commandBuilder.georadiusbymember(GEORADIUSBYMEMBER, key, member, distance, unit.name(), geoArgs));
+    public Flux<GeoWithin<V>> georadiusbymember(K key, V member, double distance, GeoArgs.Unit unit, GeoArgs geoArgs) {
+        return georadiusbymember_ro(key, member, distance, unit, geoArgs);
     }
 
     @Override
