@@ -75,7 +75,8 @@ public class ReactiveSyncInvocationHandler<K, V> extends ConnectionDecoratingInv
             if (result instanceof Mono<?>) {
                 Mono<?> mono = (Mono<?>) result;
 
-                if (!method.getName().equals("exec") && !method.getName().equals("multi")) {
+                if (!method.getName().equals("exec") && !method.getName().equals("multi")
+                        && !method.getName().equals("watch")) {
                     if (connection instanceof StatefulRedisConnection && ((StatefulRedisConnection) connection).isMulti()) {
                         mono.subscribe();
                         return null;
