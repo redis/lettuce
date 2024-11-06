@@ -9,14 +9,12 @@ package io.lettuce.core;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.File;
-import java.io.IOException;
 
 @Testcontainers
 public class RedisContainerIntegrationTests {
@@ -34,8 +32,9 @@ public class RedisContainerIntegrationTests {
                     .withExposedService(REDIS_STACK_CLUSTER, 36384).withExposedService(REDIS_STACK_STANDALONE, 6379)
                     .withLocalCompose(true);
 
-    @BeforeAll
-    public static void setup() throws IOException, InterruptedException {
+    // Singleton container pattern - start the containers only once
+    // See https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/#singleton-containers
+    static {
         // In case you need to debug the container uncomment these lines to redirect the output
         CLUSTERED_STACK.withLogConsumer(REDIS_STACK_CLUSTER, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
         CLUSTERED_STACK.withLogConsumer(REDIS_STACK_STANDALONE, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));

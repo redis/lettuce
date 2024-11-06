@@ -14,6 +14,7 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.StringCodec;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -128,6 +130,22 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         List<Long> poppedJson = redis.jsonArrlen(BIKES_INVENTORY, myPath);
         assertThat(poppedJson).hasSize(1);
         assertThat(poppedJson.get(0).longValue()).isEqualTo(3);
+    }
+
+    @Test
+    void jsonArrLenAsyncAndReactive() throws ExecutionException, InterruptedException {
+        RedisAsyncCommands<String, String> asyncCommands = client.connect().async();
+        RedisReactiveCommands<String, String> reactiveCommands = client.connect().reactive();
+
+        JsonPath myPath = JsonPath.of(MOUNTAIN_BIKES_V1);
+
+        List<Long> poppedJson = asyncCommands.jsonArrlen(BIKES_INVENTORY, myPath).get();
+        assertThat(poppedJson).hasSize(1);
+        assertThat(poppedJson.get(0).longValue()).isEqualTo(3);
+
+        StepVerifier.create(reactiveCommands.jsonArrlen(BIKES_INVENTORY, myPath)).consumeNextWith(actual -> {
+            assertThat(actual).isEqualTo(3);
+        }).verifyComplete();
     }
 
     @ParameterizedTest(name = "With {0} as path")
