@@ -9,6 +9,7 @@ package io.lettuce.core;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.BeforeAll;
 import org.testcontainers.containers.ComposeContainer;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -24,6 +25,8 @@ public class RedisContainerIntegrationTests {
     private static final String REDIS_STACK_STANDALONE = "standalone-stack";
 
     private static final String REDIS_STACK_CLUSTER = "clustered-stack";
+
+    private static Exception initializationException;
 
     public static ComposeContainer CLUSTERED_STACK = new ComposeContainer(
             new File("src/test/resources/docker/docker-compose.yml")).withExposedService(REDIS_STACK_CLUSTER, 36379)
@@ -41,7 +44,18 @@ public class RedisContainerIntegrationTests {
 
         CLUSTERED_STACK.waitingFor(REDIS_STACK_CLUSTER,
                 Wait.forLogMessage(".*Background RDB transfer terminated with success.*", 1));
-        CLUSTERED_STACK.start();
+        try {
+            CLUSTERED_STACK.start();
+        } catch (Exception e) {
+            initializationException = e;
+        }
+    }
+
+    @BeforeAll
+    public static void checkContainerInitialization() {
+        if (initializationException != null) {
+            throw new IllegalStateException("Failed to initialize containers", initializationException);
+        }
     }
 
 }
