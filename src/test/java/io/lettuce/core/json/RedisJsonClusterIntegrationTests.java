@@ -10,6 +10,8 @@ package io.lettuce.core.json;
 import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.RedisClusterClient;
+import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
+import io.lettuce.core.cluster.api.reactive.RedisClusterReactiveCommands;
 import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.json.arguments.JsonGetArgs;
 import io.lettuce.core.json.arguments.JsonMsetArgs;
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -112,6 +116,22 @@ public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationT
         assertThat(arrayIndex).isNotNull();
         assertThat(arrayIndex).hasSize(1);
         assertThat(arrayIndex.get(0).longValue()).isEqualTo(3L);
+    }
+
+    @Test
+    void jsonArrLenAsyncAndReactive() throws ExecutionException, InterruptedException {
+        RedisClusterAsyncCommands<String, String> asyncCommands = client.connect().async();
+        RedisClusterReactiveCommands<String, String> reactiveCommands = client.connect().reactive();
+
+        JsonPath myPath = JsonPath.of(MOUNTAIN_BIKES_V1);
+
+        List<Long> poppedJson = asyncCommands.jsonArrlen(BIKES_INVENTORY, myPath).get();
+        assertThat(poppedJson).hasSize(1);
+        assertThat(poppedJson.get(0).longValue()).isEqualTo(3);
+
+        StepVerifier.create(reactiveCommands.jsonArrlen(BIKES_INVENTORY, myPath)).consumeNextWith(actual -> {
+            assertThat(actual).isEqualTo(3);
+        }).verifyComplete();
     }
 
     @ParameterizedTest(name = "With {0} as path")
