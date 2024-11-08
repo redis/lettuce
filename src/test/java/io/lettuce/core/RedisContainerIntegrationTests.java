@@ -38,17 +38,22 @@ public class RedisContainerIntegrationTests {
     // Singleton container pattern - start the containers only once
     // See https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/#singleton-containers
     static {
+        int attempts = 0;
+
         // In case you need to debug the container uncomment these lines to redirect the output
         CLUSTERED_STACK.withLogConsumer(REDIS_STACK_CLUSTER, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
         CLUSTERED_STACK.withLogConsumer(REDIS_STACK_STANDALONE, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
 
         CLUSTERED_STACK.waitingFor(REDIS_STACK_CLUSTER,
                 Wait.forLogMessage(".*Background RDB transfer terminated with success.*", 1));
-        try {
-            CLUSTERED_STACK.start();
-        } catch (Exception e) {
-            initializationException = e;
-        }
+        do {
+            try {
+                CLUSTERED_STACK.start();
+            } catch (Exception e) {
+                initializationException = e;
+            }
+            // Attempt to stabilize the pipeline - sometime the `docker compose up` fails randomly
+        } while (initializationException != null && attempts++ < 3);
     }
 
     @BeforeAll
