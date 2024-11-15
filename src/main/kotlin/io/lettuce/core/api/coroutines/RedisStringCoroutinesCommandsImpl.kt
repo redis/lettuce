@@ -116,7 +116,7 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun setrange(key: K, offset: Long, value: V): Long? = ops.setrange(key, offset, value).awaitFirstOrNull()
 
-    override suspend fun stralgoLcs(strAlgoArgs: StrAlgoArgs): StringMatchResult? = ops.stralgoLcs(strAlgoArgs).awaitFirstOrNull()
+    override suspend fun lcs(lcsArgs: LcsArgs): StringMatchResult? = ops.lcs(lcsArgs).awaitFirstOrNull()
 
     override suspend fun strlen(key: K): Long? = ops.strlen(key).awaitFirstOrNull()
 

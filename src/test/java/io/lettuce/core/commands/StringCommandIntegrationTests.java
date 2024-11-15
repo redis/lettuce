@@ -68,6 +68,10 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    protected final String KEY_1 = "key1{k}";
+
+    protected final String KEY_2 = "key2{k}";
+
     @Inject
     protected StringCommandIntegrationTests(RedisCommands<String, String> redis) {
         this.redis = redis;
@@ -328,10 +332,10 @@ public class StringCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("STRALGO")
     void strAlgoUsingKeys() {
 
-        redis.set("key1{k}", "ohmytext");
-        redis.set("key2{k}", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.keys("key1{k}", "key2{k}"));
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.keys(KEY_1, KEY_2));
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
 
         // STRALGO LCS STRINGS a b
@@ -382,68 +386,105 @@ public class StringCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("LCS")
     void lcs() {
-        redis.set("key1{k}", "ohmytext");
-        redis.set("key2{k}", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        // LCS key1{k} key2{k} IDX MINMATCHLEN 4 WITHMATCHLEN
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys("key1{k}", "key2{k}"));
-
+        // > LCS key1 key2
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2));
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+        assertThat(matchResult.getMatches().size()).isEqualTo(0);
+        assertThat(matchResult.getLen()).isEqualTo(0);
+
     }
 
     @Test
     @EnabledOnCommand("LCS")
-    void lcsUsingKeys() {
-        redis.set("key1{k}", "ohmytext");
-        redis.set("key2{k}", "mynewtext");
+    void lcsNonExistantKeys() {
 
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys("key1{k}", "key2{k}"));
-
-        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+        // > LCS a b IDX MINMATCHLEN 4 WITHMATCHLEN
+        // Keys don't exist.
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys("a{k}", "b{k}").minMatchLen(4).withMatchLen());
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getMatches()).isNullOrEmpty();
+        assertThat(matchResult.getLen()).isEqualTo(0);
     }
 
     @Test
     @EnabledOnCommand("LCS")
     void lcsJustLen() {
-        redis.set("one{k}", "ohmytext");
-        redis.set("two{k}", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys("one{k}", "two{k}").justLen());
+        // > LCS key1 key2 LEN
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).justLen());
+        assertThat(matchResult.getLen()).isEqualTo(6);
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getMatches()).isNullOrEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("LCS")
+    void lcsIdx() {
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
+
+        // > LCS key1 key2 IDX
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx());
+
+        assertThat(matchResult.getMatches().size()).isEqualTo(2);
+        assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
+        assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
+        assertThat(matchResult.getMatches().get(0).getB().getStart()).isEqualTo(5);
+        assertThat(matchResult.getMatches().get(0).getB().getEnd()).isEqualTo(8);
+
+        assertThat(matchResult.getMatches().get(1).getA().getStart()).isEqualTo(2);
+        assertThat(matchResult.getMatches().get(1).getA().getEnd()).isEqualTo(3);
+        assertThat(matchResult.getMatches().get(1).getB().getStart()).isEqualTo(0);
+        assertThat(matchResult.getMatches().get(1).getB().getEnd()).isEqualTo(1);
 
         assertThat(matchResult.getLen()).isEqualTo(6);
+
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
     }
 
     @Test
     @EnabledOnCommand("LCS")
     void lcsWithMinMatchLen() {
-        redis.set("key1{k}", "ohmytext");
-        redis.set("key2{k}", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys("key1{k}", "key2{k}").minMatchLen(4));
+        // > LCS key1 key2 IDX MINMATCHLEN 4
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx().minMatchLen(4));
 
-        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+        assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
+        assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
+        assertThat(matchResult.getMatches().get(0).getB().getStart()).isEqualTo(5);
+        assertThat(matchResult.getMatches().get(0).getB().getEnd()).isEqualTo(8);
+
+        assertThat(matchResult.getLen()).isEqualTo(6);
+
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
     }
 
     @Test
     @EnabledOnCommand("LCS")
     void lcsMinMatchLenIdxMatchLen() {
-        redis.set("key1{k}", "ohmytext");
-        redis.set("key2{k}", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        StringMatchResult matchResult = redis
-                .lcs(LcsArgs.Builder.keys("key1{k}", "key2{k}").minMatchLen(4).withMatchLen().withIdx());
+        // > LCS key1 key2 IDX MINMATCHLEN 4 WITHMATCHLEN
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).minMatchLen(4).withMatchLen().withIdx());
 
-        assertThat(matchResult.getMatches()).hasSize(1);
+        assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
+        assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
+        assertThat(matchResult.getMatches().get(0).getB().getStart()).isEqualTo(5);
+        assertThat(matchResult.getMatches().get(0).getB().getEnd()).isEqualTo(8);
+
         assertThat(matchResult.getMatches().get(0).getMatchLen()).isEqualTo(4);
 
-        Position a = matchResult.getMatches().get(0).getA();
-        Position b = matchResult.getMatches().get(0).getB();
-
-        assertThat(a.getStart()).isEqualTo(4);
-        assertThat(a.getEnd()).isEqualTo(7);
-        assertThat(b.getStart()).isEqualTo(5);
-        assertThat(b.getEnd()).isEqualTo(8);
         assertThat(matchResult.getLen()).isEqualTo(6);
+
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
     }
 
 }

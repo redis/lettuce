@@ -410,6 +410,8 @@ public interface RedisStringCommands<K, V> {
     /**
      * The STRALGO command implements complex algorithms that operate on strings. This method uses the LCS algorithm (longest
      * common substring).
+     * <p>
+     * Command is no longer available in Redis server versions 7.0.x and later.
      *
      * <ul>
      * <li>Without modifiers the string representing the longest common substring is returned.</li>
@@ -422,6 +424,7 @@ public interface RedisStringCommands<K, V> {
      *
      * @param strAlgoArgs command arguments.
      * @return StringMatchResult.
+     * @deprecated since 6.6 in favor of {@link #lcs(LcsArgs)}.
      * @since 6.0
      */
     @Deprecated
@@ -431,15 +434,16 @@ public interface RedisStringCommands<K, V> {
      * The LCS command implements the longest common subsequence algorithm.
      *
      * <ul>
-     * <li>Without modifiers the string representing the longest common substring is returned.</li>
+     * <li>Without modifiers, the string representing the longest common substring is returned.</li>
      * <li>When {@link LcsArgs#justLen() LEN} is given the command returns the length of the longest common substring.</li>
      * <li>When {@link LcsArgs#withIdx() IDX} is given the command returns an array with the LCS length and all the ranges in
      * both the strings, start and end offset for each string, where there are matches. When {@link LcsArgs#withMatchLen()
      * WITHMATCHLEN} is given each array representing a match will also have the length of the match.</li>
      * </ul>
      *
-     * @param lcsArgs command arguments.
-     * @return StringMatchResult.
+     * @param lcsArgs command arguments supplied by the {@link LcsArgs}.
+     * @return StringMatchResult
+     * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
      * @since 6.6
      */
     StringMatchResult lcs(LcsArgs lcsArgs);
