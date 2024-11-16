@@ -32,6 +32,6 @@ public class JmhMain {
 
     private static ChainedOptionsBuilder prepareOptions() {
         return new OptionsBuilder().forks(1).warmupIterations(5).threads(1).measurementIterations(5)
-                .timeout(TimeValue.seconds(2));
+                .timeout(TimeValue.seconds(2)).output("benchmark.log");
     }
 }
