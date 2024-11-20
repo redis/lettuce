@@ -76,7 +76,7 @@ jobs:
           gh-repository: 'github.com/redis/lettuce'
           gh-pages-branch: 'benchmarks'
           benchmark-data-dir-path: './'
-          output-file-path: benchmark.log
+          output-file-path: benchmarks.json
           fail-on-alert: false
           alert-threshold: '200%'
           alert-comment-cc-users: '@tishun'
