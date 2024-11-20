@@ -1,13 +1,29 @@
 name: Benchmarks
 on:
+#  push:
+#    paths-ignore:
+#      - 'docs/**'
+#      - '**/*.md'
+#      - '**/*.rst'
+#    branches:
+#      - main
+#      - '[0-9].*'
+#  pull_request:
+#    branches:
+#      - main
+#      - '[0-9].*'
   schedule:
     - cron: '0 1 * * *' # nightly build
   workflow_dispatch:
 
+#permissions:
+  # For commenting alerts on commits
+  # contents: write
+
 jobs:
 
   benchmark:
-    name: Build and Test
+    name: Execute benchmarks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout project
@@ -54,12 +70,14 @@ jobs:
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          # What benchmark tool the output.txt came from
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           tool: 'jmh'
-          # Where the output from the benchmark tool is stored
+          auto-push: true
+          gh-repository: 'github.com/redis/lettuce'
+          gh-pages-branch: 'benchmarks'
+          benchmark-data-dir-path: './'
           output-file-path: benchmark.log
-          # Where the previous data file is stored
-          external-data-json-path: ./cache/benchmark.log
-          # Workflow will fail when an alert happens
-          fail-on-alert: true
-      # Upload the updated cache file for the next job by actions/cache
+          fail-on-alert: false
+          alert-threshold: '200%'
+          alert-comment-cc-users: '@tishun'
+          # comment-on-alert: true
