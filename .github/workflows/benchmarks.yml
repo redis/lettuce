@@ -1,0 +1,83 @@
+name: Benchmarks
+on:
+#  push:
+#    paths-ignore:
+#      - 'docs/**'
+#      - '**/*.md'
+#      - '**/*.rst'
+#    branches:
+#      - main
+#      - '[0-9].*'
+#  pull_request:
+#    branches:
+#      - main
+#      - '[0-9].*'
+  schedule:
+    - cron: '0 1 * * *' # nightly build
+  workflow_dispatch:
+
+#permissions:
+  # For commenting alerts on commits
+  # contents: write
+
+jobs:
+
+  benchmark:
+    name: Execute benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+      - name: Set Java up in the runner
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Setup Maven
+        uses: s4u/setup-maven-action@v1.8.0
+        with:
+          java-version: 8
+      - name: Install missing dependencies to container
+        run: |
+          sudo apt update
+          sudo apt install -y stunnel make git gcc
+      - name: Maven offline
+        run: |
+          mvn -q dependency:go-offline
+      - name: Clean environment
+        run: |
+          make cleanup
+        env:
+          JVM_OPTS: -Xmx3200m
+          TERM: dumb
+      - name: Start servers
+        run: |
+          make start
+      - name: Run benchmarks
+        run: |
+          mvn -Pjmh clean test
+        env:
+          JVM_OPTS: -Xmx3200m
+          TERM: dumb
+      # Download previous benchmark result from cache (if exists)
+      - name: Download previous benchmark data
+        uses: actions/cache@v4
+        with:
+          path: ./cache
+          key: ${{ runner.os }}-benchmark
+      # Run `github-action-benchmark` action
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          tool: 'jmh'
+          auto-push: true
+          gh-repository: 'github.com/redis/lettuce'
+          gh-pages-branch: 'benchmarks'
+          benchmark-data-dir-path: './'
+          output-file-path: benchmarks.json
+          fail-on-alert: false
+          alert-threshold: '200%'
+          alert-comment-cc-users: '@tishun'
+          # comment-on-alert: true

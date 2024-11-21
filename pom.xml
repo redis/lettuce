@@ -86,8 +86,8 @@
         <developerConnection>scm:git:https://github.com/lettuce-io/lettuce-core.git
         </developerConnection>
         <url>http://github.com/lettuce-io/lettuce-core</url>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <distributionManagement>
         <snapshotRepository>
@@ -563,13 +563,13 @@
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
-            <version>1.37</version>
+            <version>1.21</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
-            <version>1.37</version>
+            <version>1.21</version>
             <scope>test</scope>
         </dependency>
 
@@ -883,6 +883,7 @@
                     <includes>
                         <include>**/*UnitTests</include>
                         <include>**/*Tests</include>
+                        <include>**/*Example</include>
                     </includes>
                     <excludes>
                         <exclude>**/*Test</exclude>
@@ -1165,7 +1166,7 @@
 
         <profile>
 
-            <id>jmh</id>
+            <id>jmh</id> <!-- mvn -Pjmh clean test -->
 
             <dependencies>
                 <dependency>
@@ -1177,13 +1178,29 @@
                 <dependency>
                     <groupId>org.openjdk.jmh</groupId>
                     <artifactId>jmh-generator-annprocess</artifactId>
-                    <version>1.37</version>
+                    <version>1.21</version>
                     <scope>test</scope>
                 </dependency>
             </dependencies>
 
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.13.0</version>
+                        <configuration>
+                            <source>8</source>
+                            <target>8 </target>
+                            <annotationProcessorPaths>
+                                <path>
+                                    <groupId>org.openjdk.jmh</groupId>
+                                    <artifactId>jmh-generator-annprocess</artifactId>
+                                    <version>1.21</version>
+                                </path>
+                            </annotationProcessorPaths>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
@@ -1234,19 +1251,66 @@
                                         <argument>org.openjdk.jmh.Main</argument>
                                         <argument>.*</argument>
                                         <argument>-tu</argument>
+                                        <!--
+                              Override time unit in benchmark results. Available
+                              time units are: [m, s, ms, us, ns].
+                                        -->
                                         <argument>ns</argument>
                                         <argument>-f</argument>
+                                        <!--
+                              How many times to fork a single benchmark. Use 0 to
+                              disable forking altogether. Warning: disabling
+                              forking may have detrimental impact on benchmark
+                              and infrastructure reliability, you might want
+                              to use different warmup mode instead.
+                                        -->
                                         <argument>1</argument>
                                         <argument>-wi</argument>
+                                        <!--
+                              Number of warmup iterations to do. Warmup iterations
+                              are not counted towards the benchmark score.
+                                        -->
                                         <argument>10</argument>
                                         <argument>-w</argument>
+                                        <!--
+                              Minimum time to spend at each warmup iteration. Benchmarks
+                              may generally run longer than iteration duration.
+                                        -->
                                         <argument>1</argument>
                                         <argument>-r</argument>
+                                        <!--
+                              Minimum time to spend at each measurement iteration.
+                              Benchmarks may generally run longer than iteration
+                              duration.
+                                        -->
                                         <argument>1</argument>
                                         <argument>-i</argument>
+                                        <!--
+                              Number of measurement iterations to do. Measurement
+                              iterations are counted towards the benchmark score.
+                                        -->
                                         <argument>10</argument>
                                         <argument>-bm</argument>
+                                        <!--
+                              Benchmark mode. Available modes are: [Throughput/thrpt,
+                              AverageTime/avgt, SampleTime/sample, SingleShotTime/ss,
+                              All/all]
+                                        -->
                                         <argument>avgt</argument>
+                                        <argument>-rf</argument>
+                                        <!--
+                              Format type for machine-readable results. These
+                              results are written to a separate file (see -rff).
+                              See the list of available result formats with -lrf.
+                                        -->
+                                        <argument>json</argument>
+                                        <argument>-rff</argument>
+                                        <!--
+                              Write machine-readable results to a given file.
+                              The file format is controlled by -rf option. Please
+                              see the list of result formats for available formats.
+                                        -->
+                                        <argument>benchmarks.json</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
@@ -1282,6 +1346,24 @@
                         <configuration>
                             <skip>true</skip>
                             <uniqueVersion>false</uniqueVersion>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>doctests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/*Example</include>
+                            </includes>
+                            <failIfNoTests>true</failIfNoTests>
                         </configuration>
                     </plugin>
                 </plugins>
