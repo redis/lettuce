@@ -5,7 +5,7 @@ on:
     tags-ignore:
       - '*'
     branches:
-      - 'doctests'
+      - 'main'
   pull_request:
   workflow_dispatch:
 
