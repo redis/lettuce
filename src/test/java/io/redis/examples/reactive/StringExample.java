@@ -5,14 +5,14 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.StatefulRedisConnection;
 // REMOVE_START
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 // REMOVE_END
 import reactor.core.publisher.Mono;
 
 import java.util.*;
 
 // REMOVE_START
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 // REMOVE_END
 
 public class StringExample {
@@ -30,11 +30,11 @@ public class StringExample {
             Mono<Void> setAndGet = reactiveCommands.set("bike:1", "Deimos").doOnNext(v -> {
                 System.out.println(v); // OK
                 // REMOVE_START
-                assertEquals("OK", v);
+                assertThat(v).isEqualTo("OK");
                 // REMOVE_END
             }).flatMap(v -> reactiveCommands.get("bike:1")).doOnNext(res -> {
                 // REMOVE_START
-                assertEquals("Deimos", res);
+                assertThat(res).isEqualTo("Deimos");
                 // REMOVE_END
                 System.out.println(res); // Deimos
             }).then();
@@ -44,18 +44,18 @@ public class StringExample {
             Mono<Void> setnx = reactiveCommands.setnx("bike:1", "bike").doOnNext(v -> {
                 System.out.println(v); // false (because key already exists)
                 // REMOVE_START
-                assertEquals(false, v);
+                assertThat(v).isFalse();
                 // REMOVE_END
             }).flatMap(v -> reactiveCommands.get("bike:1")).doOnNext(res -> {
                 // REMOVE_START
-                assertEquals("Deimos", res);
+                assertThat(res).isEqualTo("Deimos");
                 // REMOVE_END
                 System.out.println(res); // Deimos (value is unchanged)
             }).then();
 
             Mono<Void> setxx = reactiveCommands.set("bike:1", "bike", SetArgs.Builder.xx()).doOnNext(res -> {
                 // REMOVE_START
-                assertEquals("OK", res);
+                assertThat(res).isEqualTo("OK");
                 // REMOVE_END
                 System.out.println(res); // OK
             }).then();
@@ -73,7 +73,7 @@ public class StringExample {
                                 Arrays.asList(KeyValue.just("bike:1", "Deimos"), KeyValue.just("bike:2", "Ares"),
                                         KeyValue.just("bike:3", "Vanth")));
                         // REMOVE_START
-                        assertEquals(expected, res);
+                        assertThat(res).isEqualTo(expected);
                         // REMOVE_END
                         System.out.println(res); // [KeyValue[bike:1, Deimos], KeyValue[bike:2, Ares], KeyValue[bike:3, Vanth]]
                     }).then();
@@ -84,11 +84,11 @@ public class StringExample {
                     .doOnNext(v -> {
                         System.out.println(v); // 1
                         // REMOVE_START
-                        assertEquals(1L, v.longValue());
+                        assertThat(v).isEqualTo(1L);
                         // REMOVE_END
                     }).flatMap(v -> reactiveCommands.incrby("total_crashes", 10)).doOnNext(res -> {
                         // REMOVE_START
-                        assertEquals(11L, res.longValue());
+                        assertThat(res).isEqualTo(11L);
                         // REMOVE_END
                         System.out.println(res); // 11
                     }).then();

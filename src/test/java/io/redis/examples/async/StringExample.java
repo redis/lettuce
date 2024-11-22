@@ -6,14 +6,14 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 // REMOVE_START
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 // REMOVE_END
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 // REMOVE_START
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 // REMOVE_END
 
 public class StringExample {
@@ -31,13 +31,13 @@ public class StringExample {
             CompletableFuture<Void> setAndGet = asyncCommands.set("bike:1", "Deimos").thenCompose(v -> {
                 System.out.println(v); // OK
                 // REMOVE_START
-                assertEquals("OK", v);
+                assertThat(v).isEqualTo("OK");
                 // REMOVE_END
                 return asyncCommands.get("bike:1");
             })
                     // REMOVE_START
                     .thenApply(res -> {
-                        assertEquals("Deimos", res);
+                        assertThat(res).isEqualTo("Deimos");
                         return res;
                     })
                     // REMOVE_END
@@ -49,13 +49,13 @@ public class StringExample {
             CompletableFuture<Void> setnx = asyncCommands.setnx("bike:1", "bike").thenCompose(v -> {
                 System.out.println(v); // false (because key already exists)
                 // REMOVE_START
-                assertEquals(false, v);
+                assertThat(v).isFalse();
                 // REMOVE_END
                 return asyncCommands.get("bike:1");
             })
                     // REMOVE_START
                     .thenApply(res -> {
-                        assertEquals("Deimos", res);
+                        assertThat(res).isEqualTo("Deimos");
                         return res;
                     })
                     // REMOVE_END
@@ -66,7 +66,7 @@ public class StringExample {
             CompletableFuture<Void> setxx = asyncCommands.set("bike:1", "bike", SetArgs.Builder.xx())
                     // REMOVE_START
                     .thenApply(res -> {
-                        assertEquals("OK", res);
+                        assertThat(res).isEqualTo("OK");
                         return res;
                     })
                     // REMOVE_END
@@ -89,7 +89,7 @@ public class StringExample {
                         List<KeyValue<String, String>> expected = new ArrayList<>(
                                 Arrays.asList(KeyValue.just("bike:1", "Deimos"), KeyValue.just("bike:2", "Ares"),
                                         KeyValue.just("bike:3", "Vanth")));
-                        assertEquals(expected, res);
+                        assertThat(res).isEqualTo(expected);
                         return res;
                     })
                     // REMOVE_END
@@ -103,13 +103,13 @@ public class StringExample {
                     .thenCompose(v -> asyncCommands.incr("total_crashes")).thenCompose(v -> {
                         System.out.println(v); // 1
                         // REMOVE_START
-                        assertEquals(1L, v.longValue());
+                        assertThat(v).isEqualTo(1L);
                         // REMOVE_END
                         return asyncCommands.incrby("total_crashes", 10);
                     })
                     // REMOVE_START
                     .thenApply(res -> {
-                        assertEquals(11L, res.longValue());
+                        assertThat(res).isEqualTo(11L);
                         return res;
                     })
                     // REMOVE_END
