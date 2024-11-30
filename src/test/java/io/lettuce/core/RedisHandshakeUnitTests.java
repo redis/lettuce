@@ -1,7 +1,7 @@
 package io.lettuce.core;
 
-import static io.lettuce.TestTags.UNIT_TEST;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static io.lettuce.TestTags.*;
+import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
 
 import java.nio.ByteBuffer;
@@ -13,12 +13,12 @@ import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.channel.embedded.EmbeddedChannel;
-import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 
 /**
  * Unit tests for {@link RedisHandshake}.
@@ -111,6 +111,23 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
+    void handshakeWithInvalidResponseShouldPropagateException() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
+        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        CompletionStage<Void> handshakeInit = handshake.initialize(channel);
+
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        helloStringIdResponse(hello.getOutput());
+        hello.complete();
+
+        assertThat(handshakeInit.toCompletableFuture().isCompletedExceptionally()).isTrue();
+    }
+
+    @Test
     void handshakeDelayedCredentialProvider() {
 
         DelayedRedisCredentialsProvider cp = new DelayedRedisCredentialsProvider();
@@ -165,6 +182,22 @@ class RedisHandshakeUnitTests {
         output.multiMap(8);
         output.set(ByteBuffer.wrap("id".getBytes()));
         output.set(1);
+
+        output.set(ByteBuffer.wrap("mode".getBytes()));
+        output.set(ByteBuffer.wrap("master".getBytes()));
+
+        output.set(ByteBuffer.wrap("role".getBytes()));
+        output.set(ByteBuffer.wrap("master".getBytes()));
+
+        output.set(ByteBuffer.wrap("version".getBytes()));
+        output.set(ByteBuffer.wrap("1.2.3".getBytes()));
+    }
+
+    private static void helloStringIdResponse(CommandOutput<String, String, Map<String, String>> output) {
+
+        output.multiMap(8);
+        output.set(ByteBuffer.wrap("id".getBytes()));
+        output.set(ByteBuffer.wrap("1".getBytes()));
 
         output.set(ByteBuffer.wrap("mode".getBytes()));
         output.set(ByteBuffer.wrap("master".getBytes()));
