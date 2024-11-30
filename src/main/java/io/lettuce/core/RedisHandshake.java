@@ -134,8 +134,12 @@ class RedisHandshake implements ConnectionInitializer {
                     handshake.completeExceptionally(throwable);
                 }
             } else {
-                onHelloResponse(settings);
-                handshake.complete(null);
+                try {
+                    onHelloResponse(settings);
+                    handshake.complete(null);
+                } catch (RuntimeException e) {
+                    handshake.completeExceptionally(e);
+                }
             }
         });
 
