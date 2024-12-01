@@ -2413,6 +2413,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<StringMatchResult> lcs(LcsArgs args) {
+        return dispatch(commandBuilder.lcs(args));
+    }
+
+    @Override
     public RedisFuture<Set<V>> sunion(K... keys) {
         return dispatch(commandBuilder.sunion(keys));
     }

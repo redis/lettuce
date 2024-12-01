@@ -58,6 +58,7 @@ import static io.lettuce.core.protocol.CommandType.SAVE;
  * @author Mikhael Sokolov
  * @author Tihomir Mateev
  * @author Ali Takavci
+ * @author Seonghwan Lee
  */
 @SuppressWarnings({ "unchecked", "varargs" })
 class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -2910,6 +2911,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec);
         strAlgoArgs.build(args);
         return createCommand(STRALGO, new StringMatchResultOutput<>(codec), args);
+    }
+
+    Command<K, V, StringMatchResult> lcs(LcsArgs lcsArgs) {
+        LettuceAssert.notNull(lcsArgs, "lcsArgs" + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        lcsArgs.build(args);
+        return createCommand(LCS, new StringMatchResultOutput<>(codec), args);
     }
 
     Command<K, V, Set<V>> sunion(K... keys) {

@@ -68,6 +68,10 @@ public class StringCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    protected final String KEY_1 = "key1{k}";
+
+    protected final String KEY_2 = "key2{k}";
+
     @Inject
     protected StringCommandIntegrationTests(RedisCommands<String, String> redis) {
         this.redis = redis;
@@ -328,10 +332,10 @@ public class StringCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("STRALGO")
     void strAlgoUsingKeys() {
 
-        redis.set("key1{k}", "ohmytext");
-        redis.set("key2{k}", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.keys("key1{k}", "key2{k}"));
+        StringMatchResult matchResult = redis.stralgoLcs(StrAlgoArgs.Builder.keys(KEY_1, KEY_2));
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
 
         // STRALGO LCS STRINGS a b
@@ -382,114 +386,105 @@ public class StringCommandIntegrationTests extends TestSupport {
     @Test
     @EnabledOnCommand("LCS")
     void lcs() {
-        redis.set("key1", "ohmytext");
-        redis.set("key2", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        // LCS key1 key2
-        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
-        StringMatchResult matchResult = commands.lcs("key1", "key2");
+        // > LCS key1 key2
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2));
         assertThat(matchResult.getMatchString()).isEqualTo("mytext");
-
-        // LCS a b IDX MINMATCHLEN 4 WITHMATCHLEN
-        // Keys don't exist.
-        matchResult = commands.lcsMinMatchLenWithMatchLen("a", "b", 4);
-        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getMatches().size()).isEqualTo(0);
         assertThat(matchResult.getLen()).isEqualTo(0);
+
     }
 
     @Test
     @EnabledOnCommand("LCS")
-    void lcsUsingKeys() {
+    void lcsNonExistantKeys() {
 
-        redis.set("key1{k}", "ohmytext");
-        redis.set("key2{k}", "mynewtext");
-
-        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
-
-        StringMatchResult matchResult = commands.lcs("key1{k}", "key2{k}");
-        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
-
-        // STRALGO LCS STRINGS a b
-        matchResult = commands.lcsMinMatchLenWithMatchLen("a", "b", 4);
+        // > LCS a b IDX MINMATCHLEN 4 WITHMATCHLEN
+        // Keys don't exist.
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys("a{k}", "b{k}").minMatchLen(4).withMatchLen());
         assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getMatches()).isNullOrEmpty();
         assertThat(matchResult.getLen()).isEqualTo(0);
     }
 
     @Test
     @EnabledOnCommand("LCS")
     void lcsJustLen() {
-        redis.set("one", "ohmytext");
-        redis.set("two", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
+        // > LCS key1 key2 LEN
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).justLen());
+        assertThat(matchResult.getLen()).isEqualTo(6);
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
+        assertThat(matchResult.getMatches()).isNullOrEmpty();
+    }
 
-        StringMatchResult matchResult = commands.lcsLen("one", "two");
+    @Test
+    @EnabledOnCommand("LCS")
+    void lcsIdx() {
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
+
+        // > LCS key1 key2 IDX
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx());
+
+        assertThat(matchResult.getMatches().size()).isEqualTo(2);
+        assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
+        assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
+        assertThat(matchResult.getMatches().get(0).getB().getStart()).isEqualTo(5);
+        assertThat(matchResult.getMatches().get(0).getB().getEnd()).isEqualTo(8);
+
+        assertThat(matchResult.getMatches().get(1).getA().getStart()).isEqualTo(2);
+        assertThat(matchResult.getMatches().get(1).getA().getEnd()).isEqualTo(3);
+        assertThat(matchResult.getMatches().get(1).getB().getStart()).isEqualTo(0);
+        assertThat(matchResult.getMatches().get(1).getB().getEnd()).isEqualTo(1);
 
         assertThat(matchResult.getLen()).isEqualTo(6);
+
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
     }
 
     @Test
     @EnabledOnCommand("LCS")
     void lcsWithMinMatchLen() {
-        redis.set("key1", "ohmytext");
-        redis.set("key2", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
+        // > LCS key1 key2 IDX MINMATCHLEN 4
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).withIdx().minMatchLen(4));
 
-        StringMatchResult matchResult = commands.lcsMinMatchLen("key1", "key2", 4);
+        assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
+        assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
+        assertThat(matchResult.getMatches().get(0).getB().getStart()).isEqualTo(5);
+        assertThat(matchResult.getMatches().get(0).getB().getEnd()).isEqualTo(8);
 
-        assertThat(matchResult.getMatchString()).isEqualTo("mytext");
+        assertThat(matchResult.getLen()).isEqualTo(6);
+
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
     }
 
     @Test
     @EnabledOnCommand("LCS")
     void lcsMinMatchLenIdxMatchLen() {
-        redis.set("key1", "ohmytext");
-        redis.set("key2", "mynewtext");
+        redis.set(KEY_1, "ohmytext");
+        redis.set(KEY_2, "mynewtext");
 
-        CustomStringCommands commands = CustomStringCommands.instance(getConnection());
+        // > LCS key1 key2 IDX MINMATCHLEN 4 WITHMATCHLEN
+        StringMatchResult matchResult = redis.lcs(LcsArgs.Builder.keys(KEY_1, KEY_2).minMatchLen(4).withMatchLen().withIdx());
 
-        // LCS key1 key2 IDX MINMATCHLEN 4 WITHMATCHLEN
-        StringMatchResult matchResult = commands.lcsMinMatchLenWithMatchLen("key1", "key2", 4);
+        assertThat(matchResult.getMatches().get(0).getA().getStart()).isEqualTo(4);
+        assertThat(matchResult.getMatches().get(0).getA().getEnd()).isEqualTo(7);
+        assertThat(matchResult.getMatches().get(0).getB().getStart()).isEqualTo(5);
+        assertThat(matchResult.getMatches().get(0).getB().getEnd()).isEqualTo(8);
 
-        assertThat(matchResult.getMatches()).hasSize(1);
         assertThat(matchResult.getMatches().get(0).getMatchLen()).isEqualTo(4);
 
-        Position a = matchResult.getMatches().get(0).getA();
-        Position b = matchResult.getMatches().get(0).getB();
-
-        assertThat(a.getStart()).isEqualTo(4);
-        assertThat(a.getEnd()).isEqualTo(7);
-        assertThat(b.getStart()).isEqualTo(5);
-        assertThat(b.getEnd()).isEqualTo(8);
         assertThat(matchResult.getLen()).isEqualTo(6);
-    }
 
-    protected StatefulConnection<String, String> getConnection() {
-        StatefulRedisConnection<String, String> src = redis.getStatefulConnection();
-        Assumptions.assumeFalse(Proxy.isProxyClass(src.getClass()), "Redis connection is proxy, skipping.");
-        return src;
-    }
-
-    private interface CustomStringCommands extends Commands {
-
-        @Command("LCS :k1 :k2")
-        StringMatchResult lcs(@Param("k1") String k1, @Param("k2") String k2);
-
-        @Command("LCS :k1 :k2 LEN")
-        StringMatchResult lcsLen(@Param("k1") String k1, @Param("k2") String k2);
-
-        @Command("LCS :k1 :k2 MINMATCHLEN :mml")
-        StringMatchResult lcsMinMatchLen(@Param("k1") String k1, @Param("k2") String k2, @Param("mml") int mml);
-
-        @Command("LCS :k1 :k2 IDX MINMATCHLEN :mml WITHMATCHLEN")
-        StringMatchResult lcsMinMatchLenWithMatchLen(@Param("k1") String k1, @Param("k2") String k2, @Param("mml") int mml);
-
-        static CustomStringCommands instance(StatefulConnection<String, String> conn) {
-            RedisCommandFactory factory = new RedisCommandFactory(conn);
-            return factory.getCommands(CustomStringCommands.class);
-        }
-
+        assertThat(matchResult.getMatchString()).isNullOrEmpty();
     }
 
 }

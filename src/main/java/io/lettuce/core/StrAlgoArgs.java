@@ -32,8 +32,11 @@ import io.lettuce.core.protocol.CommandArgs;
  * {@link StrAlgoArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author dengliming
+ * @deprecated As of 6.6 in favor of {@link LcsArgs}
+ * @see <a href="https://redis.io/commands/lcs">LCS command refference</a>
  * @since 6.0
  */
+@Deprecated
 public class StrAlgoArgs implements CompositeArgument {
 
     private boolean justLen;

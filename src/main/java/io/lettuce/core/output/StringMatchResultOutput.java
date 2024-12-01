@@ -21,6 +21,7 @@ package io.lettuce.core.output;
 
 import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.protocol.CommandKeyword;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +39,7 @@ import static io.lettuce.core.StringMatchResult.Position;
  */
 public class StringMatchResultOutput<K, V> extends CommandOutput<K, V, StringMatchResult> {
 
-    private static final ByteBuffer LEN = StandardCharsets.US_ASCII.encode("len");
+    private static final ByteBuffer LEN = StandardCharsets.US_ASCII.encode(CommandKeyword.LEN.toString().toLowerCase());
 
     private String matchString;
 
