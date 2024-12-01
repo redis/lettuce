@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.cluster;
 
+import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 import static io.lettuce.core.protocol.CommandType.*;
 
 import java.lang.reflect.InvocationHandler;
@@ -95,6 +96,21 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      * @param pushHandler the Cluster push handler
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
+     */
+    public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
+            Duration timeout) {
+
+        this(writer, pushHandler, codec, timeout, DEFAULT_JSON_PARSER);
+    }
+
+    /**
+     * Initialize a new connection.
+     *
+     * @param writer the channel writer
+     * @param pushHandler the Cluster push handler
+     * @param codec Codec used to encode/decode keys and values.
+     * @param timeout Maximum time to wait for a response.
+     * @param parser the JSON parser
      */
     public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
             Duration timeout, Mono<JsonParser> parser) {
