@@ -36,6 +36,8 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
+import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
+
 /**
  * An thread-safe pub/sub connection to a Redis server. Multiple threads may share one {@link StatefulRedisPubSubConnectionImpl}
  *
@@ -62,7 +64,7 @@ public class StatefulRedisPubSubConnectionImpl<K, V> extends StatefulRedisConnec
     public StatefulRedisPubSubConnectionImpl(PubSubEndpoint<K, V> endpoint, RedisChannelWriter writer, RedisCodec<K, V> codec,
             Duration timeout) {
 
-        super(writer, endpoint, codec, timeout, null);
+        super(writer, endpoint, codec, timeout, DEFAULT_JSON_PARSER);
         this.endpoint = endpoint;
         endpoint.setConnectionState(getConnectionState());
     }

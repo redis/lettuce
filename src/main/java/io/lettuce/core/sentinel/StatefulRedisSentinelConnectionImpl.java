@@ -36,6 +36,8 @@ import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
 import reactor.core.publisher.Mono;
 
+import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
+
 /**
  * @author Mark Paluch
  */
@@ -52,6 +54,25 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
 
     private final SentinelConnectionState connectionState = new SentinelConnectionState();
 
+    /**
+     * Initialize a new Sentinel connection
+     * 
+     * @param writer the writer used to write commands
+     * @param codec Codec used to encode/decode keys and values.
+     * @param timeout Maximum time to wait for a response.
+     */
+    public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout) {
+        this(writer, codec, timeout, DEFAULT_JSON_PARSER);
+    }
+
+    /**
+     * Initialize a new Sentinel connection
+     * 
+     * @param writer the writer used to write commands
+     * @param codec Codec used to encode/decode keys and values.
+     * @param timeout Maximum time to wait for a response.
+     * @param parser the parser used to parse JSON responses
+     */
     public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout,
             Mono<JsonParser> parser) {
 
