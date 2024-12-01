@@ -19,6 +19,7 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 import static io.lettuce.core.protocol.CommandType.*;
 
 import java.time.Duration;
@@ -77,6 +78,20 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * @param pushHandler the handler for push notifications.
      * @param codec Codec used to encode/decode keys and values.
      * @param timeout Maximum time to wait for a response.
+     */
+    public StatefulRedisConnectionImpl(RedisChannelWriter writer, PushHandler pushHandler, RedisCodec<K, V> codec,
+            Duration timeout) {
+        this(writer, pushHandler, codec, timeout, DEFAULT_JSON_PARSER);
+    }
+
+    /**
+     * Initialize a new connection.
+     *
+     * @param writer the channel writer.
+     * @param pushHandler the handler for push notifications.
+     * @param codec Codec used to encode/decode keys and values.
+     * @param timeout Maximum time to wait for a response.
+     * @param parser the parser to use for JSON commands.
      */
     public StatefulRedisConnectionImpl(RedisChannelWriter writer, PushHandler pushHandler, RedisCodec<K, V> codec,
             Duration timeout, Mono<JsonParser> parser) {
