@@ -256,7 +256,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Flux<KeyValue<K, V>> mget(Iterable<K> keys) {
-
         List<K> keyList = LettuceLists.newList(keys);
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
 
