@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
+import io.lettuce.authx.TokenBasedRedisCredentialsProvider;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.command.CommandSucceededEvent;
 import io.lettuce.core.protocol.RedisCommand;
@@ -24,9 +25,12 @@ import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 import reactor.core.publisher.Mono;
+import redis.clients.authentication.core.SimpleToken;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -121,6 +125,43 @@ class AuthenticationIntegrationTests extends TestSupport {
                 client.getOptions().mutate().reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.DEFAULT).build());
     }
 
+    @Test
+    @Inject
+    void tokenBasedCredentialProvider(RedisClient client) {
+
+        TestCommandListener listener = new TestCommandListener();
+        client.addListener(listener);
+        client.setOptions(client.getOptions().mutate()
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
+
+        TestTokenManager tokenManager = new TestTokenManager(null, null);
+        TokenBasedRedisCredentialsProvider credentialsProvider = new TokenBasedRedisCredentialsProvider(tokenManager);
+
+        // Build RedisURI with streaming credentials provider
+        RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(TestSettings.port())
+                .withClientName("streaming_cred_test").withAuthentication(credentialsProvider)
+                .withTimeout(Duration.ofSeconds(5)).build();
+        tokenManager.emitToken(testToken(TestSettings.username(), TestSettings.password().toString().toCharArray()));
+
+        StatefulRedisConnection<String, String> connection = client.connect(StringCodec.UTF8, uri);
+        assertThat(connection.sync().aclWhoami()).isEqualTo(TestSettings.username());
+
+        // rotate the credentials
+        tokenManager.emitToken(testToken("steave", "foobared".toCharArray()));
+
+        Awaitility.await().atMost(Duration.ofSeconds(1)).until(() -> listener.succeeded.stream()
+                .anyMatch(command -> isAuthCommandWithCredentials(command, "steave", "foobared".toCharArray())));
+
+        // verify that the connection is re-authenticated with the new user credentials
+        assertThat(connection.sync().aclWhoami()).isEqualTo("steave");
+
+        credentialsProvider.shutdown();
+        connection.close();
+        client.removeListener(listener);
+        client.setOptions(
+                client.getOptions().mutate().reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.DEFAULT).build());
+    }
+
     static class TestCommandListener implements CommandListener {
 
         final List<RedisCommand<?, ?, ?>> succeeded = new ArrayList<>();
@@ -140,6 +181,11 @@ class AuthenticationIntegrationTests extends TestSupport {
             return args.toCommandString().contains(username) && args.toCommandString().contains(String.valueOf(password));
         }
         return false;
+    }
+
+    private SimpleToken testToken(String username, char[] password) {
+        return new SimpleToken(String.valueOf(password), Instant.now().plusMillis(500).toEpochMilli(),
+                Instant.now().toEpochMilli(), Collections.singletonMap("oid", username));
     }
 
 }
