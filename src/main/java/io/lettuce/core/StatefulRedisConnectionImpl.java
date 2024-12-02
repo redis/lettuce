@@ -67,6 +67,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     private final PushHandler pushHandler;
 
+    private final RedisAuthenticationHandler authHandler;
+
     private final Mono<JsonParser> parser;
 
     protected MultiOutput<K, V> multi;
@@ -104,6 +106,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
+
+        this.authHandler = new RedisAuthenticationHandler(this);
     }
 
     public RedisCodec<K, V> getCodec() {
@@ -313,6 +317,18 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     public ConnectionState getConnectionState() {
         return state;
+    }
+
+    @Override
+    public void activated() {
+        super.activated();
+        authHandler.subscribe(state.getCredentialsProvider());
+    }
+
+    @Override
+    public void deactivated() {
+        authHandler.unsubscribe();
+        super.deactivated();
     }
 
 }
