@@ -8,12 +8,8 @@ import io.lettuce.core.api.StatefulRedisConnection;
 // REMOVE_START
 import org.junit.jupiter.api.Test;
 // REMOVE_END
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.s;
-
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-
 // REMOVE_START
 import static org.assertj.core.api.Assertions.assertThat;
 // REMOVE_END
