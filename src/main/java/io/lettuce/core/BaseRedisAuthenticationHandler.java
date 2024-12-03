@@ -1,7 +1,11 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.event.EventBus;
+import io.lettuce.core.event.connection.ReauthEvent;
+import io.lettuce.core.event.connection.ReauthFailedEvent;
 import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.protocol.Endpoint;
 import io.lettuce.core.protocol.RedisCommand;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -21,8 +25,11 @@ public abstract class BaseRedisAuthenticationHandler<T extends RedisChannelHandl
 
     private final AtomicReference<Disposable> credentialsSubscription = new AtomicReference<>();
 
-    public BaseRedisAuthenticationHandler(T connection) {
+    protected final EventBus eventBus;
+
+    public BaseRedisAuthenticationHandler(T connection, EventBus eventBus) {
         this.connection = connection;
+        this.eventBus = eventBus;
     }
 
     /**
@@ -94,11 +101,23 @@ public abstract class BaseRedisAuthenticationHandler<T extends RedisChannelHandl
             authCmd = new AsyncCommand<>(commandBuilder.auth(password));
         }
 
-        dispatchAuth(authCmd).exceptionally(throwable -> {
-            log.error("Re-authentication {} failed.", credentials.hasUsername() ? "with username" : "without username",
-                    throwable);
+        dispatchAuth(authCmd).thenRun(() -> {
+            publishReauthEvent();
+            log.info("Re-authentication succeeded for endpoint {}.", getEpid());
+        }).exceptionally(throwable -> {
+            publishReauthFailedEvent(throwable);
+            log.error("Re-authentication failed for endpoint {}.", getEpid(), throwable);
             return null;
         });
+        ;
+    }
+
+    private void publishReauthEvent() {
+        eventBus.publish(new ReauthEvent(getEpid()));
+    }
+
+    private void publishReauthFailedEvent(Throwable throwable) {
+        eventBus.publish(new ReauthFailedEvent(getEpid(), throwable));
     }
 
     protected boolean isSupportedConnection() {
@@ -112,6 +131,13 @@ public abstract class BaseRedisAuthenticationHandler<T extends RedisChannelHandl
             return (AsyncCommand<String, String, String>) dispatched;
         }
         return asyncCommand;
+    }
+
+    private String getEpid() {
+        if (connection.getChannelWriter() instanceof Endpoint) {
+            return ((Endpoint) connection.getChannelWriter()).getId();
+        }
+        return "unknown";
     }
 
 }

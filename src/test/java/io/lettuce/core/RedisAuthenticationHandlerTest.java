@@ -1,5 +1,6 @@
 package io.lettuce.core;
 
+import io.lettuce.core.event.EventBus;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnectionImpl;
@@ -21,7 +22,7 @@ public class RedisAuthenticationHandlerTest {
         ConnectionState connectionState = mock(ConnectionState.class);
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP2);
         when(connection.getConnectionState()).thenReturn(connectionState);
-        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection);
+        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection, mock(EventBus.class));
 
         assertFalse(handler.isSupportedConnection());
     }
@@ -32,7 +33,7 @@ public class RedisAuthenticationHandlerTest {
         ConnectionState connectionState = mock(ConnectionState.class);
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP2);
         when(connection.getConnectionState()).thenReturn(connectionState);
-        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection);
+        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection, mock(EventBus.class));
 
         assertTrue(handler.isSupportedConnection());
     }
@@ -44,7 +45,7 @@ public class RedisAuthenticationHandlerTest {
         ConnectionState connectionState = mock(ConnectionState.class);
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP3);
         when(connection.getConnectionState()).thenReturn(connectionState);
-        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection);
+        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection, mock(EventBus.class));
 
         assertTrue(handler.isSupportedConnection());
     }

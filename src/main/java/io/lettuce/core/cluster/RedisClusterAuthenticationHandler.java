@@ -21,6 +21,7 @@ package io.lettuce.core.cluster;
 
 import io.lettuce.core.BaseRedisAuthenticationHandler;
 import io.lettuce.core.cluster.pubsub.StatefulRedisClusterPubSubConnection;
+import io.lettuce.core.event.EventBus;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -29,8 +30,8 @@ class RedisClusterAuthenticationHandler extends BaseRedisAuthenticationHandler<S
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterAuthenticationHandler.class);
 
-    public RedisClusterAuthenticationHandler(StatefulRedisClusterConnectionImpl<?, ?> connection) {
-        super(connection);
+    public RedisClusterAuthenticationHandler(StatefulRedisClusterConnectionImpl<?, ?> connection, EventBus eventBus) {
+        super(connection, eventBus);
     }
 
     protected boolean isSupportedConnection() {

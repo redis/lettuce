@@ -126,7 +126,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         this.sync = newRedisAdvancedClusterCommandsImpl();
         this.reactive = newRedisAdvancedClusterReactiveCommandsImpl();
 
-        this.authHandler = new RedisClusterAuthenticationHandler(this);
+        this.authHandler = new RedisClusterAuthenticationHandler(this, getResources().eventBus());
     }
 
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> newRedisAdvancedClusterReactiveCommandsImpl() {

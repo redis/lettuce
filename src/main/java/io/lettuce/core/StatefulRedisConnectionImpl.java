@@ -107,7 +107,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
 
-        this.authHandler = new RedisAuthenticationHandler(this);
+        this.authHandler = new RedisAuthenticationHandler(this, getResources().eventBus());
     }
 
     public RedisCodec<K, V> getCodec() {

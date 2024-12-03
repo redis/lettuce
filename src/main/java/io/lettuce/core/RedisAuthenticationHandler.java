@@ -19,6 +19,8 @@
  */
 package io.lettuce.core;
 
+import io.lettuce.core.event.EventBus;
+import io.lettuce.core.protocol.Endpoint;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.netty.util.internal.logging.InternalLogger;
@@ -28,8 +30,8 @@ class RedisAuthenticationHandler extends BaseRedisAuthenticationHandler<Stateful
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisAuthenticationHandler.class);
 
-    public RedisAuthenticationHandler(StatefulRedisConnectionImpl<?, ?> connection) {
-        super(connection);
+    public RedisAuthenticationHandler(StatefulRedisConnectionImpl<?, ?> connection, EventBus eventBus) {
+        super(connection, eventBus);
     }
 
     protected boolean isSupportedConnection() {
