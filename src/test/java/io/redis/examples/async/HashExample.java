@@ -27,7 +27,7 @@ public class HashExample {
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
             RedisAsyncCommands<String, String> asyncCommands = connection.async();
             // REMOVE_START
-            CompletableFuture<Long> delResult = asyncCommands.del("bike:1")
+            CompletableFuture<Long> delResult = asyncCommands.del("bike:1", "bike:1:stats")
                     .toCompletableFuture();
 
             // REMOVE_END
@@ -80,7 +80,7 @@ public class HashExample {
 
             // STEP_START hmget
             CompletableFuture<Void> hmGet = setGetAll
-                    .thenApply(res4 -> {
+                    .thenCompose(res4 -> {
                         return asyncCommands.hmget(
                             "bike:1","model", "price"
                         );
@@ -98,7 +98,7 @@ public class HashExample {
 
             // STEP_START hincrby
             CompletableFuture<Void> hIncrBy = hmGet
-                    .thenCompose(res5 -> {
+                    .thenCompose(r -> {
                         return asyncCommands.hincrby(
                             "bike:1", "price", 100
                         );
@@ -106,13 +106,13 @@ public class HashExample {
                     .thenCompose(res6 -> {
                         System.out.println(res6); // >>> 5072
                         // REMOVE_START
-                        assertThat(res6).isEqualTo(5072);
+                        assertThat(res6).isEqualTo(5072L);
                         // REMOVE_END
                         return asyncCommands.hincrby("bike:1", "price", -100);
                     })
                     // REMOVE_START
                     .thenApply(res -> {
-                        assertThat(res).isEqualTo(4972);
+                        assertThat(res).isEqualTo(4972L);
                         return res;
                     })
                     // REMOVE_END
@@ -121,12 +121,82 @@ public class HashExample {
                     .toCompletableFuture();
             // STEP_END
             
+            // STEP_START incrby_get_mget
+            CompletableFuture<Void> incrByGetMget = asyncCommands.hincrby(
+                            "bike:1:stats","rides", 1
+            )
+                    .thenCompose(res7 -> {
+                        System.out.println(res7); // >>> 1
+                        // REMOVE_START
+                        assertThat(res7).isEqualTo(1L);
+                        // REMOVE_END
+                        return asyncCommands.hincrby(
+                            "bike:1:stats","rides", 1
+                        );
+                    })
+                    .thenCompose(res8 -> {
+                        System.out.println(res8); // >>> 2
+                        // REMOVE_START
+                        assertThat(res8).isEqualTo(2L);
+                        // REMOVE_END
+                        return asyncCommands.hincrby(
+                            "bike:1:stats","rides", 1
+                        );
+                    })
+                    .thenCompose(res9 -> {
+                        System.out.println(res9); // >>> 3
+                        // REMOVE_START
+                        assertThat(res9).isEqualTo(3L);
+                        // REMOVE_END
+                        return asyncCommands.hincrby(
+                            "bike:1:stats","crashes", 1
+                        );
+                    })
+                    .thenCompose(res10 -> {
+                        System.out.println(res10); // >>> 1
+                        // REMOVE_START
+                        assertThat(res10).isEqualTo(1L);
+                        // REMOVE_END
+                        return asyncCommands.hincrby(
+                            "bike:1:stats","owners", 1
+                        );
+                    })
+                    .thenCompose(res11 -> {
+                        System.out.println(res11); // >>> 1
+                        // REMOVE_START
+                        assertThat(res11).isEqualTo(1L);
+                        // REMOVE_END
+                        return asyncCommands.hget(
+                            "bike:1:stats","rides"
+                        );
+                    })
+                    .thenCompose(res12 -> {
+                        System.out.println(res12); // >>> 3
+                        // REMOVE_START
+                        assertThat(res12).isEqualTo("3");
+                        // REMOVE_END
+                        return asyncCommands.hmget(
+                            "bike:1:stats","crashes", "owners"
+                        );
+                    })
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res.toString()).isEqualTo("[KeyValue[crashes, 1], KeyValue[owners, 1]]");
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println)
+                    // >>> [KeyValue[crashes, 1], KeyValue[owners, 1]]
+                    .toCompletableFuture();
+            // STEP_END
+
             CompletableFuture.allOf(
                 // REMOVE_START
                 delResult,
-                // REMOVE_END
-                hmGet
-            );
+                // REMOVE_END,
+                hIncrBy,
+                incrByGetMget
+            ).join();
         } finally {
             redisClient.shutdown();
         }
