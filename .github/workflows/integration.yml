@@ -59,6 +59,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload test failure reports to Codecov
         uses: codecov/test-results-action@v1
+        if: always() # always upload test results to include test failures
         with:
           fail_ci_if_error: false
           files: ./target/surefire-reports/TEST*,./target/failsafe-reports/TEST*
