@@ -140,7 +140,6 @@ class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSuppo
     @Test
     void shouldPerformNodeConnectionReauth() {
         ClusterClientOptions origClientOptions = redisClient.getClusterClientOptions();
-        origClientOptions.mutate().reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build();
         redisClient.setOptions(origClientOptions.mutate()
                 .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
 

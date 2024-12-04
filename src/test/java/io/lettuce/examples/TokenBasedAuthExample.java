@@ -1,20 +1,29 @@
 package io.lettuce.examples;
 
+import com.microsoft.aad.msal4j.ClientCredentialFactory;
+import com.microsoft.aad.msal4j.ClientCredentialParameters;
+import com.microsoft.aad.msal4j.ConfidentialClientApplication;
+import com.microsoft.aad.msal4j.IAuthenticationResult;
+import com.microsoft.aad.msal4j.IClientSecret;
 import io.lettuce.authx.TokenBasedRedisCredentialsProvider;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
-import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
 import redis.clients.authentication.core.IdentityProviderConfig;
 import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.entraid.EntraIDTokenAuthConfigBuilder;
 
+import java.net.MalformedURLException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TokenBasedAuthExample {
 
@@ -24,10 +33,33 @@ public class TokenBasedAuthExample {
         Set<String> scopes = Collections.singleton("https://redis.azure.com/.default");
 
         String User1_clientId = System.getenv("USER1_CLIENT_ID");
+        String User1_objectid = System.getenv("USER1_OBJECT_ID");
         String User1_secret = System.getenv("USER1_SECRET");
 
         String User2_clientId = System.getenv("USER2_CLIENT_ID");
         String User2_secret = System.getenv("USER2_SECRET");
+
+        try {
+            IClientSecret cred = ClientCredentialFactory.createFromSecret(User1_secret);
+            ConfidentialClientApplication app = ConfidentialClientApplication.builder(User1_clientId, cred).authority(authority)
+                    .build();
+            ClientCredentialParameters params = ClientCredentialParameters.builder(scopes).skipCache(true).build();
+            Future<IAuthenticationResult> tokenRequest1 = app.acquireToken(params);
+            IAuthenticationResult t1 = tokenRequest1.get();
+            Future<IAuthenticationResult> tokenRequest2 = app.acquireToken(params);
+            IAuthenticationResult t2 = tokenRequest2.get();
+            System.out.println(t1.accessToken());
+            System.out.println(t2.accessToken());
+            assertThat(t1.accessToken()).isNotEqualTo(t2.accessToken());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+
+        ClientCredentialParameters.builder(scopes).skipCache(true).build();
 
         // User 1
         // from redis-authx-entraind
@@ -62,7 +94,7 @@ public class TokenBasedAuthExample {
         ClientOptions clientOptions = ClientOptions.builder()
                 .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(5)).build())
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
-                .timeoutOptions(TimeoutOptions.enabled(Duration.ofSeconds(1))).build();
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build();
 
         // RedisClient using user1 credentials by default
         RedisClient redisClient = RedisClient.create(redisURI1);
