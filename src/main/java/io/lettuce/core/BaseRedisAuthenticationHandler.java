@@ -2,8 +2,8 @@ package io.lettuce.core;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.EventBus;
-import io.lettuce.core.event.connection.ReauthEvent;
-import io.lettuce.core.event.connection.ReauthFailedEvent;
+import io.lettuce.core.event.connection.ReauthenticateFailedEvent;
+import io.lettuce.core.event.connection.ReauthenticateEvent;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Endpoint;
 import io.lettuce.core.protocol.RedisCommand;
@@ -15,6 +15,15 @@ import reactor.core.publisher.Flux;
 import java.nio.CharBuffer;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Base class for Redis authentication handlers.
+ * <p>
+ * This class provides a mechanism to subscribe to a stream of credentials and re-authenticate the client when new credentials
+ * are received. Internal API.
+ *
+ * @author Ivor Gaydajiev
+ * @Since 6.5.2
+ */
 public abstract class BaseRedisAuthenticationHandler<T extends RedisChannelHandler<?, ?>> {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(BaseRedisAuthenticationHandler.class);
@@ -113,11 +122,11 @@ public abstract class BaseRedisAuthenticationHandler<T extends RedisChannelHandl
     }
 
     private void publishReauthEvent() {
-        eventBus.publish(new ReauthEvent(getEpid()));
+        eventBus.publish(new ReauthenticateEvent(getEpid()));
     }
 
     private void publishReauthFailedEvent(Throwable throwable) {
-        eventBus.publish(new ReauthFailedEvent(getEpid(), throwable));
+        eventBus.publish(new ReauthenticateFailedEvent(getEpid(), throwable));
     }
 
     protected boolean isSupportedConnection() {

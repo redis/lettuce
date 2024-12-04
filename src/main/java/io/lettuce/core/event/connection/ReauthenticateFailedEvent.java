@@ -1,21 +1,19 @@
 package io.lettuce.core.event.connection;
 
-import io.lettuce.core.event.Event;
-
-import java.net.SocketAddress;
-
 /**
- * Event fired on failed authentication caused either by I/O issues or during connection reauthentication.
- *
+ * Event fired on failed authentication caused either by I/O issues or during connection re-authentication. see
+ * {@link io.lettuce.core.StreamingCredentialsProvider}
+ * 
  * @author Ivo Gaydajiev
+ * @since 6.5.2
  */
-public class ReauthFailedEvent implements Event {
+public class ReauthenticateFailedEvent implements AuthenticateEvent {
 
     private final String epId;
 
     private final Throwable cause;
 
-    public ReauthFailedEvent(String epId, Throwable cause) {
+    public ReauthenticateFailedEvent(String epId, Throwable cause) {
         this.epId = epId;
         this.cause = cause;
     }

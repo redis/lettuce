@@ -4,6 +4,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
+/**
+ * A provider for streaming credentials that can be used to authorize a Redis connection
+ *
+ * @author Ivo Gaydajiev
+ * @since 6.5.2
+ */
 public class MyStreamingRedisCredentialsProvider implements StreamingCredentialsProvider {
 
     private final Sinks.Many<RedisCredentials> credentialsSink = Sinks.many().replay().latest();

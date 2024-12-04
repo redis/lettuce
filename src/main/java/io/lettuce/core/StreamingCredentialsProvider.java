@@ -2,6 +2,13 @@ package io.lettuce.core;
 
 import reactor.core.publisher.Flux;
 
+/**
+ * A provider for streaming credentials that can be used to authorize a Redis connection and re-authenticate the connection when
+ * new credentials are received.
+ *
+ * @author Ivo Gaydajiev
+ * @since 6.5.2
+ */
 public interface StreamingCredentialsProvider extends RedisCredentialsProvider {
 
     /**

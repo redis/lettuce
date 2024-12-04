@@ -26,6 +26,14 @@ import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
+/**
+ * Redis Cluster authentication handler. Internally used to authenticate a Redis Cluster connection. Internal API.
+ * 
+ * <p>
+ * 
+ * @author Ivo Gaydajiev
+ * @since 6.5.2
+ */
 class RedisClusterAuthenticationHandler extends BaseRedisAuthenticationHandler<StatefulRedisClusterConnectionImpl<?, ?>> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisClusterAuthenticationHandler.class);
