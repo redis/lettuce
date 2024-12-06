@@ -72,7 +72,7 @@
         <rxjava2.version>2.2.21</rxjava2.version>
         <rxjava3.version>3.1.8</rxjava3.version>
         <reactive-streams-tck.version>1.0.4</reactive-streams-tck.version>
-        <slf4j.version>1.7.25</slf4j.version>
+        <slf4j.version>2.0.16</slf4j.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- You need a running redis+sentinel for all tests, therefore disabled by default -->
