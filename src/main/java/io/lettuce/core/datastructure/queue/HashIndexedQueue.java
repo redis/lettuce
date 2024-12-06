@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A queue implementation that supports O(1) removal of elements. The queue is backed by a hash map and a doubly linked list.
+ * 
  * @author chenxiaofan
  */
 @SuppressWarnings("unchecked")
