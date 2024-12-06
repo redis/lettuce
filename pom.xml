@@ -48,7 +48,7 @@
         <awaitility.version>4.2.2</awaitility.version>
         <assertj-core.version>3.25.3</assertj-core.version>
         <cdi-api.version>2.0.SP1</cdi-api.version>
-        <brave.version>5.13.11</brave.version>
+        <brave.version>6.0.3</brave.version>
         <commons-lang3.version>3.13.0</commons-lang3.version>
         <commons-pool.version>2.12.0</commons-pool.version>
         <jackson-version>2.17.0</jackson-version>
