@@ -1,3 +1,9 @@
+/*
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
 package io.lettuce.core.datastructure.queue;
 
 import java.util.AbstractQueue;
@@ -7,11 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Queue;
 
 import io.lettuce.core.internal.LettuceAssert;
+import org.jetbrains.annotations.NotNull;
 
 /**
+ * A queue implementation that supports O(1) removal of elements. The queue is backed by a hash map and a doubly linked list.
  * @author chenxiaofan
  */
 @SuppressWarnings("unchecked")
@@ -39,6 +46,9 @@ public class HashIndexedQueue<E> extends AbstractQueue<E> {
 
     }
 
+    /**
+     * Create a new instance of the {@link HashIndexedQueue}.
+     */
     public HashIndexedQueue() {
         map = new HashMap<>();
         size = 0;
@@ -157,6 +167,7 @@ public class HashIndexedQueue<E> extends AbstractQueue<E> {
 
     }
 
+    @NotNull
     @Override
     public Iterator iterator() {
         return new Iterator();
@@ -181,20 +192,20 @@ public class HashIndexedQueue<E> extends AbstractQueue<E> {
         size = 0;
     }
 
-    private boolean removeFirstOccurrence(Object o) {
-        Object current = map.get(o);
+    private boolean removeFirstOccurrence(Object element) {
+        Object current = map.get(element);
         if (current == null) {
             return false;
         }
         if (current instanceof Node) {
             Node<E> node = (Node<E>) current;
             removeNode(node);
-            map.remove(o);
+            map.remove(element);
         } else {
             List<Node<E>> nodes = (List<Node<E>>) current;
             Node<E> node = nodes.remove(0);
             if (nodes.isEmpty()) {
-                map.remove(o);
+                map.remove(element);
             }
             removeNode(node);
         }
@@ -202,8 +213,8 @@ public class HashIndexedQueue<E> extends AbstractQueue<E> {
         return true;
     }
 
-    private boolean removeAllOccurrences(Object o) {
-        Object current = map.get(o);
+    private boolean removeAllOccurrences(Object element) {
+        Object current = map.get(element);
         if (current == null) {
             return false;
         }
@@ -218,7 +229,7 @@ public class HashIndexedQueue<E> extends AbstractQueue<E> {
                 size--;
             }
         }
-        map.remove(o);
+        map.remove(element);
         return true;
     }
 

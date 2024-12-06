@@ -85,7 +85,7 @@ public class ClientOptions implements Serializable {
 
     public static final TimeoutOptions DEFAULT_TIMEOUT_OPTIONS = TimeoutOptions.enabled();
 
-    public static final boolean DEFAULT_USE_HASH_INDEX_QUEUE = false;
+    public static final boolean DEFAULT_USE_HASH_INDEX_QUEUE = true;
 
     private final boolean autoReconnect;
 
@@ -468,12 +468,12 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Use hash indexed queue which provides O(1) remove(Object) thus won't cause blocking issues.
+         * Use hash indexed queue, which provides O(1) remove(Object) thus won't cause blocking issues.
          *
          * @param useHashIndexedQueue true/false
          * @return {@code this}
          * @see io.lettuce.core.protocol.CommandHandler.AddToStack
-         * @since 5.1
+         * @since 6.6
          */
         @SuppressWarnings("JavadocReference")
         public Builder useHashIndexQueue(boolean useHashIndexedQueue) {
