@@ -38,7 +38,6 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.masterreplica.MasterReplica;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
@@ -288,6 +287,12 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout);
+
+        if (RedisAuthenticationHandler.isSupported(getOptions(), redisURI.getCredentialsProvider())) {
+            connection.setAuthenticationHandler(new RedisAuthenticationHandler(writer, redisURI.getCredentialsProvider(),
+                    connection.getConnectionState(), getResources().eventBus(), false));
+        }
+
         ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
                 () -> new CommandHandler(getOptions(), getResources(), endpoint));
 
@@ -419,6 +424,11 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout);
+
+        if (RedisAuthenticationHandler.isSupported(getOptions(), redisURI.getCredentialsProvider())) {
+            connection.setAuthenticationHandler(new RedisAuthenticationHandler(writer, redisURI.getCredentialsProvider(),
+                    connection.getConnectionState(), getResources().eventBus(), true));
+        }
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
                 () -> new PubSubCommandHandler<>(getOptions(), getResources(), codec, endpoint));

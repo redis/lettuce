@@ -90,6 +90,8 @@ class AuthenticationIntegrationTests extends TestSupport {
 
         TestCommandListener listener = new TestCommandListener();
         client.addListener(listener);
+        client.setOptions(client.getOptions().mutate()
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.REAUTHENTICATE_ON_CREDENTIALS_CHANGE).build());
 
         // Build RedisURI with streaming credentials provider
         MyStreamingRedisCredentialsProvider credentialsProvider = new MyStreamingRedisCredentialsProvider();
@@ -115,14 +117,8 @@ class AuthenticationIntegrationTests extends TestSupport {
         credentialsProvider.shutdown();
         connection.close();
         client.removeListener(listener);
-    }
-
-    private boolean isAuthCommandWithCredentials(RedisCommand<?, ?, ?> command, String username, char[] password) {
-        if (command.getType() == CommandType.AUTH) {
-            CommandArgs<?, ?> args = command.getArgs();
-            return args.toCommandString().contains(username) && args.toCommandString().contains(String.valueOf(password));
-        }
-        return false;
+        client.setOptions(
+                client.getOptions().mutate().reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.DEFAULT).build());
     }
 
     static class TestCommandListener implements CommandListener {
@@ -136,6 +132,14 @@ class AuthenticationIntegrationTests extends TestSupport {
             }
         }
 
+    }
+
+    private boolean isAuthCommandWithCredentials(RedisCommand<?, ?, ?> command, String username, char[] password) {
+        if (command.getType() == CommandType.AUTH) {
+            CommandArgs<?, ?> args = command.getArgs();
+            return args.toCommandString().contains(username) && args.toCommandString().contains(String.valueOf(password));
+        }
+        return false;
     }
 
 }

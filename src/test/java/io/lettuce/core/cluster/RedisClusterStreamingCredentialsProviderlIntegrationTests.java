@@ -1,6 +1,7 @@
 package io.lettuce.core.cluster;
 
 import io.lettuce.core.AclSetuserArgs;
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MyStreamingRedisCredentialsProvider;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
@@ -138,6 +139,11 @@ class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSuppo
 
     @Test
     void shouldPerformNodeConnectionReauth() {
+        ClusterClientOptions origClientOptions = redisClient.getClusterClientOptions();
+        origClientOptions.mutate()
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.REAUTHENTICATE_ON_CREDENTIALS_CHANGE).build();
+        redisClient.setOptions(origClientOptions.mutate()
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.REAUTHENTICATE_ON_CREDENTIALS_CHANGE).build());
 
         StatefulRedisClusterConnection<String, String> connection = redisClient.connect();
         connection.getPartitions().forEach(

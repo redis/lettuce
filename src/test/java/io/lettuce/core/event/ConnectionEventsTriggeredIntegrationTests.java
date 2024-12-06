@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MyStreamingRedisCredentialsProvider;
 import io.lettuce.core.event.connection.AuthenticateEvent;
 import io.lettuce.core.event.connection.ReauthenticateEvent;
@@ -50,11 +51,14 @@ class ConnectionEventsTriggeredIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testReauthConnectionEvents() {
+    void testReauthenticateEvents() {
         MyStreamingRedisCredentialsProvider credentialsProvider = new MyStreamingRedisCredentialsProvider();
         credentialsProvider.emitCredentials(TestSettings.username(), TestSettings.password().toString().toCharArray());
+
         RedisClient client = RedisClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(host, port).withAuthentication(credentialsProvider).build());
+        client.setOptions(ClientOptions.builder()
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.REAUTHENTICATE_ON_CREDENTIALS_CHANGE).build());
 
         Flux<AuthenticateEvent> publisher = client.getResources().eventBus().get()
                 .filter(event -> event instanceof AuthenticateEvent).cast(AuthenticateEvent.class);
@@ -66,7 +70,7 @@ class ConnectionEventsTriggeredIntegrationTests extends TestSupport {
                 .assertNext(
                         event -> assertThat(event).asInstanceOf(InstanceOfAssertFactories.type(ReauthenticateFailedEvent.class))
                                 .extracting(ReauthenticateFailedEvent::getEpId).isNotNull())
-                .thenCancel().verify(Duration.of(5, ChronoUnit.SECONDS));
+                .thenCancel().verify(Duration.of(1, ChronoUnit.SECONDS));
 
         FastShutdown.shutdown(client);
     }

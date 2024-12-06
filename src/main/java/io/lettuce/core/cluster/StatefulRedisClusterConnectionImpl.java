@@ -89,8 +89,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     private volatile Partitions partitions;
 
-    private final RedisClusterAuthenticationHandler authHandler;
-
     /**
      * Initialize a new connection.
      *
@@ -125,8 +123,6 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         this.async = newRedisAdvancedClusterAsyncCommandsImpl();
         this.sync = newRedisAdvancedClusterCommandsImpl();
         this.reactive = newRedisAdvancedClusterReactiveCommandsImpl();
-
-        this.authHandler = new RedisClusterAuthenticationHandler(this, getResources().eventBus());
     }
 
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> newRedisAdvancedClusterReactiveCommandsImpl() {
@@ -234,12 +230,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         super.activated();
 
         async.clusterMyId().thenAccept(connectionState::setNodeId);
-        authHandler.subscribe(connectionState.getCredentialsProvider());
     }
 
     @Override
     public void deactivated() {
-        authHandler.unsubscribe();
+        super.deactivated();
     }
 
     ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {

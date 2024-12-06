@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -67,7 +68,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     private final PushHandler pushHandler;
 
-    private final RedisAuthenticationHandler authHandler;
+    private final AtomicReference<RedisAuthenticationHandler> authenticationHandler = new AtomicReference<>();
 
     private final Mono<JsonParser> parser;
 
@@ -106,8 +107,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
-
-        this.authHandler = new RedisAuthenticationHandler(this, getResources().eventBus());
     }
 
     public RedisCodec<K, V> getCodec() {
@@ -322,13 +321,27 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     @Override
     public void activated() {
         super.activated();
-        authHandler.subscribe(state.getCredentialsProvider());
+        RedisAuthenticationHandler currentHandler = authenticationHandler.get();
+        if (currentHandler != null) {
+            currentHandler.subscribe();
+        }
     }
 
     @Override
     public void deactivated() {
-        authHandler.unsubscribe();
+        RedisAuthenticationHandler currentHandler = authenticationHandler.get();
+        if (currentHandler != null) {
+            currentHandler.unsubscribe();
+        }
         super.deactivated();
+    }
+
+    public void setAuthenticationHandler(RedisAuthenticationHandler authenticationHandler) {
+        RedisAuthenticationHandler currentHandler = this.authenticationHandler.getAndSet(authenticationHandler);
+
+        if (currentHandler != null) {
+            currentHandler.unsubscribe();
+        }
     }
 
 }

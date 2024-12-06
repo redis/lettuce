@@ -6,7 +6,7 @@ import io.lettuce.core.event.Event;
  * Interface for Connection authentication events
  *
  * @author Ivo Gaydajiev
- * @since 3.4
+ * @since 6.5.2
  */
 public interface AuthenticateEvent extends Event {
 

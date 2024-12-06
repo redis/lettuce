@@ -556,6 +556,11 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
                 getFirstUri().getTimeout(), getClusterClientOptions().getJsonParser());
 
+        if (RedisAuthenticationHandler.isSupported(getOptions(), getFirstUri().getCredentialsProvider())) {
+            connection.setAuthenticationHandler(new RedisAuthenticationHandler(writer, getFirstUri().getCredentialsProvider(),
+                    connection.getConnectionState(), getResources().eventBus(), false));
+        }
+
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
                 () -> new CommandHandler(getClusterClientOptions(), getResources(), endpoint));
@@ -620,6 +625,11 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 getFirstUri().getTimeout());
+
+        if (RedisAuthenticationHandler.isSupported(getOptions(), getFirstUri().getCredentialsProvider())) {
+            connection.setAuthenticationHandler(new RedisAuthenticationHandler(writer, getFirstUri().getCredentialsProvider(),
+                    connection.getConnectionState(), getResources().eventBus(), false));
+        }
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
