@@ -7,7 +7,7 @@ import reactor.core.publisher.Flux;
  * new credentials are received.
  *
  * @author Ivo Gaydajiev
- * @since 6.5.2
+ * @since 6.6.0
  */
 public interface StreamingCredentialsProvider extends RedisCredentialsProvider {
 

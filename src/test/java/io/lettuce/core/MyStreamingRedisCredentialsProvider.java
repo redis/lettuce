@@ -8,7 +8,7 @@ import reactor.core.publisher.Sinks;
  * A provider for streaming credentials that can be used to authorize a Redis connection
  *
  * @author Ivo Gaydajiev
- * @since 6.5.2
+ * @since 6.6.0
  */
 public class MyStreamingRedisCredentialsProvider implements StreamingCredentialsProvider {
 

@@ -68,8 +68,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     private final PushHandler pushHandler;
 
-    private final AtomicReference<RedisAuthenticationHandler> authenticationHandler = new AtomicReference<>();
-
     private final Mono<JsonParser> parser;
 
     protected MultiOutput<K, V> multi;
@@ -321,27 +319,11 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     @Override
     public void activated() {
         super.activated();
-        RedisAuthenticationHandler currentHandler = authenticationHandler.get();
-        if (currentHandler != null) {
-            currentHandler.subscribe();
-        }
     }
 
     @Override
     public void deactivated() {
-        RedisAuthenticationHandler currentHandler = authenticationHandler.get();
-        if (currentHandler != null) {
-            currentHandler.unsubscribe();
-        }
         super.deactivated();
-    }
-
-    public void setAuthenticationHandler(RedisAuthenticationHandler authenticationHandler) {
-        RedisAuthenticationHandler currentHandler = this.authenticationHandler.getAndSet(authenticationHandler);
-
-        if (currentHandler != null) {
-            currentHandler.unsubscribe();
-        }
     }
 
 }

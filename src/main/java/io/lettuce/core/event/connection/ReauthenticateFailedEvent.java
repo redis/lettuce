@@ -5,7 +5,7 @@ package io.lettuce.core.event.connection;
  * {@link io.lettuce.core.StreamingCredentialsProvider}
  * 
  * @author Ivo Gaydajiev
- * @since 6.5.2
+ * @since 6.6.0
  */
 public class ReauthenticateFailedEvent implements AuthenticateEvent {
 

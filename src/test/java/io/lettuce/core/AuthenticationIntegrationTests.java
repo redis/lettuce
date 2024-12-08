@@ -91,7 +91,7 @@ class AuthenticationIntegrationTests extends TestSupport {
         TestCommandListener listener = new TestCommandListener();
         client.addListener(listener);
         client.setOptions(client.getOptions().mutate()
-                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.REAUTHENTICATE_ON_CREDENTIALS_CHANGE).build());
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
 
         // Build RedisURI with streaming credentials provider
         MyStreamingRedisCredentialsProvider credentialsProvider = new MyStreamingRedisCredentialsProvider();

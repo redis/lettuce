@@ -4,7 +4,7 @@ package io.lettuce.core.event.connection;
  * Event fired on successfull connection re-authentication. see {@link io.lettuce.core.StreamingCredentialsProvider}
  *
  * @author Ivo Gaydajiev
- * @since 6.5.2
+ * @since 6.6.0
  */
 public class ReauthenticateEvent implements AuthenticateEvent {
 

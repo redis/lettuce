@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Redis authentication handler. Internally used to authenticate a Redis connection. This class is part of the internal API.
  *
  * @author Ivo Gaydazhiev
- * @since 6.5.2
+ * @since 6.6.0
  */
 public class RedisAuthenticationHandler {
 
@@ -70,13 +70,10 @@ public class RedisAuthenticationHandler {
     }
 
     /**
-     * Subscribes to the provided `Flux` of credentials if the given `RedisCredentialsProvider` supports streaming credentials.
+     * This method subscribes to a stream of credentials provided by the `StreamingCredentialsProvider`.
      * <p>
-     * This method subscribes to a stream of credentials provided by the `StreamingCredentialsProvider`. Each time new
-     * credentials are received, the client is reauthenticated. If the connection is not supported, the method returns without
-     * subscribing.
-     * <p>
-     * The previous subscription, if any, is disposed of before setting the new subscription.
+     * Each time new credentials are received, the client is re-authenticated. The previous subscription, if any, is disposed of
+     * before setting the new subscription.
      */
     public void subscribe() {
         if (credentialsProvider == null) {
@@ -179,23 +176,17 @@ public class RedisAuthenticationHandler {
         return "unknown";
     }
 
-    public static boolean isSupported(ClientOptions clientOptions, RedisCredentialsProvider credentialsProvider) {
+    public static boolean isSupported(ClientOptions clientOptions) {
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        switch (clientOptions.getReauthenticateBehaviour()) {
+            case ON_NEW_CREDENTIALS:
+                return true;
 
-        if (credentialsProvider instanceof StreamingCredentialsProvider) {
+            case DEFAULT:
+                return false;
 
-            switch (clientOptions.getReauthenticateBehaviour()) {
-                case REAUTHENTICATE_ON_CREDENTIALS_CHANGE:
-                    return true;
-
-                case DEFAULT:
-                    return false;
-
-                default:
-                    return false;
-            }
-        } else {
-            return false;
+            default:
+                return false;
         }
     }
 

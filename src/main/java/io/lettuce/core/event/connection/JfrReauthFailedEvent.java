@@ -9,7 +9,7 @@ import jdk.jfr.StackTrace;
  * Flight recorder event variant of {@link ReauthEvent}.
  *
  * @author Ivo Gaydajiev
- * @since 6.5.2
+ * @since 6.6.0
  */
 @Category({ "Lettuce", "Connection Events" })
 @Label("Reauthenticate to a Redis server failed")

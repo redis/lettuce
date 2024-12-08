@@ -141,9 +141,9 @@ class RedisClusterStreamingCredentialsProviderIntegrationTests extends TestSuppo
     void shouldPerformNodeConnectionReauth() {
         ClusterClientOptions origClientOptions = redisClient.getClusterClientOptions();
         origClientOptions.mutate()
-                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.REAUTHENTICATE_ON_CREDENTIALS_CHANGE).build();
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build();
         redisClient.setOptions(origClientOptions.mutate()
-                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.REAUTHENTICATE_ON_CREDENTIALS_CHANGE).build());
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
 
         StatefulRedisClusterConnection<String, String> connection = redisClient.connect();
         connection.getPartitions().forEach(

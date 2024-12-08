@@ -113,6 +113,17 @@ public class ConnectionBuilder {
         bootstrap.attr(REDIS_URI, redisURI.toString());
     }
 
+    public void registerAuthenticationHandler(RedisCredentialsProvider credentialsProvider, ConnectionState state,
+            Boolean isPubSubConnection) {
+        LettuceAssert.assertState(endpoint != null, "Endpoint must be set");
+        LettuceAssert.assertState(connection != null, "Connection must be set");
+        LettuceAssert.assertState(clientResources != null, "ClientResources must be set");
+
+        RedisAuthenticationHandler authenticationHandler = new RedisAuthenticationHandler(connection.getChannelWriter(),
+                credentialsProvider, state, clientResources.eventBus(), isPubSubConnection);
+        endpoint.registerAuthenticationHandler(authenticationHandler);
+    }
+
     protected List<ChannelHandler> buildHandlers() {
 
         LettuceAssert.assertState(channelGroup != null, "ChannelGroup must be set");

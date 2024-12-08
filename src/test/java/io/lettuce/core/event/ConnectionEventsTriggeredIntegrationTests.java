@@ -58,7 +58,7 @@ class ConnectionEventsTriggeredIntegrationTests extends TestSupport {
         RedisClient client = RedisClient.create(TestClientResources.get(),
                 RedisURI.Builder.redis(host, port).withAuthentication(credentialsProvider).build());
         client.setOptions(ClientOptions.builder()
-                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.REAUTHENTICATE_ON_CREDENTIALS_CHANGE).build());
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
 
         Flux<AuthenticateEvent> publisher = client.getResources().eventBus().get()
                 .filter(event -> event instanceof AuthenticateEvent).cast(AuthenticateEvent.class);
