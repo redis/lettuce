@@ -230,7 +230,6 @@ public class ClientOptions implements Serializable {
 
         private boolean useHashIndexedQueue = DEFAULT_USE_HASH_INDEX_QUEUE;
 
-
         protected Builder() {
         }
 
@@ -521,12 +520,12 @@ public class ClientOptions implements Serializable {
 
         builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .reauthenticateBehavior(getReauthenticateBehaviour()).readOnlyCommands(getReadOnlyCommands())
-                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
-                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
-                .scriptCharset(getScriptCharset()).jsonParser(getJsonParser()).socketOptions(getSocketOptions())
-                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
-                .timeoutOptions(getTimeoutOptions());
+                .reauthenticateBehavior(getReauthenticateBehaviour())
+                .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
+                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).jsonParser(getJsonParser())
+                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
@@ -764,7 +763,8 @@ public class ClientOptions implements Serializable {
          */
         ON_NEW_CREDENTIALS
     }
-  
+
+    /**
      * Whether we should use hash indexed queue, which provides O(1) remove(Object)
      *
      * @return if hash indexed queue should be used
