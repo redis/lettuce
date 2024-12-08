@@ -520,12 +520,12 @@ public class ClientOptions implements Serializable {
 
         builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .reauthenticateBehavior(getReauthenticateBehaviour())
-                .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
-                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
-                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).jsonParser(getJsonParser())
-                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
-                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
+                .reauthenticateBehavior(getReauthenticateBehaviour()).readOnlyCommands(getReadOnlyCommands())
+                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
+                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
+                .scriptCharset(getScriptCharset()).jsonParser(getJsonParser()).socketOptions(getSocketOptions())
+                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
+                .timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
