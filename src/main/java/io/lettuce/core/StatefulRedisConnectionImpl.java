@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -313,6 +314,16 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     public ConnectionState getConnectionState() {
         return state;
+    }
+
+    @Override
+    public void activated() {
+        super.activated();
+    }
+
+    @Override
+    public void deactivated() {
+        super.deactivated();
     }
 
 }
