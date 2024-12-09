@@ -72,17 +72,12 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
             throw new IllegalStateException("ConnectionProvider is already closed");
         }
 
-        Sync<K, T, F> sync = connections.get(key);
-
-        if (sync != null) {
-            return sync;
-        }
-
         AtomicBoolean atomicBoolean = new AtomicBoolean();
 
-        sync = connections.computeIfAbsent(key, connectionKey -> {
+        Sync<K, T, F> sync = connections.computeIfAbsent(key, connectionKey -> {
 
             Sync<K, T, F> createdSync = new Sync<>(key, connectionFactory.apply(key));
+            atomicBoolean.set(true);
 
             if (closed) {
                 createdSync.cancel();
@@ -91,7 +86,7 @@ public class AsyncConnectionProvider<K, T extends AsyncCloseable, F extends Comp
             return createdSync;
         });
 
-        if (atomicBoolean.compareAndSet(false, true)) {
+        if (atomicBoolean.get()) {
 
             sync.getConnection().whenComplete((c, t) -> {
 
