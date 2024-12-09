@@ -218,6 +218,12 @@ public class ClusterClientOptions extends ClientOptions {
             return this;
         }
 
+        @Override
+        public Builder reauthenticateBehavior(ReauthenticateBehavior reauthenticateBehavior) {
+            super.reauthenticateBehavior(reauthenticateBehavior);
+            return this;
+        }
+
         /**
          * Number of maximal cluster redirects ({@literal -MOVED} and {@literal -ASK}) to follow in case a key was moved from
          * one node to another node. Defaults to {@literal 5}. See {@link ClusterClientOptions#DEFAULT_MAX_REDIRECTS}.
@@ -355,12 +361,12 @@ public class ClusterClientOptions extends ClientOptions {
 
         builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .maxRedirects(getMaxRedirects()).publishOnScheduler(isPublishOnScheduler())
-                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
-                .readOnlyCommands(getReadOnlyCommands()).requestQueueSize(getRequestQueueSize())
-                .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
-                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
-                .topologyRefreshOptions(getTopologyRefreshOptions())
+                .reauthenticateBehavior(getReauthenticateBehaviour()).maxRedirects(getMaxRedirects())
+                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
+                .protocolVersion(getConfiguredProtocolVersion()).readOnlyCommands(getReadOnlyCommands())
+                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).socketOptions(getSocketOptions())
+                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
+                .timeoutOptions(getTimeoutOptions()).topologyRefreshOptions(getTopologyRefreshOptions())
                 .validateClusterNodeMembership(isValidateClusterNodeMembership()).nodeFilter(getNodeFilter());
 
         return builder;

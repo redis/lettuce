@@ -232,6 +232,11 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         async.clusterMyId().thenAccept(connectionState::setNodeId);
     }
 
+    @Override
+    public void deactivated() {
+        super.deactivated();
+    }
+
     ClusterDistributionChannelWriter getClusterDistributionChannelWriter() {
         return (ClusterDistributionChannelWriter) super.getChannelWriter();
     }
