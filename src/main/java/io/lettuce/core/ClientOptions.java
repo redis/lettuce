@@ -55,6 +55,8 @@ public class ClientOptions implements Serializable {
 
     public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
 
+    public static final ReauthenticateBehavior DEFAULT_REAUTHENTICATE_BEHAVIOUR = ReauthenticateBehavior.DEFAULT;
+
     public static final boolean DEFAULT_PUBLISH_ON_SCHEDULER = false;
 
     public static final boolean DEFAULT_PING_BEFORE_ACTIVATE_CONNECTION = true;
@@ -95,6 +97,8 @@ public class ClientOptions implements Serializable {
 
     private final DisconnectedBehavior disconnectedBehavior;
 
+    private final ReauthenticateBehavior reauthenticateBehavior;
+
     private final boolean publishOnScheduler;
 
     private final boolean pingBeforeActivateConnection;
@@ -124,6 +128,7 @@ public class ClientOptions implements Serializable {
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.disconnectedBehavior = builder.disconnectedBehavior;
+        this.reauthenticateBehavior = builder.reauthenticateBehavior;
         this.publishOnScheduler = builder.publishOnScheduler;
         this.pingBeforeActivateConnection = builder.pingBeforeActivateConnection;
         this.protocolVersion = builder.protocolVersion;
@@ -143,6 +148,7 @@ public class ClientOptions implements Serializable {
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
+        this.reauthenticateBehavior = original.getReauthenticateBehaviour();
         this.publishOnScheduler = original.isPublishOnScheduler();
         this.pingBeforeActivateConnection = original.isPingBeforeActivateConnection();
         this.protocolVersion = original.getConfiguredProtocolVersion();
@@ -219,6 +225,8 @@ public class ClientOptions implements Serializable {
         private boolean suspendReconnectOnProtocolFailure = DEFAULT_SUSPEND_RECONNECT_PROTO_FAIL;
 
         private TimeoutOptions timeoutOptions = DEFAULT_TIMEOUT_OPTIONS;
+
+        private ReauthenticateBehavior reauthenticateBehavior = DEFAULT_REAUTHENTICATE_BEHAVIOUR;
 
         private boolean useHashIndexedQueue = DEFAULT_USE_HASH_INDEX_QUEUE;
 
@@ -298,6 +306,13 @@ public class ClientOptions implements Serializable {
 
             LettuceAssert.notNull(disconnectedBehavior, "DisconnectedBehavior must not be null");
             this.disconnectedBehavior = disconnectedBehavior;
+            return this;
+        }
+
+        public Builder reauthenticateBehavior(ReauthenticateBehavior reauthenticateBehavior) {
+
+            LettuceAssert.notNull(reauthenticateBehavior, "ReuthenticatBehavior must not be null");
+            this.reauthenticateBehavior = reauthenticateBehavior;
             return this;
         }
 
@@ -505,11 +520,12 @@ public class ClientOptions implements Serializable {
 
         builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
-                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
-                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).jsonParser(getJsonParser())
-                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
-                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
+                .reauthenticateBehavior(getReauthenticateBehaviour()).readOnlyCommands(getReadOnlyCommands())
+                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
+                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
+                .scriptCharset(getScriptCharset()).jsonParser(getJsonParser()).socketOptions(getSocketOptions())
+                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
+                .timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
@@ -571,6 +587,10 @@ public class ClientOptions implements Serializable {
      */
     public DisconnectedBehavior getDisconnectedBehavior() {
         return disconnectedBehavior;
+    }
+
+    public ReauthenticateBehavior getReauthenticateBehaviour() {
+        return reauthenticateBehavior;
     }
 
     /**
@@ -702,6 +722,46 @@ public class ClientOptions implements Serializable {
      */
     public TimeoutOptions getTimeoutOptions() {
         return timeoutOptions;
+    }
+
+    /**
+     * Defines the re-authentication behavior of the Redis client in relation to the {@link CredentialsProvider}.
+     */
+    public enum ReauthenticateBehavior {
+
+        /**
+         * This is the default behavior. The client will fetch current credentials from the underlying
+         * {@link RedisCredentialsProvider} only when required.
+         *
+         * <p>
+         * No re-authentication is performed automatically when new credentials are emitted by the
+         * {@link StreamingCredentialsProvider} .
+         * </p>
+         *
+         * <p>
+         * This behavior is suitable for use cases with static credentials or where explicit reconnection is required to change
+         * credentials.
+         * </p>
+         */
+        DEFAULT,
+
+        /**
+         * Automatically triggers re-authentication whenever new credentials are emitted by the
+         * {@link StreamingCredentialsProvider} or any other credentials manager.
+         *
+         * <p>
+         * When enabled, the client subscribes to the credentials stream provided by the {@link StreamingCredentialsProvider}
+         * (or other compatible sources) and issues an {@code AUTH} command to the Redis server each time new credentials are
+         * received. This behavior supports dynamic credential scenarios, such as token-based authentication, or credential
+         * rotation where credentials are refreshed periodically to maintain access.
+         * </p>
+         *
+         * <p>
+         * Note: {@code AUTH} commands issued as part of this behavior may interleave with user-submitted commands, as the
+         * client performs re-authentication independently of user command flow.
+         * </p>
+         */
+        ON_NEW_CREDENTIALS
     }
 
     /**

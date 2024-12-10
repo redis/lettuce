@@ -315,4 +315,14 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         return state;
     }
 
+    @Override
+    public void activated() {
+        super.activated();
+    }
+
+    @Override
+    public void deactivated() {
+        super.deactivated();
+    }
+
 }

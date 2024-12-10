@@ -5,6 +5,10 @@ import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.event.command.CommandListener;
+import io.lettuce.core.event.command.CommandSucceededEvent;
+import io.lettuce.core.protocol.RedisCommand;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -21,10 +25,15 @@ import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Integration test for authentication.
  *
  * @author Mark Paluch
+ * @author Ivo Gaydajiev
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -37,6 +46,9 @@ class AuthenticationIntegrationTests extends TestSupport {
 
         connection.sync().dispatch(CommandType.ACL, new StatusOutput<>(StringCodec.UTF8),
                 new CommandArgs<>(StringCodec.UTF8).add("SETUSER").add("john").add("on").add(">foobared").add("-@all"));
+
+        connection.sync().dispatch(CommandType.ACL, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).add("SETUSER").add("steave").add("on").add(">foobared").add("+@all"));
     }
 
     @Test
@@ -69,6 +81,65 @@ class AuthenticationIntegrationTests extends TestSupport {
             assertThat(connection.sync().ping()).isEqualTo("PONG");
             connection.close();
         });
+    }
+
+    // Simulate test user credential rotation, and verify that re-authentication is successful
+    @Test
+    @Inject
+    void streamingCredentialProvider(RedisClient client) {
+
+        TestCommandListener listener = new TestCommandListener();
+        client.addListener(listener);
+        client.setOptions(client.getOptions().mutate()
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
+
+        // Build RedisURI with streaming credentials provider
+        MyStreamingRedisCredentialsProvider credentialsProvider = new MyStreamingRedisCredentialsProvider();
+        RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(TestSettings.port())
+                .withClientName("streaming_cred_test").withAuthentication(credentialsProvider)
+                .withTimeout(Duration.ofSeconds(5)).build();
+
+        credentialsProvider.emitCredentials(TestSettings.username(), TestSettings.password().toString().toCharArray());
+
+        // verify that the initial connection is successful with default user credentials
+        StatefulRedisConnection<String, String> connection = client.connect(uri);
+        assertThat(connection.sync().aclWhoami()).isEqualTo(TestSettings.username());
+
+        // rotate the credentials
+        credentialsProvider.emitCredentials("steave", "foobared".toCharArray());
+
+        Awaitility.await().atMost(Duration.ofSeconds(1)).until(() -> listener.succeeded.stream()
+                .anyMatch(command -> isAuthCommandWithCredentials(command, "steave", "foobared".toCharArray())));
+
+        // verify that the connection is re-authenticated with the new user credentials
+        assertThat(connection.sync().aclWhoami()).isEqualTo("steave");
+
+        credentialsProvider.shutdown();
+        connection.close();
+        client.removeListener(listener);
+        client.setOptions(
+                client.getOptions().mutate().reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.DEFAULT).build());
+    }
+
+    static class TestCommandListener implements CommandListener {
+
+        final List<RedisCommand<?, ?, ?>> succeeded = new ArrayList<>();
+
+        @Override
+        public void commandSucceeded(CommandSucceededEvent event) {
+            synchronized (succeeded) {
+                succeeded.add(event.getCommand());
+            }
+        }
+
+    }
+
+    private boolean isAuthCommandWithCredentials(RedisCommand<?, ?, ?> command, String username, char[] password) {
+        if (command.getType() == CommandType.AUTH) {
+            CommandArgs<?, ?> args = command.getArgs();
+            return args.toCommandString().contains(username) && args.toCommandString().contains(String.valueOf(password));
+        }
+        return false;
     }
 
 }
