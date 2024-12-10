@@ -46,7 +46,7 @@ public class RedisAuthenticationHandler {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(RedisAuthenticationHandler.class);
 
-    private final RedisChannelWriter writer;
+    private final RedisChannelHandler<?, ?> connection;
 
     private final ConnectionState state;
 
@@ -60,9 +60,9 @@ public class RedisAuthenticationHandler {
 
     private final Boolean isPubSubConnection;
 
-    public RedisAuthenticationHandler(RedisChannelWriter writer, RedisCredentialsProvider credentialsProvider,
+    public RedisAuthenticationHandler(RedisChannelHandler<?, ?> connection, RedisCredentialsProvider credentialsProvider,
             ConnectionState state, EventBus eventBus, Boolean isPubSubConnection) {
-        this.writer = writer;
+        this.connection = connection;
         this.state = state;
         this.credentialsProvider = credentialsProvider;
         this.eventBus = eventBus;
@@ -144,11 +144,11 @@ public class RedisAuthenticationHandler {
         });
     }
 
-    private AsyncCommand<String, String, String> dispatchAuth(RedisCommand<String, String, String> authCommand) {
-        AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(authCommand);
-        RedisCommand<String, String, String> dispatched = writer.write(asyncCommand);
+    private AsyncCommand<?, ?, ?> dispatchAuth(RedisCommand<?, ?, ?> authCommand) {
+        AsyncCommand asyncCommand = new AsyncCommand<>(authCommand);
+        RedisCommand<?, ?, ?> dispatched = connection.dispatch(asyncCommand);
         if (dispatched instanceof AsyncCommand) {
-            return (AsyncCommand<String, String, String>) dispatched;
+            return (AsyncCommand<?, ?, ?>) dispatched;
         }
         return asyncCommand;
     }
@@ -170,8 +170,8 @@ public class RedisAuthenticationHandler {
     }
 
     private String getEpid() {
-        if (writer instanceof Endpoint) {
-            return ((Endpoint) writer).getId();
+        if (connection.getChannelWriter() instanceof Endpoint) {
+            return ((Endpoint) connection.getChannelWriter()).getId();
         }
         return "unknown";
     }

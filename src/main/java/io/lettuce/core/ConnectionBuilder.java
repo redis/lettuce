@@ -119,8 +119,8 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(connection != null, "Connection must be set");
         LettuceAssert.assertState(clientResources != null, "ClientResources must be set");
 
-        RedisAuthenticationHandler authenticationHandler = new RedisAuthenticationHandler(connection.getChannelWriter(),
-                credentialsProvider, state, clientResources.eventBus(), isPubSubConnection);
+        RedisAuthenticationHandler authenticationHandler = new RedisAuthenticationHandler(connection, credentialsProvider,
+                state, clientResources.eventBus(), isPubSubConnection);
         endpoint.registerAuthenticationHandler(authenticationHandler);
     }
 
