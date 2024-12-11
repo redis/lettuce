@@ -1,5 +1,6 @@
 package io.lettuce.core.api;
 
+import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;

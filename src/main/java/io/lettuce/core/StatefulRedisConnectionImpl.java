@@ -22,10 +22,14 @@ package io.lettuce.core;
 import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 import static io.lettuce.core.protocol.CommandType.*;
 
+import java.nio.CharBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -37,10 +41,14 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.event.connection.ReauthenticateEvent;
+import io.lettuce.core.event.connection.ReauthenticateFailedEvent;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.output.MultiOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.publisher.Mono;
 
 /**
@@ -54,6 +62,8 @@ import reactor.core.publisher.Mono;
  * @author Mark Paluch
  */
 public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V> implements StatefulRedisConnection<K, V> {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(StatefulRedisConnectionImpl.class);
 
     protected final RedisCodec<K, V> codec;
 
@@ -70,6 +80,14 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     private final Mono<JsonParser> parser;
 
     protected MultiOutput<K, V> multi;
+
+    private RedisAuthenticationHandler authHandler;
+
+    private AtomicReference<RedisCredentials> credentialsRef = new AtomicReference<>();
+
+    private final ReentrantLock reAuthSafety = new ReentrantLock();
+
+    private AtomicBoolean inTransaction = new AtomicBoolean(false);
 
     /**
      * Initialize a new connection.
@@ -181,7 +199,13 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
 
         RedisCommand<K, V, T> toSend = preProcessCommand(command);
-        return super.dispatch(toSend);
+        RedisCommand<K, V, T> result = super.dispatch(toSend);
+        if (toSend.getType() == EXEC || toSend.getType() == DISCARD) {
+            inTransaction.set(false);
+            setCredentials(credentialsRef.getAndSet(null));
+        }
+
+        return result;
     }
 
     @Override
@@ -189,12 +213,24 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         List<RedisCommand<K, V, ?>> sentCommands = new ArrayList<>(commands.size());
 
-        commands.forEach(o -> {
+        boolean transactionComplete = false;
+        for (RedisCommand<K, V, ?> o : commands) {
             RedisCommand<K, V, ?> command = preProcessCommand(o);
             sentCommands.add(command);
-        });
+            if (command.getType() == EXEC) {
+                transactionComplete = true;
+            }
+            if (command.getType() == MULTI || command.getType() == DISCARD) {
+                transactionComplete = false;
+            }
+        }
 
-        return super.dispatch(sentCommands);
+        Collection<RedisCommand<K, V, ?>> result = super.dispatch(sentCommands);
+        if (transactionComplete) {
+            inTransaction.set(false);
+            setCredentials(credentialsRef.getAndSet(null));
+        }
+        return result;
     }
 
     // TODO [tihomir.mateev] Refactor to include as part of the Command interface
@@ -273,12 +309,20 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         if (commandType.equals(MULTI.name())) {
 
+            reAuthSafety.lock();
+            try {
+                inTransaction.set(true);
+            } finally {
+                reAuthSafety.unlock();
+            }
             multi = (multi == null ? new MultiOutput<>(codec) : multi);
 
             if (command instanceof CompleteableCommand) {
                 ((CompleteableCommand<?>) command).onComplete((ignored, e) -> {
                     if (e != null) {
                         multi = null;
+                        inTransaction.set(false);
+                        setCredentials(credentialsRef.getAndSet(null));
                     }
                 });
             }
@@ -318,11 +362,72 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     @Override
     public void activated() {
         super.activated();
+        if (authHandler != null) {
+            authHandler.subscribe();
+        }
     }
 
     @Override
     public void deactivated() {
+        if (authHandler != null) {
+            authHandler.unsubscribe();
+        }
         super.deactivated();
+    }
+
+    public void setAuthenticationHandler(RedisAuthenticationHandler handler) {
+        authHandler = handler;
+    }
+
+    public void setCredentials(RedisCredentials credentials) {
+        if (credentials == null) {
+            return;
+        }
+        reAuthSafety.lock();
+        try {
+            credentialsRef.set(credentials);
+            if (!inTransaction.get()) {
+                dispatchAuthCommand(credentialsRef.getAndSet(null));
+            }
+        } finally {
+            reAuthSafety.unlock();
+        }
+    }
+
+    private void dispatchAuthCommand(RedisCredentials credentials) {
+        if (credentials == null) {
+            return;
+        }
+
+        RedisFuture<String> auth;
+        if (credentials.getUsername() != null) {
+            auth = async().auth(credentials.getUsername(), CharBuffer.wrap(credentials.getPassword()));
+        } else {
+            auth = async().auth(CharBuffer.wrap(credentials.getPassword()));
+        }
+        auth.thenRun(() -> {
+            publishReauthEvent();
+            logger.info("Re-authentication succeeded {}.", getEpid());
+        }).exceptionally(throwable -> {
+            publishReauthFailedEvent(throwable);
+            logger.error("Re-authentication failed  {}.", getEpid(), throwable);
+            return null;
+        });
+    }
+
+    private void publishReauthEvent() {
+        getResources().eventBus().publish(new ReauthenticateEvent(getEpid()));
+    }
+
+    private void publishReauthFailedEvent(Throwable throwable) {
+        getResources().eventBus().publish(new ReauthenticateFailedEvent(getEpid(), throwable));
+    }
+
+    private String getEpid() {
+        if (getChannelWriter() instanceof Endpoint) {
+            return ((Endpoint) getChannelWriter()).getId();
+        }
+        return "";
     }
 
 }

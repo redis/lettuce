@@ -1,6 +1,5 @@
 package io.lettuce.core.protocol;
 
-import io.lettuce.core.RedisAuthenticationHandler;
 import io.netty.channel.Channel;
 
 /**
@@ -52,13 +51,6 @@ public interface Endpoint extends PushHandler {
      * @param connectionWatchdog the connection watchdog.
      */
     void registerConnectionWatchdog(ConnectionWatchdog connectionWatchdog);
-
-    /**
-     * Associate a {@link RedisAuthenticationHandler} with the {@link Endpoint}.
-     *
-     * @param authenticationHandler the connection watchdog.
-     */
-    void registerAuthenticationHandler(RedisAuthenticationHandler authenticationHandler);
 
     /**
      * @return the endpoint Id.

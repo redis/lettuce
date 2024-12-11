@@ -317,7 +317,10 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionState state = connection.getConnectionState();
         state.apply(redisURI);
         state.setDb(redisURI.getDatabase());
-
+        if (RedisAuthenticationHandler.isSupported(getOptions())) {
+            connection.setAuthenticationHandler(
+                    new RedisAuthenticationHandler(connection, redisURI.getCredentialsProvider(), isPubSub));
+        }
         connectionBuilder.connection(connection);
         connectionBuilder.clientOptions(getOptions());
         connectionBuilder.clientResources(getResources());
@@ -325,11 +328,6 @@ public class RedisClient extends AbstractRedisClient {
 
         connectionBuilder(getSocketAddressSupplier(redisURI), connectionBuilder, connection.getConnectionEvents(), redisURI);
         connectionBuilder.connectionInitializer(createHandshake(state));
-
-        if (RedisAuthenticationHandler.isSupported(getOptions())) {
-            connectionBuilder.registerAuthenticationHandler(redisURI.getCredentialsProvider(), connection.getConnectionState(),
-                    isPubSub);
-        }
 
         ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
 

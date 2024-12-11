@@ -1,11 +1,13 @@
 package io.lettuce.core;
 
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.event.DefaultEventBus;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.event.connection.ReauthenticateFailedEvent;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.resource.ClientResources;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,7 +27,9 @@ import static org.mockito.Mockito.when;
 
 public class RedisAuthenticationHandlerTest {
 
-    private RedisChannelHandler<String, String> channelHandler;
+    private StatefulRedisConnectionImpl<String, String> connection;
+
+    ClientResources resources;
 
     EventBus eventBus;
 
@@ -34,8 +38,13 @@ public class RedisAuthenticationHandlerTest {
     @BeforeEach
     void setUp() {
         eventBus = new DefaultEventBus(Schedulers.immediate());
-        channelHandler = mock(RedisChannelHandler.class);
+        connection = mock(StatefulRedisConnectionImpl.class);
+        resources = mock(ClientResources.class);
+        when(resources.eventBus()).thenReturn(eventBus);
+
         connectionState = mock(ConnectionState.class);
+        when(connection.getResources()).thenReturn(resources);
+        when(connection.getConnectionState()).thenReturn(connectionState);
     }
 
     @SuppressWarnings("unchecked")
@@ -43,20 +52,18 @@ public class RedisAuthenticationHandlerTest {
     void subscribeWithStreamingCredentialsProviderInvokesReauth() {
         MyStreamingRedisCredentialsProvider credentialsProvider = new MyStreamingRedisCredentialsProvider();
 
-        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(channelHandler, credentialsProvider,
-                connectionState, eventBus, false);
+        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection, credentialsProvider, false);
 
         // Subscribe to the provider
         handler.subscribe();
         credentialsProvider.emitCredentials("newuser", "newpassword".toCharArray());
 
-        ArgumentCaptor<RedisCommand<String, String, Object>> captor = ArgumentCaptor.forClass(RedisCommand.class);
-        verify(channelHandler).dispatch(captor.capture());
+        ArgumentCaptor<RedisCredentials> captor = ArgumentCaptor.forClass(RedisCredentials.class);
+        verify(connection).setCredentials(captor.capture());
 
-        RedisCommand<String, String, Object> capturedCommand = captor.getValue();
-        assertThat(capturedCommand.getType()).isEqualTo(CommandType.AUTH);
-        assertThat(capturedCommand.getArgs().toCommandString()).contains("newuser");
-        assertThat(capturedCommand.getArgs().toCommandString()).contains("newpassword");
+        RedisCredentials credentials = captor.getValue();
+        assertThat(credentials.getUsername()).isEqualTo("newuser");
+        assertThat(credentials.getPassword()).isEqualTo("newpassword".toCharArray());
 
         credentialsProvider.shutdown();
     }
@@ -65,10 +72,9 @@ public class RedisAuthenticationHandlerTest {
     void shouldHandleErrorInCredentialsStream() {
         MyStreamingRedisCredentialsProvider credentialsProvider = new MyStreamingRedisCredentialsProvider();
 
-        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(channelHandler, credentialsProvider,
-                connectionState, eventBus, false);
+        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection, credentialsProvider, false);
 
-        verify(channelHandler, times(0)).dispatch(any(RedisCommand.class)); // No command should be sent
+        verify(connection, times(0)).dispatch(any(RedisCommand.class)); // No command should be sent
 
         // Verify the event was published
         StepVerifier.create(eventBus.get()).then(() -> {
@@ -82,10 +88,9 @@ public class RedisAuthenticationHandlerTest {
     @Test
     void shouldNotSubscribeIfConnectionIsNotSupported() {
         StreamingCredentialsProvider credentialsProvider = mock(StreamingCredentialsProvider.class);
-
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP2);
-        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(channelHandler, credentialsProvider,
-                connectionState, eventBus, true);
+
+        RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection, credentialsProvider, true);
 
         // Subscribe to the provider (it should not subscribe due to unsupported connection)
         handler.subscribe();
@@ -96,25 +101,22 @@ public class RedisAuthenticationHandlerTest {
 
     @Test
     void testIsSupportedConnectionWithRESP2ProtocolOnPubSubConnection() {
-        RedisChannelHandler<?, ?> connection = mock(RedisChannelHandler.class);
 
-        ConnectionState connectionState = mock(ConnectionState.class);
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP2);
 
         RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection, mock(RedisCredentialsProvider.class),
-                connectionState, mock(EventBus.class), true);
+                true);
 
         assertFalse(handler.isSupportedConnection());
     }
 
     @Test
     void testIsSupportedConnectionWithNonPubSubConnection() {
-        RedisChannelHandler<?, ?> connection = mock(RedisChannelHandler.class);
-        ConnectionState connectionState = mock(ConnectionState.class);
+
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP2);
 
         RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection, mock(RedisCredentialsProvider.class),
-                connectionState, mock(EventBus.class), false);
+                false);
 
         assertTrue(handler.isSupportedConnection());
     }
@@ -122,12 +124,10 @@ public class RedisAuthenticationHandlerTest {
     @Test
     void testIsSupportedConnectionWithRESP3ProtocolOnPubSubConnection() {
 
-        RedisChannelHandler<?, ?> connection = mock(RedisChannelHandler.class);
-        ConnectionState connectionState = mock(ConnectionState.class);
         when(connectionState.getNegotiatedProtocolVersion()).thenReturn(ProtocolVersion.RESP3);
 
         RedisAuthenticationHandler handler = new RedisAuthenticationHandler(connection, mock(RedisCredentialsProvider.class),
-                connectionState, mock(EventBus.class), true);
+                true);
 
         assertTrue(handler.isSupportedConnection());
     }

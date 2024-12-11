@@ -46,26 +46,18 @@ public class RedisAuthenticationHandler {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(RedisAuthenticationHandler.class);
 
-    private final RedisChannelHandler<?, ?> connection;
-
-    private final ConnectionState state;
-
-    private final RedisCommandBuilder<String, String> commandBuilder = new RedisCommandBuilder<>(StringCodec.UTF8);
+    private final StatefulRedisConnectionImpl<?, ?> connection;
 
     private final RedisCredentialsProvider credentialsProvider;
 
     private final AtomicReference<Disposable> credentialsSubscription = new AtomicReference<>();
 
-    private final EventBus eventBus;
-
     private final Boolean isPubSubConnection;
 
-    public RedisAuthenticationHandler(RedisChannelHandler<?, ?> connection, RedisCredentialsProvider credentialsProvider,
-            ConnectionState state, EventBus eventBus, Boolean isPubSubConnection) {
+    public RedisAuthenticationHandler(StatefulRedisConnectionImpl<?, ?> connection,
+            RedisCredentialsProvider credentialsProvider, Boolean isPubSubConnection) {
         this.connection = connection;
-        this.state = state;
         this.credentialsProvider = credentialsProvider;
-        this.eventBus = eventBus;
         this.isPubSubConnection = isPubSubConnection;
     }
 
@@ -125,55 +117,19 @@ public class RedisAuthenticationHandler {
      * @param credentials the new credentials
      */
     protected void reauthenticate(RedisCredentials credentials) {
-        CharSequence password = CharBuffer.wrap(credentials.getPassword());
-
-        AsyncCommand<String, String, String> authCmd;
-        if (credentials.hasUsername()) {
-            authCmd = new AsyncCommand<>(commandBuilder.auth(credentials.getUsername(), password));
-        } else {
-            authCmd = new AsyncCommand<>(commandBuilder.auth(password));
-        }
-
-        dispatchAuth(authCmd).thenRun(() -> {
-            publishReauthEvent();
-            log.info("Re-authentication succeeded for endpoint {}.", getEpid());
-        }).exceptionally(throwable -> {
-            publishReauthFailedEvent(throwable);
-            log.error("Re-authentication failed for endpoint {}.", getEpid(), throwable);
-            return null;
-        });
-    }
-
-    private AsyncCommand<?, ?, ?> dispatchAuth(RedisCommand<?, ?, ?> authCommand) {
-        AsyncCommand asyncCommand = new AsyncCommand<>(authCommand);
-        RedisCommand<?, ?, ?> dispatched = connection.dispatch(asyncCommand);
-        if (dispatched instanceof AsyncCommand) {
-            return (AsyncCommand<?, ?, ?>) dispatched;
-        }
-        return asyncCommand;
-    }
-
-    private void publishReauthEvent() {
-        eventBus.publish(new ReauthenticateEvent(getEpid()));
-    }
-
-    private void publishReauthFailedEvent(Throwable throwable) {
-        eventBus.publish(new ReauthenticateFailedEvent(getEpid(), throwable));
+        connection.setCredentials(credentials);
     }
 
     protected boolean isSupportedConnection() {
-        if (isPubSubConnection && ProtocolVersion.RESP2 == state.getNegotiatedProtocolVersion()) {
+        if (isPubSubConnection && ProtocolVersion.RESP2 == connection.getConnectionState().getNegotiatedProtocolVersion()) {
             log.warn("Renewable credentials are not supported with RESP2 protocol on a pub/sub connection.");
             return false;
         }
         return true;
     }
 
-    private String getEpid() {
-        if (connection.getChannelWriter() instanceof Endpoint) {
-            return ((Endpoint) connection.getChannelWriter()).getId();
-        }
-        return "unknown";
+    private void publishReauthFailedEvent(Throwable throwable) {
+        connection.getResources().eventBus().publish(new ReauthenticateFailedEvent(throwable));
     }
 
     public static boolean isSupported(ClientOptions clientOptions) {

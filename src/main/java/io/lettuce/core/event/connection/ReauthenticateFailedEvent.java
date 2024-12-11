@@ -13,6 +13,11 @@ public class ReauthenticateFailedEvent implements AuthenticateEvent {
 
     private final Throwable cause;
 
+    public ReauthenticateFailedEvent(Throwable cause) {
+        this.cause = cause;
+        this.epId = null;
+    }
+
     public ReauthenticateFailedEvent(String epId, Throwable cause) {
         this.epId = epId;
         this.cause = cause;

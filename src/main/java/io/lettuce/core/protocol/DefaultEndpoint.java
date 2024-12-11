@@ -37,7 +37,6 @@ import java.util.function.Supplier;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.ConnectionEvents;
-import io.lettuce.core.RedisAuthenticationHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
@@ -109,8 +108,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     private boolean autoFlushCommands = true;
 
     private boolean inActivation = false;
-
-    private RedisAuthenticationHandler authenticationHandler;
 
     private ConnectionWatchdog connectionWatchdog;
 
@@ -475,9 +472,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
                 try {
                     inActivation = true;
-                    if (authenticationHandler != null) {
-                        authenticationHandler.subscribe();
-                    }
                     connectionFacade.activated();
                 } finally {
                     inActivation = false;
@@ -513,9 +507,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 logger.debug("{} deactivating endpoint handler", logPrefix());
             }
 
-            if (authenticationHandler != null) {
-                authenticationHandler.unsubscribe();
-            }
             connectionFacade.deactivated();
         });
 
@@ -541,11 +532,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     @Override
     public void registerConnectionWatchdog(ConnectionWatchdog connectionWatchdog) {
         this.connectionWatchdog = connectionWatchdog;
-    }
-
-    @Override
-    public void registerAuthenticationHandler(RedisAuthenticationHandler authenticationHandler) {
-        this.authenticationHandler = authenticationHandler;
     }
 
     @Override
