@@ -20,6 +20,7 @@
 package io.lettuce.core.protocol;
 
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -53,7 +54,7 @@ import io.netty.buffer.UnpooledByteBufAllocator;
  */
 public class CommandArgs<K, V> {
 
-    static final byte[] CRLF = "\r\n".getBytes(StandardCharsets.US_ASCII);
+    static final byte[] CRLF = "\r\n".getBytes(StandardCharsets.UTF_8);
 
     protected final RedisCodec<K, V> codec;
 
@@ -609,16 +610,9 @@ public class CommandArgs<K, V> {
         }
 
         static void writeString(ByteBuf target, String value) {
+            byte[] output = value.getBytes(StandardCharsets.UTF_8);
 
-            target.writeByte('$');
-
-            IntegerArgument.writeInteger(target, value.length());
-            target.writeBytes(CRLF);
-
-            for (int i = 0; i < value.length(); i++) {
-                target.writeByte((byte) value.charAt(i));
-            }
-            target.writeBytes(CRLF);
+            BytesArgument.writeBytes(target, output);
         }
 
         @Override
@@ -646,16 +640,11 @@ public class CommandArgs<K, V> {
         }
 
         static void writeString(ByteBuf target, char[] value) {
+            final ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap(value));
+            final byte[] output = new byte[byteBuffer.remaining()];
+            byteBuffer.get(output);
 
-            target.writeByte('$');
-
-            IntegerArgument.writeInteger(target, value.length);
-            target.writeBytes(CRLF);
-
-            for (char c : value) {
-                target.writeByte((byte) c);
-            }
-            target.writeBytes(CRLF);
+            BytesArgument.writeBytes(target, output);
         }
 
         @Override
