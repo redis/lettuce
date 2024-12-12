@@ -394,7 +394,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         authHandler = handler;
     }
 
-
     private void dispatchAuthCommand(RedisCredentials credentials) {
         if (credentials == null) {
             return;

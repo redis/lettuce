@@ -565,8 +565,6 @@ public class RedisClusterClient extends AbstractRedisClient {
                 getFirstUri(), socketAddressSupplier,
                 () -> new CommandHandler(getClusterClientOptions(), getResources(), endpoint));
 
-
-
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
                 connection.closeAsync();
@@ -636,8 +634,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
                 () -> new PubSubCommandHandler<>(getClusterClientOptions(), getResources(), codec, endpoint));
-
-
 
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
