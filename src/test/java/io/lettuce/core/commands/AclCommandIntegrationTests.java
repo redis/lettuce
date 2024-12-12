@@ -131,7 +131,7 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @Test
     void aclList() {
-        assertThat(redis.aclList()).hasSize(1).first().asString().contains("user default");
+        assertThat(redis.aclList()).hasSize(2).first().asString().contains("user default");
     }
 
     @Test
@@ -161,7 +161,7 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @Test
     void aclUsers() {
-        assertThat(redis.aclUsers()).hasSize(1).first().isEqualTo("default");
+        assertThat(redis.aclUsers()).hasSize(2).first().isEqualTo("default");
     }
 
     @Test

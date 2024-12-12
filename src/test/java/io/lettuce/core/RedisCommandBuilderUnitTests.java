@@ -32,6 +32,17 @@ class RedisCommandBuilderUnitTests {
 
     RedisCommandBuilder<String, String> sut = new RedisCommandBuilder<>(StringCodec.UTF8);
 
+    @Test()
+    void shouldCorrectlyConstructHello() {
+
+        Command<String, String, ?> command = sut.hello(3, "日本語", "日本語".toCharArray(), null);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$5\r\n" + "HELLO\r\n" + "$1\r\n" + "3\r\n"
+                + "$4\r\n" + "AUTH\r\n" + "$9\r\n" + "日本語\r\n" + "$9\r\n" + "日本語\r\n");
+    }
+
     @Test
     void shouldCorrectlyConstructXreadgroup() {
 
