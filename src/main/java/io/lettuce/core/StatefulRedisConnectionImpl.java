@@ -355,6 +355,21 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         dispatch((RedisCommand) async);
     }
 
+    public void setCredentials(RedisCredentials credentials) {
+        if (credentials == null) {
+            return;
+        }
+        reAuthSafety.lock();
+        try {
+            credentialsRef.set(credentials);
+            if (!inTransaction.get()) {
+                dispatchAuthCommand(credentialsRef.getAndSet(null));
+            }
+        } finally {
+            reAuthSafety.unlock();
+        }
+    }
+
     public ConnectionState getConnectionState() {
         return state;
     }
@@ -379,20 +394,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         authHandler = handler;
     }
 
-    public void setCredentials(RedisCredentials credentials) {
-        if (credentials == null) {
-            return;
-        }
-        reAuthSafety.lock();
-        try {
-            credentialsRef.set(credentials);
-            if (!inTransaction.get()) {
-                dispatchAuthCommand(credentialsRef.getAndSet(null));
-            }
-        } finally {
-            reAuthSafety.unlock();
-        }
-    }
 
     private void dispatchAuthCommand(RedisCredentials credentials) {
         if (credentials == null) {
@@ -424,10 +425,22 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     }
 
     private String getEpid() {
-        if (getChannelWriter() instanceof Endpoint) {
-            return ((Endpoint) getChannelWriter()).getId();
+        RedisChannelWriter writer = getChannelWriter();
+        while (!(writer instanceof Endpoint)) {
+
+            if (writer instanceof CommandListenerWriter) {
+                writer = ((CommandListenerWriter) writer).getDelegate();
+                continue;
+            }
+
+            if (writer instanceof CommandExpiryWriter) {
+                writer = ((CommandExpiryWriter) writer).getDelegate();
+                continue;
+            }
+            return null;
         }
-        return "";
+
+        return ((Endpoint) writer).getId();
     }
 
 }

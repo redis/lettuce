@@ -556,14 +556,16 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
                 getFirstUri().getTimeout(), getClusterClientOptions().getJsonParser());
 
-        ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
-                getFirstUri(), socketAddressSupplier,
-                () -> new CommandHandler(getClusterClientOptions(), getResources(), endpoint));
-
         if (RedisAuthenticationHandler.isSupported(getOptions())) {
             connection.setAuthenticationHandler(
                     new RedisAuthenticationHandler(connection, getFirstUri().getCredentialsProvider(), false));
         }
+
+        ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
+                getFirstUri(), socketAddressSupplier,
+                () -> new CommandHandler(getClusterClientOptions(), getResources(), endpoint));
+
+
 
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
@@ -626,14 +628,16 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 getFirstUri().getTimeout());
 
-        ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
-                getFirstUri(), socketAddressSupplier,
-                () -> new PubSubCommandHandler<>(getClusterClientOptions(), getResources(), codec, endpoint));
-
         if (RedisAuthenticationHandler.isSupported(getOptions())) {
             connection.setAuthenticationHandler(
                     new RedisAuthenticationHandler(connection, getFirstUri().getCredentialsProvider(), true));
         }
+
+        ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
+                getFirstUri(), socketAddressSupplier,
+                () -> new PubSubCommandHandler<>(getClusterClientOptions(), getResources(), codec, endpoint));
+
+
 
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
