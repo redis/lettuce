@@ -36,7 +36,7 @@ public class TokenBasedRedisCredentialsProvider implements StreamingCredentialsP
             @Override
             public void onTokenRenewed(Token token) {
                 try {
-                    String username = token.tryGet("oid");
+                    String username = token.getUser();
                     char[] pass = token.getValue().toCharArray();
                     RedisCredentials credentials = RedisCredentials.just(username, pass);
                     credentialsSink.tryEmitNext(credentials);

@@ -138,9 +138,8 @@ public class TokenBasedRedisCredentialsProviderTest {
     }
 
     private SimpleToken testToken(String username, String value) {
-        return new SimpleToken(value, System.currentTimeMillis() + 5000, // expires in 5 seconds
-                System.currentTimeMillis(), Collections.singletonMap("oid", username));
-
+        return new SimpleToken(username, value, System.currentTimeMillis() + 5000, // expires in 5 seconds
+                System.currentTimeMillis(), Collections.emptyMap());
     }
 
 }

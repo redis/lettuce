@@ -184,8 +184,8 @@ class AuthenticationIntegrationTests extends TestSupport {
     }
 
     private SimpleToken testToken(String username, char[] password) {
-        return new SimpleToken(String.valueOf(password), Instant.now().plusMillis(500).toEpochMilli(),
-                Instant.now().toEpochMilli(), Collections.singletonMap("oid", username));
+        return new SimpleToken(username, String.valueOf(password), Instant.now().plusMillis(500).toEpochMilli(),
+                Instant.now().toEpochMilli(), Collections.emptyMap());
     }
 
 }
