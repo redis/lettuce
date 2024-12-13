@@ -357,9 +357,9 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     /**
      * Authenticates the current connection using the provided credentials.
      * <p>
-     * Unlike using dispatch of {@link RedisAsyncCommands#auth}, this method defers the {@code AUTH} command if the connection is within an active
-     * transaction. The authentication command will only be dispatched after the enclosing {@code DISCARD} or {@code EXEC}
-     * command is executed, ensuring that authentication does not interfere with ongoing transactions.
+     * Unlike using dispatch of {@link RedisAsyncCommands#auth}, this method defers the {@code AUTH} command if the connection
+     * is within an active transaction. The authentication command will only be dispatched after the enclosing {@code DISCARD}
+     * or {@code EXEC} command is executed, ensuring that authentication does not interfere with ongoing transactions.
      * </p>
      *
      * @param credentials the {@link RedisCredentials} to authenticate the connection. If {@code null}, no action is performed.
@@ -421,20 +421,29 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             return;
         }
 
-        RedisFuture<String> auth;
-        if (credentials.getUsername() != null) {
-            auth = async().auth(credentials.getUsername(),  String.valueOf(credentials.getPassword()));
-        } else {
-            auth = async().auth(String.valueOf(credentials.getPassword()));
+        // dispatch directly to avoid AUTH preprocessing overrides credentials provider
+        RedisCommand<K, V, ?> auth = super.dispatch(authCommand(credentials));
+        if (auth instanceof CompleteableCommand) {
+            ((CompleteableCommand<?>) auth).onComplete((status, throwable) -> {
+                if (throwable != null) {
+                    logger.error("Re-authentication failed {}.", getEpid(), throwable);
+                    publishReauthFailedEvent(throwable);
+                } else {
+                    logger.info("Re-authentication succeeded {}.", getEpid());
+                    publishReauthEvent();
+                }
+            });
         }
-        auth.thenRun(() -> {
-            publishReauthEvent();
-            logger.info("Re-authentication succeeded {}.", getEpid());
-        }).exceptionally(throwable -> {
-            publishReauthFailedEvent(throwable);
-            logger.error("Re-authentication failed  {}.", getEpid(), throwable);
-            return null;
-        });
+    }
+
+    private AsyncCommand<K, V, String> authCommand(RedisCredentials credentials) {
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        if (credentials.getUsername() != null) {
+            args.add(credentials.getUsername()).add(credentials.getPassword());
+        } else {
+            args.add(credentials.getPassword());
+        }
+        return new AsyncCommand<>(new Command<>(AUTH, new StatusOutput<>(codec), args));
     }
 
     private void publishReauthEvent() {
@@ -463,4 +472,5 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         return ((Endpoint) writer).getId();
     }
+
 }

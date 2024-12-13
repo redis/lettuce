@@ -2,13 +2,17 @@ package io.lettuce.core;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.AsyncCommand;
+import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.PushHandler;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import io.lettuce.test.ReflectionTestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -21,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -31,10 +36,8 @@ import static org.mockito.Mockito.when;
 public class StatefulRedisConnectionImplUnitTests extends TestSupport {
 
     RedisCommandBuilder<String, String> commandBuilder = new RedisCommandBuilder<>(StringCodec.UTF8);
-    StatefulRedisConnectionImpl<String,String> connection;
 
-    @Mock
-    RedisAsyncCommandsImpl<String, String> asyncCommands;
+    StatefulRedisConnectionImpl<String, String> connection;
 
     @Mock
     PushHandler pushHandler;
@@ -53,44 +56,25 @@ public class StatefulRedisConnectionImplUnitTests extends TestSupport {
         when(writer.getClientResources()).thenReturn(clientResources);
         when(clientResources.tracing()).thenReturn(tracing);
         when(tracing.isEnabled()).thenReturn(false);
-        when(asyncCommands.auth(any(CharSequence.class)))
-                .thenAnswer( invocation -> {
-                    String pass = invocation.getArgument(0);
-                    AsyncCommand<String, String, String> auth = new AsyncCommand<>(commandBuilder.auth(pass));
-                    auth.complete();
-                    return auth;
-                });
-        when(asyncCommands.auth(anyString(), any(CharSequence.class)))
-                .thenAnswer( invocation -> {
-                    String user = invocation.getArgument(0);  // Capture username
-                    String pass = invocation.getArgument(1); // Capture password
-                    AsyncCommand<String, String, String> auth = new AsyncCommand<>(commandBuilder.auth(user, pass));
-                    auth.complete();
-                    return auth;
-                });
 
         Field asyncField = StatefulRedisConnectionImpl.class.getDeclaredField("async");
         asyncField.setAccessible(true);
 
-
         connection = new StatefulRedisConnectionImpl<>(writer, pushHandler, StringCodec.UTF8, Duration.ofSeconds(1));
-        asyncField.set(connection,asyncCommands);
     }
 
     @Test
     public void testSetCredentialsWhenCredentialsAreNull() {
         connection.setCredentials(null);
 
-        verify(asyncCommands, never()).auth(any(CharSequence.class));
-        verify(asyncCommands, never()).auth(anyString(), any(CharSequence.class));
+        verify(writer, never()).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
     }
 
     @Test
     void testSetCredentialsDispatchesAuthWhenNotInTransaction() {
         connection.setCredentials(new StaticRedisCredentials("user", "pass".toCharArray()));
-        verify(asyncCommands).auth(eq("user"), eq("pass"));
+        verify(writer).write(argThat(isAuthCommand("user", "pass")));
     }
-
 
     @Test
     void testSetCredentialsDoesNotDispatchAuthIfInTransaction() {
@@ -99,10 +83,8 @@ public class StatefulRedisConnectionImplUnitTests extends TestSupport {
 
         connection.setCredentials(new StaticRedisCredentials("user", "pass".toCharArray()));
 
-        verify(asyncCommands, never()).auth(any(CharSequence.class));
-        verify(asyncCommands, never()).auth(anyString(), any(CharSequence.class));
+        verify(writer, never()).write(ArgumentMatchers.<RedisCommand<String, String, String>> any());
     }
-
 
     @Test
     void testSetCredentialsDispatchesAuthAfterTransaction() {
@@ -116,7 +98,7 @@ public class StatefulRedisConnectionImplUnitTests extends TestSupport {
 
         assertThat(inTransaction.get()).isFalse();
 
-        verify(asyncCommands).auth(eq("user"), eq("pass"));
+        verify(writer).write(argThat(isAuthCommand("user", "pass")));
     }
 
     @Test
@@ -136,7 +118,30 @@ public class StatefulRedisConnectionImplUnitTests extends TestSupport {
         thread.join();
 
         assertThat(inTransaction.get()).isFalse();
-        verify(asyncCommands).auth(eq("user"), eq("pass"));
+        verify(writer).write(argThat(isAuthCommand("user", "pass")));
+    }
+
+    public static <K, V, T> ArgumentMatcher<RedisCommand<K, V, T>> isAuthCommand(String expectedUsername,
+            String expectedPassword) {
+        return new ArgumentMatcher<RedisCommand<K, V, T>>() {
+
+            @Override
+            public boolean matches(RedisCommand command) {
+                if (command.getType() != CommandType.AUTH) {
+                    return false;
+                }
+
+                // Retrieve arguments (adjust based on your RedisCommand implementation)
+                return command.getArgs().toCommandString().equals(expectedUsername + " " + expectedPassword);
+            }
+
+            @Override
+            public String toString() {
+                return String.format("Expected AUTH command with username=%s and password=%s", expectedUsername,
+                        expectedPassword);
+            }
+
+        };
     }
 
 }
