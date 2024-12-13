@@ -22,7 +22,6 @@ package io.lettuce.core;
 import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 import static io.lettuce.core.protocol.CommandType.*;
 
-import java.nio.CharBuffer;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -355,6 +354,29 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         dispatch((RedisCommand) async);
     }
 
+    /**
+     * Authenticates the current connection using the provided credentials.
+     * <p>
+     * Unlike using dispatch of {@link RedisAsyncCommands#auth}, this method defers the {@code AUTH} command if the connection is within an active
+     * transaction. The authentication command will only be dispatched after the enclosing {@code DISCARD} or {@code EXEC}
+     * command is executed, ensuring that authentication does not interfere with ongoing transactions.
+     * </p>
+     *
+     * @param credentials the {@link RedisCredentials} to authenticate the connection. If {@code null}, no action is performed.
+     *
+     *        <p>
+     *        <b>Behavior:</b>
+     *        <ul>
+     *        <li>If the provided credentials are {@code null}, the method exits immediately.</li>
+     *        <li>If a transaction is active (as indicated by {@code inTransaction}), the {@code AUTH} command is not dispatched
+     *        immediately but deferred until the transaction ends.</li>
+     *        <li>If no transaction is active, the {@code AUTH} command is dispatched immediately using the provided
+     *        credentials.</li>
+     *        </ul>
+     *        </p>
+     *
+     * @see RedisAsyncCommands#auth
+     */
     public void setCredentials(RedisCredentials credentials) {
         if (credentials == null) {
             return;
@@ -363,7 +385,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         try {
             credentialsRef.set(credentials);
             if (!inTransaction.get()) {
-                dispatchAuthCommand(credentialsRef.getAndSet(null));
+                dispatchAuth(credentialsRef.getAndSet(null));
             }
         } finally {
             reAuthSafety.unlock();
@@ -394,16 +416,16 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         authHandler = handler;
     }
 
-    private void dispatchAuthCommand(RedisCredentials credentials) {
+    protected void dispatchAuth(RedisCredentials credentials) {
         if (credentials == null) {
             return;
         }
 
         RedisFuture<String> auth;
         if (credentials.getUsername() != null) {
-            auth = async().auth(credentials.getUsername(), CharBuffer.wrap(credentials.getPassword()));
+            auth = async().auth(credentials.getUsername(),  String.valueOf(credentials.getPassword()));
         } else {
-            auth = async().auth(CharBuffer.wrap(credentials.getPassword()));
+            auth = async().auth(String.valueOf(credentials.getPassword()));
         }
         auth.thenRun(() -> {
             publishReauthEvent();
@@ -441,5 +463,4 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
         return ((Endpoint) writer).getId();
     }
-
 }
