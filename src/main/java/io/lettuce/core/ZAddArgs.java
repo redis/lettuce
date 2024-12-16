@@ -182,11 +182,11 @@ public class ZAddArgs implements CompositeArgument {
         }
 
         if (gt) {
-            args.add("GT");
+            args.add(GT);
         }
 
         if (lt) {
-            args.add("LT");
+            args.add(LT);
         }
 
         if (ch) {
