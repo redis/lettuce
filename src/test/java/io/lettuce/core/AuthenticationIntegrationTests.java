@@ -155,7 +155,7 @@ class AuthenticationIntegrationTests extends TestSupport {
         // verify that the connection is re-authenticated with the new user credentials
         assertThat(connection.sync().aclWhoami()).isEqualTo("steave");
 
-        credentialsProvider.shutdown();
+        credentialsProvider.close();
         connection.close();
         client.removeListener(listener);
         client.setOptions(

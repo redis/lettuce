@@ -10,7 +10,7 @@ import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.core.TokenListener;
 import redis.clients.authentication.core.TokenManager;
 
-public class TokenBasedRedisCredentialsProvider implements StreamingCredentialsProvider {
+public class TokenBasedRedisCredentialsProvider implements StreamingCredentialsProvider, AutoCloseable {
 
     private final TokenManager tokenManager;
 
@@ -94,7 +94,8 @@ public class TokenBasedRedisCredentialsProvider implements StreamingCredentialsP
      * This method stops the TokenManager and completes the credentials sink, ensuring that all resources are properly released.
      * It should be called when the credentials provider is no longer needed.
      */
-    public void shutdown() {
+    @Override
+    public void close() {
         credentialsSink.tryEmitComplete();
         tokenManager.stop();
     }

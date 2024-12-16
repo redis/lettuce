@@ -129,9 +129,8 @@ public class TokenBasedAuthExample {
             // Shutdown Redis client and close connections
             redisClusterClient.shutdown();
         } finally {
-            credentialsUser1.shutdown();
-            credentialsUser2.shutdown();
-
+            credentialsUser1.close();
+            credentialsUser2.close();
         }
 
     }

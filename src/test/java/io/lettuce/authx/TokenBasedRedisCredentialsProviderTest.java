@@ -102,7 +102,7 @@ public class TokenBasedRedisCredentialsProviderTest {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            credentialsProvider.shutdown();
+            credentialsProvider.close();
         }).start();
 
         StepVerifier.create(credentialsFlux1)
