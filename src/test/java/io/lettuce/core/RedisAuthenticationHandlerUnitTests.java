@@ -38,6 +38,8 @@ public class RedisAuthenticationHandlerUnitTests {
 
     private StatefulRedisConnectionImpl<String, String> connection;
 
+    RedisChannelWriter writer;
+
     ClientResources resources;
 
     EventBus eventBus;
@@ -47,6 +49,7 @@ public class RedisAuthenticationHandlerUnitTests {
     @BeforeEach
     void setUp() {
         eventBus = new DefaultEventBus(Schedulers.immediate());
+        writer = mock(RedisChannelWriter.class);
         connection = mock(StatefulRedisConnectionImpl.class);
         resources = mock(ClientResources.class);
         when(resources.eventBus()).thenReturn(eventBus);
@@ -55,6 +58,7 @@ public class RedisAuthenticationHandlerUnitTests {
         when(connection.getResources()).thenReturn(resources);
         when(connection.getCodec()).thenReturn(StringCodec.UTF8);
         when(connection.getConnectionState()).thenReturn(connectionState);
+        when(connection.getChannelWriter()).thenReturn(writer);
     }
 
     @SuppressWarnings("unchecked")
@@ -70,7 +74,7 @@ public class RedisAuthenticationHandlerUnitTests {
         credentialsProvider.emitCredentials("newuser", "newpassword".toCharArray());
 
         ArgumentCaptor<AsyncCommand<String, String, String>> captor = ArgumentCaptor.forClass(AsyncCommand.class);
-        verify(connection).dispatch(captor.capture());
+        verify(writer).write(captor.capture());
 
         AsyncCommand<String, String, String> credentialsCommand = captor.getValue();
         assertThat(credentialsCommand.getType()).isEqualTo(AUTH);
@@ -176,7 +180,7 @@ public class RedisAuthenticationHandlerUnitTests {
         handler.endTransaction();
 
         ArgumentCaptor<AsyncCommand<String, String, String>> captor = ArgumentCaptor.forClass(AsyncCommand.class);
-        verify(connection).dispatch(captor.capture());
+        verify(writer).write(captor.capture());
 
         AsyncCommand<String, String, String> credentialsCommand = captor.getValue();
         assertThat(credentialsCommand.getType()).isEqualTo(AUTH);

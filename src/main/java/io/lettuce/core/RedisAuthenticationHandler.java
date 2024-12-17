@@ -25,6 +25,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,6 +33,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static io.lettuce.core.protocol.CommandType.AUTH;
 import static io.lettuce.core.protocol.CommandType.DISCARD;
 import static io.lettuce.core.protocol.CommandType.EXEC;
+import static io.lettuce.core.protocol.CommandType.MULTI;
 
 /**
  * Redis authentication handler. Internally used to authenticate a Redis connection. This class is part of the internal API.
@@ -189,6 +191,25 @@ public class RedisAuthenticationHandler<K, V> {
         }
     }
 
+    public void postProcess(Collection<? extends RedisCommand<K, V, ?>> dispatched) {
+        Boolean transactionComplete = null;
+        for (RedisCommand<K, V, ?> command : dispatched) {
+            if (command.getType() == EXEC || command.getType() == DISCARD) {
+                transactionComplete = true;
+            }
+            if (command.getType() == MULTI) {
+                transactionComplete = false;
+            }
+        }
+
+        if (transactionComplete != null) {
+            if (transactionComplete) {
+                inTransaction.set(false);
+                setCredentials(credentialsRef.getAndSet(null));
+            }
+        }
+    }
+
     /**
      * Marks that the current connection has started a transaction.
      * <p>
@@ -257,7 +278,7 @@ public class RedisAuthenticationHandler<K, V> {
         }
 
         // dispatch directly to avoid AUTH preprocessing overrides credentials provider
-        RedisCommand<K, V, ?> auth = connection.dispatch(authCommand(credentials));
+        RedisCommand<K, V, ?> auth = connection.getChannelWriter().write(authCommand(credentials));
         if (auth instanceof CompleteableCommand) {
             ((CompleteableCommand<?>) auth).onComplete((status, throwable) -> {
                 if (throwable != null) {

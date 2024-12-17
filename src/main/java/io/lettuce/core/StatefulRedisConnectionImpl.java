@@ -192,6 +192,24 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     @Override
     public Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands) {
 
+        Collection<RedisCommand<K, V, ?>> sentCommands = preProcessCommands(commands);
+
+        Collection<RedisCommand<K, V, ?>> dispatchedCommands = super.dispatch(sentCommands);
+
+        return this.postProcessCommands(dispatchedCommands);
+    }
+
+    protected Collection<RedisCommand<K, V, ?>> postProcessCommands(Collection<RedisCommand<K, V, ?>> commands) {
+        authHandler.postProcess(commands);
+        return commands;
+    }
+
+    protected <T> RedisCommand<K, V, T> postProcessCommand(RedisCommand<K, V, T> command) {
+        authHandler.postProcess(command);
+        return command;
+    }
+
+    protected Collection<RedisCommand<K, V, ?>> preProcessCommands(Collection<? extends RedisCommand<K, V, ?>> commands) {
         List<RedisCommand<K, V, ?>> sentCommands = new ArrayList<>(commands.size());
 
         commands.forEach(o -> {
@@ -199,15 +217,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
             sentCommands.add(preprocessed);
         });
 
-        super.dispatch(sentCommands);
-
-        sentCommands.forEach(this::postProcessCommand);
         return sentCommands;
-    }
-
-    protected <T> RedisCommand<K, V, T> postProcessCommand(RedisCommand<K, V, T> command) {
-        authHandler.postProcess(command);
-        return command;
     }
 
     // TODO [tihomir.mateev] Refactor to include as part of the Command interface
