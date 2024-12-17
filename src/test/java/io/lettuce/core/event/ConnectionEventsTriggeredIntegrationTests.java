@@ -8,9 +8,9 @@ import java.time.temporal.ChronoUnit;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MyStreamingRedisCredentialsProvider;
-import io.lettuce.core.event.connection.AuthenticateEvent;
-import io.lettuce.core.event.connection.ReauthenticateEvent;
-import io.lettuce.core.event.connection.ReauthenticateFailedEvent;
+import io.lettuce.core.event.connection.AuthenticationEvent;
+import io.lettuce.core.event.connection.ReauthenticationEvent;
+import io.lettuce.core.event.connection.ReauthenticationFailedEvent;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.settings.TestSettings;
@@ -27,8 +27,6 @@ import io.lettuce.core.TestSupport;
 import io.lettuce.core.event.connection.ConnectionEvent;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
-
-import javax.inject.Inject;
 
 /**
  * @author Mark Paluch
@@ -66,16 +64,16 @@ class ConnectionEventsTriggeredIntegrationTests extends TestSupport {
                 .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
         RedisURI uri = RedisURI.Builder.redis(host, port).withAuthentication(credentialsProvider).build();
 
-        Flux<AuthenticateEvent> publisher = client.getResources().eventBus().get()
-                .filter(event -> event instanceof AuthenticateEvent).cast(AuthenticateEvent.class);
+        Flux<AuthenticationEvent> publisher = client.getResources().eventBus().get()
+                .filter(event -> event instanceof AuthenticationEvent).cast(AuthenticationEvent.class);
 
         WithPassword.run(client, () -> StepVerifier.create(publisher).then(() -> client.connect(uri))
-                .assertNext(event -> assertThat(event).asInstanceOf(InstanceOfAssertFactories.type(ReauthenticateEvent.class))
-                        .extracting(ReauthenticateEvent::getEpId).isNotNull())
+                .assertNext(event -> assertThat(event).asInstanceOf(InstanceOfAssertFactories.type(ReauthenticationEvent.class))
+                        .extracting(ReauthenticationEvent::getEpId).isNotNull())
                 .then(() -> credentialsProvider.emitCredentials(TestSettings.username(), "invalid".toCharArray()))
-                .assertNext(
-                        event -> assertThat(event).asInstanceOf(InstanceOfAssertFactories.type(ReauthenticateFailedEvent.class))
-                                .extracting(ReauthenticateFailedEvent::getEpId).isNotNull())
+                .assertNext(event -> assertThat(event)
+                        .asInstanceOf(InstanceOfAssertFactories.type(ReauthenticationFailedEvent.class))
+                        .extracting(ReauthenticationFailedEvent::getEpId).isNotNull())
                 .thenCancel().verify(Duration.of(1, ChronoUnit.SECONDS)));
 
         FastShutdown.shutdown(client);

@@ -42,6 +42,17 @@ public interface RedisCredentialsProvider {
     }
 
     /**
+     * Some implementations of the {@link RedisCredentialsProvider} may support streaming new credentials, based on some event
+     * that originates outside the driver. In this case they should indicate that so the {@link RedisAuthenticationHandler} is
+     * able to process these new credentials.
+     * 
+     * @return whether the {@link RedisCredentialsProvider} supports streaming credentials.
+     */
+    default boolean supportsStreaming() {
+        return false;
+    }
+
+    /**
      * Extension to {@link RedisCredentialsProvider} that resolves credentials immediately without the need to defer the
      * credential resolution.
      */

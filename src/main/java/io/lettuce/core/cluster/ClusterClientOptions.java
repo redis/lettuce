@@ -134,6 +134,7 @@ public class ClusterClientOptions extends ClientOptions {
                 .cancelCommandsOnReconnectFailure(clientOptions.isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(clientOptions.getDecodeBufferPolicy())
                 .disconnectedBehavior(clientOptions.getDisconnectedBehavior())
+                .reauthenticateBehavior(clientOptions.getReauthenticateBehaviour())
                 .pingBeforeActivateConnection(clientOptions.isPingBeforeActivateConnection())
                 .publishOnScheduler(clientOptions.isPublishOnScheduler())
                 .protocolVersion(clientOptions.getConfiguredProtocolVersion())

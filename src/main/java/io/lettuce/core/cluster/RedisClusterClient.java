@@ -74,6 +74,8 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.publisher.Mono;
 
+import static io.lettuce.core.RedisAuthenticationHandler.createHandler;
+
 /**
  * A scalable and thread-safe <a href="https://redis.io/">Redis</a> cluster client supporting synchronous, asynchronous and
  * reactive execution models. Multiple threads may share one connection. The cluster client handles command routing based on the
@@ -556,10 +558,8 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
                 getFirstUri().getTimeout(), getClusterClientOptions().getJsonParser());
 
-        if (RedisAuthenticationHandler.isSupported(getOptions())) {
-            connection.setAuthenticationHandler(
-                    new RedisAuthenticationHandler(connection, getFirstUri().getCredentialsProvider(), false));
-        }
+        connection.setAuthenticationHandler(
+                createHandler(connection, getFirstUri().getCredentialsProvider(), false, getOptions()));
 
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
@@ -625,11 +625,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 getFirstUri().getTimeout());
-
-        if (RedisAuthenticationHandler.isSupported(getOptions())) {
-            connection.setAuthenticationHandler(
-                    new RedisAuthenticationHandler(connection, getFirstUri().getCredentialsProvider(), true));
-        }
+        connection.setAuthenticationHandler(
+                createHandler(connection, getFirstUri().getCredentialsProvider(), true, getOptions()));
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,

@@ -19,4 +19,8 @@ public interface StreamingCredentialsProvider extends RedisCredentialsProvider {
      */
     Flux<RedisCredentials> credentials();
 
+    default boolean supportsStreaming() {
+        return true;
+    }
+
 }

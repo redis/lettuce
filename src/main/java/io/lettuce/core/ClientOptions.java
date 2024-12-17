@@ -309,6 +309,13 @@ public class ClientOptions implements Serializable {
             return this;
         }
 
+        /**
+         * Configure the {@link ReauthenticateBehavior} of the Lettuce driver. Defaults to
+         * {@link ReauthenticateBehavior#DEFAULT}.
+         *
+         * @param reauthenticateBehavior the {@link ReauthenticateBehavior} to use. Must not be {@code null}.
+         * @return {@code this}
+         */
         public Builder reauthenticateBehavior(ReauthenticateBehavior reauthenticateBehavior) {
 
             LettuceAssert.notNull(reauthenticateBehavior, "ReuthenticatBehavior must not be null");
@@ -589,6 +596,12 @@ public class ClientOptions implements Serializable {
         return disconnectedBehavior;
     }
 
+    /**
+     * Behavior for re-authentication when the {@link RedisCredentialsProvider} emits new credentials. Defaults to
+     * {@link ReauthenticateBehavior#DEFAULT}.
+     *
+     * @return the currently set {@link ReauthenticateBehavior}.
+     */
     public ReauthenticateBehavior getReauthenticateBehaviour() {
         return reauthenticateBehavior;
     }
@@ -725,35 +738,31 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Defines the re-authentication behavior of the Redis client in relation to the {@link CredentialsProvider}.
+     * Defines the re-authentication behavior of the Redis client.
+     * <p/>
+     * Certain implementations of the {@link RedisCredentialsProvider} such as the {@link StreamingCredentialsProvider} could
+     * emit new credentials at runtime. This setting controls how the driver reacts to these newly emitted credentials.
      */
     public enum ReauthenticateBehavior {
 
         /**
          * This is the default behavior. The client will fetch current credentials from the underlying
-         * {@link RedisCredentialsProvider} only when required.
-         *
-         * <p>
-         * No re-authentication is performed automatically when new credentials are emitted by the
-         * {@link StreamingCredentialsProvider} .
-         * </p>
-         *
-         * <p>
-         * This behavior is suitable for use cases with static credentials or where explicit reconnection is required to change
-         * credentials.
-         * </p>
+         * {@link RedisCredentialsProvider} only when the driver needs to, e.g. when the connection is first established or when
+         * it is re-established after a disconnect.
+         * <p/>
+         * No re-authentication is performed when new credentials are emitted by the {@link StreamingCredentialsProvider} .
          */
         DEFAULT,
 
         /**
-         * Automatically triggers re-authentication whenever new credentials are emitted by the
-         * {@link StreamingCredentialsProvider} or any other credentials manager.
+         * Automatically triggers re-authentication whenever new credentials are emitted by any implementation of the
+         * {@link StreamingCredentialsProvider} interface.
          *
          * <p>
-         * When enabled, the client subscribes to the credentials stream provided by the {@link StreamingCredentialsProvider}
-         * (or other compatible sources) and issues an {@code AUTH} command to the Redis server each time new credentials are
-         * received. This behavior supports dynamic credential scenarios, such as token-based authentication, or credential
-         * rotation where credentials are refreshed periodically to maintain access.
+         * When enabled, the client subscribes to the credential stream provided by the {@link StreamingCredentialsProvider} and
+         * issues an {@code AUTH} command to the Redis server each time new credentials are received. This behavior supports
+         * dynamic credential scenarios, such as token-based authentication, or credential rotation where credentials are
+         * refreshed periodically to maintain access.
          * </p>
          *
          * <p>

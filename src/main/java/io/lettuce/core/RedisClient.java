@@ -19,6 +19,7 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.core.RedisAuthenticationHandler.createHandler;
 import static io.lettuce.core.internal.LettuceStrings.*;
 
 import java.net.InetSocketAddress;
@@ -317,10 +318,8 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionState state = connection.getConnectionState();
         state.apply(redisURI);
         state.setDb(redisURI.getDatabase());
-        if (RedisAuthenticationHandler.isSupported(getOptions())) {
-            connection.setAuthenticationHandler(
-                    new RedisAuthenticationHandler(connection, redisURI.getCredentialsProvider(), isPubSub));
-        }
+        connection
+                .setAuthenticationHandler(createHandler(connection, redisURI.getCredentialsProvider(), isPubSub, getOptions()));
         connectionBuilder.connection(connection);
         connectionBuilder.clientOptions(getOptions());
         connectionBuilder.clientResources(getResources());
