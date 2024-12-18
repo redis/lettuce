@@ -1,7 +1,7 @@
 package io.lettuce.authx;
 
 import io.lettuce.core.RedisCredentials;
-import io.lettuce.core.StreamingCredentialsProvider;
+import io.lettuce.core.RedisCredentialsProvider;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -10,7 +10,7 @@ import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.core.TokenListener;
 import redis.clients.authentication.core.TokenManager;
 
-public class TokenBasedRedisCredentialsProvider implements StreamingCredentialsProvider, AutoCloseable {
+public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvider, AutoCloseable {
 
     private final TokenManager tokenManager;
 
@@ -86,6 +86,11 @@ public class TokenBasedRedisCredentialsProvider implements StreamingCredentialsP
     public Flux<RedisCredentials> credentials() {
 
         return credentialsSink.asFlux().onBackpressureLatest(); // Provide a continuous stream of credentials
+    }
+
+    @Override
+    public boolean supportsStreaming() {
+        return true;
     }
 
     /**
