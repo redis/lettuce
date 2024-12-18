@@ -83,7 +83,7 @@ public class RedisAuthenticationHandler<K, V> {
      * @return a new {@link RedisAuthenticationHandler} if the connection supports re-authentication, otherwise an
      *         implementation of the {@link RedisAuthenticationHandler} that does nothing
      * @since 6.6.0
-     * @see StreamingCredentialsProvider
+     * @see RedisCredentialsProvider
      */
     public static <K, V> RedisAuthenticationHandler<K, V> createHandler(StatefulRedisConnectionImpl<K, V> connection,
             RedisCredentialsProvider credentialsProvider, Boolean isPubSubConnection, ClientOptions options) {
@@ -102,7 +102,7 @@ public class RedisAuthenticationHandler<K, V> {
      *
      * @return a new {@link RedisAuthenticationHandler}
      * @since 6.6.0
-     * @see StreamingCredentialsProvider
+     * @see RedisCredentialsProvider
      */
     public static <K, V> RedisAuthenticationHandler<K, V> createDefaultAuthenticationHandler() {
         return new DisabledAuthenticationHandler<>();
@@ -123,7 +123,7 @@ public class RedisAuthenticationHandler<K, V> {
             return;
         }
 
-        Flux<RedisCredentials> credentialsFlux = ((StreamingCredentialsProvider) credentialsProvider).credentials();
+        Flux<RedisCredentials> credentialsFlux = credentialsProvider.credentials();
 
         Disposable subscription = credentialsFlux.subscribe(this::onNext, this::onError, this::complete);
 

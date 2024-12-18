@@ -740,8 +740,8 @@ public class ClientOptions implements Serializable {
     /**
      * Defines the re-authentication behavior of the Redis client.
      * <p/>
-     * Certain implementations of the {@link RedisCredentialsProvider} such as the {@link StreamingCredentialsProvider} could
-     * emit new credentials at runtime. This setting controls how the driver reacts to these newly emitted credentials.
+     * Certain implementations of the {@link RedisCredentialsProvider} could emit new credentials at runtime. This setting
+     * controls how the driver reacts to these newly emitted credentials.
      */
     public enum ReauthenticateBehavior {
 
@@ -750,19 +750,23 @@ public class ClientOptions implements Serializable {
          * {@link RedisCredentialsProvider} only when the driver needs to, e.g. when the connection is first established or when
          * it is re-established after a disconnect.
          * <p/>
-         * No re-authentication is performed when new credentials are emitted by the {@link StreamingCredentialsProvider} .
+         * <p>
+         * No re-authentication is performed when new credentials are emitted by a {@link RedisCredentialsProvider} that
+         * supports streaming. The client does not subscribe to or react to any updates in the credential stream provided by
+         * {@link RedisCredentialsProvider#credentials()}.
+         * </p>
          */
         DEFAULT,
 
         /**
-         * Automatically triggers re-authentication whenever new credentials are emitted by any implementation of the
-         * {@link StreamingCredentialsProvider} interface.
+         * Automatically triggers re-authentication whenever new credentials are emitted by a {@link RedisCredentialsProvider}
+         * that supports streaming, as indicated by {@link RedisCredentialsProvider#supportsStreaming()}.
          *
          * <p>
-         * When enabled, the client subscribes to the credential stream provided by the {@link StreamingCredentialsProvider} and
-         * issues an {@code AUTH} command to the Redis server each time new credentials are received. This behavior supports
-         * dynamic credential scenarios, such as token-based authentication, or credential rotation where credentials are
-         * refreshed periodically to maintain access.
+         * When this behavior is enabled, the client subscribes to the credential stream provided by
+         * {@link RedisCredentialsProvider#credentials()} and issues an {@code AUTH} command to the Redis server each time new
+         * credentials are received. This behavior supports dynamic credential scenarios, such as token-based authentication, or
+         * credential rotation where credentials are refreshed periodically to maintain access.
          * </p>
          *
          * <p>

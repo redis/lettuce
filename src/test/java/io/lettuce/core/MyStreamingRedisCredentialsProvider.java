@@ -10,9 +10,14 @@ import reactor.core.publisher.Sinks;
  * @author Ivo Gaydajiev
  * @since 6.6.0
  */
-public class MyStreamingRedisCredentialsProvider implements StreamingCredentialsProvider {
+public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProvider {
 
     private final Sinks.Many<RedisCredentials> credentialsSink = Sinks.many().replay().latest();
+
+    @Override
+    public boolean supportsStreaming() {
+        return true;
+    }
 
     @Override
     public Mono<RedisCredentials> resolveCredentials() {

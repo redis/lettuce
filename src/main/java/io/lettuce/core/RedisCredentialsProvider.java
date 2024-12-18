@@ -2,6 +2,7 @@ package io.lettuce.core;
 
 import java.util.function.Supplier;
 
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 
@@ -50,6 +51,23 @@ public interface RedisCredentialsProvider {
      */
     default boolean supportsStreaming() {
         return false;
+    }
+
+    /**
+     * Returns a {@link Flux} emitting {@link RedisCredentials} that can be used to authorize a Redis connection.
+     *
+     * For implementations that support streaming credentials (as indicated by {@link #supportsStreaming()} returning
+     * {@code true}), this method can emit multiple credentials over time, typically based on external events like token renewal
+     * or rotation.
+     *
+     * For implementations that do not support streaming credentials (where {@link #supportsStreaming()} returns {@code false}),
+     * this method throws an {@link UnsupportedOperationException} by default.
+     *
+     * @return a {@link Flux} emitting {@link RedisCredentials}, or throws an exception if streaming is not supported.
+     * @throws UnsupportedOperationException if the provider does not support streaming credentials.
+     */
+    default Flux<RedisCredentials> credentials() {
+        throw new UnsupportedOperationException("Streaming credentials are not supported by this provider.");
     }
 
     /**
