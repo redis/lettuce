@@ -32,6 +32,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.protocol.ProtocolVersion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -217,6 +218,23 @@ class RedisClientConnectIntegrationTests extends TestSupport {
     @Test
     void connectPubSubCodecSentinelMissingHostAndSocketUri() {
         assertThatThrownBy(() -> client.connectPubSub(UTF8, invalidSentinel())).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void connectPubSubAsyncReauthNotSupportedWithRESP2() {
+        ClientOptions.ReauthenticateBehavior reauth = client.getOptions().getReauthenticateBehaviour();
+        ProtocolVersion protocolVersion = client.getOptions().getConfiguredProtocolVersion();
+        try {
+            client.setOptions(client.getOptions().mutate().protocolVersion(ProtocolVersion.RESP2)
+                    .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
+
+            RedisURI redisURI = redis(host, port).build();
+            assertThatThrownBy(() -> client.connectPubSubAsync(UTF8, redisURI)).isInstanceOf(RedisConnectionException.class);
+
+        } finally {
+            client.setOptions(
+                    client.getOptions().mutate().protocolVersion(protocolVersion).reauthenticateBehavior(reauth).build());
+        }
     }
 
     /*
