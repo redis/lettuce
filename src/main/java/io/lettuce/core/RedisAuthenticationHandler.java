@@ -89,6 +89,12 @@ public class RedisAuthenticationHandler<K, V> {
             RedisCredentialsProvider credentialsProvider, Boolean isPubSubConnection, ClientOptions options) {
 
         if (isSupported(options)) {
+
+            if (isPubSubConnection && options.getConfiguredProtocolVersion() == ProtocolVersion.RESP2) {
+                throw new RedisConnectionException(
+                        "Renewable credentials are not supported with RESP2 protocol on a pub/sub connection.");
+            }
+
             return new RedisAuthenticationHandler<>(connection, credentialsProvider, isPubSubConnection);
         }
 

@@ -780,6 +780,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
         connection.setPartitions(partitions);
+        connection.setAuthenticationHandler(
+                createHandler(connection, getFirstUri().getCredentialsProvider(), true, getOptions()));
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
                 getResources(), codec, endpoint);
