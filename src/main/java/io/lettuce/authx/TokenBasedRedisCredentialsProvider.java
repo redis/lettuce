@@ -1,3 +1,9 @@
+/*
+ * Copyright 2024, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
 package io.lettuce.authx;
 
 import io.lettuce.core.RedisCredentials;
