@@ -58,7 +58,7 @@ public class EntraIdIntegrationTests {
                 .secret(testCtx.getClientSecret()).authority(testCtx.getAuthority()).scopes(testCtx.getRedisScopes())
                 .expirationRefreshRatio(0.0000001F).build();
 
-        credentialsProvider = new TokenBasedRedisCredentialsProvider(tokenAuthConfig);
+        credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenAuthConfig);
 
         RedisURI uri = RedisURI.builder().withHost(testCtx.host()).withPort(testCtx.port())
                 .withAuthentication(credentialsProvider).build();

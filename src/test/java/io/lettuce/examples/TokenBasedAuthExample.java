@@ -47,7 +47,7 @@ public class TokenBasedAuthExample {
         TokenAuthConfig tokenAuthConfigUser1 = TokenAuthConfig.builder().tokenRequestExecTimeoutInMs(10000)
                 .expirationRefreshRatio(0.1f).identityProviderConfig(config1).build();
         // Create credentials provider user1
-        TokenBasedRedisCredentialsProvider credentialsUser1 = new TokenBasedRedisCredentialsProvider(tokenAuthConfigUser1);
+        TokenBasedRedisCredentialsProvider credentialsUser1 = TokenBasedRedisCredentialsProvider.create(tokenAuthConfigUser1);
 
         // User2
         // from redis-authx-entraind
@@ -58,7 +58,7 @@ public class TokenBasedAuthExample {
                 .expirationRefreshRatio(0.1f).identityProviderConfig(config2).build();
         // Create credentials provider user2
         // TODO: lettuce-autx-tba ( TokenBasedRedisCredentialsProvider & Example there)
-        TokenBasedRedisCredentialsProvider credentialsUser2 = new TokenBasedRedisCredentialsProvider(tokenAuthConfigUser2);
+        TokenBasedRedisCredentialsProvider credentialsUser2 = TokenBasedRedisCredentialsProvider.create(tokenAuthConfigUser2);
 
         // lettuce-core
         RedisURI redisURI1 = RedisURI.create(REDIS_URI);

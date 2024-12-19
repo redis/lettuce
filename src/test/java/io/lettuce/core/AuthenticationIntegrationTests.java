@@ -135,7 +135,7 @@ class AuthenticationIntegrationTests extends TestSupport {
                 .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
 
         TestTokenManager tokenManager = new TestTokenManager(null, null);
-        TokenBasedRedisCredentialsProvider credentialsProvider = new TokenBasedRedisCredentialsProvider(tokenManager);
+        TokenBasedRedisCredentialsProvider credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenManager);
 
         // Build RedisURI with streaming credentials provider
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(TestSettings.port())

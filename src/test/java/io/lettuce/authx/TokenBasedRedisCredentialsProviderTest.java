@@ -25,7 +25,7 @@ public class TokenBasedRedisCredentialsProviderTest {
     public void setUp() {
         // Use TestToken manager to emit tokens/errors on request
         tokenManager = new TestTokenManager(null, null);
-        credentialsProvider = new TokenBasedRedisCredentialsProvider(tokenManager);
+        credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenManager);
     }
 
     @Test
@@ -128,13 +128,17 @@ public class TokenBasedRedisCredentialsProviderTest {
     @Test
     public void shouldHandleTokenRequestErrorGracefully() {
         Exception simulatedError = new RuntimeException("Token request failed");
-        tokenManager.emitError(simulatedError);
 
         Flux<RedisCredentials> result = credentialsProvider.credentials();
 
-        StepVerifier.create(result).expectErrorMatches(
-                throwable -> throwable instanceof RuntimeException && "Token request failed".equals(throwable.getMessage()))
-                .verify();
+        StepVerifier.create(result).then(() -> {
+            tokenManager.emitToken(testToken("test-user", "token1"));
+            tokenManager.emitError(simulatedError);
+            tokenManager.emitToken(testToken("test-user", "token2"));
+        }).assertNext(credentials -> assertThat(String.valueOf(credentials.getPassword())).isEqualTo("token1"))
+                .assertNext(credentials -> assertThat(String.valueOf(credentials.getPassword())).isEqualTo("token2"))
+                .thenCancel().verify(Duration.ofMillis(100));
+
     }
 
     private SimpleToken testToken(String username, String value) {

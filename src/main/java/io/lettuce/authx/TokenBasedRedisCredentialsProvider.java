@@ -8,6 +8,8 @@ package io.lettuce.authx;
 
 import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisCredentialsProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -18,42 +20,31 @@ import redis.clients.authentication.core.TokenManager;
 
 public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvider, AutoCloseable {
 
+    private static final Logger log = LoggerFactory.getLogger(TokenBasedRedisCredentialsProvider.class);
+
     private final TokenManager tokenManager;
 
     private final Sinks.Many<RedisCredentials> credentialsSink = Sinks.many().replay().latest();
 
-    public TokenBasedRedisCredentialsProvider(TokenAuthConfig tokenAuthConfig) {
-        this(new TokenManager(tokenAuthConfig.getIdentityProviderConfig().getProvider(),
-                tokenAuthConfig.getTokenManagerConfig()));
-
-    }
-
-    public TokenBasedRedisCredentialsProvider(TokenManager tokenManager) {
+    private TokenBasedRedisCredentialsProvider(TokenManager tokenManager) {
         this.tokenManager = tokenManager;
-        initializeTokenManager();
     }
 
-    /**
-     * Initialize the TokenManager and subscribe to token renewal events.
-     */
-    private void initializeTokenManager() {
+    private void init() {
+
         TokenListener listener = new TokenListener() {
 
             @Override
             public void onTokenRenewed(Token token) {
-                try {
-                    String username = token.getUser();
-                    char[] pass = token.getValue().toCharArray();
-                    RedisCredentials credentials = RedisCredentials.just(username, pass);
-                    credentialsSink.tryEmitNext(credentials);
-                } catch (Exception e) {
-                    credentialsSink.emitError(e, Sinks.EmitFailureHandler.FAIL_FAST);
-                }
+                String username = token.getUser();
+                char[] pass = token.getValue().toCharArray();
+                RedisCredentials credentials = RedisCredentials.just(username, pass);
+                credentialsSink.tryEmitNext(credentials);
             }
 
             @Override
             public void onError(Exception exception) {
-                credentialsSink.tryEmitError(exception);
+                log.error("Token renew failed!", exception);
             }
 
         };
@@ -62,6 +53,8 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
             tokenManager.start(listener, false);
         } catch (Exception e) {
             credentialsSink.tryEmitError(e);
+            tokenManager.stop();
+            throw new RuntimeException("Failed to start TokenManager", e);
         }
     }
 
@@ -109,6 +102,17 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
     public void close() {
         credentialsSink.tryEmitComplete();
         tokenManager.stop();
+    }
+
+    public static TokenBasedRedisCredentialsProvider create(TokenAuthConfig tokenAuthConfig) {
+        return create(new TokenManager(tokenAuthConfig.getIdentityProviderConfig().getProvider(),
+                tokenAuthConfig.getTokenManagerConfig()));
+    }
+
+    public static TokenBasedRedisCredentialsProvider create(TokenManager tokenManager) {
+        TokenBasedRedisCredentialsProvider credentialManager = new TokenBasedRedisCredentialsProvider(tokenManager);
+        credentialManager.init();
+        return credentialManager;
     }
 
 }
