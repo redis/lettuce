@@ -134,6 +134,7 @@ public class ClusterClientOptions extends ClientOptions {
                 .cancelCommandsOnReconnectFailure(clientOptions.isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(clientOptions.getDecodeBufferPolicy())
                 .disconnectedBehavior(clientOptions.getDisconnectedBehavior())
+                .reauthenticateBehavior(clientOptions.getReauthenticateBehaviour())
                 .pingBeforeActivateConnection(clientOptions.isPingBeforeActivateConnection())
                 .publishOnScheduler(clientOptions.isPublishOnScheduler())
                 .protocolVersion(clientOptions.getConfiguredProtocolVersion())
@@ -215,6 +216,12 @@ public class ClusterClientOptions extends ClientOptions {
         @Override
         public Builder disconnectedBehavior(DisconnectedBehavior disconnectedBehavior) {
             super.disconnectedBehavior(disconnectedBehavior);
+            return this;
+        }
+
+        @Override
+        public Builder reauthenticateBehavior(ReauthenticateBehavior reauthenticateBehavior) {
+            super.reauthenticateBehavior(reauthenticateBehavior);
             return this;
         }
 
@@ -355,12 +362,12 @@ public class ClusterClientOptions extends ClientOptions {
 
         builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .maxRedirects(getMaxRedirects()).publishOnScheduler(isPublishOnScheduler())
-                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
-                .readOnlyCommands(getReadOnlyCommands()).requestQueueSize(getRequestQueueSize())
-                .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
-                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
-                .topologyRefreshOptions(getTopologyRefreshOptions())
+                .reauthenticateBehavior(getReauthenticateBehaviour()).maxRedirects(getMaxRedirects())
+                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
+                .protocolVersion(getConfiguredProtocolVersion()).readOnlyCommands(getReadOnlyCommands())
+                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).socketOptions(getSocketOptions())
+                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
+                .timeoutOptions(getTimeoutOptions()).topologyRefreshOptions(getTopologyRefreshOptions())
                 .validateClusterNodeMembership(isValidateClusterNodeMembership()).nodeFilter(getNodeFilter());
 
         return builder;

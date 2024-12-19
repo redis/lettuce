@@ -74,6 +74,8 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.publisher.Mono;
 
+import static io.lettuce.core.RedisAuthenticationHandler.createHandler;
+
 /**
  * A scalable and thread-safe <a href="https://redis.io/">Redis</a> cluster client supporting synchronous, asynchronous and
  * reactive execution models. Multiple threads may share one connection. The cluster client handles command routing based on the
@@ -556,6 +558,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
                 getFirstUri().getTimeout(), getClusterClientOptions().getJsonParser());
 
+        connection.setAuthenticationHandler(
+                createHandler(connection, getFirstUri().getCredentialsProvider(), false, getOptions()));
+
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
                 () -> new CommandHandler(getClusterClientOptions(), getResources(), endpoint));
@@ -620,10 +625,13 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 getFirstUri().getTimeout());
+        connection.setAuthenticationHandler(
+                createHandler(connection, getFirstUri().getCredentialsProvider(), true, getOptions()));
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
                 () -> new PubSubCommandHandler<>(getClusterClientOptions(), getResources(), codec, endpoint));
+
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
                 connection.closeAsync();
@@ -772,6 +780,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
         connection.setPartitions(partitions);
+        connection.setAuthenticationHandler(
+                createHandler(connection, getFirstUri().getCredentialsProvider(), true, getOptions()));
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
                 getResources(), codec, endpoint);
@@ -843,6 +853,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         state.apply(connectionSettings);
+
         connectionBuilder.connectionInitializer(createHandshake(state));
 
         connectionBuilder.reconnectionListener(new ReconnectEventListener(topologyRefreshScheduler));
@@ -851,6 +862,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.clientResources(getResources());
         connectionBuilder.endpoint(endpoint);
         connectionBuilder.commandHandler(commandHandlerSupplier);
+
         connectionBuilder(socketAddressSupplier, connectionBuilder, connection.getConnectionEvents(), connectionSettings);
 
         return connectionBuilder;

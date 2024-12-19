@@ -19,6 +19,7 @@
  */
 package io.lettuce.core;
 
+import static io.lettuce.core.RedisAuthenticationHandler.createHandler;
 import static io.lettuce.core.internal.LettuceStrings.*;
 
 import java.net.InetSocketAddress;
@@ -38,7 +39,6 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.masterreplica.MasterReplica;
 import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
@@ -288,8 +288,9 @@ public class RedisClient extends AbstractRedisClient {
         }
 
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec, timeout);
+
         ConnectionFuture<StatefulRedisConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
-                () -> new CommandHandler(getOptions(), getResources(), endpoint));
+                () -> new CommandHandler(getOptions(), getResources(), endpoint), false);
 
         future.whenComplete((channelHandler, throwable) -> {
 
@@ -303,7 +304,7 @@ public class RedisClient extends AbstractRedisClient {
 
     @SuppressWarnings("unchecked")
     private <K, V, S> ConnectionFuture<S> connectStatefulAsync(StatefulRedisConnectionImpl<K, V> connection, Endpoint endpoint,
-            RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier) {
+            RedisURI redisURI, Supplier<CommandHandler> commandHandlerSupplier, Boolean isPubSub) {
 
         ConnectionBuilder connectionBuilder;
         if (redisURI.isSsl()) {
@@ -317,7 +318,8 @@ public class RedisClient extends AbstractRedisClient {
         ConnectionState state = connection.getConnectionState();
         state.apply(redisURI);
         state.setDb(redisURI.getDatabase());
-
+        connection
+                .setAuthenticationHandler(createHandler(connection, redisURI.getCredentialsProvider(), isPubSub, getOptions()));
         connectionBuilder.connection(connection);
         connectionBuilder.clientOptions(getOptions());
         connectionBuilder.clientResources(getResources());
@@ -421,7 +423,7 @@ public class RedisClient extends AbstractRedisClient {
         StatefulRedisPubSubConnectionImpl<K, V> connection = newStatefulRedisPubSubConnection(endpoint, writer, codec, timeout);
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> future = connectStatefulAsync(connection, endpoint, redisURI,
-                () -> new PubSubCommandHandler<>(getOptions(), getResources(), codec, endpoint));
+                () -> new PubSubCommandHandler<>(getOptions(), getResources(), codec, endpoint), true);
 
         return future.whenComplete((conn, throwable) -> {
 
