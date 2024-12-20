@@ -2,6 +2,8 @@ package io.lettuce.core;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import javax.inject.Inject;
 
@@ -26,6 +28,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
 import reactor.core.publisher.Mono;
 import redis.clients.authentication.core.SimpleToken;
+import redis.clients.authentication.core.TokenManagerConfig;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -134,7 +137,9 @@ class AuthenticationIntegrationTests extends TestSupport {
         client.setOptions(client.getOptions().mutate()
                 .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build());
 
-        TestTokenManager tokenManager = new TestTokenManager(null, null);
+        TokenManagerConfig tokenManagerConfig = mock(TokenManagerConfig.class);
+        when(tokenManagerConfig.getRetryPolicy()).thenReturn(mock(TokenManagerConfig.RetryPolicy.class));
+        TestTokenManager tokenManager = new TestTokenManager(null, tokenManagerConfig);
         TokenBasedRedisCredentialsProvider credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenManager);
 
         // Build RedisURI with streaming credentials provider

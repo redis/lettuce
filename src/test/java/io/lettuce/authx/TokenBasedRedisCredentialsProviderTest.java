@@ -9,11 +9,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import redis.clients.authentication.core.SimpleToken;
+import redis.clients.authentication.core.TokenManagerConfig;
 
 import java.time.Duration;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TokenBasedRedisCredentialsProviderTest {
 
@@ -24,7 +27,9 @@ public class TokenBasedRedisCredentialsProviderTest {
     @BeforeEach
     public void setUp() {
         // Use TestToken manager to emit tokens/errors on request
-        tokenManager = new TestTokenManager(null, null);
+        TokenManagerConfig tokenManagerConfig = mock(TokenManagerConfig.class);
+        when(tokenManagerConfig.getRetryPolicy()).thenReturn(mock(TokenManagerConfig.RetryPolicy.class));
+        tokenManager = new TestTokenManager(null, tokenManagerConfig);
         credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenManager);
     }
 
@@ -112,6 +117,10 @@ public class TokenBasedRedisCredentialsProviderTest {
         StepVerifier.create(credentialsFlux2)
                 .assertNext(credentials -> assertThat(String.valueOf(credentials.getPassword())).isEqualTo("token-1"))
                 .verifyComplete();
+
+        assertThat(subscription1.isDisposed()).isTrue();
+        assertThat(subscription2.isDisposed()).isTrue();
+
     }
 
     @Test
