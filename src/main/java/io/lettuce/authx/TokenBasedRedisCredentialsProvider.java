@@ -18,6 +18,25 @@ import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.core.TokenListener;
 import redis.clients.authentication.core.TokenManager;
 
+/**
+ * A {@link RedisCredentialsProvider} implementation that supports token-based authentication for Redis.
+ * <p>
+ * This provider uses a {@link TokenManager} to manage and renew tokens, ensuring that the Redis client can authenticate with
+ * Redis using a dynamically updated token. This is particularly useful in scenarios where Redis access is controlled via
+ * token-based authentication, such as when Redis is integrated with an identity provider like EntraID.
+ * </p>
+ * <p>
+ * The provider supports streaming of credentials and automatically emits new credentials whenever a token is renewed. It must
+ * be used with {@link io.lettuce.core.ClientOptions.ReauthenticateBehavior#ON_NEW_CREDENTIALS} to automatically re-authenticate
+ * connections whenever new tokens are emitted by the provider.
+ * </p>
+ * <p>
+ * The lifecycle of this provider is externally managed. It should be closed when there are no longer any connections using it,
+ * to stop the token management process and release resources.
+ * </p>
+ *
+ * @since 6.6
+ */
 public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvider, AutoCloseable {
 
     private static final Logger log = LoggerFactory.getLogger(TokenBasedRedisCredentialsProvider.class);

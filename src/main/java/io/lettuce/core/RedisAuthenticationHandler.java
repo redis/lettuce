@@ -190,14 +190,33 @@ public class RedisAuthenticationHandler<K, V> {
         }
     }
 
-    public void postProcess(RedisCommand<K, V, ?> toSend) {
+    /**
+     * Post-processes the command after it is sent to the server.
+     * <p>
+     * If the command type is either {@link RedisCommand.Type#EXEC} or {@link RedisCommand.Type#DISCARD}, the transaction state
+     * is cleared and a check for deferred credentials is initiated.
+     * </p>
+     *
+     * @param toSend the command to post-process
+     */
+    protected void postProcess(RedisCommand<K, V, ?> toSend) {
         if (toSend.getType() == EXEC || toSend.getType() == DISCARD) {
             inTransaction.set(false);
             setCredentials(credentialsRef.getAndSet(null));
         }
     }
 
-    public void postProcess(Collection<? extends RedisCommand<K, V, ?>> dispatched) {
+    /**
+     * Post-processes a collection of dispatched commands after they are sent to the server.
+     * <p>
+     * This method checks if any of the dispatched commands indicate the completion of a transaction (via
+     * {@link RedisCommand.Type#EXEC} or {@link RedisCommand.Type#DISCARD}). If the transaction is complete, it clears the
+     * transaction state and initiates a check for deferred credentials.
+     * </p>
+     *
+     * @param dispatched the collection of dispatched commands to post-process
+     */
+    protected void postProcess(Collection<? extends RedisCommand<K, V, ?>> dispatched) {
         Boolean transactionComplete = null;
         for (RedisCommand<K, V, ?> command : dispatched) {
             if (command.getType() == EXEC || command.getType() == DISCARD) {
@@ -348,7 +367,12 @@ public class RedisAuthenticationHandler<K, V> {
         }
 
         @Override
-        public void postProcess(RedisCommand<K, V, ?> toSend) {
+        protected void postProcess(RedisCommand<K, V, ?> toSend) {
+            // No-op
+        }
+
+        @Override
+        protected void postProcess(Collection<? extends RedisCommand<K, V, ?>> dispatched) {
             // No-op
         }
 
