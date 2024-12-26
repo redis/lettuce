@@ -57,6 +57,15 @@ class BitReactiveCommandIntegrationTests extends BitCommandIntegrationTests {
     }
 
     @Test
+    void bitfieldGetWithUnsignedOffset() {
+
+        long unsignedIntMax = (1L << 32) - 1;
+        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).get(signed(1), (int) unsignedIntMax);
+
+        StepVerifier.create(reactive.bitfield(key, bitFieldArgs)).expectNext(Value.just(0L), Value.just(0L)).verifyComplete();
+    }
+
+    @Test
     void bitfieldSet() {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).set(5);
