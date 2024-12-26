@@ -86,6 +86,7 @@ public class CommandDetailParser {
         aclCategoriesMap.put("@hyperloglog", AclCategory.HYPERLOGLOG);
         aclCategoriesMap.put("@geo", AclCategory.GEO);
         aclCategoriesMap.put("@stream", AclCategory.STREAM);
+        // TODO:
         aclCategoriesMap.put("@pubsub", AclCategory.PUBSUB);
         aclCategoriesMap.put("@admin", AclCategory.ADMIN);
         aclCategoriesMap.put("@fast", AclCategory.FAST);
