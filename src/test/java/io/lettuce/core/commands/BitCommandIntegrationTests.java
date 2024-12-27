@@ -121,6 +121,9 @@ public class BitCommandIntegrationTests extends TestSupport {
 
         assertThat(offset(5).toString()).isEqualTo("5");
         assertThat(typeWidthBasedOffset(5).toString()).isEqualTo("#5");
+
+        assertThat(offset(-1).toString()).isEqualTo(Integer.toUnsignedString(-1));
+        assertThat(typeWidthBasedOffset(-1).toString()).isEqualTo("#" + Integer.toUnsignedString(-1));
     }
 
     @Test
@@ -149,6 +152,18 @@ public class BitCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("BITFIELD")
+    void bitfieldGetWithUnsignedOffset() {
+
+        long unsignedIntMax = (1L << 32) - 1;
+        BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 1).get(signed(1), (int) unsignedIntMax);
+
+        List<Long> values = redis.bitfield(key, bitFieldArgs);
+
+        assertThat(values).containsExactly(0L, 0L);
+    }
+
+    @Test
+    @EnabledOnCommand("BITFIELD")
     void bitfieldSet() {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).set(5);
@@ -173,6 +188,16 @@ public class BitCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("BITFIELD")
+    void bitfieldWithUnsignedOffsetSet() {
+
+        long unsignedIntMax = (1L << 32) - 1;
+        redis.bitfield(key, BitFieldArgs.Builder.set(signed(1), offset((int) unsignedIntMax), 1));
+        assertThat(bitstring.getbit(key, unsignedIntMax)).isEqualTo(1);
+        assertThat(bitstring.bitcount(key)).isEqualTo(1);
+    }
+
+    @Test
+    @EnabledOnCommand("BITFIELD")
     void bitfieldIncrBy() {
 
         BitFieldArgs bitFieldArgs = BitFieldArgs.Builder.set(signed(8), 0, 5).incrBy(1);
@@ -193,6 +218,16 @@ public class BitCommandIntegrationTests extends TestSupport {
         redis.del(key);
         redis.bitfield(key, BitFieldArgs.Builder.incrBy(signed(8), offset(2), 1));
         assertThat(bitstring.get(key)).isEqualTo("0000000000000010");
+    }
+
+    @Test
+    @EnabledOnCommand("BITFIELD")
+    void bitfieldWithUnsignedOffsetIncryBy() {
+
+        long unsignedIntMax = (1L << 32) - 1;
+        redis.bitfield(key, BitFieldArgs.Builder.incrBy(signed(1), offset((int) unsignedIntMax), 1));
+        assertThat(bitstring.getbit(key, unsignedIntMax)).isEqualTo(1);
+        assertThat(bitstring.bitcount(key)).isEqualTo(1);
     }
 
     @Test
