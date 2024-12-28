@@ -436,6 +436,18 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("FT.SEARCH")
+    void configSearchModuleDefaultDialect() {
+        String configParam = "search-default-dialect";
+        assertThat(redis.configGet(configParam)).containsEntry(configParam, "1"); // confirm server default
+
+        assertThat(redis.configSet(configParam, "2")).isEqualTo("OK");
+        assertThat(redis.configGet(configParam)).containsEntry(configParam, "2");
+
+        redis.configSet(configParam, "1"); // reset to server default
+    }
+
+    @Test
     void dbsize() {
         assertThat(redis.dbsize()).isEqualTo(0);
         redis.set(key, value);
