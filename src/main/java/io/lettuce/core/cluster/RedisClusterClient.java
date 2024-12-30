@@ -592,6 +592,24 @@ public class RedisClusterClient extends AbstractRedisClient {
     }
 
     /**
+     * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override that method.
+     *
+     * @param channelWriter the channel writer
+     * @param pushHandler the handler for push notifications
+     * @param codec codec
+     * @param timeout default timeout
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisConnectionImpl
+     */
+    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
+            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
+        return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout);
+    }
+
+    /**
      * Create a pub/sub connection to a redis socket address.
      *
      * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
@@ -718,6 +736,24 @@ public class RedisClusterClient extends AbstractRedisClient {
             RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout,
             Mono<JsonParser> parser) {
         return new StatefulRedisClusterConnectionImpl(channelWriter, pushHandler, codec, timeout, parser);
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisClusterConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override that method.
+     *
+     * @param channelWriter the channel writer
+     * @param pushHandler the handler for push notifications
+     * @param codec codec
+     * @param timeout default timeout
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisClusterConnectionImpl
+     */
+    protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(
+            RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
+        return new StatefulRedisClusterConnectionImpl(channelWriter, pushHandler, codec, timeout);
     }
 
     private <T, K, V> Mono<T> connect(Mono<SocketAddress> socketAddressSupplier, DefaultEndpoint endpoint,
