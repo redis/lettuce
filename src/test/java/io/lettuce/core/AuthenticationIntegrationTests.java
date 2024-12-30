@@ -37,6 +37,9 @@ class AuthenticationIntegrationTests extends TestSupport {
 
         connection.sync().dispatch(CommandType.ACL, new StatusOutput<>(StringCodec.UTF8),
                 new CommandArgs<>(StringCodec.UTF8).add("SETUSER").add("john").add("on").add(">foobared").add("-@all"));
+
+        connection.sync().dispatch(CommandType.ACL, new StatusOutput<>(StringCodec.UTF8),
+                new CommandArgs<>(StringCodec.UTF8).add("SETUSER").add("日本語").add("on").add(">日本語").add("+@all"));
     }
 
     @Test
@@ -69,6 +72,18 @@ class AuthenticationIntegrationTests extends TestSupport {
             assertThat(connection.sync().ping()).isEqualTo("PONG");
             connection.close();
         });
+    }
+
+    @Test
+    @Inject
+    void authAsJapanese(RedisClient client) {
+
+        RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(TestSettings.port())
+                .withAuthentication("日本語", "日本語".toCharArray()).build();
+
+        StatefulRedisConnection<String, String> connection = client.connect(uri);
+        assertThat(connection.sync().ping()).isEqualTo("PONG");
+        connection.close();
     }
 
 }
