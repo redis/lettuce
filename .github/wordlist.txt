@@ -80,3 +80,4 @@ DnsResolver
 dnsResolver
 evalReadOnly
 gg
+NOAUTH
