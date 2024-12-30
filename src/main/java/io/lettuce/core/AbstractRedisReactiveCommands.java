@@ -65,6 +65,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 import static io.lettuce.core.protocol.CommandType.EXEC;
 import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
 import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
@@ -109,6 +110,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
      *
      * @param connection the connection to operate on.
      * @param codec the codec for command encoding.
+     * @param parser the implementation of the {@link JsonParser} to use
      */
     public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, Mono<JsonParser> parser) {
         this.connection = connection;
@@ -117,6 +119,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
+    }
+
+    /**
+     * Initialize a new instance.
+     *
+     * @param connection the connection to operate on.
+     * @param codec the codec for command encoding.
+     */
+    public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
+        this(connection, codec, DEFAULT_JSON_PARSER);
     }
 
     private EventExecutorGroup getScheduler() {
