@@ -272,3 +272,6 @@ ubuntu
 behaviour
 databind
 jackson
+tishun
+bugfixes
+changelog
