@@ -136,7 +136,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         this.codec = codec;
     }
 
-
     @Override
     public RedisFuture<String> clientSetname(K name) {
 
