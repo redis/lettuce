@@ -87,6 +87,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      *
      * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
+     * @param parser the implementation of the {@link JsonParser} to use
      * @deprecated since 5.1, use
      *             {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
      */
@@ -102,10 +103,36 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      *
      * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
+     * @deprecated since 5.1, use
+     *             {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
+     */
+    @Deprecated
+    public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
+        super(connection, codec);
+        this.codec = codec;
+    }
+
+    /**
+     * Initialize a new connection.
+     *
+     * @param connection the stateful connection
+     * @param codec Codec used to encode/decode keys and values.
+     * @param parser the implementation of the {@link JsonParser} to use
      */
     public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec,
             Mono<JsonParser> parser) {
         super(connection, codec, parser);
+        this.codec = codec;
+    }
+
+    /**
+     * Initialize a new connection.
+     *
+     * @param connection the stateful connection
+     * @param codec Codec used to encode/decode keys and values.
+     */
+    public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec) {
+        super(connection, codec);
         this.codec = codec;
     }
 
