@@ -57,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 import static io.lettuce.core.protocol.CommandType.EXEC;
 import static io.lettuce.core.protocol.CommandType.GEORADIUSBYMEMBER_RO;
 import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
@@ -93,12 +94,23 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
      *
      * @param connection the connection to operate on
      * @param codec the codec for command encoding
+     * @param parser the implementation of the {@link JsonParser} to use
      */
     public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, Mono<JsonParser> parser) {
         this.parser = parser;
         this.connection = connection;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
+    }
+
+    /**
+     * Initialize a new instance.
+     *
+     * @param connection the connection to operate on
+     * @param codec the codec for command encoding
+     */
+    public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec) {
+        this(connection, codec, DEFAULT_JSON_PARSER);
     }
 
     @Override

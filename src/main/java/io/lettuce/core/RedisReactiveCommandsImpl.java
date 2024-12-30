@@ -22,11 +22,21 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
      *
      * @param connection the connection to operate on.
      * @param codec the codec for command encoding.
-     *
+     * @param parser the implementation of the {@link JsonParser} to use
      */
     public RedisReactiveCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec,
             Mono<JsonParser> parser) {
         super(connection, codec, parser);
+    }
+
+    /**
+     * Initialize a new instance.
+     *
+     * @param connection the connection to operate on.
+     * @param codec the codec for command encoding.
+     */
+    public RedisReactiveCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec) {
+        super(connection, codec);
     }
 
     @Override
