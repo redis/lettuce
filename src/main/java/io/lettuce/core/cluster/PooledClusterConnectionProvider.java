@@ -28,6 +28,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -63,6 +65,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Tihomir Mateev
  * @since 3.0
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -72,7 +75,7 @@ class PooledClusterConnectionProvider<K, V>
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
 
     // Contains NodeId-identified and HostAndPort-identified connections.
-    private final Object stateLock = new Object();
+    private final Lock stateLock = new ReentrantLock();
 
     private final boolean debugEnabled = logger.isDebugEnabled();
 
@@ -156,8 +159,12 @@ class PooledClusterConnectionProvider<K, V>
     private CompletableFuture<StatefulRedisConnection<K, V>> getWriteConnection(int slot) {
 
         CompletableFuture<StatefulRedisConnection<K, V>> writer;// avoid races when reconfiguring partitions.
-        synchronized (stateLock) {
+
+        stateLock.lock();
+        try {
             writer = writers[slot];
+        } finally {
+            stateLock.unlock();
         }
 
         if (writer == null) {
@@ -177,10 +184,13 @@ class PooledClusterConnectionProvider<K, V>
 
             return future.thenApply(connection -> {
 
-                synchronized (stateLock) {
+                stateLock.lock();
+                try {
                     if (writers[slot] == null) {
                         writers[slot] = CompletableFuture.completedFuture(connection);
                     }
+                } finally {
+                    stateLock.unlock();
                 }
 
                 return connection;
@@ -196,8 +206,11 @@ class PooledClusterConnectionProvider<K, V>
 
         boolean cached = true;
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             readerCandidates = readers[slot];
+        } finally {
+            stateLock.unlock();
         }
 
         if (readerCandidates == null) {
@@ -293,8 +306,12 @@ class PooledClusterConnectionProvider<K, V>
             for (int i = 0; i < toCache.length; i++) {
                 toCache[i] = CompletableFuture.completedFuture(statefulRedisConnections[i]);
             }
-            synchronized (stateLock) {
+
+            stateLock.lock();
+            try {
                 readers[slot] = toCache;
+            } finally {
+                stateLock.unlock();
             }
 
             if (!orderSensitive) {
@@ -532,12 +549,15 @@ class PooledClusterConnectionProvider<K, V>
 
         boolean reconfigurePartitions = false;
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             if (this.partitions != null) {
                 reconfigurePartitions = true;
             }
             this.partitions = partitions;
             this.connectionFactory.setPartitions(partitions);
+        } finally {
+            stateLock.unlock();
         }
 
         if (reconfigurePartitions) {
@@ -601,8 +621,11 @@ class PooledClusterConnectionProvider<K, V>
     @Override
     public void setAutoFlushCommands(boolean autoFlush) {
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             this.autoFlushCommands = autoFlush;
+        } finally {
+            stateLock.unlock();
         }
 
         connectionProvider.forEach(connection -> connection.setAutoFlushCommands(autoFlush));
@@ -616,9 +639,12 @@ class PooledClusterConnectionProvider<K, V>
     @Override
     public void setReadFrom(ReadFrom readFrom) {
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             this.readFrom = readFrom;
             Arrays.fill(readers, null);
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -643,9 +669,12 @@ class PooledClusterConnectionProvider<K, V>
      */
     private void resetFastConnectionCache() {
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             Arrays.fill(writers, null);
             Arrays.fill(readers, null);
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -719,9 +748,12 @@ class PooledClusterConnectionProvider<K, V>
 
             RedisClusterNode actualNode = targetNode;
             connection = connection.thenApply(c -> {
-                synchronized (stateLock) {
+                stateLock.lock();
+                try {
                     c.setAutoFlushCommands(autoFlushCommands);
                     c.addListener(message -> onPushMessage(actualNode, message));
+                } finally {
+                    stateLock.unlock();
                 }
                 return c;
             });
