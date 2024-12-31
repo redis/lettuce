@@ -1153,7 +1153,13 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         suspendTopologyRefresh();
 
-        return super.shutdownAsync(quietPeriod, timeout, timeUnit);
+        CompletableFuture<Void> topologyRefreshFuture = topologyRefreshScheduler.getTopologyRefreshCompletionFuture();
+
+        return topologyRefreshFuture.thenCompose(ignore -> super.shutdownAsync(quietPeriod, timeout, timeUnit))
+                .exceptionally(ex -> {
+                    System.err.println("Error during topology refresh or shutdown: " + ex.getMessage());
+                    return null;
+        });
     }
 
     // -------------------------------------------------------------------------
