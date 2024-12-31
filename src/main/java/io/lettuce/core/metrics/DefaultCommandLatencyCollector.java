@@ -339,19 +339,19 @@ public class DefaultCommandLatencyCollector implements CommandLatencyCollector {
         }
 
         @Override
-        protected synchronized void notifyListeners(long pauseLengthNsec, long pauseEndTimeNsec) {
+        protected void notifyListeners(long pauseLengthNsec, long pauseEndTimeNsec) {
         }
 
         @Override
-        public synchronized void addListener(PauseDetectorListener listener) {
+        public void addListener(PauseDetectorListener listener) {
         }
 
         @Override
-        public synchronized void addListener(PauseDetectorListener listener, boolean isHighPriority) {
+        public void addListener(PauseDetectorListener listener, boolean isHighPriority) {
         }
 
         @Override
-        public synchronized void removeListener(PauseDetectorListener listener) {
+        public void removeListener(PauseDetectorListener listener) {
         }
 
         @Override

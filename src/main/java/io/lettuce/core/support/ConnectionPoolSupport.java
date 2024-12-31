@@ -4,6 +4,8 @@ import static io.lettuce.core.support.ConnectionWrapping.HasTargetConnection;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import org.apache.commons.pool2.BasePooledObjectFactory;
@@ -157,20 +159,31 @@ public abstract class ConnectionPoolSupport {
 
         SoftReferenceObjectPool<T> pool = new SoftReferenceObjectPool<T>(new RedisPooledObjectFactory<>(connectionSupplier)) {
 
+            private final Lock lock = new ReentrantLock();
+
             @Override
-            public synchronized T borrowObject() throws Exception {
-                return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get())
-                        : super.borrowObject();
+            public T borrowObject() throws Exception {
+                lock.lock();
+                try {
+                    return wrapConnections ? ConnectionWrapping.wrapConnection(super.borrowObject(), poolRef.get())
+                            : super.borrowObject();
+                } finally {
+                    lock.unlock();
+                }
             }
 
             @Override
-            public synchronized void returnObject(T obj) throws Exception {
-
-                if (wrapConnections && obj instanceof HasTargetConnection) {
-                    super.returnObject((T) ((HasTargetConnection) obj).getTargetConnection());
-                    return;
+            public void returnObject(T obj) throws Exception {
+                lock.lock();
+                try {
+                    if (wrapConnections && obj instanceof HasTargetConnection) {
+                        super.returnObject((T) ((HasTargetConnection) obj).getTargetConnection());
+                        return;
+                    }
+                    super.returnObject(obj);
+                } finally {
+                    lock.unlock();
                 }
-                super.returnObject(obj);
             }
 
         };

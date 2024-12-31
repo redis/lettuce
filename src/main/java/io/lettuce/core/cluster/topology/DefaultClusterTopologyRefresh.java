@@ -506,7 +506,7 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
         }
 
         @Override
-        public synchronized Throwable fillInStackTrace() {
+        public Throwable fillInStackTrace() {
             return this;
         }
 

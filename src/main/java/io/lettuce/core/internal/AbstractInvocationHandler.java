@@ -24,6 +24,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Abstract base class for invocation handlers.
@@ -161,6 +163,8 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
 
         private static final WeakHashMap<Class<?>, MethodTranslator> TRANSLATOR_MAP = new WeakHashMap<>(32);
 
+        private static final Lock lock = new ReentrantLock();
+
         private final Map<Method, Method> map;
 
         private MethodTranslator(Class<?> delegate, Class<?>... methodSources) {
@@ -170,8 +174,11 @@ public abstract class AbstractInvocationHandler implements InvocationHandler {
 
         public static MethodTranslator of(Class<?> delegate, Class<?>... methodSources) {
 
-            synchronized (TRANSLATOR_MAP) {
+            lock.lock();
+            try {
                 return TRANSLATOR_MAP.computeIfAbsent(delegate, key -> new MethodTranslator(key, methodSources));
+            } finally {
+                lock.unlock();
             }
         }
 

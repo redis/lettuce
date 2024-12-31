@@ -10,6 +10,8 @@ package io.lettuce.core.json;
 import io.lettuce.core.codec.StringCodec;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A wrapper around any of the implementations of the {@link JsonValue} provided by the implementation of the {@link JsonParser}
@@ -21,6 +23,8 @@ import java.nio.ByteBuffer;
  * @author Tihomir Mateev
  */
 class UnproccessedJsonValue implements JsonValue {
+
+    private final Lock lock = new ReentrantLock();
 
     private volatile JsonValue jsonValue;
 
@@ -45,7 +49,8 @@ class UnproccessedJsonValue implements JsonValue {
             return jsonValue.toString();
         }
 
-        synchronized (this) {
+        lock.lock();
+        try {
             if (isDeserialized()) {
                 return jsonValue.toString();
             }
@@ -53,6 +58,8 @@ class UnproccessedJsonValue implements JsonValue {
             // if no deserialization took place, so no modification took place
             // in this case we can decode the source data as is
             return StringCodec.UTF8.decodeValue(unprocessedData);
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -62,7 +69,8 @@ class UnproccessedJsonValue implements JsonValue {
             return jsonValue.asByteBuffer();
         }
 
-        synchronized (this) {
+        lock.lock();
+        try {
             if (isDeserialized()) {
                 return jsonValue.asByteBuffer();
             }
@@ -70,6 +78,8 @@ class UnproccessedJsonValue implements JsonValue {
             // if no deserialization took place, so no modification took place
             // in this case we can decode the source data as is
             return unprocessedData;
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -147,11 +157,14 @@ class UnproccessedJsonValue implements JsonValue {
 
     private void lazilyDeserialize() {
         if (!isDeserialized()) {
-            synchronized (this) {
+            lock.lock();
+            try {
                 if (!isDeserialized()) {
                     jsonValue = parser.createJsonValue(unprocessedData);
                     unprocessedData.clear();
                 }
+            } finally {
+                lock.unlock();
             }
         }
     }
