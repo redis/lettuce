@@ -321,6 +321,7 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
         private static final long serialVersionUID = -1337731371220365694L;
 
         private final Supplier<CompletionStage<?>> reloadTopologyAsync;
+
         private final CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 
         ClusterTopologyRefreshTask(Supplier<CompletionStage<?>> reloadTopologyAsync) {

@@ -1159,7 +1159,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 .exceptionally(ex -> {
                     System.err.println("Error during topology refresh or shutdown: " + ex.getMessage());
                     return null;
-        });
+                });
     }
 
     // -------------------------------------------------------------------------
