@@ -530,7 +530,7 @@ class CommandHandlerUnitTests {
 
         // set the command handler buffer capacity to 30, make it easy to test
         ByteBuf internalBuffer = context.alloc().buffer(30);
-        sut.setBuffer(internalBuffer);
+        sut.setReadBuffer(internalBuffer);
 
         // mock a multi reply, which will reach the buffer usage ratio
         ByteBuf msg = context.alloc().buffer(100);
@@ -559,7 +559,7 @@ class CommandHandlerUnitTests {
 
         // set the command handler buffer capacity to 30, make it easy to test
         ByteBuf internalBuffer = context.alloc().buffer(30);
-        sut.setBuffer(internalBuffer);
+        sut.setReadBuffer(internalBuffer);
 
         // mock a multi reply, which will reach the buffer usage ratio
         ByteBuf msg = context.alloc().buffer(100);
@@ -636,6 +636,18 @@ class CommandHandlerUnitTests {
         assertThat(stack.isEmpty()).isTrue();
         assertThat(hmgetCommand.get()).isNotNull();
         assertThat(hmgetCommand.get()).hasSize(3);
+    }
+
+    /**
+     * @see <a href="https://github.com/redis/lettuce/issues/3087">Issue 3087</a>
+     */
+    @Test
+    void shouldHandleNullBuffers() throws Exception {
+        sut.setReadBuffer(null);
+        sut.channelRead(context, Unpooled.wrappedBuffer(("*4\r\n" + "$3\r\nONE\r\n" + "$4\r\n>TW").getBytes()));
+        assertThat(stack).hasSize(0);
+
+        sut.channelUnregistered(context);
     }
 
 }

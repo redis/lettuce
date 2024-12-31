@@ -82,9 +82,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCommands {
 
     /**
-     * When we encounter an unexpected IOException we look for these {@link Throwable#getMessage() messages} (because we have no
-     * better way to distinguish) and log them at DEBUG rather than WARN, since they are generally caused by unclean client
-     * disconnects rather than an actual problem.
+     * When we encounter an unexpected {@link IOException} we look for these {@link Throwable#getMessage() messages} (because we
+     * have no better way to distinguish) and log them at DEBUG rather than WARN, since they are generally caused by unclean
+     * client disconnects rather than an actual problem.
      */
     static final Set<String> SUPPRESS_IO_EXCEPTION_MESSAGES = LettuceSets.unmodifiableSet("Connection reset by peer",
             "Broken pipe", "Connection timed out");
@@ -123,7 +123,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private Channel channel;
 
-    private ByteBuf buffer;
+    private ByteBuf readBuffer;
 
     private boolean hasDecodeProgress;
 
@@ -182,8 +182,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
     }
 
-    void setBuffer(ByteBuf buffer) {
-        this.buffer = buffer;
+    void setReadBuffer(ByteBuf readBuffer) {
+        this.readBuffer = readBuffer;
     }
 
     @Override
@@ -222,7 +222,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         setState(LifecycleState.REGISTERED);
 
-        buffer = ctx.alloc().buffer(8192 * 8);
+        readBuffer = ctx.alloc().buffer(8192 * 8);
         rsm = new RedisStateMachine();
         ctx.fireChannelRegistered();
     }
@@ -242,10 +242,15 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             ctx.fireChannelUnregistered();
             return;
         }
-
         channel = null;
-        buffer.release();
-        rsm.close();
+
+        if (readBuffer != null) {
+            readBuffer.release();
+        }
+
+        if (rsm != null) {
+            rsm.close();
+        }
         rsm = null;
 
         reset();
@@ -596,7 +601,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         try {
-            if (buffer.refCnt() < 1) {
+            if (readBuffer == null || readBuffer.refCnt() < 1) {
                 logger.warn("{} Ignoring received data for closed or abandoned connection", logPrefix());
                 return;
             }
@@ -610,10 +615,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 logger.trace("{} Buffer: {}", logPrefix(), input.toString(Charset.defaultCharset()).trim());
             }
 
-            buffer.touch("CommandHandler.read(…)");
-            buffer.writeBytes(input);
+            readBuffer.touch("CommandHandler.read(…)");
+            readBuffer.writeBytes(input);
 
-            decode(ctx, buffer);
+            decode(ctx, readBuffer);
         } finally {
             input.release();
         }
@@ -829,7 +834,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private boolean decode0(ChannelHandlerContext ctx, ByteBuf buffer, CommandOutput<?, ?, ?> pushOutput) {
 
-        if (!rsm.decode(buffer, pushOutput, ctx::fireExceptionCaught)) {
+        if (rsm != null && !rsm.decode(buffer, pushOutput, ctx::fireExceptionCaught)) {
             return false;
         }
 
@@ -852,11 +857,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     protected boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output) {
-        return rsm.decode(buffer, output);
+        return rsm != null && rsm.decode(buffer, output);
     }
 
     protected boolean decode(ByteBuf buffer, RedisCommand<?, ?, ?> command, CommandOutput<?, ?, ?> output) {
-        return rsm.decode(buffer, output, command::completeExceptionally);
+        return rsm != null && rsm.decode(buffer, output, command::completeExceptionally);
     }
 
     /**
@@ -918,7 +923,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * @param command
      */
     protected void afterDecode(ChannelHandlerContext ctx, RedisCommand<?, ?, ?> command) {
-        decodeBufferPolicy.afterCommandDecoded(buffer);
+        decodeBufferPolicy.afterCommandDecoded(readBuffer);
     }
 
     private void recordLatency(WithLatency withLatency, RedisCommand<?, ?, ?> command) {
@@ -960,8 +965,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             rsm.reset();
         }
 
-        if (buffer.refCnt() > 0) {
-            buffer.clear();
+        if (readBuffer != null && readBuffer.refCnt() > 0) {
+            readBuffer.clear();
         }
     }
 
