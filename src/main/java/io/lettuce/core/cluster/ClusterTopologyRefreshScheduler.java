@@ -22,6 +22,7 @@ package io.lettuce.core.cluster;
 import static io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent.*;
 
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -93,19 +94,27 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     /**
      * Suspend (cancel) periodic topology refresh.
      */
-    public void suspendTopologyRefresh() {
+    public CompletableFuture<Void> suspendTopologyRefresh() {
+        CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 
         if (clusterTopologyRefreshActivated.compareAndSet(true, false)) {
-
             ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
 
             try {
-                scheduledFuture.cancel(false);
-                clusterTopologyRefreshFuture.set(null);
+                if (scheduledFuture != null) {
+                    scheduledFuture.cancel(false);
+                    clusterTopologyRefreshFuture.set(null);
+                }
+                completionFuture.complete(null);
             } catch (Exception e) {
                 logger.debug("Could not cancel Cluster topology refresh", e);
+                completionFuture.completeExceptionally(e);
             }
+        } else {
+            completionFuture.complete(null);
         }
+
+        return completionFuture;
     }
 
     public boolean isTopologyRefreshInProgress() {
