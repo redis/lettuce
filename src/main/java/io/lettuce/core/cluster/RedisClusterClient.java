@@ -968,8 +968,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      *
      * @since 6.3
      */
-    public void suspendTopologyRefresh() {
-        topologyRefreshScheduler.suspendTopologyRefresh();
+    public CompletableFuture<Void> suspendTopologyRefresh() {
+        return topologyRefreshScheduler.suspendTopologyRefresh();
     }
 
     /**
@@ -1151,15 +1151,7 @@ public class RedisClusterClient extends AbstractRedisClient {
     @Override
     public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
-        suspendTopologyRefresh();
-
-        CompletableFuture<Void> topologyRefreshFuture = topologyRefreshScheduler.getTopologyRefreshCompletionFuture();
-
-        return topologyRefreshFuture.thenCompose(ignore -> super.shutdownAsync(quietPeriod, timeout, timeUnit))
-                .exceptionally(ex -> {
-                    System.err.println("Error during topology refresh or shutdown: " + ex.getMessage());
-                    return null;
-                });
+        return suspendTopologyRefresh().thenCompose(voidResult -> super.shutdownAsync(quietPeriod, timeout, timeUnit));
     }
 
     // -------------------------------------------------------------------------

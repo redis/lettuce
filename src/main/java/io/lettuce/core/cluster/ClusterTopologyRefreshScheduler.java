@@ -94,27 +94,31 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     /**
      * Suspend (cancel) periodic topology refresh.
      */
-    public void suspendTopologyRefresh() {
+    public CompletableFuture<Void> suspendTopologyRefresh() {
+        CompletableFuture<Void> completionFuture = new CompletableFuture<>();
 
         if (clusterTopologyRefreshActivated.compareAndSet(true, false)) {
-
             ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
 
             try {
-                scheduledFuture.cancel(false);
-                clusterTopologyRefreshFuture.set(null);
+                if (scheduledFuture != null) {
+                    scheduledFuture.cancel(false);
+                    clusterTopologyRefreshFuture.set(null);
+                }
+                completionFuture.complete(null);
             } catch (Exception e) {
                 logger.debug("Could not cancel Cluster topology refresh", e);
+                completionFuture.completeExceptionally(e);
             }
+        } else {
+            completionFuture.complete(null);
         }
+
+        return completionFuture;
     }
 
     public boolean isTopologyRefreshInProgress() {
         return clusterTopologyRefreshTask.get();
-    }
-
-    public CompletableFuture<Void> getTopologyRefreshCompletionFuture() {
-        return clusterTopologyRefreshTask.getCompletionFuture();
     }
 
     @Override
@@ -322,14 +326,8 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         private final Supplier<CompletionStage<?>> reloadTopologyAsync;
 
-        private final CompletableFuture<Void> completionFuture = new CompletableFuture<>();
-
         ClusterTopologyRefreshTask(Supplier<CompletionStage<?>> reloadTopologyAsync) {
             this.reloadTopologyAsync = reloadTopologyAsync;
-        }
-
-        public CompletableFuture<Void> getCompletionFuture() {
-            return completionFuture;
         }
 
         public void run() {
@@ -354,16 +352,12 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
                     if (throwable != null) {
                         logger.warn("Cannot refresh Redis Cluster topology", throwable);
-                        completionFuture.completeExceptionally(throwable);
-                    } else {
-                        completionFuture.complete(null);
                     }
 
                     set(false);
                 });
             } catch (Exception e) {
                 logger.warn("Cannot refresh Redis Cluster topology", e);
-                completionFuture.completeExceptionally(e);
             }
         }
 
