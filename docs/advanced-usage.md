@@ -327,7 +327,7 @@ client.setOptions(ClientOptions.builder()
 <tbody>
 <tr>
 <td>PING before activating connection</td>
-<td><code>pingBefor eActivateConnection</code></td>
+<td><code>pingBeforeActivateConnection</code></td>
 <td><code>true</code></td>
 </tr>
 <tr>
@@ -362,8 +362,21 @@ queued commands.</p>
 refuse commands and cancel these with an exception.</p></td>
 </tr>
 <tr>
+<td>Replay filter</td>
+<td><code>replayFilter</code></td>
+<td><code>(cmd) -> false</code></td>
+</tr>
+<tr>
+<td colspan="3"><p>Since: 6.6</p>
+<p>Controls which commands are to be filtered out in case the driver
+attempts to reconnect to the server. Returning <code>false</code> means
+that the command would not be filtered out.</p>
+<p>This flag has no effect in case the autoReconnect feature is not
+enabled.</p></td>
+</tr>
+<tr>
 <td>Cancel commands on reconnect failure</td>
-<td><code>cancelCommand sOnReconnectFailure</code></td>
+<td><code>cancelCommandsOnReconnectFailure</code></td>
 <td><code>false</code></td>
 </tr>
 <tr>
@@ -486,7 +499,7 @@ store/trust store.</p></td>
 <tr>
 <td>Timeout Options</td>
 <td><code>timeoutOptions</code></td>
-<td><code>Do n ot timeout commands.</code></td>
+<td><code>Do not timeout commands.</code></td>
 </tr>
 <tr>
 <td colspan="3"><p>Since: 5.1</p>
@@ -550,7 +563,7 @@ client.setOptions(ClusterClientOptions.builder()
 <tbody>
 <tr>
 <td>Periodic cluster topology refresh</td>
-<td><code>en ablePeriodicRefresh</code></td>
+<td><code>enablePeriodicRefresh</code></td>
 <td><code>false</code></td>
 </tr>
 <tr>
@@ -2399,14 +2412,14 @@ independent connections to Redis.
 Lettuce provides two levels of consistency; these are the rules for
 Redis command sends:
 
-Depending on the chosen consistency level:
+#### Depending on the chosen consistency level
 
-- **at-most-once execution**, i. e. no guaranteed execution
+- **at-most-once execution**, i.e. no guaranteed execution
 
-- **at-least-once execution**, i. e. guaranteed execution (with [some
+- **at-least-once execution**, i.e. guaranteed execution (with [some
   exceptions](#exceptions-to-at-least-once))
 
-Always:
+#### Always
 
 - command ordering in the order of invocations
 
@@ -2602,9 +2615,44 @@ re-established, queued commands are re-sent for execution. While a
 connection failure persists, issued commands are buffered.
 
 To change into *at-most-once* consistency level, disable auto-reconnect
-mode. Connections cannot be longer reconnected and thus no retries are
-issued. Not successfully commands are canceled. New commands are
-rejected.
+mode. Connections can no longer be reconnected and thus no retries are
+issued. Unsuccessful commands are canceled. New commands are rejected.
+
+#### Controlling replay of commands in *at-lease-once* mode
+
+!!! NOTE
+    This feature is only available since Lettuce 6.6
+
+One can achieve a more fine-grained control over the commands that are
+replayed after a reconnection by using the option to specify a filter
+predicate. This option is part of the ClientOptions configuration. See 
+[Client Options](advanced-usage.md#client-options) for further reference.
+
+``` java
+Predicate<RedisCommand<?, ?, ?> > filter = cmd -> 
+    cmd.getType().toString().equalsIgnoreCase("DECR");
+
+client.setOptions(ClientOptions.builder()
+    .autoReconnect(true)
+    .replayFilter(filter)
+    .build());
+```
+
+The code above would filter out all `DECR` commands from being replayed
+after a reconnection. Another, perhaps more popular example, would be:
+
+``` java
+Predicate<RedisCommand<?, ?, ?> > filter = cmd -> true;
+
+client.setOptions(ClientOptions.builder()
+    .autoReconnect(true)
+    .replayFilter(filter)
+    .build());
+```
+
+... which disables any command replay, but still allows the driver to
+re-connect, basically providing a way to have auto-reconnect without
+auto-replay of commands.
 
 ### Clustered operations
 

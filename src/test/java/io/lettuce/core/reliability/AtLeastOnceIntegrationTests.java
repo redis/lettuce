@@ -8,8 +8,10 @@ import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 import io.lettuce.core.TimeoutOptions;
+import io.lettuce.core.protocol.RedisCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -351,6 +353,54 @@ class AtLeastOnceIntegrationTests extends AbstractRedisClientTest {
         }
 
         assertThat(connection.async().incr(key).await(1, TimeUnit.SECONDS)).isFalse();
+
+        assertThat(verificationConnection.get("key")).isEqualTo("1");
+
+        assertThat(ConnectionTestUtil.getDisconnectedBuffer(connection).size()).isGreaterThan(0);
+        assertThat(ConnectionTestUtil.getCommandBuffer(connection)).isEmpty();
+
+        connectionWatchdog.setListenOnChannelInactive(true);
+        connectionWatchdog.scheduleReconnect();
+
+        while (!ConnectionTestUtil.getCommandBuffer(connection).isEmpty()
+                || !ConnectionTestUtil.getDisconnectedBuffer(connection).isEmpty()) {
+            Delay.delay(Duration.ofMillis(10));
+        }
+
+        assertThat(connection.sync().get(key)).isEqualTo("2");
+        assertThat(verificationConnection.get(key)).isEqualTo("2");
+
+        connection.close();
+        verificationConnection.getStatefulConnection().close();
+    }
+
+    @Test
+    void retryAfterConnectionIsDisconnectedButFiltered() throws Exception {
+        // Do not replay DECR commands after reconnect for some reason
+        Predicate<RedisCommand<?, ?, ?>> filter = cmd -> cmd.getType().toString().equalsIgnoreCase("DECR");
+
+        client.setOptions(ClientOptions.builder().autoReconnect(true).replayFilter(filter)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+
+        // needs to be increased on slow systems...perhaps...
+        client.setDefaultTimeout(3, TimeUnit.SECONDS);
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+        RedisCommands<String, String> verificationConnection = client.connect().sync();
+
+        connection.sync().set(key, "1");
+
+        ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection);
+        connectionWatchdog.setListenOnChannelInactive(false);
+
+        connection.async().quit();
+        while (connection.isOpen()) {
+            Delay.delay(Duration.ofMillis(100));
+        }
+
+        assertThat(connection.async().incr(key).await(1, TimeUnit.SECONDS)).isFalse();
+        assertThat(connection.async().decr(key).await(1, TimeUnit.SECONDS)).isFalse();
+        assertThat(connection.async().decr(key).await(1, TimeUnit.SECONDS)).isFalse();
 
         assertThat(verificationConnection.get("key")).isEqualTo("1");
 
