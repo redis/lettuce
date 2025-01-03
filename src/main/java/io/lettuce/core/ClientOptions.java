@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+import java.util.function.Predicate;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -34,6 +35,7 @@ import io.lettuce.core.protocol.DecodeBufferPolicies;
 import io.lettuce.core.protocol.DecodeBufferPolicy;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.ReadOnlyCommands;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import reactor.core.publisher.Mono;
 
@@ -48,6 +50,8 @@ import reactor.core.publisher.Mono;
 public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
+
+    public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
     public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
 
@@ -91,6 +95,8 @@ public class ClientOptions implements Serializable {
 
     private final boolean autoReconnect;
 
+    private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
+
     private final boolean cancelCommandsOnReconnectFailure;
 
     private final DecodeBufferPolicy decodeBufferPolicy;
@@ -125,6 +131,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
+        this.replayFilter = builder.replayFilter;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.disconnectedBehavior = builder.disconnectedBehavior;
@@ -145,6 +152,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(ClientOptions original) {
         this.autoReconnect = original.isAutoReconnect();
+        this.replayFilter = original.getReplayFilter();
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
@@ -198,6 +206,8 @@ public class ClientOptions implements Serializable {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
+        private Predicate<RedisCommand<?, ?, ?>> replayFilter = DEFAULT_REPLAY_FILTER;
+
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
 
         private DecodeBufferPolicy decodeBufferPolicy = DecodeBufferPolicies.ratio(DEFAULT_BUFFER_USAGE_RATIO);
@@ -242,6 +252,21 @@ public class ClientOptions implements Serializable {
          */
         public Builder autoReconnect(boolean autoReconnect) {
             this.autoReconnect = autoReconnect;
+            return this;
+        }
+
+        /**
+         * When {@link #autoReconnect(boolean)} is set to true, this {@link Predicate} is used to filter commands to replay when
+         * the connection is reestablished after a disconnect. Returning <code>false</code> means the command will not be
+         * filtered out and will be replayed. Defaults to replaying all queued commands.
+         *
+         * @param replayFilter a {@link Predicate} to filter commands to replay. Must not be {@code null}.
+         * @see #DEFAULT_REPLAY_FILTER
+         * @return {@code this}
+         * @since 6.6
+         */
+        public Builder replayFilter(Predicate<RedisCommand<?, ?, ?>> replayFilter) {
+            this.replayFilter = replayFilter;
             return this;
         }
 
@@ -526,13 +551,13 @@ public class ClientOptions implements Serializable {
         Builder builder = new Builder();
 
         builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .reauthenticateBehavior(getReauthenticateBehaviour()).readOnlyCommands(getReadOnlyCommands())
-                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
-                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
-                .scriptCharset(getScriptCharset()).jsonParser(getJsonParser()).socketOptions(getSocketOptions())
-                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
-                .timeoutOptions(getTimeoutOptions());
+                .replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
+                .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
+                .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
+                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).jsonParser(getJsonParser())
+                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
@@ -548,6 +573,16 @@ public class ClientOptions implements Serializable {
      */
     public boolean isAutoReconnect() {
         return autoReconnect;
+    }
+
+    /**
+     * Controls which {@link RedisCommand} will be replayed after a re-connect. The {@link Predicate} returns <code>true</code>
+     * if command should be filtered out and not replayed. Defaults to {@link #DEFAULT_REPLAY_FILTER}.
+     * 
+     * @return the currently set {@link Predicate} used to filter out commands to replay
+     */
+    public Predicate<RedisCommand<?, ?, ?>> getReplayFilter() {
+        return replayFilter;
     }
 
     /**

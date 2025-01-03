@@ -33,6 +33,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ClientOptions;
@@ -80,6 +81,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     protected volatile Channel channel;
 
     private final Reliability reliability;
+
+    private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
 
     private final ClientOptions clientOptions;
 
@@ -139,6 +142,7 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.clientOptions = clientOptions;
         this.clientResources = clientResources;
         this.reliability = clientOptions.isAutoReconnect() ? Reliability.AT_LEAST_ONCE : Reliability.AT_MOST_ONCE;
+        this.replayFilter = clientOptions.getReplayFilter();
         this.disconnectedBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.commandBuffer = LettuceFactories.newConcurrentQueue(clientOptions.getRequestQueueSize());
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
@@ -340,6 +344,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
             }
             command.completeExceptionally(connectionError);
 
+            return;
+        }
+
+        if (replayFilter.test(command)) {
+            if (debugEnabled) {
+                logger.debug("{} writeToDisconnectedBuffer() Filtering out command {}", logPrefix(), command);
+            }
             return;
         }
 
@@ -1033,7 +1044,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         private void potentiallyRequeueCommands(Channel channel, RedisCommand<?, ?, ?> sentCommand,
                 Collection<? extends RedisCommand<?, ?, ?>> sentCommands) {
 
+            // do not requeue commands that are done
             if (sentCommand != null && sentCommand.isDone()) {
+                return;
+            }
+
+            // do not requeue commands that are to be filtered out
+            if (this.endpoint.replayFilter.test(sentCommand)) {
                 return;
             }
 
