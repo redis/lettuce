@@ -169,4 +169,13 @@ public class AclCommandIntegrationTests extends TestSupport {
         assertThat(redis.aclWhoami()).isEqualTo("default");
     }
 
+    @Test
+    void aclHashCommands() {
+        assertThat(redis.aclDeluser("foo")).isNotNull();
+        AclSetuserArgs args = AclSetuserArgs.Builder.on().addCategory(AclCategory.HASH);
+        assertThat(redis.aclSetuser("foo", args)).isEqualTo("OK");
+        assertThat(redis.aclGetuser("foo")).contains("-@all +@hash");
+        assertThat(redis.aclDeluser("foo")).isNotNull();
+    }
+
 }
