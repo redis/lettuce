@@ -187,8 +187,8 @@ path.</td>
 <td colspan="3">The client can collect latency metrics during while dispatching
 commands. Command latency metrics is collected on connection or server
 level. Command latency collection is enabled by default and can be
-disabled by setting <code>commandLatency CollectorOptions(…)</code> to
-<code>DefaultCom mandLatencyCollector Options.disabled()</code>.</td>
+disabled by setting <code>commandLatencyCollectorOptions(…)</code> to
+<code>DefaultCommandLatencyCollectorOptions.disabled()</code>.</td>
 </tr>
 <tr>
 <td><strong>Latency event publisher options</strong></td>
@@ -296,11 +296,11 @@ instance .</p></td>
 </tbody>
 </table>
 
-## Client Options
+## ClientOptions
 
-Client options allow controlling behavior for some specific features.
+ClientOptions allow controlling behavior for some specific features.
 
-Client options are immutable. Connections inherit the current options at
+ClientOptions are immutable. Connections inherit the current options at
 the moment the connection is created. Changes to options will not affect
 existing connections.
 
@@ -466,7 +466,7 @@ latest available protocol.</p></td>
 <tr>
 <td>Socket Options</td>
 <td><code>socketOptions</code></td>
-<td><code>10 seconds Connecti on-Timeout, no keep-a live, no TCP noDelay</code></td>
+<td><code>10 seconds Connection-Timeout, no keep-alive, no TCP noDelay</code></td>
 </tr>
 <tr>
 <td colspan="3"><p>Since: 4.3</p>
@@ -476,7 +476,7 @@ kept to Redis servers.</p></td>
 <tr>
 <td>SSL Options</td>
 <td><code>sslOptions</code></td>
-<td><code>(non e), use JDK defaults</code></td>
+<td><code>(none), use JDK defaults</code></td>
 </tr>
 <tr>
 <td colspan="3"><p>Since: 4.3</p>
@@ -516,10 +516,10 @@ option uses <code>EventExecutorGroup</code> configured through
 
 ### Cluster-specific options
 
-Cluster client options extend the regular client options by some cluster
+ClusterClientOptions extend the regular ClientOptions by some cluster
 specifics.
 
-Cluster client options are immutable. Connections inherit the current
+ClusterClientOptions are immutable. Connections inherit the current
 options at the moment the connection is created. Changes to options will
 not affect existing connections.
 
@@ -564,7 +564,7 @@ operate on the one cluster topology.</p>
 can be set with <code>refreshPeriod</code>. The refresh job starts after
 either opening the first connection with the job enabled or by calling
 <code>reloadPartitions</code>. The job can be disabled without
-discarding the full client by setting new client options.</p></td>
+discarding the full client by setting new ClientOptions.</p></td>
 </tr>
 <tr>
 <td>Cluster topology refresh period</td>
@@ -579,7 +579,7 @@ will be ignored.</p></td>
 </tr>
 <tr>
 <td>Adaptive cluster topology refresh</td>
-<td><code>enableAda ptiveRefreshTrigger</code></td>
+<td><code>enableAdaptiveRefreshTrigger</code></td>
 <td><code>(none)</code></td>
 </tr>
 <tr>
@@ -597,7 +597,7 @@ attempts for the reconnect trigger)</p></td>
 </tr>
 <tr>
 <td>Adaptive refresh triggers timeout</td>
-<td><code>adaptiveRef reshTriggersTimeout</code></td>
+<td><code>adaptiveRefreshTriggersTimeout</code></td>
 <td><code>30 SECONDS</code></td>
 </tr>
 <tr>
@@ -610,7 +610,7 @@ ignored.</p></td>
 </tr>
 <tr>
 <td>Reconnect attempts (Adaptive topology refresh trigger)</td>
-<td><code>refreshTrigge rsReconnectAttempts</code></td>
+<td><code>refreshTriggersReconnectAttempts</code></td>
 <td><code>5</code></td>
 </tr>
 <tr>
@@ -623,7 +623,7 @@ attempts. The first reconnect attempt starts with
 </tr>
 <tr>
 <td>Dynamic topology refresh sources</td>
-<td><code>dy namicRefreshSources</code></td>
+<td><code>dynamicRefreshSources</code></td>
 <td><code>true</code></td>
 </tr>
 <tr>
@@ -641,7 +641,7 @@ typically contains IP addresses.</p></td>
 </tr>
 <tr>
 <td>Close stale connections</td>
-<td><code>cl oseStaleConnections</code></td>
+<td><code>closeStaleConnections</code></td>
 <td><code>true</code></td>
 </tr>
 <tr>
@@ -686,7 +686,7 @@ trying to connect the node during topology discovery.</p></td>
 </tr>
 <tr>
 <td>Validate cluster node membership</td>
-<td><code>validateCl usterNodeMembership</code></td>
+<td><code>validateClusterNodeMembership</code></td>
 <td><code>true</code></td>
 </tr>
 <tr>
@@ -771,7 +771,7 @@ logs.
 
 Lettuce uses Java defaults for the trust store that is usually `cacerts`
 in your `jre/lib/security` directory and comes with customizable SSL
-options via [client options](#client-options). If you need to add you
+options via [ClientOptions](#ClientOptions). If you need to add you
 own root certificate, so you can configure `SslOptions`, import it
 either to `cacerts` or you provide an own trust store and set the
 necessary system properties:
