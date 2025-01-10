@@ -71,6 +71,8 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     protected MultiOutput<K, V> multi;
 
+    private RedisAuthenticationHandler<K, V> authHandler = RedisAuthenticationHandler.createDefaultAuthenticationHandler();
+
     /**
      * Initialize a new connection.
      *
@@ -181,20 +183,41 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
     public <T> RedisCommand<K, V, T> dispatch(RedisCommand<K, V, T> command) {
 
         RedisCommand<K, V, T> toSend = preProcessCommand(command);
-        return super.dispatch(toSend);
+        RedisCommand<K, V, T> result = super.dispatch(toSend);
+        RedisCommand<K, V, T> finalCommand = postProcessCommand(result);
+
+        return finalCommand;
     }
 
     @Override
     public Collection<RedisCommand<K, V, ?>> dispatch(Collection<? extends RedisCommand<K, V, ?>> commands) {
 
+        Collection<RedisCommand<K, V, ?>> sentCommands = preProcessCommands(commands);
+
+        Collection<RedisCommand<K, V, ?>> dispatchedCommands = super.dispatch(sentCommands);
+
+        return this.postProcessCommands(dispatchedCommands);
+    }
+
+    protected Collection<RedisCommand<K, V, ?>> postProcessCommands(Collection<RedisCommand<K, V, ?>> commands) {
+        authHandler.postProcess(commands);
+        return commands;
+    }
+
+    protected <T> RedisCommand<K, V, T> postProcessCommand(RedisCommand<K, V, T> command) {
+        authHandler.postProcess(command);
+        return command;
+    }
+
+    protected Collection<RedisCommand<K, V, ?>> preProcessCommands(Collection<? extends RedisCommand<K, V, ?>> commands) {
         List<RedisCommand<K, V, ?>> sentCommands = new ArrayList<>(commands.size());
 
         commands.forEach(o -> {
-            RedisCommand<K, V, ?> command = preProcessCommand(o);
-            sentCommands.add(command);
+            RedisCommand<K, V, ?> preprocessed = preProcessCommand(o);
+            sentCommands.add(preprocessed);
         });
 
-        return super.dispatch(sentCommands);
+        return sentCommands;
     }
 
     // TODO [tihomir.mateev] Refactor to include as part of the Command interface
@@ -272,13 +295,14 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         }
 
         if (commandType.equals(MULTI.name())) {
-
+            authHandler.startTransaction();
             multi = (multi == null ? new MultiOutput<>(codec) : multi);
 
             if (command instanceof CompleteableCommand) {
                 ((CompleteableCommand<?>) command).onComplete((ignored, e) -> {
                     if (e != null) {
                         multi = null;
+                        authHandler.endTransaction();
                     }
                 });
             }
@@ -313,6 +337,24 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     public ConnectionState getConnectionState() {
         return state;
+    }
+
+    @Override
+    public void activated() {
+        super.activated();
+        authHandler.subscribe();
+    }
+
+    @Override
+    public void deactivated() {
+        authHandler.unsubscribe();
+        super.deactivated();
+    }
+
+    public void setAuthenticationHandler(RedisAuthenticationHandler<K, V> handler) {
+        if (handler != null) {
+            authHandler = handler;
+        }
     }
 
 }

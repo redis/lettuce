@@ -254,6 +254,7 @@ xml
 RedisJSON
 MkDocs
 ClientOptions
+ClusterClientOptions
 TimeoutOptions
 timeoutOptions
 ClusterCommand
