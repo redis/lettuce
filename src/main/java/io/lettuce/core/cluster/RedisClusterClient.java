@@ -33,6 +33,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -968,8 +970,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      *
      * @since 6.3
      */
-    public CompletableFuture<Void> suspendTopologyRefresh() {
-        return topologyRefreshScheduler.suspendTopologyRefresh();
+    public void suspendTopologyRefresh() {
+        topologyRefreshScheduler.suspendTopologyRefresh();
     }
 
     /**
@@ -1151,7 +1153,24 @@ public class RedisClusterClient extends AbstractRedisClient {
     @Override
     public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
-        return suspendTopologyRefresh().thenCompose(voidResult -> super.shutdownAsync(quietPeriod, timeout, timeUnit));
+        suspendTopologyRefresh();
+        ReentrantLock refreshLock = topologyRefreshScheduler.getRefreshLock();
+        Condition refreshComplete = topologyRefreshScheduler.getRefreshComplete();
+
+        refreshLock.lock();
+        try {
+            while (topologyRefreshScheduler.isTopologyRefreshInProgress()) {
+                try {
+                    refreshComplete.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        } finally {
+            refreshLock.unlock();
+        }
+
+        return super.shutdownAsync(quietPeriod, timeout, timeUnit);
     }
 
     // -------------------------------------------------------------------------

@@ -22,11 +22,12 @@ package io.lettuce.core.cluster;
 import static io.lettuce.core.event.cluster.AdaptiveRefreshTriggeredEvent.*;
 
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ClientOptions;
@@ -65,6 +66,10 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
     private final EventExecutorGroup genericWorkerPool;
 
+    private static final ReentrantLock refreshLock = new ReentrantLock();
+
+    private static final Condition refreshComplete = refreshLock.newCondition();
+
     ClusterTopologyRefreshScheduler(Supplier<ClusterClientOptions> clientOptions, Supplier<Partitions> partitions,
             Supplier<CompletionStage<?>> refreshTopology, ClientResources clientResources) {
 
@@ -94,31 +99,31 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     /**
      * Suspend (cancel) periodic topology refresh.
      */
-    public CompletableFuture<Void> suspendTopologyRefresh() {
-        CompletableFuture<Void> completionFuture = new CompletableFuture<>();
+    public void suspendTopologyRefresh() {
 
         if (clusterTopologyRefreshActivated.compareAndSet(true, false)) {
+
             ScheduledFuture<?> scheduledFuture = clusterTopologyRefreshFuture.get();
 
             try {
-                if (scheduledFuture != null) {
-                    scheduledFuture.cancel(false);
-                    clusterTopologyRefreshFuture.set(null);
-                }
-                completionFuture.complete(null);
+                scheduledFuture.cancel(false);
+                clusterTopologyRefreshFuture.set(null);
             } catch (Exception e) {
                 logger.debug("Could not cancel Cluster topology refresh", e);
-                completionFuture.completeExceptionally(e);
             }
-        } else {
-            completionFuture.complete(null);
         }
-
-        return completionFuture;
     }
 
     public boolean isTopologyRefreshInProgress() {
         return clusterTopologyRefreshTask.get();
+    }
+
+    public ReentrantLock getRefreshLock() {
+        return refreshLock;
+    }
+
+    public Condition getRefreshComplete() {
+        return refreshComplete;
     }
 
     @Override
@@ -332,13 +337,18 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         public void run() {
 
-            if (compareAndSet(false, true)) {
-                doRun();
-                return;
-            }
+            refreshLock.lock();
+            try {
+                if (compareAndSet(false, true)) {
+                    doRun();
+                    return;
+                }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("ClusterTopologyRefreshTask already in progress");
+                if (logger.isDebugEnabled()) {
+                    logger.debug("ClusterTopologyRefreshTask already in progress");
+                }
+            } finally {
+                refreshLock.unlock();
             }
         }
 
@@ -354,7 +364,13 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
                         logger.warn("Cannot refresh Redis Cluster topology", throwable);
                     }
 
-                    set(false);
+                    refreshLock.lock();
+                    try {
+                        set(false);
+                        refreshComplete.signalAll();
+                    } finally {
+                        refreshLock.unlock();
+                    }
                 });
             } catch (Exception e) {
                 logger.warn("Cannot refresh Redis Cluster topology", e);
