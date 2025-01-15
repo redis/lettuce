@@ -933,6 +933,7 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <systemPropertyVariables>
+                        <REDIS_STACK_VERSION>${env.REDIS_STACK_VERSION}</REDIS_STACK_VERSION>
                         <io.netty.eventLoopThreads>4</io.netty.eventLoopThreads>
                     </systemPropertyVariables>
                     <includes>
