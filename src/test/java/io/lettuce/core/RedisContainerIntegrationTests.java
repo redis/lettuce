@@ -26,14 +26,20 @@ public class RedisContainerIntegrationTests {
 
     private static final String REDIS_STACK_CLUSTER = "clustered-stack";
 
+    private static final String REDIS_STACK_VERSION = System.getProperty("REDIS_STACK_VERSION", "8.0-M02");;
+
     private static Exception initializationException;
 
     public static ComposeContainer CLUSTERED_STACK = new ComposeContainer(
-            new File("src/test/resources/docker/docker-compose.yml")).withExposedService(REDIS_STACK_CLUSTER, 36379)
-                    .withExposedService(REDIS_STACK_CLUSTER, 36380).withExposedService(REDIS_STACK_CLUSTER, 36381)
-                    .withExposedService(REDIS_STACK_CLUSTER, 36382).withExposedService(REDIS_STACK_CLUSTER, 36383)
-                    .withExposedService(REDIS_STACK_CLUSTER, 36384).withExposedService(REDIS_STACK_STANDALONE, 6379)
-                    .withLocalCompose(true);
+            new File("src/test/resources/docker/docker-compose.yml"))
+            .withExposedService(REDIS_STACK_CLUSTER, 36379)
+            .withExposedService(REDIS_STACK_CLUSTER, 36380)
+            .withExposedService(REDIS_STACK_CLUSTER, 36381)
+            .withExposedService(REDIS_STACK_STANDALONE, 6379)
+            .withEnv("CLIENT_LIBS_TEST_IMAGE", "redislabs/client-libs-test")
+            .withEnv("REDIS_STACK_VERSION", REDIS_STACK_VERSION)
+            .withPull(false)
+            .withLocalCompose(true);
 
     // Singleton container pattern - start the containers only once
     // See https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/#singleton-containers
@@ -45,7 +51,7 @@ public class RedisContainerIntegrationTests {
         CLUSTERED_STACK.withLogConsumer(REDIS_STACK_STANDALONE, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
 
         CLUSTERED_STACK.waitingFor(REDIS_STACK_CLUSTER,
-                Wait.forLogMessage(".*Background RDB transfer terminated with success.*", 1));
+                Wait.forLogMessage("Cluster created with nodes:.*", 1));
         do {
             try {
                 CLUSTERED_STACK.start();
