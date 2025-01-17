@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>6.5.0.BUILD-SNAPSHOT</version>
+    <version>6.7.0.BUILD-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -61,7 +61,7 @@
         <kotlinx-coroutines.version>1.5.2</kotlinx-coroutines.version>
         <latencyutils.version>2.0.3</latencyutils.version>
         <log4j2-version>2.24.0</log4j2-version>
-        <micrometer.version>1.12.4</micrometer.version>
+        <micrometer.version>1.14.2</micrometer.version>
         <micrometer-tracing.version>1.2.4</micrometer-tracing.version>
         <mockito.version>4.9.0</mockito.version>
         <netty.version>4.1.115.Final</netty.version>
@@ -178,7 +178,23 @@
     </dependencyManagement>
 
     <dependencies>
-
+        <dependency>
+            <groupId>redis.clients.authentication</groupId>
+            <artifactId>redis-authx-core</artifactId>
+            <version>0.1.1-beta1</version>
+        </dependency>
+        <dependency>
+            <groupId>redis.clients.authentication</groupId>
+            <artifactId>redis-authx-entraid</artifactId>
+            <version>0.1.1-beta1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.cdimascio</groupId>
+            <artifactId>dotenv-java</artifactId>
+            <version>2.2.0</version>
+            <scope>test</scope>
+        </dependency>
         <!-- Start of core dependencies -->
 
         <dependency>
@@ -271,7 +287,7 @@
         <dependency>
             <groupId>io.netty.incubator</groupId>
             <artifactId>netty-incubator-transport-native-io_uring</artifactId>
-            <version>0.0.25.Final</version>
+            <version>0.0.26.Final</version>
             <classifier>linux-x86_64</classifier>
             <optional>true</optional>
         </dependency>
@@ -548,7 +564,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.20.1</version>
+            <version>1.20.4</version>
             <scope>test</scope>
         </dependency>
         <dependency>

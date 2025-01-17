@@ -74,6 +74,8 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.publisher.Mono;
 
+import static io.lettuce.core.RedisAuthenticationHandler.createHandler;
+
 /**
  * A scalable and thread-safe <a href="https://redis.io/">Redis</a> cluster client supporting synchronous, asynchronous and
  * reactive execution models. Multiple threads may share one connection. The cluster client handles command routing based on the
@@ -556,6 +558,9 @@ public class RedisClusterClient extends AbstractRedisClient {
         StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
                 getFirstUri().getTimeout(), getClusterClientOptions().getJsonParser());
 
+        connection.setAuthenticationHandler(
+                createHandler(connection, getFirstUri().getCredentialsProvider(), false, getOptions()));
+
         ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
                 () -> new CommandHandler(getClusterClientOptions(), getResources(), endpoint));
@@ -584,6 +589,24 @@ public class RedisClusterClient extends AbstractRedisClient {
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
             PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout, Mono<JsonParser> parser) {
         return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout, parser);
+    }
+
+    /**
+     * Create a new instance of {@link StatefulRedisConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override that method.
+     *
+     * @param channelWriter the channel writer
+     * @param pushHandler the handler for push notifications
+     * @param codec codec
+     * @param timeout default timeout
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisConnectionImpl
+     */
+    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
+            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
+        return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout);
     }
 
     /**
@@ -620,10 +643,13 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         StatefulRedisPubSubConnectionImpl<K, V> connection = new StatefulRedisPubSubConnectionImpl<>(endpoint, writer, codec,
                 getFirstUri().getTimeout());
+        connection.setAuthenticationHandler(
+                createHandler(connection, getFirstUri().getCredentialsProvider(), true, getOptions()));
 
         ConnectionFuture<StatefulRedisPubSubConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
                 getFirstUri(), socketAddressSupplier,
                 () -> new PubSubCommandHandler<>(getClusterClientOptions(), getResources(), codec, endpoint));
+
         return connectionFuture.whenComplete((conn, throwable) -> {
             if (throwable != null) {
                 connection.closeAsync();
@@ -712,6 +738,24 @@ public class RedisClusterClient extends AbstractRedisClient {
         return new StatefulRedisClusterConnectionImpl(channelWriter, pushHandler, codec, timeout, parser);
     }
 
+    /**
+     * Create a new instance of {@link StatefulRedisClusterConnectionImpl} or a subclass.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override that method.
+     *
+     * @param channelWriter the channel writer
+     * @param pushHandler the handler for push notifications
+     * @param codec codec
+     * @param timeout default timeout
+     * @param <K> Key-Type
+     * @param <V> Value Type
+     * @return new instance of StatefulRedisClusterConnectionImpl
+     */
+    protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(
+            RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout) {
+        return new StatefulRedisClusterConnectionImpl(channelWriter, pushHandler, codec, timeout);
+    }
+
     private <T, K, V> Mono<T> connect(Mono<SocketAddress> socketAddressSupplier, DefaultEndpoint endpoint,
             StatefulRedisClusterConnectionImpl<K, V> connection, Supplier<CommandHandler> commandHandlerSupplier) {
 
@@ -772,6 +816,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         clusterWriter.setClusterConnectionProvider(pooledClusterConnectionProvider);
         connection.setPartitions(partitions);
+        connection.setAuthenticationHandler(
+                createHandler(connection, getFirstUri().getCredentialsProvider(), true, getOptions()));
 
         Supplier<CommandHandler> commandHandlerSupplier = () -> new PubSubCommandHandler<>(getClusterClientOptions(),
                 getResources(), codec, endpoint);
@@ -843,6 +889,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         }
 
         state.apply(connectionSettings);
+
         connectionBuilder.connectionInitializer(createHandshake(state));
 
         connectionBuilder.reconnectionListener(new ReconnectEventListener(topologyRefreshScheduler));
@@ -851,6 +898,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         connectionBuilder.clientResources(getResources());
         connectionBuilder.endpoint(endpoint);
         connectionBuilder.commandHandler(commandHandlerSupplier);
+
         connectionBuilder(socketAddressSupplier, connectionBuilder, connection.getConnectionEvents(), connectionSettings);
 
         return connectionBuilder;
