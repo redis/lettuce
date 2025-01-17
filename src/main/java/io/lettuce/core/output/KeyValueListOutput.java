@@ -74,7 +74,7 @@ public class KeyValueListOutput<K, V> extends CommandOutput<K, V, List<KeyValue<
     public void multi(int count) {
 
         if (!initialized) {
-            output = OutputFactory.newList(keys == null ? count / 2 : count);
+            output = OutputFactory.newList(count);
             initialized = true;
         }
     }

@@ -933,6 +933,7 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <systemPropertyVariables>
+                        <REDIS_STACK_VERSION>${env.REDIS_STACK_VERSION}</REDIS_STACK_VERSION>
                         <io.netty.eventLoopThreads>4</io.netty.eventLoopThreads>
                     </systemPropertyVariables>
                     <includes>
@@ -1361,6 +1362,25 @@
                         <configuration>
                             <skip>true</skip>
                             <uniqueVersion>false</uniqueVersion>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>doctests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/examples/reactive/*Example.java</include>
+                                <include>**/examples/async/*Example.java</include>
+                            </includes>
+                            <failIfNoTests>true</failIfNoTests>
                         </configuration>
                     </plugin>
                 </plugins>
