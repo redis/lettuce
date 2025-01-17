@@ -1,10 +1,7 @@
 package io.lettuce.authx;
 
-import io.github.cdimascio.dotenv.Dotenv;
-
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class EntraIdTestContext {
@@ -23,25 +20,22 @@ public class EntraIdTestContext {
 
     private final String clientSecret;
 
-    private final Set<String> redisScopes;
-
-    private static Dotenv dotenv;
-    static {
-        dotenv = Dotenv.configure().directory("src/test/resources").filename(".env.entraid.local").load();
-    }
+    private Set<String> redisScopes;
 
     public static final EntraIdTestContext DEFAULT = new EntraIdTestContext();
 
     private EntraIdTestContext() {
-        clientId = dotenv.get(AZURE_CLIENT_ID, "<client-id>");
-        clientSecret = dotenv.get(AZURE_CLIENT_SECRET, "<client-secret>");
-        authority = dotenv.get(AZURE_AUTHORITY, "https://login.microsoftonline.com/your-tenant-id");
-        String redisScopesEnv = dotenv.get(AZURE_REDIS_SCOPES, "https://redis.azure.com/.default");
-        if (redisScopesEnv != null && !redisScopesEnv.isEmpty()) {
-            this.redisScopes = new HashSet<>(Arrays.asList(redisScopesEnv.split(";")));
-        } else {
-            this.redisScopes = new HashSet<>();
-        }
+        clientId = System.getenv(AZURE_CLIENT_ID);
+        authority = System.getenv(AZURE_AUTHORITY);
+        clientSecret = System.getenv(AZURE_CLIENT_SECRET);
+    }
+
+    public EntraIdTestContext(String clientId, String authority, String clientSecret, Set<String> redisScopes,
+            String userAssignedManagedIdentity) {
+        this.clientId = clientId;
+        this.authority = authority;
+        this.clientSecret = clientSecret;
+        this.redisScopes = redisScopes;
     }
 
     public String getClientId() {
@@ -57,6 +51,10 @@ public class EntraIdTestContext {
     }
 
     public Set<String> getRedisScopes() {
+        if (redisScopes == null) {
+            String redisScopesEnv = System.getenv(AZURE_REDIS_SCOPES);
+            this.redisScopes = new HashSet<>(Arrays.asList(redisScopesEnv.split(";")));
+        }
         return redisScopes;
     }
 

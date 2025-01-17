@@ -10,8 +10,6 @@ import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
-import io.lettuce.core.cluster.RedisClusterClient;
-import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DnsResolver;
@@ -22,7 +20,6 @@ import io.lettuce.test.env.Endpoints.Endpoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import redis.clients.authentication.core.TokenAuthConfig;
@@ -73,12 +70,11 @@ public class EntraIdIntegrationTests {
 
             resources = ClientResources.builder().dnsResolver(DnsResolver.jvmDefault()).build();
 
-            if (standalone != null) {
-                RedisURI uri = RedisURI.create((standalone.getEndpoints().get(0)));
-                uri.setCredentialsProvider(credentialsProvider);
-                client = RedisClient.create(resources, uri);
-                client.setOptions(clientOptions);
-            }
+            RedisURI uri = RedisURI.create((standalone.getEndpoints().get(0)));
+            uri.setCredentialsProvider(credentialsProvider);
+            client = RedisClient.create(resources, uri);
+            client.setOptions(clientOptions);
+
         }
     }
 
