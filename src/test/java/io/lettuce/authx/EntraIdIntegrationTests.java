@@ -70,7 +70,9 @@ public class EntraIdIntegrationTests {
 
             credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenAuthConfig);
 
-            resources = ClientResources.builder().dnsResolver(DnsResolver.jvmDefault()).build();
+            resources = ClientResources.builder()
+                    // .dnsResolver(DnsResolver.jvmDefault())
+                    .build();
 
             RedisURI uri = RedisURI.create((standalone.getEndpoints().get(0)));
             uri.setCredentialsProvider(credentialsProvider);
