@@ -1,0 +1,197 @@
+version: "3.9"
+
+services:
+  # Standalone Redis Servers
+  redis-6479:
+    image: redis:latest
+    container_name: redis-6479
+    command: ["redis-server", "/usr/local/etc/redis/redis-6479.conf"]
+    volumes:
+      - ./redis-standalone/redis-6479.conf:/usr/local/etc/redis/redis-6479.conf
+    ports:
+      - "6479:6479"
+    networks:
+      - redis-network
+
+  redis-6480:
+    image: redis:latest
+    container_name: redis-6480
+    command: ["redis-server", "/usr/local/etc/redis/redis-6480.conf"]
+    volumes:
+      - ./redis-standalone/redis-6480.conf:/usr/local/etc/redis/redis-6480.conf
+    ports:
+      - "6480:6480"
+    networks:
+      - redis-network
+
+  redis-6481:
+    image: redis:latest
+    container_name: redis-6481
+    command: ["redis-server", "/usr/local/etc/redis/redis-6481.conf"]
+    volumes:
+      - ./redis-standalone/redis-6481.conf:/usr/local/etc/redis/redis-6481.conf
+    ports:
+      - "6481:6481"
+    networks:
+      - redis-network
+
+  redis-6482:
+    image: redis:latest
+    container_name: redis-6482
+    command: ["redis-server", "/usr/local/etc/redis/redis-6482.conf"]
+    volumes:
+      - ./redis-standalone/redis-6482.conf:/usr/local/etc/redis/redis-6482.conf
+    ports:
+      - "6482:6482"
+    networks:
+      - redis-network
+
+  redis-6483:
+    image: redis:latest
+    container_name: redis-6483
+    command: ["redis-server", "/usr/local/etc/redis/redis-6483.conf"]
+    volumes:
+      - ./redis-standalone/redis-6483.conf:/usr/local/etc/redis/redis-6483.conf
+    ports:
+      - "6483:6483"
+    networks:
+      - redis-network
+
+  redis-6484:
+    image: redis:latest
+    container_name: redis-6484
+    command: ["redis-server", "/usr/local/etc/redis/redis-6484.conf"]
+    volumes:
+      - ./redis-standalone/redis-6484.conf:/usr/local/etc/redis/redis-6484.conf
+    ports:
+      - "6484:6484"
+    networks:
+      - redis-network
+
+  # Sentinel Nodes
+  sentinel-26379:
+    image: redis:latest
+    container_name: sentinel-26379
+    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel-26379.conf"]
+    volumes:
+      - ./redis-sentinel/sentinel-26379.conf:/usr/local/etc/redis/sentinel-26379.conf
+    ports:
+      - "26379:26379"
+    networks:
+      - redis-network
+
+  sentinel-26380:
+    image: redis:latest
+    container_name: sentinel-26380
+    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel-26380.conf"]
+    volumes:
+      - ./redis-sentinel/sentinel-26380.conf:/usr/local/etc/redis/sentinel-26380.conf
+    ports:
+      - "26380:26380"
+    networks:
+      - redis-network
+
+  sentinel-26381:
+    image: redis:latest
+    container_name: sentinel-26381
+    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel-26381.conf"]
+    volumes:
+      - ./redis-sentinel/sentinel-26381.conf:/usr/local/etc/redis/sentinel-26381.conf
+    ports:
+      - "26381:26381"
+    networks:
+      - redis-network
+
+  # SSL Cluster
+  ssl-cluster-node-7479:
+    image: redis:latest
+    container_name: ssl-cluster-node-7479
+    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7479.conf"]
+    volumes:
+      - ./redis-ssl-cluster/cluster-node-7479.conf:/usr/local/etc/redis/cluster-node-7479.conf
+    ports:
+      - "7479:7479"
+    networks:
+      - redis-network
+
+  ssl-cluster-node-7480:
+    image: redis:latest
+    container_name: ssl-cluster-node-7480
+    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7480.conf"]
+    volumes:
+      - ./redis-ssl-cluster/cluster-node-7480.conf:/usr/local/etc/redis/cluster-node-7480.conf
+    ports:
+      - "7480:7480"
+    networks:
+      - redis-network
+
+  ssl-cluster-node-7481:
+    image: redis:latest
+    container_name: ssl-cluster-node-7481
+    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7481.conf"]
+    volumes:
+      - ./redis-ssl-cluster/cluster-node-7481.conf:/usr/local/etc/redis/cluster-node-7481.conf
+    ports:
+      - "7481:7481"
+    networks:
+      - redis-network
+
+  # Non-SSL Cluster
+  cluster-node-7379:
+    image: redis:latest
+    container_name: cluster-node-7379
+    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7379.conf"]
+    volumes:
+      - ./redis-cluster/cluster-node-7379.conf:/usr/local/etc/redis/cluster-node-7379.conf
+    ports:
+      - "7379:7379"
+    networks:
+      - redis-network
+
+  cluster-node-7380:
+    image: redis:latest
+    container_name: cluster-node-7380
+    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7380.conf"]
+    volumes:
+      - ./redis-cluster/cluster-node-7380.conf:/usr/local/etc/redis/cluster-node-7380.conf
+    ports:
+      - "7380:7380"
+    networks:
+      - redis-network
+
+  cluster-node-7381:
+    image: redis:latest
+    container_name: cluster-node-7381
+    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7381.conf"]
+    volumes:
+      - ./redis-cluster/cluster-node-7381.conf:/usr/local/etc/redis/cluster-node-7381.conf
+    ports:
+      - "7381:7381"
+    networks:
+      - redis-network
+
+  cluster-node-7382:
+    image: redis:latest
+    container_name: cluster-node-7382
+    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7382.conf"]
+    volumes:
+      - ./redis-cluster/cluster-node-7382.conf:/usr/local/etc/redis/cluster-node-7382.conf
+    ports:
+      - "7382:7382"
+    networks:
+      - redis-network
+
+  cluster-node-7383:
+    image: redis:latest
+    container_name: cluster-node-7383
+    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7383.conf"]
+    volumes:
+      - ./redis-cluster/cluster-node-7383.conf:/usr/local/etc/redis/cluster-node-7383.conf
+    ports:
+      - "7383:7383"
+    networks:
+      - redis-network
+
+networks:
+  redis-network:
+    driver: bridge
