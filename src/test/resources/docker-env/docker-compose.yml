@@ -1,68 +1,66 @@
-version: "3.9"
-
 services:
   # Standalone Redis Servers
   redis-6479:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: redis-6479
-    command: ["redis-server", "/usr/local/etc/redis/redis-6479.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-standalone/redis-6479.conf:/usr/local/etc/redis/redis-6479.conf
+      - ./redis-6479:/work
     ports:
       - "6479:6479"
     networks:
       - redis-network
 
   redis-6480:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: redis-6480
-    command: ["redis-server", "/usr/local/etc/redis/redis-6480.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-standalone/redis-6480.conf:/usr/local/etc/redis/redis-6480.conf
+      - ./redis-6480:/work
     ports:
       - "6480:6480"
     networks:
       - redis-network
 
   redis-6481:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: redis-6481
-    command: ["redis-server", "/usr/local/etc/redis/redis-6481.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-standalone/redis-6481.conf:/usr/local/etc/redis/redis-6481.conf
+      - ./redis-6481:/work
     ports:
       - "6481:6481"
     networks:
       - redis-network
 
   redis-6482:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: redis-6482
-    command: ["redis-server", "/usr/local/etc/redis/redis-6482.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-standalone/redis-6482.conf:/usr/local/etc/redis/redis-6482.conf
+      - ./redis-6482:/work
     ports:
       - "6482:6482"
     networks:
       - redis-network
 
   redis-6483:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: redis-6483
-    command: ["redis-server", "/usr/local/etc/redis/redis-6483.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-standalone/redis-6483.conf:/usr/local/etc/redis/redis-6483.conf
+      - ./redis-6483:/work
     ports:
       - "6483:6483"
     networks:
       - redis-network
 
   redis-6484:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: redis-6484
-    command: ["redis-server", "/usr/local/etc/redis/redis-6484.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-standalone/redis-6484.conf:/usr/local/etc/redis/redis-6484.conf
+      - ./redis-6484:/work
     ports:
       - "6484:6484"
     networks:
@@ -70,33 +68,33 @@ services:
 
   # Sentinel Nodes
   sentinel-26379:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: sentinel-26379
-    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel-26379.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-sentinel/sentinel-26379.conf:/usr/local/etc/redis/sentinel-26379.conf
+      - ./sentinel-26379:/work
     ports:
       - "26379:26379"
     networks:
       - redis-network
 
   sentinel-26380:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: sentinel-26380
-    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel-26380.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-sentinel/sentinel-26380.conf:/usr/local/etc/redis/sentinel-26380.conf
+      - ./sentinel-26380:/work
     ports:
       - "26380:26380"
     networks:
       - redis-network
 
   sentinel-26381:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: sentinel-26381
-    command: ["redis-sentinel", "/usr/local/etc/redis/sentinel-26381.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-sentinel/sentinel-26381.conf:/usr/local/etc/redis/sentinel-26381.conf
+      - ./sentinel-26381:/work
     ports:
       - "26381:26381"
     networks:
@@ -104,33 +102,33 @@ services:
 
   # SSL Cluster
   ssl-cluster-node-7479:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: ssl-cluster-node-7479
-    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7479.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-ssl-cluster/cluster-node-7479.conf:/usr/local/etc/redis/cluster-node-7479.conf
+      - ./ssl-test-cluster/ssl-node-7479:/work
     ports:
       - "7479:7479"
     networks:
       - redis-network
 
   ssl-cluster-node-7480:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: ssl-cluster-node-7480
-    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7480.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-ssl-cluster/cluster-node-7480.conf:/usr/local/etc/redis/cluster-node-7480.conf
+      - ./ssl-test-cluster/ssl-node-7480:/work
     ports:
       - "7480:7480"
     networks:
       - redis-network
 
   ssl-cluster-node-7481:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: ssl-cluster-node-7481
-    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7481.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-ssl-cluster/cluster-node-7481.conf:/usr/local/etc/redis/cluster-node-7481.conf
+      - ./ssl-test-cluster/ssl-node-7481:/work
     ports:
       - "7481:7481"
     networks:
@@ -138,55 +136,55 @@ services:
 
   # Non-SSL Cluster
   cluster-node-7379:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7379
-    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7379.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-cluster/cluster-node-7379.conf:/usr/local/etc/redis/cluster-node-7379.conf
+      - ./test-cluster/node-7379:/work
     ports:
       - "7379:7379"
     networks:
       - redis-network
 
   cluster-node-7380:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7380
-    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7380.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-cluster/cluster-node-7380.conf:/usr/local/etc/redis/cluster-node-7380.conf
+      - ./test-cluster/node-7380:/work
     ports:
       - "7380:7380"
     networks:
       - redis-network
 
   cluster-node-7381:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7381
-    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7381.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-cluster/cluster-node-7381.conf:/usr/local/etc/redis/cluster-node-7381.conf
+      - ./test-cluster/node-7381:/work
     ports:
       - "7381:7381"
     networks:
       - redis-network
 
   cluster-node-7382:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7382
-    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7382.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-cluster/cluster-node-7382.conf:/usr/local/etc/redis/cluster-node-7382.conf
+      - ./test-cluster/node-7382:/work
     ports:
       - "7382:7382"
     networks:
       - redis-network
 
   cluster-node-7383:
-    image: redis:latest
+    image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7383
-    command: ["redis-server", "/usr/local/etc/redis/cluster-node-7383.conf"]
+    command: ["redis-server", "/work/redis.conf"]
     volumes:
-      - ./redis-cluster/cluster-node-7383.conf:/usr/local/etc/redis/cluster-node-7383.conf
+      - ./test-cluster/node-7383:/work
     ports:
       - "7383:7383"
     networks:
