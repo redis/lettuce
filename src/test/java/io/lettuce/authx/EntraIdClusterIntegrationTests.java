@@ -1,22 +1,17 @@
 package io.lettuce.authx;
 
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.TimeoutOptions;
-import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
+import io.lettuce.core.cluster.ClusterTopologyRefreshOptions;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
+import io.lettuce.core.cluster.api.sync.RedisAdvancedClusterCommands;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DnsResolver;
-import io.lettuce.core.support.PubSubTestListener;
-import io.lettuce.test.Wait;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
 import org.junit.jupiter.api.AfterAll;
@@ -28,10 +23,12 @@ import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.entraid.EntraIDTokenAuthConfigBuilder;
 
 import java.time.Duration;
-import java.util.concurrent.CountDownLatch;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.lettuce.TestTags.ENTRA_ID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,6 +54,7 @@ public class EntraIdClusterIntegrationTests {
         if (cluster != null) {
             Assumptions.assumeTrue(testCtx.getClientId() != null && testCtx.getClientSecret() != null,
                     "Skipping EntraID tests. Azure AD credentials not provided!");
+
             // Configure timeout options to assure fast test failover
             ClusterClientOptions clientOptions = ClusterClientOptions.builder()
                     .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build())
@@ -70,11 +68,17 @@ public class EntraIdClusterIntegrationTests {
 
             credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenAuthConfig);
 
-            resources = ClientResources.builder().dnsResolver(DnsResolver.jvmDefault()).build();
+            resources = ClientResources.builder()
+                    // .dnsResolver(DnsResolver.jvmDefault())
+                    .build();
 
-            RedisURI clusterUri = RedisURI.create(cluster.getEndpoints().get(0));
-            clusterUri.setCredentialsProvider(credentialsProvider);
-            clusterClient = RedisClusterClient.create(resources, clusterUri);
+            List<RedisURI> seedURI = new ArrayList<>();
+            for (String addr : cluster.getRawEndpoints().get(0).getAddr()) {
+                seedURI.add(RedisURI.builder().withAuthentication(credentialsProvider).withHost(addr)
+                        .withPort(cluster.getRawEndpoints().get(0).getPort()).build());
+            }
+
+            clusterClient = RedisClusterClient.create(resources, seedURI);
             clusterClient.setOptions(clientOptions);
         }
     }
@@ -95,17 +99,42 @@ public class EntraIdClusterIntegrationTests {
     public void clusterWithSecret_azureServicePrincipalIntegrationTest() throws ExecutionException, InterruptedException {
         assumeTrue(cluster != null, "Skipping EntraID tests. Redis host with enabled EntraId not provided!");
 
-        try (StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
-            assertThat(connection.sync().aclWhoami()).isEqualTo(cluster.getUsername());
-            assertThat(connection.async().aclWhoami().get()).isEqualTo(cluster.getUsername());
-            assertThat(connection.reactive().aclWhoami().block()).isEqualTo(cluster.getUsername());
+        try (StatefulRedisClusterConnection<String, String> defaultConnection = clusterClient.connect()) {
+            RedisAdvancedClusterCommands<String, String> sync = defaultConnection.sync();
+            String keyPrefix = UUID.randomUUID().toString();
+            Map<String, String> mset = prepareMset(keyPrefix);
 
-            connection.getPartitions().forEach((partition) -> {
-                try (StatefulRedisConnection<?, ?> nodeConnection = connection.getConnection(partition.getNodeId())) {
-                    assertThat(nodeConnection.sync().aclWhoami()).isEqualTo(cluster.getUsername());
-                }
+            assertThat(sync.mset(mset)).isEqualTo("OK");
+
+            for (String mykey : mset.keySet()) {
+                assertThat(defaultConnection.sync().get(mykey)).isEqualTo("value-" + mykey);
+                assertThat(defaultConnection.async().get(mykey).get()).isEqualTo("value-" + mykey);
+                assertThat(defaultConnection.reactive().get(mykey).block()).isEqualTo("value-" + mykey);
+            }
+            assertThat(sync.del(mset.keySet().toArray(new String[0]))).isEqualTo(mset.keySet().size());
+
+            // Test connections to each node
+            defaultConnection.getPartitions().forEach((partition) -> {
+                StatefulRedisConnection<?, ?> nodeConnection = defaultConnection.getConnection(partition.getNodeId());
+                assertThat(nodeConnection.sync().ping()).isEqualTo("PONG");
+            });
+
+            defaultConnection.getPartitions().forEach((partition) -> {
+                StatefulRedisConnection<?, ?> nodeConnection = defaultConnection.getConnection(partition.getUri().getHost(),
+                        partition.getUri().getPort());
+                assertThat(nodeConnection.sync().ping()).isEqualTo("PONG");
             });
         }
+    }
+
+    Map<String, String> prepareMset(String keyPrefix) {
+        Map<String, String> mset = new HashMap<>();
+        for (char c = 'a'; c <= 'z'; c++) {
+            String keySuffix = new String(new char[] { c, c, c }); // Generates "aaa", "bbb", etc.
+            String key = String.format("%s-{%s}", keyPrefix, keySuffix);
+            mset.put(key, "value-" + key);
+        }
+        return mset;
     }
 
 }
