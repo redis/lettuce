@@ -9,6 +9,7 @@ import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.resource.ClientResources;
@@ -26,6 +27,7 @@ import redis.clients.authentication.core.TokenAuthConfig;
 import redis.clients.authentication.entraid.EntraIDTokenAuthConfigBuilder;
 
 import java.time.Duration;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -95,9 +97,13 @@ public class EntraIdIntegrationTests {
         assumeTrue(standalone != null, "Skipping EntraID tests. Redis host with enabled EntraId not provided!");
 
         try (StatefulRedisConnection<String, String> connection = client.connect()) {
-            assertThat(connection.sync().aclWhoami()).isEqualTo(standalone.getUsername());
-            assertThat(connection.async().aclWhoami().get()).isEqualTo(standalone.getUsername());
-            assertThat(connection.reactive().aclWhoami().block()).isEqualTo(standalone.getUsername());
+            RedisCommands<String, String> sync = connection.sync();
+            String key = UUID.randomUUID().toString();
+            sync.set(key, "value");
+            assertThat(connection.sync().get(key)).isEqualTo("value");
+            assertThat(connection.async().get(key).get()).isEqualTo("value");
+            assertThat(connection.reactive().get(key).block()).isEqualTo("value");
+            sync.del(key);
         }
     }
 
