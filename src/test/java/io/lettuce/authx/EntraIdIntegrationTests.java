@@ -12,8 +12,6 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
-import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.resource.DnsResolver;
 import io.lettuce.core.support.PubSubTestListener;
 import io.lettuce.test.Wait;
 import io.lettuce.test.env.Endpoints;
@@ -47,8 +45,6 @@ public class EntraIdIntegrationTests {
 
     private static RedisClient client;
 
-    private static ClientResources resources;
-
     private static Endpoint standalone;
 
     @BeforeAll
@@ -70,13 +66,9 @@ public class EntraIdIntegrationTests {
 
             credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenAuthConfig);
 
-            resources = ClientResources.builder()
-                    // .dnsResolver(DnsResolver.jvmDefault())
-                    .build();
-
             RedisURI uri = RedisURI.create((standalone.getEndpoints().get(0)));
             uri.setCredentialsProvider(credentialsProvider);
-            client = RedisClient.create(resources, uri);
+            client = RedisClient.create(uri);
             client.setOptions(clientOptions);
 
         }
@@ -86,9 +78,6 @@ public class EntraIdIntegrationTests {
     public static void cleanup() {
         if (credentialsProvider != null) {
             credentialsProvider.close();
-        }
-        if (resources != null) {
-            resources.shutdown();
         }
     }
 
