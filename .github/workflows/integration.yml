@@ -38,7 +38,7 @@ jobs:
             "unstable") redis_branch="unstable" stack_version="8.0-M02" ;;
             "8.0") redis_branch="8.0" stack_version="8.0-M02" ;;
             "7.4") redis_branch="7.4" stack_version="rs-7.4.0-v1" ;;
-            "7.2") redis_branch="7.2" stack_version="rs-7.2.0-v137" ;;
+            "7.2") redis_branch="7.2" stack_version="rs-7.2.0-v13" ;;
             *) echo "Unsupported version: ${{ matrix.redis_version }}" && exit 1 ;;
           esac
           # Save them as outputs for later use
