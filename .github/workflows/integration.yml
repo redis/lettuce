@@ -35,7 +35,7 @@ jobs:
         run: |
           # Map requested version to github or  tag
           case "${{ matrix.redis_version }}" in
-            "unstable") redis_branch="unstable" stack_version="8.0-M02" ;;
+            "unstable") redis_branch="unstable" stack_version="8.0-M03-pre" ;;
             "8.0") redis_branch="8.0" stack_version="8.0-M02" ;;
             "7.4") redis_branch="7.4" stack_version="rs-7.4.0-v1" ;;
             "7.2") redis_branch="7.2" stack_version="rs-7.2.0-v13" ;;
