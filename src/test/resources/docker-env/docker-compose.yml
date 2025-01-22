@@ -1,66 +1,60 @@
 services:
   # Standalone Redis Servers
-  redis-6479:
+  redis-standalone-1:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: redis-6479
-    command: ["redis-server", "/work/redis.conf"]
+    container_name: redis-standalone-1
     volumes:
-      - ./redis-6479:/work
+      - ./redis-standalone-1/config:/redis/config:r
     ports:
       - "6479:6479"
     networks:
       - redis-network
 
-  redis-6480:
+  redis-standalone-2:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: redis-6480
-    command: ["redis-server", "/work/redis.conf"]
+    container_name: redis-standalone-2
     volumes:
-      - ./redis-6480:/work
+      - ./redis-standalone-2/config:/redis/config:r
     ports:
       - "6480:6480"
     networks:
       - redis-network
 
-  redis-6481:
+  redis-standalone-3:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: redis-6481
-    command: ["redis-server", "/work/redis.conf"]
+    container_name: redis-standalone-3
     volumes:
-      - ./redis-6481:/work
+      - ./redis-standalone-3/config:/redis/config:r
     ports:
       - "6481:6481"
     networks:
       - redis-network
 
-  redis-6482:
+  redis-standalone-4:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: redis-6482
-    command: ["redis-server", "/work/redis.conf"]
+    container_name: redis-standalone-4
     volumes:
-      - ./redis-6482:/work
+      - ./redis-standalone-4/config:/redis/config:r
     ports:
       - "6482:6482"
     networks:
       - redis-network
 
-  redis-6483:
+  redis-standalone-sentinel-controlled:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: redis-6483
-    command: ["redis-server", "/work/redis.conf"]
+    container_name: redis-standalone-sentinel-controlled
     volumes:
-      - ./redis-6483:/work
+      - ./redis-standalone-sentinel-controlled/config:/redis/config:r
     ports:
       - "6483:6483"
     networks:
       - redis-network
 
-  redis-6484:
+  redis-standalone-5:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: redis-6484
-    command: ["redis-server", "/work/redis.conf"]
+    container_name: redis-standalone-5
     volumes:
-      - ./redis-6484:/work
+      - ./redis-standalone-5/config:/redis/config:r
     ports:
       - "6484:6484"
     networks:
