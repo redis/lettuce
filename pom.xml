@@ -189,12 +189,6 @@
             <version>0.1.1-beta1</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>io.github.cdimascio</groupId>
-            <artifactId>dotenv-java</artifactId>
-            <version>2.2.0</version>
-            <scope>test</scope>
-        </dependency>
         <!-- Start of core dependencies -->
 
         <dependency>
@@ -1043,6 +1037,38 @@
 
         <profile>
             <id>ci</id>
+        </profile>
+        <profile>
+            <id>entraid-it</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                           <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <groups>entraid</groups>
+                            <skipITs>false</skipITs>
+                            <includes>
+                                <include>**/*IntegrationTests</include>
+                            </includes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
         <profile>
