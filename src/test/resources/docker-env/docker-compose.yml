@@ -64,7 +64,6 @@ services:
   sentinel-26379:
     image: redislabs/client-libs-test:8.0-M02
     container_name: sentinel-26379
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./sentinel-26379:/work
     ports:
