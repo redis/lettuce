@@ -21,16 +21,11 @@ package io.lettuce.core.commands;
 
 import io.lettuce.core.AclCategory;
 import io.lettuce.core.AclSetuserArgs;
-import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.Command;
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -43,7 +38,6 @@ import java.util.Arrays;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Integration tests for ACL commands with Redis modules since Redis 8.0.
