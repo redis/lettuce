@@ -61,115 +61,67 @@ services:
       - redis-network
 
   # Sentinel Nodes
-  sentinel-26379:
+  sentinel-1:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: sentinel-26379
+    container_name: sentinel-1
     volumes:
-      - ./sentinel-26379:/work
+      - ./sentinel-1/config:/redis/config:r
     ports:
       - "26379:26379"
     networks:
       - redis-network
 
-  sentinel-26380:
+  sentinel-2:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: sentinel-26380
+    container_name: sentinel-2
     volumes:
-      - ./sentinel-26380:/work
+      - ./sentinel-2/config:/redis/config:r
     ports:
       - "26380:26380"
     networks:
       - redis-network
 
-  sentinel-26381:
+  sentinel-3:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: sentinel-26381
+    container_name: sentinel-3
     volumes:
-      - ./sentinel-26381:/work
+      - ./sentinel-3/config:/redis/config:r
     ports:
       - "26381:26381"
     networks:
       - redis-network
 
-  # SSL Cluster
-  ssl-cluster-node-7479:
+  ssl-test-cluster:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: ssl-cluster-node-7479
+    container_name: ssl-test-cluster
+    environment:
+      - REDIS_CLUSTER=yes
     volumes:
-      - ./ssl-test-cluster/ssl-node-7479:/work
+      - ./ssl-test-cluster/config:/redis/config:r
     ports:
       - "7479:7479"
-    networks:
-      - redis-network
-
-  ssl-cluster-node-7480:
-    image: redislabs/client-libs-test:8.0-M02
-    container_name: ssl-cluster-node-7480
-    volumes:
-      - ./ssl-test-cluster/ssl-node-7480:/work
-    ports:
       - "7480:7480"
-    networks:
-      - redis-network
-
-  ssl-cluster-node-7481:
-    image: redislabs/client-libs-test:8.0-M02
-    container_name: ssl-cluster-node-7481
-    volumes:
-      - ./ssl-test-cluster/ssl-node-7481:/work
-    ports:
       - "7481:7481"
     networks:
       - redis-network
 
   # Non-SSL Cluster
-  cluster-node-7379:
+  test-cluster:
     image: redislabs/client-libs-test:8.0-M02
-    container_name: cluster-node-7379
+    container_name: test-cluster
+    environment:
+      - REDIS_CLUSTER=yes
     volumes:
-      - ./test-cluster/node-7379:/work
+      - ./test-cluster/config:/redis/config:r
     ports:
       - "7379:7379"
-    networks:
-      - redis-network
-
-  cluster-node-7380:
-    image: redislabs/client-libs-test:8.0-M02
-    container_name: cluster-node-7380
-    volumes:
-      - ./test-cluster/node-7380:/work
-    ports:
       - "7380:7380"
-    networks:
-      - redis-network
-
-  cluster-node-7381:
-    image: redislabs/client-libs-test:8.0-M02
-    container_name: cluster-node-7381
-    volumes:
-      - ./test-cluster/node-7381:/work
-    ports:
       - "7381:7381"
-    networks:
-      - redis-network
-
-  cluster-node-7382:
-    image: redislabs/client-libs-test:8.0-M02
-    container_name: cluster-node-7382
-    volumes:
-      - ./test-cluster/node-7382:/work
-    ports:
       - "7382:7382"
-    networks:
-      - redis-network
-
-  cluster-node-7383:
-    image: redislabs/client-libs-test:8.0-M02
-    container_name: cluster-node-7383
-    volumes:
-      - ./test-cluster/node-7383:/work
-    ports:
       - "7383:7383"
+      - "7384:7384"
+      - "7385:7385"
+      - "7582:7582"
     networks:
       - redis-network
 
