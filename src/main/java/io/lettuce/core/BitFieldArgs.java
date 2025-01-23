@@ -70,7 +70,7 @@ public class BitFieldArgs implements CompositeArgument {
          * Create a new {@code GET} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@code null}.
-         * @param offset bitfield offset
+         * @param offset bitfield offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
          * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
          */
         public static BitFieldArgs get(BitFieldType bitFieldType, int offset) {
@@ -93,7 +93,7 @@ public class BitFieldArgs implements CompositeArgument {
          * Create a new {@code SET} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@code null}.
-         * @param offset bitfield offset
+         * @param offset bitfield offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
          * @param value the value
          * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
          */
@@ -118,7 +118,7 @@ public class BitFieldArgs implements CompositeArgument {
          * Create a new {@code INCRBY} subcommand.
          *
          * @param bitFieldType the bit field type, must not be {@code null}.
-         * @param offset bitfield offset
+         * @param offset bitfield offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
          * @param value the value
          * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value} .
          */
@@ -177,7 +177,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Creates a new {@link Offset} for the given {@code offset}.
      *
-     * @param offset zero-based offset.
+     * @param offset zero-based offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
      * @return the {@link Offset}.
      * @since 4.3
      */
@@ -233,7 +233,7 @@ public class BitFieldArgs implements CompositeArgument {
      * Adds a new {@code GET} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@code null}.
-     * @param offset bitfield offset
+     * @param offset bitfield offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
      * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      */
     public BitFieldArgs get(BitFieldType bitFieldType, int offset) {
@@ -258,7 +258,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code GET} subcommand using the field type of the previous command.
      *
-     * @param offset bitfield offset
+     * @param offset bitfield offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
      * @return a new {@code GET} subcommand for the given {@code bitFieldType} and {@code offset}.
      * @throws IllegalStateException if no previous field type was found
      */
@@ -291,7 +291,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code SET} subcommand using the field type of the previous command.
      *
-     * @param offset bitfield offset
+     * @param offset bitfield offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
      * @param value the value
      * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
@@ -304,7 +304,7 @@ public class BitFieldArgs implements CompositeArgument {
      * Adds a new {@code SET} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@code null}.
-     * @param offset bitfield offset
+     * @param offset bitfield offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
      * @param value the value
      * @return a new {@code SET} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
@@ -353,7 +353,7 @@ public class BitFieldArgs implements CompositeArgument {
     /**
      * Adds a new {@code INCRBY} subcommand using the field type of the previous command.
      *
-     * @param offset bitfield offset
+     * @param offset bitfield offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
      * @param value the value
      * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      * @throws IllegalStateException if no previous field type was found
@@ -366,7 +366,7 @@ public class BitFieldArgs implements CompositeArgument {
      * Adds a new {@code INCRBY} subcommand.
      *
      * @param bitFieldType the bit field type, must not be {@code null}.
-     * @param offset bitfield offset
+     * @param offset bitfield offset, supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}.
      * @param value the value
      * @return a new {@code INCRBY} subcommand for the given {@code bitFieldType}, {@code offset} and {@code value}.
      */
@@ -432,14 +432,13 @@ public class BitFieldArgs implements CompositeArgument {
 
         private final boolean bitOffset;
 
-        private final long offset;
+        private final int offset;
 
         private final long value;
 
         private Set(BitFieldType bitFieldType, boolean bitOffset, int offset, long value) {
 
             LettuceAssert.notNull(bitFieldType, "BitFieldType must not be null");
-            LettuceAssert.isTrue(offset > -1, "Offset must be greater or equal to 0");
 
             this.bitFieldType = bitFieldType;
             this.bitOffset = bitOffset;
@@ -453,9 +452,9 @@ public class BitFieldArgs implements CompositeArgument {
             args.add(CommandType.SET).add(bitFieldType.asString());
 
             if (bitOffset) {
-                args.add("#" + offset);
+                args.add("#" + Integer.toUnsignedString(offset));
             } else {
-                args.add(offset);
+                args.add(Integer.toUnsignedString(offset));
             }
 
             args.add(value);
@@ -477,7 +476,6 @@ public class BitFieldArgs implements CompositeArgument {
         private Get(BitFieldType bitFieldType, boolean bitOffset, int offset) {
 
             LettuceAssert.notNull(bitFieldType, "BitFieldType must not be null");
-            LettuceAssert.isTrue(offset > -1, "Offset must be greater or equal to 0");
 
             this.bitFieldType = bitFieldType;
             this.bitOffset = bitOffset;
@@ -490,9 +488,9 @@ public class BitFieldArgs implements CompositeArgument {
             args.add(CommandType.GET).add(bitFieldType.asString());
 
             if (bitOffset) {
-                args.add("#" + offset);
+                args.add("#" + Integer.toUnsignedString(offset));
             } else {
-                args.add(offset);
+                args.add(Integer.toUnsignedString(offset));
             }
         }
 
@@ -507,14 +505,13 @@ public class BitFieldArgs implements CompositeArgument {
 
         private final boolean bitOffset;
 
-        private final long offset;
+        private final int offset;
 
         private final long value;
 
         private IncrBy(BitFieldType bitFieldType, boolean offsetWidthMultiplier, int offset, long value) {
 
             LettuceAssert.notNull(bitFieldType, "BitFieldType must not be null");
-            LettuceAssert.isTrue(offset > -1, "Offset must be greater or equal to 0");
 
             this.bitFieldType = bitFieldType;
             this.bitOffset = offsetWidthMultiplier;
@@ -528,9 +525,9 @@ public class BitFieldArgs implements CompositeArgument {
             args.add(CommandType.INCRBY).add(bitFieldType.asString());
 
             if (bitOffset) {
-                args.add("#" + offset);
+                args.add("#" + Integer.toUnsignedString(offset));
             } else {
-                args.add(offset);
+                args.add(Integer.toUnsignedString(offset));
             }
 
             args.add(value);
@@ -646,8 +643,8 @@ public class BitFieldArgs implements CompositeArgument {
     }
 
     /**
-     * Represents a bit field offset. See also <a href="https://redis.io/commands/bitfield#bits-and-positional-offsets">Bits and
-     * positional offsets</a>
+     * Represents a bit field offset. Offset supports up to {@code 2^32-1} using {@link Integer#toUnsignedString(int)}. See also
+     * <a href="https://redis.io/commands/bitfield#bits-and-positional-offsets">Bits and positional offsets</a>
      *
      * @since 4.3
      */
@@ -681,7 +678,7 @@ public class BitFieldArgs implements CompositeArgument {
 
         @Override
         public String toString() {
-            return (multiplyByTypeWidth ? "#" : "") + offset;
+            return (multiplyByTypeWidth ? "#" : "") + Integer.toUnsignedString(offset);
         }
 
     }

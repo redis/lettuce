@@ -76,6 +76,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      *
      * @param connection the stateful connection.
      * @param codec Codec used to encode/decode keys and values.
+     * @param parser the implementation of the {@link JsonParser} to use
      * @deprecated since 5.2, use
      *             {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
      */
@@ -91,10 +92,37 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      *
      * @param connection the stateful connection.
      * @param codec Codec used to encode/decode keys and values.
+     * @deprecated since 5.2, use
+     *             {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
+     */
+    @Deprecated
+    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection,
+            RedisCodec<K, V> codec) {
+        super(connection, codec);
+        this.codec = codec;
+    }
+
+    /**
+     * Initialize a new connection.
+     *
+     * @param connection the stateful connection.
+     * @param codec Codec used to encode/decode keys and values.
+     * @param parser the implementation of the {@link JsonParser} to use
      */
     public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec,
             Mono<JsonParser> parser) {
         super(connection, codec, parser);
+        this.codec = codec;
+    }
+
+    /**
+     * Initialize a new connection.
+     *
+     * @param connection the stateful connection.
+     * @param codec Codec used to encode/decode keys and values.
+     */
+    public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec) {
+        super(connection, codec);
         this.codec = codec;
     }
 
@@ -256,7 +284,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public Flux<KeyValue<K, V>> mget(Iterable<K> keys) {
-
         List<K> keyList = LettuceLists.newList(keys);
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, keyList);
 
@@ -264,37 +291,25 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
             return super.mget(keyList);
         }
 
-        List<Publisher<KeyValue<K, V>>> publishers = new ArrayList<>();
+        List<Publisher<KeyValue<K, V>>> publishers = partitioned.values().stream().map(super::mget)
+                .collect(Collectors.toList());
 
-        for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
-            publishers.add(super.mget(entry.getValue()));
-        }
-
-        Flux<KeyValue<K, V>> fluxes = Flux.mergeSequential(publishers);
-
-        Mono<List<KeyValue<K, V>>> map = fluxes.collectList().map(vs -> {
-
-            KeyValue<K, V>[] values = new KeyValue[vs.size()];
+        return Flux.mergeSequential(publishers).collectList().map(results -> {
+            KeyValue<K, V>[] values = new KeyValue[keyList.size()];
             int offset = 0;
-            for (Map.Entry<Integer, List<K>> entry : partitioned.entrySet()) {
 
+            for (List<K> partitionKeys : partitioned.values()) {
                 for (int i = 0; i < keyList.size(); i++) {
-
-                    int index = entry.getValue().indexOf(keyList.get(i));
-                    if (index == -1) {
-                        continue;
+                    int index = partitionKeys.indexOf(keyList.get(i));
+                    if (index != -1) {
+                        values[i] = results.get(offset + index);
                     }
-
-                    values[i] = vs.get(offset + index);
                 }
-
-                offset += entry.getValue().size();
+                offset += partitionKeys.size();
             }
 
             return Arrays.asList(values);
-        });
-
-        return map.flatMapIterable(keyValues -> keyValues);
+        }).flatMapMany(Flux::fromIterable);
     }
 
     @Override

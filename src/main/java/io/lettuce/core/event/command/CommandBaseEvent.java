@@ -32,9 +32,7 @@ public abstract class CommandBaseEvent {
      * @return shared context.
      */
     public Map<String, Object> getContext() {
-        synchronized (this) {
-            return context;
-        }
+        return context;
     }
 
     @Override

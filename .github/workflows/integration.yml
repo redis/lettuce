@@ -15,6 +15,16 @@ on:
   schedule:
     - cron: '0 1 * * *' # nightly build
   workflow_dispatch:
+    inputs:
+      redis_version:
+        description: "Redis stack version to use for testing"
+        required: false
+        default: "8.0-M02"
+        type: choice
+        options:
+          - "8.0-M02"
+          - "rs-7.4.0-v1"
+          - "rs-7.2.0-v13"
 
 jobs:
 
@@ -51,6 +61,7 @@ jobs:
         run: |
           make test-coverage
         env:
+          REDIS_STACK_VERSION: ${{ inputs.redis_version || '8.0-M02' }}
           JVM_OPTS: -Xmx3200m
           TERM: dumb
       - name: Upload coverage reports to Codecov

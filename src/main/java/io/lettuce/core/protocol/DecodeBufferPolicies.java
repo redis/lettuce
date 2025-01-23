@@ -69,7 +69,7 @@ public abstract class DecodeBufferPolicies {
 
     /**
      * {@link DecodeBufferPolicy} that {@link ByteBuf#discardReadBytes() discards read bytes} after each decoding phase. This
-     * strategy hast the most memory efficiency but also leads to more CPU pressure.
+     * strategy has the most memory efficiency but also leads to more CPU pressure.
      *
      * @return the strategy object.
      */
@@ -80,7 +80,7 @@ public abstract class DecodeBufferPolicies {
     /**
      * {@link DecodeBufferPolicy} that {@link ByteBuf#discardSomeReadBytes() discards some read bytes} after each decoding
      * phase. This strategy might discard some, all, or none of read bytes depending on its internal implementation to reduce
-     * overall memory bandwidth consumption at the cost of potentially additional memory consumption.
+     * overall CPU bandwidth consumption at the cost of potentially additional memory consumption.
      *
      * @return the strategy object.
      */

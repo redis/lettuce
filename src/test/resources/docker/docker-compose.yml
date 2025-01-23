@@ -2,16 +2,17 @@
 services:
 
   standalone-stack:
-    image: redis/redis-stack:latest
+    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_STACK_VERSION}"
+    environment:
+        - REDIS_CLUSTER=no
+        - PORT=6379
     ports:
       - "16379:6379"
 
   clustered-stack:
-    image: tihomirmateev339/cae-infra:latest
+    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_STACK_VERSION}"
+    environment:
+      - REDIS_CLUSTER=yes
+      - PORT=36379
     ports:
-      - "36379:36379"
-      - "36380:36380"
-      - "36381:36381"
-      - "36382:36382"
-      - "36383:36383"
-      - "36384:36384"
+      - "36379-36381:36379-36381"
