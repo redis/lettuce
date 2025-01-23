@@ -75,7 +75,6 @@ services:
   sentinel-26380:
     image: redislabs/client-libs-test:8.0-M02
     container_name: sentinel-26380
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./sentinel-26380:/work
     ports:
@@ -86,7 +85,6 @@ services:
   sentinel-26381:
     image: redislabs/client-libs-test:8.0-M02
     container_name: sentinel-26381
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./sentinel-26381:/work
     ports:
@@ -98,7 +96,6 @@ services:
   ssl-cluster-node-7479:
     image: redislabs/client-libs-test:8.0-M02
     container_name: ssl-cluster-node-7479
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./ssl-test-cluster/ssl-node-7479:/work
     ports:
@@ -109,7 +106,6 @@ services:
   ssl-cluster-node-7480:
     image: redislabs/client-libs-test:8.0-M02
     container_name: ssl-cluster-node-7480
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./ssl-test-cluster/ssl-node-7480:/work
     ports:
@@ -120,7 +116,6 @@ services:
   ssl-cluster-node-7481:
     image: redislabs/client-libs-test:8.0-M02
     container_name: ssl-cluster-node-7481
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./ssl-test-cluster/ssl-node-7481:/work
     ports:
@@ -132,7 +127,6 @@ services:
   cluster-node-7379:
     image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7379
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./test-cluster/node-7379:/work
     ports:
@@ -143,7 +137,6 @@ services:
   cluster-node-7380:
     image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7380
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./test-cluster/node-7380:/work
     ports:
@@ -154,7 +147,6 @@ services:
   cluster-node-7381:
     image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7381
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./test-cluster/node-7381:/work
     ports:
@@ -165,7 +157,6 @@ services:
   cluster-node-7382:
     image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7382
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./test-cluster/node-7382:/work
     ports:
@@ -176,7 +167,6 @@ services:
   cluster-node-7383:
     image: redislabs/client-libs-test:8.0-M02
     container_name: cluster-node-7383
-    command: ["redis-server", "/work/redis.conf"]
     volumes:
       - ./test-cluster/node-7383:/work
     ports:
