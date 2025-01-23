@@ -93,7 +93,7 @@ ifeq ($(REDIS),unstable)
 	@echo slaveof localhost 6482 >> $@
 	@echo replica-announce-ip localhost >> $@
 else
-	@echo slaveof 127.0.1 6482 >> $@
+	@echo slaveof 127.0.0.1 6482 >> $@
 endif
 
 
