@@ -66,7 +66,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     void genericPoolShouldWorkWithWrappedConnections() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         borrowAndReturn(pool);
         borrowAndClose(pool);
@@ -91,7 +97,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
         poolConfig.setMaxIdle(2);
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> client.connect(), poolConfig);
+                .createGenericObjectPool(() -> client.connect(), poolConfig, connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         borrowAndReturn(pool);
         borrowAndClose(pool);
@@ -120,7 +132,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     void genericPoolShouldWorkWithPlainConnections() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), false);
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), false, connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         borrowAndReturn(pool);
 
@@ -151,7 +169,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     void genericPoolUsingWrappingShouldPropagateExceptionsCorrectly() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         StatefulRedisConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
@@ -172,7 +196,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     void wrappedConnectionShouldUseWrappers() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         StatefulRedisConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
@@ -197,7 +227,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
 
         GenericObjectPool<StatefulRedisMasterReplicaConnection<String, String>> pool = ConnectionPoolSupport
                 .createGenericObjectPool(() -> MasterReplica.connect(client, new StringCodec(), RedisURI.create(host, port)),
-                        new GenericObjectPoolConfig<>());
+                        new GenericObjectPoolConfig<>(), connection -> {
+                            try {
+                                return "PONG".equals(connection.sync().ping());
+                            } catch (Exception e) {
+                                return false;
+                            }
+                        });
 
         StatefulRedisMasterReplicaConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
@@ -223,7 +259,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
                 RedisURI.create(TestSettings.host(), 7379));
 
         GenericObjectPool<StatefulRedisClusterConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(redisClusterClient::connect, new GenericObjectPoolConfig<>());
+                .createGenericObjectPool(redisClusterClient::connect, new GenericObjectPoolConfig<>(), connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         StatefulRedisClusterConnection<String, String> connection = pool.borrowObject();
         RedisAdvancedClusterCommands<String, String> sync = connection.sync();
@@ -250,7 +292,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     void plainConnectionShouldNotUseWrappers() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), false);
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), false, connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         StatefulRedisConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
@@ -295,7 +343,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     void wrappedObjectClosedAfterReturn() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), true);
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), true, connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         StatefulRedisConnection<String, String> connection = pool.borrowObject();
         RedisCommands<String, String> sync = connection.sync();
@@ -317,7 +371,13 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     void tryWithResourcesReturnsConnectionToPool() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>());
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         StatefulRedisConnection<String, String> usedConnection = null;
         try (StatefulRedisConnection<String, String> connection = pool.borrowObject()) {

@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.apache.commons.pool2.BasePooledObjectFactory;
@@ -60,6 +61,7 @@ import io.lettuce.core.support.ConnectionWrapping.Origin;
  * </pre>
  *
  * @author Mark Paluch
+ * @author dae won
  * @since 4.3
  */
 public abstract class ConnectionPoolSupport {
@@ -77,8 +79,8 @@ public abstract class ConnectionPoolSupport {
      * @return the connection pool.
      */
     public static <T extends StatefulConnection<?, ?>> GenericObjectPool<T> createGenericObjectPool(
-            Supplier<T> connectionSupplier, GenericObjectPoolConfig<T> config) {
-        return createGenericObjectPool(connectionSupplier, config, true);
+            Supplier<T> connectionSupplier, GenericObjectPoolConfig<T> config, Predicate<T> connectionValidator) {
+        return createGenericObjectPool(connectionSupplier, config, true, connectionValidator);
     }
 
     /**
@@ -94,14 +96,17 @@ public abstract class ConnectionPoolSupport {
      */
     @SuppressWarnings("unchecked")
     public static <T extends StatefulConnection<?, ?>> GenericObjectPool<T> createGenericObjectPool(
-            Supplier<T> connectionSupplier, GenericObjectPoolConfig<T> config, boolean wrapConnections) {
+            Supplier<T> connectionSupplier, GenericObjectPoolConfig<T> config, boolean wrapConnections,
+            Predicate<T> connectionValidator) {
 
         LettuceAssert.notNull(connectionSupplier, "Connection supplier must not be null");
         LettuceAssert.notNull(config, "GenericObjectPoolConfig must not be null");
+        LettuceAssert.notNull(connectionValidator, "Connection validator must not be null");
 
         AtomicReference<Origin<T>> poolRef = new AtomicReference<>();
 
-        GenericObjectPool<T> pool = new GenericObjectPool<T>(new RedisPooledObjectFactory<T>(connectionSupplier), config) {
+        GenericObjectPool<T> pool = new GenericObjectPool<T>(
+                new EnhancedRedisPooledObjectFactory<T>(connectionSupplier, connectionValidator), config) {
 
             @Override
             public T borrowObject() throws Exception {
@@ -245,6 +250,45 @@ public abstract class ConnectionPoolSupport {
         public CompletableFuture<Void> returnObjectAsync(T o) throws Exception {
             pool.returnObject(o);
             return COMPLETED;
+        }
+
+    }
+
+    private static class EnhancedRedisPooledObjectFactory<T extends StatefulConnection<?, ?>>
+            extends BasePooledObjectFactory<T> {
+
+        private final Supplier<T> connectionSupplier;
+
+        private final Predicate<T> connectionValidator;
+
+        EnhancedRedisPooledObjectFactory(Supplier<T> connectionSupplier, Predicate<T> connectionValidator) {
+            this.connectionSupplier = connectionSupplier;
+            this.connectionValidator = connectionValidator;
+        }
+
+        @Override
+        public T create() throws Exception {
+            return connectionSupplier.get();
+        }
+
+        @Override
+        public PooledObject<T> wrap(T obj) {
+            return new DefaultPooledObject<>(obj);
+        }
+
+        @Override
+        public boolean validateObject(PooledObject<T> p) {
+            T connection = p.getObject();
+            return connection.isOpen() && connectionValidator.test(connection);
+        }
+
+        @Override
+        public void destroyObject(PooledObject<T> p) throws Exception {
+            try {
+                p.getObject().close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
     }
