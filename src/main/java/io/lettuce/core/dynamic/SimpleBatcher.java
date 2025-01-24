@@ -40,6 +40,7 @@ import io.lettuce.core.protocol.RedisCommand;
  *
  * @author Mark Paluch
  * @author Lucio Paiva
+ * @author Ivo Gaydajiev
  */
 class SimpleBatcher implements Batcher {
 
@@ -50,6 +51,11 @@ class SimpleBatcher implements Batcher {
     private final BlockingQueue<RedisCommand<Object, Object, Object>> queue = new LinkedBlockingQueue<>();
 
     private final AtomicBoolean flushing = new AtomicBoolean();
+
+    //foreFlushRequested indicates that a flush was requested while there is already a flush in progress
+    //This flag is used to ensure we will flush again after the current flush is done
+    //to ensure that any commands added while dispatching the current flush are also dispatched
+    private final AtomicBoolean  forceFlushRequested = new AtomicBoolean();
 
     public SimpleBatcher(StatefulConnection<Object, Object> connection, int batchSize) {
 
@@ -95,37 +101,55 @@ class SimpleBatcher implements Batcher {
 
         List<RedisCommand<?, ?, ?>> commands = newDrainTarget();
 
-        while (flushing.compareAndSet(false, true)) {
+        while (true) {
+            if (flushing.compareAndSet(false, true)) {
+                try {
 
-            try {
+                    int consume = -1;
 
-                int consume = -1;
-
-                if (!forcedFlush) {
-                    long queuedItems = queue.size();
-                    if (queuedItems >= batchSize) {
-                        consume = batchSize;
-                        defaultFlush = true;
+                    if (!forcedFlush) {
+                        long queuedItems = queue.size();
+                        if (queuedItems >= batchSize) {
+                            consume = batchSize;
+                            defaultFlush = true;
+                        }
                     }
+
+                    List<? extends RedisCommand<?, ?, ?>> batch = doFlush(forcedFlush, defaultFlush, consume);
+                    if (batch != null) {
+                        commands.addAll(batch);
+                    }
+
+                    if (defaultFlush && !queue.isEmpty() && queue.size() > batchSize) {
+                        continue;
+                    }
+
+                    if (forceFlushRequested.compareAndSet(true, false)) {
+                        continue;
+                    }
+
+                    return new BatchTasks(commands);
+
+                } finally {
+                    flushing.set(false);
                 }
 
-                List<? extends RedisCommand<?, ?, ?>> batch = doFlush(forcedFlush, defaultFlush, consume);
-                if (batch != null) {
-                    commands.addAll(batch);
+            } else {
+                // Another thread is already flushing
+                if (forcedFlush) {
+                    forceFlushRequested.set(true);
                 }
 
-                if (defaultFlush && !queue.isEmpty() && queue.size() > batchSize) {
-                    continue;
+                if (commands.isEmpty()) {
+                    return BatchTasks.EMPTY;
+                } else {
+                    // Could happen if default flush is started in t1 and in case
+                    // there are multiple default batches to process another thread
+                    // acquires flushing flag in-between t1 releases flushing flag & try to acquire it again
+                    return new BatchTasks(commands);
                 }
-
-                return new BatchTasks(commands);
-
-            } finally {
-                flushing.set(false);
             }
         }
-
-        return BatchTasks.EMPTY;
     }
 
     private List<? extends RedisCommand<?, ?, ?>> doFlush(boolean forcedFlush, boolean defaultFlush, int consume) {
