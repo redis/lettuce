@@ -41,6 +41,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import javax.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -263,6 +264,19 @@ public class HashCommandIntegrationTests extends TestSupport {
                 KeyValue.fromNullable("three", "3"));
         assertThat(redis.hrandfieldWithvalues(key, 2)).hasSize(2).containsAnyOf(KeyValue.fromNullable("one", "1"),
                 KeyValue.fromNullable("two", "2"), KeyValue.fromNullable("three", "3"));
+    }
+
+    @Test
+    @EnabledOnCommand("HRANDFIELD")
+    void hrandfieldIssue3122() {
+
+        Map<String, String> hash = new LinkedHashMap<>();
+        hash.put("one", "1");
+        hash.put("two", "2");
+
+        redis.hset(key, hash);
+        assertThat(redis.hrandfieldWithvalues(key)).isIn(KeyValue.fromNullable("one", "1"), KeyValue.fromNullable("two", "2"),
+                KeyValue.fromNullable("three", "3"));
     }
 
     @Test
