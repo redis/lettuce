@@ -3,6 +3,7 @@ package io.lettuce.core.event.jfr;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import io.lettuce.core.event.Event;
 import io.lettuce.core.internal.LettuceAssert;
@@ -23,7 +24,7 @@ import io.lettuce.core.internal.LettuceClassUtils;
  */
 class JfrEventRecorder implements EventRecorder {
 
-    private final Map<Class<?>, Constructor<?>> constructorMap = new HashMap<>();
+    private final Map<Class<?>, Constructor<?>> constructorMap = new ConcurrentHashMap<>();
 
     @Override
     public void record(Event event) {
@@ -54,11 +55,7 @@ class JfrEventRecorder implements EventRecorder {
 
     private Constructor<?> getEventConstructor(Event event) throws NoSuchMethodException {
 
-        Constructor<?> constructor;
-
-        synchronized (constructorMap) {
-            constructor = constructorMap.get(event.getClass());
-        }
+        Constructor<?> constructor = constructorMap.get(event.getClass());
 
         if (constructor == null) {
 
@@ -73,9 +70,7 @@ class JfrEventRecorder implements EventRecorder {
                 constructor.setAccessible(true);
             }
 
-            synchronized (constructorMap) {
-                constructorMap.put(event.getClass(), constructor);
-            }
+            constructorMap.put(event.getClass(), constructor);
         }
 
         return constructor;
