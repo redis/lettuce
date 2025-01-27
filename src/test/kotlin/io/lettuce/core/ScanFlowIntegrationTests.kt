@@ -23,11 +23,13 @@ import io.lettuce.TestTags
 import io.lettuce.core.api.StatefulRedisConnection
 import io.lettuce.core.api.coroutines
 import io.lettuce.test.LettuceExtension
+import io.lettuce.test.condition.RedisConditions
 import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
@@ -78,6 +80,9 @@ internal class ScanFlowIntegrationTests @Inject constructor(private val connecti
 
     @Test
     fun `should hscanNovalues iteratively`() = runBlocking<Unit> {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(connection).hasVersionGreaterOrEqualsTo("7.4"));
+
         with(connection.coroutines()) {
             repeat(iterations) {
                 hset(key, "field-$it", "value-$it")
