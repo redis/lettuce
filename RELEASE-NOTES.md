@@ -28,8 +28,8 @@ Enhancements
 
 Fixes
 -----
-* Fix issue with array initialization #3123, #3135 by @tishun in https://github.com/redis/lettuce/pull/3123, https://github.com/redis/lettuce/pull/3135
-* Replacing all instances of synchronized blocks with ReentrantLock #3116, #3134 by @tishun in https://github.com/redis/lettuce/pull/3116, https://github.com/redis/lettuce/pull/3134
+* Fix issue with array initialization #3123, #3135 by @tishun in https://github.com/redis/lettuce/pull/3123 https://github.com/redis/lettuce/pull/3135
+* Replacing all instances of synchronized blocks with ReentrantLock #3116, #3134 by @tishun in https://github.com/redis/lettuce/pull/3116 https://github.com/redis/lettuce/pull/3134
 
 Other
 -----
