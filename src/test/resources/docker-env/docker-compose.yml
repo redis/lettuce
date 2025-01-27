@@ -35,8 +35,11 @@ services:
     container_name: redis-standalone-4
     volumes:
       - ./redis-standalone-4/config:/redis/config:r
+    environment:
+      - REDIS_CLUSTER=no
     ports:
       - "6484:6484"
+      - "26381:26381"
     networks:
       - redis-network
 
@@ -48,43 +51,13 @@ services:
     volumes:
       - ./redis-standalone-sentinel-controlled/config:/redis/config:r
     ports:
+      - "26380:26380"
+      - "26379:26379"
       - "6482:6482"
       - "6483:6483"
     networks:
       - redis-network
 
-
-
-  # Sentinel Nodes
-  sentinel-1:
-    image: redislabs/client-libs-test:8.0-M02
-    container_name: sentinel-1
-    volumes:
-      - ./sentinel-1/config:/redis/config:r
-    ports:
-      - "26379:26379"
-    networks:
-      - redis-network
-
-  sentinel-2:
-    image: redislabs/client-libs-test:8.0-M02
-    container_name: sentinel-2
-    volumes:
-      - ./sentinel-2/config:/redis/config:r
-    ports:
-      - "26380:26380"
-    networks:
-      - redis-network
-
-  sentinel-3:
-    image: redislabs/client-libs-test:8.0-M02
-    container_name: sentinel-3
-    volumes:
-      - ./sentinel-3/config:/redis/config:r
-    ports:
-      - "26381:26381"
-    networks:
-      - redis-network
 
   ssl-test-cluster:
     image: redislabs/client-libs-test:8.0-M02
