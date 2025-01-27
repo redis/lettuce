@@ -409,9 +409,9 @@ test-coverage: start
 	mvn -DskipITs=false clean compile verify jacoco:report -P$(PROFILE)
 	$(MAKE) stop
 
-test: start
+test:
 	mvn -DskipITs=false clean compile verify -P$(PROFILE)
-	$(MAKE) stop
+
 
 prepare: stop
 
