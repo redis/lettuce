@@ -27,13 +27,11 @@ public class ListExample {
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
             RedisAsyncCommands<String, String> asyncCommands = connection.async();
             // REMOVE_START
-            CompletableFuture<Long> delResult = asyncCommands
-                    .del("bikes:repairs", "bikes:finished").toCompletableFuture();
+            CompletableFuture<Long> delResult = asyncCommands.del("bikes:repairs", "bikes:finished").toCompletableFuture();
             // REMOVE_END
 
             // STEP_START queue
-            CompletableFuture<Void> queue = asyncCommands.lpush("bikes:repairs", "bike:1")
-            .thenCompose(res1 -> {
+            CompletableFuture<Void> queue = asyncCommands.lpush("bikes:repairs", "bike:1").thenCompose(res1 -> {
                 System.out.println(res1); // >>> 1
                 // REMOVE_START
                 assertThat(res1).isEqualTo(1);
@@ -55,16 +53,16 @@ public class ListExample {
 
                 return asyncCommands.rpop("bikes:repairs");
             })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res).isEqualTo("bike:2");
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> bike:2
-            .toCompletableFuture();
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res).isEqualTo("bike:2");
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> bike:2
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START stack
             CompletableFuture<Void> stack = queue.thenCompose(r -> {
                 return asyncCommands.lpush("bikes:repairs", "bike:1");
@@ -91,28 +89,28 @@ public class ListExample {
 
                 return asyncCommands.lpop("bikes:repairs");
             })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res).isEqualTo("bike:1");
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> bike:1
-            .toCompletableFuture();
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res).isEqualTo("bike:1");
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> bike:1
+                    .toCompletableFuture();
             // STEP_END
 
             // STEP_START llen
             CompletableFuture<Void> llen = stack.thenCompose(r -> {
                 return asyncCommands.llen("bikes:repairs");
             })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res).isZero();
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> 0
-            .toCompletableFuture();
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res).isZero();
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> 0
+                    .toCompletableFuture();
             // STEP_END
 
             // STEP_START lmove_lrange
@@ -131,11 +129,7 @@ public class ListExample {
                 assertThat(res8).isEqualTo(2);
                 // REMOVE_END
 
-                return asyncCommands.lmove(
-                    "bikes:repairs",
-                    "bikes:finished",
-                    LMoveArgs.Builder.leftLeft()
-                );
+                return asyncCommands.lmove("bikes:repairs", "bikes:finished", LMoveArgs.Builder.leftLeft());
             }).thenCompose(res9 -> {
                 System.out.println(res9); // >>> bike:2
                 // REMOVE_START
@@ -151,148 +145,145 @@ public class ListExample {
 
                 return asyncCommands.lrange("bikes:finished", 0, -1);
             })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res.toString()).isEqualTo("[bike:2]");
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> [bike:2]
-            .toCompletableFuture();
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res.toString()).isEqualTo("[bike:2]");
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> [bike:2]
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START lpush_rpush
             CompletableFuture<Void> lpushrpush = lmovelrange
-            // REMOVE_START
-            .thenCompose(r -> {
-                return asyncCommands.del("bikes:repairs");
-            })
-            // REMOVE_END
-            .thenCompose(r -> {
-                return asyncCommands.rpush("bikes:repairs", "bike:1");
-            }).thenCompose(res11 -> {
-                System.out.println(res11); // >>> 1
-                // REMOVE_START
-                assertThat(res11).isEqualTo(1);
-                // REMOVE_END
+                    // REMOVE_START
+                    .thenCompose(r -> {
+                        return asyncCommands.del("bikes:repairs");
+                    })
+                    // REMOVE_END
+                    .thenCompose(r -> {
+                        return asyncCommands.rpush("bikes:repairs", "bike:1");
+                    }).thenCompose(res11 -> {
+                        System.out.println(res11); // >>> 1
+                        // REMOVE_START
+                        assertThat(res11).isEqualTo(1);
+                        // REMOVE_END
 
-                return asyncCommands.rpush("bikes:repairs", "bike:2");
-            }).thenCompose(res12 -> {
-                System.out.println(res12); // >>> 2
-                // REMOVE_START
-                assertThat(res12).isEqualTo(2);
-                // REMOVE_END
+                        return asyncCommands.rpush("bikes:repairs", "bike:2");
+                    }).thenCompose(res12 -> {
+                        System.out.println(res12); // >>> 2
+                        // REMOVE_START
+                        assertThat(res12).isEqualTo(2);
+                        // REMOVE_END
 
-                return asyncCommands.lpush("bikes:repairs", "bike:important_bike");
-            }).thenCompose(res13 -> {
-                System.out.println(res13); // >>> 3
-                // REMOVE_START
-                assertThat(res13).isEqualTo(3);
-                // REMOVE_END
+                        return asyncCommands.lpush("bikes:repairs", "bike:important_bike");
+                    }).thenCompose(res13 -> {
+                        System.out.println(res13); // >>> 3
+                        // REMOVE_START
+                        assertThat(res13).isEqualTo(3);
+                        // REMOVE_END
 
-                return asyncCommands.lrange("bikes:repairs", 0, -1);
-            })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res.toString()).isEqualTo("[bike:important_bike, bike:1, bike:2]");
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println)
-            // >>> [bike:important_bike, bike:1, bike:2]
-            .toCompletableFuture();
+                        return asyncCommands.lrange("bikes:repairs", 0, -1);
+                    })
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res.toString()).isEqualTo("[bike:important_bike, bike:1, bike:2]");
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println)
+                    // >>> [bike:important_bike, bike:1, bike:2]
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START variadic
             CompletableFuture<Void> variadic = lpushrpush
-            // REMOVE_START
-            .thenCompose(r -> {
-                return asyncCommands.del("bikes:repairs");
-            })
-            // REMOVE_END
-            .thenCompose(r -> {
-                return asyncCommands.rpush("bikes:repairs", "bike:1", "bike:2", "bike:3");
-            }).thenCompose(res14 -> {
-                System.out.println(res14); // >>> 3
-                // REMOVE_START
-                assertThat(res14).isEqualTo(3);
-                // REMOVE_END
+                    // REMOVE_START
+                    .thenCompose(r -> {
+                        return asyncCommands.del("bikes:repairs");
+                    })
+                    // REMOVE_END
+                    .thenCompose(r -> {
+                        return asyncCommands.rpush("bikes:repairs", "bike:1", "bike:2", "bike:3");
+                    }).thenCompose(res14 -> {
+                        System.out.println(res14); // >>> 3
+                        // REMOVE_START
+                        assertThat(res14).isEqualTo(3);
+                        // REMOVE_END
 
-                return asyncCommands.lpush(
-                    "bikes:repairs", "bike:important_bike", "bike:very_important_bike"
-                );
-            }).thenCompose(res15 -> {
-                System.out.println(res15); // >>> 5
-                // REMOVE_START
-                assertThat(res15).isEqualTo(5);
-                // REMOVE_END
+                        return asyncCommands.lpush("bikes:repairs", "bike:important_bike", "bike:very_important_bike");
+                    }).thenCompose(res15 -> {
+                        System.out.println(res15); // >>> 5
+                        // REMOVE_START
+                        assertThat(res15).isEqualTo(5);
+                        // REMOVE_END
 
-                return asyncCommands.lrange("bikes:repairs", 0, -1);
-            })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res.toString()).isEqualTo("[bike:very_important_bike, bike:important_bike, bike:1, bike:2, bike:3]");
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println)
-            // >>> [bike:very_important_bike, bike:important_bike, bike:1, bike:2, bike:3]
-            .toCompletableFuture();
+                        return asyncCommands.lrange("bikes:repairs", 0, -1);
+                    })
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res.toString())
+                                .isEqualTo("[bike:very_important_bike, bike:important_bike, bike:1, bike:2, bike:3]");
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println)
+                    // >>> [bike:very_important_bike, bike:important_bike, bike:1, bike:2, bike:3]
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START lpop_rpop
             CompletableFuture<Void> lpoprpop = variadic
-            // REMOVE_START
-            .thenCompose(r -> {
-                return asyncCommands.del("bikes:repairs");
-            })
-            // REMOVE_END
-            .thenCompose(r -> {
-                return asyncCommands.rpush("bikes:repairs", "bike:1", "bike:2", "bike:3");
-            }).thenCompose(res16 -> {
-                System.out.println(res16); // >>> 3
-                // REMOVE_START
-                assertThat(res16).isEqualTo(3);
-                // REMOVE_END
+                    // REMOVE_START
+                    .thenCompose(r -> {
+                        return asyncCommands.del("bikes:repairs");
+                    })
+                    // REMOVE_END
+                    .thenCompose(r -> {
+                        return asyncCommands.rpush("bikes:repairs", "bike:1", "bike:2", "bike:3");
+                    }).thenCompose(res16 -> {
+                        System.out.println(res16); // >>> 3
+                        // REMOVE_START
+                        assertThat(res16).isEqualTo(3);
+                        // REMOVE_END
 
-                return asyncCommands.rpop("bikes:repairs");
-            }).thenCompose(res17 -> {
-                System.out.println(res17); // >>> bike:3
-                // REMOVE_START
-                assertThat(res17).isEqualTo("bike:3");
-                // REMOVE_END
+                        return asyncCommands.rpop("bikes:repairs");
+                    }).thenCompose(res17 -> {
+                        System.out.println(res17); // >>> bike:3
+                        // REMOVE_START
+                        assertThat(res17).isEqualTo("bike:3");
+                        // REMOVE_END
 
-                return asyncCommands.lpop("bikes:repairs");
-            }).thenCompose(res18 -> {
-                System.out.println(res18); // >>> bike:1
-                // REMOVE_START
-                assertThat(res18).isEqualTo("bike:1");
-                // REMOVE_END
+                        return asyncCommands.lpop("bikes:repairs");
+                    }).thenCompose(res18 -> {
+                        System.out.println(res18); // >>> bike:1
+                        // REMOVE_START
+                        assertThat(res18).isEqualTo("bike:1");
+                        // REMOVE_END
 
-                return asyncCommands.rpop("bikes:repairs");
-            }).thenCompose(res19 -> {
-                System.out.println(res19); // >>> bike:2
-                // REMOVE_START
-                assertThat(res19).isEqualTo("bike:2");
-                // REMOVE_END
+                        return asyncCommands.rpop("bikes:repairs");
+                    }).thenCompose(res19 -> {
+                        System.out.println(res19); // >>> bike:2
+                        // REMOVE_START
+                        assertThat(res19).isEqualTo("bike:2");
+                        // REMOVE_END
 
-                return asyncCommands.rpop(res19);
-            })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res).isNull();
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> null
-            .toCompletableFuture();
+                        return asyncCommands.rpop(res19);
+                    })
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res).isNull();
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> null
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START ltrim
             CompletableFuture<Void> ltrim = lpoprpop.thenCompose(r -> {
-                return asyncCommands.lpush(
-                    "bikes:repairs", "bike:1", "bike:2", "bike:3", "bike:4", "bike:5"
-                );
+                return asyncCommands.lpush("bikes:repairs", "bike:1", "bike:2", "bike:3", "bike:4", "bike:5");
             }).thenCompose(res20 -> {
                 System.out.println(res20); // >>> 5
                 // REMOVE_START
@@ -308,116 +299,111 @@ public class ListExample {
 
                 return asyncCommands.lrange("bikes:repairs", 0, -1);
             })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res.toString()).isEqualTo("[bike:5, bike:4, bike:3]");
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println)
-            // >>> [bike:5, bike:4, bike:3]
-            .toCompletableFuture();
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res.toString()).isEqualTo("[bike:5, bike:4, bike:3]");
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println)
+                    // >>> [bike:5, bike:4, bike:3]
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START ltrim_end_of_list
             CompletableFuture<Void> ltrimendoflist = ltrim
-            // REMOVE_START
-            .thenCompose(r -> {
-                return asyncCommands.del("bikes:repairs");
-            })
-            // REMOVE_END
-            .thenCompose(r -> {
-                return asyncCommands.rpush(
-                    "bikes:repairs", "bike:1", "bike:2", "bike:3", "bike:4", "bike:5"
-                );
-            }).thenCompose(res22 -> {
-                System.out.println(res22); // >>> 5
-                // REMOVE_START
-                assertThat(res22).isEqualTo(5);
-                // REMOVE_END
+                    // REMOVE_START
+                    .thenCompose(r -> {
+                        return asyncCommands.del("bikes:repairs");
+                    })
+                    // REMOVE_END
+                    .thenCompose(r -> {
+                        return asyncCommands.rpush("bikes:repairs", "bike:1", "bike:2", "bike:3", "bike:4", "bike:5");
+                    }).thenCompose(res22 -> {
+                        System.out.println(res22); // >>> 5
+                        // REMOVE_START
+                        assertThat(res22).isEqualTo(5);
+                        // REMOVE_END
 
-                return asyncCommands.ltrim("bikes:repairs", -3, -1);
-            }).thenCompose(res23 -> {
-                System.out.println(res23); // >>> OK
-                // REMOVE_START
-                assertThat(res23).isEqualTo("OK");
-                // REMOVE_END
+                        return asyncCommands.ltrim("bikes:repairs", -3, -1);
+                    }).thenCompose(res23 -> {
+                        System.out.println(res23); // >>> OK
+                        // REMOVE_START
+                        assertThat(res23).isEqualTo("OK");
+                        // REMOVE_END
 
-                return asyncCommands.lrange("bikes:repairs", 0, -1);
-            })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res.toString()).isEqualTo("[bike:3, bike:4, bike:5]");
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println)
-            // >>> [bike:3, bike:4, bike:5]
-            .toCompletableFuture();
+                        return asyncCommands.lrange("bikes:repairs", 0, -1);
+                    })
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res.toString()).isEqualTo("[bike:3, bike:4, bike:5]");
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println)
+                    // >>> [bike:3, bike:4, bike:5]
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START brpop
             CompletableFuture<Void> brpop = ltrimendoflist
-            // REMOVE_START
-            .thenCompose(r -> {
-                return asyncCommands.del("bikes:repairs");
-            })
-            // REMOVE_END
-            .thenCompose(r -> {
-                return asyncCommands.rpush("bikes:repairs", "bike:1", "bike:2");
-            }).thenCompose(res24 -> {
-                System.out.println(res24); // >>> 2
-                // REMOVE_START
-                assertThat(res24).isEqualTo(2);
-                // REMOVE_END
+                    // REMOVE_START
+                    .thenCompose(r -> {
+                        return asyncCommands.del("bikes:repairs");
+                    })
+                    // REMOVE_END
+                    .thenCompose(r -> {
+                        return asyncCommands.rpush("bikes:repairs", "bike:1", "bike:2");
+                    }).thenCompose(res24 -> {
+                        System.out.println(res24); // >>> 2
+                        // REMOVE_START
+                        assertThat(res24).isEqualTo(2);
+                        // REMOVE_END
 
-                return asyncCommands.brpop(1, "bikes:repairs");
-            }).thenCompose(res25 -> {
-                System.out.println(res25);
-                // >>> KeyValue[bikes:repairs, bike:2]
-                // REMOVE_START
-                assertThat(res25.toString()).isEqualTo("KeyValue[bikes:repairs, bike:2]");
-                // REMOVE_END
+                        return asyncCommands.brpop(1, "bikes:repairs");
+                    }).thenCompose(res25 -> {
+                        System.out.println(res25);
+                        // >>> KeyValue[bikes:repairs, bike:2]
+                        // REMOVE_START
+                        assertThat(res25.toString()).isEqualTo("KeyValue[bikes:repairs, bike:2]");
+                        // REMOVE_END
 
-                return asyncCommands.brpop(1, "bikes:repairs");
-            }).thenCompose(res26 -> {
-                System.out.println(res26);
-                // >>> KeyValue[bikes:repairs, bike:1]
-                // REMOVE_START
-                assertThat(res26.toString()).isEqualTo("KeyValue[bikes:repairs, bike:1]");
-                // REMOVE_END
+                        return asyncCommands.brpop(1, "bikes:repairs");
+                    }).thenCompose(res26 -> {
+                        System.out.println(res26);
+                        // >>> KeyValue[bikes:repairs, bike:1]
+                        // REMOVE_START
+                        assertThat(res26.toString()).isEqualTo("KeyValue[bikes:repairs, bike:1]");
+                        // REMOVE_END
 
-                return asyncCommands.brpop(1, "bikes:repairs");
-            })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res).isNull();
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> null
-            .toCompletableFuture();
+                        return asyncCommands.brpop(1, "bikes:repairs");
+                    })
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res).isNull();
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> null
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START rule_1
-            CompletableFuture<Void> rule1 = asyncCommands.del("new_bikes")
-            .thenCompose(res27 -> {
+            CompletableFuture<Void> rule1 = asyncCommands.del("new_bikes").thenCompose(res27 -> {
                 System.out.println(res27); // >>> 0
 
-                return asyncCommands.lpush(
-                    "new_bikes", "bike:1", "bike:2", "bike:3"
-                );
+                return asyncCommands.lpush("new_bikes", "bike:1", "bike:2", "bike:3");
             })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res).isEqualTo(3);
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> 3
-            .toCompletableFuture();
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res).isEqualTo(3);
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> 3
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START rule_1.1
             CompletableFuture<Void> rule11 = rule1.thenCompose(r -> {
                 return asyncCommands.set("new_bikes", "bike:1");
@@ -433,7 +419,7 @@ public class ListExample {
                 // REMOVE_START
                 assertThat(res29).isEqualTo("string");
                 // REMOVE_END
-                
+
                 return asyncCommands.lpush("new_bikes", "bike:2", "bike:3");
             }).exceptionally(ex -> {
                 System.out.println(ex);
@@ -441,76 +427,74 @@ public class ListExample {
                 // >>> io.lettuce.core.RedisCommandExecutionException:
                 // >>> WRONGTYPE Operation against a key holding the wrong kind of value
                 // REMOVE_START
-                assertThat(ex.toString()).isEqualTo("java.util.concurrent.CompletionException: io.lettuce.core.RedisCommandExecutionException: WRONGTYPE Operation against a key holding the wrong kind of value");
+                assertThat(ex.toString()).isEqualTo(
+                        "java.util.concurrent.CompletionException: io.lettuce.core.RedisCommandExecutionException: WRONGTYPE Operation against a key holding the wrong kind of value");
                 // REMOVE_END
 
                 return -1L;
             })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res).isEqualTo(-1L);
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println)
-            .toCompletableFuture();
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res).isEqualTo(-1L);
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println).toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START rule_2
             CompletableFuture<Void> rule2 = brpop
-            // REMOVE_START
-            .thenCompose(r -> {
-                return asyncCommands.del("bikes:repairs");
-            })
-            // REMOVE_END
-            .thenCompose(r -> {
-                return asyncCommands.lpush(
-                    "bikes:repairs", "bike:1", "bike:2", "bike:3"
-                );
-            }).thenCompose(res30 -> {
-                System.out.println(res30); // >>> 3
-                // REMOVE_START
-                assertThat(res30).isEqualTo(3);
-                // REMOVE_END
+                    // REMOVE_START
+                    .thenCompose(r -> {
+                        return asyncCommands.del("bikes:repairs");
+                    })
+                    // REMOVE_END
+                    .thenCompose(r -> {
+                        return asyncCommands.lpush("bikes:repairs", "bike:1", "bike:2", "bike:3");
+                    }).thenCompose(res30 -> {
+                        System.out.println(res30); // >>> 3
+                        // REMOVE_START
+                        assertThat(res30).isEqualTo(3);
+                        // REMOVE_END
 
-                return asyncCommands.exists("bikes:repairs");
-            }).thenCompose(res31 -> {
-                System.out.println(res31); // >>> 1
-                // REMOVE_START
-                assertThat(res31).isEqualTo(1);
-                // REMOVE_END
+                        return asyncCommands.exists("bikes:repairs");
+                    }).thenCompose(res31 -> {
+                        System.out.println(res31); // >>> 1
+                        // REMOVE_START
+                        assertThat(res31).isEqualTo(1);
+                        // REMOVE_END
 
-                return asyncCommands.lpop("bikes:repairs");
-            }).thenCompose(res32 -> {
-                System.out.println(res32); // >>> bike:3
-                // REMOVE_START
-                assertThat(res32).isEqualTo("bike:3");
-                // REMOVE_END
+                        return asyncCommands.lpop("bikes:repairs");
+                    }).thenCompose(res32 -> {
+                        System.out.println(res32); // >>> bike:3
+                        // REMOVE_START
+                        assertThat(res32).isEqualTo("bike:3");
+                        // REMOVE_END
 
-                return asyncCommands.lpop("bikes:repairs");
-            }).thenCompose(res33 -> {
-                System.out.println(res33); // >>> bike:2
-                // REMOVE_START
-                assertThat(res33).isEqualTo("bike:2");
-                // REMOVE_END
+                        return asyncCommands.lpop("bikes:repairs");
+                    }).thenCompose(res33 -> {
+                        System.out.println(res33); // >>> bike:2
+                        // REMOVE_START
+                        assertThat(res33).isEqualTo("bike:2");
+                        // REMOVE_END
 
-                return asyncCommands.lpop("bikes:repairs");
-            }).thenCompose(res34 -> {
-                System.out.println(res34); // >>> bike:1
-                // REMOVE_START
-                assertThat(res34).isEqualTo("bike:1");
-                // REMOVE_END
+                        return asyncCommands.lpop("bikes:repairs");
+                    }).thenCompose(res34 -> {
+                        System.out.println(res34); // >>> bike:1
+                        // REMOVE_START
+                        assertThat(res34).isEqualTo("bike:1");
+                        // REMOVE_END
 
-                return asyncCommands.exists("bikes:repairs");
-            })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res).isZero();
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> 0
-            .toCompletableFuture();
+                        return asyncCommands.exists("bikes:repairs");
+                    })
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res).isZero();
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> 0
+                    .toCompletableFuture();
             // STEP_END
 
             // STEP_START rule_3
@@ -518,7 +502,7 @@ public class ListExample {
                 return asyncCommands.del("bikes:repairs");
             }).thenCompose(res35 -> {
                 System.out.println(res35); // >>> 0
-                
+
                 return asyncCommands.llen("bikes:repairs");
             }).thenCompose(res36 -> {
                 System.out.println(res36); // >>> 0
@@ -528,21 +512,19 @@ public class ListExample {
 
                 return asyncCommands.lpop("bikes:repairs");
             })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res).isNull();
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> null
-            .toCompletableFuture();
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res).isNull();
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> null
+                    .toCompletableFuture();
             // STEP_END
-            
+
             // STEP_START ltrim.1
             CompletableFuture<Void> ltrim1 = rule3.thenCompose(r -> {
-                return asyncCommands.lpush(
-                    "bikes:repairs", "bike:1", "bike:2", "bike:3", "bike:4", "bike:5"
-                );
+                return asyncCommands.lpush("bikes:repairs", "bike:1", "bike:2", "bike:3", "bike:4", "bike:5");
             }).thenCompose(res37 -> {
                 System.out.println(res37); // >>> 5
                 // REMOVE_START
@@ -558,26 +540,26 @@ public class ListExample {
 
                 return asyncCommands.lrange("bikes:repairs", 0, -1);
             })
-            // REMOVE_START
-            .thenApply(res -> {
-                assertThat(res.toString()).isEqualTo("[bike:5, bike:4, bike:3]");
-                return res;
-            })
-            // REMOVE_END
-            .thenAccept(System.out::println) // >>> [bike:5, bike:4, bike:3]
-            .toCompletableFuture();
+                    // REMOVE_START
+                    .thenApply(res -> {
+                        assertThat(res.toString()).isEqualTo("[bike:5, bike:4, bike:3]");
+                        return res;
+                    })
+                    // REMOVE_END
+                    .thenAccept(System.out::println) // >>> [bike:5, bike:4, bike:3]
+                    .toCompletableFuture();
             // STEP_END
-  
+
             // HIDE_START
             CompletableFuture.allOf(
                     // REMOVE_START
                     delResult,
                     // REMOVE_END,
-                    rule11, ltrim1
-            ).join();
+                    rule11, ltrim1).join();
         } finally {
             redisClient.shutdown();
         }
     }
+
 }
 // HIDE_END
