@@ -421,17 +421,22 @@ public class ListExample {
                 // REMOVE_END
 
                 return asyncCommands.lpush("new_bikes", "bike:2", "bike:3");
-            }).exceptionally(ex -> {
-                System.out.println(ex);
-                // >>> java.util.concurrent.CompletionException:
-                // >>> io.lettuce.core.RedisCommandExecutionException:
-                // >>> WRONGTYPE Operation against a key holding the wrong kind of value
-                // REMOVE_START
-                assertThat(ex.toString()).isEqualTo(
-                        "java.util.concurrent.CompletionException: io.lettuce.core.RedisCommandExecutionException: WRONGTYPE Operation against a key holding the wrong kind of value");
-                // REMOVE_END
+            }).handle((res, ex) -> {
+                if (ex == null) {
+                    return res;
+                } else {
+                    System.out.println(ex);
+                    // >>> java.util.concurrent.CompletionException:
+                    // >>> io.lettuce.core.RedisCommandExecutionException:
+                    // >>> WRONGTYPE Operation against a key holding the wrong
+                    // >>> kind of value
+                    // REMOVE_START
+                    assertThat(ex.toString()).isEqualTo(
+                            "java.util.concurrent.CompletionException: io.lettuce.core.RedisCommandExecutionException: WRONGTYPE Operation against a key holding the wrong kind of value");
+                    // REMOVE_END
 
-                return -1L;
+                    return -1L;
+                }
             })
                     // REMOVE_START
                     .thenApply(res -> {
