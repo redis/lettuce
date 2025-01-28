@@ -5,14 +5,9 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.StatefulRedisConnection;
 
+import java.util.concurrent.CompletableFuture;
 // REMOVE_START
 import org.junit.jupiter.api.Test;
-// REMOVE_END
-
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-
-// REMOVE_START
 import static org.assertj.core.api.Assertions.assertThat;
 // REMOVE_END
 
