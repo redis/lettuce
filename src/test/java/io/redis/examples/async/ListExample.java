@@ -3,7 +3,6 @@ package io.redis.examples.async;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.async.RedisAsyncCommands;
-import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 // REMOVE_START
@@ -400,12 +399,181 @@ public class ListExample {
             .toCompletableFuture();
             // STEP_END
             
+            // STEP_START rule_1
+            CompletableFuture<Void> rule1 = asyncCommands.del("new_bikes")
+            .thenCompose(res27 -> {
+                System.out.println(res27); // >>> 0
+
+                return asyncCommands.lpush(
+                    "new_bikes", "bike:1", "bike:2", "bike:3"
+                );
+            })
+            // REMOVE_START
+            .thenApply(res -> {
+                assertThat(res).isEqualTo(3);
+                return res;
+            })
+            // REMOVE_END
+            .thenAccept(System.out::println) // >>> 3
+            .toCompletableFuture();
+            // STEP_END
+            
+            // STEP_START rule_1.1
+            CompletableFuture<Void> rule11 = rule1.thenCompose(r -> {
+                return asyncCommands.set("new_bikes", "bike:1");
+            }).thenCompose(res28 -> {
+                System.out.println(res28); // >>> OK
+                // REMOVE_START
+                assertThat(res28).isEqualTo("OK");
+                // REMOVE_END
+
+                return asyncCommands.type("new_bikes");
+            }).thenCompose(res29 -> {
+                System.out.println(res29); // >>> string
+                // REMOVE_START
+                assertThat(res29).isEqualTo("string");
+                // REMOVE_END
+                
+                return asyncCommands.lpush("new_bikes", "bike:2", "bike:3");
+            }).exceptionally(ex -> {
+                System.out.println(ex);
+                // >>> java.util.concurrent.CompletionException:
+                // >>> io.lettuce.core.RedisCommandExecutionException:
+                // >>> WRONGTYPE Operation against a key holding the wrong kind of value
+                // REMOVE_START
+                assertThat(ex.toString()).isEqualTo("java.util.concurrent.CompletionException: io.lettuce.core.RedisCommandExecutionException: WRONGTYPE Operation against a key holding the wrong kind of value");
+                // REMOVE_END
+
+                return -1L;
+            })
+            // REMOVE_START
+            .thenApply(res -> {
+                assertThat(res).isEqualTo(-1L);
+                return res;
+            })
+            // REMOVE_END
+            .thenAccept(System.out::println)
+            .toCompletableFuture();
+            // STEP_END
+            
+            // STEP_START rule_2
+            CompletableFuture<Void> rule2 = brpop
+            // REMOVE_START
+            .thenCompose(r -> {
+                return asyncCommands.del("bikes:repairs");
+            })
+            // REMOVE_END
+            .thenCompose(r -> {
+                return asyncCommands.lpush(
+                    "bikes:repairs", "bike:1", "bike:2", "bike:3"
+                );
+            }).thenCompose(res30 -> {
+                System.out.println(res30); // >>> 3
+                // REMOVE_START
+                assertThat(res30).isEqualTo(3);
+                // REMOVE_END
+
+                return asyncCommands.exists("bikes:repairs");
+            }).thenCompose(res31 -> {
+                System.out.println(res31); // >>> 1
+                // REMOVE_START
+                assertThat(res31).isEqualTo(1);
+                // REMOVE_END
+
+                return asyncCommands.lpop("bikes:repairs");
+            }).thenCompose(res32 -> {
+                System.out.println(res32); // >>> bike:3
+                // REMOVE_START
+                assertThat(res32).isEqualTo("bike:3");
+                // REMOVE_END
+
+                return asyncCommands.lpop("bikes:repairs");
+            }).thenCompose(res33 -> {
+                System.out.println(res33); // >>> bike:2
+                // REMOVE_START
+                assertThat(res33).isEqualTo("bike:2");
+                // REMOVE_END
+
+                return asyncCommands.lpop("bikes:repairs");
+            }).thenCompose(res34 -> {
+                System.out.println(res34); // >>> bike:1
+                // REMOVE_START
+                assertThat(res34).isEqualTo("bike:1");
+                // REMOVE_END
+
+                return asyncCommands.exists("bikes:repairs");
+            })
+            // REMOVE_START
+            .thenApply(res -> {
+                assertThat(res).isZero();
+                return res;
+            })
+            // REMOVE_END
+            .thenAccept(System.out::println) // >>> 0
+            .toCompletableFuture();
+            // STEP_END
+
+            // STEP_START rule_3
+            CompletableFuture<Void> rule3 = rule2.thenCompose(r -> {
+                return asyncCommands.del("bikes:repairs");
+            }).thenCompose(res35 -> {
+                System.out.println(res35); // >>> 0
+                
+                return asyncCommands.llen("bikes:repairs");
+            }).thenCompose(res36 -> {
+                System.out.println(res36); // >>> 0
+                // REMOVE_START
+                assertThat(res36).isZero();
+                // REMOVE_END
+
+                return asyncCommands.lpop("bikes:repairs");
+            })
+            // REMOVE_START
+            .thenApply(res -> {
+                assertThat(res).isNull();
+                return res;
+            })
+            // REMOVE_END
+            .thenAccept(System.out::println) // >>> null
+            .toCompletableFuture();
+            // STEP_END
+            
+            // STEP_START ltrim.1
+            CompletableFuture<Void> ltrim1 = rule3.thenCompose(r -> {
+                return asyncCommands.lpush(
+                    "bikes:repairs", "bike:1", "bike:2", "bike:3", "bike:4", "bike:5"
+                );
+            }).thenCompose(res37 -> {
+                System.out.println(res37); // >>> 5
+                // REMOVE_START
+                assertThat(res37).isEqualTo(5);
+                // REMOVE_END
+
+                return asyncCommands.ltrim("bikes:repairs", 0, 2);
+            }).thenCompose(res38 -> {
+                System.out.println(res38); // >>> OK
+                // REMOVE_START
+                assertThat(res38).isEqualTo("OK");
+                // REMOVE_END
+
+                return asyncCommands.lrange("bikes:repairs", 0, -1);
+            })
+            // REMOVE_START
+            .thenApply(res -> {
+                assertThat(res.toString()).isEqualTo("[bike:5, bike:4, bike:3]");
+                return res;
+            })
+            // REMOVE_END
+            .thenAccept(System.out::println) // >>> [bike:5, bike:4, bike:3]
+            .toCompletableFuture();
+            // STEP_END
+  
             // HIDE_START
             CompletableFuture.allOf(
                     // REMOVE_START
                     delResult,
                     // REMOVE_END,
-                    brpop
+                    rule11, ltrim1
             ).join();
         } finally {
             redisClient.shutdown();
