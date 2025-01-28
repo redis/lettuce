@@ -3,10 +3,13 @@ services:
   redis-standalone-1:
     image: redislabs/client-libs-test:8.0-M02
     container_name: redis-standalone-1
+    environment:
+      - TLS_ENABLED=yes
     volumes:
       - ./redis-standalone-1/config:/redis/config:r
     ports:
       - "6479:6479"
+      - "6443:6443" # TLS Port
     networks:
       - redis-network
 
@@ -35,6 +38,7 @@ services:
     container_name: redis-standalone-4
     volumes:
       - ./redis-standalone-4/config:/redis/config:r
+
     environment:
       - REDIS_CLUSTER=no
     ports:
