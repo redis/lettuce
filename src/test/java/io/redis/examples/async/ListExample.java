@@ -415,7 +415,7 @@ public class ListExample {
                 assertThat(res29).isEqualTo("string");
                 // REMOVE_END
 
-                return asyncCommands.lpush("new_bikes", "bike:2", "bike:3");
+                //return asyncCommands.lpush("new_bikes", "bike:2", "bike:3");
             }).handle((res, ex) -> {
                 if (ex == null) {
                     return res;
