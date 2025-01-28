@@ -22,7 +22,8 @@ public class ListExample {
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
             RedisAsyncCommands<String, String> asyncCommands = connection.async();
             // REMOVE_START
-            CompletableFuture<Long> delResult = asyncCommands.del("bikes:repairs", "bikes:finished").toCompletableFuture();
+            CompletableFuture<Long> delResult = asyncCommands
+                    .del("bikes:repairs", "bikes:finished", "new_bikes", "new_bikes_string").toCompletableFuture();
             // REMOVE_END
 
             // STEP_START queue
@@ -401,22 +402,21 @@ public class ListExample {
 
             // STEP_START rule_1.1
             CompletableFuture<Void> rule11 = rule1.thenCompose(r -> {
-                return asyncCommands.set("new_bikes", "bike:1");
+                return asyncCommands.set("new_bikes_string", "bike:1");
             }).thenCompose(res28 -> {
                 System.out.println(res28); // >>> OK
                 // REMOVE_START
                 assertThat(res28).isEqualTo("OK");
                 // REMOVE_END
 
-                return asyncCommands.type("new_bikes");
+                return asyncCommands.type("new_bikes_string");
             }).thenCompose(res29 -> {
                 System.out.println(res29); // >>> string
                 // REMOVE_START
                 assertThat(res29).isEqualTo("string");
                 // REMOVE_END
 
-                // return asyncCommands.lpush("new_bikes", "bike:2", "bike:3");
-                return asyncCommands.set("new_bikes", "bike:1");
+                return asyncCommands.lpush("new_bikes_string", "bike:2", "bike:3");
             }).handle((res, ex) -> {
                 if (ex == null) {
                     return res;
@@ -436,11 +436,12 @@ public class ListExample {
             })
                     // REMOVE_START
                     .thenApply(res -> {
-                        // assertThat(res).isEqualTo(-1L);
+                        assertThat(res).isEqualTo(-1L);
                         return res;
                     })
                     // REMOVE_END
-                    .thenAccept(System.out::println).toCompletableFuture();
+                    .thenAccept(System.out::println) // >>> -1
+                    .toCompletableFuture();
             // STEP_END
 
             // STEP_START rule_2
