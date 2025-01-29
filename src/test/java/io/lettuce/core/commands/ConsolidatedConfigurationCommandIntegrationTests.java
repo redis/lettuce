@@ -50,6 +50,7 @@ public class ConsolidatedConfigurationCommandIntegrationTests extends RedisConta
 
         client = RedisClient.create(redisURI);
         redis = client.connect().sync();
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.9"));
     }
 
     @AfterAll
@@ -61,7 +62,6 @@ public class ConsolidatedConfigurationCommandIntegrationTests extends RedisConta
 
     @BeforeEach
     void setUp() {
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.9"));
         redis.flushall();
     }
 
