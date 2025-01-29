@@ -90,7 +90,7 @@ public class ConsolidatedConfigurationCommandIntegrationTests extends RedisConta
 
     @Test
     public void getSearchConfigSettingTest() {
-        assertThat(redis.configGet("search-timeout")).hasSize(0); // Redis 8.0-M03 has no default value
+        assertThat(redis.configGet("search-timeout")).hasSize(1);
     }
 
     @Test
