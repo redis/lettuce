@@ -68,9 +68,8 @@ public class ConsolidatedConfigurationCommandIntegrationTests extends RedisConta
     @Test
     public void setSearchConfigGloballyTest() {
         final String configParam = "search-default-dialect";
-        // confirm default - Redis 8.0-M03 has no default dialect
-        // assertThat(redis.configGet(configParam)).isEqualTo(Collections.singletonMap(configParam, "1"));
-        assertThat(redis.configGet(configParam)).isEmpty();
+        // confirm default
+        assertThat(redis.configGet(configParam)).isEqualTo(Collections.singletonMap(configParam, "1"));
 
         try {
             assertThat(redis.configSet(configParam, "2")).isEqualTo("OK");
