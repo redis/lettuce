@@ -19,20 +19,10 @@
  */
 package io.lettuce.core.commands;
 
-import io.lettuce.core.AclCategory;
-import io.lettuce.core.AclSetuserArgs;
-import io.lettuce.core.TestSupport;
+import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.test.LettuceExtension;
-import io.lettuce.test.condition.EnabledOnCommand;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import javax.inject.Inject;
+import org.junit.jupiter.api.*;
 
 import java.util.Arrays;
 
@@ -45,16 +35,25 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author M Sazzadul Hoque
  */
 @Tag(INTEGRATION_TEST)
-@ExtendWith(LettuceExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@EnabledOnCommand("ACL")
-public class ConsolidatedAclCommandIntegrationTests extends TestSupport {
+public class ConsolidatedAclCommandIntegrationTests extends RedisContainerIntegrationTests {
 
-    private final RedisCommands<String, String> redis;
+    private static RedisClient client;
 
-    @Inject
-    protected ConsolidatedAclCommandIntegrationTests(RedisCommands<String, String> redis) {
-        this.redis = redis;
+    private static RedisCommands<String, String> redis;
+
+    @BeforeAll
+    public static void setup() {
+        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+
+        client = RedisClient.create(redisURI);
+        redis = client.connect().sync();
+    }
+
+    @AfterAll
+    static void teardown() {
+        if (client != null) {
+            client.shutdown();
+        }
     }
 
     @BeforeEach
