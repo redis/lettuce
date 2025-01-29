@@ -42,6 +42,8 @@ import javax.inject.Inject;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
 import java.util.function.Function;
@@ -50,6 +52,7 @@ import java.util.stream.IntStream;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.settings.TestSettings.sslPort;
+import static io.lettuce.test.settings.TlsSettings.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -66,11 +69,9 @@ class SslIntegrationTests extends TestSupport {
 
     private static final String KEYSTORE = "work/keystore.jks";
 
-    private static final String TRUSTSTORE = "work/truststore.jks";
+    private static File truststoreFile;
 
-    private static final File TRUSTSTORE_FILE = new File(TRUSTSTORE);
-
-    private static final File CA_CERT_FILE = new File("work/ca/certs/ca.cert.pem");
+    private static File cacertFile;
 
     private static final int MASTER_SLAVE_BASE_PORT_OFFSET = 2000;
 
@@ -111,9 +112,12 @@ class SslIntegrationTests extends TestSupport {
 
     @BeforeAll
     static void beforeClass() {
-
+        Path path = createAndSaveTestTruststore("redis-standalone-1", Paths.get("work/tls"), "changeit");
+        truststoreFile = path.toFile();
+        cacertFile = envCa(Paths.get("redis-standalone-1/work/tls")).toFile();
+        // do for 6444 and 8444
         assumeTrue(CanConnect.to(TestSettings.host(), sslPort()), "Assume that stunnel runs on port 6443");
-        assertThat(TRUSTSTORE_FILE).exists();
+        assertThat(truststoreFile).exists();
     }
 
     @Test
@@ -130,7 +134,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(TRUSTSTORE_FILE) //
+                .truststore(truststoreFile, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -142,7 +146,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(TRUSTSTORE_FILE) //
+                .truststore(truststoreFile, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -153,7 +157,7 @@ class SslIntegrationTests extends TestSupport {
     void standaloneWithPemCert() {
 
         SslOptions sslOptions = SslOptions.builder() //
-                .trustManager(CA_CERT_FILE) //
+                .trustManager(cacertFile) //
                 .build();
         setOptions(sslOptions);
         verifyConnection(URI_VERIFY);
@@ -164,7 +168,7 @@ class SslIntegrationTests extends TestSupport {
 
         Assertions.setMaxStackTraceElementsDisplayed(30);
         SslOptions sslOptions = SslOptions.builder() //
-                .trustManager(CA_CERT_FILE) //
+                .trustManager(cacertFile) //
                 .build();
         setOptions(sslOptions);
         redisClient.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).sslOptions(sslOptions).build());
@@ -196,7 +200,7 @@ class SslIntegrationTests extends TestSupport {
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
                 .keystore(new File(KEYSTORE), "changeit".toCharArray()) //
-                .truststore(TRUSTSTORE_FILE) //
+                .truststore(truststoreFile, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -208,7 +212,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(TRUSTSTORE_FILE) //
+                .truststore(truststoreFile, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -245,7 +249,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .openSslProvider() //
-                .truststore(TRUSTSTORE_FILE) //
+                .truststore(truststoreFile, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -298,7 +302,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(TRUSTSTORE_FILE) //
+                .truststore(truststoreFile, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -363,7 +367,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(TRUSTSTORE_FILE) //
+                .truststore(truststoreFile, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -375,7 +379,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(TRUSTSTORE_FILE) //
+                .truststore(truststoreFile, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -416,7 +420,7 @@ class SslIntegrationTests extends TestSupport {
     }
 
     private URL truststoreURL() throws MalformedURLException {
-        return TRUSTSTORE_FILE.toURI().toURL();
+        return truststoreFile.toURI().toURL();
     }
 
     private void setOptions(SslOptions sslOptions) {

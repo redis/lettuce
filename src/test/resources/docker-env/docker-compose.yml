@@ -7,6 +7,7 @@ services:
       - TLS_ENABLED=yes
     volumes:
       - ./redis-standalone-1/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-1/work:/redis/work:rw
     ports:
       - "6479:6479"
       - "6443:6443" # TLS Port
@@ -52,10 +53,12 @@ services:
     container_name: redis-standalone-sentinel-controlled
     environment:
       - REDIS_CLUSTER=no
+      - TLS_ENABLED=yes
     volumes:
       - ./redis-standalone-sentinel-controlled/config:/redis/config:r
     ports:
       - "26380:26380"
+      - "26822:26822" # sentinel tls port
       - "26379:26379"
       - "6482:6482"
       - "6483:6483"
