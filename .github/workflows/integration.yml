@@ -15,23 +15,35 @@ on:
   schedule:
     - cron: '0 1 * * *' # nightly build
   workflow_dispatch:
-    inputs:
-      redis_version:
-        description: "Redis stack version to use for testing"
-        required: false
-        default: "8.0-M02"
-        type: choice
-        options:
-          - "8.0-M02"
-          - "rs-7.4.0-v1"
-          - "rs-7.2.0-v13"
 
 jobs:
-
   build:
     name: Build and Test
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        redis_version:
+          - "unstable"
+          - "8.0"
+          - "7.4"
+          - "7.2"
+
     steps:
+      - name: Test Redis Server Version
+        id: map-tags
+        run: |
+          # Map requested version to github or  tag
+          case "${{ matrix.redis_version }}" in
+            "unstable") redis_branch="unstable" stack_version="8.0-M03-pre" ;;
+            "8.0") redis_branch="8.0" stack_version="8.0-M04-pre" ;;
+            "7.4") redis_branch="7.4" stack_version="rs-7.4.0-v2" ;;
+            "7.2") redis_branch="7.2" stack_version="rs-7.2.0-v14" ;;
+            *) echo "Unsupported version: ${{ matrix.redis_version }}" && exit 1 ;;
+          esac
+          # Save them as outputs for later use
+          echo "redis_branch=$redis_branch" >> $GITHUB_OUTPUT
+          echo "redis_stack_version=$stack_version" >> $GITHUB_OUTPUT
       - name: Checkout project
         uses: actions/checkout@v4
       - name: Set Java up in the runner
@@ -61,7 +73,8 @@ jobs:
         run: |
           make test-coverage
         env:
-          REDIS_STACK_VERSION: ${{ inputs.redis_version || '8.0-M02' }}
+          REDIS: ${{ steps.map-tags.outputs.redis_branch }}
+          REDIS_STACK_VERSION: ${{ steps.map-tags.outputs.redis_stack_version }}
           JVM_OPTS: -Xmx3200m
           TERM: dumb
       - name: Upload coverage reports to Codecov

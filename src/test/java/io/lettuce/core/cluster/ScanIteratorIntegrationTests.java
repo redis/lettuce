@@ -22,6 +22,7 @@ package io.lettuce.core.cluster;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.AssertionsForClassTypes.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -185,6 +187,8 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
     @Test
     void hashNovaluesSinglePass() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         redis.hmset(key, KeysAndValues.MAP);
 
@@ -215,6 +219,8 @@ class ScanIteratorIntegrationTests extends TestSupport {
 
     @Test
     void hashNovaluesMultiPass() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         redis.hmset(key, KeysAndValues.MAP);
 

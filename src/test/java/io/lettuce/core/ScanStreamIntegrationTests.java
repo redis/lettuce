@@ -21,12 +21,14 @@ package io.lettuce.core;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.List;
 import java.util.stream.IntStream;
 
 import javax.inject.Inject;
 
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -95,6 +97,8 @@ class ScanStreamIntegrationTests extends TestSupport {
 
     @Test
     void shouldHscanNovaluesIteratively() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         for (int i = 0; i < 1000; i++) {
             redis.hset(key, "field-" + i, "value-" + i);
@@ -160,6 +164,8 @@ class ScanStreamIntegrationTests extends TestSupport {
 
     @Test
     void shouldCorrectlyEmitKeysWithConcurrentPoll() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         RedisReactiveCommands<String, String> commands = connection.reactive();
 
