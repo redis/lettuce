@@ -22,12 +22,14 @@ package io.lettuce.core.commands;
 import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
 
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.*;
 
 import java.util.Arrays;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for ACL commands with Redis modules since Redis 8.0.
@@ -47,6 +49,7 @@ public class ConsolidatedAclCommandIntegrationTests extends RedisContainerIntegr
 
         client = RedisClient.create(redisURI);
         redis = client.connect().sync();
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.9"));
     }
 
     @AfterAll
