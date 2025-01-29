@@ -32,6 +32,7 @@ import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisHashCommands}.
@@ -340,6 +342,9 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     void hscanNovalues() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         redis.hset(key, key, value);
         KeyScanCursor<String> cursor = redis.hscanNovalues(key);
 
@@ -361,6 +366,9 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     void hscanNoValuesWithCursor() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         redis.hset(key, key, value);
 
         KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanCursor.INITIAL);
@@ -383,6 +391,9 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     void hscanNoValuesWithCursorAndArgs() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         redis.hset(key, key, value);
 
         KeyScanCursor<String> cursor = redis.hscanNovalues(key, ScanCursor.INITIAL, ScanArgs.Builder.limit(2));
@@ -407,6 +418,9 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     void hscanNoValuesStreaming() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         redis.hset(key, key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -432,6 +446,9 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     void hscanNoValuesStreamingWithCursor() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         redis.hset(key, key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -457,6 +474,9 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     void hscanNoValuesStreamingWithCursorAndArgs() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         redis.hset(key, key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -482,6 +502,9 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     void hscanNoValuesStreamingWithArgs() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         redis.hset(key, key, value);
         ListStreamingAdapter<String> adapter = new ListStreamingAdapter<>();
 
@@ -520,6 +543,8 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     void hscanNoValuesMultiple() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         Map<String, String> expect = new LinkedHashMap<>();
         setup100KeyValues(expect);
@@ -558,6 +583,8 @@ public class HashCommandIntegrationTests extends TestSupport {
 
     @Test
     void hscanNoValuesMatch() {
+        // NOVALUES flag (since Redis 7.4)
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
 
         Map<String, String> expect = new LinkedHashMap<>();
         setup100KeyValues(expect);
