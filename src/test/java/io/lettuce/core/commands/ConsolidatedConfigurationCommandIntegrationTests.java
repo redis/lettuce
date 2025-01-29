@@ -24,18 +24,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisCommandExecutionException;
-import io.lettuce.core.TestSupport;
+import io.lettuce.core.*;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.RedisConditions;
 
-import java.util.Collections;
-import javax.inject.Inject;
-
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
+
+import java.util.Collections;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisServerCommands} with Redis modules since Redis 8.0.
@@ -43,24 +38,31 @@ import org.junit.jupiter.api.extension.ExtendWith;
  * @author M Sazzadul Hoque
  */
 @Tag(INTEGRATION_TEST)
-@ExtendWith(LettuceExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ConsolidatedConfigurationCommandIntegrationTests extends TestSupport {
+public class ConsolidatedConfigurationCommandIntegrationTests extends RedisContainerIntegrationTests {
 
-    private final RedisClient client;
+    private static RedisClient client;
 
-    private final RedisCommands<String, String> redis;
+    private static RedisCommands<String, String> redis;
 
-    @Inject
-    protected ConsolidatedConfigurationCommandIntegrationTests(RedisClient client, RedisCommands<String, String> redis) {
-        this.client = client;
-        this.redis = redis;
+    @BeforeAll
+    public static void setup() {
+        RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
+
+        client = RedisClient.create(redisURI);
+        redis = client.connect().sync();
+    }
+
+    @AfterAll
+    static void teardown() {
+        if (client != null) {
+            client.shutdown();
+        }
     }
 
     @BeforeEach
     void setUp() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.9"));
-        this.redis.flushall();
+        redis.flushall();
     }
 
     @Disabled(value = "failing")
