@@ -19,10 +19,10 @@ on:
       redis_version:
         description: "Redis stack version to use for testing"
         required: false
-        default: "8.0-M02"
+        default: "8.0-M04-pre"
         type: choice
         options:
-          - "8.0-M02"
+          - "8.0-M04-pre"
           - "rs-7.4.0-v1"
           - "rs-7.2.0-v13"
 
@@ -61,7 +61,7 @@ jobs:
         run: |
           make test-coverage
         env:
-          REDIS_STACK_VERSION: ${{ inputs.redis_version || '8.0-M02' }}
+          REDIS_STACK_VERSION: ${{ inputs.redis_version || '8.0-M04-pre' }}
           JVM_OPTS: -Xmx3200m
           TERM: dumb
       - name: Upload coverage reports to Codecov
