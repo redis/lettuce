@@ -65,7 +65,6 @@ public class ConsolidatedConfigurationCommandIntegrationTests extends RedisConta
         redis.flushall();
     }
 
-    @Disabled(value = "failing")
     @Test
     public void setSearchConfigGloballyTest() {
         final String configParam = "search-default-dialect";
