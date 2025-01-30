@@ -399,6 +399,11 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    public void getAllConfigSettings() {
+        assertThat(redis.configGet("*")).isNotEmpty();
+    }
+
+    @Test
     void configResetstat() {
         redis.get(key);
         redis.get(key);

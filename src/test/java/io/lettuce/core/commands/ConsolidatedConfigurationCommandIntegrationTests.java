@@ -31,6 +31,7 @@ import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.*;
 
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisServerCommands} with Redis modules since Redis 8.0.
@@ -108,7 +109,8 @@ public class ConsolidatedConfigurationCommandIntegrationTests extends RedisConta
 
     @Test
     public void getAllConfigSettings() {
-        assertThat(redis.configGet("*")).isNotEmpty();
+        assertThat(redis.configGet("*").keySet()).contains("search-default-dialect", "search-timeout", "ts-retention-policy",
+                "bf-error-rate", "cf-initial-size");
     }
 
 }
