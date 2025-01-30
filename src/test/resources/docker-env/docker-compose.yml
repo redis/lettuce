@@ -1,5 +1,19 @@
 services:
   # Standalone Redis Servers
+  redis-standalone-0:
+    image: redislabs/client-libs-test:8.0-M02
+    container_name: redis-standalone-0
+    environment:
+      - TLS_ENABLED=yes
+    volumes:
+      - ./redis-standalone-0/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-0/work:/redis/work:rw
+    ports:
+      - "6478:6478"
+      - "6444:6444" # TLS Port
+    networks:
+      - redis-network
+
   redis-standalone-1:
     image: redislabs/client-libs-test:8.0-M02
     container_name: redis-standalone-1
@@ -56,12 +70,15 @@ services:
       - TLS_ENABLED=yes
     volumes:
       - ./redis-standalone-sentinel-controlled/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-sentinel-controlled/work:/redis/work:rw
     ports:
       - "26380:26380"
       - "26822:26822" # sentinel tls port
       - "26379:26379"
       - "6482:6482"
       - "6483:6483"
+      - "8443:8443" # TLS Port
+      - "8444:8444" # TLS Port
     networks:
       - redis-network
 
