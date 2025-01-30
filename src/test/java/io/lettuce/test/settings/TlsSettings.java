@@ -43,10 +43,10 @@ public class TlsSettings {
      * Creates an empty truststore.
      *
      * @return An empty KeyStore object.
-     * @throws KeyStoreException        If there's an error initializing the truststore.
-     * @throws IOException              If there's an error loading the truststore.
+     * @throws KeyStoreException If there's an error initializing the truststore.
+     * @throws IOException If there's an error loading the truststore.
      * @throws NoSuchAlgorithmException If the algorithm used to check the integrity of the truststore cannot be found.
-     * @throws CertificateException     If any of the certificates in the truststore could not be loaded.
+     * @throws CertificateException If any of the certificates in the truststore could not be loaded.
      */
     private static KeyStore createTruststore()
             throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
@@ -73,8 +73,8 @@ public class TlsSettings {
      * Adds a trusted certificate to the given truststore.
      *
      * @param trustStore The KeyStore object.
-     * @param alias      Alias for the certificate.
-     * @param certPath   Path to the certificate file.
+     * @param alias Alias for the certificate.
+     * @param certPath Path to the certificate file.
      * @throws Exception If there's an error adding the certificate.
      */
     private static void addTrustedCertificate(KeyStore trustStore, String alias, Path certPath) throws Exception {
@@ -85,8 +85,8 @@ public class TlsSettings {
     /**
      * Creates a truststore, adds multiple trusted certificates, and saves it to the specified path.
      *
-     * @param trustedCertPaths   List of certificate file paths to add to the truststore.
-     * @param truststorePath     Path to save the generated truststore.
+     * @param trustedCertPaths List of certificate file paths to add to the truststore.
+     * @param truststorePath Path to save the generated truststore.
      * @param truststorePassword Password for the truststore.
      * @return Path to the saved truststore file.
      */
@@ -111,7 +111,7 @@ public class TlsSettings {
     }
 
     public static Path createAndSaveTestTruststore(String trustStoreName, Path certificateLocations,
-                                                   String truststorePassword) {
+            String truststorePassword) {
         List<Path> trustedCertPaths = new ArrayList<>();
         trustedCertPaths.add(envCa(certificateLocations).toAbsolutePath());
         trustedCertPaths.add(envServerCert(certificateLocations).toAbsolutePath());
@@ -120,4 +120,5 @@ public class TlsSettings {
 
         return createAndSaveTruststore(trustedCertPaths, trustStorePath, truststorePassword);
     }
+
 }

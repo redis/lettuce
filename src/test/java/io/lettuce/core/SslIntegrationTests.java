@@ -70,7 +70,9 @@ class SslIntegrationTests extends TestSupport {
     private static final String KEYSTORE = "work/keystore.jks";
 
     private static File truststoreFile0;
+
     private static File truststoreFile1;
+
     private static File truststoreFile2;
 
     private static File cacertFile;
@@ -122,11 +124,10 @@ class SslIntegrationTests extends TestSupport {
         truststoreFile1 = path.toFile();
         cacertFile = envCa(Paths.get("redis-standalone-1/work/tls")).toFile();
 
-        Path path2 = createAndSaveTestTruststore("redis-standalone-sentinel-controlled", Paths.get("redis-standalone-sentinel-controlled/work/tls"), "changeit");
+        Path path2 = createAndSaveTestTruststore("redis-standalone-sentinel-controlled",
+                Paths.get("redis-standalone-sentinel-controlled/work/tls"), "changeit");
         truststoreFile2 = path2.toFile();
         cacertFile = envCa(Paths.get("redis-standalone-sentinel-controlled/work/tls")).toFile();
-
-
 
         assumeTrue(CanConnect.to(TestSettings.host(), sslPort()), "Assume that stunnel runs on port 6443");
         // Maybe we should do a list.
@@ -211,7 +212,7 @@ class SslIntegrationTests extends TestSupport {
 
     @Test
     void standaloneWithClientCertificates() {
-        //6445
+        // 6445
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
                 .keystore(new File(KEYSTORE), "changeit".toCharArray()) //
