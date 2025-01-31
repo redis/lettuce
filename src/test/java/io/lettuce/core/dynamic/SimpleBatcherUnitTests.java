@@ -146,12 +146,12 @@ class SimpleBatcherUnitTests {
 
         SimpleBatcher batcher = new SimpleBatcher(connection, 4);
 
-        Thread batchThread1 = new Thread(()->{
+        Thread batchThread1 = new Thread(() -> {
             batcher.batch(c1, CommandBatching.flush());
         });
         batchThread1.start();
 
-        Thread batchThread2 = new Thread(()->{
+        Thread batchThread2 = new Thread(() -> {
             try {
                 batchFlushLatch1.await();
             } catch (InterruptedException ignored) {
@@ -166,7 +166,6 @@ class SimpleBatcherUnitTests {
         verify(connection, times(1)).dispatch(c1);
         verify(connection, times(1)).dispatch(c2);
     }
-
 
     private static RedisCommand<Object, Object, Object> createCommand() {
         return new AsyncCommand<>(new Command<>(CommandType.COMMAND, null, null));
