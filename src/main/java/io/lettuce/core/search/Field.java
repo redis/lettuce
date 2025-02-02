@@ -354,7 +354,8 @@ public class Field<K> {
         }
 
         /**
-         * Build a {@link java.util.List} of {@link Field}s, containing the current {@link Field} as the only element of the list.
+         * Build a {@link java.util.List} of {@link Field}s, containing the current {@link Field} as the only element of the
+         * list.
          *
          * @return the instance of the {@link Field}
          */
