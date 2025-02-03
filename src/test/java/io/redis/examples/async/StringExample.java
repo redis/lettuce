@@ -7,14 +7,11 @@ import io.lettuce.core.api.StatefulRedisConnection;
 
 // REMOVE_START
 import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 // REMOVE_END
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-
-// REMOVE_START
-import static org.assertj.core.api.Assertions.assertThat;
-// REMOVE_END
 
 public class StringExample {
 
@@ -29,7 +26,7 @@ public class StringExample {
 
             // STEP_START set_get
             CompletableFuture<Void> setAndGet = asyncCommands.set("bike:1", "Deimos").thenCompose(v -> {
-                System.out.println(v); // OK
+                System.out.println(v); // >>> OK
                 // REMOVE_START
                 assertThat(v).isEqualTo("OK");
                 // REMOVE_END
@@ -41,13 +38,16 @@ public class StringExample {
                         return res;
                     })
                     // REMOVE_END
-                    .thenAccept(System.out::println) // Deimos
+                    .thenAccept(System.out::println) // >>> Deimos
                     .toCompletableFuture();
             // STEP_END
+            // HIDE_START
+            setAndGet.join();
+            // HIDE_END
 
             // STEP_START setnx_xx
             CompletableFuture<Void> setnx = asyncCommands.setnx("bike:1", "bike").thenCompose(v -> {
-                System.out.println(v); // false (because key already exists)
+                System.out.println(v); // >>> false (because key already exists)
                 // REMOVE_START
                 assertThat(v).isFalse();
                 // REMOVE_END
@@ -59,8 +59,11 @@ public class StringExample {
                         return res;
                     })
                     // REMOVE_END
-                    .thenAccept(System.out::println) // Deimos (value is unchanged)
+                    .thenAccept(System.out::println) // >>> Deimos (value is unchanged)
                     .toCompletableFuture();
+            // HIDE_START
+            setnx.join();
+            // HIDE_END
 
             // set the value to "bike" if it already exists
             CompletableFuture<Void> setxx = asyncCommands.set("bike:1", "bike", SetArgs.Builder.xx())
@@ -70,8 +73,11 @@ public class StringExample {
                         return res;
                     })
                     // REMOVE_END
-                    .thenAccept(System.out::println) // OK
+                    .thenAccept(System.out::println) // >>> OK
                     .toCompletableFuture();
+            // HIDE_START
+            setxx.join();
+            // HIDE_END
             // STEP_END
 
             // STEP_START mset
@@ -81,7 +87,7 @@ public class StringExample {
             bikeMap.put("bike:3", "Vanth");
 
             CompletableFuture<Void> mset = asyncCommands.mset(bikeMap).thenCompose(v -> {
-                System.out.println(v); // OK
+                System.out.println(v); // >>> OK
                 return asyncCommands.mget("bike:1", "bike:2", "bike:3");
             })
                     // REMOVE_START
@@ -93,15 +99,19 @@ public class StringExample {
                         return res;
                     })
                     // REMOVE_END
-                    .thenAccept(System.out::println) // [KeyValue[bike:1, Deimos], KeyValue[bike:2, Ares], KeyValue[bike:3,
-                                                     // Vanth]]
+                    .thenAccept(System.out::println)
+                    // >>> [KeyValue[bike:1, Deimos], KeyValue[bike:2, Ares], KeyValue[bike:3,
+                    // Vanth]]
                     .toCompletableFuture();
             // STEP_END
+            // HIDE_START
+            mset.join();
+            // HIDE_END
 
             // STEP_START incr
             CompletableFuture<Void> incrby = asyncCommands.set("total_crashes", "0")
                     .thenCompose(v -> asyncCommands.incr("total_crashes")).thenCompose(v -> {
-                        System.out.println(v); // 1
+                        System.out.println(v); // >>> 1
                         // REMOVE_START
                         assertThat(v).isEqualTo(1L);
                         // REMOVE_END
@@ -113,15 +123,14 @@ public class StringExample {
                         return res;
                     })
                     // REMOVE_END
-                    .thenAccept(System.out::println) // 11
+                    .thenAccept(System.out::println) // >>> 11
                     .toCompletableFuture();
             // STEP_END
-
-            CompletableFuture.allOf(setAndGet, setnx, setxx, mset, incrby).join();
-
+            // HIDE_START
+            incrby.join();
+            // HIDE_END
         } finally {
             redisClient.shutdown();
         }
     }
-
 }
