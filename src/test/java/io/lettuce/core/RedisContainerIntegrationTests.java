@@ -26,7 +26,7 @@ public class RedisContainerIntegrationTests {
 
     private static final String REDIS_STACK_CLUSTER = "clustered-stack";
 
-    private static final String REDIS_STACK_VERSION = System.getProperty("REDIS_STACK_VERSION", "8.0-M02");;
+    private static final String REDIS_STACK_VERSION = System.getProperty("REDIS_STACK_VERSION", "8.0-M04-pre");;
 
     private static Exception initializationException;
 

@@ -111,5 +111,45 @@ public enum AclCategory {
     /**
      * scripting command
      */
-    SCRIPTING
+    SCRIPTING,
+
+    /**
+     * bloom command
+     */
+    BLOOM,
+
+    /**
+     * cuckoo command
+     */
+    CUCKOO,
+
+    /**
+     * count-min-sketch command
+     */
+    CMS,
+
+    /**
+     * top-k command
+     */
+    TOPK,
+
+    /**
+     * t-digest command
+     */
+    TDIGEST,
+
+    /**
+     * search command
+     */
+    SEARCH,
+
+    /**
+     * timeseries command
+     */
+    TIMESERIES,
+
+    /**
+     * json command
+     */
+    JSON
 }

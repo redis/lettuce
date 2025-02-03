@@ -95,6 +95,15 @@ public class CommandDetailParser {
         aclCategoriesMap.put("@connection", AclCategory.CONNECTION);
         aclCategoriesMap.put("@transaction", AclCategory.TRANSACTION);
         aclCategoriesMap.put("@scripting", AclCategory.SCRIPTING);
+        aclCategoriesMap.put("@bloom", AclCategory.BLOOM);
+        aclCategoriesMap.put("@cuckoo", AclCategory.CUCKOO);
+        aclCategoriesMap.put("@cms", AclCategory.CMS);
+        aclCategoriesMap.put("@topk", AclCategory.TOPK);
+        aclCategoriesMap.put("@tdigest", AclCategory.TDIGEST);
+        aclCategoriesMap.put("@search", AclCategory.SEARCH);
+        aclCategoriesMap.put("@timeseries", AclCategory.TIMESERIES);
+        aclCategoriesMap.put("@json", AclCategory.JSON);
+
         ACL_CATEGORY_MAPPING = Collections.unmodifiableMap(aclCategoriesMap);
     }
 
