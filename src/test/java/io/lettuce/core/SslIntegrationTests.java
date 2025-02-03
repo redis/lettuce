@@ -91,7 +91,7 @@ class SslIntegrationTests extends TestSupport {
             .withVerifyPeer(false) //
             .build();
 
-    private static final RedisURI URI_CLIENT_CERT_AUTH = sslURIBuilder(2) //
+    private static final RedisURI URI_CLIENT_CERT_AUTH = sslURIBuilder(1) //
             .withVerifyPeer(true) //
             .build();
 
@@ -203,7 +203,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(truststoreURL(truststoreFile1)) //
+                .truststore(truststoreURL(truststoreFile1), "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -216,7 +216,7 @@ class SslIntegrationTests extends TestSupport {
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
                 .keystore(new File(KEYSTORE), "changeit".toCharArray()) //
-                .truststore(truststoreFile1, "changeit") //
+                .truststore(truststoreFile0, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -228,7 +228,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(truststoreFile0, "changeit") //
+                .truststore(truststoreFile1, "changeit") //
                 .build();
         setOptions(sslOptions);
 
@@ -330,7 +330,7 @@ class SslIntegrationTests extends TestSupport {
 
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .truststore(truststoreURL(truststoreFile2)) //
+                .truststore(truststoreURL(truststoreFile2), "changeit") //
                 .build();
         setOptions(sslOptions);
 
