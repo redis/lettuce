@@ -13,7 +13,7 @@
         and much more.
     </description>
 
-    <url>http://github.com/lettuce-io/lettuce-core</url>
+    <url>https://github.com/redis/lettuce</url>
 
     <organization>
         <name>lettuce.io</name>
@@ -30,7 +30,7 @@
 
     <issueManagement>
         <system>Github</system>
-        <url>https://github.com/lettuce-io/lettuce-core/issues</url>
+        <url>https://github.com/redis/lettuce/issues</url>
     </issueManagement>
 
     <developers>
@@ -82,10 +82,10 @@
     </properties>
 
     <scm>
-        <connection>scm:git:https://github.com/lettuce-io/lettuce-core.git</connection>
-        <developerConnection>scm:git:https://github.com/lettuce-io/lettuce-core.git
+        <connection>scm:git:https://github.com/redis/lettuce.git</connection>
+        <developerConnection>scm:git:https://github.com/redis/lettuce.git
         </developerConnection>
-        <url>http://github.com/lettuce-io/lettuce-core</url>
+        <url>https://github.com/redis/lettuce</url>
       <tag>HEAD</tag>
   </scm>
 

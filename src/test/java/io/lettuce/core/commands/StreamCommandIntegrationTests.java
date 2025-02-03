@@ -30,6 +30,7 @@ import io.lettuce.core.output.NestedMultiOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,7 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.protocol.CommandType.XINFO;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisStreamCommands}.
@@ -340,6 +342,9 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
     @Test
     public void xreadLastVsLatest() {
+        // Redis 7.4 - you can use the + sign as a special ID to read the last message in the stream.
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         redis.xadd("stream-1", Collections.singletonMap("key1", "value1"));
         redis.xadd("stream-1", Collections.singletonMap("key2", "value2"));
 
