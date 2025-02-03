@@ -10,11 +10,11 @@ concurrency:
   group: "pages"
   cancel-in-progress: false
 jobs:
-  build-and-deploy:
+  publish-docs:
     concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
           python-version: 3.9
@@ -26,7 +26,7 @@ jobs:
         run: |
           mkdocs build -d docsbuild
       - name: Setup Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v4
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
