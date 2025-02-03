@@ -4,10 +4,12 @@
  *
  * Licensed under the MIT License.
  */
+
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.search.Fields
+import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.search.Field
 import io.lettuce.core.search.arguments.CreateArgs
 
 /**
@@ -24,14 +26,16 @@ import io.lettuce.core.search.arguments.CreateArgs
 interface RediSearchCoroutinesCommands<K : Any, V : Any> {
 
     /**
-     * Create a new index with the given name, index options and fields.
+     * Create a new index with the given name, index options, and fields.
      *
-     * @param index the index name
-     * @param options the index options
-     * @param fields the fields
+     * @param index the index name, as a key
+     * @param options the index [CreateArgs]
+     * @param fields the [Field]s of the index
      * @return the result of the create command
+     * @since 6.6
+     * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      */
-    suspend fun ftCreate(index: K, options: CreateArgs<K, V>, fields: Fields<K>): String?
+    suspend fun ftCreate(index: K, options: CreateArgs<K, V>, fields: List<Field<K>>): String?
 
 }
 

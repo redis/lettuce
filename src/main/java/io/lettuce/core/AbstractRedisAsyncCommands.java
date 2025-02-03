@@ -48,7 +48,7 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
-import io.lettuce.core.search.Fields;
+import io.lettuce.core.search.Field;
 import io.lettuce.core.search.arguments.CreateArgs;
 import reactor.core.publisher.Mono;
 
@@ -1485,7 +1485,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftCreate(K index, CreateArgs<K, V> options, Fields<K> fields) {
+    public RedisFuture<String> ftCreate(K index, CreateArgs<K, V> options, List<Field<K>> fields) {
         return dispatch(searchCommandBuilder.ftCreate(index, options, fields));
     }
 

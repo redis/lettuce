@@ -9,7 +9,6 @@ package io.lettuce.core;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.search.Field;
-import io.lettuce.core.search.Fields;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -17,6 +16,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,7 +55,7 @@ class RediSearchCommandBuilderUnitTests {
         Field<String> field3 = Field.<String> builder().name(FIELD3_NAME).type(Field.Type.TAG).sortable().build();
         CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix(PREFIX)
                 .on(CreateArgs.TargetType.HASH).build();
-        Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs, Fields.from(field1, field2, field3));
+        Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs, Arrays.asList(field1, field2, field3));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -76,7 +76,7 @@ class RediSearchCommandBuilderUnitTests {
                 .build();
         CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix(PREFIX)
                 .on(CreateArgs.TargetType.HASH).build();
-        Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs, Fields.from(field1, field2));
+        Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs, Arrays.asList(field1, field2));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

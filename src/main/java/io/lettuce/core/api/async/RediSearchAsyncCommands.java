@@ -6,8 +6,9 @@
  */
 package io.lettuce.core.api.async;
 
+import java.util.List;
 import io.lettuce.core.RedisFuture;
-import io.lettuce.core.search.Fields;
+import io.lettuce.core.search.Field;
 import io.lettuce.core.search.arguments.CreateArgs;
 
 /**
@@ -23,13 +24,15 @@ import io.lettuce.core.search.arguments.CreateArgs;
 public interface RediSearchAsyncCommands<K, V> {
 
     /**
-     * Create a new index with the given name, index options and fields.
+     * Create a new index with the given name, index options, and fields.
      *
-     * @param index the index name
-     * @param options the index options
-     * @param fields the fields
+     * @param index the index name, as a key
+     * @param options the index {@link CreateArgs}
+     * @param fields the {@link Field}s of the index
      * @return the result of the create command
+     * @since 6.6
+     * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      */
-    RedisFuture<String> ftCreate(K index, CreateArgs<K, V> options, Fields<K> fields);
+    RedisFuture<String> ftCreate(K index, CreateArgs<K, V> options, List<Field<K>> fields);
 
 }

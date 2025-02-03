@@ -12,7 +12,6 @@ import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.search.Field;
-import io.lettuce.core.search.Fields;
 import io.lettuce.core.search.arguments.CreateArgs;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,7 +77,7 @@ public class RediSearchIntegrationTests extends RedisContainerIntegrationTests {
         CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix(PREFIX)
                 .on(CreateArgs.TargetType.HASH).build();
 
-        String result = redis.ftCreate(GENERIC_INDEX, createArgs, Fields.from(field1, field2, field3));
+        String result = redis.ftCreate(GENERIC_INDEX, createArgs, Arrays.asList(field1, field2, field3));
         assertThat(result).isEqualTo("OK");
     }
 

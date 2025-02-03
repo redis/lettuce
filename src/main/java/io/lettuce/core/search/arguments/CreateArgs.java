@@ -316,6 +316,8 @@ public class CreateArgs<K, V> {
          *
          * @param stopWords a list of stop words
          * @return the instance of the current {@link Builder} for the purpose of method chaining
+         * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/stopwords/">Stop
+         *      words</a>
          */
         public Builder<K, V> stopWords(List<V> stopWords) {
             instance.stopWords = Optional.of(stopWords);

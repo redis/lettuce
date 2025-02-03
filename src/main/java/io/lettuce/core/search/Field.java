@@ -8,6 +8,8 @@ package io.lettuce.core.search;
 
 import io.lettuce.core.protocol.CommandArgs;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static io.lettuce.core.protocol.CommandKeyword.*;
@@ -359,9 +361,10 @@ public class Field<K> {
          *
          * @return the instance of the {@link Field}
          */
-        public Fields<K> buildFields() {
-            Fields<K> fields = new Fields<>();
-            return fields.add(instance);
+        public List<Field<K>> buildFields() {
+            List<Field<K>> fields = new ArrayList<>();
+            fields.add(instance);
+            return fields;
         }
 
     }

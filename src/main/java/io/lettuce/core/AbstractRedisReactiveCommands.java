@@ -49,7 +49,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.search.Fields;
+import io.lettuce.core.search.Field;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
@@ -1549,7 +1549,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<String> ftCreate(K index, CreateArgs<K, V> options, Fields<K> fields) {
+    public Mono<String> ftCreate(K index, CreateArgs<K, V> options, List<Field<K>> fields) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, options, fields));
     }
 

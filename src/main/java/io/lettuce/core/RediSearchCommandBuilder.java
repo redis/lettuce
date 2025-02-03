@@ -12,9 +12,10 @@ import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
-import io.lettuce.core.search.Fields;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.Field;
+
+import java.util.List;
 
 import static io.lettuce.core.protocol.CommandType.*;
 
@@ -39,9 +40,9 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param fields the fields
      * @return the result of the create command
      */
-    public Command<K, V, String> ftCreate(K index, CreateArgs<K, V> createArgs, Fields<K> fields) {
+    public Command<K, V, String> ftCreate(K index, CreateArgs<K, V> createArgs, List<Field<K>> fields) {
         notNullKey(index);
-        notEmpty(fields.getFields().toArray());
+        notEmpty(fields.toArray());
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
 
@@ -51,7 +52,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(CommandKeyword.SCHEMA);
 
-        for (Field<K> field : fields.getFields()) {
+        for (Field<K> field : fields) {
             field.build(args);
         }
 
