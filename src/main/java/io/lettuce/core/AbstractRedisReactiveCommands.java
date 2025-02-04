@@ -49,6 +49,8 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.search.Field;
+import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
@@ -91,13 +93,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
         RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
         BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
-        RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V> {
+        RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V>,
+        RediSearchReactiveCommands<K, V>{
 
     private final StatefulConnection<K, V> connection;
 
     private final RedisCommandBuilder<K, V> commandBuilder;
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
+
+    private final RediSearchCommandBuilder<K, V> searchCommandBuilder;
 
     private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
 
@@ -123,6 +128,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
         this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
+        this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -1602,6 +1608,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public boolean isOpen() {
         return connection.isOpen();
+    }
+
+    @Override
+    public Mono<String> ftCreate(K index, CreateArgs<K, V> options, List<Field<K>> fields) {
+        return createMono(() -> searchCommandBuilder.ftCreate(index, options, fields));
     }
 
     @Override
