@@ -36,7 +36,7 @@ public interface RedisCommands<K, V> extends BaseRedisCommands<K, V>, RedisAclCo
         RedisFunctionCommands<K, V>, RedisGeoCommands<K, V>, RedisHashCommands<K, V>, RedisHLLCommands<K, V>,
         RedisKeyCommands<K, V>, RedisListCommands<K, V>, RedisScriptingCommands<K, V>, RedisServerCommands<K, V>,
         RedisSetCommands<K, V>, RedisSortedSetCommands<K, V>, RedisStreamCommands<K, V>, RedisStringCommands<K, V>,
-        RedisTransactionalCommands<K, V>, RedisJsonCommands<K, V> {
+        RedisTransactionalCommands<K, V>, RedisJsonCommands<K, V>, RediSearchCommands<K, V> {
 
     /**
      * Authenticate to the server.
