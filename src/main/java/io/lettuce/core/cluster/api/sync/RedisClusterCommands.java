@@ -34,7 +34,6 @@ import io.lettuce.core.json.JsonParser;
  * @param <V> Value type.
  * @author Mark Paluch
  * @author dengliming
- * @author Tihomir Mateev
  * @since 4.0
  */
 public interface RedisClusterCommands<K, V>
