@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Test;
 class CommonsPool2ConfigConverterUnitTests {
 
     private static final int MIN_IDLE_EXPECTED = 2;
-    
+
     private static final int MAX_IDLE_EXPECTED = 12;
-    
+
     private static final int MAX_TOTAL_EXPECTED = 13;
 
     @Test
