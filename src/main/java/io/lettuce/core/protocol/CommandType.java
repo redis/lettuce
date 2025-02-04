@@ -116,6 +116,9 @@ public enum CommandType implements ProtocolKeyword {
 
     VADD, VCARD, VDIM, VEMB, VEMBRAW, VGETATTR, VINFO, VLINKS, VLINKSWITHSCORES, VRANDMEMBER, VREM, VSETATTR, VSIM, VSIMWITHSCORES,
 
+    // RediSearch
+    FT_CREATE("FT.CREATE"),
+
     // Others
 
     TIME, WAIT,
