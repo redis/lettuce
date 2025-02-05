@@ -1551,6 +1551,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+        return dispatch(searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
+    }
+
+    @Override
     public RedisFuture<List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue... values) {
         return dispatch(jsonCommandBuilder.jsonArrappend(key, jsonPath, values));
     }

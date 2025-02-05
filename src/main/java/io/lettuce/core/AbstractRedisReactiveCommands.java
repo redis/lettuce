@@ -1616,6 +1616,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+        return createMono(() -> searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
+    }
+
+    @Override
     public Flux<Long> jsonArrappend(K key, JsonPath jsonPath, JsonValue... values) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrappend(key, jsonPath, values));
     }
