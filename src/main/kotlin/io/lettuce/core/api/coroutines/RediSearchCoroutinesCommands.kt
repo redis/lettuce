@@ -37,5 +37,22 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      */
     suspend fun ftCreate(index: K, options: CreateArgs<K, V>, fields: List<Field<K>>): String?
 
+    /**
+     * Drop an index.
+     * <p/>
+     * By default, <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a> does not delete the documents
+     * associated with the index. Adding the <code>deleteDocuments</code> option deletes the documents as well. If an index
+     * creation is still running (<a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a> is running
+     * asynchronously), only the document hashes that have already been indexed are deleted. The document hashes left to be
+     * indexed remain in the database.
+     *
+     * @param index the index name, as a key
+     * @param deleteDocuments if true, delete the documents as well
+     * @return the result of the drop command
+     * @since 6.6
+     * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
+     */
+    suspend fun ftDropindex(index: K, deleteDocuments: Boolean): String?
+
 }
 

@@ -8,6 +8,7 @@
 package io.lettuce.core.json;
 
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
@@ -26,6 +27,7 @@ import java.util.Arrays;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Tag(INTEGRATION_TEST)
 public class RediSearchIntegrationTests extends RedisContainerIntegrationTests {
@@ -78,6 +80,9 @@ public class RediSearchIntegrationTests extends RedisContainerIntegrationTests {
                 .on(CreateArgs.TargetType.HASH).build();
 
         String result = redis.ftCreate(GENERIC_INDEX, createArgs, Arrays.asList(field1, field2, field3));
+        assertThat(result).isEqualTo("OK");
+
+        result = redis.ftDropindex(GENERIC_INDEX, false);
         assertThat(result).isEqualTo("OK");
     }
 

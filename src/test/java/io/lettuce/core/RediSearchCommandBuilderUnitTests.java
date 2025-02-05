@@ -89,4 +89,26 @@ class RediSearchCommandBuilderUnitTests {
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }
 
+    @Test
+    void shouldCorrectlyConstructFtDropindexCommand() {
+        Command<String, String, String> command = builder.ftDropindex(MY_KEY, false);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*2\r\n" + "$12\r\n" + "FT.DROPINDEX\r\n" + "$3\r\n" + MY_KEY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void shouldCorrectlyConstructFtDropindexCommandDd() {
+        Command<String, String, String> command = builder.ftDropindex(MY_KEY, true);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" + "$12\r\n" + "FT.DROPINDEX\r\n" + "$3\r\n" + MY_KEY + "\r\n" + "$2\r\n" + "DD\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
 }
