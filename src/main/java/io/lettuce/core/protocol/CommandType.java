@@ -113,7 +113,7 @@ public enum CommandType implements ProtocolKeyword {
                                             "JSON.STRLEN"), JSON_TOGGLE("JSON.TOGGLE"), JSON_TYPE("JSON.TYPE"),
 
     // RediSearch
-    FT_CREATE("FT.CREATE"),
+    FT_CREATE("FT.CREATE"), FT_DROPINDEX("FT.DROPINDEX"),
 
     // Others
 

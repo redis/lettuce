@@ -12,6 +12,7 @@ import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.Field;
 
@@ -58,6 +59,18 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         return createCommand(FT_CREATE, new StatusOutput<>(codec), args);
 
+    }
+
+    public Command<K, V, String> ftDropindex(K index, boolean deleteDocumentKeys) {
+        notNullKey(index);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
+
+        if (deleteDocumentKeys) {
+            args.add(CommandKeyword.DD);
+        }
+
+        return createCommand(FT_DROPINDEX, new StatusOutput<>(codec), args);
     }
 
 }
