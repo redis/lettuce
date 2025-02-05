@@ -1,6 +1,6 @@
 ---
 x-client-libs-stack-image: &client-libs-stack-image
-    image: "redislabs/client-libs-test:${REDIS_STACK_VERSION:-8.0-M04-pre}"
+    image: "redislabs/client-libs-test:${REDIS_STACK_VERSION:-8.0-M02}"
 
 services:
 

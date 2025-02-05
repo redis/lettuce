@@ -61,6 +61,13 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
     }
 
+    /**
+     * Drop the index with the given name.
+     *
+     * @param index the index name
+     * @param deleteDocumentKeys whether to delete the document keys
+     * @return the result of the drop command
+     */
     public Command<K, V, String> ftDropindex(K index, boolean deleteDocumentKeys) {
         notNullKey(index);
 
