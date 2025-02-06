@@ -42,6 +42,7 @@ import io.lettuce.test.settings.TestSettings;
 class SentinelSslIntegrationTests extends TestSupport {
 
     private static File truststoreFile;
+
     private final ClientResources clientResources;
 
     private static Map<Integer, Integer> portMap = new HashMap<>();
