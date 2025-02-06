@@ -24,6 +24,7 @@ services:
       - ${REDIS_ENV_WORK_DIR}/redis-standalone-1/work:/redis/work:rw
     ports:
       - "6479:6479"
+      - "6486:6486"
       - "6443:6443" # TLS Port
     networks:
       - redis-network
