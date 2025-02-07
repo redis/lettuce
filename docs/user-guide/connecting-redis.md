@@ -239,7 +239,7 @@ client.shutdown();
 
 ## Microsoft Entra ID Authentication
 
-[Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2) introduces buld in support for authentication with [Azure Managed Redis](https://azure.microsoft.com/en-us/products/managed-redis) and Azure Cache for Redis using Microsoft Entra ID (formerly Azure Active Directory). It enables seamless integration with Azure's Redis services by fetching authentication tokens and managing the token renewal in the background. 
+[Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2) introduces build in support for authentication with [Azure Managed Redis](https://azure.microsoft.com/en-us/products/managed-redis) and Azure Cache for Redis using Microsoft Entra ID (formerly Azure Active Directory). It enables seamless integration with Azure's Redis services by fetching authentication tokens and managing the token renewal in the background. 
 Integration is build on top of [redis-authx](https://github.com/redis/jvm-redis-authx-entraid) library, and provides support for:
 
 System-assigned managed identity
@@ -254,9 +254,7 @@ You can learn more about managed identities in the [Microsoft Entra ID documenta
 * Create a Redis cache in Azure and grant your service principal access: [AMR](https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/managed-redis/managed-redis-entra-for-authentication) or [ACR](https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-azure-active-directory-for-authentication) documentation.
  
 #### Step 1 - Add the dependencies
-Lettuce requires [redis-authx-entraid](https://github.com/redis/jvm-redis-authx-entraid/)
-dependency to provide Entra ID authentication support. Make sure to
-include that dependency on your classpath.
+Lettuce requires [redis-authx-entraid](https://github.com/redis/jvm-redis-authx-entraid/) dependency to provide Microsoft Entra ID authentication support. Make sure to include that dependency on your classpath.
 
 If using Maven, add the following dependency to your `pom.xml`:
 
@@ -272,7 +270,7 @@ If using Maven, add the following dependency to your `pom.xml`:
 ### Step 2 - Create Entra ID enabled credentials provider
 Credential's provider lifecycle is not managed by Lettuce client. You can create it once and reuse it across multiple clients\connections. Once no longer needed, you should close the provider to release resources `TokenBasedRedisCredentialsProvider#close`.
 
-#### Create Enta ID enabled credentials provider
+#### Create Microsoft Entra ID enabled credentials provider
 ```java
   // Entra ID enabled credentials provider for Service Principle Identity with Client Secret
   TokenBasedRedisCredentialsProvider credentialsSP;
