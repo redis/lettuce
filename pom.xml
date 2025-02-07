@@ -589,6 +589,25 @@
             <scope>test</scope>
         </dependency>
 
+
+        <!-- Bouncy Castle Provider (Crypto API) -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>1.80</version>
+        </dependency>
+
+        <!-- Bouncy Castle PKIX (X.509 Certificates, PKCS, CSR) -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>1.80</version>
+        </dependency>
+
+
+
+
+
     </dependencies>
 
     <build>
