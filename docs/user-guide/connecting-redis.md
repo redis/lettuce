@@ -242,9 +242,10 @@ client.shutdown();
 [Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2) introduces build in support for authentication with [Azure Managed Redis](https://azure.microsoft.com/en-us/products/managed-redis) and Azure Cache for Redis using Microsoft Entra ID (formerly Azure Active Directory). It enables seamless integration with Azure's Redis services by fetching authentication tokens and managing the token renewal in the background. 
 Integration is build on top of [redis-authx](https://github.com/redis/jvm-redis-authx-entraid) library, and provides support for:
 
-System-assigned managed identity
-User-assigned managed identity
-Service principal
+ - System-assigned managed identity
+ - User-assigned managed identity
+ - Service principal
+
 You can learn more about managed identities in the [Microsoft Entra ID documentation](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview).
 
 ### Basic Usage
@@ -268,7 +269,7 @@ If using Maven, add the following dependency to your `pom.xml`:
 
 
 ### Step 2 - Create Entra ID enabled credentials provider
-Credential's provider lifecycle is not managed by Lettuce client. You can create it once and reuse it across multiple clients\connections. Once no longer needed, you should close the provider to release resources `TokenBasedRedisCredentialsProvider#close`.
+Credential's provider lifecycle is not managed by Lettuce client. You can create it once and reuse it across multiple clients\connections. When no longer needed, you should close the provider to release resources `TokenBasedRedisCredentialsProvider#close`.
 
 #### Create Microsoft Entra ID enabled credentials provider
 ```java
@@ -292,8 +293,8 @@ You can test the credentials provider by obtaining a token.
       .block();
 ```
 
-### Step 3 - 
-Enable automatic re-authentication on new credentials. This is required to ensure that the client will re-authenticate whenever new credentials are emitted by a `RedisCredentialsProvider`.
+### Step 3 - Enable automatic re-authentication
+Microsoft Entra ID tokens have a limited lifetime. Lettuce provides a mechanism to automatically re-authenticate when new credentials are emitted by a `RedisCredentialsProvider`.
 ```java
   // Enable automatic re-authentication
   ClientOptions clientOptions = ClientOptions.builder()
