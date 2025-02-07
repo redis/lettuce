@@ -237,3 +237,94 @@ RedisClient client = RedisClient.create(redisUri);
 client.shutdown();
 ```
 
+## Microsoft Entra ID Authentication
+
+[Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2) introduces buld in support for authentication with [Azure Managed Redis](https://azure.microsoft.com/en-us/products/managed-redis) and Azure Cache for Redis using Microsoft Entra ID (formerly Azure Active Directory). It enables seamless integration with Azure's Redis services by fetching authentication tokens and managing the token renewal in the background. 
+Integration is build on top of [redis-authx](https://github.com/redis/jvm-redis-authx-entraid) library, and provides support for:
+
+System-assigned managed identity
+User-assigned managed identity
+Service principal
+You can learn more about managed identities in the [Microsoft Entra ID documentation](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview).
+
+### Basic Usage
+
+#### Pre-requisites
+* [register an application and create a service principal](https://learn.microsoft.com/en-us/entra/identity-platform/app-objects-and-service-principals?tabs=browser) in Azure.
+* Create a Redis cache in Azure and grant your service principal access: [AMR](https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/managed-redis/managed-redis-entra-for-authentication) or [ACR](https://learn.microsoft.com/en-us/azure/azure-cache-for-redis/cache-azure-active-directory-for-authentication) documentation.
+ 
+#### Step 1 - Add the dependencies
+Lettuce requires [redis-authx-entraid](https://github.com/redis/jvm-redis-authx-entraid/)
+dependency to provide Entra ID authentication support. Make sure to
+include that dependency on your classpath.
+
+If using Maven, add the following dependency to your `pom.xml`:
+
+``` xml
+        <dependency>
+            <groupId>redis.clients.authentication</groupId>
+            <artifactId>redis-authx-entraid</artifactId>
+            <version>0.1.1-beta1</version>
+        </dependency>
+```
+
+
+### Step 2 - Create Entra ID enabled credentials provider
+Credential's provider lifecycle is not managed by Lettuce client. You can create it once and reuse it across multiple clients\connections. Once no longer needed, you should close the provider to release resources `TokenBasedRedisCredentialsProvider#close`.
+
+#### Create Enta ID enabled credentials provider
+```java
+  // Entra ID enabled credentials provider for Service Principle Identity with Client Secret
+  TokenBasedRedisCredentialsProvider credentialsSP;
+  try ( EntraIDTokenAuthConfigBuilder builder = EntraIDTokenAuthConfigBuilder.builder()) {
+       builder.clientId(CLIENT_ID)
+              .secret(CLIENT_SECRET)
+              .authority(AUTHORITY) // "https://login.microsoftonline.com/{YOUR_TENANT_ID}";
+              .scopes(SCOPES);      // "https://redis.azure.com/.default";
+      credentialsSP = TokenBasedRedisCredentialsProvider.create(builder.build());
+  }
+```
+
+You can test the credentials provider by obtaining a token.
+
+```java
+  // Test Entra ID credentials provider can resolve credentials
+  credentialsSP.resolveCredentials()
+      .doOnNext(c-> System.out.println(c.getUsername()))
+      .block();
+```
+
+### Step 3 - 
+Enable automatic re-authentication on new credentials. This is required to ensure that the client will re-authenticate whenever new credentials are emitted by a `RedisCredentialsProvider`.
+```java
+  // Enable automatic re-authentication
+  ClientOptions clientOptions = ClientOptions.builder()
+        .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS)
+        .build();
+```
+
+### Step 4 - Connect with Entra ID enabled credentials provider
+
+```java
+  // Use Entra ID credentials provider
+  RedisURI redisURI = RedisURI.builder()
+      .withHost(HOST)
+      .withPort(PORT)
+      .withAuthentication(credentialsSP).build();
+
+  // RedisClient
+  RedisClient redisClient = RedisClient.create(redisURI1);
+  redisClient.setOptions(clientOptions);
+  
+  try {
+      redisClient.setOptions(clientOptions);
+      // Connect with Entra ID credentials provider
+      try (StatefulRedisConnection<String, String> user1 = redisClient.connect(StringCodec.UTF8)) {
+          System.out.println("Connected to redis as :" + user1.sync().aclWhoami());
+          System.out.println("Db size :" + user1.sync().dbsize());
+      }
+  } finally {
+      redisClient.shutdown();  // Shutdown Redis client and close connections
+      credentialsSP.close(); // Shutdown Entra ID Credentials provider
+  }
+```
