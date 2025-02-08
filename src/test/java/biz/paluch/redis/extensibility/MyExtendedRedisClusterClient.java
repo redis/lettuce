@@ -20,6 +20,7 @@
 package biz.paluch.redis.extensibility;
 
 import java.time.Duration;
+import java.util.function.Supplier;
 
 import javax.enterprise.inject.Alternative;
 
@@ -51,7 +52,7 @@ public class MyExtendedRedisClusterClient extends RedisClusterClient {
     @Override
     protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(
             RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
         return new MyRedisClusterConnection<>(channelWriter, pushHandler, codec, timeout, parser);
     }
 

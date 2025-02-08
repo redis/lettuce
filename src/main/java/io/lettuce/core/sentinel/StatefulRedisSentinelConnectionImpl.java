@@ -21,6 +21,7 @@ package io.lettuce.core.sentinel;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.function.Supplier;
 
 import io.lettuce.core.ConnectionState;
 import io.lettuce.core.RedisChannelHandler;
@@ -34,7 +35,6 @@ import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.lettuce.core.sentinel.api.async.RedisSentinelAsyncCommands;
 import io.lettuce.core.sentinel.api.reactive.RedisSentinelReactiveCommands;
 import io.lettuce.core.sentinel.api.sync.RedisSentinelCommands;
-import reactor.core.publisher.Mono;
 
 import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 
@@ -74,7 +74,7 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
      * @param parser the parser used to parse JSON responses
      */
     public StatefulRedisSentinelConnectionImpl(RedisChannelWriter writer, RedisCodec<K, V> codec, Duration timeout,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
 
         super(writer, timeout);
 
