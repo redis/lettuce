@@ -239,7 +239,7 @@ client.shutdown();
 
 ## Microsoft Entra ID Authentication
 
-[Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2) introduces build in support for authentication with [Azure Managed Redis](https://azure.microsoft.com/en-us/products/managed-redis) and Azure Cache for Redis using Microsoft Entra ID (formerly Azure Active Directory). It enables seamless integration with Azure's Redis services by fetching authentication tokens and managing the token renewal in the background. 
+[Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2) introduces built-in support for authentication with [Azure Managed Redis](https://azure.microsoft.com/en-us/products/managed-redis) and Azure Cache for Redis using Microsoft Entra ID (formerly Azure Active Directory). It enables seamless integration with Azure's Redis services by fetching authentication tokens and managing the token renewal in the background. 
 Integration is build on top of [redis-authx](https://github.com/redis/jvm-redis-authx-entraid) library, and provides support for:
 
  - System-assigned managed identity
