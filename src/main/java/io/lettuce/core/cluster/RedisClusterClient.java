@@ -582,7 +582,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @return new instance of StatefulRedisConnectionImpl
      */
     protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
-            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout, Mono<JsonParser> parser) {
+            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout, Supplier<JsonParser> parser) {
         return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout, parser);
     }
 
@@ -726,7 +726,7 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     protected <V, K> StatefulRedisClusterConnectionImpl<K, V> newStatefulRedisClusterConnection(
             RedisChannelWriter channelWriter, ClusterPushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
         return new StatefulRedisClusterConnectionImpl(channelWriter, pushHandler, codec, timeout, parser);
     }
 

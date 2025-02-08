@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+import java.util.function.Supplier;
 
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
@@ -69,7 +70,7 @@ public class ClientOptions implements Serializable {
 
     public static final SocketOptions DEFAULT_SOCKET_OPTIONS = SocketOptions.create();
 
-    public static final Mono<JsonParser> DEFAULT_JSON_PARSER = Mono.defer(() -> Mono.fromCallable(() -> {
+    public static final Supplier<JsonParser> DEFAULT_JSON_PARSER = () -> {
         try {
             Iterator<JsonParser> services = ServiceLoader.load(JsonParser.class).iterator();
             return services.hasNext() ? services.next() : null;
@@ -77,7 +78,7 @@ public class ClientOptions implements Serializable {
             throw new RedisJsonException("Could not load JsonParser, please consult the guide"
                     + "at https://redis.github.io/lettuce/user-guide/redis-json/", e);
         }
-    }));
+    };
 
     public static final SslOptions DEFAULT_SSL_OPTIONS = SslOptions.create();
 
@@ -105,7 +106,7 @@ public class ClientOptions implements Serializable {
 
     private final Charset scriptCharset;
 
-    private final Mono<JsonParser> jsonParser;
+    private final Supplier<JsonParser> jsonParser;
 
     private final SocketOptions socketOptions;
 
@@ -204,7 +205,7 @@ public class ClientOptions implements Serializable {
 
         private Charset scriptCharset = DEFAULT_SCRIPT_CHARSET;
 
-        private Mono<JsonParser> jsonParser = DEFAULT_JSON_PARSER;
+        private Supplier<JsonParser> jsonParser = DEFAULT_JSON_PARSER;
 
         private SocketOptions socketOptions = DEFAULT_SOCKET_OPTIONS;
 
@@ -399,7 +400,7 @@ public class ClientOptions implements Serializable {
          * @see JsonParser
          * @since 6.5
          */
-        public Builder jsonParser(Mono<JsonParser> parser) {
+        public Builder jsonParser(Supplier<JsonParser> parser) {
 
             LettuceAssert.notNull(parser, "JsonParser must not be null");
             this.jsonParser = parser;
@@ -652,7 +653,7 @@ public class ClientOptions implements Serializable {
      * @return the implementation of the {@link JsonParser} to use.
      * @since 6.5
      */
-    public Mono<JsonParser> getJsonParser() {
+    public Supplier<JsonParser> getJsonParser() {
         return jsonParser;
     }
 

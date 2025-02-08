@@ -21,6 +21,7 @@ package io.lettuce.core.sentinel;
 
 import java.net.SocketAddress;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import io.lettuce.core.AbstractRedisReactiveCommands;
 import io.lettuce.core.ClientListArgs;
@@ -52,7 +53,7 @@ public class RedisSentinelReactiveCommandsImpl<K, V> extends AbstractRedisReacti
     private final SentinelCommandBuilder<K, V> commandBuilder;
 
     public RedisSentinelReactiveCommandsImpl(StatefulConnection<K, V> connection, RedisCodec<K, V> codec,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
         super(connection, codec, parser);
         commandBuilder = new SentinelCommandBuilder<K, V>(codec);
     }
