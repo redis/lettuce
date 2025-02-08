@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.json.JsonParser;
@@ -78,11 +79,11 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param codec Codec used to encode/decode keys and values.
      * @param parser the implementation of the {@link JsonParser} to use
      * @deprecated since 5.2, use
-     *             {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
+     *             {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Supplier)}.
      */
     @Deprecated
     public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
         super(connection, codec, parser);
         this.codec = codec;
     }
@@ -93,7 +94,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param connection the stateful connection.
      * @param codec Codec used to encode/decode keys and values.
      * @deprecated since 5.2, use
-     *             {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
+     *             {@link #RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Supplier)}.
      */
     @Deprecated
     public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection,
@@ -110,7 +111,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param parser the implementation of the {@link JsonParser} to use
      */
     public RedisAdvancedClusterReactiveCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
         super(connection, codec, parser);
         this.codec = codec;
     }

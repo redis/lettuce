@@ -20,6 +20,7 @@
 package biz.paluch.redis.extensibility;
 
 import java.time.Duration;
+import java.util.function.Supplier;
 
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.cluster.ClusterPushHandler;
@@ -37,7 +38,7 @@ import reactor.core.publisher.Mono;
 class MyRedisClusterConnection<K, V> extends StatefulRedisClusterConnectionImpl<K, V> {
 
     public MyRedisClusterConnection(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
-            Duration timeout, Mono<JsonParser> parser) {
+            Duration timeout, Supplier<JsonParser> parser) {
         super(writer, pushHandler, codec, timeout, parser);
     }
 

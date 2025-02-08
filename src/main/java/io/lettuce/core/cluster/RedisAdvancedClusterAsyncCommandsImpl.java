@@ -29,13 +29,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.*;
@@ -64,7 +64,6 @@ import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionIntent;
-import reactor.core.publisher.Mono;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
@@ -89,11 +88,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * @param codec Codec used to encode/decode keys and values.
      * @param parser the implementation of the {@link JsonParser} to use
      * @deprecated since 5.1, use
-     *             {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
+     *             {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Supplier)}.
      */
     @Deprecated
     public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
         super(connection, codec, parser);
         this.codec = codec;
     }
@@ -104,7 +103,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * @param connection the stateful connection
      * @param codec Codec used to encode/decode keys and values.
      * @deprecated since 5.1, use
-     *             {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Mono)}.
+     *             {@link #RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection, RedisCodec, Supplier)}.
      */
     @Deprecated
     public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnectionImpl<K, V> connection, RedisCodec<K, V> codec) {
@@ -120,7 +119,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * @param parser the implementation of the {@link JsonParser} to use
      */
     public RedisAdvancedClusterAsyncCommandsImpl(StatefulRedisClusterConnection<K, V> connection, RedisCodec<K, V> codec,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
         super(connection, codec, parser);
         this.codec = codec;
     }
