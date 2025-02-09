@@ -238,9 +238,9 @@ client.shutdown();
 ```
 
 w## Streaming Credentials Provider
-[Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2)  extends RedisCredentialsProvider to support streaming credentials. 
-It is useful when you need to refresh credentials periodically. Example usecases include: token expiration, rotating credentials, etc.
-Connection configured with RedisCredentialsProvider supporting streaming will be re-authenticated automatically when new credentials are emitted and ReauthenticateBehavior is set to `ON_NEW_CREDENTIALS`.
+[Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2)  extends `RedisCredentialsProvider` to support streaming credentials. 
+It is useful when you need to refresh credentials periodically. Example use cases include: token expiration, rotating credentials, etc.
+Connection configured with `RedisCredentialsProvider` supporting streaming will be re-authenticated automatically when new credentials are emitted and `ReauthenticateBehavior` is set to `ON_NEW_CREDENTIALS`.
 
 ### Step 1 - Create a Streaming Credentials Provider
 A simple example of a streaming credentials provider that emits new credentials.
