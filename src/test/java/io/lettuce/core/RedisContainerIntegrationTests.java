@@ -26,22 +26,23 @@ public class RedisContainerIntegrationTests {
 
     private static final String REDIS_STACK_CLUSTER = "clustered-stack";
 
-    private static final String REDIS_STACK_VERSION = System.getProperty("REDIS_STACK_VERSION", "8.0-M04-pre");;
+    private static final String REDIS_STACK_VERSION = System.getProperty("REDIS_STACK_VERSION");
 
     private static Exception initializationException;
 
     public static ComposeContainer CLUSTERED_STACK = new ComposeContainer(
             new File("src/test/resources/docker/docker-compose.yml")).withExposedService(REDIS_STACK_CLUSTER, 36379)
                     .withExposedService(REDIS_STACK_CLUSTER, 36380).withExposedService(REDIS_STACK_CLUSTER, 36381)
-                    .withExposedService(REDIS_STACK_STANDALONE, 6379)
-                    .withEnv("CLIENT_LIBS_TEST_IMAGE", "redislabs/client-libs-test")
-                    .withEnv("REDIS_STACK_VERSION", REDIS_STACK_VERSION).withPull(false).withLocalCompose(true);
+                    .withExposedService(REDIS_STACK_STANDALONE, 6379).withPull(false).withLocalCompose(true);
 
     // Singleton container pattern - start the containers only once
     // See https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/#singleton-containers
     static {
         int attempts = 0;
 
+        if (REDIS_STACK_VERSION != null && !REDIS_STACK_VERSION.isEmpty()) {
+            CLUSTERED_STACK.withEnv("REDIS_VERSION", REDIS_STACK_VERSION);
+        }
         // In case you need to debug the container uncomment these lines to redirect the output
         CLUSTERED_STACK.withLogConsumer(REDIS_STACK_CLUSTER, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
         CLUSTERED_STACK.withLogConsumer(REDIS_STACK_STANDALONE, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
