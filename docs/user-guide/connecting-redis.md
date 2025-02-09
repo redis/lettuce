@@ -237,6 +237,74 @@ RedisClient client = RedisClient.create(redisUri);
 client.shutdown();
 ```
 
+w## Streaming Credentials Provider
+[Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2)  extends RedisCredentialsProvider to support streaming credentials. 
+It is useful when you need to refresh credentials periodically. Example usecases include: token expiration, rotating credentials, etc.
+Connection configured with RedisCredentialsProvider supporting streaming will be re-authenticated automatically when new credentials are emitted and ReauthenticateBehavior is set to `ON_NEW_CREDENTIALS`.
+
+### Step 1 - Create a Streaming Credentials Provider
+A simple example of a streaming credentials provider that emits new credentials.
+```java
+public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProvider {
+
+    private final Sinks.Many<RedisCredentials> credentialsSink = Sinks.many().replay().latest();
+
+    @Override
+    public boolean supportsStreaming() {
+        return true;
+    }
+
+    @Override
+    public Mono<RedisCredentials> resolveCredentials() {
+        return credentialsSink.asFlux().next();
+    }
+    
+    @Override
+    // Provide a continuous stream of credentials
+    public Flux<RedisCredentials> credentials() {
+        return credentialsSink.asFlux().onBackpressureLatest(); 
+    }
+
+    public void close() {
+        credentialsSink.tryEmitComplete();
+    }
+    // Emit new credentials when needed
+    public void emitCredentials(String username, char[] password) {
+        credentialsSink.tryEmitNext(new StaticRedisCredentials(username, password));
+    }
+
+}
+```
+###  Step 2 - Create a RedisURI with streaming credentials provider
+
+```java
+    // Create a streaming credentials provider
+    MyStreamingRedisCredentialsProvider streamingCredentialsProvider = new MyStreamingRedisCredentialsProvider();
+    
+    // Emit initial credentials
+    streamingCredentialsProvider.emitCredentials("testuser", "testpass".toCharArray());
+   
+    // Enable automatic re-authentication
+    ClientOptions clientOptions = ClientOptions.builder()
+            // enable automatic re-authentication
+            .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS)
+            .build();
+    
+    // Create a RedisURI with streaming credentials provider
+    RedisURI redisURI = RedisURI.builder().withHost(HOST).withPort(PORT)
+            .withAuthentication(streamingCredentialsProvider)
+            .build();
+    
+    // RedisClient
+    RedisClient redisClient = RedisClient.create(redisURI);
+    rediscClient.connect().sync().ping();
+    
+    // ...
+    // Emit new credentials when needed
+    streamingCredentialsProvider.emitCredentials("testuser", "password-rotated".toCharArray());
+    
+```
+
 ## Microsoft Entra ID Authentication
 
 [Lettuce 6.0.0](https://github.com/redis/lettuce/releases/tag/6.6.0.BETA2) introduces built-in support for authentication with [Azure Managed Redis](https://azure.microsoft.com/en-us/products/managed-redis) and Azure Cache for Redis using Microsoft Entra ID (formerly Azure Active Directory). It enables seamless integration with Azure's Redis services by fetching authentication tokens and managing the token renewal in the background. 
