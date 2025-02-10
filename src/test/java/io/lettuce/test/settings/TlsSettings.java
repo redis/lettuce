@@ -1,33 +1,17 @@
 package io.lettuce.test.settings;
 
-import io.lettuce.core.internal.LettuceStrings;
-import org.testcontainers.shaded.org.bouncycastle.cert.X509v3CertificateBuilder;
-import org.testcontainers.shaded.org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
-import org.testcontainers.shaded.org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
-import org.testcontainers.shaded.org.bouncycastle.operator.ContentSigner;
-import org.testcontainers.shaded.org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.testcontainers.shaded.org.bouncycastle.pkcs.PKCS10CertificationRequest;
-import org.testcontainers.shaded.org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder;
-import org.testcontainers.shaded.org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequest;
-import org.testcontainers.shaded.org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder;
-import org.testcontainers.shaded.org.bouncycastle.util.io.pem.PemObject;
-import org.testcontainers.shaded.org.bouncycastle.util.io.pem.PemWriter;
-import sun.security.x509.X500Name;
-
-import javax.security.auth.x500.X500Principal;
-import java.io.*;
-import java.math.BigInteger;
-import java.nio.file.Files;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.*;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -43,10 +27,6 @@ public class TlsSettings {
 
     private static final String TEST_TRUSTSTORE = "truststore.jks";
 
-    private static final String TEST_KEYSTORE = "keystore.jks";
-
-    private static final String PASSWORD = "changeit";
-
     public static Path envServerCert(Path certLocation) {
         return Paths.get(TEST_WORK_FOLDER, certLocation.toString(), TEST_SERVER_CERT);
     }
@@ -57,14 +37,6 @@ public class TlsSettings {
 
     public static Path testTruststorePath(String name) {
         return Paths.get(TEST_WORK_FOLDER, name + '-' + TEST_TRUSTSTORE);
-    }
-
-    public static Path testGenCertPath(String keystoreLocation) {
-        return Paths.get(TEST_WORK_FOLDER, keystoreLocation);
-    }
-
-    public static Path testKeyStorePath(String keystoreLocation) {
-        return Paths.get(TEST_WORK_FOLDER, keystoreLocation, TEST_KEYSTORE);
     }
 
     /**
@@ -147,92 +119,6 @@ public class TlsSettings {
         Path trustStorePath = testTruststorePath(trustStoreName).toAbsolutePath();
 
         return createAndSaveTruststore(trustedCertPaths, trustStorePath, truststorePassword);
-    }
-
-    public static void generateCertificates(String caDir, String keystoreFile) throws Exception {
-        createDirectories(caDir);
-
-        KeyPair keyPair = generateKeyPair();
-
-        savePrivateKey(keyPair.getPrivate(), caDir);
-
-        PKCS10CertificationRequest csr = generateCSR(keyPair);
-
-        X509Certificate certificate = signCertificate(csr, keyPair);
-
-        saveCertificate(certificate, caDir);
-
-        createPKCS12(keyPair.getPrivate(), certificate, keystoreFile);
-    }
-
-    private static void createDirectories(String caDir) throws IOException {
-        Files.createDirectories(Paths.get(caDir, "private"));
-        Files.createDirectories(Paths.get(caDir, "certs"));
-    }
-
-    private static KeyPair generateKeyPair() throws NoSuchAlgorithmException {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-        keyGen.initialize(2048);
-        return keyGen.generateKeyPair();
-    }
-
-    private static void savePrivateKey(PrivateKey privateKey, String caDir) throws Exception {
-        String keyPath = Paths.get(caDir, "private", "client.key.pem").toString();
-        try (PemWriter pemWriter = new PemWriter(new FileWriter(keyPath))) {
-            pemWriter.writeObject(new PemObject("PRIVATE KEY", privateKey.getEncoded()));
-        }
-
-        File keyFile = new File(keyPath);
-        keyFile.setReadable(false, false);
-        keyFile.setReadable(true, true);
-        keyFile.setWritable(false, false);
-        keyFile.setExecutable(false, false);
-    }
-
-    private static PKCS10CertificationRequest generateCSR(KeyPair keyPair) throws Exception {
-        X500Principal subject = new X500Principal("CN=client,O=lettuce,C=NN,ST=Unknown,L=Unknown");
-        PKCS10CertificationRequestBuilder csrBuilder = new JcaPKCS10CertificationRequestBuilder(subject, keyPair.getPublic());
-
-        ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA").build(keyPair.getPrivate());
-
-        return csrBuilder.build(signer);
-    }
-
-    private static X509Certificate signCertificate(PKCS10CertificationRequest csr, KeyPair keyPair) throws Exception {
-        org.bouncycastle.asn1.x500.X500Name issuerName = new org.bouncycastle.asn1.x500.X500Name(
-                "CN=client,O=lettuce,C=NN,ST=Unknown,L=Unknown");
-
-        BigInteger serialNumber = BigInteger.valueOf(System.currentTimeMillis());
-        Instant now = Instant.now();
-        Date startDate = Date.from(now);
-        Date endDate = Date.from(now.plus(Duration.ofDays(375)));
-
-        JcaPKCS10CertificationRequest jcaCsr = new JcaPKCS10CertificationRequest(csr);
-
-        X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(org.testcontainers.shaded.org.bouncycastle.asn1.x500.X500Name.getInstance(issuerName), serialNumber, startDate, endDate,
-                jcaCsr.getSubject(), jcaCsr.getPublicKey());
-
-        ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA").build(keyPair.getPrivate());
-
-        return new JcaX509CertificateConverter().getCertificate(certBuilder.build(signer));
-    }
-
-    private static void saveCertificate(X509Certificate certificate, String caDir) throws Exception {
-        String certPath = Paths.get(caDir, "certs", "client.cert.pem").toString();
-        try (PemWriter pemWriter = new PemWriter(new FileWriter(certPath))) {
-            pemWriter.writeObject(new PemObject("CERTIFICATE", certificate.getEncoded()));
-        }
-    }
-
-    private static void createPKCS12(PrivateKey privateKey, X509Certificate certificate, String keystoreFile) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(null, null);
-
-        keyStore.setKeyEntry("client", privateKey, PASSWORD.toCharArray(), new X509Certificate[] { certificate });
-
-        try (OutputStream output = Files.newOutputStream(testKeyStorePath(keystoreFile))) {
-            keyStore.store(output, PASSWORD.toCharArray());
-        }
     }
 
 }

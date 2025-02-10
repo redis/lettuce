@@ -109,8 +109,6 @@ class SslIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;
 
-    private static File keystore;
-
     @Inject
     SslIntegrationTests(RedisClient redisClient) {
         this.redisClient = redisClient;
@@ -131,13 +129,6 @@ class SslIntegrationTests extends TestSupport {
         truststoreFile2 = path2.toFile();
         cacertFile = envCa(Paths.get("redis-standalone-sentinel-controlled/work/tls")).toFile();
 
-        try {
-            generateCertificates(testGenCertPath("redis-standalone-0/work/tls").toString(), "redis-standalone-0/work/tls");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        keystore = Paths.get("redis-standalone-0/work/tls/keystore.jks").toFile();
         assumeTrue(CanConnect.to(TestSettings.host(), sslPort()), "Assume that stunnel runs on port 6443");
         // Maybe we should do a list.
         assertThat(truststoreFile0).exists();
@@ -221,10 +212,10 @@ class SslIntegrationTests extends TestSupport {
 
     @Test
     void standaloneWithClientCertificates() {
-        // 6444
+        // 6445
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .keystore(keystore, "changeit".toCharArray()) //
+                .keystore(new File(KEYSTORE), "changeit".toCharArray()) //
                 .truststore(truststoreFile0, "changeit") //
                 .build();
         setOptions(sslOptions);

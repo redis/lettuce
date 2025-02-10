@@ -420,7 +420,6 @@ docker-test:
 
 docker-stop:
 	docker compose --env-file src/test/resources/docker-env/.env -f src/test/resources/docker-env/docker-compose.yml down; \
-	rm -rf /tmp/redis-env-work
 
 prepare: stop
 
