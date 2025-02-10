@@ -5,12 +5,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,9 +22,19 @@ public class TlsSettings {
 
     private static final String TEST_SERVER_CERT = "redis.crt";
 
+    private static final String TEST_CLIENT_P12 = "client.p12";
+
+    private static final String TEST_CLIENT_CERT = "client.crt";
+
+    private static final String TEST_CLIENT_KEY = "client.key";
+
     private static final String TEST_CA_CERT = "ca.crt";
 
     private static final String TEST_TRUSTSTORE = "truststore.jks";
+
+    public static Path envClientP12(Path certLocation) {
+        return Paths.get(TEST_WORK_FOLDER, certLocation.toString(), TEST_CLIENT_P12);
+    }
 
     public static Path envServerCert(Path certLocation) {
         return Paths.get(TEST_WORK_FOLDER, certLocation.toString(), TEST_SERVER_CERT);

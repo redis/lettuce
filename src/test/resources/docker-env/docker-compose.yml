@@ -1,7 +1,10 @@
+x-client-libs-image: &client-libs-image
+  image: "redislabs/client-libs-test:${REDIS_VERSION:-8.0-M04-pre}"
+
 services:
   # Standalone Redis Servers
   redis-standalone-0:
-    image: redislabs/client-libs-test:8.0-M02
+    <<: *client-libs-image
     container_name: redis-standalone-0
     environment:
       - TLS_ENABLED=yes
@@ -15,7 +18,7 @@ services:
       - redis-network
 
   redis-standalone-1:
-    image: redislabs/client-libs-test:8.0-M02
+    <<: *client-libs-image
     container_name: redis-standalone-1
     environment:
       - TLS_ENABLED=yes
@@ -30,7 +33,7 @@ services:
       - redis-network
 
   redis-standalone-2:
-    image: redislabs/client-libs-test:8.0-M02
+    <<: *client-libs-image
     container_name: redis-standalone-2
     volumes:
       - ./redis-standalone-2/config:/redis/config:r
@@ -40,7 +43,7 @@ services:
       - redis-network
 
   redis-standalone-3:
-    image: redislabs/client-libs-test:8.0-M02
+    <<: *client-libs-image
     container_name: redis-standalone-3
     volumes:
       - ./redis-standalone-3/config:/redis/config:r
@@ -50,7 +53,7 @@ services:
       - redis-network
 
   redis-standalone-4:
-    image: redislabs/client-libs-test:8.0-M02
+    <<: *client-libs-image
     container_name: redis-standalone-4
     volumes:
       - ./redis-standalone-4/config:/redis/config:r
@@ -63,8 +66,22 @@ services:
     networks:
       - redis-network
 
+  redis-standalone-5-client-cert:
+    <<: *client-libs-image
+    container_name: redis-standalone-5-client-cert
+    environment:
+      - TLS_ENABLED=yes
+    volumes:
+      - ./redis-standalone-5-client-cert/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-5-client-cert/work:/redis/work:rw
+    ports:
+      - "6485:6485"
+      - "6445:6445" # TLS Port
+    networks:
+      - redis-network
+
   redis-standalone-sentinel-controlled:
-    image: redislabs/client-libs-test:8.0-M02
+    <<: *client-libs-image
     container_name: redis-standalone-sentinel-controlled
     environment:
       - REDIS_CLUSTER=no
@@ -85,7 +102,7 @@ services:
 
 
   ssl-test-cluster:
-    image: redislabs/client-libs-test:8.0-M02
+    <<: *client-libs-image
     container_name: ssl-test-cluster
     environment:
       - REDIS_CLUSTER=yes
@@ -100,7 +117,7 @@ services:
 
   # Non-SSL Cluster
   test-cluster:
-    image: redislabs/client-libs-test:8.0-M02
+    <<: *client-libs-image
     container_name: test-cluster
     environment:
       - REDIS_CLUSTER=yes

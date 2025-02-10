@@ -75,7 +75,7 @@ class SslIntegrationTests extends TestSupport {
 
     private static File truststoreFile2;
 
-    private static File cacertFile;
+    private static File truststoreFile3;
 
     private static final int MASTER_SLAVE_BASE_PORT_OFFSET = 2000;
 
@@ -91,7 +91,7 @@ class SslIntegrationTests extends TestSupport {
             .withVerifyPeer(false) //
             .build();
 
-    private static final RedisURI URI_CLIENT_CERT_AUTH = sslURIBuilder(1) //
+    private static final RedisURI URI_CLIENT_CERT_AUTH = sslURIBuilder(2) //
             .withVerifyPeer(true) //
             .build();
 
@@ -118,22 +118,23 @@ class SslIntegrationTests extends TestSupport {
     static void beforeClass() {
         Path path0 = createAndSaveTestTruststore("redis-standalone-0", Paths.get("redis-standalone-0/work/tls"), "changeit");
         truststoreFile0 = path0.toFile();
-        cacertFile = envCa(Paths.get("redis-standalone-0/work/tls")).toFile();
 
         Path path = createAndSaveTestTruststore("redis-standalone-1", Paths.get("redis-standalone-1/work/tls"), "changeit");
         truststoreFile1 = path.toFile();
-        cacertFile = envCa(Paths.get("redis-standalone-1/work/tls")).toFile();
 
         Path path2 = createAndSaveTestTruststore("redis-standalone-sentinel-controlled",
                 Paths.get("redis-standalone-sentinel-controlled/work/tls"), "changeit");
         truststoreFile2 = path2.toFile();
-        cacertFile = envCa(Paths.get("redis-standalone-sentinel-controlled/work/tls")).toFile();
+
+        truststoreFile3 = createAndSaveTestTruststore("redis-standalone-5-client-cert",
+                Paths.get("redis-standalone-5-client-cert/work/tls"), "changeit").toFile();
 
         assumeTrue(CanConnect.to(TestSettings.host(), sslPort()), "Assume that stunnel runs on port 6443");
         // Maybe we should do a list.
         assertThat(truststoreFile0).exists();
         assertThat(truststoreFile1).exists();
         assertThat(truststoreFile2).exists();
+        assertThat(truststoreFile3).exists();
     }
 
     @Test
@@ -213,10 +214,11 @@ class SslIntegrationTests extends TestSupport {
     @Test
     void standaloneWithClientCertificates() {
         // 6445
+        File keystore = envClientP12(Paths.get("redis-standalone-5-client-cert/work/tls")).toFile();
         SslOptions sslOptions = SslOptions.builder() //
                 .jdkSslProvider() //
-                .keystore(new File(KEYSTORE), "changeit".toCharArray()) //
-                .truststore(truststoreFile0, "changeit") //
+                .keystore(keystore, "changeit".toCharArray()) //
+                .truststore(truststoreFile3, "changeit") //
                 .build();
         setOptions(sslOptions);
 
