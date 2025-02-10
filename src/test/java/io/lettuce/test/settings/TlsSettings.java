@@ -19,7 +19,7 @@ public class TlsSettings {
 
     private static final String TRUST_STORE_TYPE = "PKCS12";
 
-    private static final String TEST_WORK_FOLDER = System.getenv().getOrDefault("TEST_WORK_FOLDER", "/tmp/redis-env-work");
+    private static final String TEST_WORK_FOLDER = System.getenv().getOrDefault("TEST_WORK_FOLDER", "target/docker");
 
     private static final String TEST_SERVER_CERT = "redis.crt";
 

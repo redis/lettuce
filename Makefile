@@ -413,13 +413,16 @@ test: start
 	mvn -DskipITs=false clean compile verify -P$(PROFILE)
 	$(MAKE) stop
 
-docker-test:
-	rm -rf /tmp/redis-env-work
+docker-start:
+	rm -rf target/docker
 	docker compose --env-file src/test/resources/docker-env/.env -f src/test/resources/docker-env/docker-compose.yml up -d; \
+
+docker-test: docker-start
 	mvn -DskipITs=false clean compile verify -P$(PROFILE)
 
 docker-stop:
 	docker compose --env-file src/test/resources/docker-env/.env -f src/test/resources/docker-env/docker-compose.yml down; \
+	rm -rf target/docker
 
 prepare: stop
 
