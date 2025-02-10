@@ -209,9 +209,8 @@ public class TlsSettings {
 
         JcaPKCS10CertificationRequest jcaCsr = new JcaPKCS10CertificationRequest(csr);
 
-        X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
-                org.testcontainers.shaded.org.bouncycastle.asn1.x500.X500Name.getInstance(issuerName), serialNumber, startDate,
-                endDate, jcaCsr.getSubject(), jcaCsr.getPublicKey());
+        X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(org.testcontainers.shaded.org.bouncycastle.asn1.x500.X500Name.getInstance(issuerName), serialNumber, startDate, endDate,
+                jcaCsr.getSubject(), jcaCsr.getPublicKey());
 
         ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA").build(keyPair.getPrivate());
 
