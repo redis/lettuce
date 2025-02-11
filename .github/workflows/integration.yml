@@ -72,7 +72,7 @@ jobs:
           mvn -q dependency:go-offline
       - name: Clean environment
         run: |
-          make cleanup
+          make clean
         env:
           JVM_OPTS: -Xmx3200m
           TERM: dumb
