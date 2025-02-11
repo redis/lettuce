@@ -28,6 +28,8 @@ jobs:
           - "8.0"
           - "7.4"
           - "7.2"
+    env:
+      REDIS_ENV_WORK_DIR: ${{ github.workspace }}/work
 
     steps:
       - name: Test Redis Server Version
@@ -59,7 +61,11 @@ jobs:
       - name: Install missing dependencies to container
         run: |
           sudo apt update
-          sudo apt install -y stunnel make git gcc
+      - name: Set up Docker Compose environment
+        run: |
+          mkdir -m 777 $REDIS_ENV_WORK_DIR
+          export REDIS_VERSION="${{ matrix.redis_version }}"
+          make docker-start version=$REDIS_VERSION
       - name: Maven offline
         run: |
           mvn -q dependency:go-offline
@@ -69,11 +75,14 @@ jobs:
         env:
           JVM_OPTS: -Xmx3200m
           TERM: dumb
+      - name: Tear down Docker Compose environment
+        run: |
+          docker compose $COMPOSE_ENV_FILES -f src/test/resources/env/docker-compose.yml down
+        continue-on-error: true
       - name: Run tests
         run: |
-          make test-coverage
+          make docker-test
         env:
-          REDIS: ${{ steps.map-tags.outputs.redis_branch }}
           REDIS_STACK_VERSION: ${{ steps.map-tags.outputs.redis_stack_version }}
           JVM_OPTS: -Xmx3200m
           TERM: dumb
