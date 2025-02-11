@@ -37,7 +37,7 @@ jobs:
         run: |
           # Map requested version to github or  tag
           case "${{ matrix.redis_version }}" in
-            "unstable") redis_branch="unstable" stack_version="8.0-M04-pre" ;;
+            "unstable") redis_branch="unstable" stack_version="8.0-M04-pre" redis_test_version="8.0-M02";;
             "8.0") redis_branch="8.0" stack_version="8.0-M04-pre" ;;
             "7.4") redis_branch="7.4" stack_version="rs-7.4.0-v2" ;;
             "7.2") redis_branch="7.2" stack_version="rs-7.2.0-v14" ;;
@@ -46,6 +46,7 @@ jobs:
           # Save them as outputs for later use
           echo "redis_branch=$redis_branch" >> $GITHUB_OUTPUT
           echo "redis_stack_version=$stack_version" >> $GITHUB_OUTPUT
+          echo "redis_test_version=$redis_test_version" >> $GITHUB_OUTPUT
       - name: Checkout project
         uses: actions/checkout@v4
       - name: Set Java up in the runner
@@ -64,7 +65,7 @@ jobs:
       - name: Set up Docker Compose environment
         run: |
           mkdir -m 777 $REDIS_ENV_WORK_DIR
-          export REDIS_VERSION="${{ matrix.redis_version }}"
+          export REDIS_VERSION="${{ steps.map-tags.outputs.redis_test_version }}"
           make docker-start version=$REDIS_VERSION
       - name: Maven offline
         run: |
