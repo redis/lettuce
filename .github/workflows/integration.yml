@@ -76,13 +76,14 @@ jobs:
           export TEST_WORK_FOLDER=$REDIS_ENV_WORK_DIR
           echo $TEST_WORK_FOLDER
           ls -la $TEST_WORK_FOLDER
-          make docker-test
+          make test-coverage
         env:
           REDIS_STACK_VERSION: ${{ steps.map-tags.outputs.redis_stack_version }}
           JVM_OPTS: -Xmx3200m
           TERM: dumb
       - name: Clean environment
         run: |
+          sudo rm -rf $REDIS_ENV_WORK_DIR
           make clean
         env:
           JVM_OPTS: -Xmx3200m

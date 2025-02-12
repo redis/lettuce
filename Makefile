@@ -35,14 +35,14 @@ docker-start:
 docker-test:
 	mvn -DskipITs=false clean compile verify -P$(PROFILE)
 
-test-coverage: docker-start
+test-coverage:
 	mvn -DskipITs=false clean compile verify jacoco:report -P$(PROFILE)
 
 docker-stop:
 	docker compose --env-file src/test/resources/docker-env/.env -f src/test/resources/docker-env/docker-compose.yml down; \
 	rm -rf "$(REDIS_ENV_WORK_DIR)"
 
-clean: docker-stop
+clean:
 	rm -Rf target/
 
 release:
