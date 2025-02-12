@@ -47,7 +47,7 @@ public class RedisContainerIntegrationTests {
         CLUSTERED_STACK.withLogConsumer(REDIS_STACK_CLUSTER, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
         CLUSTERED_STACK.withLogConsumer(REDIS_STACK_STANDALONE, (OutputFrame frame) -> LOGGER.debug(frame.getUtf8String()));
 
-        CLUSTERED_STACK.waitingFor(REDIS_STACK_CLUSTER, Wait.forLogMessage("Cluster created with nodes:.*", 1));
+        CLUSTERED_STACK.waitingFor(REDIS_STACK_CLUSTER, Wait.forLogMessage("*Starting redis instance.*", 1));
         do {
             try {
                 CLUSTERED_STACK.start();
