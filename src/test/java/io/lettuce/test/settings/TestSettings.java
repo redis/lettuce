@@ -49,7 +49,7 @@ public class TestSettings {
      *         {@code -Ddomainsocket=YourSocket}
      */
     public static String socket() {
-        return System.getProperty("domainsocket", "work/socket-6479");
+        return System.getProperty("domainsocket", "work/socket-6482");
     }
 
     /**
@@ -58,7 +58,7 @@ public class TestSettings {
      *         overriden with {@code -Dsentineldomainsocket=YourSocket}
      */
     public static String sentinelSocket() {
-        return System.getProperty("sentineldomainsocket", "work/docker/socket-26379");
+        return System.getProperty("sentineldomainsocket", "work/socket-26379");
     }
 
     /**
