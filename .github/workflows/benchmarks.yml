@@ -63,7 +63,7 @@ jobs:
           TERM: dumb
       - name: Tear down Docker Compose environment
         run: |
-          docker compose $COMPOSE_ENV_FILES -f src/test/resources/env/docker-compose.yml down
+          docker compose $COMPOSE_ENV_FILES -f src/test/resources/docker-env/docker-compose.yml down
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
         uses: actions/cache@v4
