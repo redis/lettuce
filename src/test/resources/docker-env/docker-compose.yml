@@ -89,7 +89,7 @@ services:
     volumes:
       - ./redis-standalone-sentinel-controlled/config:/redis/config:r
       - ${REDIS_ENV_WORK_DIR}/redis-standalone-sentinel-controlled/work:/redis/work:rw
-      - ${REDIS_ENV_WORK_DIR}/redis-standalone-sentinel-controlled:/work
+      - ${REDIS_ENV_WORK_DIR}:/work
     ports:
       - "26380:26380"
       - "26822:26822" # sentinel tls port
