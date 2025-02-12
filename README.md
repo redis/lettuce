@@ -162,15 +162,14 @@ To build:
 ```
 $ git clone https://github.com/redis/lettuce.git
 $ cd lettuce/
-$ make prepare ssl-keys
-$ make test
+$ make docker-start
+$ make docker-test
 ```
 
-* Initial environment setup (clone and build `redis`): ```make prepare```
-* Setup SSL Keys: ```make ssl-keys```
-* Run the build: ```make test```
-* Start Redis (manually): ```make start```
-* Stop Redis (manually): ```make stop```
+* Run the build: ```make docker-test```
+* Start Redis (manually): ```make docker-start```
+* Stop Redis (manually): ```make docker-stop```
+* Clean up: ```make clean```
 
 Bugs and Feedback
 -----------
