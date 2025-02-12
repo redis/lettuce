@@ -68,7 +68,7 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @BeforeEach
     void setUp() {
-        try ( StatefulRedisConnection<String,String> conn = DefaultRedisClient.get().connect(StringCodec.ASCII)) {
+        try (StatefulRedisConnection<String, String> conn = DefaultRedisClient.get().connect(StringCodec.ASCII)) {
             conn.sync().flushall();
             conn.sync().aclUsers().stream().filter(o -> !"default".equals(o)).forEach(redis::aclDeluser);
             conn.sync().aclLogReset();
