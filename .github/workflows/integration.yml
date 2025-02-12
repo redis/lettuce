@@ -37,10 +37,10 @@ jobs:
         run: |
           # Map requested version to github or  tag
           case "${{ matrix.redis_version }}" in
-            "unstable") redis_branch="unstable" stack_version="8.0-M04-pre" redis_test_version="8.0-M02";;
-            "8.0") redis_branch="8.0" stack_version="8.0-M04-pre" redis_test_version="8.0-M02";;
-            "7.4") redis_branch="7.4" stack_version="rs-7.4.0-v2" redis_test_version="7.4.1";;
-            "7.2") redis_branch="7.2" stack_version="rs-7.2.0-v14" redis_test_version="7.2.6";;
+            "unstable") redis_branch="unstable" stack_version="8.0-M04-pre" redis_test_version="8.0-M04-pre";;
+            "8.0") redis_branch="8.0" stack_version="8.0-M04-pre" redis_test_version="8.0-M04-pre";;
+            "7.4") redis_branch="7.4" stack_version="rs-7.4.0-v2" redis_test_version="7.4.2";;
+            "7.2") redis_branch="7.2" stack_version="rs-7.2.0-v14" redis_test_version="7.2.7";;
             *) echo "Unsupported version: ${{ matrix.redis_version }}" && exit 1 ;;
           esac
           # Save them as outputs for later use
