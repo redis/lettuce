@@ -45,6 +45,8 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
+import java.util.stream.Collectors;
+
 /**
  * Integration tests for ACL commands.
  *
