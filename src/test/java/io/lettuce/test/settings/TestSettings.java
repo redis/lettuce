@@ -58,7 +58,7 @@ public class TestSettings {
      *         overriden with {@code -Dsentineldomainsocket=YourSocket}
      */
     public static String sentinelSocket() {
-        return System.getProperty("sentineldomainsocket", "work/socket-26379");
+        return System.getProperty("sentineldomainsocket", "work/docker/redis-standalone-sentinel-controlled/socket-26379");
     }
 
     /**
