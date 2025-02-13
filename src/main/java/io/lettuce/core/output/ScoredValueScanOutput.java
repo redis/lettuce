@@ -33,7 +33,7 @@ public class ScoredValueScanOutput<K, V> extends ScanOutput<K, V, ScoredValueSca
             return;
         }
 
-        double score = LettuceStrings.toDouble(decodeAscii(bytes));
+        double score = LettuceStrings.toDouble(decodeString(bytes));
         set(score);
     }
 
