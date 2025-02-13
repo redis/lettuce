@@ -140,7 +140,7 @@ public abstract class CommandOutput<K, V, T> {
      * @param error Error message.
      */
     public void setError(ByteBuffer error) {
-        this.error = decodeUtf8(error);
+        this.error = decodeString(error);
     }
 
     /**
@@ -180,7 +180,7 @@ public abstract class CommandOutput<K, V, T> {
         // nothing to do by default
     }
 
-    protected String decodeUtf8(ByteBuffer bytes) {
+    protected String decodeString(ByteBuffer bytes) {
         return bytes == null ? null : StandardCharsets.UTF_8.decode(bytes).toString();
     }
 

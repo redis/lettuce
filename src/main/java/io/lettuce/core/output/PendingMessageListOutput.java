@@ -41,7 +41,7 @@ public class PendingMessageListOutput<K, V> extends CommandOutput<K, V, List<Pen
     public void set(ByteBuffer bytes) {
 
         if (messageId == null) {
-            messageId = decodeUtf8(bytes);
+            messageId = decodeString(bytes);
             return;
         }
 
@@ -51,7 +51,7 @@ public class PendingMessageListOutput<K, V> extends CommandOutput<K, V, List<Pen
             return;
         }
 
-        set(Long.parseLong(decodeUtf8(bytes)));
+        set(Long.parseLong(decodeString(bytes)));
     }
 
     @Override

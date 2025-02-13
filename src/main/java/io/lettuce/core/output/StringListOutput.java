@@ -32,7 +32,7 @@ public class StringListOutput<K, V> extends CommandOutput<K, V, List<String>> im
             multi(1);
         }
 
-        subscriber.onNext(output, bytes == null ? null : decodeUtf8(bytes));
+        subscriber.onNext(output, bytes == null ? null : decodeString(bytes));
     }
 
     @Override

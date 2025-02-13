@@ -39,12 +39,12 @@ public class PendingMessagesOutput<K, V> extends CommandOutput<K, V, PendingMess
     public void set(ByteBuffer bytes) {
 
         if (messageIdsFrom == null) {
-            messageIdsFrom = decodeUtf8(bytes);
+            messageIdsFrom = decodeString(bytes);
             return;
         }
 
         if (messageIdsTo == null) {
-            messageIdsTo = decodeUtf8(bytes);
+            messageIdsTo = decodeString(bytes);
             return;
         }
 
@@ -54,7 +54,7 @@ public class PendingMessagesOutput<K, V> extends CommandOutput<K, V, PendingMess
             return;
         }
 
-        set(Long.parseLong(decodeUtf8(bytes)));
+        set(Long.parseLong(decodeString(bytes)));
     }
 
     @Override

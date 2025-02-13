@@ -24,7 +24,7 @@ public abstract class ScanOutput<K, V, T extends ScanCursor> extends CommandOutp
     public void set(ByteBuffer bytes) {
 
         if (output.getCursor() == null) {
-            output.setCursor(decodeUtf8(bytes));
+            output.setCursor(decodeString(bytes));
             if (LettuceStrings.isNotEmpty(output.getCursor()) && "0".equals(output.getCursor())) {
                 output.setFinished(true);
             }

@@ -40,7 +40,7 @@ public class DoubleOutput<K, V> extends CommandOutput<K, V, Double> {
 
     @Override
     public void set(ByteBuffer bytes) {
-        output = (bytes == null) ? null : parseDouble(decodeUtf8(bytes));
+        output = (bytes == null) ? null : parseDouble(decodeString(bytes));
     }
 
     @Override

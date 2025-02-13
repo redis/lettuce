@@ -133,7 +133,7 @@ public class MultiOutput<K, V> extends CommandOutput<K, V, TransactionResult> {
         }
 
         CommandOutput<K, V, ?> output = queue.isEmpty() ? this : queue.peek().getOutput();
-        output.setError(decodeUtf8(error));
+        output.setError(decodeString(error));
     }
 
     @Override

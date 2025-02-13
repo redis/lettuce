@@ -60,7 +60,7 @@ public class ScoredValueListOutput<K, V> extends CommandOutput<K, V, List<Scored
             return;
         }
 
-        double score = LettuceStrings.toDouble(decodeUtf8(bytes));
+        double score = LettuceStrings.toDouble(decodeString(bytes));
         set(score);
     }
 

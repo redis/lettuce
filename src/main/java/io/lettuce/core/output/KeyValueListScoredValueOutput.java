@@ -45,7 +45,7 @@ public class KeyValueListScoredValueOutput<K, V> extends CommandOutput<K, V, Key
                 value = codec.decodeValue(bytes);
                 return;
             }
-            score = parseDouble(decodeUtf8(bytes));
+            score = parseDouble(decodeString(bytes));
         }
     }
 

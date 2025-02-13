@@ -40,7 +40,7 @@ public class KeyValueOfScoredValueOutput<K, V> extends CommandOutput<K, V, KeyVa
                 return;
             }
 
-            output = KeyValue.just(key, ScoredValue.just(parseDouble(decodeUtf8(bytes)), value));
+            output = KeyValue.just(key, ScoredValue.just(parseDouble(decodeString(bytes)), value));
         }
     }
 
