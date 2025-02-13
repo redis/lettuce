@@ -35,7 +35,7 @@ public class JsonTypeListOutput<K, V> extends CommandOutput<K, V, List<JsonType>
             multi(1);
         }
 
-        output.add(JsonType.fromString(decodeAscii(bytes)));
+        output.add(JsonType.fromString(decodeUtf8(bytes)));
     }
 
     @Override

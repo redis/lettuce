@@ -26,12 +26,12 @@ public class SocketAddressOutput<K, V> extends CommandOutput<K, V, SocketAddress
     public void set(ByteBuffer bytes) {
 
         if (!hasHostname) {
-            hostname = decodeAscii(bytes);
+            hostname = decodeUtf8(bytes);
             hasHostname = true;
             return;
         }
 
-        int port = Integer.parseInt(decodeAscii(bytes));
+        int port = Integer.parseInt(decodeUtf8(bytes));
         output = InetSocketAddress.createUnresolved(hostname, port);
     }
 

@@ -39,7 +39,7 @@ public class GeoCoordinatesListOutput<K, V> extends CommandOutput<K, V, List<Geo
             return;
         }
 
-        double value = (bytes == null) ? 0 : parseDouble(decodeAscii(bytes));
+        double value = (bytes == null) ? 0 : parseDouble(decodeUtf8(bytes));
         set(value);
     }
 

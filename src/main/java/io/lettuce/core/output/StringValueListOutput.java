@@ -30,7 +30,7 @@ public class StringValueListOutput<K, V> extends CommandOutput<K, V, List<Value<
 
     @Override
     public void set(ByteBuffer bytes) {
-        subscriber.onNext(output, bytes == null ? Value.empty() : Value.fromNullable(decodeAscii(bytes)));
+        subscriber.onNext(output, bytes == null ? Value.empty() : Value.fromNullable(decodeUtf8(bytes)));
     }
 
     @Override

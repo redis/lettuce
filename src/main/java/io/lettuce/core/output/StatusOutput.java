@@ -41,7 +41,7 @@ public class StatusOutput<K, V> extends CommandOutput<K, V, String> {
 
     @Override
     public void set(ByteBuffer bytes) {
-        output = OK.equals(bytes) ? "OK" : decodeAscii(bytes);
+        output = OK.equals(bytes) ? "OK" : decodeUtf8(bytes);
     }
 
 }

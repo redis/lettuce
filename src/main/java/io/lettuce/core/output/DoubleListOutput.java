@@ -46,7 +46,7 @@ public class DoubleListOutput<K, V> extends CommandOutput<K, V, List<Double>> {
 
     @Override
     public void set(ByteBuffer bytes) {
-        output.add(bytes != null ? parseDouble(decodeAscii(bytes)) : null);
+        output.add(bytes != null ? parseDouble(decodeUtf8(bytes)) : null);
     }
 
     @Override

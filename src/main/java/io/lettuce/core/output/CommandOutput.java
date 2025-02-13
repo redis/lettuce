@@ -20,6 +20,7 @@
 package io.lettuce.core.output;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
@@ -139,7 +140,7 @@ public abstract class CommandOutput<K, V, T> {
      * @param error Error message.
      */
     public void setError(ByteBuffer error) {
-        this.error = decodeAscii(error);
+        this.error = decodeUtf8(error);
     }
 
     /**
@@ -179,16 +180,8 @@ public abstract class CommandOutput<K, V, T> {
         // nothing to do by default
     }
 
-    protected String decodeAscii(ByteBuffer bytes) {
-        if (bytes == null) {
-            return null;
-        }
-
-        char[] chars = new char[bytes.remaining()];
-        for (int i = 0; i < chars.length; i++) {
-            chars[i] = (char) bytes.get();
-        }
-        return new String(chars);
+    protected String decodeUtf8(ByteBuffer bytes) {
+        return bytes == null ? null : StandardCharsets.UTF_8.decode(bytes).toString();
     }
 
     @Override

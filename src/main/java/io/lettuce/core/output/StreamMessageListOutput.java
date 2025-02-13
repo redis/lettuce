@@ -41,7 +41,7 @@ public class StreamMessageListOutput<K, V> extends CommandOutput<K, V, List<Stre
     public void set(ByteBuffer bytes) {
 
         if (id == null) {
-            id = decodeAscii(bytes);
+            id = decodeUtf8(bytes);
             return;
         }
 

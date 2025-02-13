@@ -37,7 +37,7 @@ public class ScoredValueOutput<K, V> extends CommandOutput<K, V, ScoredValue<V>>
             return;
         }
 
-        double score = LettuceStrings.toDouble(decodeAscii(bytes));
+        double score = LettuceStrings.toDouble(decodeUtf8(bytes));
         set(score);
     }
 

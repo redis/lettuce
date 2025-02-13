@@ -48,7 +48,7 @@ public class KeyValueScoredValueOutput<K, V> extends CommandOutput<K, V, KeyValu
             return;
         }
 
-        double score = LettuceStrings.toDouble(decodeAscii(bytes));
+        double score = LettuceStrings.toDouble(decodeUtf8(bytes));
 
         set(score);
     }

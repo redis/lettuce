@@ -20,10 +20,13 @@
 package io.lettuce.core.commands;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static java.util.Arrays.stream;
 import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.test.resource.DefaultRedisClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -42,6 +45,8 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
+
+import java.util.List;
 
 /**
  * Integration tests for ACL commands.
@@ -64,9 +69,12 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @BeforeEach
     void setUp() {
-        redis.flushall();
-        redis.aclUsers().stream().filter(o -> !"default".equals(o)).forEach(redis::aclDeluser);
-        redis.aclLogReset();
+        try (StatefulRedisConnection<String, String> conn = DefaultRedisClient.get().connect(StringCodec.UTF8)) {
+            conn.sync().flushall();
+            List<String> users = conn.sync().aclUsers();
+            users.stream().filter(o -> !"default".equals(o)).forEach(redis::aclDeluser);
+            conn.sync().aclLogReset();
+        }
     }
 
     @Test
@@ -131,7 +139,7 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @Test
     void aclList() {
-        assertThat(redis.aclList()).hasSize(2).first().asString().contains("user default");
+        assertThat(redis.aclList()).hasSize(1).first().asString().contains("user default");
     }
 
     @Test
@@ -161,7 +169,7 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @Test
     void aclUsers() {
-        assertThat(redis.aclUsers()).hasSize(2).first().isEqualTo("default");
+        assertThat(redis.aclUsers()).hasSize(1).first().isEqualTo("default");
     }
 
     @Test
