@@ -19,22 +19,27 @@ import org.junit.jupiter.api.Test;
 @Tag(UNIT_TEST)
 class CommonsPool2ConfigConverterUnitTests {
 
+    private static final int MIN_IDLE_EXPECTED = 2;
+
+    private static final int MAX_IDLE_EXPECTED = 12;
+
+    private static final int MAX_TOTAL_EXPECTED = 13;
+
     @Test
     void shouldAdaptConfiguration() {
-
         GenericObjectPoolConfig<String> config = new GenericObjectPoolConfig<>();
-        config.setMinIdle(2);
-        config.setMaxIdle(12);
-        config.setMaxTotal(13);
+        config.setMinIdle(MIN_IDLE_EXPECTED);
+        config.setMaxIdle(MAX_IDLE_EXPECTED);
+        config.setMaxTotal(MAX_TOTAL_EXPECTED);
         config.setTestOnBorrow(true);
         config.setTestOnReturn(true);
         config.setTestOnCreate(true);
 
         BoundedPoolConfig result = CommonsPool2ConfigConverter.bounded(config);
 
-        assertThat(result.getMinIdle()).isEqualTo(2);
-        assertThat(result.getMaxIdle()).isEqualTo(12);
-        assertThat(result.getMaxTotal()).isEqualTo(13);
+        assertThat(result.getMinIdle()).isEqualTo(MIN_IDLE_EXPECTED);
+        assertThat(result.getMaxIdle()).isEqualTo(MAX_IDLE_EXPECTED);
+        assertThat(result.getMaxTotal()).isEqualTo(MAX_TOTAL_EXPECTED);
         assertThat(result.isTestOnAcquire()).isTrue();
         assertThat(result.isTestOnCreate()).isTrue();
         assertThat(result.isTestOnRelease()).isTrue();

@@ -601,7 +601,7 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
 
         try (RedisClient client = RedisClient.create(redisURI)) {
-            client.setOptions(ClientOptions.builder().jsonParser(Mono.just(new CustomParser())).build());
+            client.setOptions(ClientOptions.builder().jsonParser(CustomParser::new).build());
             StatefulRedisConnection<String, String> connection = client.connect(StringCodec.UTF8);
             RedisCommands<String, String> redis = connection.sync();
             assertThat(redis.getJsonParser()).isInstanceOf(CustomParser.class);

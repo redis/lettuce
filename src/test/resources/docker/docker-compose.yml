@@ -1,8 +1,11 @@
 ---
+x-client-libs-stack-image: &client-libs-stack-image
+    image: "redislabs/client-libs-test:${REDIS_STACK_VERSION:-8.0-M04-pre}"
+
 services:
 
   standalone-stack:
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_STACK_VERSION}"
+    <<: *client-libs-stack-image
     environment:
         - REDIS_CLUSTER=no
         - PORT=6379
@@ -10,7 +13,7 @@ services:
       - "16379:6379"
 
   clustered-stack:
-    image: "${CLIENT_LIBS_TEST_IMAGE}:${REDIS_STACK_VERSION}"
+    <<: *client-libs-stack-image
     environment:
       - REDIS_CLUSTER=yes
       - PORT=36379
