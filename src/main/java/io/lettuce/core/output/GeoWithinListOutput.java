@@ -73,7 +73,7 @@ public class GeoWithinListOutput<K, V> extends CommandOutput<K, V, List<GeoWithi
             return;
         }
 
-        double value = (bytes == null) ? 0 : parseDouble(decodeAscii(bytes));
+        double value = (bytes == null) ? 0 : parseDouble(decodeString(bytes));
         set(value);
     }
 

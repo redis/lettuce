@@ -51,7 +51,7 @@ public class EnumSetOutput<K, V, E extends Enum<E>> extends CommandOutput<K, V, 
             return;
         }
 
-        E enumConstant = resolve(enumValuePreprocessor.apply(decodeAscii(bytes)));
+        E enumConstant = resolve(enumValuePreprocessor.apply(decodeString(bytes)));
 
         if (enumConstant == null) {
             return;
