@@ -12,8 +12,10 @@
 
     <Loggers>
         <Logger name="io.lettuce.core.protocol" level="FATAL"/>
-        <!-- Remove the line below after we stabilize the test-containers deployment -->
+        <!-- Uncomment the line below to enable test-containers debug logging -->
+        <!--
         <Logger name="org.testcontainers" level="DEBUG"/>
+        -->
         <Root level="FATAL">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>

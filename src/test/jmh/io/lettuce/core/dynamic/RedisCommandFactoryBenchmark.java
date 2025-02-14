@@ -32,7 +32,7 @@ public class RedisCommandFactoryBenchmark {
         redisCommandFactory = new RedisCommandFactory(new MockStatefulConnection(EmptyRedisChannelWriter.INSTANCE));
         regularCommands = redisCommandFactory.getCommands(RegularCommands.class);
 
-        asyncCommands = new RedisAsyncCommandsImpl<>(EmptyStatefulRedisConnection.INSTANCE, StringCodec.UTF8, Mono.just(new DefaultJsonParser()));
+        asyncCommands = new RedisAsyncCommandsImpl<>(EmptyStatefulRedisConnection.INSTANCE, StringCodec.UTF8);
     }
 
     @Benchmark

@@ -40,7 +40,7 @@ public class GeoCoordinatesValueListOutput<K, V> extends CommandOutput<K, V, Lis
             return;
         }
 
-        double value = parseDouble(decodeAscii(bytes));
+        double value = parseDouble(decodeString(bytes));
         set(value);
     }
 

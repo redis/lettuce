@@ -1133,7 +1133,7 @@ events is:
     `ConnectionDeactivatedEvent`
 
 5.  Since 5.3: Reconnect failed: A reconnect attempt failed. Contains
-    the reconnect failure and and the retry counter. Event type:
+    the reconnect failure and the retry counter. Event type:
     `ReconnectFailedEvent`
 
 #### Metrics events
@@ -2515,7 +2515,7 @@ Commands that are issued as long as the failure persists are buffered.
 
 #### Exceptions to *at-least-once*
 
-Lettuce does not loose commands while sending them. A command execution
+Lettuce does not lose commands while sending them. A command execution
 can, however, fail for the same reasons as a normal method call can on
 the JVM:
 
@@ -2558,7 +2558,7 @@ from the response queue, and the connection stays usable.
 
 In general, when `Errors` occur while operating on a connection, you
 should close the connection and use a new one. Connections, that
-experienced such severe failures get into a unrecoverable state, and no
+experienced such severe failures get into an unrecoverable state, and no
 further response processing is possible.
 
 Executing commands more than once
