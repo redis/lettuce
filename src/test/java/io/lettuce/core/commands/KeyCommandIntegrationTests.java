@@ -408,7 +408,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    @Disabled("ADDJIRAHERE")
+    @Disabled("https://github.com/redis/lettuce/issues/3181")
     void restoreIdleTime() {
 
         redis.set(key, value);
