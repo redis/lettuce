@@ -24,8 +24,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.test.resource.DefaultRedisClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -68,11 +66,9 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @BeforeEach
     void setUp() {
-        try ( StatefulRedisConnection<String,String> conn = DefaultRedisClient.get().connect(StringCodec.ASCII)) {
-            conn.sync().flushall();
-            conn.sync().aclUsers().stream().filter(o -> !"default".equals(o)).forEach(redis::aclDeluser);
-            conn.sync().aclLogReset();
-        }
+        redis.flushall();
+        redis.aclUsers().stream().filter(o -> !"default".equals(o)).forEach(redis::aclDeluser);
+        redis.aclLogReset();
     }
 
     @Test
