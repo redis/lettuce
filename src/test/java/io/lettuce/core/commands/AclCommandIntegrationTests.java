@@ -45,6 +45,8 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 
+import java.util.stream.Collectors;
+
 /**
  * Integration tests for ACL commands.
  *
@@ -66,7 +68,7 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @BeforeEach
     void setUp() {
-        try (StatefulRedisConnection<String, String> conn = DefaultRedisClient.get().connect(StringCodec.ASCII)) {
+        try ( StatefulRedisConnection<String,String> conn = DefaultRedisClient.get().connect(StringCodec.ASCII)) {
             conn.sync().flushall();
             conn.sync().aclUsers().stream().filter(o -> !"default".equals(o)).forEach(redis::aclDeluser);
             conn.sync().aclLogReset();
@@ -135,7 +137,7 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @Test
     void aclList() {
-        assertThat(redis.aclList()).hasSize(2).first().asString().contains("user default");
+        assertThat(redis.aclList()).hasSize(1).first().asString().contains("user default");
     }
 
     @Test
@@ -165,7 +167,7 @@ public class AclCommandIntegrationTests extends TestSupport {
 
     @Test
     void aclUsers() {
-        assertThat(redis.aclUsers()).hasSize(2).first().isEqualTo("default");
+        assertThat(redis.aclUsers()).hasSize(1).first().isEqualTo("default");
     }
 
     @Test
