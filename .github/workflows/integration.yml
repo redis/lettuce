@@ -24,7 +24,6 @@ jobs:
       fail-fast: false
       matrix:
         redis_version:
-          - "unstable"
           - "8.0"
           - "7.4"
           - "7.2"
@@ -37,7 +36,6 @@ jobs:
         run: |
           # Map requested version to github or  tag
           case "${{ matrix.redis_version }}" in
-            "unstable") redis_branch="unstable" stack_version="8.0-M04-pre" redis_test_version="8.0-M04-pre";;
             "8.0") redis_branch="8.0" stack_version="8.0-M04-pre" redis_test_version="8.0-M04-pre";;
             "7.4") redis_branch="7.4" stack_version="rs-7.4.0-v2" redis_test_version="7.4.2";;
             "7.2") redis_branch="7.2" stack_version="rs-7.2.0-v14" redis_test_version="7.2.7";;
@@ -79,13 +77,6 @@ jobs:
           make test-coverage
         env:
           REDIS_STACK_VERSION: ${{ steps.map-tags.outputs.redis_stack_version }}
-          JVM_OPTS: -Xmx3200m
-          TERM: dumb
-      - name: Clean environment
-        run: |
-          sudo rm -rf $REDIS_ENV_WORK_DIR
-          make clean
-        env:
           JVM_OPTS: -Xmx3200m
           TERM: dumb
       - name: Tear down Docker Compose environment

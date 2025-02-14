@@ -155,7 +155,7 @@ Building
 -----------
 
 Lettuce is built with Apache Maven. The tests require multiple running Redis instances for different test cases which
-are configured using a ```Makefile```. Tests run by default against Redis `unstable`.
+are configured using a ```Makefile```. Tests run by default against Redis `latest`.
 
 To build:
 
@@ -163,7 +163,6 @@ To build:
 $ git clone https://github.com/redis/lettuce.git
 $ cd lettuce/
 $ make docker-start
-$ make docker-test
 ```
 
 * Run the build: ```make docker-test```
