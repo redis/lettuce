@@ -7,6 +7,8 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonParser;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Supplier;
+
 /**
  * A reactive and thread-safe API for a Redis Sentinel connection.
  *
@@ -25,7 +27,7 @@ public class RedisReactiveCommandsImpl<K, V> extends AbstractRedisReactiveComman
      * @param parser the implementation of the {@link JsonParser} to use
      */
     public RedisReactiveCommandsImpl(StatefulRedisConnection<K, V> connection, RedisCodec<K, V> codec,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
         super(connection, codec, parser);
     }
 

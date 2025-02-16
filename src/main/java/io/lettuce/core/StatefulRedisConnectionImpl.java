@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -67,7 +68,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
 
     private final PushHandler pushHandler;
 
-    private final Mono<JsonParser> parser;
+    private final Supplier<JsonParser> parser;
 
     protected MultiOutput<K, V> multi;
 
@@ -94,7 +95,7 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
      * @param parser the parser to use for JSON commands.
      */
     public StatefulRedisConnectionImpl(RedisChannelWriter writer, PushHandler pushHandler, RedisCodec<K, V> codec,
-            Duration timeout, Mono<JsonParser> parser) {
+            Duration timeout, Supplier<JsonParser> parser) {
 
         super(writer, timeout);
 
