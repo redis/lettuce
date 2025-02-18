@@ -143,9 +143,10 @@ class SimpleBatcher implements Batcher {
                 if (commands.isEmpty()) {
                     return BatchTasks.EMPTY;
                 } else {
-                    // Could happen if default flush is started in t1 and in case
-                    // there are multiple default batches to process another thread
-                    // acquires flushing flag in-between t1 releases flushing flag & try to acquire it again
+                    // Scenario: A default flush is started in Thread T1.
+                    // If multiple default batches need processing, T1 will release `flushing` and try to reacquire it.
+                    // However, in the brief moment when T1 releases `flushing`, another thread (T2) might acquire it.
+                    // This lead to a state where T2 has taken over processing from T1 and T1 should return commands processed
                     return new BatchTasks(commands);
                 }
             }
