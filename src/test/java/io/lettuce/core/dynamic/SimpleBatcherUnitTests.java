@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * @author Mark Paluch
+ * @author Ivo Gaydajiev
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
@@ -125,6 +127,44 @@ class SimpleBatcherUnitTests {
         batcher.batch(c2, CommandBatching.flush());
 
         verify(connection).dispatch(Arrays.asList(c1, c2));
+    }
+
+    @Test
+    void shouldDispatchCommandsQueuedDuringOngoingFlush() throws InterruptedException {
+        RedisCommand<Object, Object, Object> c1 = createCommand();
+        RedisCommand<Object, Object, Object> c2 = createCommand();
+
+        CountDownLatch batchFlushLatch1 = new CountDownLatch(1);
+        CountDownLatch batchFlushLatch2 = new CountDownLatch(1);
+
+        when(connection.dispatch((RedisCommand<Object, Object, Object>) any())).thenAnswer(invocation -> {
+            batchFlushLatch1.countDown();
+            batchFlushLatch2.await();
+
+            return null;
+        });
+
+        SimpleBatcher batcher = new SimpleBatcher(connection, 4);
+
+        Thread batchThread1 = new Thread(() -> {
+            batcher.batch(c1, CommandBatching.flush());
+        });
+        batchThread1.start();
+
+        Thread batchThread2 = new Thread(() -> {
+            try {
+                batchFlushLatch1.await();
+            } catch (InterruptedException ignored) {
+            }
+            batcher.batch(c2, CommandBatching.flush());
+            batchFlushLatch2.countDown();
+        });
+        batchThread2.start();
+
+        batchThread1.join();
+        batchThread2.join();
+        verify(connection, times(1)).dispatch(c1);
+        verify(connection, times(1)).dispatch(c2);
     }
 
     private static RedisCommand<Object, Object, Object> createCommand() {
