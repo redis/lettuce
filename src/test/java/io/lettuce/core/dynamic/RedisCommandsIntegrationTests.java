@@ -100,7 +100,13 @@ class RedisCommandsIntegrationTests extends TestSupport {
     void shouldWorkWithPooledConnection() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
-                .createGenericObjectPool(client::connect, new GenericObjectPoolConfig<>());
+                .createGenericObjectPool(client::connect, new GenericObjectPoolConfig<>(), connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         try (StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
 
