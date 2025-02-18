@@ -23,7 +23,7 @@ public class SortedSetExample {
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
             RedisAsyncCommands<String, String> asyncCommands = connection.async();
             // REMOVE_START
-            CompletableFuture<Long> delResult = asyncCommands.del("racer_scores").toCompletableFuture();
+            asyncCommands.del("racer_scores").toCompletableFuture().join();
             // REMOVE_END
 
             // STEP_START zadd
@@ -51,13 +51,13 @@ public class SortedSetExample {
                         return res;
                     })
                     // REMOVE_END
-                    .thenAccept(System.out::println).toCompletableFuture();
+                    .thenAccept(System.out::println) // >>> 4
+                    .toCompletableFuture();
             // STEP_END
+            zadd.join();
 
             // STEP_START zrange
-            CompletableFuture<Void> zrange = zadd.thenCompose(r -> {
-                return asyncCommands.zrange("racer_scores", 0, -1);
-            }).thenCompose(res3 -> {
+            CompletableFuture<Void> zrange = asyncCommands.zrange("racer_scores", 0, -1).thenCompose(res3 -> {
                 System.out.println(res3);
                 // >>> [Ford, Sam-Bodden, Norem, Royce, Castilla, Prickett]
                 // REMOVE_START
@@ -72,13 +72,14 @@ public class SortedSetExample {
                         return res;
                     })
                     // REMOVE_END
-                    .thenAccept(System.out::println).toCompletableFuture();
+                    .thenAccept(System.out::println)
+                    // >>> [Prickett, Castilla, Royce, Norem, Sam-Bodden, Ford]
+                    .toCompletableFuture();
             // STEP_END
+            zrange.join();
 
             // STEP_START zrange_withscores
-            CompletableFuture<Void> zrangeWithScores = zrange.thenCompose(r -> {
-                return asyncCommands.zrangeWithScores("racer_scores", 0, -1);
-            })
+            CompletableFuture<Void> zrangeWithScores = asyncCommands.zrangeWithScores("racer_scores", 0, -1)
                     // REMOVE_START
                     .thenApply((List<ScoredValue<String>> res) -> {
                         assertThat(res.toString()).isEqualTo("[ScoredValue[6.000000, Ford], ScoredValue[8.000000, Sam-Bodden],"
@@ -91,11 +92,11 @@ public class SortedSetExample {
                     // >>> [ScoredValue[6.000000, Ford], ScoredValue[8.000000, Sam-Bodden]...
                     .toCompletableFuture();
             // STEP_END
+            zrangeWithScores.join();
 
             // STEP_START zrangebyscore
-            CompletableFuture<Void> zrangebyscore = zrangeWithScores.thenCompose(r -> {
-                return asyncCommands.zrangebyscore("racer_scores", Range.create(Double.MIN_VALUE, 10));
-            })
+            CompletableFuture<Void> zrangebyscore = asyncCommands
+                    .zrangebyscore("racer_scores", Range.create(Double.MIN_VALUE, 10))
                     // REMOVE_START
                     .thenApply(res -> {
                         assertThat(res.toString()).isEqualTo("[Ford, Sam-Bodden, Norem, Royce]");
@@ -106,11 +107,10 @@ public class SortedSetExample {
                     // >>> [Ford, Sam-Bodden, Norem, Royce]
                     .toCompletableFuture();
             // STEP_END
+            zrangebyscore.join();
 
             // STEP_START zremrangebyscore
-            CompletableFuture<Void> zremrangebyscore = zrangebyscore.thenCompose(r -> {
-                return asyncCommands.zrem("racer_scores", "Castilla");
-            }).thenCompose(res4 -> {
+            CompletableFuture<Void> zremrangebyscore = asyncCommands.zrem("racer_scores", "Castilla").thenCompose(res4 -> {
                 System.out.println(res4); // >>> 1
                 // REMOVE_START
                 assertThat(res4).isEqualTo(1);
@@ -135,11 +135,10 @@ public class SortedSetExample {
                     // >>> [Norem, Royce, Prickett]
                     .toCompletableFuture();
             // STEP_END
+            zremrangebyscore.join();
 
             // STEP_START zrank
-            CompletableFuture<Void> zrank = zremrangebyscore.thenCompose(r -> {
-                return asyncCommands.zrank("racer_scores", "Norem");
-            }).thenCompose(res6 -> {
+            CompletableFuture<Void> zrank = asyncCommands.zrank("racer_scores", "Norem").thenCompose(res6 -> {
                 System.out.println(res6); // >>> 0
                 // REMOVE_START
                 assertThat(res6).isZero();
@@ -156,70 +155,70 @@ public class SortedSetExample {
                     .thenAccept(System.out::println) // >>> 2
                     .toCompletableFuture();
             // STEP_END
+            zrank.join();
 
             // STEP_START zadd_lex
-            CompletableFuture<Void> zaddLex = zrank.thenCompose(r -> {
-                return asyncCommands.zadd("racer_scores", ScoredValue.just(0d, "Norem"), ScoredValue.just(0d, "Sam-Bodden"),
-                        ScoredValue.just(0d, "Royce"), ScoredValue.just(0d, "Castilla"), ScoredValue.just(0d, "Prickett"),
-                        ScoredValue.just(0d, "Ford"));
-            }).thenCompose(res7 -> {
-                System.out.println(res7); // >>> 3
-                // REMOVE_START
-                assertThat(res7).isEqualTo(3);
-                // REMOVE_END
+            CompletableFuture<Void> zaddLex = asyncCommands.zadd("racer_scores", ScoredValue.just(0d, "Norem"),
+                    ScoredValue.just(0d, "Sam-Bodden"), ScoredValue.just(0d, "Royce"), ScoredValue.just(0d, "Castilla"),
+                    ScoredValue.just(0d, "Prickett"), ScoredValue.just(0d, "Ford")).thenCompose(res7 -> {
+                        System.out.println(res7); // >>> 3
+                        // REMOVE_START
+                        assertThat(res7).isEqualTo(3);
+                        // REMOVE_END
 
-                return asyncCommands.zrange("racer_scores", 0, -1);
-            }).thenCompose(res8 -> {
-                System.out.println(res8);
-                // >>> [Castilla, Ford, Norem, Prickett, Royce, Sam-Bodden]
-                // REMOVE_START
-                assertThat(res8.toString()).isEqualTo("[Castilla, Ford, Norem, Prickett, Royce, Sam-Bodden]");
-                // REMOVE_END
+                        return asyncCommands.zrange("racer_scores", 0, -1);
+                    }).thenCompose(res8 -> {
+                        System.out.println(res8);
+                        // >>> [Castilla, Ford, Norem, Prickett, Royce, Sam-Bodden]
+                        // REMOVE_START
+                        assertThat(res8.toString()).isEqualTo("[Castilla, Ford, Norem, Prickett, Royce, Sam-Bodden]");
+                        // REMOVE_END
 
-                return asyncCommands.zrangebylex("racer_scores", Range.create("A", "L"));
-            })
+                        return asyncCommands.zrangebylex("racer_scores", Range.create("A", "L"));
+                    })
                     // REMOVE_START
                     .thenApply(res -> {
                         assertThat(res.toString()).isEqualTo("[Castilla, Ford]");
                         return res;
                     })
                     // REMOVE_END
-                    .thenAccept(System.out::println) // >>> [Castilla, Ford]
+                    .thenAccept(System.out::println)
+                    // >>> [Castilla, Ford]
                     .toCompletableFuture();
             // STEP_END
+            zaddLex.join();
 
             // STEP_START leaderboard
-            CompletableFuture<Void> leaderboard = zaddLex.thenCompose(r -> {
-                return asyncCommands.zadd("racer_scores", ScoredValue.just(100, "Wood"));
-            }).thenCompose(res9 -> {
-                System.out.println(res9); // >>> 1
-                // REMOVE_START
-                assertThat(res9).isEqualTo(1);
-                // REMOVE_END
+            CompletableFuture<Void> leaderboard = asyncCommands.zadd("racer_scores", ScoredValue.just(100, "Wood"))
+                    .thenCompose(res9 -> {
+                        System.out.println(res9); // >>> 1
+                        // REMOVE_START
+                        assertThat(res9).isEqualTo(1);
+                        // REMOVE_END
 
-                return asyncCommands.zadd("racer_scores", ScoredValue.just(100, "Henshaw"));
-            }).thenCompose(res10 -> {
-                System.out.println(res10); // >>> 1
-                // REMOVE_START
-                assertThat(res10).isEqualTo(1);
-                // REMOVE_END
+                        return asyncCommands.zadd("racer_scores", ScoredValue.just(100, "Henshaw"));
+                    }).thenCompose(res10 -> {
+                        System.out.println(res10); // >>> 1
+                        // REMOVE_START
+                        assertThat(res10).isEqualTo(1);
+                        // REMOVE_END
 
-                return asyncCommands.zadd("racer_scores", ScoredValue.just(150, "Henshaw"));
-            }).thenCompose(res11 -> {
-                System.out.println(res11); // >>> 0
-                // REMOVE_START
-                assertThat(res11).isZero();
-                // REMOVE_END
+                        return asyncCommands.zadd("racer_scores", ScoredValue.just(150, "Henshaw"));
+                    }).thenCompose(res11 -> {
+                        System.out.println(res11); // >>> 0
+                        // REMOVE_START
+                        assertThat(res11).isZero();
+                        // REMOVE_END
 
-                return asyncCommands.zincrby("racer_scores", 50, "Wood");
-            }).thenCompose(res12 -> {
-                System.out.println(res12); // >>> 150
-                // REMOVE_START
-                assertThat(res12).isEqualTo(150);
-                // REMOVE_END
+                        return asyncCommands.zincrby("racer_scores", 50, "Wood");
+                    }).thenCompose(res12 -> {
+                        System.out.println(res12); // >>> 150
+                        // REMOVE_START
+                        assertThat(res12).isEqualTo(150);
+                        // REMOVE_END
 
-                return asyncCommands.zincrby("racer_scores", 50, "Henshaw");
-            })
+                        return asyncCommands.zincrby("racer_scores", 50, "Henshaw");
+                    })
                     // REMOVE_START
                     .thenApply(res -> {
                         assertThat(res).isEqualTo(200);
@@ -229,12 +228,7 @@ public class SortedSetExample {
                     .thenAccept(System.out::println) // >>> 200
                     .toCompletableFuture();
             // STEP_END
-
-            CompletableFuture.allOf(
-                    // REMOVE_START
-                    delResult,
-                    // REMOVE_END,
-                    leaderboard).join();
+            leaderboard.join();
             // HIDE_START
         } finally {
             redisClient.shutdown();
