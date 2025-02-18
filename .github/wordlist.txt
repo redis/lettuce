@@ -273,3 +273,8 @@ ubuntu
 behaviour
 databind
 jackson
+ACR
+AMR
+Entra
+authx
+entraid

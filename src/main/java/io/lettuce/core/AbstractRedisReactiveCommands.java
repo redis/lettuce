@@ -49,8 +49,6 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.search.Field;
-import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
@@ -86,12 +84,12 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author Tihomir Mateev
  * @since 4.0
  */
-public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
-        RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
-        RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
-        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
-        BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
-        RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RediSearchReactiveCommands<K, V> {
+public abstract class AbstractRedisReactiveCommands<K, V>
+        implements RedisAclReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
+        RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
+        RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
+        RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
+        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -99,9 +97,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
 
-    private final RediSearchCommandBuilder<K, V> searchCommandBuilder;
-
-    private final Mono<JsonParser> parser;
+    private final Supplier<JsonParser> parser;
 
     private final ClientResources clientResources;
 
@@ -116,12 +112,12 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
      * @param codec the codec for command encoding.
      * @param parser the implementation of the {@link JsonParser} to use
      */
-    public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, Mono<JsonParser> parser) {
+    public AbstractRedisReactiveCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec,
+            Supplier<JsonParser> parser) {
         this.connection = connection;
         this.parser = parser;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
-        this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -154,7 +150,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     @Override
     public JsonParser getJsonParser() {
-        return parser.block();
+        return parser.get();
     }
 
     @Override
@@ -1546,11 +1542,6 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public boolean isOpen() {
         return connection.isOpen();
-    }
-
-    @Override
-    public Mono<String> ftCreate(K index, CreateArgs<K, V> options, List<Field<K>> fields) {
-        return createMono(() -> searchCommandBuilder.ftCreate(index, options, fields));
     }
 
     @Override

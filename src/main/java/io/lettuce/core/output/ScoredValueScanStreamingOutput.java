@@ -35,7 +35,7 @@ public class ScoredValueScanStreamingOutput<K, V> extends ScanOutput<K, V, Strea
             return;
         }
 
-        double score = LettuceStrings.toDouble(decodeAscii(bytes));
+        double score = LettuceStrings.toDouble(decodeString(bytes));
         set(score);
     }
 

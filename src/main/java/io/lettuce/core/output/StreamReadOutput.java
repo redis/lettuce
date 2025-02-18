@@ -52,7 +52,7 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
         }
 
         if (id == null) {
-            id = decodeAscii(bytes);
+            id = decodeString(bytes);
             return;
         }
 

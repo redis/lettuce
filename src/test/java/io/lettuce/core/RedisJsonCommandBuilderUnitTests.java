@@ -49,7 +49,7 @@ class RedisJsonCommandBuilderUnitTests {
 
     public static final JsonPath MY_PATH = JsonPath.of("$..commuter_bikes");
 
-    RedisJsonCommandBuilder<String, String> builder = new RedisJsonCommandBuilder<>(StringCodec.UTF8, Mono.just(PARSER));
+    RedisJsonCommandBuilder<String, String> builder = new RedisJsonCommandBuilder<>(StringCodec.UTF8, () -> PARSER);
 
     @Test
     void shouldCorrectlyConstructJsonArrappend() {

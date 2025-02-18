@@ -65,7 +65,7 @@ public class NumberListOutput<K, V> extends CommandOutput<K, V, List<Number>> {
     private Number parseNumber(ByteBuffer bytes) {
         Number result = 0;
         try {
-            result = NumberFormat.getNumberInstance().parse(decodeAscii(bytes));
+            result = NumberFormat.getNumberInstance().parse(decodeString(bytes));
         } catch (ParseException e) {
             LOG.warn("Failed to parse " + bytes, e);
         }

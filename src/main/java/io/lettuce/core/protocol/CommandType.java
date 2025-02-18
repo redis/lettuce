@@ -112,9 +112,6 @@ public enum CommandType implements ProtocolKeyword {
                                     "JSON.OBJLEN"), JSON_SET("JSON.SET"), JSON_STRAPPEND("JSON.STRAPPEND"), JSON_STRLEN(
                                             "JSON.STRLEN"), JSON_TOGGLE("JSON.TOGGLE"), JSON_TYPE("JSON.TYPE"),
 
-    // RediSearch
-    FT_CREATE("FT.CREATE"),
-
     // Others
 
     TIME, WAIT,

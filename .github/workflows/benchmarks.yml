@@ -41,25 +41,24 @@ jobs:
       - name: Install missing dependencies to container
         run: |
           sudo apt update
-          sudo apt install -y stunnel make git gcc
+      - name: Set up Docker Compose environment
+        run: |
+          mkdir -m 777 $REDIS_ENV_WORK_DIR
+          make docker-start
+        env:
+          REDIS_ENV_WORK_DIR: ${{ github.workspace }}/work
       - name: Maven offline
         run: |
           mvn -q dependency:go-offline
-      - name: Clean environment
-        run: |
-          make cleanup
-        env:
-          JVM_OPTS: -Xmx3200m
-          TERM: dumb
-      - name: Start servers
-        run: |
-          make start
       - name: Run benchmarks
         run: |
           mvn -Pjmh clean test
         env:
           JVM_OPTS: -Xmx3200m
           TERM: dumb
+      - name: Tear down Docker Compose environment
+        run: |
+          docker compose $COMPOSE_ENV_FILES -f src/test/resources/docker-env/docker-compose.yml down
       # Download previous benchmark result from cache (if exists)
       - name: Download previous benchmark data
         uses: actions/cache@v4
