@@ -40,7 +40,7 @@ class ClientOptionsUnitTests {
         assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.SET, null))).isFalse();
         assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.PUBLISH, null))).isFalse();
         assertThat(options.getReadOnlyCommands().isReadOnly(new Command<>(CommandType.GET, null))).isTrue();
-        assertThat(options.getJsonParser().block()).isInstanceOf(DefaultJsonParser.class);
+        assertThat(options.getJsonParser().get()).isInstanceOf(DefaultJsonParser.class);
     }
 
     @Test
@@ -66,8 +66,8 @@ class ClientOptionsUnitTests {
     @Test
     void jsonParser() {
         JsonParser parser = new CustomJsonParser();
-        ClientOptions options = ClientOptions.builder().jsonParser(Mono.justOrEmpty(parser)).build();
-        assertThat(options.getJsonParser().block()).isInstanceOf(CustomJsonParser.class);
+        ClientOptions options = ClientOptions.builder().jsonParser(() -> parser).build();
+        assertThat(options.getJsonParser().get()).isInstanceOf(CustomJsonParser.class);
     }
 
     static class CustomJsonParser implements JsonParser {
