@@ -52,7 +52,7 @@ class SimpleBatcher implements Batcher {
 
     private final AtomicBoolean flushing = new AtomicBoolean();
 
-    // foreFlushRequested indicates that a flush was requested while there is already a flush in progress
+    // forceFlushRequested indicates that a flush was requested while there is already a flush in progress
     // This flag is used to ensure we will flush again after the current flush is done
     // to ensure that any commands added while dispatching the current flush are also dispatched
     private final AtomicBoolean forceFlushRequested = new AtomicBoolean();
