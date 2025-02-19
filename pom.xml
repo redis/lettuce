@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>6.5.4.BUILD-SNAPSHOT</version>
+    <version>6.5.5.BUILD-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
