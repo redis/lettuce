@@ -377,10 +377,11 @@ Microsoft Entra ID tokens have a limited lifetime. Lettuce provides a mechanism 
   RedisURI redisURI = RedisURI.builder()
       .withHost(HOST)
       .withPort(PORT)
+      .withSsl(true)
       .withAuthentication(credentialsSP).build();
 
   // RedisClient
-  RedisClient redisClient = RedisClient.create(redisURI1);
+  RedisClient redisClient = RedisClient.create(redisURI);
   redisClient.setOptions(clientOptions);
   
   try {
