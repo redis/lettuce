@@ -337,18 +337,13 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
         public void run() {
 
-            refreshLock.lock();
-            try {
-                if (compareAndSet(false, true)) {
-                    doRun();
-                    return;
-                }
+            if (compareAndSet(false, true)) {
+                doRun();
+                return;
+            }
 
-                if (logger.isDebugEnabled()) {
-                    logger.debug("ClusterTopologyRefreshTask already in progress");
-                }
-            } finally {
-                refreshLock.unlock();
+            if (logger.isDebugEnabled()) {
+                logger.debug("ClusterTopologyRefreshTask already in progress");
             }
         }
 
@@ -366,6 +361,8 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
                     refreshLock.lock();
                     try {
+                        reloadTopologyAsync.get();
+
                         set(false);
                         refreshComplete.signalAll();
                     } finally {

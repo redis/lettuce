@@ -1155,22 +1155,12 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         suspendTopologyRefresh();
         ReentrantLock refreshLock = topologyRefreshScheduler.getRefreshLock();
-        Condition refreshComplete = topologyRefreshScheduler.getRefreshComplete();
-
         refreshLock.lock();
         try {
-            while (topologyRefreshScheduler.isTopologyRefreshInProgress()) {
-                try {
-                    refreshComplete.await();
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }
+            return super.shutdownAsync(quietPeriod, timeout, timeUnit);
         } finally {
             refreshLock.unlock();
         }
-
-        return super.shutdownAsync(quietPeriod, timeout, timeUnit);
     }
 
     // -------------------------------------------------------------------------
