@@ -1,13 +1,13 @@
-Lettuce 6.5.3 RELEASE NOTES
+Lettuce 6.5.4 RELEASE NOTES
 ==============================
 
-The Redis team is delighted to announce the general availability of Lettuce 6.5.3
+The Redis team is delighted to announce the general availability of Lettuce 6.5.4
 This release ships with bugfixes and dependency upgrades.
 
 Lettuce 6 supports Redis 2.6+ up to Redis 7.x. In terms of Java runtime, Lettuce requires
 at least Java 8 and works with Java 21. Find the full changelog at the end of this document.
 
-Thanks to all contributors who made Lettuce 6.5.3 possible.
+Thanks to all contributors who made Lettuce 6.5.4 possible.
 
 If you need any support, meet Lettuce at
 
@@ -16,7 +16,7 @@ If you need any support, meet Lettuce at
 * Join the chat at https://discord.gg/redis and look for the "Help:Tools Lettuce" channel 
 * GitHub Issues (Bug reports, feature requests): https://github.com/redis/lettuce/issues
 * Documentation: https://redis.github.io/lettuce/
-* Javadoc: https://www.javadoc.io/doc/io.lettuce/lettuce-core/6.5.3.RELEASE/index.html
+* Javadoc: https://www.javadoc.io/doc/io.lettuce/lettuce-core/6.5.4.RELEASE/index.html
 
 Commands
 --------
@@ -28,8 +28,9 @@ Enhancements
 
 Fixes
 -----
-* Fix issue with array initialization [#3123](https://github.com/redis/lettuce/pull/3123), [#3135](https://github.com/redis/lettuce/pull/3135) by @tishun
-* Replacing all instances of synchronized blocks with ReentrantLock [#3116](https://github.com/redis/lettuce/pull/3116), [#3134](https://github.com/redis/lettuce/pull/3134) by @tishun
+* report block error when use with reactor mode #3168 (6.5.x) by @tishun in https://github.com/redis/lettuce/pull/3170
+* ACL DELUSER does not work correctly with UTF-8 Japanese characters #3178 (6.5.x) by @tishun in https://github.com/redis/lettuce/pull/3188
+* Bump netty.version to 4.1.118.Final #3187 (6.5.x) by @tishun in https://github.com/redis/lettuce/pull/3192
 
 Other
 -----
