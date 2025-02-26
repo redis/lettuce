@@ -49,7 +49,7 @@ public class TestSettings {
      *         {@code -Ddomainsocket=YourSocket}
      */
     public static String socket() {
-        return System.getProperty("domainsocket", "work/socket-6479");
+        return System.getProperty("domainsocket", "work/socket-6482");
     }
 
     /**

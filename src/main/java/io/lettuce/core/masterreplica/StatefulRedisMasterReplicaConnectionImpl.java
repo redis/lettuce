@@ -1,12 +1,12 @@
 package io.lettuce.core.masterreplica;
 
 import java.time.Duration;
+import java.util.function.Supplier;
 
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.json.JsonParser;
-import reactor.core.publisher.Mono;
 
 import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 
@@ -36,7 +36,7 @@ class StatefulRedisMasterReplicaConnectionImpl<K, V> extends StatefulRedisConnec
      * @param parser the JSON parser to use
      */
     StatefulRedisMasterReplicaConnectionImpl(MasterReplicaChannelWriter writer, RedisCodec<K, V> codec, Duration timeout,
-            Mono<JsonParser> parser) {
+            Supplier<JsonParser> parser) {
         super(writer, NoOpPushHandler.INSTANCE, codec, timeout, parser);
     }
 

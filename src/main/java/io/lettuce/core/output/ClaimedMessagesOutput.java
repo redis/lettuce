@@ -70,12 +70,12 @@ public class ClaimedMessagesOutput<K, V> extends CommandOutput<K, V, ClaimedMess
     @Override
     public void set(ByteBuffer bytes) {
         if (startId == null) {
-            startId = decodeAscii(bytes);
+            startId = decodeString(bytes);
             return;
         }
 
         if (id == null) {
-            id = decodeAscii(bytes);
+            id = decodeString(bytes);
             return;
         }
 

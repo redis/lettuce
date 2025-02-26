@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.AbstractRedisClient;
@@ -77,7 +78,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
 
     protected final RedisCodec<K, V> codec;
 
-    protected final Mono<JsonParser> parser;
+    protected final Supplier<JsonParser> parser;
 
     protected final RedisAdvancedClusterCommands<K, V> sync;
 
@@ -113,7 +114,7 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
      * @param parser the JSON parser
      */
     public StatefulRedisClusterConnectionImpl(RedisChannelWriter writer, ClusterPushHandler pushHandler, RedisCodec<K, V> codec,
-            Duration timeout, Mono<JsonParser> parser) {
+            Duration timeout, Supplier<JsonParser> parser) {
 
         super(writer, timeout);
         this.pushHandler = pushHandler;

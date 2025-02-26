@@ -48,7 +48,6 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -56,6 +55,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import static io.lettuce.core.ClientOptions.DEFAULT_JSON_PARSER;
 import static io.lettuce.core.protocol.CommandType.EXEC;
@@ -87,7 +87,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
 
-    private final Mono<JsonParser> parser;
+    private final Supplier<JsonParser> parser;
 
     /**
      * Initialize a new instance.
@@ -96,7 +96,8 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
      * @param codec the codec for command encoding
      * @param parser the implementation of the {@link JsonParser} to use
      */
-    public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec, Mono<JsonParser> parser) {
+    public AbstractRedisAsyncCommands(StatefulConnection<K, V> connection, RedisCodec<K, V> codec,
+            Supplier<JsonParser> parser) {
         this.parser = parser;
         this.connection = connection;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
@@ -3396,7 +3397,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public JsonParser getJsonParser() {
-        return this.parser.block();
+        return this.parser.get();
     }
 
     private byte[] encodeFunction(String functionCode) {

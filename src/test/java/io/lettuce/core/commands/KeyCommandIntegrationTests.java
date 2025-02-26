@@ -33,10 +33,8 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.Ignore;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.CopyArgs;
@@ -410,6 +408,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @Disabled("https://github.com/redis/lettuce/issues/3181")
     void restoreIdleTime() {
 
         redis.set(key, value);

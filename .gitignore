@@ -15,3 +15,5 @@ work/
 dependency-reduced-pom.xml
 .idea
 .flattened-pom.xml
+*.java-version
+*.DS_Store

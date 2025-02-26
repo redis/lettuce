@@ -93,7 +93,7 @@ public class PubSubOutput<K, V> extends CommandOutput<K, V, V> implements PubSub
         }
 
         if (type == null) {
-            type = Type.valueOf(decodeAscii(bytes));
+            type = Type.valueOf(decodeString(bytes));
             return;
         }
 

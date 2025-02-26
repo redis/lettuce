@@ -12,15 +12,15 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v3
+      - uses: actions/stale@v9
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          stale-issue-message: 'If you would like us to look at this issue, please provide the requested information. If the information is not provided within the next 30 days this issue will be closed.'
+          stale-issue-message: 'If you would like us to look at this issue, please provide the requested information. If the information is not provided within the next 2 weeks this issue will be closed.'
           stale-pr-message: 'Closing due to lack of requested feedback. If you would like us to look at this issue, please provide the requested information and we will re-open the issue.'
-          days-before-stale: 365
-          days-before-close: 30
+          days-before-stale: 30
+          days-before-close: 14
           stale-issue-label: "status: feedback-reminder"
           stale-pr-label: "status: feedback-reminder"
-          operations-per-run: 10
-          remove-stale-when-updated: false
+          operations-per-run: 30
+          remove-stale-when-updated: true
           only-labels: "status: waiting-for-feedback"

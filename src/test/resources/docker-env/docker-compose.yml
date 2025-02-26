@@ -1,0 +1,141 @@
+x-client-libs-image: &client-libs-image
+  image: "redislabs/client-libs-test:${REDIS_VERSION:-8.0-M04-pre}"
+
+services:
+  # Standalone Redis Servers
+  redis-standalone-0:
+    <<: *client-libs-image
+    container_name: redis-standalone-0
+    environment:
+      - TLS_ENABLED=yes
+    volumes:
+      - ./redis-standalone-0/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-0/work:/redis/work:rw
+    ports:
+      - "6478:6478"
+      - "6444:6444" # TLS Port
+    networks:
+      - redis-network
+
+  redis-standalone-1:
+    <<: *client-libs-image
+    container_name: redis-standalone-1
+    environment:
+      - TLS_ENABLED=yes
+    volumes:
+      - ./redis-standalone-1/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-1/work:/redis/work:rw
+    ports:
+      - "6479:6479"
+      - "6486:6486"
+      - "6443:6443" # TLS Port
+    networks:
+      - redis-network
+
+  redis-standalone-2:
+    <<: *client-libs-image
+    container_name: redis-standalone-2
+    volumes:
+      - ./redis-standalone-2/config:/redis/config:r
+    ports:
+      - "6480:6480"
+    networks:
+      - redis-network
+
+  redis-standalone-3:
+    <<: *client-libs-image
+    container_name: redis-standalone-3
+    volumes:
+      - ./redis-standalone-3/config:/redis/config:r
+    ports:
+      - "6481:6481"
+    networks:
+      - redis-network
+
+  redis-standalone-4:
+    <<: *client-libs-image
+    container_name: redis-standalone-4
+    volumes:
+      - ./redis-standalone-4/config:/redis/config:r
+
+    environment:
+      - REDIS_CLUSTER=no
+    ports:
+      - "6484:6484"
+      - "26381:26381"
+    networks:
+      - redis-network
+
+  redis-standalone-5-client-cert:
+    <<: *client-libs-image
+    container_name: redis-standalone-5-client-cert
+    environment:
+      - TLS_ENABLED=yes
+    volumes:
+      - ./redis-standalone-5-client-cert/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-5-client-cert/work:/redis/work:rw
+    ports:
+      - "6485:6485"
+      - "6445:6445" # TLS Port
+    networks:
+      - redis-network
+
+  redis-standalone-sentinel-controlled:
+    <<: *client-libs-image
+    container_name: redis-standalone-sentinel-controlled
+    environment:
+      - REDIS_CLUSTER=no
+      - TLS_ENABLED=yes
+    volumes:
+      - ./redis-standalone-sentinel-controlled/config:/redis/config:r
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-sentinel-controlled/work:/redis/work:rw
+      - ${REDIS_ENV_WORK_DIR}:/work
+    ports:
+      - "26380:26380"
+      - "26822:26822" # sentinel tls port
+      - "26379:26379"
+      - "6482:6482"
+      - "6483:6483"
+      - "8443:8443" # TLS Port
+      - "8444:8444" # TLS Port
+    networks:
+      - redis-network
+
+
+  ssl-test-cluster:
+    <<: *client-libs-image
+    container_name: ssl-test-cluster
+    environment:
+      - REDIS_CLUSTER=yes
+    volumes:
+      - ./ssl-test-cluster/config:/redis/config:r
+    ports:
+      - "7479:7479"
+      - "7480:7480"
+      - "7481:7481"
+    networks:
+      - redis-network
+
+  # Non-SSL Cluster
+  test-cluster:
+    <<: *client-libs-image
+    container_name: test-cluster
+    environment:
+      - REDIS_CLUSTER=yes
+    volumes:
+      - ./test-cluster/config:/redis/config:r
+    ports:
+      - "7379:7379"
+      - "7380:7380"
+      - "7381:7381"
+      - "7382:7382"
+      - "7383:7383"
+      - "7384:7384"
+      - "7385:7385"
+      - "7582:7582"
+    networks:
+      - redis-network
+
+networks:
+  redis-network:
+    driver: bridge
