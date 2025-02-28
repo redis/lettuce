@@ -47,6 +47,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
         }
 
@@ -62,10 +63,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
-        if (jsonPath != null && !jsonPath.isRootPath()) {
-            args.add(jsonPath.toString());
-        }
-
+        args.add(jsonPath.toString());
         args.add(value.asByteBuffer().array());
 
         if (range != null) {
@@ -81,10 +79,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
-        if (jsonPath != null && !jsonPath.isRootPath()) {
-            args.add(jsonPath.toString());
-        }
-
+        args.add(jsonPath.toString());
         args.add(index);
 
         for (JsonValue value : values) {
@@ -100,6 +95,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
         }
         return createCommand(JSON_ARRLEN, (CommandOutput) new ArrayOutput<>(codec), args);
@@ -110,10 +106,12 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
-        if (jsonPath != null) {
+        if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
 
             if (index != -1) {
+                // OPTIONAL as per API
                 args.add(index);
             }
         }
@@ -126,10 +124,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-
-        if (jsonPath != null && !jsonPath.isRootPath()) {
-            args.add(jsonPath.toString());
-        }
+        args.add(jsonPath.toString());
 
         if (range != null) {
             range.build(args);
@@ -144,6 +139,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
         }
 
@@ -156,10 +152,12 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (options != null) {
+            // OPTIONAL as per API
             options.build(args);
         }
 
         if (jsonPaths != null) {
+            // OPTIONAL as per API
             for (JsonPath jsonPath : jsonPaths) {
                 if (jsonPath != null) {
                     args.add(jsonPath.toString());
@@ -175,11 +173,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-
-        if (jsonPath != null && !jsonPath.isRootPath()) {
-            args.add(jsonPath.toString());
-        }
-
+        args.add(jsonPath.toString());
         args.add(value.asByteBuffer().array());
 
         return createCommand(JSON_MERGE, new StatusOutput<>(codec), args);
@@ -189,10 +183,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notEmpty(keys);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKeys(keys);
-
-        if (jsonPath != null) {
-            args.add(jsonPath.toString());
-        }
+        args.add(jsonPath.toString());
 
         return createCommand(JSON_MGET, new JsonValueListOutput<>(codec, parser.get()), args);
     }
@@ -214,11 +205,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-
-        if (jsonPath != null && !jsonPath.isRootPath()) {
-            args.add(jsonPath.toString());
-        }
-
+        args.add(jsonPath.toString());
         args.add(number.toString());
 
         return createCommand(JSON_NUMINCRBY, new NumberListOutput<>(codec), args);
@@ -230,6 +217,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
         }
 
@@ -243,6 +231,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
         }
 
@@ -259,6 +248,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.add(value.asByteBuffer().array());
 
         if (options != null) {
+            // OPTIONAL as per API
             options.build(args);
         }
 
@@ -271,6 +261,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
         }
 
@@ -286,6 +277,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
         }
 
@@ -296,10 +288,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNullKey(key);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-
-        if (jsonPath != null && !jsonPath.isRootPath()) {
-            args.add(jsonPath.toString());
-        }
+        args.add(jsonPath.toString());
 
         return createCommand(JSON_TOGGLE, (CommandOutput) new ArrayOutput<>(codec), args);
     }
@@ -310,6 +299,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
         }
         return createCommand(JSON_DEL, new IntegerOutput<>(codec), args);
@@ -321,6 +311,7 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null && !jsonPath.isRootPath()) {
+            // OPTIONAL as per API
             args.add(jsonPath.toString());
         }
 
