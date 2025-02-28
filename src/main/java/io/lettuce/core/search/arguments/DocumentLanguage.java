@@ -4,14 +4,15 @@
  *
  * Licensed under the MIT License.
  */
-package io.lettuce.core.search;
+
+package io.lettuce.core.search.arguments;
 
 import java.util.Locale;
 
 /**
  * Supported document languages.
  *
- * @since 6.6
+ * @since 6.8
  * @author Tihomir Mateev
  * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/stemming/">Stemming</a>
  */
