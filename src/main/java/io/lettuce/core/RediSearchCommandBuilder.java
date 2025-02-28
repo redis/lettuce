@@ -7,14 +7,17 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
-import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.search.SearchResults;
+import io.lettuce.core.search.SearchResultsParser;
 import io.lettuce.core.search.arguments.CreateArgs;
-import io.lettuce.core.search.Field;
+import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.SearchArgs;
 
 import java.util.List;
 
@@ -25,7 +28,7 @@ import static io.lettuce.core.protocol.CommandType.*;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @since 6.6
+ * @since 6.8
  */
 class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
@@ -34,16 +37,16 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     /**
-     * Create a new index with the given name, index options and fields.
+     * Create a new index with the given name, index options and fieldArgs.
      *
      * @param index the index name
      * @param createArgs the index options
-     * @param fields the fields
+     * @param fieldArgs the fieldArgs
      * @return the result of the create command
      */
-    public Command<K, V, String> ftCreate(K index, CreateArgs<K, V> createArgs, List<Field<K>> fields) {
+    public Command<K, V, String> ftCreate(K index, CreateArgs<K, V> createArgs, List<FieldArgs<K>> fieldArgs) {
         notNullKey(index);
-        notEmpty(fields.toArray());
+        notEmpty(fieldArgs.toArray());
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
 
@@ -53,12 +56,34 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         args.add(CommandKeyword.SCHEMA);
 
-        for (Field<K> field : fields) {
-            field.build(args);
+        for (FieldArgs<K> arg : fieldArgs) {
+            arg.build(args);
         }
 
         return createCommand(FT_CREATE, new StatusOutput<>(codec), args);
 
+    }
+
+    /**
+     * Search the index with the given name using the specified query and search arguments.
+     *
+     * @param index the index name
+     * @param query the query
+     * @param searchArgs the search arguments
+     * @return the result of the search command
+     */
+    public Command<K, V, SearchResults<K, V>> ftSearch(K index, V query, SearchArgs<K, V> searchArgs) {
+        notNullKey(index);
+        notNullKey(query);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
+        args.addValue(query);
+
+        if (searchArgs != null) {
+            searchArgs.build(args);
+        }
+
+        return createCommand(FT_SEARCH, new EncodedComplexOutput<>(codec, new SearchResultsParser<>(codec, searchArgs)), args);
     }
 
     /**

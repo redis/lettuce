@@ -4,10 +4,10 @@
  *
  * Licensed under the MIT License.
  */
+
 package io.lettuce.core.search.arguments;
 
 import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.search.DocumentLanguage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  * @param <K> Key type.
  * @param <V> Value type.
  * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
- * @since 6.6
+ * @since 6.8
  * @author Tihomir Mateev
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
