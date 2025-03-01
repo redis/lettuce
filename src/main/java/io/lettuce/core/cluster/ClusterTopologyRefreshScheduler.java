@@ -26,6 +26,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 import io.lettuce.core.ClientOptions;
@@ -63,6 +65,10 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
     private final AtomicReference<ScheduledFuture<?>> clusterTopologyRefreshFuture = new AtomicReference<>();
 
     private final EventExecutorGroup genericWorkerPool;
+
+    private static final ReentrantLock refreshLock = new ReentrantLock();
+
+    private static final Condition refreshComplete = refreshLock.newCondition();
 
     ClusterTopologyRefreshScheduler(Supplier<ClusterClientOptions> clientOptions, Supplier<Partitions> partitions,
             Supplier<CompletionStage<?>> refreshTopology, ClientResources clientResources) {
@@ -110,6 +116,14 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
 
     public boolean isTopologyRefreshInProgress() {
         return clusterTopologyRefreshTask.get();
+    }
+
+    public ReentrantLock getRefreshLock() {
+        return refreshLock;
+    }
+
+    public Condition getRefreshComplete() {
+        return refreshComplete;
     }
 
     @Override
@@ -345,7 +359,15 @@ class ClusterTopologyRefreshScheduler implements Runnable, ClusterEventListener 
                         logger.warn("Cannot refresh Redis Cluster topology", throwable);
                     }
 
-                    set(false);
+                    refreshLock.lock();
+                    try {
+                        reloadTopologyAsync.get();
+
+                        set(false);
+                        refreshComplete.signalAll();
+                    } finally {
+                        refreshLock.unlock();
+                    }
                 });
             } catch (Exception e) {
                 logger.warn("Cannot refresh Redis Cluster topology", e);
