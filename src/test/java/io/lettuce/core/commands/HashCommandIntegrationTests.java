@@ -229,6 +229,28 @@ public class HashCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("HGETDEL")
+    void hgetdel() {
+        setup();
+        List<KeyValue<String, String>> values = redis.hgetdel(key, "one", "two", "missing");
+        assertThat(values).hasSize(3);
+        assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2"), kv("missing", null)))).isTrue();
+    }
+
+    @Test
+    @EnabledOnCommand("HGETDEL")
+    void hgetdelStreaming() {
+        setup();
+
+        KeyValueStreamingAdapter<String, String> streamingAdapter = new KeyValueStreamingAdapter<>();
+        Long count = redis.hgetdel(streamingAdapter, key, "one", "two", "missing");
+        Map<String, String> values = streamingAdapter.getMap();
+        assertThat(count.intValue()).isEqualTo(3);
+        assertThat(values).hasSize(3);
+        assertThat(values).containsEntry("one", "1").containsEntry("two", "2").containsEntry("missing", null);
+    }
+
+    @Test
     void hmset() {
         Map<String, String> hash = new LinkedHashMap<>();
         hash.put("one", "1");

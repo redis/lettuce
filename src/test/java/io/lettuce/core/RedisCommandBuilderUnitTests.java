@@ -163,6 +163,17 @@ class RedisCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructHgetdel() {
+
+        Command<String, String, ?> command = sut.hgetdel(MY_KEY, "one", "two");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$7\r\n" + "HGETDEL\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "2\r\n" + "$3\r\n" + "one\r\n" + "$3\r\n" + "two\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructClientTrackinginfo() {
 
         Command<String, String, ?> command = sut.clientTrackinginfo();

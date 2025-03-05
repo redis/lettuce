@@ -81,6 +81,25 @@ public interface RedisHashAsyncCommands<K, V> {
     RedisFuture<V> hget(K key, K field);
 
     /**
+     * Get and delete one or more hash fields.
+     *
+     * @param key the hash key.
+     * @param fields one or more fields whose values will be retrieved and deleted.
+     * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
+     */
+    RedisFuture<List<KeyValue<K, V>>> hgetdel(K key, K... fields);
+
+    /**
+     * Stream over the values of all the given hash fields retrieved and deleted.
+     *
+     * @param channel the channel.
+     * @param key the key.
+     * @param fields the fields.
+     * @return Long count of the keys.
+     */
+    RedisFuture<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
+
+    /**
      * Increment the integer value of a hash field by the given number.
      *
      * @param key the key.

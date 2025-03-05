@@ -1313,6 +1313,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<KeyValue<K, V>>> hgetdel(K key, K... fields) {
+        return dispatch(commandBuilder.hgetdel(key, fields));
+    }
+
+    @Override
+    public RedisFuture<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
+        return dispatch(commandBuilder.hgetdel(channel, key, fields));
+    }
+
+    @Override
     public RedisFuture<String> hmset(K key, Map<K, V> map) {
         return dispatch(commandBuilder.hmset(key, map));
     }

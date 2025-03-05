@@ -1579,6 +1579,23 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HMGET, new KeyValueListOutput<>(codec, Arrays.asList(fields)), args);
     }
 
+    Command<K, V, List<KeyValue<K, V>>> hgetdel(K key, K... fields) {
+        keyAndFieldsProvided(key, fields);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(FIELDS).add(fields.length).addKeys(fields);
+
+        return createCommand(HGETDEL, new KeyValueListOutput<>(codec, Arrays.asList(fields)), args);
+    }
+
+    Command<K, V, Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
+        keyAndFieldsProvided(key, fields);
+
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(FIELDS).add(fields.length).addKeys(fields);
+        return createCommand(HGETDEL, new KeyValueStreamingOutput<>(codec, channel, Arrays.asList(fields)), args);
+    }
+
     Command<K, V, String> hmset(K key, Map<K, V> map) {
         notNullKey(key);
         LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);

@@ -77,6 +77,15 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
     suspend fun hget(key: K, field: K): V?
 
     /**
+     * Get and delete one or more hash fields.
+     *
+     * @param key the hash key.
+     * @param fields one or more fields whose values will be retrieved and deleted.
+     * @return List<KeyValue<K, V>> array-reply list of fields and their values.
+     */
+    fun hgetdel(key: K, vararg fields: K): Flow<KeyValue<K, V>>
+
+    /**
      * Increment the integer value of a hash field by the given number.
      *
      * @param key the key.

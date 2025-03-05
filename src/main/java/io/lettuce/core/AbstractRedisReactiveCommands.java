@@ -1378,6 +1378,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Flux<KeyValue<K, V>> hgetdel(K key, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hgetdel(key, fields));
+    }
+
+    @Override
+    public Mono<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
+        return createMono(() -> commandBuilder.hgetdel(channel, key, fields));
+    }
+
+    @Override
     public Mono<K> hrandfield(K key) {
         return createMono(() -> commandBuilder.hrandfield(key));
     }

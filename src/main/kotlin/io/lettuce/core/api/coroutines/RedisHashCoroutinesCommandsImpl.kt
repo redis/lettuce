@@ -48,6 +48,8 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
 
     override suspend fun hget(key: K, field: K): V? = ops.hget(key, field).awaitFirstOrNull()
 
+    override fun hgetdel(key: K, vararg fields: K): Flow<KeyValue<K, V>> = ops.hgetdel(key, *fields).asFlow()
+
     override suspend fun hincrby(key: K, field: K, amount: Long): Long? = ops.hincrby(key, field, amount).awaitFirstOrNull()
 
     override suspend fun hincrbyfloat(key: K, field: K, amount: Double): Double? =

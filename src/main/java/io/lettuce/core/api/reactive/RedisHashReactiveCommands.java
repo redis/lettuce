@@ -81,6 +81,25 @@ public interface RedisHashReactiveCommands<K, V> {
     Mono<V> hget(K key, K field);
 
     /**
+     * Get and delete one or more hash fields.
+     *
+     * @param key the hash key.
+     * @param fields one or more fields whose values will be retrieved and deleted.
+     * @return KeyValue&lt;K, V&gt; array-reply list of fields and their values.
+     */
+    Flux<KeyValue<K, V>> hgetdel(K key, K... fields);
+
+    /**
+     * Stream over the values of all the given hash fields.
+     *
+     * @param channel the channel.
+     * @param key the key.
+     * @param fields the fields.
+     * @return Long count of the keys.
+     */
+    Mono<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
+
+    /**
      * Increment the integer value of a hash field by the given number.
      *
      * @param key the key.
@@ -314,7 +333,8 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every key.
      * @param key the key.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.4 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     * @since 6.4
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #hscanNovalues}.
      */
     @Deprecated
@@ -340,7 +360,8 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.4 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     * @since 6.4
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #hscanNovalues}.
      */
     @Deprecated
@@ -368,7 +389,8 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.4 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     * @since 6.4
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #hscanNovalues}.
      */
     @Deprecated
@@ -394,7 +416,8 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.4 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     * @since 6.4
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #hscanNovalues}.
      */
     @Deprecated
