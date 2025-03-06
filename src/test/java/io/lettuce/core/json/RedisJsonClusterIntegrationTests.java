@@ -7,7 +7,6 @@
 
 package io.lettuce.core.json;
 
-import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.async.RedisClusterAsyncCommands;
@@ -39,7 +38,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag(INTEGRATION_TEST)
-public class RedisJsonClusterIntegrationTests extends RedisContainerIntegrationTests {
+public class RedisJsonClusterIntegrationTests {
 
     protected static RedisClusterClient client;
 
