@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * @author M Sazzadul Hoque
  */
 @Tag(INTEGRATION_TEST)
-public class ConsolidatedAclCommandIntegrationTests extends RedisContainerIntegrationTests {
+public class ConsolidatedAclCommandIntegrationTests {
 
     private static RedisClient client;
 
