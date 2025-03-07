@@ -19,7 +19,14 @@
  */
 package io.lettuce.core.cluster.api.async;
 
+import java.util.Map;
+import java.util.List;
+import java.util.Date;
+import java.time.Instant;
+import java.time.Duration;
 import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.HGetExArgs;
+import io.lettuce.core.HSetExArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
@@ -29,12 +36,6 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Asynchronous executed commands on a node selection for Hashes (Key-Value pairs).
@@ -160,25 +161,6 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @return Long count of the keys.
      */
     AsyncExecutions<Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
-
-    /**
-     * Get and delete one or more hash fields.
-     *
-     * @param key the hash key.
-     * @param fields one or more fields whose values will be retrieved and deleted.
-     * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
-     */
-    AsyncExecutions<List<KeyValue<K, V>>> hgetdel(K key, K... fields);
-
-    /**
-     * Stream over the values of all the given hash fields.
-     *
-     * @param channel the channel.
-     * @param key the key.
-     * @param fields the fields.
-     * @return Long the number of fields that were removed from the hash.
-     */
-    AsyncExecutions<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
 
     /**
      * Set multiple hash fields to multiple values.
@@ -354,8 +336,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
-            ScanArgs scanArgs);
+    AsyncExecutions<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields, without associated values.
@@ -367,8 +348,7 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      * @since 6.4
      */
-    AsyncExecutions<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
-            ScanArgs scanArgs);
+    AsyncExecutions<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -413,6 +393,78 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @since 5.3
      */
     AsyncExecutions<Long> hset(K key, Map<K, V> map);
+
+    /**
+     * Set the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param map the field/value pairs to update.
+     * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
+     * @since 6.7.0
+     */
+    AsyncExecutions<Long> hsetex(K key, Map<K, V> map);
+
+    /**
+     * Set the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param hSetExArgs hsetex arguments.
+     * @param map the field/value pairs to update.
+     * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
+     * @since 6.7.0
+     */
+    AsyncExecutions<Long> hsetex(K key, HSetExArgs hSetExArgs, Map<K, V> map);
+
+    /**
+     * Get the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param fields fields to retrieve.
+     * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
+     * @since 6.7.0
+     */
+    AsyncExecutions<List<KeyValue<K, V>>> hgetex(K key, K... fields);
+
+    /**
+     * Get the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param hGetExArgs hgetex arguments.
+     * @param fields fields to retrieve.
+     * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
+     * @since 6.7.0
+     */
+    AsyncExecutions<List<KeyValue<K, V>>> hgetex(K key, HGetExArgs hGetExArgs, K... fields);
+
+    /**
+     * Stream over the values of all the given hash fields.
+     *
+     * @param channel the channel.
+     * @param key the key.
+     * @param hGetExArgs hgetex arguments.
+     * @param fields fields to retrieve.
+     * @return Long the number of fields that were removed from the hash.
+     */
+    AsyncExecutions<Long> hgetex(KeyValueStreamingChannel<K, V> channel, K key, HGetExArgs hGetExArgs, K... fields);
+
+    /**
+     * Get and delete one or more hash fields.
+     *
+     * @param key the hash key.
+     * @param fields fields to retrieve and delete.
+     * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
+     */
+    AsyncExecutions<List<KeyValue<K, V>>> hgetdel(K key, K... fields);
+
+    /**
+     * Stream over the values of all the given hash fields.
+     *
+     * @param channel the channel.
+     * @param key the key.
+     * @param fields fields to retrieve and delete.
+     * @return Long the number of fields that were removed from the hash.
+     */
+    AsyncExecutions<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
 
     /**
      * Set the value of a hash field, only if the field does not exist.
@@ -801,5 +853,4 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @since 6.4
      */
     AsyncExecutions<List<Long>> hpttl(K key, K... fields);
-
 }

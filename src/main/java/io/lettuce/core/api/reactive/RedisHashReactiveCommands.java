@@ -19,7 +19,13 @@
  */
 package io.lettuce.core.api.reactive;
 
+import java.util.Map;
+import java.util.Date;
+import java.time.Instant;
+import java.time.Duration;
 import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.HGetExArgs;
+import io.lettuce.core.HSetExArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
@@ -31,11 +37,6 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Date;
-import java.util.Map;
 
 /**
  * Reactive executed commands for Hashes (Key-Value pairs).
@@ -81,25 +82,6 @@ public interface RedisHashReactiveCommands<K, V> {
     Mono<V> hget(K key, K field);
 
     /**
-     * Get and delete one or more hash fields.
-     *
-     * @param key the hash key.
-     * @param fields one or more fields whose values will be retrieved and deleted.
-     * @return KeyValue&lt;K, V&gt; array-reply list of fields and their values.
-     */
-    Flux<KeyValue<K, V>> hgetdel(K key, K... fields);
-
-    /**
-     * Stream over the values of all the given hash fields.
-     *
-     * @param channel the channel.
-     * @param key the key.
-     * @param fields the fields.
-     * @return Long count of the keys.
-     */
-    Mono<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
-
-    /**
      * Increment the integer value of a hash field by the given number.
      *
      * @param key the key.
@@ -134,8 +116,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param channel the channel.
      * @param key the key.
      * @return Long count of the keys.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hgetall}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hgetall}.
      */
     @Deprecated
     Mono<Long> hgetall(KeyValueStreamingChannel<K, V> channel, K key);
@@ -154,8 +135,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param channel the channel.
      * @param key the key.
      * @return Long count of the keys.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hkeys}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hkeys}.
      */
     @Deprecated
     Mono<Long> hkeys(KeyStreamingChannel<K> channel, K key);
@@ -184,8 +164,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param fields the fields.
      * @return Long count of the keys.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hmget}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hmget}.
      */
     @Deprecated
     Mono<Long> hmget(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
@@ -321,8 +300,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every key-value pair.
      * @param key the key.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hscan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key);
@@ -334,8 +312,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @return StreamScanCursor scan cursor.
      * @since 6.4
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hscanNovalues}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscanNovalues}.
      */
     @Deprecated
     Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key);
@@ -347,8 +324,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hscan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanArgs scanArgs);
@@ -361,8 +337,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      * @since 6.4
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hscanNovalues}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscanNovalues}.
      */
     @Deprecated
     Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanArgs scanArgs);
@@ -375,8 +350,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hscan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
@@ -390,8 +364,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      * @since 6.4
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hscanNovalues}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscanNovalues}.
      */
     @Deprecated
     Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
@@ -403,8 +376,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hscan}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor);
@@ -417,8 +389,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
      * @since 6.4
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hscanNovalues}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hscanNovalues}.
      */
     @Deprecated
     Mono<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor);
@@ -445,6 +416,78 @@ public interface RedisHashReactiveCommands<K, V> {
      * @since 5.3
      */
     Mono<Long> hset(K key, Map<K, V> map);
+
+    /**
+     * Set the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param map the field/value pairs to update.
+     * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
+     * @since 6.7.0
+     */
+    Mono<Long> hsetex(K key, Map<K, V> map);
+
+    /**
+     * Set the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param hSetExArgs hsetex arguments.
+     * @param map the field/value pairs to update.
+     * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
+     * @since 6.7.0
+     */
+    Mono<Long> hsetex(K key, HSetExArgs hSetExArgs, Map<K, V> map);
+
+    /**
+     * Get the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param fields fields to retrieve.
+     * @return KeyValue&lt;K, V&gt; array-reply list of fields and their values.
+     * @since 6.7.0
+     */
+    Flux<KeyValue<K, V>> hgetex(K key, K... fields);
+
+    /**
+     * Get the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param hGetExArgs hgetex arguments.
+     * @param fields fields to retrieve.
+     * @return KeyValue&lt;K, V&gt; array-reply list of fields and their values.
+     * @since 6.7.0
+     */
+    Flux<KeyValue<K, V>> hgetex(K key, HGetExArgs hGetExArgs, K... fields);
+
+    /**
+     * Stream over the values of all the given hash fields.
+     *
+     * @param channel the channel.
+     * @param key the key.
+     * @param hGetExArgs hgetex arguments.
+     * @param fields fields to retrieve.
+     * @return Long the number of fields that were removed from the hash.
+     */
+    Mono<Long> hgetex(KeyValueStreamingChannel<K, V> channel, K key, HGetExArgs hGetExArgs, K... fields);
+
+    /**
+     * Get and delete one or more hash fields.
+     *
+     * @param key the hash key.
+     * @param fields fields to retrieve and delete.
+     * @return KeyValue&lt;K, V&gt; array-reply list of fields and their values.
+     */
+    Flux<KeyValue<K, V>> hgetdel(K key, K... fields);
+
+    /**
+     * Stream over the values of all the given hash fields.
+     *
+     * @param channel the channel.
+     * @param key the key.
+     * @param fields fields to retrieve and delete.
+     * @return Long the number of fields that were removed from the hash.
+     */
+    Mono<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
 
     /**
      * Set the value of a hash field, only if the field does not exist.
@@ -483,8 +526,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every value.
      * @param key the key.
      * @return Long count of the keys.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #hvals}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #hvals}.
      */
     @Deprecated
     Mono<Long> hvals(ValueStreamingChannel<V> channel, K key);
@@ -836,5 +878,4 @@ public interface RedisHashReactiveCommands<K, V> {
      * @since 6.4
      */
     Flux<Long> hpttl(K key, K... fields);
-
 }

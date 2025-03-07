@@ -1313,16 +1313,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<KeyValue<K, V>>> hgetdel(K key, K... fields) {
-        return dispatch(commandBuilder.hgetdel(key, fields));
-    }
-
-    @Override
-    public RedisFuture<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
-        return dispatch(commandBuilder.hgetdel(channel, key, fields));
-    }
-
-    @Override
     public RedisFuture<String> hmset(K key, Map<K, V> map) {
         return dispatch(commandBuilder.hmset(key, map));
     }
@@ -1437,6 +1427,41 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Long> hset(K key, Map<K, V> map) {
         return dispatch(commandBuilder.hset(key, map));
+    }
+
+    @Override
+    public RedisFuture<Long> hsetex(K key, Map<K, V> map) {
+        return dispatch(commandBuilder.hsetex(key, map));
+    }
+
+    @Override
+    public RedisFuture<Long> hsetex(K key, HSetExArgs hSetExArgs, Map<K, V> map) {
+        return dispatch(commandBuilder.hsetex(key, hSetExArgs, map));
+    }
+
+    @Override
+    public RedisFuture<List<KeyValue<K, V>>> hgetex(K key, K... fields) {
+        return dispatch(commandBuilder.hgetex(key, fields));
+    }
+
+    @Override
+    public RedisFuture<List<KeyValue<K, V>>> hgetex(K key, HGetExArgs hGetExArgs, K... fields) {
+        return dispatch(commandBuilder.hgetex(key, hGetExArgs, fields));
+    }
+
+    @Override
+    public RedisFuture<Long> hgetex(KeyValueStreamingChannel<K, V> channel, K key, HGetExArgs hGetExArgs, K... fields) {
+        return dispatch(commandBuilder.hgetex(channel, key, hGetExArgs, fields));
+    }
+
+    @Override
+    public RedisFuture<List<KeyValue<K, V>>> hgetdel(K key, K... fields) {
+        return dispatch(commandBuilder.hgetdel(key, fields));
+    }
+
+    @Override
+    public RedisFuture<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
+        return dispatch(commandBuilder.hgetdel(channel, key, fields));
     }
 
     @Override

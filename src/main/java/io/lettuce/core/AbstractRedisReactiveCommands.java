@@ -1378,16 +1378,6 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<KeyValue<K, V>> hgetdel(K key, K... fields) {
-        return createDissolvingFlux(() -> commandBuilder.hgetdel(key, fields));
-    }
-
-    @Override
-    public Mono<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
-        return createMono(() -> commandBuilder.hgetdel(channel, key, fields));
-    }
-
-    @Override
     public Mono<K> hrandfield(K key) {
         return createMono(() -> commandBuilder.hrandfield(key));
     }
@@ -1502,6 +1492,41 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Long> hset(K key, Map<K, V> map) {
         return createMono(() -> commandBuilder.hset(key, map));
+    }
+
+    @Override
+    public Mono<Long> hsetex(K key, Map<K, V> map) {
+        return createMono(() -> commandBuilder.hsetex(key, map));
+    }
+
+    @Override
+    public Mono<Long> hsetex(K key, HSetExArgs hSetExArgs, Map<K, V> map) {
+        return createMono(() -> commandBuilder.hsetex(key, hSetExArgs, map));
+    }
+
+    @Override
+    public Flux<KeyValue<K, V>> hgetex(K key, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hgetex(key, fields));
+    }
+
+    @Override
+    public Flux<KeyValue<K, V>> hgetex(K key, HGetExArgs hGetExArgs, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hgetex(key, hGetExArgs, fields));
+    }
+
+    @Override
+    public Mono<Long> hgetex(KeyValueStreamingChannel<K, V> channel, K key, HGetExArgs hGetExArgs, K... fields) {
+        return createMono(() -> commandBuilder.hgetdel(channel, key, fields));
+    }
+
+    @Override
+    public Flux<KeyValue<K, V>> hgetdel(K key, K... fields) {
+        return createDissolvingFlux(() -> commandBuilder.hgetdel(key, fields));
+    }
+
+    @Override
+    public Mono<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields) {
+        return createMono(() -> commandBuilder.hgetdel(channel, key, fields));
     }
 
     @Override
