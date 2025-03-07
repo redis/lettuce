@@ -44,7 +44,7 @@ jobs:
       - name: Set up Docker Compose environment
         run: |
           mkdir -m 777 $REDIS_ENV_WORK_DIR
-          make docker-start
+          make start
         env:
           REDIS_ENV_WORK_DIR: ${{ github.workspace }}/work
       - name: Maven offline
