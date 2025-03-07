@@ -431,7 +431,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key of the hash.
      * @param map the field/value pairs to update.
      * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
-     * @since 6.7.0
+     * @since 6.6
      */
     Mono<Long> hsetex(K key, Map<K, V> map);
 
@@ -442,7 +442,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param hSetExArgs hsetex arguments.
      * @param map the field/value pairs to update.
      * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
-     * @since 6.7.0
+     * @since 6.6
      */
     Mono<Long> hsetex(K key, HSetExArgs hSetExArgs, Map<K, V> map);
 
@@ -452,7 +452,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param key the key of the hash.
      * @param fields fields to retrieve.
      * @return KeyValue&lt;K, V&gt; array-reply list of fields and their values.
-     * @since 6.7.0
+     * @since 6.6
      */
     Flux<KeyValue<K, V>> hgetex(K key, K... fields);
 
@@ -463,7 +463,7 @@ public interface RedisHashReactiveCommands<K, V> {
      * @param hGetExArgs hgetex arguments.
      * @param fields fields to retrieve.
      * @return KeyValue&lt;K, V&gt; array-reply list of fields and their values.
-     * @since 6.7.0
+     * @since 6.6
      */
     Flux<KeyValue<K, V>> hgetex(K key, HGetExArgs hGetExArgs, K... fields);
 

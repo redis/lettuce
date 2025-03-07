@@ -404,7 +404,7 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param key the key of the hash.
      * @param map the field/value pairs to update.
      * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
-     * @since 6.7.0
+     * @since 6.6
      */
     RedisFuture<Long> hsetex(K key, Map<K, V> map);
 
@@ -415,7 +415,7 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param hSetExArgs hsetex arguments.
      * @param map the field/value pairs to update.
      * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
-     * @since 6.7.0
+     * @since 6.6
      */
     RedisFuture<Long> hsetex(K key, HSetExArgs hSetExArgs, Map<K, V> map);
 
@@ -425,7 +425,7 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param key the key of the hash.
      * @param fields fields to retrieve.
      * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
-     * @since 6.7.0
+     * @since 6.6
      */
     RedisFuture<List<KeyValue<K, V>>> hgetex(K key, K... fields);
 
@@ -436,7 +436,7 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param hGetExArgs hgetex arguments.
      * @param fields fields to retrieve.
      * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
-     * @since 6.7.0
+     * @since 6.6
      */
     RedisFuture<List<KeyValue<K, V>>> hgetex(K key, HGetExArgs hGetExArgs, K... fields);
 

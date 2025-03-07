@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -186,7 +187,7 @@ class RedisCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructHsetexWithArgs() {
-        Command<String, String, ?> command = sut.hsetex(MY_KEY, HSetExArgs.Builder.ex(10).fnx(),
+        Command<String, String, ?> command = sut.hsetex(MY_KEY, HSetExArgs.Builder.ex(Duration.ofSeconds(10)).fnx(),
                 Collections.singletonMap("one", "1"));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -211,7 +212,7 @@ class RedisCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructHgetexWithArgs() {
-        Command<String, String, ?> command = sut.hgetex(MY_KEY, HGetExArgs.Builder.ex(10).persist(), "one");
+        Command<String, String, ?> command = sut.hgetex(MY_KEY, HGetExArgs.Builder.ex(Duration.ofSeconds(10)).persist(), "one");
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

@@ -285,7 +285,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param hSetExArgs hsetex arguments.
      * @param map the field/value pairs to update.
      * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
-     * @since 6.7.0
+     * @since 6.6
      */
     suspend fun hsetex(key: K, hSetExArgs: HSetExArgs, map: Map<K, V>): Long?
 
@@ -296,7 +296,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param hGetExArgs hgetex arguments.
      * @param fields fields to retrieve.
      * @return List<KeyValue<K, V>> array-reply list of fields and their values.
-     * @since 6.7.0
+     * @since 6.6
      */
     fun hgetex(key: K, hGetExArgs: HGetExArgs, vararg fields: K): Flow<KeyValue<K, V>>
 

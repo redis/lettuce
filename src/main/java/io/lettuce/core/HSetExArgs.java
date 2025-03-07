@@ -36,7 +36,7 @@ import static io.lettuce.core.protocol.CommandKeyword.FXX;
  * {@link HSetExArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Ivo Gaydajiev
- * @since 6.7.0
+ * @since 6.6
  */
 public class HSetExArgs implements CompositeArgument {
 
@@ -68,21 +68,10 @@ public class HSetExArgs implements CompositeArgument {
         /**
          * Creates new {@link HSetExArgs} and enable {@literal EX}.
          *
-         * @param timeout expire time in seconds.
-         * @return new {@link HSetExArgs} with {@literal EX} enabled.
-         * @see HSetExArgs#ex(long)
-         */
-        public static HSetExArgs ex(long timeout) {
-            return new HSetExArgs().ex(timeout);
-        }
-
-        /**
-         * Creates new {@link HSetExArgs} and enable {@literal EX}.
-         *
          * @param timeout expire time as duration.
          * @return new {@link HSetExArgs} with {@literal EX} enabled.
          * @see HSetExArgs#ex(long)
-         * @since 6.7.0
+         * @since 6.6
          */
         public static HSetExArgs ex(Duration timeout) {
             return new HSetExArgs().ex(timeout);
@@ -93,31 +82,8 @@ public class HSetExArgs implements CompositeArgument {
          *
          * @param timestamp the timestamp type: posix time in seconds.
          * @return new {@link HSetExArgs} with {@literal EXAT} enabled.
-         * @see HSetExArgs#exAt(long)
-         */
-        public static HSetExArgs exAt(long timestamp) {
-            return new HSetExArgs().exAt(timestamp);
-        }
-
-        /**
-         * Creates new {@link HSetExArgs} and enable {@literal EXAT}.
-         *
-         * @param timestamp the timestamp type: posix time in seconds.
-         * @return new {@link HSetExArgs} with {@literal EXAT} enabled.
-         * @see HSetExArgs#exAt(Date)
-         * @since 6.7.0
-         */
-        public static HSetExArgs exAt(Date timestamp) {
-            return new HSetExArgs().exAt(timestamp);
-        }
-
-        /**
-         * Creates new {@link HSetExArgs} and enable {@literal EXAT}.
-         *
-         * @param timestamp the timestamp type: posix time in seconds.
-         * @return new {@link HSetExArgs} with {@literal EXAT} enabled.
          * @see HSetExArgs#exAt(Instant)
-         * @since 6.7.0
+         * @since 6.6
          */
         public static HSetExArgs exAt(Instant timestamp) {
             return new HSetExArgs().exAt(timestamp);
@@ -129,18 +95,7 @@ public class HSetExArgs implements CompositeArgument {
          * @param timeout expire time in milliseconds.
          * @return new {@link HSetExArgs} with {@literal PX} enabled.
          * @see HSetExArgs#px(long)
-         */
-        public static HSetExArgs px(long timeout) {
-            return new HSetExArgs().px(timeout);
-        }
-
-        /**
-         * Creates new {@link HSetExArgs} and enable {@literal PX}.
-         *
-         * @param timeout expire time in milliseconds.
-         * @return new {@link HSetExArgs} with {@literal PX} enabled.
-         * @see HSetExArgs#px(long)
-         * @since 6.7.0
+         * @since 6.6
          */
         public static HSetExArgs px(Duration timeout) {
             return new HSetExArgs().px(timeout);
@@ -151,31 +106,8 @@ public class HSetExArgs implements CompositeArgument {
          *
          * @param timestamp the timestamp type: posix time.
          * @return new {@link HSetExArgs} with {@literal PXAT} enabled.
-         * @see HSetExArgs#pxAt(long)
-         */
-        public static HSetExArgs pxAt(long timestamp) {
-            return new HSetExArgs().pxAt(timestamp);
-        }
-
-        /**
-         * Creates new {@link HSetExArgs} and enable {@literal PXAT}.
-         *
-         * @param timestamp the timestamp type: posix time.
-         * @return new {@link HSetExArgs} with {@literal PXAT} enabled.
-         * @see HSetExArgs#pxAt(Date)
-         * @since 6.7.0
-         */
-        public static HSetExArgs pxAt(Date timestamp) {
-            return new HSetExArgs().pxAt(timestamp);
-        }
-
-        /**
-         * Creates new {@link HSetExArgs} and enable {@literal PXAT}.
-         *
-         * @param timestamp the timestamp type: posix time.
-         * @return new {@link HSetExArgs} with {@literal PXAT} enabled.
          * @see HSetExArgs#pxAt(Instant)
-         * @since 6.7.0
+         * @since 6.6
          */
         public static HSetExArgs pxAt(Instant timestamp) {
             return new HSetExArgs().pxAt(timestamp);
@@ -206,7 +138,7 @@ public class HSetExArgs implements CompositeArgument {
          *
          * @return new {@link HSetExArgs} with {@literal KEEPTTL} enabled.
          * @see HSetExArgs#keepttl()
-         * @since 6.7.0
+         * @since 6.6
          */
         public static HSetExArgs keepttl() {
             return new HSetExArgs().keepttl();
@@ -219,25 +151,13 @@ public class HSetExArgs implements CompositeArgument {
      *
      * @param timeout expire time in seconds.
      * @return {@code this} {@link HSetExArgs}.
-     */
-    public HSetExArgs ex(long timeout) {
-
-        this.ex = timeout;
-        return this;
-    }
-
-    /**
-     * Set the specified expire time, in seconds.
-     *
-     * @param timeout expire time in seconds.
-     * @return {@code this} {@link HSetExArgs}.
-     * @since 6.7.0
+     * @since 6.6
      */
     public HSetExArgs ex(Duration timeout) {
 
         LettuceAssert.notNull(timeout, "Timeout must not be null");
 
-        this.ex = timeout.toMillis() / 1000;
+        this.ex = timeout.getSeconds();
         return this;
     }
 
@@ -246,51 +166,13 @@ public class HSetExArgs implements CompositeArgument {
      *
      * @param timestamp the timestamp type: posix time in seconds.
      * @return {@code this} {@link HSetExArgs}.
-     * @since 6.7.0
-     */
-    public HSetExArgs exAt(long timestamp) {
-
-        this.exAt = timestamp;
-        return this;
-    }
-
-    /**
-     * Set the specified expire at time using a posix {@code timestamp}.
-     *
-     * @param timestamp the timestamp type: posix time in seconds.
-     * @return {@code this} {@link HSetExArgs}.
-     * @since 6.7.0
-     */
-    public HSetExArgs exAt(Date timestamp) {
-
-        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
-
-        return exAt(timestamp.getTime() / 1000);
-    }
-
-    /**
-     * Set the specified expire at time using a posix {@code timestamp}.
-     *
-     * @param timestamp the timestamp type: posix time in seconds.
-     * @return {@code this} {@link HSetExArgs}.
-     * @since 6.7.0
+     * @since 6.6
      */
     public HSetExArgs exAt(Instant timestamp) {
 
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
 
-        return exAt(timestamp.toEpochMilli() / 1000);
-    }
-
-    /**
-     * Set the specified expire time, in milliseconds.
-     *
-     * @param timeout expire time in milliseconds.
-     * @return {@code this} {@link HSetExArgs}.
-     */
-    public HSetExArgs px(long timeout) {
-
-        this.px = timeout;
+        this.exAt = timestamp.getEpochSecond();
         return this;
     }
 
@@ -313,40 +195,14 @@ public class HSetExArgs implements CompositeArgument {
      *
      * @param timestamp the timestamp type: posix time in milliseconds.
      * @return {@code this} {@link HSetExArgs}.
-     * @since 6.7.0
-     */
-    public HSetExArgs pxAt(long timestamp) {
-
-        this.pxAt = timestamp;
-        return this;
-    }
-
-    /**
-     * Set the specified expire at time using a posix {@code timestamp}.
-     *
-     * @param timestamp the timestamp type: posix time in milliseconds.
-     * @return {@code this} {@link HSetExArgs}.
-     * @since 6.7.0
-     */
-    public HSetExArgs pxAt(Date timestamp) {
-
-        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
-
-        return pxAt(timestamp.getTime());
-    }
-
-    /**
-     * Set the specified expire at time using a posix {@code timestamp}.
-     *
-     * @param timestamp the timestamp type: posix time in milliseconds.
-     * @return {@code this} {@link HSetExArgs}.
-     * @since 6.7.0
+     * @since 6.6
      */
     public HSetExArgs pxAt(Instant timestamp) {
 
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
 
-        return pxAt(timestamp.toEpochMilli());
+        this.pxAt = timestamp.toEpochMilli();
+        return this;
     }
 
     /**
@@ -364,7 +220,7 @@ public class HSetExArgs implements CompositeArgument {
      * Set the value and retain the existing TTL.
      *
      * @return {@code this} {@link HSetExArgs}.
-     * @since 6.7.0
+     * @since 6.6
      */
     public HSetExArgs keepttl() {
 
