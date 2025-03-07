@@ -1516,7 +1516,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     @Override
     public Mono<Long> hgetex(KeyValueStreamingChannel<K, V> channel, K key, HGetExArgs hGetExArgs, K... fields) {
-        return createMono(() -> commandBuilder.hgetdel(channel, key, fields));
+        return createMono(() -> commandBuilder.hgetex(channel, key, hGetExArgs, fields));
     }
 
     @Override

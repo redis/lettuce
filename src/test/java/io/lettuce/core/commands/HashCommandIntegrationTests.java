@@ -237,6 +237,8 @@ public class HashCommandIntegrationTests extends TestSupport {
         List<KeyValue<String, String>> values = redis.hgetdel(key, "one", "two", "missing");
         assertThat(values).hasSize(3);
         assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2"), kv("missing", null)))).isTrue();
+        assertThat(redis.hexists(key, "one")).isFalse();
+        assertThat(redis.hexists(key, "two")).isFalse();
     }
 
     @Test
@@ -250,6 +252,8 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(count).isEqualTo(3);
         assertThat(values).hasSize(3);
         assertThat(values).containsEntry("one", "1").containsEntry("two", "2").containsEntry("missing", null);
+        assertThat(redis.hexists(key, "one")).isFalse();
+        assertThat(redis.hexists(key, "two")).isFalse();
     }
 
     @Test
@@ -284,6 +288,7 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(count).isEqualTo(3);
         assertThat(values).hasSize(3);
         assertThat(values).containsEntry("one", "1").containsEntry("two", "2").containsEntry("missing", null);
+        assertThat(redis.httl(key, "one", "two")).allMatch(ttl -> ttl > 1);
     }
 
     @Test
