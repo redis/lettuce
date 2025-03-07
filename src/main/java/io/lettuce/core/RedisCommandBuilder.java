@@ -1767,7 +1767,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HSET, new IntegerOutput<>(codec), args);
     }
 
-    Command<K,V, Long> hsetex(K key,  Map<K, V> map) {
+    Command<K, V, Long> hsetex(K key, Map<K, V> map) {
         notNullKey(key);
         LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(!map.isEmpty(), "Map " + MUST_NOT_BE_EMPTY);
@@ -1778,7 +1778,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HSETEX, new IntegerOutput<>(codec), args);
     }
 
-    Command<K,V, Long> hsetex(K key, HSetExArgs hSetExArgs, Map<K, V> map) {
+    Command<K, V, Long> hsetex(K key, HSetExArgs hSetExArgs, Map<K, V> map) {
         notNullKey(key);
         LettuceAssert.notNull(hSetExArgs, "HSetExArgs " + MUST_NOT_BE_NULL);
         LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);
@@ -1791,7 +1791,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HSETEX, new IntegerOutput<>(codec), args);
     }
 
-    Command<K,V, List<KeyValue<K,V>>> hgetex(K key, K... fields) {
+    Command<K, V, List<KeyValue<K, V>>> hgetex(K key, K... fields) {
         keyAndFieldsProvided(key, fields);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
@@ -1800,7 +1800,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(HGETEX, new KeyValueListOutput<>(codec, Arrays.asList(fields)), args);
     }
 
-    Command<K,V, List<KeyValue<K,V>>> hgetex(K key, HGetExArgs hGetExArgs, K... fields) {
+    Command<K, V, List<KeyValue<K, V>>> hgetex(K key, HGetExArgs hGetExArgs, K... fields) {
         keyAndFieldsProvided(key, fields);
         LettuceAssert.notNull(hGetExArgs, "HGetExArgs " + MUST_NOT_BE_NULL);
 
@@ -1810,7 +1810,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         return createCommand(HGETEX, new KeyValueListOutput<>(codec, Arrays.asList(fields)), args);
     }
-
 
     Command<K, V, Long> hgetex(KeyValueStreamingChannel<K, V> channel, K key, HGetExArgs hGetExArgs, K... fields) {
         keyAndFieldsProvided(key, fields);

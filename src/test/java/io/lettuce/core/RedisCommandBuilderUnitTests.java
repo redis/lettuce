@@ -186,7 +186,8 @@ class RedisCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructHsetexWithArgs() {
-        Command<String, String, ?> command = sut.hsetex(MY_KEY, HSetExArgs.Builder.ex(10).fnx(), Collections.singletonMap("one", "1"));
+        Command<String, String, ?> command = sut.hsetex(MY_KEY, HSetExArgs.Builder.ex(10).fnx(),
+                Collections.singletonMap("one", "1"));
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -194,12 +195,13 @@ class RedisCommandBuilderUnitTests {
                 + "$3\r\n" + "FNX\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n" + "$1\r\n"
                 + "1\r\n";
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$6\r\n" + "HSETEX\r\n" + "$4\r\n" + "hKey\r\n"
-                + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n" + "$3\r\n" + "FNX\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n" + "$1\r\n" + "1\r\n");
+                + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n" + "$3\r\n" + "FNX\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n"
+                + "1\r\n" + "$3\r\n" + "one\r\n" + "$1\r\n" + "1\r\n");
     }
 
     @Test
     void shouldCorrectlyConstructHgetex() {
-        Command<String, String, ?> command = sut.hgetex(MY_KEY,"one");
+        Command<String, String, ?> command = sut.hgetex(MY_KEY, "one");
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -213,8 +215,9 @@ class RedisCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" + "$6\r\n" + "HGETEX\r\n" + "$4\r\n" + "hKey\r\n"
-                + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n" + "$7\r\n" + "PERSIST\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$6\r\n" + "HGETEX\r\n" + "$4\r\n" + "hKey\r\n" + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n"
+                        + "$7\r\n" + "PERSIST\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n");
     }
 
     @Test

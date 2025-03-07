@@ -19,11 +19,6 @@
  */
 package io.lettuce.core.api.sync;
 
-import java.util.Map;
-import java.util.List;
-import java.util.Date;
-import java.time.Instant;
-import java.time.Duration;
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.HGetExArgs;
 import io.lettuce.core.HSetExArgs;
@@ -36,6 +31,12 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Synchronous executed commands for Hashes (Key-Value pairs).
@@ -853,4 +854,5 @@ public interface RedisHashCommands<K, V> {
      * @since 6.4
      */
     List<Long> hpttl(K key, K... fields);
+
 }

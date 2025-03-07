@@ -21,11 +21,8 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import java.time.Duration
-import java.time.Instant
-import java.util.Date
 import io.lettuce.core.ExpireArgs
+import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.KeyScanCursor
 import io.lettuce.core.KeyValue
 import io.lettuce.core.MapScanCursor
@@ -33,6 +30,9 @@ import io.lettuce.core.ScanArgs
 import io.lettuce.core.ScanCursor
 import io.lettuce.core.HGetExArgs
 import io.lettuce.core.HSetExArgs
+import java.time.Duration
+import java.time.Instant
+import java.util.*
 
 /**
  * Coroutine executed commands for Hashes (Key-Value pairs).
@@ -173,8 +173,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * Return `count` random fields along their value from the hash stored at `key`.
      *
      * @param key the key.
-     * @param count the number of fields to return. If the provided count argument is positive, return an array of distinct
-     *        fields.
+     * @param count the number of fields to return. If the provided count argument is positive, return an array of distinct fields.
      * @return array-reply the keys and values.
      * @since 6.1
      */
@@ -348,9 +347,9 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param seconds the seconds type: long.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; `1` indicating expiration time is set/updated;
-     *         `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
-     *         `-2` indicating there is no such field
+     *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
+     *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); `-2` indicating there is no such field
      * @since 6.4
      */
     suspend fun hexpire(key: K, seconds: Long, vararg fields: K): List<Long>
@@ -360,12 +359,12 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key of the fields.
      * @param seconds the seconds type: long.
-     * @param expireArgs the expiry arguments.
+     * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; `1` indicating expiration time is set/updated;
-     *         `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
-     *         `-2` indicating there is no such field
+     *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
+     *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); `-2` indicating there is no such field
      * @since 6.4
      */
     suspend fun hexpire(key: K, seconds: Long, expireArgs: ExpireArgs, vararg fields: K): List<Long>
@@ -377,9 +376,9 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param seconds the TTL [Duration]
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; `1` indicating expiration time is set/updated;
-     *         `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
-     *         `-2` indicating there is no such field
+     *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
+     *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); `-2` indicating there is no such field
      * @since 6.4
      */
     suspend fun hexpire(key: K, seconds: Duration, vararg fields: K): List<Long>
@@ -392,9 +391,9 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param expireArgs the [ExpireArgs].
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; `1` indicating expiration time is set/updated;
-     *         `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
-     *         `-2` indicating there is no such field
+     *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
+     *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); `-2` indicating there is no such field
      * @since 6.4
      */
     suspend fun hexpire(key: K, seconds: Duration, expireArgs: ExpireArgs, vararg fields: K): List<Long>
@@ -406,7 +405,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -418,10 +417,10 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expiry arguments.
+     * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -435,7 +434,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -447,10 +446,10 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expiry arguments.
+     * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -464,7 +463,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -476,10 +475,10 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param timestamp the timestamp type: posix time.
-     * @param expireArgs the expiry arguments.
+     * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -515,9 +514,9 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param milliseconds the milliseconds type: long.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; `1` indicating expiration time is set/updated;
-     *         `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
-     *         `-2` indicating there is no such field
+     *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
+     *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); `-2` indicating there is no such field
      * @since 6.4
      */
     suspend fun hpexpire(key: K, milliseconds: Long, vararg fields: K): List<Long>
@@ -527,12 +526,12 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param milliseconds the milliseconds type: long.
-     * @param expireArgs the expiry arguments.
+     * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; `1` indicating expiration time is set/updated;
-     *         `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
-     *         `-2` indicating there is no such field
+     *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
+     *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); `-2` indicating there is no such field
      * @since 6.4
      */
     suspend fun hpexpire(key: K, milliseconds: Long, expireArgs: ExpireArgs, vararg fields: K): List<Long>
@@ -544,9 +543,9 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param milliseconds the milliseconds.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; `1` indicating expiration time is set/updated;
-     *         `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
-     *         `-2` indicating there is no such field
+     *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
+     *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); `-2` indicating there is no such field
      * @since 6.4
      */
     suspend fun hpexpire(key: K, milliseconds: Duration, vararg fields: K): List<Long>
@@ -556,12 +555,12 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param milliseconds the milliseconds.
-     * @param expireArgs the expiry arguments.
+     * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is 0; `1` indicating expiration time is set/updated;
-     *         `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not met);
-     *         `-2` indicating there is no such field
+     *         already due to expiration, or provided expriry interval is 0; `1` indicating expiration time is
+     *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
+     *         met); `-2` indicating there is no such field
      * @since 6.4
      */
     suspend fun hpexpire(key: K, milliseconds: Duration, expireArgs: ExpireArgs, vararg fields: K): List<Long>
@@ -573,7 +572,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -585,10 +584,10 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expiry arguments.
+     * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -602,7 +601,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -614,10 +613,10 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expiry arguments.
+     * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -631,7 +630,7 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @param timestamp the milliseconds-timestamp type: posix time.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -643,10 +642,10 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param timestamp the milliseconds-timestamp type: posix time.
-     * @param expireArgs the expiry arguments.
+     * @param expireArgs the expire arguments.
      * @param fields one or more fields to set the TTL for.
      * @return a list of [Long] values for each of the fields provided: `2` indicating the specific field is deleted
-     *         already due to expiration, or provided expiry interval is in the past; `1` indicating expiration time is
+     *         already due to expiration, or provided expriry interval is in the past; `1` indicating expiration time is
      *         set/updated; `0` indicating the expiration time is not set (a provided NX | XX | GT | LT condition is not
      *         met); `-2` indicating there is no such field
      * @since 6.4
@@ -658,9 +657,8 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return a list of [Long] values for each of the fields provided: expiration time as a UNIX timestamp in
-     *         milliseconds; `-1` indicating the field has no expiry time set; `-2` indicating there is no such
-     *         field
+     * @return a list of [Long] values for each of the fields provided: expiration time as a UNIX timestamp in milliseconds;
+     *         `-1` indicating the field has no expiry time set; `-2` indicating there is no such field
      * @since 6.4
      */
     suspend fun hpexpiretime(key: K, vararg fields: K): List<Long>
@@ -670,9 +668,9 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key.
      * @param fields one or more fields to get the TTL for.
-     * @return a list of [Long] values for each of the fields provided: the time to live in seconds; or a negative value
-     *         in order to signal an error. The command returns `-1` if the key exists but has no associated expiration
-     *         time. The command returns `-2` if the key does not exist.
+     * @return a list of [Long] values for each of the fields provided: the time to live in seconds; or a negative value in
+     *         order to signal an error. The command returns `-1` if the key exists but has no associated expiration time.
+     *         The command returns `-2` if the key does not exist.
      * @since 6.4
      */
     suspend fun httl(key: K, vararg fields: K): List<Long>

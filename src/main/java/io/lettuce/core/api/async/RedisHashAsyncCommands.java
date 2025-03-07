@@ -19,11 +19,6 @@
  */
 package io.lettuce.core.api.async;
 
-import java.util.Map;
-import java.util.List;
-import java.util.Date;
-import java.time.Instant;
-import java.time.Duration;
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.HGetExArgs;
 import io.lettuce.core.HSetExArgs;
@@ -37,6 +32,12 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Asynchronous executed commands for Hashes (Key-Value pairs).
@@ -337,7 +338,8 @@ public interface RedisHashAsyncCommands<K, V> {
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
      */
-    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> hscan(KeyValueStreamingChannel<K, V> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields, without associated values.
@@ -349,7 +351,8 @@ public interface RedisHashAsyncCommands<K, V> {
      * @return StreamScanCursor scan cursor.
      * @since 6.4
      */
-    RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
+    RedisFuture<StreamScanCursor> hscanNovalues(KeyStreamingChannel<K> channel, K key, ScanCursor scanCursor,
+            ScanArgs scanArgs);
 
     /**
      * Incrementally iterate hash fields and associated values.
@@ -854,4 +857,5 @@ public interface RedisHashAsyncCommands<K, V> {
      * @since 6.4
      */
     RedisFuture<List<Long>> hpttl(K key, K... fields);
+
 }

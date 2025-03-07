@@ -265,7 +265,8 @@ public class HashCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("HGETEX")
     void hgetexWithArgs() {
         setup();
-        List<KeyValue<String, String>> values = redis.hgetex(key, HGetExArgs.Builder.ex(Duration.ofSeconds(100)), "one", "two", "missing");
+        List<KeyValue<String, String>> values = redis.hgetex(key, HGetExArgs.Builder.ex(Duration.ofSeconds(100)), "one", "two",
+                "missing");
         assertThat(values).hasSize(3);
         assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2"), kv("missing", null)))).isTrue();
         assertThat(redis.httl(key, "one", "two")).allMatch(ttl -> ttl > 1);
@@ -277,7 +278,8 @@ public class HashCommandIntegrationTests extends TestSupport {
         setup();
 
         KeyValueStreamingAdapter<String, String> streamingAdapter = new KeyValueStreamingAdapter<>();
-        Long count = redis.hgetex(streamingAdapter, key, HGetExArgs.Builder.ex(Duration.ofSeconds(100)), "one", "two", "missing");
+        Long count = redis.hgetex(streamingAdapter, key, HGetExArgs.Builder.ex(Duration.ofSeconds(100)), "one", "two",
+                "missing");
         Map<String, String> values = streamingAdapter.getMap();
         assertThat(count).isEqualTo(3);
         assertThat(values).hasSize(3);

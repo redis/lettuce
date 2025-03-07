@@ -404,7 +404,6 @@ public interface RedisHashCommands<K, V> {
      */
     Long hsetex(K key, Map<K, V> map);
 
-
     /**
      * Set the value of one or more fields of a given hash key, and optionally set their expiration
      *

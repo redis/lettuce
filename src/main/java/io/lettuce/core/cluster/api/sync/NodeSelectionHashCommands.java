@@ -19,11 +19,6 @@
  */
 package io.lettuce.core.cluster.api.sync;
 
-import java.util.Map;
-import java.util.List;
-import java.util.Date;
-import java.time.Instant;
-import java.time.Duration;
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.HGetExArgs;
 import io.lettuce.core.HSetExArgs;
@@ -36,6 +31,12 @@ import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Synchronous executed commands on a node selection for Hashes (Key-Value pairs).
@@ -447,7 +448,6 @@ public interface NodeSelectionHashCommands<K, V> {
      */
     Executions<Long> hgetex(KeyValueStreamingChannel<K, V> channel, K key, HGetExArgs hGetExArgs, K... fields);
 
-
     /**
      * Get and delete one or more hash fields.
      *
@@ -854,4 +854,5 @@ public interface NodeSelectionHashCommands<K, V> {
      * @since 6.4
      */
     Executions<List<Long>> hpttl(K key, K... fields);
+
 }
