@@ -909,6 +909,9 @@ Lettuce because of two reasons:
 2.  Support for using epoll/kqueue with shaded netty requires netty 4.1
     and all parts of netty to be shaded.
 
+3. The limitations regarding shaded JAR files are applicable only to Lettuce versions prior to 5.0.1. Since version 5.0.1, Lettuce no longer releases shaded JAR files, and these limitations are no longer relevant for newer versions.
+
+
 See also Netty [documentation on native
 transports](http://netty.io/wiki/native-transports.html).
 
