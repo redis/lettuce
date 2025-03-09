@@ -179,8 +179,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
         Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
-                executors.submit(() -> command.completeExceptionally(
-                        ExceptionFactory.createTimeoutException(Duration.ofNanos(timeUnit.toNanos(timeout)))));
+                executors.submit(() -> command.completeExceptionally(ExceptionFactory
+                        .createTimeoutException(command.getType().toString(), Duration.ofNanos(timeUnit.toNanos(timeout)))));
 
             }
         }, timeout, timeUnit);
