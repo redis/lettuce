@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -160,6 +162,63 @@ class RedisCommandBuilderUnitTests {
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*7\r\n" + "$5\r\n" + "HPTTL\r\n" + "$4\r\n" + "hKey\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n"
                         + "3\r\n" + "$7\r\n" + "hField1\r\n" + "$7\r\n" + "hField2\r\n" + "$7\r\n" + "hField3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHgetdel() {
+
+        Command<String, String, ?> command = sut.hgetdel(MY_KEY, "one", "two");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$7\r\n" + "HGETDEL\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "2\r\n" + "$3\r\n" + "one\r\n" + "$3\r\n" + "two\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHsetex() {
+        Command<String, String, ?> command = sut.hsetex(MY_KEY, Collections.singletonMap("one", "1"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + "$6\r\n" + "HSETEX\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n" + "$1\r\n" + "1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHsetexWithArgs() {
+        Command<String, String, ?> command = sut.hsetex(MY_KEY, HSetExArgs.Builder.ex(Duration.ofSeconds(10)).fnx(),
+                Collections.singletonMap("one", "1"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String expected = "*9\r\n" + "$6\r\n" + "HSETEX\r\n" + "$4\r\n" + "hKey\r\n" + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n"
+                + "$3\r\n" + "FNX\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n" + "$1\r\n"
+                + "1\r\n";
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$6\r\n" + "HSETEX\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n" + "$3\r\n" + "FNX\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n"
+                + "1\r\n" + "$3\r\n" + "one\r\n" + "$1\r\n" + "1\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHgetex() {
+        Command<String, String, ?> command = sut.hgetex(MY_KEY, "one");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "HGETEX\r\n" + "$4\r\n" + "hKey\r\n"
+                + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructHgetexWithArgs() {
+        Command<String, String, ?> command = sut.hgetex(MY_KEY, HGetExArgs.Builder.ex(Duration.ofSeconds(10)).persist(), "one");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*8\r\n" + "$6\r\n" + "HGETEX\r\n" + "$4\r\n" + "hKey\r\n" + "$2\r\n" + "EX\r\n" + "$2\r\n" + "10\r\n"
+                        + "$7\r\n" + "PERSIST\r\n" + "$6\r\n" + "FIELDS\r\n" + "$1\r\n" + "1\r\n" + "$3\r\n" + "one\r\n");
     }
 
     @Test

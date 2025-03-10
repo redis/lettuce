@@ -20,6 +20,8 @@
 package io.lettuce.core.cluster.api.async;
 
 import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.HGetExArgs;
+import io.lettuce.core.HSetExArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
@@ -394,6 +396,78 @@ public interface NodeSelectionHashAsyncCommands<K, V> {
      * @since 5.3
      */
     AsyncExecutions<Long> hset(K key, Map<K, V> map);
+
+    /**
+     * Set the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param map the field/value pairs to update.
+     * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
+     * @since 6.6
+     */
+    AsyncExecutions<Long> hsetex(K key, Map<K, V> map);
+
+    /**
+     * Set the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param hSetExArgs hsetex arguments.
+     * @param map the field/value pairs to update.
+     * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
+     * @since 6.6
+     */
+    AsyncExecutions<Long> hsetex(K key, HSetExArgs hSetExArgs, Map<K, V> map);
+
+    /**
+     * Get the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param fields fields to retrieve.
+     * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
+     * @since 6.6
+     */
+    AsyncExecutions<List<KeyValue<K, V>>> hgetex(K key, K... fields);
+
+    /**
+     * Get the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param hGetExArgs hgetex arguments.
+     * @param fields fields to retrieve.
+     * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
+     * @since 6.6
+     */
+    AsyncExecutions<List<KeyValue<K, V>>> hgetex(K key, HGetExArgs hGetExArgs, K... fields);
+
+    /**
+     * Stream over the values of all the given hash fields.
+     *
+     * @param channel the channel.
+     * @param key the key.
+     * @param hGetExArgs hgetex arguments.
+     * @param fields fields to retrieve.
+     * @return Long the number of fields that were removed from the hash.
+     */
+    AsyncExecutions<Long> hgetex(KeyValueStreamingChannel<K, V> channel, K key, HGetExArgs hGetExArgs, K... fields);
+
+    /**
+     * Get and delete one or more hash fields.
+     *
+     * @param key the hash key.
+     * @param fields fields to retrieve and delete.
+     * @return List&lt;KeyValue&lt;K, V&gt;&gt; array-reply list of fields and their values.
+     */
+    AsyncExecutions<List<KeyValue<K, V>>> hgetdel(K key, K... fields);
+
+    /**
+     * Stream over the values of all the given hash fields.
+     *
+     * @param channel the channel.
+     * @param key the key.
+     * @param fields fields to retrieve and delete.
+     * @return Long the number of fields that were removed from the hash.
+     */
+    AsyncExecutions<Long> hgetdel(KeyValueStreamingChannel<K, V> channel, K key, K... fields);
 
     /**
      * Set the value of a hash field, only if the field does not exist.
