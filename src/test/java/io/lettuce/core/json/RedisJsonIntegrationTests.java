@@ -159,6 +159,16 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
                 "{\"id\":\"bike:3\",\"model\":\"Weywot\",\"description\":\"This bike gives kids aged six years and old");
     }
 
+    @Test
+    public void jsonArrpopEmptyArray() {
+        JsonValue value = redis.getJsonParser().createJsonValue("[\"one\"]");
+        redis.jsonSet("myKey", JsonPath.ROOT_PATH, value);
+        List<JsonValue> result = redis.jsonArrpop("myKey");
+        assertThat(result.toString()).isEqualTo("[\"one\"]");
+        result = redis.jsonArrpop("myKey", JsonPath.ROOT_PATH, 0);
+        assertThat(result.get(0).isNull()).isTrue();
+    }
+
     @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
     void jsonArrtrim(String path) {
