@@ -45,6 +45,11 @@ class UnproccessedJsonValue implements JsonValue {
 
     @Override
     public String toString() {
+
+        if (unprocessedData == null) {
+            return null;
+        }
+
         if (isDeserialized()) {
             return jsonValue.toString();
         }
@@ -161,7 +166,9 @@ class UnproccessedJsonValue implements JsonValue {
             try {
                 if (!isDeserialized()) {
                     jsonValue = parser.createJsonValue(unprocessedData);
-                    unprocessedData.clear();
+                    if (unprocessedData != null) {
+                        unprocessedData.clear();
+                    }
                 }
             } finally {
                 lock.unlock();
