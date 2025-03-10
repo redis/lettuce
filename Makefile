@@ -27,7 +27,7 @@ start:
 	echo "Environment work directory: $(REDIS_ENV_WORK_DIR)"; \
 	rm -rf "$(REDIS_ENV_WORK_DIR)"; \
 	mkdir -p "$(REDIS_ENV_WORK_DIR)"; \
-	docker compose $(DOCKER_COMPOSE_ARGS) $$env_files -f src/test/resources/docker-env/docker-compose.yml up -d; \
+	docker compose $$env_files -f src/test/resources/docker-env/docker-compose.yml up -d; \
 	echo "Started test environment with Redis version $$version."
 
 
@@ -38,7 +38,7 @@ test-coverage:
 	mvn -DskipITs=false clean compile verify jacoco:report -P$(PROFILE)
 
 stop:
-	docker compose $(DOCKER_COMPOSE_ARGS) $$env_files -f src/test/resources/docker-env/docker-compose.yml down; \
+	docker compose --env-file src/test/resources/docker-env/.env -f src/test/resources/docker-env/docker-compose.yml down; \
 	rm -rf "$(REDIS_ENV_WORK_DIR)"
 
 clean:

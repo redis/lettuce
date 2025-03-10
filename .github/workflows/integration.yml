@@ -49,7 +49,7 @@ jobs:
       - name: Set up Docker Compose environment
         run: |
           mkdir -m 777 $REDIS_ENV_WORK_DIR
-          DOCKER_COMPOSE_ARGS="--progress quiet" make start version=${{ matrix.redis_version }}
+          make start version=${{ matrix.redis_version }}
       - name: Maven offline
         run: |
           mvn -q dependency:go-offline
@@ -65,7 +65,7 @@ jobs:
           TERM: dumb
       - name: Tear down Docker Compose environment
         run: |
-          DOCKER_COMPOSE_ARGS="--progress quiet" make stop
+          docker compose $COMPOSE_ENV_FILES -f src/test/resources/docker-env/docker-compose.yml down
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
         with:
