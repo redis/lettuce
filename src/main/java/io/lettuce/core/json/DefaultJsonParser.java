@@ -10,6 +10,7 @@ package io.lettuce.core.json;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -61,6 +62,10 @@ public class DefaultJsonParser implements JsonParser {
     }
 
     private JsonValue parse(String value) {
+        if (value == null) {
+            return DelegateJsonValue.wrap(NullNode.getInstance());
+        }
+
         ObjectMapper mapper = new ObjectMapper();
         try {
             JsonNode root = mapper.readTree(value);
@@ -72,6 +77,10 @@ public class DefaultJsonParser implements JsonParser {
     }
 
     private JsonValue parse(ByteBuffer byteBuffer) {
+        if (byteBuffer == null) {
+            return DelegateJsonValue.wrap(NullNode.getInstance());
+        }
+
         ObjectMapper mapper = new ObjectMapper();
         try {
             byte[] bytes = new byte[byteBuffer.remaining()];

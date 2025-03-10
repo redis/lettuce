@@ -39,9 +39,18 @@ public class JsonValueListOutput<K, V> extends CommandOutput<K, V, List<JsonValu
             multi(1);
         }
 
-        ByteBuffer fetched = ByteBuffer.allocate(bytes.remaining());
-        fetched.put(bytes);
-        fetched.flip();
+        // if (bytes != null) {
+        // output.add(parser.createJsonValue(bytes));
+        // return;
+        // }
+
+        ByteBuffer fetched = null;
+        if (bytes != null) {
+            fetched = ByteBuffer.allocate(bytes.remaining());
+            fetched.put(bytes);
+            fetched.flip();
+        }
+
         output.add(parser.loadJsonValue(fetched));
     }
 

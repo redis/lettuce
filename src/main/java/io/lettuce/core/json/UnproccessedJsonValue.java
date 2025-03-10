@@ -45,6 +45,11 @@ class UnproccessedJsonValue implements JsonValue {
 
     @Override
     public String toString() {
+
+        if (unprocessedData == null) {
+            return null;
+        }
+
         if (isDeserialized()) {
             return jsonValue.toString();
         }
