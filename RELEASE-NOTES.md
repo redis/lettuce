@@ -30,7 +30,7 @@ Fixes
 -----
 * Some json command assume optional path while it's not (#3198) by @tishun in https://github.com/redis/lettuce/pull/3201
 * jsonArrpop fails with null return value (#3196) (6.5.x) by @tishun in https://github.com/redis/lettuce/pull/3208
-* Exeption on zpopmin (#3199) (6.5.x) by @tishun in https://github.com/redis/lettuce/pull/3211
+* Exception on zpopmin (#3199) (6.5.x) by @tishun in https://github.com/redis/lettuce/pull/3211
 
 Other
 -----
