@@ -279,3 +279,5 @@ html
 www
 ReentrantLock
 DELUSER
+zpopmin
+jsonArrpop
