@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -541,6 +542,15 @@ class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
         redis.spublish(shardChannel, shardMessage);
         assertThat(shardChannels.take()).isEqualTo(shardChannel);
         assertThat(messages.take()).isEqualTo(shardMessage);
+    }
+
+    @Test
+    void interleaveCommands() throws ExecutionException, InterruptedException {
+
+        // relay Double and Long
+        assertThat(pubsub.zadd("myzset", 1.0, "one").get()).isEqualTo(1L);
+        assertThat(pubsub.zadd("myzset", 2.0, "two").get()).isEqualTo(1L);
+        assertThat(pubsub.zpopmin("myzset", 1).get().get(0).getValue()).isEqualTo("one");
     }
 
     @Test
