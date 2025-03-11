@@ -57,7 +57,7 @@
         <junit5.version>5.10.2</junit5.version>
         <hamcrest-library.version>2.2</hamcrest-library.version>
         <hdr-histogram.version>2.2.2</hdr-histogram.version>
-        <kotlin.version>1.7.21</kotlin.version>
+        <kotlin.version>2.0.0</kotlin.version>
         <kotlinx-coroutines.version>1.5.2</kotlinx-coroutines.version>
         <latencyutils.version>2.0.3</latencyutils.version>
         <log4j2-version>2.24.0</log4j2-version>
@@ -792,8 +792,8 @@
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <configuration>
                     <jvmTarget>1.8</jvmTarget>
-                    <languageVersion>1.3</languageVersion>
-                    <apiVersion>1.3</apiVersion>
+                    <languageVersion>1.4</languageVersion>
+                    <apiVersion>1.4</apiVersion>
                     <args>
                         <arg>-Xopt-in=kotlin.RequiresOptIn</arg>
                         <arg>-Xopt-in=io.lettuce.core.ExperimentalLettuceCoroutinesApi
