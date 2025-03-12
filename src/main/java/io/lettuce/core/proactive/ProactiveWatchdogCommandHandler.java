@@ -67,6 +67,7 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
 
         if (content.stream().anyMatch(c -> c.contains("type=rebind"))) {
             logger.info("Attempt to rebind to new endpoint '" + getRemoteAddress(content)+"'");
+            context.fireUserEventTriggered(new ProactiveRebindEvent(getRemoteAddress(content)));
             context.fireChannelInactive();
         }
     }

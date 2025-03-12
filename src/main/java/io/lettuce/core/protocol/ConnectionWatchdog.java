@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.lettuce.core.proactive.ProactiveRebindEvent;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
@@ -100,6 +101,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
     private volatile boolean listenOnChannelInactive;
 
     private volatile Timeout reconnectScheduleTimeout;
+
+    private SocketAddress rebindAddress;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -211,6 +214,17 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         }
 
         super.channelInactive(ctx);
+    }
+
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if(evt instanceof ProactiveRebindEvent) {
+            ProactiveRebindEvent event = (ProactiveRebindEvent) evt;
+            logger.info("Proactive rebind to {}", event.getRemoteAddress());
+            rebindAddress = event.getRemoteAddress();
+        }
+
+        super.userEventTriggered(ctx, evt);
     }
 
     /**
@@ -330,7 +344,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             eventBus.publish(new ReconnectAttemptEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, attempt, delay));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
-            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnect();
+            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple =
+                    rebindAddress == null ? reconnectionHandler.reconnect() : reconnectionHandler.reconnect(rebindAddress);
             CompletableFuture<Channel> future = tuple.getT1();
 
             future.whenComplete((c, t) -> {
