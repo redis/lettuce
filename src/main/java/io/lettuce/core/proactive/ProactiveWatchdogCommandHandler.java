@@ -4,38 +4,21 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.output.StatusOutput;
-import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.ConnectionWatchdog;
-import io.lettuce.core.protocol.DefaultEndpoint;
-import io.lettuce.core.pubsub.PubSubOutput;
-import io.lettuce.core.pubsub.RedisPubSubAdapter;
-import io.lettuce.core.pubsub.RedisPubSubListener;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerAdapter;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.VoidChannelPromise;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.StringTokenizer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import static io.lettuce.core.protocol.CommandType.PING;
-import static io.lettuce.core.protocol.CommandType.SUBSCRIBE;
 
 /**
  *
@@ -43,6 +26,7 @@ import static io.lettuce.core.protocol.CommandType.SUBSCRIBE;
  * @param <V> Value type.
  * @author Will Glozer
  */
+@ChannelHandler.Sharable
 public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandlerAdapter implements PushListener {
 
     private static final Logger logger = Logger.getLogger(ProactiveWatchdogCommandHandler.class.getName());
@@ -76,8 +60,6 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
 
     @Override
     public void onPushMessage(PushMessage message) {
-        logger.info("Channel received message");
-
         List<String> content = message.getContent()
                 .stream()
                 .map( ez -> StringCodec.UTF8.decodeKey( (ByteBuffer) ez))
@@ -85,21 +67,7 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
 
         if (content.stream().anyMatch(c -> c.contains("type=rebind"))) {
             logger.info("Attempt to rebind to new endpoint '" + getRemoteAddress(content)+"'");
-            context.channel().disconnect().addListener(future -> {
-                Bootstrap bootstrap = watchdog.getBootstrap();
-                bootstrap.connect(getRemoteAddress(content)).addListener(futur -> {
-                    if (futur.isSuccess()) {
-                        logger.info("Success?");
-                    } else {
-                        logger.info("Failure?");
-                    }
-                });
-
-            });
-
-//            context.fireChannelInactive();
-//            context.channel().connect(getRemoteAddress(content));
-
+            context.fireChannelInactive();
         }
     }
 
