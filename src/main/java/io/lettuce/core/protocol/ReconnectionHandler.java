@@ -114,6 +114,16 @@ class ReconnectionHandler {
         return Tuples.of(future, address);
     }
 
+    protected Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnect(SocketAddress remoteAddress) {
+        CompletableFuture<Channel> future = new CompletableFuture<>();
+        CompletableFuture<SocketAddress> address = new CompletableFuture<>();
+
+        reconnect0(future, remoteAddress);
+
+        this.currentFuture = future;
+        return Tuples.of(future, address);
+    }
+
     private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {
 
         ChannelHandler handler = bootstrap.config().handler();
