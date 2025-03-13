@@ -63,6 +63,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     public static boolean relaxTimeoutsGlobally = false;
 
+    public static boolean enableProactive = false;
+
     /**
      * Create a new {@link CommandExpiryWriter}.
      *
@@ -182,7 +184,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
                 executors.submit(() -> {
-                    if (!relaxTimeoutsGlobally) {
+                    if (shouldRelaxTimeoutsGlobally() ) {
                         command.completeExceptionally(
                                 ExceptionFactory.createTimeoutException(command.getType().toString(), Duration.ofNanos(timeUnit.toNanos(timeout))));
                     } else {
@@ -197,6 +199,10 @@ public class CommandExpiryWriter implements RedisChannelWriter {
             ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
         }
 
+    }
+
+    public static boolean shouldRelaxTimeoutsGlobally() {
+        return relaxTimeoutsGlobally && enableProactive;
     }
 
     // when relaxing the timeouts - instead of expiring immediately, we will start a new timer with 10 seconds
