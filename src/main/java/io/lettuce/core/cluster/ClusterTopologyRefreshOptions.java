@@ -169,7 +169,7 @@ public class ClusterTopologyRefreshOptions {
 
             LettuceAssert.notNull(refreshTrigger, "RefreshTriggers must not be null");
             LettuceAssert.noNullElements(refreshTrigger, "RefreshTriggers must not contain null elements");
-            LettuceAssert.notEmpty(refreshTrigger, "RefreshTriggers must not contain at least one element");
+            LettuceAssert.notEmpty(refreshTrigger, "RefreshTriggers must contain at least one element");
 
             adaptiveRefreshTriggers.addAll(Arrays.asList(refreshTrigger));
             return this;
