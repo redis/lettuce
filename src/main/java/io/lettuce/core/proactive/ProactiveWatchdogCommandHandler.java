@@ -1,6 +1,5 @@
 package io.lettuce.core.proactive;
 
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.RedisCodec;
@@ -64,7 +63,12 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
 
     @Override
     public void onPushMessage(PushMessage message) {
-        List<String> content = message.getContent().stream().map(ez -> StringCodec.UTF8.decodeKey((ByteBuffer) ez))
+        if (!message.getType().equals("message")) {
+            return;
+        }
+
+        List<String> content = message.getContent().stream()
+                .map(ez -> ez instanceof ByteBuffer ? StringCodec.UTF8.decodeKey((ByteBuffer) ez) : ez.toString())
                 .collect(Collectors.toList());
 
         if (content.stream().anyMatch(c -> c.contains("type=rebind"))) {
