@@ -1,5 +1,6 @@
 package io.lettuce.core.proactive;
 
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.RedisCodec;
@@ -7,6 +8,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.ConnectionWatchdog;
+import io.lettuce.core.pubsub.PubSubCommandHandler;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -46,6 +48,8 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
         watchdog = pipeline.get(ConnectionWatchdog.class);
         context = ctx;
 
+        PubSubCommandHandler<?, ?> cmdhndlr =  pipeline.get(PubSubCommandHandler.class);
+        cmdhndlr.getEndpoint().addListener(this);
 //        Command<String, String, String> rebind =
 //                new Command<>(SUBSCRIBE,
 //                        new PubSubOutput<>(StringCodec.UTF8),
@@ -69,6 +73,12 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
             logger.info("Attempt to rebind to new endpoint '" + getRemoteAddress(content)+"'");
             context.fireUserEventTriggered(new ProactiveRebindEvent(getRemoteAddress(content)));
             context.fireChannelInactive();
+
+//            context.channel().pipeline().get()
+//
+//
+//            StatefulRedisConnection<String, String> connection = watchdog.getConnection();
+//            connection.setTimeout();
         }
     }
 
