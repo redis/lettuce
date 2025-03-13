@@ -61,6 +61,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     private volatile long timeout = -1;
 
+    public static boolean relaxTimeoutsGlobally = false;
+
     /**
      * Create a new {@link CommandExpiryWriter}.
      *
@@ -179,8 +181,14 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
         Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
-                executors.submit(() -> command.completeExceptionally(ExceptionFactory
-                        .createTimeoutException(command.getType().toString(), Duration.ofNanos(timeUnit.toNanos(timeout)))));
+                executors.submit(() -> {
+                    if (!relaxTimeoutsGlobally) {
+                        command.completeExceptionally(
+                                ExceptionFactory.createTimeoutException(command.getType().toString(), Duration.ofNanos(timeUnit.toNanos(timeout))));
+                    } else {
+                        relaxedAttempt(command, executors);
+                    }
+                });
 
             }
         }, timeout, timeUnit);
@@ -189,6 +197,22 @@ public class CommandExpiryWriter implements RedisChannelWriter {
             ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
         }
 
+    }
+
+    // when relaxing the timeouts - instead of expiring immediately, we will start a new timer with 10 seconds
+    private void relaxedAttempt(RedisCommand<?, ?, ?> command, ScheduledExecutorService executors) {
+
+        Duration timeout = Duration.ofSeconds(10);
+
+        Timeout commandTimeout = timer.newTimeout(t -> {
+            if (!command.isDone()) {
+                executors.submit(() -> command.completeExceptionally(ExceptionFactory.createTimeoutException(timeout)));
+            }
+        }, timeout.getSeconds(), TimeUnit.SECONDS);
+
+        if (command instanceof CompleteableCommand) {
+            ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
+        }
     }
 
 }

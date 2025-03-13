@@ -5,6 +5,7 @@ import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandExpiryWriter;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
@@ -47,8 +48,9 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
         watchdog = pipeline.get(ConnectionWatchdog.class);
         context = ctx;
 
-        PubSubCommandHandler<?, ?> cmdhndlr = pipeline.get(PubSubCommandHandler.class);
-        cmdhndlr.getEndpoint().addListener(this);
+        PubSubCommandHandler<?, ?> commandHandler = pipeline.get(PubSubCommandHandler.class);
+        commandHandler.getEndpoint().addListener(this);
+
         // Command<String, String, String> rebind =
         // new Command<>(SUBSCRIBE,
         // new PubSubOutput<>(StringCodec.UTF8),
@@ -73,14 +75,13 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
 
         if (content.stream().anyMatch(c -> c.contains("type=rebind"))) {
             logger.info("Attempt to rebind to new endpoint '" + getRemoteAddress(content) + "'");
+
+            // relax the command timeouts of the existing commands
+            CommandExpiryWriter.relaxTimeoutsGlobally = true;
+
+            // disconnect the current channel and fire a re-bind event with the new address
             context.fireUserEventTriggered(new ProactiveRebindEvent(getRemoteAddress(content)));
             context.fireChannelInactive();
-
-            // context.channel().pipeline().get()
-            //
-            //
-            // StatefulRedisConnection<String, String> connection = watchdog.getConnection();
-            // connection.setTimeout();
         }
     }
 
