@@ -53,7 +53,9 @@ public class LettuceProactiveDemo {
 
         // Used to initiate the proactive rebind by sending the following command
         // publish __rebind "type=rebind;from_ep=localhost:6379;to_ep=localhost:6479;until_s=10"
-        redis.addListener(proactiveHandler);
+        
+        // NO LONGER NEEDED, HANDLER REGISTERES ITSELF
+        //        redis.addListener(proactiveHandler);
 
         while (control.shouldContinue) {
             try {
