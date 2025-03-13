@@ -48,49 +48,45 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
         watchdog = pipeline.get(ConnectionWatchdog.class);
         context = ctx;
 
-        PubSubCommandHandler<?, ?> cmdhndlr =  pipeline.get(PubSubCommandHandler.class);
+        PubSubCommandHandler<?, ?> cmdhndlr = pipeline.get(PubSubCommandHandler.class);
         cmdhndlr.getEndpoint().addListener(this);
-//        Command<String, String, String> rebind =
-//                new Command<>(SUBSCRIBE,
-//                        new PubSubOutput<>(StringCodec.UTF8),
-//                        new PubSubCommandArgs<>(StringCodec.UTF8).addKey(REBIND_CHANNEL));
-//
-//        if (command != null) {
-//            ctx.write(rebind);
-//        }
+        // Command<String, String, String> rebind =
+        // new Command<>(SUBSCRIBE,
+        // new PubSubOutput<>(StringCodec.UTF8),
+        // new PubSubCommandArgs<>(StringCodec.UTF8).addKey(REBIND_CHANNEL));
+        //
+        // if (command != null) {
+        // ctx.write(rebind);
+        // }
 
         super.channelActive(ctx);
     }
 
     @Override
     public void onPushMessage(PushMessage message) {
-        List<String> content = message.getContent()
-                .stream()
-                .map( ez -> StringCodec.UTF8.decodeKey( (ByteBuffer) ez))
+        List<String> content = message.getContent().stream().map(ez -> StringCodec.UTF8.decodeKey((ByteBuffer) ez))
                 .collect(Collectors.toList());
 
         if (content.stream().anyMatch(c -> c.contains("type=rebind"))) {
-            logger.info("Attempt to rebind to new endpoint '" + getRemoteAddress(content)+"'");
+            logger.info("Attempt to rebind to new endpoint '" + getRemoteAddress(content) + "'");
             context.fireUserEventTriggered(new ProactiveRebindEvent(getRemoteAddress(content)));
             context.fireChannelInactive();
 
-//            context.channel().pipeline().get()
-//
-//
-//            StatefulRedisConnection<String, String> connection = watchdog.getConnection();
-//            connection.setTimeout();
+            // context.channel().pipeline().get()
+            //
+            //
+            // StatefulRedisConnection<String, String> connection = watchdog.getConnection();
+            // connection.setTimeout();
         }
     }
 
-    private SocketAddress getRemoteAddress(List<String> messageContents){
+    private SocketAddress getRemoteAddress(List<String> messageContents) {
 
-        final String payload = messageContents.stream()
-                .filter(c -> c.contains("to_ep"))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException("to_ep not found"));
+        final String payload = messageContents.stream().filter(c -> c.contains("to_ep")).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("to_ep not found"));
 
-        final String toEndpoint = Arrays.stream(payload.split(";"))
-                .filter( c->c.contains("to_ep"))
-                .findFirst().orElseThrow(() -> new IllegalArgumentException("to_ep not found"));
+        final String toEndpoint = Arrays.stream(payload.split(";")).filter(c -> c.contains("to_ep")).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("to_ep not found"));
 
         final String addressAndPort = toEndpoint.split("=")[1];
         final String address = addressAndPort.split(":")[0];
@@ -99,10 +95,10 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
         return new InetSocketAddress(address, port);
     }
 
-
     /**
      *
-     * Command args for Pub/Sub connections. This implementation hides the first key as PubSub keys are not keys from the key-space.
+     * Command args for Pub/Sub connections. This implementation hides the first key as PubSub keys are not keys from the
+     * key-space.
      *
      * @author Mark Paluch
      * @since 4.2
@@ -133,4 +129,5 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
 
         super.channelInactive(ctx);
     }
+
 }
