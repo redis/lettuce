@@ -19,19 +19,20 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class LettuceProactiveDemo {
+
     public static final Logger logger = Logger.getLogger(LettuceProactiveDemo.class.getName());
 
     public static void main(String[] args) {
-        ProactiveWatchdogCommandHandler<String, String> proactiveHandler =
-                new ProactiveWatchdogCommandHandler<>();
+        ProactiveWatchdogCommandHandler<String, String> proactiveHandler = new ProactiveWatchdogCommandHandler<>();
 
-        ClientResources resources = ClientResources.builder()
-                .nettyCustomizer(new NettyCustomizer() {
-                    @Override
-                    public void afterChannelInitialized(Channel channel) {
-                        channel.pipeline().addFirst(proactiveHandler);
-                    }
-                }).build();
+        ClientResources resources = ClientResources.builder().nettyCustomizer(new NettyCustomizer() {
+
+            @Override
+            public void afterChannelInitialized(Channel channel) {
+                channel.pipeline().addFirst(proactiveHandler);
+            }
+
+        }).build();
 
         RedisClient redisClient = RedisClient.create(resources, RedisURI.Builder.redis("localhost", 6379).build());
 
@@ -53,9 +54,9 @@ public class LettuceProactiveDemo {
 
         // Used to initiate the proactive rebind by sending the following command
         // publish __rebind "type=rebind;from_ep=localhost:6379;to_ep=localhost:6479;until_s=10"
-        
+
         // NO LONGER NEEDED, HANDLER REGISTERES ITSELF
-        //        redis.addListener(proactiveHandler);
+        // redis.addListener(proactiveHandler);
 
         while (control.shouldContinue) {
             try {
@@ -67,7 +68,6 @@ public class LettuceProactiveDemo {
             }
         }
 
-
         redis.close();
         redisClient.shutdown();
     }
@@ -78,9 +78,7 @@ public class LettuceProactiveDemo {
 
         @Override
         public void onPushMessage(PushMessage message) {
-            List<String> content = message.getContent()
-                    .stream()
-                    .map( ez -> StringCodec.UTF8.decodeKey( (ByteBuffer) ez))
+            List<String> content = message.getContent().stream().map(ez -> StringCodec.UTF8.decodeKey((ByteBuffer) ez))
                     .collect(Collectors.toList());
 
             if (content.stream().anyMatch(c -> c.equals("type=stop_demo"))) {
@@ -88,6 +86,7 @@ public class LettuceProactiveDemo {
                 shouldContinue = false;
             }
         }
+
     }
 
 }

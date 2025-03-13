@@ -218,7 +218,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        if(evt instanceof ProactiveRebindEvent) {
+        if (evt instanceof ProactiveRebindEvent) {
             ProactiveRebindEvent event = (ProactiveRebindEvent) evt;
             logger.info("Proactive rebind to {}", event.getRemoteAddress());
             rebindAddress = event.getRemoteAddress();
@@ -344,8 +344,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             eventBus.publish(new ReconnectAttemptEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, attempt, delay));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
-            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple =
-                    rebindAddress == null ? reconnectionHandler.reconnect() : reconnectionHandler.reconnect(rebindAddress);
+            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = rebindAddress == null
+                    ? reconnectionHandler.reconnect()
+                    : reconnectionHandler.reconnect(rebindAddress);
             CompletableFuture<Channel> future = tuple.getT1();
 
             future.whenComplete((c, t) -> {
