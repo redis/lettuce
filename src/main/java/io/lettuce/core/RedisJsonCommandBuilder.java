@@ -107,12 +107,13 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
 
         if (jsonPath != null) {
-            // OPTIONAL as per API
-            args.add(jsonPath.toString());
-
             if (index != -1) {
                 // OPTIONAL as per API
+                args.add(jsonPath.toString());
                 args.add(index);
+            } else if (!jsonPath.isRootPath()) {
+                // OPTIONAL as per API
+                args.add(jsonPath.toString());
             }
         }
 
