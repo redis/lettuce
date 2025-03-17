@@ -163,7 +163,7 @@ class RedisJsonCommandBuilderUnitTests {
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*2\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n" + "bikes:inventory\r\n");
+                .isEqualTo("*3\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$1\r\n" + "$\r\n");
     }
 
     @Test
