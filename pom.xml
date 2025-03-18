@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>6.7.0.BUILD-SNAPSHOT</version>
+    <version>6.7.0.BUILD-OBSERVABILITY-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -90,16 +90,14 @@
   </scm>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
         <repository>
-            <id>ossrh</id>
-            <name>Nexus Release Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/ggivo/lettuce</url>
         </repository>
+        <snapshotRepository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/ggivo/lettuce</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <dependencyManagement>
