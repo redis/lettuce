@@ -165,8 +165,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             return attempts.get();
         }
 
-        public void increment() {
-            attempts.incrementAndGet();
+        public int incrementAndGet() {
+           return attempts.incrementAndGet();
         }
 
     }
@@ -341,8 +341,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         if ((channel == null || !channel.isActive()) && reconnectSchedulerSync.compareAndSet(false, true)) {
             // attempts++;
             // final int attempt = attempts;
-            attempts.increment();
-            final int attempt = attempts.getAttempts();
+            final int attempt = attempts.incrementAndGet();
             connectionMonitor.incrementReconnectionAttempts(epid);
 
             Duration delay = reconnectDelay.createDelay(attempt);
