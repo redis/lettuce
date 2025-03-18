@@ -81,7 +81,7 @@ public class ProactiveWatchdogCommandHandler<K, V> extends ChannelInboundHandler
 
             // disconnect the current channel and fire a re-bind event with the new address
             context.fireUserEventTriggered(new ProactiveRebindEvent(getRemoteAddress(content)));
-            context.fireChannelInactive();
+            context.channel().close().awaitUninterruptibly();
         }
     }
 
