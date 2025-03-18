@@ -11,6 +11,7 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.EventBus;
+import io.lettuce.core.metrics.ConnectionMonitor;
 import io.lettuce.core.resource.Delay;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -68,11 +69,11 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     public MaintenanceAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap,
             Timer timer, EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
-            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
-            Endpoint endpoint) {
+            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus, Endpoint endpoint,
+            ConnectionMonitor connectionMonitor) {
 
         super(reconnectDelay, clientOptions, bootstrap, timer, reconnectWorkers, socketAddressSupplier, reconnectionListener,
-                connectionFacade, eventBus, endpoint);
+                connectionFacade, eventBus, endpoint, connectionMonitor);
     }
 
     @Override

@@ -18,6 +18,7 @@ import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.EventBus;
+import io.lettuce.core.metrics.ConnectionMonitor;
 import io.lettuce.core.resource.Delay;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -107,6 +108,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     private Queue<RedisCommand<?, ?, ?>> commandStack;
 
     @Mock
+    private ConnectionMonitor connectionMonitor;
+
+    @Mock
     private ReconnectionHandler reconnectionHandler;
 
     private MaintenanceAwareConnectionWatchdog watchdog;
@@ -120,7 +124,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(endpoint.getId()).thenReturn("test-endpoint");
 
         watchdog = new MaintenanceAwareConnectionWatchdog(reconnectDelay, clientOptions, realBootstrap, timer, reconnectWorkers,
-                socketAddressSupplier, reconnectionListener, connectionFacade, eventBus, endpoint);
+                socketAddressSupplier, reconnectionListener, connectionFacade, eventBus, endpoint, connectionMonitor);
 
         // Set up the reconnectionHandler field using ReflectionTestUtils
         setField(watchdog, "reconnectionHandler", reconnectionHandler);
