@@ -31,7 +31,6 @@ import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.*;
 
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisServerCommands} with Redis modules since Redis 8.0.
@@ -39,7 +38,7 @@ import java.util.Map;
  * @author M Sazzadul Hoque
  */
 @Tag(INTEGRATION_TEST)
-public class ConsolidatedConfigurationCommandIntegrationTests extends RedisContainerIntegrationTests {
+public class ConsolidatedConfigurationCommandIntegrationTests {
 
     private static RedisClient client;
 

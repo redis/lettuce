@@ -9,7 +9,6 @@ package io.lettuce.core.json;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisContainerIntegrationTests;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -26,7 +25,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.io.IOException;
@@ -43,7 +41,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag(INTEGRATION_TEST)
-public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
+public class RedisJsonIntegrationTests {
 
     private static final String BIKES_INVENTORY = "bikes:inventory";
 
@@ -157,6 +155,24 @@ public class RedisJsonIntegrationTests extends RedisContainerIntegrationTests {
         assertThat(poppedJson).hasSize(1);
         assertThat(poppedJson.get(0).toString()).contains(
                 "{\"id\":\"bike:3\",\"model\":\"Weywot\",\"description\":\"This bike gives kids aged six years and old");
+    }
+
+    @Test
+    public void jsonArrpopEmptyArray() {
+        JsonValue value = redis.getJsonParser().createJsonValue("[\"one\"]");
+        redis.jsonSet("myKey", JsonPath.ROOT_PATH, value);
+        List<JsonValue> result = redis.jsonArrpop("myKey");
+        assertThat(result.toString()).isEqualTo("[\"one\"]");
+        assertThat(redis.jsonGet("myKey").get(0).toString()).isEqualTo("[]");
+    }
+
+    @Test
+    public void jsonArrpopWithRootPathAndIndex() {
+        JsonValue value = redis.getJsonParser().createJsonValue("[\"one\",\"two\",\"three\"]");
+        redis.jsonSet("myKey", JsonPath.ROOT_PATH, value);
+        List<JsonValue> result = redis.jsonArrpop("myKey", JsonPath.ROOT_PATH, 1);
+        assertThat(result.toString()).isEqualTo("[\"two\"]");
+        assertThat(redis.jsonGet("myKey").get(0).toString()).isEqualTo("[\"one\",\"three\"]");
     }
 
     @ParameterizedTest(name = "With {0} as path")

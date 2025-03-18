@@ -34,6 +34,11 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
     }
 
     @Override
+    public void set(double number) {
+        output.add(new Double(number));
+    }
+
+    @Override
     public void setError(ByteBuffer error) {
         error.mark();
         output.add(new ErrorBytes(error));
@@ -120,6 +125,21 @@ public class ReplayOutput<K, V> extends CommandOutput<K, V, List<ReplayOutput.Si
         final long message;
 
         Integer(long message) {
+            this.message = message;
+        }
+
+        @Override
+        protected void replay(CommandOutput<?, ?, ?> target) {
+            target.set(message);
+        }
+
+    }
+
+    static class Double extends Signal {
+
+        final double message;
+
+        Double(double message) {
             this.message = message;
         }
 
