@@ -56,7 +56,7 @@ public class MicrometerConnectionMonitor implements ConnectionMonitor {
     // Track the time between a connection being disconnected and successfully reconnected or closed
     public static final String METRIC_RECONNECTION_INACTIVE_TIME = "lettuce.reconnection.inactive.duration";
 
-    public static final String METRIC_RECONNECTION_ATTEMPTS = "lettuce.reconnection.attempts.count";
+    public static final String METRIC_RECONNECTION_ATTEMPTS = "lettuce.reconnection.attempts";
 
     private final MeterRegistry meterRegistry;
 
