@@ -41,7 +41,7 @@ class ConnectionMonitorIntegrationTests extends TestSupport {
         ClientResources resources = clientResources.mutate().connectionMonitor(monitor).build();
         RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
 
-        try ( StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
             RedisCommands<String, String> redis = connection.sync();
 
             // Force disconnection
@@ -55,7 +55,9 @@ class ConnectionMonitorIntegrationTests extends TestSupport {
             assertThat(meterRegistry.find(METRIC_CONNECTION_RECONNECTION_ATTEMPTS).counter().count()).isGreaterThanOrEqualTo(1);
             assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).timers()).isNotEmpty();
             assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).timer().count()).isEqualTo(1);
-            assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).timer().totalTime(TimeUnit.NANOSECONDS)).isGreaterThan(0);
+            assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).timer().totalTime(TimeUnit.NANOSECONDS))
+                    .isGreaterThan(0);
         }
     }
+
 }

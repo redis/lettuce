@@ -166,7 +166,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         }
 
         public int incrementAndGet() {
-           return attempts.incrementAndGet();
+            return attempts.incrementAndGet();
         }
 
     }
