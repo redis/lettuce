@@ -18,8 +18,8 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
-import static io.lettuce.core.metrics.MicrometerConnectionMonitor.METRIC_CONNECTION_INACTIVE_TIME;
-import static io.lettuce.core.metrics.MicrometerConnectionMonitor.METRIC_CONNECTION_RECONNECTION_ATTEMPTS;
+import static io.lettuce.core.metrics.MicrometerConnectionMonitor.METRIC_RECONNECTION_INACTIVE_TIME;
+import static io.lettuce.core.metrics.MicrometerConnectionMonitor.METRIC_RECONNECTION_ATTEMPTS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -34,7 +34,7 @@ class ConnectionMonitorIntegrationTests extends TestSupport {
     private final ClientResources clientResources = TestClientResources.get();
 
     @Test
-    void metricConnectionInactiveTime() throws InterruptedException {
+    void connectionInactiveTime() {
 
         MicrometerOptions options = MicrometerOptions.create();
         MicrometerConnectionMonitor monitor = new MicrometerConnectionMonitor(meterRegistry, options);
@@ -52,12 +52,37 @@ class ConnectionMonitorIntegrationTests extends TestSupport {
             Wait.untilTrue(() -> connection.isOpen()).during(Duration.ofSeconds(1)).waitOrTimeout();
 
             // At least one reconnect attempt
-            assertThat(meterRegistry.find(METRIC_CONNECTION_RECONNECTION_ATTEMPTS).counter().count()).isGreaterThanOrEqualTo(1);
-            assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).timers()).isNotEmpty();
-            assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).timer().count()).isEqualTo(1);
-            assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).timer().totalTime(TimeUnit.NANOSECONDS))
+            assertThat(meterRegistry.find(METRIC_RECONNECTION_ATTEMPTS).counter().count()).isGreaterThanOrEqualTo(1);
+            assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timers()).isNotEmpty();
+            assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timer().count()).isEqualTo(1);
+            assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timer().totalTime(TimeUnit.NANOSECONDS))
                     .isGreaterThan(0);
         }
+    }
+
+    @Test
+    void connectionInactiveTimeAutoReconnectDisabled() {
+
+        MicrometerOptions options = MicrometerOptions.create();
+        MicrometerConnectionMonitor monitor = new MicrometerConnectionMonitor(meterRegistry, options);
+        ClientResources resources = clientResources.mutate().connectionMonitor(monitor).build();
+
+        ClientOptions clientOptions = ClientOptions.builder().autoReconnect(false).build();
+
+        RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
+        client.setOptions(clientOptions);
+
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+            RedisCommands<String, String> redis = connection.sync();
+
+            // Force disconnection
+            redis.quit();
+            Wait.untilTrue(() -> !connection.isOpen()).during(Duration.ofSeconds(1)).waitOrTimeout();
+        }
+
+        // Connection is closed, with auto-reconnect disabled, no metrics are recorded
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_ATTEMPTS).counters()).isEmpty();
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timers()).isEmpty();
     }
 
 }
