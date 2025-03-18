@@ -27,6 +27,7 @@ import io.lettuce.core.event.EventPublisherOptions;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
+import io.lettuce.core.metrics.ConnectionMonitor;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.Timer;
@@ -129,6 +130,8 @@ public interface ClientResources {
          * @since 6.0
          */
         Builder commandLatencyRecorder(CommandLatencyRecorder latencyRecorder);
+
+        Builder connectionMonitor(ConnectionMonitor connectionMonitor);
 
         /**
          * Sets the {@link CommandLatencyCollectorOptions} that can be used across different instances of the RedisClient. The
@@ -340,6 +343,8 @@ public interface ClientResources {
      * @return the {@link EventPublisherOptions} for latency event publishing.
      */
     EventPublisherOptions commandLatencyPublisherOptions();
+
+    ConnectionMonitor connectionMonitor();
 
     /**
      * Return the {@link CommandLatencyRecorder}.
