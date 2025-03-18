@@ -22,17 +22,12 @@ package io.lettuce.core.metrics;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.netty.channel.local.LocalAddress;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.net.SocketAddress;
-
 import static io.lettuce.TestTags.UNIT_TEST;
-import static io.lettuce.core.metrics.MicrometerCommandLatencyRecorder.LABEL_LOCAL;
-import static io.lettuce.core.metrics.MicrometerCommandLatencyRecorder.LABEL_REMOTE;
 import static io.lettuce.core.metrics.MicrometerConnectionMonitor.LABEL_EPID;
-import static io.lettuce.core.metrics.MicrometerConnectionMonitor.METRIC_CONNECTION_INACTIVE_TIME;
+import static io.lettuce.core.metrics.MicrometerConnectionMonitor.METRIC_RECONNECTION_INACTIVE_TIME;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Tag(UNIT_TEST)
@@ -47,8 +42,8 @@ class MicrometerConnectionMonitorUnitTest {
         MicrometerConnectionMonitor monitor = new MicrometerConnectionMonitor(meterRegistry, options);
 
         monitor.recordDisconnectedTime("1", 1);
-        assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).timers()).isEmpty();
-        assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).timers()).isEmpty();
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timers()).isEmpty();
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timers()).isEmpty();
     }
 
     @Test
@@ -60,8 +55,8 @@ class MicrometerConnectionMonitorUnitTest {
 
         monitor.recordDisconnectedTime("1", 1);
 
-        assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).tags(tags).timers()).hasSize(1);
-        assertThat(meterRegistry.find(METRIC_CONNECTION_INACTIVE_TIME).tag(LABEL_EPID, "1").timers()).hasSize(1);
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).tags(tags).timers()).hasSize(1);
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).tag(LABEL_EPID, "1").timers()).hasSize(1);
     }
 
 }

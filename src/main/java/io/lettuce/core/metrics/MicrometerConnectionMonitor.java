@@ -23,9 +23,7 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import io.netty.channel.local.LocalAddress;
 
-import java.net.SocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -34,23 +32,9 @@ import java.util.concurrent.TimeUnit;
  * Micrometer implementation for tracking connection metrics.
  *
  * <ul>
- * <li>Time taken from initiating connection to connection getting in active state (successful):
- * <ul>
- * <li>lettuce.connection.active.success.time</li>
- * <li>Description: Measures the time taken from initiating a connection to the point where the connection becomes active and is
- * successfully established.</li>
- * </ul>
- * </li>
- * <li>Time taken from initiating connection to connection getting in active state (failed):
- * <ul>
- * <li>lettuce.connection.active.failure.time</li>
- * <li>Description: Measures the time taken from initiating a connection until the connection attempt fails (i.e., the
- * connection doesn’t become active).</li>
- * </ul>
- * </li>
  * <li>Time from having connection disconnected till successfully reconnected:
  * <ul>
- * <li>lettuce.reconnection.success.time</li>
+ * <li>lettuce.reconnection.inactive.duration</li>
  * <li>Description: Measures the time between a connection being disconnected and successfully reconnected.</li>
  * </ul>
  * </li>
@@ -70,9 +54,9 @@ public class MicrometerConnectionMonitor implements ConnectionMonitor {
     static final String LABEL_EPID = "epid";
 
     // Track the time between a connection being disconnected and successfully reconnected or closed
-    public static final String METRIC_CONNECTION_INACTIVE_TIME = "lettuce.connection.inactive.duration";
+    public static final String METRIC_RECONNECTION_INACTIVE_TIME = "lettuce.reconnection.inactive.duration";
 
-    public static final String METRIC_CONNECTION_RECONNECTION_ATTEMPTS = "lettuce.reconnection.attempts.count";
+    public static final String METRIC_RECONNECTION_ATTEMPTS = "lettuce.reconnection.attempts.count";
 
     private final MeterRegistry meterRegistry;
 
@@ -133,7 +117,7 @@ public class MicrometerConnectionMonitor implements ConnectionMonitor {
     }
 
     protected Timer inactiveConnectionTimer(MonitoredConnectionId connectionId) {
-        Timer.Builder timer = Timer.builder(METRIC_CONNECTION_INACTIVE_TIME)
+        Timer.Builder timer = Timer.builder(METRIC_RECONNECTION_INACTIVE_TIME)
                 .description("Time taken for successful reconnection").tag(LABEL_EPID, connectionId.epId())
                 .tags(options.tags());
 
@@ -146,8 +130,8 @@ public class MicrometerConnectionMonitor implements ConnectionMonitor {
     }
 
     protected Counter reconnectAttempts(MonitoredConnectionId connectionId) {
-        Counter.Builder timer = Counter.builder(METRIC_CONNECTION_RECONNECTION_ATTEMPTS)
-                .description("Number of reconnection attempts").tag(LABEL_EPID, connectionId.epId()).tags(options.tags());
+        Counter.Builder timer = Counter.builder(METRIC_RECONNECTION_ATTEMPTS).description("Number of reconnection attempts")
+                .tag(LABEL_EPID, connectionId.epId()).tags(options.tags());
 
         return timer.register(meterRegistry);
     }
