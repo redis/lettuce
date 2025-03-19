@@ -68,10 +68,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Base Redis client. This class holds the netty infrastructure, {@link ClientOptions} and the basic connection procedure. This
- * class creates the netty {@link EventLoopGroup}s for NIO ({@link NioEventLoopGroup}) and EPoll (
- * {@link io.netty.channel.epoll.EpollEventLoopGroup}) with a default of {@code Runtime.getRuntime().availableProcessors() * 4}
- * threads. Reuse the instance as much as possible since the {@link EventLoopGroup} instances are expensive and can consume a
- * huge part of your resources, if you create multiple instances.
+ * class creates the netty {@link EventLoopGroup}s for NIO ({@link NioEventLoopGroup}) with a default of
+ * {@code SystemPropertyUtil.getInt("io.netty.eventLoopThreads", Math.max(MIN_IO_THREADS, Runtime.getRuntime().availableProcessors()))}
+ * threads and EPoll ({@link io.netty.channel.epoll.EpollEventLoopGroup}) with a default of
+ * {@code Runtime.getRuntime().availableProcessors() * 4} threads. Reuse the instance as much as possible since the
+ * {@link EventLoopGroup} instances are expensive and can consume a huge part of your resources, if you create multiple
+ * instances.
  * <p>
  * You can set the number of threads per {@link NioEventLoopGroup} by setting the {@code io.netty.eventLoopThreads} system
  * property to a reasonable number of threads.
