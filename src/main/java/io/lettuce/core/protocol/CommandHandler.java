@@ -169,7 +169,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.decodeBufferPolicy = clientOptions.getDecodeBufferPolicy();
 
         EndpointQueueMonitor endpointQueueMonitor = clientResources.endpointQueueMonitor();
-        endpointQueueMonitor.observeQueueSize(QueueId.create("lettuce.command.handler.queue", endpoint.getId()), stack::size);
+        if (endpointQueueMonitor != null) {
+            endpointQueueMonitor.observeQueueSize(QueueId.create("lettuce.command.handler.queue", endpoint.getId()),
+                    stack::size);
+        }
     }
 
     public Endpoint getEndpoint() {
