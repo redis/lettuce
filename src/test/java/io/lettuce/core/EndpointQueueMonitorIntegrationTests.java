@@ -11,6 +11,9 @@ import io.lettuce.test.Wait;
 import io.lettuce.test.resource.TestClientResources;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,20 +31,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(LettuceExtension.class)
 class EndpointQueueMonitorIntegrationTests extends TestSupport {
 
-    private final MeterRegistry meterRegistry = new SimpleMeterRegistry();
+    private final static MeterRegistry meterRegistry = new SimpleMeterRegistry();
 
-    private final ClientResources clientResources = TestClientResources.get();
+    private static RedisClient client;
+
+    private static ClientResources resources;
+
+    @BeforeAll
+    static void beforeAll() {
+        MicrometerOptions options = MicrometerOptions.create();
+        EndpointQueueMonitor monitor = new MicrometerQueueMonitor(meterRegistry, options);
+        resources = TestClientResources.get().mutate().endpointQueueMonitor(monitor).build();
+        client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
+    }
+
+    @BeforeEach
+    void setUp() {
+        client.setOptions(ClientOptions.builder().build());
+    }
+
+    @AfterEach
+    void tearDown() {
+        meterRegistry.clear();
+    }
 
     @Test
     void queueMonitorDisconnectedBuffer() {
 
-        MicrometerOptions options = MicrometerOptions.create();
-        EndpointQueueMonitor monitor = new MicrometerQueueMonitor(meterRegistry, options);
-        ClientResources resources = clientResources.mutate().endpointQueueMonitor(monitor).build();
-
         ClientOptions clientOptions = ClientOptions.builder().autoReconnect(false)
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS).build();
-        RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
         client.setOptions(clientOptions);
 
         try (StatefulRedisConnection<String, String> connection = client.connect()) {
@@ -60,10 +78,6 @@ class EndpointQueueMonitorIntegrationTests extends TestSupport {
     @Test
     void queueMonitorCommandsBuffer() {
 
-        MicrometerOptions options = MicrometerOptions.create();
-        EndpointQueueMonitor monitor = new MicrometerQueueMonitor(meterRegistry, options);
-        ClientResources resources = clientResources.mutate().endpointQueueMonitor(monitor).build();
-
         RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
 
         try (StatefulRedisConnection<String, String> connection = client.connect()) {
@@ -80,20 +94,15 @@ class EndpointQueueMonitorIntegrationTests extends TestSupport {
     @Test
     void queueMonitorCommandHandlerStackSize() throws ExecutionException, InterruptedException {
 
-        MicrometerOptions options = MicrometerOptions.create();
-        EndpointQueueMonitor monitor = new MicrometerQueueMonitor(meterRegistry, options);
-        ClientResources resources = clientResources.mutate().endpointQueueMonitor(monitor).build();
-
-        RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
-
-        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (StatefulRedisConnection<String, String> connection = client.connect();
+                StatefulRedisConnection<String, String> connection2 = client.connect()) {
             RedisAsyncCommands<String, String> redis = connection.async();
-
             RedisFuture<KeyValue<String, String>> blpop = redis.blpop(1, "blpop:key");
             assertThat(meterRegistry.find("lettuce.command.handler.queue").gauge().value()).isEqualTo(1);
 
-            RedisFuture<Long> lpush = redis.lpush("blpop:key", "value");
-            LettuceFutures.awaitAll(Duration.ofSeconds(1), blpop, lpush);
+            Long lpush = connection2.sync().lpush("blpop:key", "value");
+            assertThat(lpush).isEqualTo(1);
+            assertThat(blpop.get()).isNotNull();
 
             assertThat(meterRegistry.find("lettuce.command.handler.queue").gauge().value()).isEqualTo(0);
         }
