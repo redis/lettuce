@@ -28,6 +28,7 @@ import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.metrics.ConnectionMonitor;
+import io.lettuce.core.metrics.EndpointQueueMonitor;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.Timer;
@@ -132,6 +133,8 @@ public interface ClientResources {
         Builder commandLatencyRecorder(CommandLatencyRecorder latencyRecorder);
 
         Builder connectionMonitor(ConnectionMonitor connectionMonitor);
+
+        Builder endpointQueueMonitor(EndpointQueueMonitor queueMonitor);
 
         /**
          * Sets the {@link CommandLatencyCollectorOptions} that can be used across different instances of the RedisClient. The
@@ -344,8 +347,6 @@ public interface ClientResources {
      */
     EventPublisherOptions commandLatencyPublisherOptions();
 
-    ConnectionMonitor connectionMonitor();
-
     /**
      * Return the {@link CommandLatencyRecorder}.
      *
@@ -353,6 +354,10 @@ public interface ClientResources {
      * @since 6.0
      */
     CommandLatencyRecorder commandLatencyRecorder();
+
+    ConnectionMonitor connectionMonitor();
+
+    EndpointQueueMonitor endpointQueueMonitor();
 
     /**
      * Return the pool size (number of threads) for all computation tasks.

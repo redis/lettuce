@@ -88,9 +88,8 @@ public class MicrometerConnectionMonitor implements ConnectionMonitor {
             return;
         }
 
-        MonitoredConnectionId commandLatencyId = createId(epid);
-
-        Timer inavtiveConnectionTimer = disconnectedTimers.computeIfAbsent(commandLatencyId, this::inactiveConnectionTimer);
+        MonitoredConnectionId connectionId = createId(epid);
+        Timer inavtiveConnectionTimer = disconnectedTimers.computeIfAbsent(connectionId, this::inactiveConnectionTimer);
         inavtiveConnectionTimer.record(time, TimeUnit.NANOSECONDS);
     }
 
@@ -101,9 +100,9 @@ public class MicrometerConnectionMonitor implements ConnectionMonitor {
             return;
         }
 
-        MonitoredConnectionId commandLatencyId = createId(epid);
+        MonitoredConnectionId connectionId = createId(epid);
 
-        Counter recconectionAttemptsCounter = reconnectionAttempts.computeIfAbsent(commandLatencyId, this::reconnectAttempts);
+        Counter recconectionAttemptsCounter = reconnectionAttempts.computeIfAbsent(connectionId, this::reconnectAttempts);
         recconectionAttemptsCounter.increment();
     }
 

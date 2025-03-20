@@ -47,6 +47,8 @@ import io.lettuce.core.datastructure.queue.HashIndexedQueue;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
+import io.lettuce.core.metrics.EndpointQueueMonitor;
+import io.lettuce.core.metrics.EndpointQueueMonitor.QueueId;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.PushOutput;
 import io.lettuce.core.resource.ClientResources;
@@ -165,6 +167,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.tracingEnabled = tracing.isEnabled();
 
         this.decodeBufferPolicy = clientOptions.getDecodeBufferPolicy();
+
+        EndpointQueueMonitor endpointQueueMonitor = clientResources.endpointQueueMonitor();
+        endpointQueueMonitor.observeQueueSize(QueueId.create("lettuce.command.handler.queue", endpoint.getId()), stack::size);
     }
 
     public Endpoint getEndpoint() {
