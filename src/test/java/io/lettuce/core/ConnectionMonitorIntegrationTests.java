@@ -39,6 +39,7 @@ class ConnectionMonitorIntegrationTests extends TestSupport {
         MicrometerOptions options = MicrometerOptions.create();
         MicrometerConnectionMonitor monitor = new MicrometerConnectionMonitor(meterRegistry, options);
         ClientResources resources = clientResources.mutate().connectionMonitor(monitor).build();
+
         RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
 
         try (StatefulRedisConnection<String, String> connection = client.connect()) {
