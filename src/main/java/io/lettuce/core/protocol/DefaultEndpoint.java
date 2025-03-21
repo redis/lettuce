@@ -44,6 +44,8 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
+import io.lettuce.core.metrics.EndpointQueueMonitor;
+import io.lettuce.core.metrics.EndpointQueueMonitor.QueueId;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -144,6 +146,17 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
         this.rejectCommandsWhileDisconnected = isRejectCommand(clientOptions);
         this.cachedEndpointId = "0x" + Long.toHexString(endpointId);
+
+        // Commands submitted netty queue but still not written to the channel
+        EndpointQueueMonitor endpointQueueMonitor = clientResources.endpointQueueMonitor();
+        if (endpointQueueMonitor != null) {
+            endpointQueueMonitor.observeQueueSize(QueueId.create("lettuce.endpoint.command.queue", getId()),
+                    () -> QUEUE_SIZE.get(this));
+            endpointQueueMonitor.observeQueueSize(QueueId.create("lettuce.endpoint.disconnected.buffer", getId()),
+                    disconnectedBuffer::size);
+            endpointQueueMonitor.observeQueueSize(QueueId.create("lettuce.endpoint.command.buffer", getId()),
+                    commandBuffer::size);
+        }
     }
 
     @Override
