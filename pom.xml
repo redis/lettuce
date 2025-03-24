@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>6.7.0.BUILD-SNAPSHOT</version>
+    <version>6.6.0.BUILD-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -34,6 +34,10 @@
     </issueManagement>
 
     <developers>
+        <developer>
+            <id>tishun</id>
+            <name>Tihomir Mateev</name>
+        </developer>
         <developer>
             <id>mp911de</id>
             <name>Mark Paluch</name>
