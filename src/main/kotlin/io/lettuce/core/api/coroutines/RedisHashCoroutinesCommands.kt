@@ -28,6 +28,8 @@ import io.lettuce.core.KeyValue
 import io.lettuce.core.MapScanCursor
 import io.lettuce.core.ScanArgs
 import io.lettuce.core.ScanCursor
+import io.lettuce.core.HGetExArgs
+import io.lettuce.core.HSetExArgs
 import java.time.Duration
 import java.time.Instant
 import java.util.*
@@ -275,6 +277,37 @@ interface RedisHashCoroutinesCommands<K : Any, V : Any> {
      * @since 5.3
      */
     suspend fun hset(key: K, map: Map<K, V>): Long?
+
+    /**
+     * Set the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param hSetExArgs hsetex arguments.
+     * @param map the field/value pairs to update.
+     * @return Long long-reply: 0 if no fields were set, 1 if all the fields were set
+     * @since 6.6
+     */
+    suspend fun hsetex(key: K, hSetExArgs: HSetExArgs, map: Map<K, V>): Long?
+
+    /**
+     * Get the value of one or more fields of a given hash key, and optionally set their expiration
+     *
+     * @param key the key of the hash.
+     * @param hGetExArgs hgetex arguments.
+     * @param fields fields to retrieve.
+     * @return List<KeyValue<K, V>> array-reply list of fields and their values.
+     * @since 6.6
+     */
+    fun hgetex(key: K, hGetExArgs: HGetExArgs, vararg fields: K): Flow<KeyValue<K, V>>
+
+    /**
+     * Get and delete one or more hash fields.
+     *
+     * @param key the hash key.
+     * @param fields one or more fields whose values will be retrieved and deleted.
+     * @return List<KeyValue<K, V>> array-reply list of fields and their values.
+     */
+    fun hgetdel(key: K, vararg fields: K): Flow<KeyValue<K, V>>
 
     /**
      * Set the value of a hash field, only if the field does not exist.

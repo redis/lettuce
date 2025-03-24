@@ -20,6 +20,8 @@
 package io.lettuce.core.commands;
 
 import io.lettuce.core.ExpireArgs;
+import io.lettuce.core.HGetExArgs;
+import io.lettuce.core.HSetExArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.MapScanCursor;
@@ -226,6 +228,96 @@ public class HashCommandIntegrationTests extends TestSupport {
         assertThat(count.intValue()).isEqualTo(2);
         assertThat(values).hasSize(2);
         assertThat(values).containsEntry("one", "1").containsEntry("two", "2");
+    }
+
+    @Test
+    @EnabledOnCommand("HGETDEL")
+    void hgetdel() {
+        setup();
+        List<KeyValue<String, String>> values = redis.hgetdel(key, "one", "two", "missing");
+        assertThat(values).hasSize(3);
+        assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2"), kv("missing", null)))).isTrue();
+        assertThat(redis.hexists(key, "one")).isFalse();
+        assertThat(redis.hexists(key, "two")).isFalse();
+    }
+
+    @Test
+    @EnabledOnCommand("HGETDEL")
+    void hgetdelStreaming() {
+        setup();
+
+        KeyValueStreamingAdapter<String, String> streamingAdapter = new KeyValueStreamingAdapter<>();
+        Long count = redis.hgetdel(streamingAdapter, key, "one", "two", "missing");
+        Map<String, String> values = streamingAdapter.getMap();
+        assertThat(count).isEqualTo(3);
+        assertThat(values).hasSize(3);
+        assertThat(values).containsEntry("one", "1").containsEntry("two", "2").containsEntry("missing", null);
+        assertThat(redis.hexists(key, "one")).isFalse();
+        assertThat(redis.hexists(key, "two")).isFalse();
+    }
+
+    @Test
+    @EnabledOnCommand("HGETEX")
+    void hgetex() {
+        setup();
+        List<KeyValue<String, String>> values = redis.hgetex(key, "one", "two", "missing");
+        assertThat(values).hasSize(3);
+        assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2"), kv("missing", null)))).isTrue();
+    }
+
+    @Test
+    @EnabledOnCommand("HGETEX")
+    void hgetexWithArgs() {
+        setup();
+        List<KeyValue<String, String>> values = redis.hgetex(key, HGetExArgs.Builder.ex(Duration.ofSeconds(100)), "one", "two",
+                "missing");
+        assertThat(values).hasSize(3);
+        assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2"), kv("missing", null)))).isTrue();
+        assertThat(redis.httl(key, "one", "two")).allMatch(ttl -> ttl > 1);
+    }
+
+    @Test
+    @EnabledOnCommand("HGETEX")
+    void hgetexStreaming() {
+        setup();
+
+        KeyValueStreamingAdapter<String, String> streamingAdapter = new KeyValueStreamingAdapter<>();
+        Long count = redis.hgetex(streamingAdapter, key, HGetExArgs.Builder.ex(Duration.ofSeconds(100)), "one", "two",
+                "missing");
+        Map<String, String> values = streamingAdapter.getMap();
+        assertThat(count).isEqualTo(3);
+        assertThat(values).hasSize(3);
+        assertThat(values).containsEntry("one", "1").containsEntry("two", "2").containsEntry("missing", null);
+        assertThat(redis.httl(key, "one", "two")).allMatch(ttl -> ttl > 1);
+    }
+
+    @Test
+    @EnabledOnCommand("HSETEX")
+    void hsetex() {
+        Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("one", "1");
+        fields.put("two", "2");
+
+        Long result = redis.hsetex(key, fields);
+        assertThat(result).isEqualTo(1);
+
+        List<KeyValue<String, String>> values = redis.hmget(key, "one", "two", "missing");
+        assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2")))).isTrue();
+    }
+
+    @Test
+    @EnabledOnCommand("HSETEX")
+    void hsetexWithArgs() {
+        Map<String, String> fields = new LinkedHashMap<>();
+        fields.put("one", "1");
+        fields.put("two", "2");
+
+        Long result = redis.hsetex(key, HSetExArgs.Builder.ex(Duration.ofSeconds(100)), fields);
+        assertThat(result).isEqualTo(1);
+
+        List<KeyValue<String, String>> values = redis.hmget(key, "one", "two");
+        assertThat(values.containsAll(list(kv("one", "1"), kv("two", "2")))).isTrue();
+        assertThat(redis.httl(key, "one", "two")).allMatch(ttl -> ttl > 1);
     }
 
     @Test

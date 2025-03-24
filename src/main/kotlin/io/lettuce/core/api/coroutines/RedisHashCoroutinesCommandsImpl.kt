@@ -62,6 +62,13 @@ internal class RedisHashCoroutinesCommandsImpl<K : Any, V : Any>(internal val op
     override fun hmget(key: K, vararg fields: K): Flow<KeyValue<K, V>> =
         ops.hmget(key, *fields).asFlow()
 
+    override suspend fun hsetex(key: K, hSetExArgs: HSetExArgs, map: Map<K, V>): Long? =
+        ops.hsetex(key, hSetExArgs, map).awaitFirstOrNull()
+
+    override fun hgetex(key: K, hGetExArgs: HGetExArgs, vararg fields: K): Flow<KeyValue<K, V>> = ops.hgetex(key, hGetExArgs, *fields).asFlow()
+
+    override fun hgetdel(key: K, vararg fields: K): Flow<KeyValue<K, V>> = ops.hgetdel(key, *fields).asFlow()
+
     override suspend fun hrandfield(key: K): K? = ops.hrandfield(key).awaitFirstOrNull();
 
     override suspend fun hrandfield(key: K, count: Long): List<K> =
