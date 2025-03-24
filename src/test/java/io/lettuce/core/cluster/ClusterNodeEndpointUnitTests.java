@@ -56,6 +56,7 @@ class ClusterNodeEndpointUnitTests {
     @BeforeEach
     void before() {
 
+        when(clientOptions.getReplayFilter()).thenReturn((cmd) -> false);
         when(clientOptions.getRequestQueueSize()).thenReturn(1000);
         when(clientOptions.getDisconnectedBehavior()).thenReturn(ClientOptions.DisconnectedBehavior.DEFAULT);
 

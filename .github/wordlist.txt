@@ -278,3 +278,4 @@ AMR
 Entra
 authx
 entraid
+autoReconnect
