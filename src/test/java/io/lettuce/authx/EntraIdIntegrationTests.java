@@ -6,7 +6,6 @@ import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.cluster.ClusterClientOptions;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.support.PubSubTestListener;
 import io.lettuce.test.Wait;
@@ -34,45 +33,43 @@ public class EntraIdIntegrationTests {
 
     private static final EntraIdTestContext testCtx = EntraIdTestContext.DEFAULT;
 
-    private static RedisClient client;
+    private RedisClient client;
 
-    private static Endpoint standalone;
+    private Endpoint standalone;
 
-    private static ClusterClientOptions clientOptions;
+    private ClientOptions clientOptions;
 
-    @BeforeAll
-    public static void setup() {
+    private TokenBasedRedisCredentialsProvider credentialsProvider;
+
+    @BeforeEach
+    public void setup() {
         standalone = Endpoints.DEFAULT.getEndpoint("standalone-entraid-acl");
-        if (standalone != null) {
-            Assumptions.assumeTrue(testCtx.getClientId() != null && testCtx.getClientSecret() != null,
-                    "Skipping EntraID tests. Azure AD credentials not provided!");
+        assumeTrue(standalone != null, "Skipping EntraID tests. Redis host with enabled EntraId not provided!");
+        Assumptions.assumeTrue(testCtx.getClientId() != null && testCtx.getClientSecret() != null,
+                "Skipping EntraID tests. Azure AD credentials not provided!");
 
-            clientOptions = ClusterClientOptions.builder()
-                    .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build())
-                    .timeoutOptions(TimeoutOptions.enabled(Duration.ofSeconds(1)))
-                    .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build();
+        clientOptions = ClientOptions.builder()
+                .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build())
+                .timeoutOptions(TimeoutOptions.enabled(Duration.ofSeconds(1)))
+                .reauthenticateBehavior(ClientOptions.ReauthenticateBehavior.ON_NEW_CREDENTIALS).build();
 
-            TokenAuthConfig tokenAuthConfig = EntraIDTokenAuthConfigBuilder.builder().clientId(testCtx.getClientId())
-                    .secret(testCtx.getClientSecret()).authority(testCtx.getAuthority()).scopes(testCtx.getRedisScopes())
-                    .expirationRefreshRatio(0.0000001F).build();
+        TokenAuthConfig tokenAuthConfig = EntraIDTokenAuthConfigBuilder.builder().clientId(testCtx.getClientId())
+                .secret(testCtx.getClientSecret()).authority(testCtx.getAuthority()).scopes(testCtx.getRedisScopes())
+                .expirationRefreshRatio(0.0000001F).build();
 
-            client = createRedisClient(tokenAuthConfig);
-        }
+        TokenBasedRedisCredentialsProvider credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenAuthConfig);
+
+        client = createClient(credentialsProvider);
     }
 
-    @AfterAll
-    public static void cleanup() {
+    @AfterEach
+    public void cleanUp() {
         if (credentialsProvider != null) {
             credentialsProvider.close();
         }
         if (client != null) {
             client.shutdown();
         }
-    }
-
-    @BeforeEach
-    public void beforeEach() {
-        assumeTrue(standalone != null, "Skipping EntraID tests. Redis host with enabled EntraId not provided!");
     }
 
     // T.1.1
@@ -167,30 +164,26 @@ public class EntraIdIntegrationTests {
         TokenAuthConfig tokenAuthConfig = AzureTokenAuthConfigBuilder.builder().defaultAzureCredential(credential)
                 .tokenRequestExecTimeoutInMs(2000).build();
 
-        TokenBasedRedisCredentialsProvider credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenAuthConfig);
-        client = createRedisClient(credentialsProvider);
+        try (RedisClient azureCredClient = createClient(credentialsProvider);
+                TokenBasedRedisCredentialsProvider credentialsProvider = TokenBasedRedisCredentialsProvider
+                        .create(tokenAuthConfig);) {
+            RedisCredentials credentials = credentialsProvider.resolveCredentials().block(Duration.ofSeconds(5));
+            assertThat(credentials).isNotNull();
 
-        RedisCredentials credentials = credentialsProvider.resolveCredentials().block(Duration.ofSeconds(5));
-        assertThat(credentials).isNotNull();
-
-        String key = UUID.randomUUID().toString();
-        try (StatefulRedisConnection<String, String> connection = client.connect()) {
-            RedisCommands<String, String> sync = connection.sync();
-            assertThat(sync.aclWhoami()).isEqualTo(credentials.getUsername());
-            sync.set(key, "value");
-            assertThat(sync.get(key)).isEqualTo("value");
-            assertThat(connection.async().get(key).get()).isEqualTo("value");
-            assertThat(connection.reactive().get(key).block()).isEqualTo("value");
-            sync.del(key);
+            String key = UUID.randomUUID().toString();
+            try (StatefulRedisConnection<String, String> connection = azureCredClient.connect()) {
+                RedisCommands<String, String> sync = connection.sync();
+                assertThat(sync.aclWhoami()).isEqualTo(credentials.getUsername());
+                sync.set(key, "value");
+                assertThat(sync.get(key)).isEqualTo("value");
+                assertThat(connection.async().get(key).get()).isEqualTo("value");
+                assertThat(connection.reactive().get(key).block()).isEqualTo("value");
+                sync.del(key);
+            }
         }
     }
 
-    private static RedisClient createRedisClient(TokenAuthConfig tokenAuthConfig) {
-        TokenBasedRedisCredentialsProvider credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenAuthConfig);
-        return createRedisClient(credentialsProvider);
-    }
-
-    private static RedisClient createRedisClient(TokenBasedRedisCredentialsProvider credentialsProvider) {
+    private RedisClient createClient(TokenBasedRedisCredentialsProvider credentialsProvider) {
         RedisURI uri = RedisURI.create((standalone.getEndpoints().get(0)));
         uri.setCredentialsProvider(credentialsProvider);
         RedisClient redis = RedisClient.create(uri);
