@@ -139,7 +139,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         }
 
         /**
-         * @return the time of when the item was sent.
+         * @return the time of when the connection became inactive.
          */
         long getDisconnected() {
             return disconnectedNs;
@@ -167,6 +167,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         public int incrementAndGet() {
             return attempts.incrementAndGet();
+        }
+
+        @Override
+        public String toString() {
+            return "Attempts{" + "attempts=" + attempts + ", disconnectedNs=" + disconnectedNs + ", completedNs=" + completedNs
+                    + ", reconnected=" + reconnected + '}';
         }
 
     }
@@ -245,7 +251,14 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
         // connection is closing,
         // reset attempts & record record the time of completion if in middle of reconnect
-        resetAttempts(false);
+        Attempts currentAttempts = this.attempts;
+        this.attempts = new Attempts();
+        if (currentAttempts.getAttempts() > 0) {
+            // reconnected after disconnect
+            currentAttempts.completed(System.nanoTime(), false);
+
+            connectionMonitor.recordDisconnectedTime(epid, currentAttempts.getCompleted() - currentAttempts.getDisconnected());
+        }
 
         reconnectionHandler.prepareClose();
     }
@@ -264,7 +277,13 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         // attempts = 0;
         // reconnected successfully
         // reset attempts & record record the time of completion
-        resetAttempts(true);
+        final Attempts currentAttempts = this.attempts;
+        this.attempts = new Attempts();
+        if (currentAttempts.getAttempts() > 0) {
+            // reconnected after disconnect
+            currentAttempts.completed(System.nanoTime(), true);
+            connectionMonitor.recordDisconnectedTime(epid, currentAttempts.getCompleted() - currentAttempts.getDisconnected());
+        }
 
         resetReconnectDelay();
         logPrefix = null;
@@ -285,7 +304,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         channel = null;
 
         if (listenOnChannelInactive && !reconnectionHandler.isReconnectSuspended()) {
-            resetAttempts(false);
+            Attempts currentAttempts = this.attempts;
+            if (currentAttempts.getAttempts() > 0) {
+                currentAttempts.completed(System.nanoTime(), false);
+            }
+            // reset attempts
+            this.attempts = new Attempts();
             attempts.disconnected(System.nanoTime());
             scheduleReconnect();
         } else {
@@ -508,23 +532,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         if (reconnectDelay instanceof StatefulDelay) {
             ((StatefulDelay) reconnectDelay).reset();
         }
-    }
-
-    private void resetAttempts(boolean reconnected) {
-        final Attempts currentAttempts = this.attempts;
-
-        // Record disconnected time if there is ongoing reconnect
-        if (currentAttempts.getAttempts() > 0) {
-            currentAttempts.completed(System.nanoTime(), reconnected);
-            recordDisconnectedTime(currentAttempts);
-        }
-
-        this.attempts = new Attempts();
-    }
-
-    private void recordDisconnectedTime(Attempts currentAttempts) {
-        long disconnectedTime = currentAttempts.getCompleted() - currentAttempts.getDisconnected();
-        connectionMonitor.recordDisconnectedTime(epid, disconnectedTime);
     }
 
     private String logPrefix() {

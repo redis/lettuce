@@ -42,23 +42,29 @@ class ConnectionMonitorIntegrationTests extends TestSupport {
 
         RedisClient client = RedisClient.create(resources, RedisURI.Builder.redis(host, port).build());
 
-        try (StatefulRedisConnection<String, String> connection = client.connect()) {
-            RedisCommands<String, String> redis = connection.sync();
+        StatefulRedisConnection<String, String> connection = client.connect();
 
-            // Force disconnection
-            redis.quit();
-            Wait.untilTrue(() -> !connection.isOpen()).during(Duration.ofSeconds(1)).waitOrTimeout();
+        // Force disconnection
+        connection.sync().quit();
+        Wait.untilTrue(() -> !connection.isOpen()).during(Duration.ofSeconds(1)).waitOrTimeout();
 
-            // Wait for successful reconnection
-            Wait.untilTrue(() -> connection.isOpen()).during(Duration.ofSeconds(1)).waitOrTimeout();
+        // Wait for successful reconnection
+        Wait.untilTrue(connection::isOpen).during(Duration.ofSeconds(1)).waitOrTimeout();
 
-            // At least one reconnect attempt
-            assertThat(meterRegistry.find(METRIC_RECONNECTION_ATTEMPTS).counter().count()).isGreaterThanOrEqualTo(1);
-            assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timers()).isNotEmpty();
-            assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timer().count()).isEqualTo(1);
-            assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timer().totalTime(TimeUnit.NANOSECONDS))
-                    .isGreaterThan(0);
-        }
+        // At least one reconnect attempt
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_ATTEMPTS).counter().count()).isGreaterThanOrEqualTo(1);
+
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timers()).isNotEmpty();
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timer().count()).isEqualTo(1);
+        double totalTime = meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timer().totalTime(TimeUnit.NANOSECONDS);
+        assertThat(totalTime).isGreaterThan(0);
+
+        connection.close();
+
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timer().count()).isEqualTo(1);
+        assertThat(meterRegistry.find(METRIC_RECONNECTION_INACTIVE_TIME).timer().totalTime(TimeUnit.NANOSECONDS))
+                .isEqualTo(totalTime);
+
     }
 
     @Test
