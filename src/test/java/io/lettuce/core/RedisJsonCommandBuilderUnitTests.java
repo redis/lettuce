@@ -157,13 +157,23 @@ class RedisJsonCommandBuilderUnitTests {
     }
 
     @Test
-    void shouldCorrectlyConstructJsonArrpopRootPath() {
+    void shouldCorrectlyConstructJsonArrpopRootPathNoIndex() {
         Command<String, String, List<JsonValue>> command = builder.jsonArrpop(MY_KEY, JsonPath.ROOT_PATH, -1);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*2\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n" + "bikes:inventory\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrpopRootPath() {
+        Command<String, String, List<JsonValue>> command = builder.jsonArrpop(MY_KEY, JsonPath.ROOT_PATH, 1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$1\r\n" + "$\r\n" + "$1\r\n" + "1\r\n");
     }
 
     @Test

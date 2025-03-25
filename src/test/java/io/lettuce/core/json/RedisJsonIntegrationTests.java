@@ -163,8 +163,16 @@ public class RedisJsonIntegrationTests {
         redis.jsonSet("myKey", JsonPath.ROOT_PATH, value);
         List<JsonValue> result = redis.jsonArrpop("myKey");
         assertThat(result.toString()).isEqualTo("[\"one\"]");
-        result = redis.jsonArrpop("myKey", JsonPath.ROOT_PATH, 0);
-        assertThat(result.get(0).isNull()).isTrue();
+        assertThat(redis.jsonGet("myKey").get(0).toString()).isEqualTo("[]");
+    }
+
+    @Test
+    public void jsonArrpopWithRootPathAndIndex() {
+        JsonValue value = redis.getJsonParser().createJsonValue("[\"one\",\"two\",\"three\"]");
+        redis.jsonSet("myKey", JsonPath.ROOT_PATH, value);
+        List<JsonValue> result = redis.jsonArrpop("myKey", JsonPath.ROOT_PATH, 1);
+        assertThat(result.toString()).isEqualTo("[\"two\"]");
+        assertThat(redis.jsonGet("myKey").get(0).toString()).isEqualTo("[\"one\",\"three\"]");
     }
 
     @ParameterizedTest(name = "With {0} as path")
