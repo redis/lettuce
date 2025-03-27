@@ -24,18 +24,26 @@ import io.lettuce.core.protocol.RedisCommand;
 @SuppressWarnings("serial")
 public class TimeoutOptions implements Serializable {
 
+    public static final Duration DISABLED_TIMEOUT = Duration.ZERO.minusSeconds(1);
+
     public static final boolean DEFAULT_TIMEOUT_COMMANDS = false;
+
+    public static final Duration DEFAULT_RELAXED_TIMEOUT = DISABLED_TIMEOUT;
 
     private final boolean timeoutCommands;
 
     private final boolean applyConnectionTimeout;
 
+    private final Duration relaxedTimeout;
+
     private final TimeoutSource source;
 
-    private TimeoutOptions(boolean timeoutCommands, boolean applyConnectionTimeout, TimeoutSource source) {
+    private TimeoutOptions(boolean timeoutCommands, boolean applyConnectionTimeout, TimeoutSource source,
+            Duration relaxedTimeout) {
 
         this.timeoutCommands = timeoutCommands;
         this.applyConnectionTimeout = applyConnectionTimeout;
+        this.relaxedTimeout = relaxedTimeout;
         this.source = source;
     }
 
@@ -84,6 +92,8 @@ public class TimeoutOptions implements Serializable {
 
         private boolean applyConnectionTimeout = false;
 
+        private Duration relaxedTimeout = DEFAULT_RELAXED_TIMEOUT;
+
         private TimeoutSource source;
 
         /**
@@ -104,6 +114,24 @@ public class TimeoutOptions implements Serializable {
         public Builder timeoutCommands(boolean enabled) {
 
             this.timeoutCommands = enabled;
+            return this;
+        }
+
+        /**
+         * Enable proactive timeout relaxing. Disabled by default, see {@link #DEFAULT_RELAXED_TIMEOUT}.
+         * <p/>
+         * If the Redis server supports this, the client could listen to notifications that the current endpoint is about to go
+         * down as part of some maintenance or failover activity. In such cases the driver could extend the existing timeout
+         * settings for existing commands to make sure they do not time out during this process either as part of the offline
+         * buffer or while waiting for a reply.
+         *
+         * @param duration {@link Duration} to relax timeouts proactively, must not be {@code null}.
+         * @return {@code this}
+         */
+        public Builder proactiveTimeoutsRelaxing(Duration duration) {
+            LettuceAssert.notNull(duration, "Duration must not be null");
+
+            this.relaxedTimeout = duration;
             return this;
         }
 
@@ -158,7 +186,7 @@ public class TimeoutOptions implements Serializable {
                 }
             }
 
-            return new TimeoutOptions(timeoutCommands, applyConnectionTimeout, source);
+            return new TimeoutOptions(timeoutCommands, applyConnectionTimeout, source, relaxedTimeout);
         }
 
     }
@@ -175,6 +203,13 @@ public class TimeoutOptions implements Serializable {
      */
     public boolean isApplyConnectionTimeout() {
         return applyConnectionTimeout;
+    }
+
+    /**
+     * @return the {@link Duration} to relax timeouts proactively, {@link #DISABLED_TIMEOUT} if disabled.
+     */
+    public Duration getRelaxedTimeout() {
+        return relaxedTimeout;
     }
 
     /**
