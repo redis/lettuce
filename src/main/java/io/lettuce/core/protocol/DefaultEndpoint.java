@@ -1054,20 +1054,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 return;
             }
 
-            if (sentCommands != null) {
-
-                boolean foundToSend = false;
-
-                for (RedisCommand<?, ?, ?> command : sentCommands) {
-                    if (!command.isDone()) {
-                        foundToSend = true;
-                        break;
-                    }
-                }
-
-                if (!foundToSend) {
-                    return;
-                }
+            if (sentCommands != null && sentCommands.stream().allMatch(RedisCommand::isDone)) {
+                return;
             }
 
             if (channel != null) {

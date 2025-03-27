@@ -59,6 +59,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     private final boolean applyConnectionTimeout;
 
+    private final Duration relaxedTimeout;
+
     private volatile long timeout = -1;
 
     public static boolean relaxTimeoutsGlobally = false;
@@ -82,6 +84,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         this.delegate = delegate;
         this.source = timeoutOptions.getSource();
         this.applyConnectionTimeout = timeoutOptions.isApplyConnectionTimeout();
+        this.relaxedTimeout = timeoutOptions.getRelaxedTimeout();
         this.timeUnit = source.getTimeUnit();
         this.executorService = clientResources.eventExecutorGroup();
         this.timer = clientResources.timer();
@@ -184,7 +187,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
                 executors.submit(() -> {
-                    if (shouldRelaxTimeoutsGlobally() ) {
+                    if (shouldRelaxTimeoutsGlobally()) {
                         command.completeExceptionally(
                                 ExceptionFactory.createTimeoutException(command.getType().toString(), Duration.ofNanos(timeUnit.toNanos(timeout))));
                     } else {
@@ -201,20 +204,18 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     }
 
-    public static boolean shouldRelaxTimeoutsGlobally() {
-        return relaxTimeoutsGlobally && enableProactive;
+    public boolean shouldRelaxTimeoutsGlobally() {
+        return relaxTimeoutsGlobally && relaxedTimeout.isNegative();
     }
 
     // when relaxing the timeouts - instead of expiring immediately, we will start a new timer with 10 seconds
     private void relaxedAttempt(RedisCommand<?, ?, ?> command, ScheduledExecutorService executors) {
 
-        Duration timeout = Duration.ofSeconds(10);
-
         Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
-                executors.submit(() -> command.completeExceptionally(ExceptionFactory.createTimeoutException(timeout)));
+                executors.submit(() -> command.completeExceptionally(ExceptionFactory.createTimeoutException(relaxedTimeout)));
             }
-        }, timeout.getSeconds(), TimeUnit.SECONDS);
+        }, relaxedTimeout.toMillis(), TimeUnit.MILLISECONDS);
 
         if (command instanceof CompleteableCommand) {
             ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
