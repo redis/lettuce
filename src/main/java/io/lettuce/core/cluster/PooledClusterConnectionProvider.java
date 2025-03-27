@@ -157,47 +157,44 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     private CompletableFuture<StatefulRedisConnection<K, V>> getWriteConnection(int slot) {
-
-        CompletableFuture<StatefulRedisConnection<K, V>> writer;// avoid races when reconfiguring partitions.
-
-        stateLock.lock();
-        try {
-            writer = writers[slot];
-        } finally {
-            stateLock.unlock();
-        }
-
-        if (writer == null) {
-            RedisClusterNode master = partitions.getMasterBySlot(slot);
-            if (master == null) {
-                clusterEventListener.onUncoveredSlot(slot);
-                return Futures.failed(new PartitionSelectorException("Cannot determine a partition for slot " + slot + ".",
-                        partitions.clone()));
-            }
-
-            // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
-            // host because the nodeId can be handled by a different host.
-            RedisURI uri = master.getUri();
-            ConnectionKey key = new ConnectionKey(ConnectionIntent.WRITE, uri.getHost(), uri.getPort());
-
-            ConnectionFuture<StatefulRedisConnection<K, V>> future = getConnectionAsync(key);
-
-            return future.thenApply(connection -> {
-
-                stateLock.lock();
-                try {
-                    if (writers[slot] == null) {
-                        writers[slot] = CompletableFuture.completedFuture(connection);
+        if (writers[slot] == null) {
+            stateLock.lock();
+            try {
+                if (writers[slot] == null) {
+                    RedisClusterNode master = partitions.getMasterBySlot(slot);
+                    if (master == null) {
+                        clusterEventListener.onUncoveredSlot(slot);
+                        return Futures.failed(new PartitionSelectorException(
+                                "Cannot determine a partition for slot " + slot + ".", partitions.clone()));
                     }
-                } finally {
-                    stateLock.unlock();
-                }
 
-                return connection;
-            }).toCompletableFuture();
+                    // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
+                    // host because the nodeId can be handled by a different host.
+                    RedisURI uri = master.getUri();
+                    ConnectionKey key = new ConnectionKey(ConnectionIntent.WRITE, uri.getHost(), uri.getPort());
+
+                    ConnectionFuture<StatefulRedisConnection<K, V>> future = getConnectionAsync(key);
+
+                    return future.thenApply(connection -> {
+
+                        stateLock.lock();
+                        try {
+                            if (writers[slot] == null) {
+                                writers[slot] = CompletableFuture.completedFuture(connection);
+                            }
+                        } finally {
+                            stateLock.unlock();
+                        }
+
+                        return connection;
+                    }).toCompletableFuture();
+                }
+            } finally {
+                stateLock.unlock();
+            }
         }
 
-        return writer;
+        return writers[slot];
     }
 
     private CompletableFuture<StatefulRedisConnection<K, V>> getReadConnection(int slot) {
