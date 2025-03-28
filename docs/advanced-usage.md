@@ -882,6 +882,16 @@ Native transports are available with:
   classifier `linux-x86_64`. Note that this transport is still
   experimental.
 
+Note that both epoll and io_uring transports are supported on Linux. If
+you need both libraries to be present—for example if you're using a
+different transport for another Netty library—you must resolve this
+ambiguity explicitly via one of the following options:
+ 1. Set the system property `io.lettuce.core.iouring=true` to prefer
+    io_uring for all supported functions. epoll will be used for Unix
+    domain sockets, which are not supported for io_uring.
+ 2. Set `io.lettuce.core.iouring=false` to completely disable io_uring.
+ 3. Set `io.lettuce.core.epoll=false` to completely disable epoll.
+
   ``` xml
   <dependency>
       <groupId>io.netty.incubator</groupId>
