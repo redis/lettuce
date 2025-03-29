@@ -155,7 +155,7 @@ public class ConnectionBuilder {
 
         ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
                 clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
-                connection, clientResources.eventBus(), endpoint);
+                connection, clientResources.eventBus(), endpoint, clientResources.connectionMonitor());
 
         endpoint.registerConnectionWatchdog(watchdog);
 

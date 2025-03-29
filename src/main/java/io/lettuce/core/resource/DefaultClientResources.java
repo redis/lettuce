@@ -33,9 +33,11 @@ import io.lettuce.core.internal.LettuceLists;
 import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.metrics.CommandLatencyCollectorOptions;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
+import io.lettuce.core.metrics.ConnectionMonitor;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollector;
 import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.metrics.MetricCollector;
+import io.lettuce.core.metrics.EndpointQueueMonitor;
 import io.lettuce.core.resource.Delay.StatefulDelay;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.resolver.AddressResolverGroup;
@@ -131,6 +133,10 @@ public class DefaultClientResources implements ClientResources {
 
     private final CommandLatencyRecorder commandLatencyRecorder;
 
+    private final ConnectionMonitor connectionMonitor;
+
+    private final EndpointQueueMonitor endpointQueueMonitor;
+
     private final boolean sharedCommandLatencyRecorder;
 
     private final EventPublisherOptions commandLatencyPublisherOptions;
@@ -219,6 +225,9 @@ public class DefaultClientResources implements ClientResources {
         } else {
             eventBus = builder.eventBus;
         }
+
+        connectionMonitor = builder.connectionMonitor;
+        endpointQueueMonitor = builder.queueMonitor;
 
         if (builder.commandLatencyRecorder == null) {
             if (DefaultCommandLatencyCollector.isAvailable()) {
@@ -335,6 +344,10 @@ public class DefaultClientResources implements ClientResources {
 
         private Runnable afterBuild;
 
+        private ConnectionMonitor connectionMonitor = ConnectionMonitor.disabled();
+
+        private EndpointQueueMonitor queueMonitor = EndpointQueueMonitor.disabled();
+
         private Builder() {
         }
 
@@ -405,6 +418,20 @@ public class DefaultClientResources implements ClientResources {
             LettuceAssert.notNull(commandLatencyCollectorOptions, "CommandLatencyCollectorOptions must not be null");
 
             this.commandLatencyCollectorOptions = commandLatencyCollectorOptions;
+            return this;
+        }
+
+        @Override
+        public Builder connectionMonitor(ConnectionMonitor connectionMonitor) {
+            LettuceAssert.notNull(connectionMonitor, "ConnectionMonitor must not be null");
+            this.connectionMonitor = connectionMonitor;
+            return this;
+        }
+
+        @Override
+        public Builder endpointQueueMonitor(EndpointQueueMonitor queueMonitor) {
+            LettuceAssert.notNull(queueMonitor, "QueueMonitor must not be null");
+            this.queueMonitor = queueMonitor;
             return this;
         }
 
@@ -769,6 +796,16 @@ public class DefaultClientResources implements ClientResources {
         aggregator.finish(voidPromise);
 
         return PromiseAdapter.toBooleanPromise(voidPromise);
+    }
+
+    @Override
+    public ConnectionMonitor connectionMonitor() {
+        return connectionMonitor;
+    }
+
+    @Override
+    public EndpointQueueMonitor endpointQueueMonitor() {
+        return endpointQueueMonitor;
     }
 
     @Override
