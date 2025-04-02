@@ -25,6 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.lettuce.core.metrics.ConnectionMonitor;
 import reactor.core.publisher.Mono;
@@ -95,7 +97,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private final AtomicBoolean reconnectSchedulerSync;
 
-    private Attempts attempts = new Attempts();
+    private volatile Attempts attempts = new Attempts();
 
     private volatile boolean armed;
 
@@ -107,13 +109,11 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     static class Attempts {
 
-        private final AtomicInteger attempts = new AtomicInteger(0);
+        private int attempts = 0;
 
-        private volatile long disconnectedNs = -1;
+        private long disconnectedNs = -1;
 
-        private volatile long completedNs = -1;
-
-        private volatile boolean reconnected = false;
+        private long completedNs = -1;
 
         /**
          * Sets the time of when connection transitioned to disconnected state.
@@ -121,21 +121,24 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
          * @param time the time of when the item was sent.
          */
         void disconnected(long time) {
-            this.disconnectedNs = time;
+            if (this.disconnectedNs == -1) {
+                this.disconnectedNs = time;
+            }
+
             this.completedNs = -1;
-            this.reconnected = false;
         }
 
         /**
-         * Set the time of completion and if reconnection attempt was successful.
-         *
-         * true if reconnected successfully and false if connection was closed while still inactive s
+         * Set the time of completion
          * 
          * @param time the time of completion.
          */
-        void completed(long time, boolean reconnected) {
-            this.completedNs = time;
-            this.reconnected = reconnected;
+        void completed(long time) {
+            if (this.completedNs == -1) {
+                this.completedNs = time;
+            } else {
+                logger.warn("Attempt Completed time already set, ignoring");
+            }
         }
 
         /**
@@ -153,26 +156,18 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
             return completedNs;
         }
 
-        /**
-         *
-         * @return the status of reconnection.
-         */
-        boolean isReconnected() {
-            return reconnected;
-        }
-
         public int getAttempts() {
-            return attempts.get();
+            return attempts;
         }
 
         public int incrementAndGet() {
-            return attempts.incrementAndGet();
+            return ++attempts;
         }
 
         @Override
         public String toString() {
             return "Attempts{" + "attempts=" + attempts + ", disconnectedNs=" + disconnectedNs + ", completedNs=" + completedNs
-                    + ", reconnected=" + reconnected + '}';
+                    + '}';
         }
 
     }
@@ -253,9 +248,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         // reset attempts & record record the time of completion if in middle of reconnect
         Attempts currentAttempts = this.attempts;
         this.attempts = new Attempts();
-        if (currentAttempts.getAttempts() > 0) {
+        if (currentAttempts.getDisconnected() > 0) {
             // reconnected after disconnect
-            currentAttempts.completed(System.nanoTime(), false);
+            currentAttempts.completed(System.nanoTime());
 
             connectionMonitor.recordDisconnectedTime(epid, currentAttempts.getCompleted() - currentAttempts.getDisconnected());
         }
@@ -281,7 +276,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         this.attempts = new Attempts();
         if (currentAttempts.getAttempts() > 0) {
             // reconnected after disconnect
-            currentAttempts.completed(System.nanoTime(), true);
+            currentAttempts.completed(System.nanoTime());
             connectionMonitor.recordDisconnectedTime(epid, currentAttempts.getCompleted() - currentAttempts.getDisconnected());
         }
 
@@ -304,12 +299,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
         channel = null;
 
         if (listenOnChannelInactive && !reconnectionHandler.isReconnectSuspended()) {
-            Attempts currentAttempts = this.attempts;
-            if (currentAttempts.getAttempts() > 0) {
-                currentAttempts.completed(System.nanoTime(), false);
-            }
-            // reset attempts
-            this.attempts = new Attempts();
             attempts.disconnected(System.nanoTime());
             scheduleReconnect();
         } else {
