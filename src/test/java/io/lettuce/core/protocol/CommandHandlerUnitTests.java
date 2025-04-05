@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,6 +66,7 @@ import io.lettuce.core.metrics.CommandLatencyCollector;
 import io.lettuce.core.output.KeyValueListOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.ValueListOutput;
+import io.lettuce.core.output.ValueOutput;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
 import io.lettuce.test.Delay;
@@ -648,6 +650,51 @@ class CommandHandlerUnitTests {
         assertThat(stack).hasSize(0);
 
         sut.channelUnregistered(context);
+    }
+
+    /**
+     * if large keys are received ,the large buffer will created and then released
+     */
+    @Test
+    void shouldLargeBufferCreatedAndRelease() throws Exception {
+        ChannelPromise channelPromise = new DefaultChannelPromise(channel, ImmediateEventExecutor.INSTANCE);
+        channelPromise.setSuccess();
+        sut.channelRegistered(context);
+        sut.channelActive(context);
+        sut.getStack().add(new Command<>(CommandType.GET, new ValueOutput<String, String>(StringCodec.UTF8)));
+
+        ByteBuf internalBuffer = ReflectionTestUtils.getField(sut, "readBuffer");
+
+        // step1 Receive First TCP Packet
+        ByteBuf msg = context.alloc().buffer(13);
+        // 1+5+2+7 ($+length+\r\n+len(value))
+        msg.writeBytes("$65536\r\nval_abc".getBytes(StandardCharsets.UTF_8));
+        sut.channelRead(context, msg);
+
+        int markedReaderIndex = ReflectionTestUtils.getField(internalBuffer, "markedReaderIndex");
+        assertThat(markedReaderIndex).isEqualTo(8);
+        assertThat(internalBuffer.readerIndex()).isEqualTo(8);
+        assertThat(internalBuffer.writerIndex()).isEqualTo(15);
+
+        // step2 Receive Second TCP Packet
+        ByteBuf msg2 = context.alloc().buffer(64 * 1024);
+        StringBuilder sb = new StringBuilder();
+        // 65536-7
+        for (int i = 0; i < 65529; i++) {
+            sb.append((char) ('a' + i % 26));
+        }
+        sb.append("\r\n");
+        msg2.writeBytes(sb.toString().getBytes(StandardCharsets.UTF_8));
+        sut.channelRead(context, msg2);
+
+        // step3 Got Result: readBuffer.capacity = 64k and tmpBuffer is null
+        ByteBuf readBuffer = ReflectionTestUtils.getField(sut, "readBuffer");
+        assertThat(readBuffer.capacity()).isEqualTo(64 * 1024);
+        assertThat(readBuffer.readerIndex()).isZero();
+        assertThat(readBuffer.writerIndex()).isZero();
+
+        ByteBuf tmpBuffer = ReflectionTestUtils.getField(sut, "tmpReadBuffer");
+        assertThat(tmpBuffer).isNull();
     }
 
 }

@@ -55,6 +55,7 @@ import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracer;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
@@ -92,6 +93,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(CommandHandler.class);
 
     private static final AtomicLong COMMAND_HANDLER_COUNTER = new AtomicLong();
+
+    private static final int DEFAULT_READER_BUFFER_CAPACITY = 8192 * 8;
 
     private final ClientOptions clientOptions;
 
@@ -138,6 +141,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private boolean pristine;
 
     private Tracing.Endpoint tracedEndpoint;
+
+    private ByteBuf tmpReadBuffer;
+
+    private ByteBufAllocator byteBufAllocator;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -222,7 +229,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         setState(LifecycleState.REGISTERED);
 
-        readBuffer = ctx.alloc().buffer(8192 * 8);
+        byteBufAllocator = ctx.alloc();
+        readBuffer = ctx.alloc().buffer(DEFAULT_READER_BUFFER_CAPACITY);
         rsm = new RedisStateMachine();
         ctx.fireChannelRegistered();
     }
@@ -614,6 +622,15 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             if (traceEnabled) {
                 logger.trace("{} Buffer: {}", logPrefix(), input.toString(Charset.defaultCharset()).trim());
             }
+            // if buffer capacity larger than default capacity, then create a new buffer with double capacity
+            // in most cases, key size is less than 64k
+            if (readBuffer.capacity() == DEFAULT_READER_BUFFER_CAPACITY && readBuffer.writableBytes() < input.readableBytes()
+                    && byteBufAllocator != null) {
+                ByteBuf byteBuf = byteBufAllocator.directBuffer(readBuffer.capacity() << 1);
+                byteBuf.writeBytes(readBuffer);
+                tmpReadBuffer = readBuffer;
+                readBuffer = byteBuf;
+            }
 
             readBuffer.touch("CommandHandler.read(…)");
             readBuffer.writeBytes(input);
@@ -661,6 +678,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
                     ctx.close();
                     throw e;
+                } finally {
+                    releaseLargeBufferIfNecessary(buffer);
                 }
 
                 hasDecodeProgress = false;
@@ -704,14 +723,26 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                             complete(command);
                         } catch (Exception e) {
                             logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                        } finally {
+                            releaseLargeBufferIfNecessary(buffer);
                         }
                     }
                 }
                 afterDecode(ctx, command);
             }
         }
+        if (buffer.refCnt() > 0) {
+            decodeBufferPolicy.afterDecoding(buffer);
+        }
+    }
 
-        decodeBufferPolicy.afterDecoding(buffer);
+    private void releaseLargeBufferIfNecessary(ByteBuf buffer) {
+        if (this.tmpReadBuffer != null) {
+            buffer.release();
+            this.readBuffer = tmpReadBuffer;
+            this.readBuffer.clear();
+            this.tmpReadBuffer = null;
+        }
     }
 
     protected void notifyPushListeners(PushMessage notification) {
@@ -734,7 +765,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
      * @return
      */
     protected boolean canDecode(ByteBuf buffer) {
-        return buffer.isReadable() && (isMessageDecode() || isPushDecode(buffer));
+        return buffer.refCnt()>0 && buffer.isReadable() && (isMessageDecode() || isPushDecode(buffer));
     }
 
     private boolean isPushMessage(ByteBuf buffer) {
