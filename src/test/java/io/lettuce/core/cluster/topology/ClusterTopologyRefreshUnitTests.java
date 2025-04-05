@@ -21,6 +21,7 @@ package io.lettuce.core.cluster.topology;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Timeout.ThreadMode.SEPARATE_THREAD;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.anyLong;
@@ -40,6 +41,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -453,6 +455,20 @@ class ClusterTopologyRefreshUnitTests {
 
         verify(connection1).closeAsync();
         verify(connection2).closeAsync();
+    }
+
+    /**
+     * @see <a href="https://github.com/redis/lettuce/issues/3240">Issue link</a>
+     */
+    @Test
+    @org.junit.jupiter.api.Timeout(value = 5, unit = TimeUnit.SECONDS, threadMode = SEPARATE_THREAD)
+    void shouldHandleInvalidUrisWithoutDeadlock() {
+        List<RedisURI> seed = Arrays.asList(RedisURI.create("redis://localhost:$(INVALID_DATA):CONFIG"),
+                RedisURI.create("redis://localhost:$(INVALID_DATA):CONFIG"));
+        CompletionException completionException = Assertions.assertThrows(CompletionException.class,
+                () -> sut.loadViews(seed, Duration.ofSeconds(1), true).toCompletableFuture().join());
+        assertThat(completionException)
+                .hasRootCauseInstanceOf(DefaultClusterTopologyRefresh.CannotRetrieveClusterPartitions.class);
     }
 
     @Test
