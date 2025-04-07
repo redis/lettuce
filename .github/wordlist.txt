@@ -321,3 +321,4 @@ jcl
 slf
 testcontainers
 Readme
+DefaultAzureCredential
