@@ -1,7 +1,7 @@
-Lettuce 6.6.0 BETA3 NOTES
+Lettuce 6.6.0 BETA4 NOTES
 ==============================
 
-The Redis team is delighted to announce the BETA3 pre-release of Lettuce 6.6.0
+The Redis team is delighted to announce the BETA4 pre-release of Lettuce 6.6.0
 
 Lettuce 6 supports Redis 2.6+ up to Redis 7.x. In terms of Java runtime, Lettuce requires
 at least Java 8 and works with Java 21.
@@ -14,8 +14,8 @@ If you need any support, meet Lettuce at
 * Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
 * Join the chat at https://discord.gg/redis and look for the "Help:Tools Lettuce" channel 
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/6.6.0.BETA3/reference/
-* Javadoc: https://lettuce.io/core/6.6.0.BETA3/api/
+* Documentation: https://lettuce.io/core/6.6.0.BETA4/reference/
+* Javadoc: https://lettuce.io/core/6.6.0.BETA4/api/
 
 Commands
 --------
@@ -27,6 +27,7 @@ Enhancements
 * Deprecate the STRALGO command and implement the LCS in its place by @Dltmd202 in https://github.com/redis/lettuce/pull/3037
 * fix: prevent blocking event loop thread by replacing ArrayDeque with HashIndexedQueue by @okg-cxf in https://github.com/redis/lettuce/pull/2953
 * Token based authentication integration with core extension by @ggivo in https://github.com/redis/lettuce/pull/3063
+* Support for DefaultAzureCredential by @ggivo in https://github.com/redis/lettuce/pull/3230
 * replace hardcoded GT and LT with CommandKeyword enum by @minwoo1999 in https://github.com/redis/lettuce/pull/3079
 * Add support up to max unsigned integer in Bitfield offset (#2964) by @psw0946 in https://github.com/redis/lettuce/pull/3099
 * Improve code by adding some null checks by @tishun in https://github.com/redis/lettuce/pull/3115
