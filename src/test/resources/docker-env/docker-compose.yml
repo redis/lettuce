@@ -1,7 +1,7 @@
 x-client-libs-image: &client-libs-image
-  image: "redislabs/client-libs-test:${REDIS_VERSION:-8.0-M05-pre}"
+  image: "redislabs/client-libs-test:${REDIS_VERSION:-8.0-RC1-pre}"
 x-client-libs-stack-image: &client-libs-stack-image
-  image: "redislabs/client-libs-test:${REDIS_STACK_VERSION:-8.0-M05-pre}"
+  image: "redislabs/client-libs-test:${REDIS_STACK_VERSION:-8.0-RC1-pre}"
 
 services:
   # Standalone Redis Servers
