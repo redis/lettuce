@@ -307,11 +307,14 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
 
         for (RedisURI redisURI : redisURIs) {
 
-            if (redisURI.getHost() == null || tracker.contains(redisURI) || !isEventLoopActive()) {
-                continue;
-            }
+            CompletableFuture<StatefulRedisConnection<String, String>> sync = new CompletableFuture<>();
 
             try {
+
+                if (redisURI.getHost() == null || tracker.contains(redisURI) || !isEventLoopActive()) {
+                    continue;
+                }
+
                 SocketAddress socketAddress = clientResources.socketAddressResolver().resolve(redisURI);
 
                 ConnectionFuture<StatefulRedisConnection<String, String>> connectionFuture = nodeConnectionFactory
@@ -319,7 +322,6 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
 
                 // Note: timeout skew due to potential socket address resolution and connection work possible.
 
-                CompletableFuture<StatefulRedisConnection<String, String>> sync = new CompletableFuture<>();
                 Timeout cancelTimeout = clientResources.timer().newTimeout(it -> {
 
                     String message = String.format("Unable to connect to [%s]: Timeout after %s", socketAddress,
@@ -360,7 +362,10 @@ class DefaultClusterTopologyRefresh implements ClusterTopologyRefresh {
 
                 tracker.addConnection(redisURI, sync);
             } catch (RuntimeException e) {
-                logger.warn(String.format("Unable to connect to [%s]", redisURI), e);
+                String message = String.format("Unable to connect to [%s]", redisURI);
+                logger.warn(message, e);
+                sync.completeExceptionally(new RedisConnectionException(message, e));
+                tracker.addConnection(redisURI, sync);
             }
         }
     }
