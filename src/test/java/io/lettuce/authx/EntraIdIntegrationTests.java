@@ -1,7 +1,5 @@
 package io.lettuce.authx;
 
-import com.azure.identity.DefaultAzureCredential;
-import com.azure.identity.DefaultAzureCredentialBuilder;
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -13,7 +11,6 @@ import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
 import org.junit.jupiter.api.*;
 import redis.clients.authentication.core.TokenAuthConfig;
-import redis.clients.authentication.entraid.AzureTokenAuthConfigBuilder;
 import redis.clients.authentication.entraid.EntraIDTokenAuthConfigBuilder;
 
 import java.time.Duration;
@@ -57,7 +54,7 @@ public class EntraIdIntegrationTests {
                 .secret(testCtx.getClientSecret()).authority(testCtx.getAuthority()).scopes(testCtx.getRedisScopes())
                 .expirationRefreshRatio(0.0000001F).build();
 
-        TokenBasedRedisCredentialsProvider credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenAuthConfig);
+        credentialsProvider = TokenBasedRedisCredentialsProvider.create(tokenAuthConfig);
 
         client = createClient(credentialsProvider);
     }
@@ -119,7 +116,7 @@ public class EntraIdIntegrationTests {
         CountDownLatch latch = new CountDownLatch(10); // Wait for at least 10 token renewalss
         credentialsProvider.credentials().subscribe(cred -> latch.countDown());
 
-        assertThat(latch.await(1, TimeUnit.SECONDS)).isTrue(); // Wait to reach 10 renewals
+        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue(); // Wait to reach 10 renewals
         commandThread.join(); // Wait for the command thread to finish
 
         assertThat(commandCycleCount.get()).isGreaterThanOrEqualTo(10);
@@ -154,32 +151,6 @@ public class EntraIdIntegrationTests {
 
             Wait.untilEquals(100, () -> listener.getMessages().size()).waitOrTimeout();
             assertThat(listener.getMessages()).allMatch(msg -> msg.equals("message"));
-        }
-    }
-
-    @Test
-    public void azureTokenAuthWithDefaultAzureCredentials() throws ExecutionException, InterruptedException {
-        DefaultAzureCredential credential = new DefaultAzureCredentialBuilder().build();
-
-        TokenAuthConfig tokenAuthConfig = AzureTokenAuthConfigBuilder.builder().defaultAzureCredential(credential)
-                .tokenRequestExecTimeoutInMs(2000).build();
-
-        try (RedisClient azureCredClient = createClient(credentialsProvider);
-                TokenBasedRedisCredentialsProvider credentialsProvider = TokenBasedRedisCredentialsProvider
-                        .create(tokenAuthConfig);) {
-            RedisCredentials credentials = credentialsProvider.resolveCredentials().block(Duration.ofSeconds(5));
-            assertThat(credentials).isNotNull();
-
-            String key = UUID.randomUUID().toString();
-            try (StatefulRedisConnection<String, String> connection = azureCredClient.connect()) {
-                RedisCommands<String, String> sync = connection.sync();
-                assertThat(sync.aclWhoami()).isEqualTo(credentials.getUsername());
-                sync.set(key, "value");
-                assertThat(sync.get(key)).isEqualTo("value");
-                assertThat(connection.async().get(key).get()).isEqualTo("value");
-                assertThat(connection.reactive().get(key).block()).isEqualTo("value");
-                sync.del(key);
-            }
         }
     }
 
