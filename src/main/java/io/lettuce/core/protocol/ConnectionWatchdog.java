@@ -205,11 +205,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         logPrefix = null;
         logger.debug("{} channelActive()", logPrefix());
 
-        // FIXME (start) To be removed once the server starts sending the rebind message without needing a subscription.
         ChannelPipeline pipeline = ctx.channel().pipeline();
         PubSubCommandHandler<?, ?> commandHandler = pipeline.get(PubSubCommandHandler.class);
         commandHandler.getEndpoint().addListener(this);
-        // FIXME (end)
 
         super.channelActive(ctx);
     }
@@ -349,8 +347,9 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             eventBus.publish(new ReconnectAttemptEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, attempt, delay));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
-            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple =
-                    rebindAddress == null ? reconnectionHandler.reconnect() : reconnectionHandler.reconnect(rebindAddress);
+            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = rebindAddress == null
+                    ? reconnectionHandler.reconnect()
+                    : reconnectionHandler.reconnect(rebindAddress);
             CompletableFuture<Channel> future = tuple.getT1();
 
             future.whenComplete((c, t) -> {
