@@ -36,6 +36,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 class RepeatedRefreshPartitionsTest {
 
     private static final String host = TestSettings.hostAddr();
+
     private static final Logger log = LoggerFactory.getLogger(RepeatedRefreshPartitionsTest.class);
 
     private final RedisClient client;
@@ -77,14 +78,10 @@ class RepeatedRefreshPartitionsTest {
     public void countUpdateCacheInvocations() throws Exception {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
-                .enablePeriodicRefresh(true)
-                .refreshPeriod(100, TimeUnit.NANOSECONDS)
-                .enableAdaptiveRefreshTrigger(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT)
-                .build();
+                .enablePeriodicRefresh(true).refreshPeriod(100, TimeUnit.NANOSECONDS)
+                .enableAdaptiveRefreshTrigger(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT).build();
 
-        clusterClient.setOptions(ClusterClientOptions.builder()
-                .topologyRefreshOptions(topologyRefreshOptions)
-                .build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
 
@@ -113,20 +110,17 @@ class RepeatedRefreshPartitionsTest {
     }
 
     /**
-     * Test to measure the number of times the slotCache reference is changed via updateCache() invocation when a topology change is detected.
+     * Test to measure the number of times the slotCache reference is changed via updateCache() invocation when a topology
+     * change is detected.
      */
     @Test
     public void countUpdateCacheInvocationsWhenTopologyChanges() throws Exception {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
-                .enablePeriodicRefresh(true)
-                .refreshPeriod(100, TimeUnit.NANOSECONDS)
-                .enableAdaptiveRefreshTrigger(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT)
-                .build();
+                .enablePeriodicRefresh(true).refreshPeriod(100, TimeUnit.NANOSECONDS)
+                .enableAdaptiveRefreshTrigger(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT).build();
 
-        clusterClient.setOptions(ClusterClientOptions.builder()
-                .topologyRefreshOptions(topologyRefreshOptions)
-                .build());
+        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
 
@@ -157,7 +151,8 @@ class RepeatedRefreshPartitionsTest {
         Assertions.assertNotEquals(updatedSlotCache, baselineSlotCache, "new slotCache should be different");
 
         // --- Measure subsequent updateCache() invocation count ---
-        // Although topology change is not continuously happening, for testing purposes, call reload() once more to observe changes.
+        // Although topology change is not continuously happening, for testing purposes, call reload() once more to observe
+        // changes.
         Object previousSlotCache = updatedSlotCache;
 
         List<RedisClusterNode> newPartitions2 = new ArrayList<>();
@@ -188,4 +183,5 @@ class RepeatedRefreshPartitionsTest {
 
         connection.close();
     }
+
 }
