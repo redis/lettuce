@@ -34,12 +34,9 @@ public class LettuceRebindDemo {
 
         // NEW! No need for a custom handler
 
-        TimeoutOptions timeoutOpts = TimeoutOptions.builder()
-                .timeoutCommands()
-                .fixedTimeout(Duration.ofMillis(50))
+        TimeoutOptions timeoutOpts = TimeoutOptions.builder().timeoutCommands().fixedTimeout(Duration.ofMillis(50))
                 // NEW! control that during timeouts we need to relax the timeouts
-                .proactiveTimeoutsRelaxing(Duration.ofMillis(500))
-                .build();
+                .proactiveTimeoutsRelaxing(Duration.ofMillis(500)).build();
         ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts).build();
 
         RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis("localhost", 6379).build());
@@ -64,11 +61,10 @@ public class LettuceRebindDemo {
         // Used to initiate the proactive rebind by sending the following command
         // publish __rebind "type=rebind;from_ep=localhost:6379;to_ep=localhost:6479;until_s=10"
 
-        ExecutorService executorService = new ThreadPoolExecutor(
-                5,                           // core pool size
-                10,                                      // maximum pool size
-                60, TimeUnit.SECONDS,                    // idle thread keep-alive time
-                new ArrayBlockingQueue<>(20),    // work queue size
+        ExecutorService executorService = new ThreadPoolExecutor(5, // core pool size
+                10, // maximum pool size
+                60, TimeUnit.SECONDS, // idle thread keep-alive time
+                new ArrayBlockingQueue<>(20), // work queue size
                 new ThreadPoolExecutor.DiscardPolicy()); // rejection policy
 
         try {
@@ -77,7 +73,7 @@ public class LettuceRebindDemo {
                 Thread.sleep(1);
             }
 
-            if(executorService.awaitTermination(5, TimeUnit.SECONDS)){
+            if (executorService.awaitTermination(5, TimeUnit.SECONDS)) {
                 logger.info("Executor service terminated");
             } else {
                 logger.warning("Executor service did not terminate in the specified time");
@@ -90,8 +86,9 @@ public class LettuceRebindDemo {
         redis.close();
         redisClient.shutdown();
     }
-    
+
     static class DemoWorker implements Runnable {
+
         private final RedisPubSubAsyncCommands<String, String> commands;
 
         public DemoWorker(RedisPubSubAsyncCommands<String, String> commands) {
@@ -106,6 +103,7 @@ public class LettuceRebindDemo {
                 logger.severe("ExecutionException: " + e.getMessage());
             }
         }
+
     }
 
     static class Control implements PushListener {
@@ -114,10 +112,8 @@ public class LettuceRebindDemo {
 
         @Override
         public void onPushMessage(PushMessage message) {
-            List<String> content = message.getContent().stream()
-                    .filter(ez -> ez instanceof ByteBuffer)
-                    .map(ez -> StringCodec.UTF8.decodeKey((ByteBuffer) ez))
-                    .collect(Collectors.toList());
+            List<String> content = message.getContent().stream().filter(ez -> ez instanceof ByteBuffer)
+                    .map(ez -> StringCodec.UTF8.decodeKey((ByteBuffer) ez)).collect(Collectors.toList());
 
             if (content.stream().anyMatch(c -> c.contains("type=stop_demo"))) {
                 logger.info("Control received message to stop the demo");

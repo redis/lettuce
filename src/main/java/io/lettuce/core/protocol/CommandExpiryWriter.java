@@ -94,14 +94,12 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         this.executorService = clientResources.eventExecutorGroup();
         this.timer = clientResources.timer();
 
-        this.rebindStatedListener = clientResources.eventBus()
-                .get().filter(e -> e instanceof RebindInitiatedEvent)
+        this.rebindStatedListener = clientResources.eventBus().get().filter(e -> e instanceof RebindInitiatedEvent)
                 .subscribe(e -> {
                     this.relaxTimeoutsGlobally = true;
                 });
 
-        this.rebindEndedListener = clientResources.eventBus()
-                .get().filter(e -> e instanceof RebindCompletedEvent)
+        this.rebindEndedListener = clientResources.eventBus().get().filter(e -> e instanceof RebindCompletedEvent)
                 .subscribe(e -> {
                     this.relaxTimeoutsGlobally = false;
                 });
@@ -210,8 +208,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
                     if (shouldRelaxTimeoutsGlobally()) {
                         relaxedAttempt(command, executors);
                     } else {
-                        command.completeExceptionally(
-                                ExceptionFactory.createTimeoutException(command.getType().toString(), Duration.ofNanos(timeUnit.toNanos(timeout))));
+                        command.completeExceptionally(ExceptionFactory.createTimeoutException(command.getType().toString(),
+                                Duration.ofNanos(timeUnit.toNanos(timeout))));
                     }
                 });
 

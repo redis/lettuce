@@ -8,5 +8,5 @@
 package io.lettuce.core.rebind;
 
 public enum RebindState {
-        STARTED, COMPLETED
+    STARTED, COMPLETED
 }

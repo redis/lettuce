@@ -633,8 +633,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 && ctx.channel().attr(REBIND_ATTRIBUTE).get() != null
                 && ctx.channel().attr(REBIND_ATTRIBUTE).get().equals(RebindState.STARTED);
         if (debugEnabled && rebindInProgress) {
-            logger.debug("{} Processing command while rebind is in progress, stack has {} more to process",
-                    logPrefix(), stack.size());
+            logger.debug("{} Processing command while rebind is in progress, stack has {} more to process", logPrefix(),
+                    stack.size());
         }
 
         if (pristine) {
@@ -722,7 +722,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             }
         }
 
-        if (rebindInProgress && stack.isEmpty()){
+        if (rebindInProgress && stack.isEmpty()) {
             logger.info("{} Rebind completed at {}", logPrefix(), LocalTime.now());
             ctx.channel().attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
             clientResources.eventBus().publish(new RebindCompletedEvent());
