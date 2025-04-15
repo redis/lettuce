@@ -920,7 +920,8 @@ public class RedisClusterClient extends AbstractRedisClient {
      * @since 6.0
      */
     public void refreshPartitions() {
-        get(refreshPartitionsAsync().toCompletableFuture(), e -> new RedisException("Cannot reload Redis Cluster topology", e));
+        get(refreshPartitionsAsync(true).toCompletableFuture(),
+                e -> new RedisException("Cannot reload Redis Cluster topology", e));
     }
 
     /**
@@ -931,6 +932,18 @@ public class RedisClusterClient extends AbstractRedisClient {
      */
     public CompletionStage<Void> refreshPartitionsAsync() {
 
+        return refreshPartitionsAsync(false);
+    }
+
+    /**
+     * Asynchronously reload partitions and re-initialize the distribution table. This method is protected to hide the forced
+     * reload variant from external API usage.
+     *
+     * @param forceReload if true, forces a reload regardless of detected topology changes.
+     * @return a {@link CompletionStage} that signals completion.
+     * @since 6.0
+     */
+    protected CompletionStage<Void> refreshPartitionsAsync(boolean forceReload) {
         List<RedisURI> sources = new ArrayList<>();
 
         Iterable<RedisURI> topologyRefreshSource = getTopologyRefreshSource();
@@ -947,7 +960,8 @@ public class RedisClusterClient extends AbstractRedisClient {
 
         return loadPartitionsAsync().thenAccept(loadedPartitions -> {
 
-            if (TopologyComparators.isChanged(getPartitions(), loadedPartitions)) {
+            boolean topologyChanged = TopologyComparators.isChanged(getPartitions(), loadedPartitions);
+            if (topologyChanged) {
 
                 logger.debug("Using a new cluster topology");
 
@@ -956,9 +970,14 @@ public class RedisClusterClient extends AbstractRedisClient {
 
                 getResources().eventBus().publish(new ClusterTopologyChangedEvent(before, after));
 
-                this.partitions.reload(loadedPartitions.getPartitions());
             }
 
+            if (forceReload || topologyChanged) {
+
+                logger.debug("Reloading cluster partitions");
+
+                this.partitions.reload(loadedPartitions.getPartitions());
+            }
             updatePartitionsInConnections();
         }).whenComplete((unused, throwable) -> event.record());
     }

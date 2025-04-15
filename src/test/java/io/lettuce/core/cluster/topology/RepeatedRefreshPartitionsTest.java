@@ -11,7 +11,6 @@ import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
-import io.lettuce.test.Delay;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
@@ -22,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.lang.reflect.Field;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -78,14 +76,12 @@ class RepeatedRefreshPartitionsTest {
     public void countUpdateCacheInvocations() throws Exception {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
-                .enablePeriodicRefresh(true).refreshPeriod(100, TimeUnit.NANOSECONDS)
+                .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.NANOSECONDS)
                 .enableAdaptiveRefreshTrigger(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT).build();
 
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
-
-        Delay.delay(Duration.ofMillis(200));
 
         Partitions partitions = clusterClient.getPartitions();
 
@@ -94,7 +90,7 @@ class RepeatedRefreshPartitionsTest {
 
         Object previousSlotCache = slotCacheField.get(partitions);
         int updateCount = 0;
-        long endTime = System.currentTimeMillis() + 500; // Measure for 0.5 seconds
+        long endTime = System.currentTimeMillis() + 100; // Measure for 0.1 seconds
 
         while (System.currentTimeMillis() < endTime) {
             Object currentSlotCache = slotCacheField.get(partitions);
@@ -102,7 +98,6 @@ class RepeatedRefreshPartitionsTest {
                 updateCount++;
                 previousSlotCache = currentSlotCache;
             }
-            Thread.sleep(5);
         }
 
         Assertions.assertEquals(0, updateCount, "updateCache() should not be called");
@@ -117,14 +112,12 @@ class RepeatedRefreshPartitionsTest {
     public void countUpdateCacheInvocationsWhenTopologyChanges() throws Exception {
 
         ClusterTopologyRefreshOptions topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
-                .enablePeriodicRefresh(true).refreshPeriod(100, TimeUnit.NANOSECONDS)
+                .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.NANOSECONDS)
                 .enableAdaptiveRefreshTrigger(ClusterTopologyRefreshOptions.RefreshTrigger.MOVED_REDIRECT).build();
 
         clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(topologyRefreshOptions).build());
 
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
-
-        Delay.delay(Duration.ofMillis(200));
 
         Partitions partitions = clusterClient.getPartitions();
 
@@ -145,8 +138,6 @@ class RepeatedRefreshPartitionsTest {
 
         partitions.reload(newPartitions);
 
-        Delay.delay(Duration.ofMillis(50));
-
         Object updatedSlotCache = slotCacheField.get(partitions);
         Assertions.assertNotEquals(updatedSlotCache, baselineSlotCache, "new slotCache should be different");
 
@@ -165,10 +156,8 @@ class RepeatedRefreshPartitionsTest {
         }
         partitions.reload(newPartitions2);
 
-        Delay.delay(Duration.ofMillis(50));
-
         int updateCount = 0;
-        long endTime = System.currentTimeMillis() + 500; // Measure for 0.5 seconds
+        long endTime = System.currentTimeMillis() + 100; // Measure for 0.1 seconds
 
         while (System.currentTimeMillis() < endTime) {
             Object currentSlotCache = slotCacheField.get(partitions);
@@ -176,7 +165,6 @@ class RepeatedRefreshPartitionsTest {
                 updateCount++;
                 previousSlotCache = currentSlotCache;
             }
-            Thread.sleep(5);
         }
 
         Assertions.assertTrue(updateCount > 0, "updateCache() should be called at least once");
