@@ -298,9 +298,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         logPrefix = null;
         logger.debug("{} channelActive()", logPrefix());
 
+        // todo : Configurable enable disable proactive reconnect
         ChannelPipeline pipeline = ctx.channel().pipeline();
         PubSubCommandHandler<?, ?> commandHandler = pipeline.get(PubSubCommandHandler.class);
-        commandHandler.getEndpoint().addListener(this);
+        if (commandHandler != null) {
+            commandHandler.getEndpoint().addListener(this);
+        }
 
         super.channelActive(ctx);
     }
