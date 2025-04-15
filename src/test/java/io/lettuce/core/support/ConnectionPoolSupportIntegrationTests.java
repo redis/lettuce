@@ -132,10 +132,53 @@ class ConnectionPoolSupportIntegrationTests extends TestSupport {
     }
 
     @Test
+    void genericPoolShouldWorkWithValidationPredicate() throws Exception {
+
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(() -> client.connect(), new GenericObjectPoolConfig<>(), false, connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
+
+        borrowAndReturn(pool);
+
+        StatefulRedisConnection<String, String> connection = pool.borrowObject();
+        assertThat(Proxy.isProxyClass(connection.getClass())).isFalse();
+        pool.returnObject(connection);
+
+        pool.close();
+    }
+
+    @Test
     void softReferencePoolShouldWorkWithPlainConnections() throws Exception {
 
         SoftReferenceObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
                 .createSoftReferenceObjectPool(() -> client.connect(), false);
+
+        borrowAndReturn(pool);
+
+        StatefulRedisConnection<String, String> connection = pool.borrowObject();
+        assertThat(Proxy.isProxyClass(connection.getClass())).isFalse();
+        pool.returnObject(connection);
+
+        connection.close();
+        pool.close();
+    }
+
+    @Test
+    void softReferencePoolShouldWorkWithValidationPredicate() throws Exception {
+
+        SoftReferenceObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createSoftReferenceObjectPool(() -> client.connect(), false, connection -> {
+                    try {
+                        return "PONG".equals(connection.sync().ping());
+                    } catch (Exception e) {
+                        return false;
+                    }
+                });
 
         borrowAndReturn(pool);
 
