@@ -100,6 +100,22 @@ class RedisCommandsIntegrationTests extends TestSupport {
     void shouldWorkWithPooledConnection() throws Exception {
 
         GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
+                .createGenericObjectPool(client::connect, new GenericObjectPoolConfig<>());
+
+        try (StatefulRedisConnection<String, String> connection = pool.borrowObject()) {
+
+            RedisCommandFactory factory = new RedisCommandFactory(connection);
+            SimpleCommands commands = factory.getCommands(SimpleCommands.class);
+            commands.get("foo");
+        }
+
+        pool.close();
+    }
+
+    @Test
+    void shouldWorkWithPooledConnectionAndCustomValidation() throws Exception {
+
+        GenericObjectPool<StatefulRedisConnection<String, String>> pool = ConnectionPoolSupport
                 .createGenericObjectPool(client::connect, new GenericObjectPoolConfig<>(), connection -> {
                     try {
                         return "PONG".equals(connection.sync().ping());
