@@ -51,7 +51,6 @@ import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.PushOutput;
-import io.lettuce.core.rebind.RebindCompletedEvent;
 import io.lettuce.core.rebind.RebindState;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.TraceContext;
@@ -725,7 +724,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         if (rebindInProgress && stack.isEmpty()) {
             logger.info("{} Rebind completed at {}", logPrefix(), LocalTime.now());
             ctx.channel().attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
-            clientResources.eventBus().publish(new RebindCompletedEvent());
         }
 
         decodeBufferPolicy.afterDecoding(buffer);

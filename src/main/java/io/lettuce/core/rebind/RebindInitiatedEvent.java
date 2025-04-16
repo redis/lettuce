@@ -26,14 +26,4 @@ import java.net.SocketAddress;
 
 public class RebindInitiatedEvent implements Event {
 
-    private final SocketAddress remoteAddress;
-
-    public RebindInitiatedEvent(SocketAddress remoteAddress) {
-        this.remoteAddress = remoteAddress;
-    }
-
-    public SocketAddress getRemoteAddress() {
-        return remoteAddress;
-    }
-
 }
