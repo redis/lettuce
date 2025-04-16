@@ -38,6 +38,7 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.pubsub.PubSubCommandHandler;
+import io.lettuce.core.rebind.RebindCompletedEvent;
 import io.lettuce.core.rebind.RebindInitiatedEvent;
 import io.lettuce.core.rebind.RebindState;
 import io.netty.util.AttributeKey;
@@ -562,6 +563,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                 && ctx.channel().attr(REBIND_ATTRIBUTE).get() == RebindState.COMPLETED) {
             logger.debug("Disconnecting at {}", LocalTime.now());
             ctx.channel().close().awaitUninterruptibly();
+            // FIXME this is currently only used to notify in an awkward way the ChannelExpiryWriter
+            eventBus.publish(new RebindCompletedEvent());
         }
 
         super.channelReadComplete(ctx);
@@ -590,8 +593,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
                 channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
             } else {
                 // FIXME this is currently only used to notify in an awkward way the ChannelExpiryWriter
-                RebindInitiatedEvent event = new RebindInitiatedEvent(getRemoteAddress(content));
-                eventBus.publish(event);
+                eventBus.publish(new RebindInitiatedEvent());
             }
         }
     }

@@ -101,7 +101,13 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
         this.rebindEndedListener = clientResources.eventBus().get().filter(e -> e instanceof RebindCompletedEvent)
                 .subscribe(e -> {
-                    this.relaxTimeoutsGlobally = false;
+                    // Consider the rebind complete after another relaxed timeout cycle.
+                    //
+                    // The reasoning behind that is we can't really be sure when all the enqueued commands have
+                    // successfully been written to the wire and then the reply was received
+                    timer.newTimeout(t -> getExecutorService().submit(() -> this.relaxTimeoutsGlobally = false),
+                            relaxedTimeout.toMillis(), TimeUnit.MILLISECONDS);
+
                 });
     }
 
