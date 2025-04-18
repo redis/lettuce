@@ -69,7 +69,7 @@ class ReplicaTopologyProvider implements TopologyProvider {
         InfoPatterns(Pattern pattern) {
             this.pattern = pattern;
         }
-        
+
         public Pattern getPattern() {
             return pattern;
         }
