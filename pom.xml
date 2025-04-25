@@ -679,11 +679,6 @@
                             <version>3.4.0</version>
                         </dependency>
                     </dependencies>
-                    <configuration>
-                        <classpathDependencyExcludes>
-                            <classpathDependencyExclude>io.netty.incubator:netty-incubator-transport-native-io_uring</classpathDependencyExclude>
-                        </classpathDependencyExcludes>
-                    </configuration>
                 </plugin>
 
                 <plugin>
