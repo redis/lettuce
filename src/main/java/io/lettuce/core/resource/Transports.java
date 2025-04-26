@@ -1,6 +1,8 @@
 package io.lettuce.core.resource;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.micrometer.common.util.internal.logging.InternalLogger;
+import io.micrometer.common.util.internal.logging.InternalLoggerFactory;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -59,8 +61,16 @@ public class Transports {
      */
     public static class NativeTransports {
 
+        private static final InternalLogger epollLogger = InternalLoggerFactory.getInstance(EpollProvider.class);
+
         static EventLoopResources RESOURCES = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
-                : IOUringProvider.isAvailable() ? IOUringProvider.getResources() : EpollProvider.getResources();
+                : EpollProvider.isAvailable() ? EpollProvider.getResources() : IOUringProvider.getResources();
+
+        static {
+            if (EpollProvider.isAvailable() && IOUringProvider.isAvailable()) {
+                epollLogger.warn("Both epoll and io_uring native transports are available, epoll has been prioritized.");
+            }
+        }
 
         /**
          * @return {@code true} if a native transport is available.
