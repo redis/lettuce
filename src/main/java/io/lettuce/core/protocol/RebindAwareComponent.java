@@ -18,12 +18,12 @@
  * limitations under the License.
  */
 
-package io.lettuce.core.rebind;
+package io.lettuce.core.protocol;
 
-import io.lettuce.core.event.Event;
+public interface RebindAwareComponent {
 
-import java.net.SocketAddress;
+    void onRebindStarted();
 
-public class RebindInitiatedEvent implements Event {
+    void onRebindCompleted();
 
 }

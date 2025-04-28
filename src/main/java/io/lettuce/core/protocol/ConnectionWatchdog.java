@@ -19,26 +19,12 @@
  */
 package io.lettuce.core.protocol;
 
-import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.time.LocalTime;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
-import io.lettuce.core.api.push.PushListener;
-import io.lettuce.core.api.push.PushMessage;
-import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.pubsub.PubSubCommandHandler;
-import io.lettuce.core.rebind.RebindCompletedEvent;
-import io.lettuce.core.rebind.RebindInitiatedEvent;
-import io.lettuce.core.rebind.RebindState;
-import io.netty.util.AttributeKey;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import io.lettuce.core.ClientOptions;
@@ -73,9 +59,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Koji Lin
  */
 @ChannelHandler.Sharable
-public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements PushListener {
-
-    public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
+public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private static final long LOGGING_QUIET_TIME_MS = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
 
@@ -87,7 +71,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
     private final EventExecutorGroup reconnectWorkers;
 
-    private final ReconnectionHandler reconnectionHandler;
+    protected final ReconnectionHandler reconnectionHandler;
 
     private final ReconnectionListener reconnectionListener;
 
@@ -116,8 +100,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     private volatile boolean listenOnChannelInactive;
 
     private volatile Timeout reconnectScheduleTimeout;
-
-    private SocketAddress rebindAddress;
 
     /**
      * Create a new watchdog that adds to new connections to the supplied {@link ChannelGroup} and establishes a new
@@ -196,6 +178,8 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
 
+        CommandHandler commandHandler = ctx.pipeline().get(CommandHandler.class);
+
         reconnectSchedulerSync.set(false);
         channel = ctx.channel();
         reconnectScheduleTimeout = null;
@@ -205,10 +189,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
         resetReconnectDelay();
         logPrefix = null;
         logger.debug("{} channelActive()", logPrefix());
-
-        ChannelPipeline pipeline = ctx.channel().pipeline();
-        PubSubCommandHandler<?, ?> commandHandler = pipeline.get(PubSubCommandHandler.class);
-        commandHandler.getEndpoint().addListener(this);
 
         super.channelActive(ctx);
     }
@@ -295,6 +275,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      * the same handler instances contained in the old channel's pipeline.
      *
      * @param attempt attempt counter
+     *
      * @throws Exception when reconnection fails.
      */
     public void run(int attempt) throws Exception {
@@ -307,6 +288,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
      *
      * @param attempt attempt counter.
      * @param delay retry delay.
+     *
      * @throws Exception when reconnection fails.
      */
     private void run(int attempt, Duration delay) throws Exception {
@@ -348,15 +330,12 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
             eventBus.publish(new ReconnectAttemptEvent(redisUri, epid, LocalAddress.ANY, remoteAddress, attempt, delay));
             logger.log(infoLevel, "Reconnecting, last destination was {}", remoteAddress);
 
-            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = rebindAddress == null
-                    ? reconnectionHandler.reconnect()
-                    : reconnectionHandler.reconnect(rebindAddress);
+            Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> tuple = reconnectionHandler.reconnect();
             CompletableFuture<Channel> future = tuple.getT1();
 
             future.whenComplete((c, t) -> {
 
                 if (c != null && t == null) {
-                    this.channel.attr(REBIND_ATTRIBUTE).set(null);
                     return;
                 }
 
@@ -455,63 +434,6 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter implements 
 
         String buffer = "[" + ChannelLogDescriptor.logDescriptor(channel) + ", last known addr=" + remoteAddress + ']';
         return logPrefix = buffer;
-    }
-
-    @Override
-    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-
-        if (ctx.channel() != null && ctx.channel().isActive() && ctx.channel().hasAttr(REBIND_ATTRIBUTE)
-                && ctx.channel().attr(REBIND_ATTRIBUTE).get() == RebindState.COMPLETED) {
-            logger.debug("Disconnecting at {}", LocalTime.now());
-            ctx.channel().close().awaitUninterruptibly();
-            // FIXME this is currently only used to notify in an awkward way the ChannelExpiryWriter
-            eventBus.publish(new RebindCompletedEvent());
-        }
-
-        super.channelReadComplete(ctx);
-    }
-
-    @Override
-    public void onPushMessage(PushMessage message) {
-        if (!message.getType().equals("message")) {
-            return;
-        }
-
-        List<String> content = message.getContent().stream()
-                .map(ez -> ez instanceof ByteBuffer ? StringCodec.UTF8.decodeKey((ByteBuffer) ez) : ez.toString())
-                .collect(Collectors.toList());
-
-        if (content.stream().anyMatch(c -> c.contains("type=rebind"))) {
-            logger.info("Attempting to rebind to new endpoint '{}'", getRemoteAddress(content));
-
-            channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
-            this.rebindAddress = getRemoteAddress(content);
-
-            ChannelPipeline pipeline = channel.pipeline();
-            PubSubCommandHandler<?, ?> commandHandler = pipeline.get(PubSubCommandHandler.class);
-            if (commandHandler.getStack().isEmpty()) {
-                channel.close().awaitUninterruptibly();
-                channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
-            } else {
-                // FIXME this is currently only used to notify in an awkward way the ChannelExpiryWriter
-                eventBus.publish(new RebindInitiatedEvent());
-            }
-        }
-    }
-
-    private SocketAddress getRemoteAddress(List<String> messageContents) {
-
-        final String payload = messageContents.stream().filter(c -> c.contains("to_ep")).findFirst()
-                .orElse("type=rebind;from_ep=localhost:6479;to_ep=localhost:6379;until_s=10");
-
-        final String toEndpoint = Arrays.stream(payload.split(";")).filter(c -> c.contains("to_ep")).findFirst()
-                .orElse("to_ep=localhost:6479");
-
-        final String addressAndPort = toEndpoint.split("=")[1];
-        final String address = addressAndPort.split(":")[0];
-        final int port = Integer.parseInt(addressAndPort.split(":")[1]);
-
-        return new InetSocketAddress(address, port);
     }
 
 }

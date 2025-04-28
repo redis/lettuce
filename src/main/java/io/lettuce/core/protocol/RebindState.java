@@ -18,10 +18,8 @@
  * limitations under the License.
  */
 
-package io.lettuce.core.rebind;
+package io.lettuce.core.protocol;
 
-import io.lettuce.core.event.Event;
-
-public class RebindCompletedEvent implements Event {
-
+public enum RebindState {
+    STARTED, COMPLETED
 }
