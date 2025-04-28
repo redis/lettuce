@@ -20,7 +20,7 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.core.ConnectionEvents.*;
-import static io.lettuce.core.protocol.ConnectionWatchdog.REBIND_ATTRIBUTE;
+import static io.lettuce.core.protocol.RebindAwareConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -53,7 +53,6 @@ import io.lettuce.core.metrics.EndpointQueueMonitor;
 import io.lettuce.core.metrics.EndpointQueueMonitor.QueueId;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.PushOutput;
-import io.lettuce.core.rebind.RebindState;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;

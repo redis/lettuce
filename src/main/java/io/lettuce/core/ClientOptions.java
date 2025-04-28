@@ -52,6 +52,8 @@ public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
 
+    public static final boolean DEFAULT_PROACTIVE_REBIND = false;
+
     public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
     public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
@@ -96,6 +98,8 @@ public class ClientOptions implements Serializable {
 
     private final boolean autoReconnect;
 
+    private final boolean proactiveRebind;
+
     private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
 
     private final boolean cancelCommandsOnReconnectFailure;
@@ -132,6 +136,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
+        this.proactiveRebind = builder.proactiveRebind;
         this.replayFilter = builder.replayFilter;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
@@ -153,6 +158,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(ClientOptions original) {
         this.autoReconnect = original.isAutoReconnect();
+        this.proactiveRebind = original.isProactiveRebindEnabled();
         this.replayFilter = original.getReplayFilter();
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
@@ -207,6 +213,8 @@ public class ClientOptions implements Serializable {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
+        private boolean proactiveRebind = DEFAULT_PROACTIVE_REBIND;
+
         private Predicate<RedisCommand<?, ?, ?>> replayFilter = DEFAULT_REPLAY_FILTER;
 
         private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
@@ -253,6 +261,20 @@ public class ClientOptions implements Serializable {
          */
         public Builder autoReconnect(boolean autoReconnect) {
             this.autoReconnect = autoReconnect;
+            return this;
+        }
+
+        /**
+         * Configure whether the driver should listen for server events that indicate the current endpoint is being re-bound.
+         * When enabled the proactive re-bind will help with the connection handover and reduce the number of failed commands.
+         * This feature requires the server to support proactive re-binds. Defaults to {@code false}. See
+         * {@link #DEFAULT_PROACTIVE_REBIND}.
+         *
+         * @param proactiveRebind true/false
+         * @return {@code this}
+         */
+        public Builder proactiveRebind(boolean proactiveRebind) {
+            this.proactiveRebind = proactiveRebind;
             return this;
         }
 
@@ -551,14 +573,15 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
-                .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
-                .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
-                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
-                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).jsonParser(getJsonParser())
-                .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
-                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
+        builder.autoReconnect(isAutoReconnect()).proactiveRebind(isProactiveRebindEnabled())
+                .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure()).replayFilter(getReplayFilter())
+                .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
+                .reauthenticateBehavior(getReauthenticateBehaviour()).readOnlyCommands(getReadOnlyCommands())
+                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
+                .protocolVersion(getConfiguredProtocolVersion()).requestQueueSize(getRequestQueueSize())
+                .scriptCharset(getScriptCharset()).jsonParser(getJsonParser()).socketOptions(getSocketOptions())
+                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
+                .timeoutOptions(getTimeoutOptions());
 
         return builder;
     }
@@ -574,6 +597,19 @@ public class ClientOptions implements Serializable {
      */
     public boolean isAutoReconnect() {
         return autoReconnect;
+    }
+
+    /**
+     * Controls auto-reconnect behavior on connections. If auto-reconnect is {@code true} (default), it is enabled. As soon as a
+     * connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any queued
+     * commands.
+     *
+     * This flag has also the effect that disconnected connections will refuse commands and cancel these with an exception.
+     *
+     * @return {@code true} if auto-reconnect is enabled.
+     */
+    public boolean isProactiveRebindEnabled() {
+        return proactiveRebind;
     }
 
     /**

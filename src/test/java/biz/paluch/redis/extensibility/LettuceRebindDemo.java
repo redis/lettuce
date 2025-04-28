@@ -32,11 +32,11 @@ public class LettuceRebindDemo {
     public static void main(String[] args) throws ExecutionException, InterruptedException {
 
         // NEW! No need for a custom handler
-
         TimeoutOptions timeoutOpts = TimeoutOptions.builder().timeoutCommands().fixedTimeout(Duration.ofMillis(50))
                 // NEW! control that during timeouts we need to relax the timeouts
                 .proactiveTimeoutsRelaxing(Duration.ofMillis(500)).build();
-        ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts).build();
+        // NEW! requires proactive rebind to be enabled
+        ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts).proactiveRebind(true).build();
 
         RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis("localhost", 6379).build());
         redisClient.setOptions(options);
