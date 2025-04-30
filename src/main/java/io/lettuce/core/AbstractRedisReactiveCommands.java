@@ -133,19 +133,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     private EventExecutorGroup getScheduler() {
+        EventExecutorGroup result = scheduler;
 
-        EventExecutorGroup scheduler = this.scheduler;
-        if (scheduler != null) {
-            return scheduler;
+        if (result == null) {
+            synchronized (this) {
+                result = scheduler;
+
+                if (result == null) {
+
+                    if (connection.getOptions().isPublishOnScheduler()) {
+                        result = connection.getResources().eventExecutorGroup();
+                    } else {
+                        result = ImmediateEventExecutor.INSTANCE;
+                    }
+
+                    scheduler = result;
+                }
+            }
         }
 
-        EventExecutorGroup schedulerToUse = ImmediateEventExecutor.INSTANCE;
-
-        if (connection.getOptions().isPublishOnScheduler()) {
-            schedulerToUse = connection.getResources().eventExecutorGroup();
-        }
-
-        return this.scheduler = schedulerToUse;
+        return result;
     }
 
     @Override
