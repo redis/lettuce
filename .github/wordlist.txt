@@ -326,3 +326,4 @@ EntraID
 changelog
 OpsForGeo
 AsyncCluster
+de
