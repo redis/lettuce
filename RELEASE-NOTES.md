@@ -49,7 +49,7 @@ Enhancements
 
 Fixes
 -----
-* Restore API that was accidently deleted when introducing the JSON feature by @tishun in https://github.com/redis/lettuce/pull/3065
+* Restore API that was accidentally deleted when introducing the JSON feature by @tishun in https://github.com/redis/lettuce/pull/3065
 * Propagate handshake failures to Handshake future by @mp911de in https://github.com/redis/lettuce/pull/3058
 * OpsForGeo producing "READONLY You can't write against a read only replica " on READS...  by @ggivo in https://github.com/redis/lettuce/pull/3032
 * Json commands not exposed in AsyncCluster #3048 by @tishun in https://github.com/redis/lettuce/pull/3049
