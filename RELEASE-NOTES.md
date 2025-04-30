@@ -1,4 +1,4 @@
-Lettuce 6.6.0 BETA4 NOTES
+Lettuce 6.6.0 RELEASE NOTES
 ==============================
 
 The Redis team is delighted to announce the Lettuce 6.6.0 minor release!
@@ -16,7 +16,7 @@ works with Java 21. The driver is tested against Redis 8.0, Redis 7.4 and Redis 
 
 Find the full changelog at the end of this document.
 
-Thanks to all contributors who made Lettuce 6.7.0.RELEASE possible.
+Thanks to all contributors who made Lettuce 6.6.0.RELEASE possible.
 
 If you need any support, meet Lettuce at
 
@@ -24,8 +24,8 @@ If you need any support, meet Lettuce at
 * Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
 * Join the chat at https://discord.gg/redis and look for the "Help:Tools Lettuce" channel 
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/6.6.0.BETA4/reference/
-* Javadoc: https://lettuce.io/core/6.6.0.BETA4/api/
+* Documentation: https://lettuce.io/core/6.6.0.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/6.6.0.RELEASE/api/
 
 Commands
 --------
