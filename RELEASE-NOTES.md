@@ -1,7 +1,7 @@
 Lettuce 6.6.0 BETA4 NOTES
 ==============================
 
-The Lettuce team is delighted to announce the Lettuce 6.6.0 minor release!
+The Redis team is delighted to announce the Lettuce 6.6.0 minor release!
 
 This release provides support for the newly introduced `HGETDEL`, `HGETEX` and `HSETEX` commands.
 Users of the driver are also now able to [use a command replay filter](https://redis.github.io/lettuce/advanced-usage/#controlling-replay-of-commands-in-at-lease-once-mode),
