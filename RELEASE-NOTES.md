@@ -1,12 +1,22 @@
-Lettuce 6.6.0 BETA4 NOTES
+Lettuce 6.6.0 RELEASE NOTES
 ==============================
 
-The Redis team is delighted to announce the BETA4 pre-release of Lettuce 6.6.0
+The Redis team is delighted to announce the Lettuce 6.6.0 minor release!
 
-Lettuce 6 supports Redis 2.6+ up to Redis 7.x. In terms of Java runtime, Lettuce requires
-at least Java 8 and works with Java 21.
+This release provides support for the newly introduced `HGETDEL`, `HGETEX` and `HSETEX` commands.
+Users of the driver are also now able to [use a command replay filter](https://redis.github.io/lettuce/advanced-usage/#controlling-replay-of-commands-in-at-lease-once-mode),
+that allows the user to control which (if any) commands are being retried when the reconnect feature is on. It is also possible to configure the driver to use the
+`HashIndexedQueue` as a backing data structure for the command queue, which speeds up  the driver during disconnect / reconnect (needs to be configured using the ClientOptions).
+Last but not least the `STRALGO` command was replaced by the `LCS` command.
 
-Thanks to all contributors who made Lettuce 6.7.0 possible.
+The driver comes with Microsoft EntraID authentication support.
+
+Lettuce 6 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
+works with Java 21. The driver is tested against Redis 8.0, Redis 7.4 and Redis 7.2.
+
+Find the full changelog at the end of this document.
+
+Thanks to all contributors who made Lettuce 6.6.0.RELEASE possible.
 
 If you need any support, meet Lettuce at
 
@@ -14,21 +24,20 @@ If you need any support, meet Lettuce at
 * Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
 * Join the chat at https://discord.gg/redis and look for the "Help:Tools Lettuce" channel 
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/6.6.0.BETA4/reference/
-* Javadoc: https://lettuce.io/core/6.6.0.BETA4/api/
+* Documentation: https://lettuce.io/core/6.6.0.RELEASE/reference/
+* Javadoc: https://lettuce.io/core/6.6.0.RELEASE/api/
 
 Commands
 --------
 * Hash Field Expiration (part II) (#3195) by @ggivo in https://github.com/redis/lettuce/pull/3204
+* Deprecate the STRALGO command and implement the LCS in its place by @Dltmd202 in https://github.com/redis/lettuce/pull/3037
 
 Enhancements
 ------------
 * Introduce command replay filter to avoid command replaying after reconnect #1310 by @tishun in https://github.com/redis/lettuce/pull/3118
-* Deprecate the STRALGO command and implement the LCS in its place by @Dltmd202 in https://github.com/redis/lettuce/pull/3037
 * fix: prevent blocking event loop thread by replacing ArrayDeque with HashIndexedQueue by @okg-cxf in https://github.com/redis/lettuce/pull/2953
 * Token based authentication integration with core extension by @ggivo in https://github.com/redis/lettuce/pull/3063
 * Support for DefaultAzureCredential by @ggivo in https://github.com/redis/lettuce/pull/3230
-* replace hardcoded GT and LT with CommandKeyword enum by @minwoo1999 in https://github.com/redis/lettuce/pull/3079
 * Add support up to max unsigned integer in Bitfield offset (#2964) by @psw0946 in https://github.com/redis/lettuce/pull/3099
 * Improve code by adding some null checks by @tishun in https://github.com/redis/lettuce/pull/3115
 * Introduce test matrix based on Redis server versions by @ggivo in https://github.com/redis/lettuce/pull/3145
@@ -36,9 +45,14 @@ Enhancements
 * Test modules CONFIG support by @sazzad16 in https://github.com/redis/lettuce/pull/3103
 * report block error when use with reactor mode #3168 by @tishun in https://github.com/redis/lettuce/pull/3169
 * Include command type in the timeout message by @arturaz in https://github.com/redis/lettuce/pull/3167
+* replace hardcoded GT and LT with CommandKeyword enum by @minwoo1999 in https://github.com/redis/lettuce/pull/3079
 
 Fixes
 -----
+* Restore API that was accidentally deleted when introducing the JSON feature by @tishun in https://github.com/redis/lettuce/pull/3065
+* Propagate handshake failures to Handshake future by @mp911de in https://github.com/redis/lettuce/pull/3058
+* OpsForGeo producing "READONLY You can't write against a read only replica " on READS...  by @ggivo in https://github.com/redis/lettuce/pull/3032
+* Json commands not exposed in AsyncCluster #3048 by @tishun in https://github.com/redis/lettuce/pull/3049
 * WATCH during MULTI shouldn't fail transaction #3009 by @tishun in https://github.com/redis/lettuce/pull/3027
 * Fix: make sure FIFO order between write and notify channel active by @okg-cxf in https://github.com/redis/lettuce/pull/2597
 * UnsupportedOperationException from ListSubscriber during hrandfieldWithvalues #3122 by @tishun in https://github.com/redis/lettuce/pull/3123
@@ -51,6 +65,7 @@ Fixes
 
 Other
 -----
+
 * Add example configuration using SNI enabled TLS connection by @ggivo in https://github.com/redis/lettuce/pull/3045
 * Disable docker image being used to call compose when running tests by @tishun in https://github.com/redis/lettuce/pull/3046
 * Workflow for running benchmarks weekly by @tishun in https://github.com/redis/lettuce/pull/3052

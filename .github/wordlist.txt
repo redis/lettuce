@@ -322,3 +322,8 @@ slf
 testcontainers
 Readme
 DefaultAzureCredential
+EntraID
+changelog
+OpsForGeo
+AsyncCluster
+de
