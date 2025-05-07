@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Utility to provide server-side assistance for client-side caches. This is a {@link CacheFrontend} that represents a two-level
@@ -32,6 +33,7 @@ import java.util.function.Consumer;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Yoobin Yoon
  * @since 6.0
  */
 public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
@@ -52,12 +54,12 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
     /**
      * Enable server-assisted Client side caching for the given {@link CacheAccessor} and {@link StatefulRedisConnection}.
      * <p>
-     * Note that the {@link CacheFrontend} is associated with a Redis connection. Make sure to
-     * {@link CacheFrontend#close() close} the frontend object to release the Redis connection after use.
+     * Note that the {@link CacheFrontend} is associated with a Redis connection. Make sure to {@link CacheFrontend#close()
+     * close} the frontend object to release the Redis connection after use.
      *
      * @param cacheAccessor the accessor used to interact with the client-side cache.
      * @param connection the Redis connection to use. The connection will be associated with {@link CacheFrontend} and must be
-     * closed through {@link CacheFrontend#close()}.
+     *        closed through {@link CacheFrontend#close()}.
      * @param tracking the tracking parameters.
      * @param <K> Key type.
      * @param <V> Value type.
@@ -75,12 +77,12 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
      * Create a server-assisted Client side caching for the given {@link CacheAccessor} and {@link StatefulRedisConnection}.
      * This method expects that client key tracking is already configured.
      * <p>
-     * Note that the {@link CacheFrontend} is associated with a Redis connection. Make sure to
-     * {@link CacheFrontend#close() close} the frontend object to release the Redis connection after use.
+     * Note that the {@link CacheFrontend} is associated with a Redis connection. Make sure to {@link CacheFrontend#close()
+     * close} the frontend object to release the Redis connection after use.
      *
      * @param cacheAccessor the accessor used to interact with the client-side cache.
      * @param connection the Redis connection to use. The connection will be associated with {@link CacheFrontend} and must be
-     * closed through {@link CacheFrontend#close()}.
+     *        closed through {@link CacheFrontend#close()}.
      * @param <K> Key type.
      * @param <V> Value type.
      * @return the {@link CacheFrontend} for value retrieval.
@@ -123,27 +125,44 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         invalidationListeners.add(invalidationListener);
     }
 
+    /**
+     * Execute the supplied function while holding the lock for the given key.
+     *
+     * @param key the key to lock
+     * @param supplier the function to execute under the lock
+     * @return the result of the supplied function
+     */
+    private <T> T withKeyLock(K key, Supplier<T> supplier) {
+        ReentrantLock keyLock = keyLocks.computeIfAbsent(key, k -> new ReentrantLock());
+        keyLock.lock();
+        try {
+            return supplier.get();
+        } finally {
+            keyLock.unlock();
+        }
+    }
+
     @Override
     public V get(K key) {
 
         V value = cacheAccessor.get(key);
 
         if (value == null) {
-            ReentrantLock keyLock = keyLocks.computeIfAbsent(key, k -> new ReentrantLock());
-            keyLock.lock();
-            try {
-                value = cacheAccessor.get(key);
+            value = withKeyLock(key, () -> {
+                V cachedValue = cacheAccessor.get(key);
 
-                if (value == null) {
-                    value = redisCache.get(key);
+                if (cachedValue == null) {
+                    V redisValue = redisCache.get(key);
 
-                    if (value != null) {
-                        cacheAccessor.put(key, value);
+                    if (redisValue != null) {
+                        cacheAccessor.put(key, redisValue);
                     }
+
+                    return redisValue;
                 }
-            } finally {
-                keyLock.unlock();
-            }
+
+                return cachedValue;
+            });
         }
 
         return value;
@@ -155,38 +174,38 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         V value = cacheAccessor.get(key);
 
         if (value == null) {
-            ReentrantLock keyLock = keyLocks.computeIfAbsent(key, k -> new ReentrantLock());
-            keyLock.lock();
+            value = withKeyLock(key, () -> {
+                V cachedValue = cacheAccessor.get(key);
 
-            try {
-                value = cacheAccessor.get(key);
+                if (cachedValue == null) {
+                    V redisValue = redisCache.get(key);
 
-                if (value == null) {
-                    value = redisCache.get(key);
-
-                    if (value == null) {
+                    if (redisValue == null) {
                         try {
-                            value = valueLoader.call();
+                            V loadedValue = valueLoader.call();
+
+                            if (loadedValue == null) {
+                                throw new ValueRetrievalException(
+                                        String.format("Value loader %s returned a null value for key %s", valueLoader, key));
+                            }
+
+                            redisCache.put(key, loadedValue);
+                            redisCache.get(key);
+                            cacheAccessor.put(key, loadedValue);
+
+                            return loadedValue;
                         } catch (Exception e) {
                             throw new ValueRetrievalException(
                                     String.format("Value loader %s failed with an exception for key %s", valueLoader, key), e);
                         }
-
-                        if (value == null) {
-                            throw new ValueRetrievalException(
-                                    String.format("Value loader %s returned a null value for key %s", valueLoader, key));
-                        }
-
-                        redisCache.put(key, value);
-
-                        redisCache.get(key);
+                    } else {
+                        cacheAccessor.put(key, redisValue);
+                        return redisValue;
                     }
-
-                    cacheAccessor.put(key, value);
                 }
-            } finally {
-                keyLock.unlock();
-            }
+
+                return cachedValue;
+            });
         }
 
         return value;

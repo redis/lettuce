@@ -316,13 +316,13 @@ public class ClientsideCachingIntegrationTests extends TestSupport {
         connection.sync().set(testKey1, initialValue);
         connection.sync().set(testKey2, initialValue);
 
-        ClientSideCaching<String, String> frontend = (ClientSideCaching<String, String>) ClientSideCaching.enable(
-                CacheAccessor.forMap(clientCache), connection, TrackingArgs.Builder.enabled());
+        ClientSideCaching<String, String> frontend = (ClientSideCaching<String, String>) ClientSideCaching
+                .enable(CacheAccessor.forMap(clientCache), connection, TrackingArgs.Builder.enabled());
 
         Field keyLocksField = ClientSideCaching.class.getDeclaredField("keyLocks");
         keyLocksField.setAccessible(true);
-        ConcurrentHashMap<String, ReentrantLock> keyLocks = (ConcurrentHashMap<String, ReentrantLock>) keyLocksField.get(
-                frontend);
+        ConcurrentHashMap<String, ReentrantLock> keyLocks = (ConcurrentHashMap<String, ReentrantLock>) keyLocksField
+                .get(frontend);
 
         try {
             frontend.get(testKey1);
