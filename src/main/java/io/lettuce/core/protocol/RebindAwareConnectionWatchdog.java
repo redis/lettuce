@@ -41,7 +41,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.time.LocalTime;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,6 +50,8 @@ import java.util.stream.Collectors;
 public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements PushListener {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(RebindAwareConnectionWatchdog.class);
+
+    private static final String REBIND_MESSAGE_TYPE = "MOVING";
 
     public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
 
@@ -110,28 +111,21 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
         }
     }
 
-    // TODO this logic needs to be addressed according the finalized message payload
     private SocketAddress getRemoteAddress(PushMessage message) {
 
-        if (!message.getType().equals("message")) {
+        if (!REBIND_MESSAGE_TYPE.equals(message.getType())) {
             return null;
         }
 
-        List<String> content = message.getContent().stream()
-                .map(ez -> ez instanceof ByteBuffer ? StringCodec.UTF8.decodeKey((ByteBuffer) ez) : ez.toString())
-                .collect(Collectors.toList());
+        List<String> contents = message.getContent().stream().filter(element -> element instanceof ByteBuffer)
+                .map(ez -> StringCodec.UTF8.decodeKey((ByteBuffer) ez)).collect(Collectors.toList());
 
-        if (content.stream().noneMatch(c -> c.contains("type=rebind"))) {
+        if (contents.size() != 3) {
+            logger.warn("Invalid re-bind message format, expected 3 elements, got {}", contents);
             return null;
         }
 
-        final String payload = content.stream().filter(c -> c.contains("to_ep")).findFirst()
-                .orElse("type=rebind;from_ep=localhost:6479;to_ep=localhost:6379;until_s=10");
-
-        final String toEndpoint = Arrays.stream(payload.split(";")).filter(c -> c.contains("to_ep")).findFirst()
-                .orElse("to_ep=localhost:6479");
-
-        final String addressAndPort = toEndpoint.split("=")[1];
+        final String addressAndPort = contents.get(2);
         final String address = addressAndPort.split(":")[0];
         final int port = Integer.parseInt(addressAndPort.split(":")[1]);
 
