@@ -4,16 +4,12 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TimeoutOptions;
-import io.lettuce.core.api.push.PushListener;
-import io.lettuce.core.api.push.PushMessage;
-import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.event.EventBus;
-import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
-import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
 
-import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.List;
+import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
@@ -21,9 +17,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class LettuceRebindDemo {
+
+    public static final String ADDRESS = System.getenv("REBIND_DEMO_ADDRESS");
 
     public static final Logger logger = Logger.getLogger(LettuceRebindDemo.class.getName());
 
@@ -31,34 +28,26 @@ public class LettuceRebindDemo {
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
 
-        // NEW! No need for a custom handler
-        TimeoutOptions timeoutOpts = TimeoutOptions.builder().timeoutCommands().fixedTimeout(Duration.ofMillis(50))
-                // NEW! control that during timeouts we need to relax the timeouts
-                .proactiveTimeoutsRelaxing(Duration.ofMillis(500)).build();
-        // NEW! requires proactive rebind to be enabled
+        TimeoutOptions timeoutOpts = TimeoutOptions.builder().timeoutCommands().fixedTimeout(Duration.ofMillis(250))
+                // (optional) relax timeouts during re-bind to decrease risk of timeouts
+                .proactiveTimeoutsRelaxing(Duration.ofMillis(750)).build();
+        // (required) enable proactive re-bind by enabling it in the ClientOptions
         ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts).proactiveRebind(true).build();
 
-        RedisClient redisClient = RedisClient.create(RedisURI.Builder.redis("localhost", 6379).build());
+        RedisClient redisClient = RedisClient.create(RedisURI.create(ADDRESS == null ? "redis://localhost:6379" : ADDRESS));
         redisClient.setOptions(options);
 
-        // Monitor connection events
+        // (optional) monitor connection events
         EventBus eventBus = redisClient.getResources().eventBus();
         eventBus.get().subscribe(e -> {
             logger.info(">>> Event bus received: {} " + e);
         });
 
-        // Subscribe to __rebind channel (REMOVE ONCE WE START RECEIVING THESE WITHOUT SUBSCRIPTION)
-        StatefulRedisPubSubConnection<String, String> redis = redisClient.connectPubSub();
-        RedisPubSubAsyncCommands<String, String> commands = redis.async();
-        commands.subscribe("__rebind").get();
+        StatefulRedisConnection<String, String> redis = redisClient.connect();
+        RedisAsyncCommands<String, String> commands = redis.async();
 
-        // Used to stop the demo by sending the following command:
-        // publish __rebind "type=stop_demo"
-        Control control = new Control();
-        redis.addListener(control);
-
-        // Used to initiate the proactive rebind by sending the following command
-        // publish __rebind "type=rebind;from_ep=localhost:6379;to_ep=localhost:6479;until_s=10"
+        // Used to stop the demo after 3 minutes
+        Control control = new Control(Duration.ofMinutes(3));
 
         ExecutorService executorService = new ThreadPoolExecutor(5, // core pool size
                 10, // maximum pool size
@@ -67,7 +56,7 @@ public class LettuceRebindDemo {
                 new ThreadPoolExecutor.DiscardPolicy()); // rejection policy
 
         try {
-            while (control.shouldContinue) {
+            while (control.shouldContinue()) {
                 executorService.execute(new DemoWorker(commands));
                 Thread.sleep(1);
             }
@@ -88,9 +77,9 @@ public class LettuceRebindDemo {
 
     static class DemoWorker implements Runnable {
 
-        private final RedisPubSubAsyncCommands<String, String> commands;
+        private final RedisAsyncCommands<String, String> commands;
 
-        public DemoWorker(RedisPubSubAsyncCommands<String, String> commands) {
+        public DemoWorker(RedisAsyncCommands<String, String> commands) {
             this.commands = commands;
         }
 
@@ -105,19 +94,19 @@ public class LettuceRebindDemo {
 
     }
 
-    static class Control implements PushListener {
+    static class Control {
 
-        public boolean shouldContinue = true;
+        private final Instant start;
 
-        @Override
-        public void onPushMessage(PushMessage message) {
-            List<String> content = message.getContent().stream().filter(ez -> ez instanceof ByteBuffer)
-                    .map(ez -> StringCodec.UTF8.decodeKey((ByteBuffer) ez)).collect(Collectors.toList());
+        private final Duration duration;
 
-            if (content.stream().anyMatch(c -> c.contains("type=stop_demo"))) {
-                logger.info("Control received message to stop the demo");
-                shouldContinue = false;
-            }
+        public Control(Duration duration) {
+            this.duration = duration;
+            this.start = Instant.now();
+        }
+
+        public boolean shouldContinue() {
+            return Instant.now().isBefore(start.plus(duration));
         }
 
     }
