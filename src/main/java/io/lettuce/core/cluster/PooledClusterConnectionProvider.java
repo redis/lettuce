@@ -74,7 +74,6 @@ class PooledClusterConnectionProvider<K, V>
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledClusterConnectionProvider.class);
 
-    // Contains NodeId-identified and HostAndPort-identified connections.
     private final Lock stateLock = new ReentrantLock();
 
     private final boolean debugEnabled = logger.isDebugEnabled();
@@ -157,44 +156,39 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     private CompletableFuture<StatefulRedisConnection<K, V>> getWriteConnection(int slot) {
-        if (writers[slot] == null) {
+
+        CompletableFuture<StatefulRedisConnection<K, V>> writer = writers[slot];
+        if (writer != null) {
+            return writer;
+        }
+
+        RedisClusterNode master = partitions.getMasterBySlot(slot);
+        if (master == null) {
+            clusterEventListener.onUncoveredSlot(slot);
+            return Futures.failed(
+                    new PartitionSelectorException("Cannot determine a partition for slot " + slot + ".", partitions.clone()));
+        }
+
+        // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
+        // host because the nodeId can be handled by a different host.
+        RedisURI uri = master.getUri();
+        ConnectionKey key = new ConnectionKey(ConnectionIntent.WRITE, uri.getHost(), uri.getPort());
+
+        ConnectionFuture<StatefulRedisConnection<K, V>> future = getConnectionAsync(key);
+
+        return future.thenApply(connection -> {
+
             stateLock.lock();
             try {
                 if (writers[slot] == null) {
-                    RedisClusterNode master = partitions.getMasterBySlot(slot);
-                    if (master == null) {
-                        clusterEventListener.onUncoveredSlot(slot);
-                        return Futures.failed(new PartitionSelectorException(
-                                "Cannot determine a partition for slot " + slot + ".", partitions.clone()));
-                    }
-
-                    // Use always host and port for slot-oriented operations. We don't want to get reconnected on a different
-                    // host because the nodeId can be handled by a different host.
-                    RedisURI uri = master.getUri();
-                    ConnectionKey key = new ConnectionKey(ConnectionIntent.WRITE, uri.getHost(), uri.getPort());
-
-                    ConnectionFuture<StatefulRedisConnection<K, V>> future = getConnectionAsync(key);
-
-                    return future.thenApply(connection -> {
-
-                        stateLock.lock();
-                        try {
-                            if (writers[slot] == null) {
-                                writers[slot] = CompletableFuture.completedFuture(connection);
-                            }
-                        } finally {
-                            stateLock.unlock();
-                        }
-
-                        return connection;
-                    }).toCompletableFuture();
+                    writers[slot] = CompletableFuture.completedFuture(connection);
                 }
             } finally {
                 stateLock.unlock();
             }
-        }
 
-        return writers[slot];
+            return connection;
+        }).toCompletableFuture();
     }
 
     private CompletableFuture<StatefulRedisConnection<K, V>> getReadConnection(int slot) {
@@ -651,7 +645,6 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     /**
-     *
      * @return number of connections.
      */
     long getConnectionCount() {
@@ -682,8 +675,8 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     private boolean validateClusterNodeMembership() {
-        return redisClusterClient.getClusterClientOptions() == null
-                || redisClusterClient.getClusterClientOptions().isValidateClusterNodeMembership();
+        return redisClusterClient.getClusterClientOptions() == null || redisClusterClient.getClusterClientOptions()
+                .isValidateClusterNodeMembership();
     }
 
     /**
