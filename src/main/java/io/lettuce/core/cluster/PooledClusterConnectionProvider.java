@@ -675,8 +675,8 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     private boolean validateClusterNodeMembership() {
-        return redisClusterClient.getClusterClientOptions() == null || redisClusterClient.getClusterClientOptions()
-                .isValidateClusterNodeMembership();
+        return redisClusterClient.getClusterClientOptions() == null
+                || redisClusterClient.getClusterClientOptions().isValidateClusterNodeMembership();
     }
 
     /**
