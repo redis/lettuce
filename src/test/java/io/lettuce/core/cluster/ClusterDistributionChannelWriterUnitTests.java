@@ -230,11 +230,11 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldDisconnectWrappedEndpoint() {
 
-        CommandListenerWriter listenerWriter = new CommandListenerWriter(defaultWriter, Collections.emptyList());
-        CommandExpiryWriter expiryWriter = new CommandExpiryWriter(listenerWriter,
+        CommandExpiryWriter expiryWriter = new CommandExpiryWriter(defaultWriter,
                 ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build(), clientResources);
+        CommandListenerWriter listenerWriter = new CommandListenerWriter(expiryWriter, Collections.emptyList());
 
-        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(expiryWriter, ClientOptions.create(),
+        ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(listenerWriter, ClientOptions.create(),
                 clusterEventListener);
 
         writer.disconnectDefaultEndpoint();
