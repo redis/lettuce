@@ -43,6 +43,15 @@ public class Transports {
     }
 
     /**
+     * Checks if native transports (io_uring, epoll, kqueue) are available.
+     *
+     * @return {@code true} if native transports are available, {@code false} otherwise.
+     */
+    public static boolean areNativeTransportsAvailable() {
+        return NativeTransports.isAvailable();
+    }
+
+    /**
      * @return the default {@link DatagramChannel} for socket (network/UDP) transport.
      */
     public static Class<? extends DatagramChannel> datagramChannelClass() {
