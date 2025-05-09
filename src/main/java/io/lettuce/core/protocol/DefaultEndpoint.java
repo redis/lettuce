@@ -46,7 +46,6 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceFactories;
-import io.lettuce.core.rebind.RebindState;
 import io.lettuce.core.metrics.EndpointQueueMonitor;
 import io.lettuce.core.metrics.EndpointQueueMonitor.QueueId;
 import io.lettuce.core.resource.ClientResources;
