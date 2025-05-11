@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.netty.resolver.dns.DnsAddressResolverGroup;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -110,6 +111,15 @@ class DefaultClientResourcesUnitTests {
         DefaultClientResources sut = DefaultClientResources.builder().dnsResolver(dirContextDnsResolver).build();
 
         assertThat(sut.dnsResolver()).isEqualTo(dirContextDnsResolver);
+    }
+
+    @Test
+    void testShouldUseDnsAddressResolverGroup() {
+        DefaultClientResources sut = DefaultClientResources.create();
+        AddressResolverGroup<?> addressResolverGroup = sut.addressResolverGroup();
+
+        assertThat(addressResolverGroup).as("Default AddressResolverGroup should be DnsAddressResolverGroup")
+                .isInstanceOf(DnsAddressResolverGroup.class);
     }
 
     @Test
