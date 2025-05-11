@@ -264,7 +264,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
     }
 
     private String getNodeDescription(List<RedisClusterNode> notFinished) {
-        return String.join(", ", notFinished.stream().map(this::getDescriptor).collect(Collectors.toList()));
+        return notFinished.stream().map(this::getDescriptor).collect(Collectors.joining(", "));
     }
 
     private String getDescriptor(RedisClusterNode redisClusterNode) {
