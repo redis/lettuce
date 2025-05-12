@@ -53,6 +53,8 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
     private static final String REBIND_MESSAGE_TYPE = "MOVING";
 
+    private static final int REBIND_ADDRESS_INDEX = 2;
+
     public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
 
     private Channel channel;
@@ -117,19 +119,29 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
             return null;
         }
 
-        List<String> contents = message.getContent().stream().filter(element -> element instanceof ByteBuffer)
-                .map(ez -> StringCodec.UTF8.decodeKey((ByteBuffer) ez)).collect(Collectors.toList());
-
-        if (contents.size() != 3) {
-            logger.warn("Invalid re-bind message format, expected 3 elements, got {}", contents);
+        List<Object> content = message.getContent();
+        if (content.size() != 3) {
+            logger.warn("Invalid re-bind message format, expected 3 elements, got {}", content.size());
             return null;
         }
 
-        final String addressAndPort = contents.get(2);
-        final String address = addressAndPort.split(":")[0];
-        final int port = Integer.parseInt(addressAndPort.split(":")[1]);
+        Object addressObject = content.get(REBIND_ADDRESS_INDEX);
+        if (!(addressObject instanceof ByteBuffer)) {
+            logger.warn("Invalid re-bind message format, expected 3rd element to be a ByteBuffer, got {}",
+                    addressObject.getClass());
+            return null;
+        }
 
-        return new InetSocketAddress(address, port);
+        String addressAndPort = StringCodec.UTF8.decodeKey((ByteBuffer) addressObject);
+        try {
+            String[] parts = addressAndPort.split(":");
+            String address = parts[0];
+            int port = Integer.parseInt(parts[1]);
+            return new InetSocketAddress(address, port);
+        } catch (Exception e) {
+            logger.error("Failed to parse address and port from '{}'", addressAndPort, e);
+            return null;
+        }
     }
 
     public void setRebindListener(RebindAwareComponent component) {
