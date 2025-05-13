@@ -120,7 +120,7 @@ public class ConnectionInterruptionReactiveTest {
     public void testWithPubSub(String triggerAction) {
         RedisURI uri = RedisURI.builder(RedisURI.create(standalone.getEndpoints().get(0)))
                 .withAuthentication(standalone.getUsername(), standalone.getPassword()).build();
-        
+
         RedisClient subscriberClient = RedisClient.create(uri);
         subscriberClient.setOptions(ClientOptions.builder().autoReconnect(true).build());
 
@@ -132,9 +132,9 @@ public class ConnectionInterruptionReactiveTest {
 
         AtomicLong messagesSent = new AtomicLong();
         AtomicLong messagesReceived = new AtomicLong();
-        List<Throwable> subscriberExceptions = new CopyOnWriteArrayList<>();        
+        List<Throwable> subscriberExceptions = new CopyOnWriteArrayList<>();
         List<String> receivedMessages = new CopyOnWriteArrayList<>();
-        
+
         StatefulRedisPubSubConnection<String, String> pubSubConnection = subscriberClient.connectPubSub();
         RedisPubSubReactiveCommands<String, String> pubSubReactive = pubSubConnection.reactive();
         pubSubConnection.addListener(new RedisPubSubAdapter<String, String>() {
@@ -150,8 +150,8 @@ public class ConnectionInterruptionReactiveTest {
 
         StepVerifier.create(pubSubReactive.subscribe("test")).verifyComplete();
 
-        Disposable publisherSubscription = Flux.interval(Duration.ofMillis(200))
-                .flatMap(i -> publisherReactive.publish("test", String.valueOf(messagesSent.getAndIncrement())).onErrorResume(e -> {
+        Disposable publisherSubscription = Flux.interval(Duration.ofMillis(200)).flatMap(
+                i -> publisherReactive.publish("test", String.valueOf(messagesSent.getAndIncrement())).onErrorResume(e -> {
                     log.warn("Error publishing message", e);
                     subscriberExceptions.add(e);
                     return Mono.empty();
@@ -163,7 +163,7 @@ public class ConnectionInterruptionReactiveTest {
         // Trigger the fault injection
         Map<String, Object> params = new HashMap<>();
         params.put("bdb_id", standalone.getBdbId());
-        
+
         Mono<Boolean> actionCompleted = faultClient.triggerActionAndWait(triggerAction, params, CHECK_INTERVAL, DELAY_AFTER,
                 DEFAULT_TIMEOUT);
 

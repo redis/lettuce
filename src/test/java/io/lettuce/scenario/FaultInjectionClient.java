@@ -115,13 +115,11 @@ public class FaultInjectionClient {
                     // Return empty to trigger retry
                     return Mono.empty();
                 })
-                .retryWhen(reactor.util.retry.Retry.backoff(3, Duration.ofMillis(300))
-                    .maxBackoff(Duration.ofSeconds(2))
-                    .filter(throwable -> !(throwable instanceof RuntimeException &&
-                                          throwable.getMessage() != null &&
-                                          throwable.getMessage().contains("Fault injection proxy error")))
-                    .doBeforeRetry(retrySignal ->
-                        log.warn("Retrying action status check after error, attempt: {}", retrySignal.totalRetries() + 1)))
+                .retryWhen(reactor.util.retry.Retry.backoff(3, Duration.ofMillis(300)).maxBackoff(Duration.ofSeconds(2))
+                        .filter(throwable -> !(throwable instanceof RuntimeException && throwable.getMessage() != null
+                                && throwable.getMessage().contains("Fault injection proxy error")))
+                        .doBeforeRetry(retrySignal -> log.warn("Retrying action status check after error, attempt: {}",
+                                retrySignal.totalRetries() + 1)))
                 .onErrorResume(e -> {
                     log.error("Fault injection proxy error after retries", e);
                     return Mono.error(new RuntimeException("Fault injection proxy error", e));
