@@ -56,6 +56,7 @@ import io.netty.util.concurrent.Future;
  * @author Mark Paluch
  * @author Mikhael Sokolov
  * @author Yohei Ueki
+ * @author Euiyoung Nam
  * @since 3.4
  * @see DefaultClientResources
  */
@@ -361,7 +362,9 @@ public interface ClientResources {
      *
      * @return the DNS resolver.
      * @since 4.3
+     * @deprecated since 6.6 replaced by{@link AddressResolverGroup} instead.
      */
+    @Deprecated
     DnsResolver dnsResolver();
 
     /**
