@@ -69,8 +69,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Base Redis client. This class holds the netty infrastructure, {@link ClientOptions} and the basic connection procedure. This
  * class creates different Netty {@link EventLoopGroup}s depending on the {@link NativeTransports} used.
  * <p>
- * You can set the number of threads by using the {@link ClientResources} configuration.
- * For more details, check the documentation of the {@link DefaultClientResources} class.
+ * You can set the number of threads by using the {@link ClientResources} configuration. For more details, check the
+ * documentation of the {@link DefaultClientResources} class.
  * </p>
  *
  * @author Mark Paluch
