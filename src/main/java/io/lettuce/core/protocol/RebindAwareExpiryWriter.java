@@ -3,29 +3,8 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package io.lettuce.core.protocol;
-
-import static io.lettuce.core.TimeoutOptions.*;
-
-import java.time.Duration;
-import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
@@ -33,8 +12,19 @@ import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.channel.ChannelPipeline;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import static io.lettuce.core.TimeoutOptions.TimeoutSource;
 
 /**
  * Extension to {@link RedisChannelWriter} that expires commands. Command timeout starts at the time the command is written
@@ -43,9 +33,11 @@ import io.netty.util.Timer;
  * @author Mark Paluch
  * @author Tianyi Yang
  * @since 5.1
- * @see io.lettuce.core.TimeoutOptions
+ * @see TimeoutOptions
  */
-public class CommandExpiryWriter implements RedisChannelWriter {
+public class RebindAwareExpiryWriter implements RedisChannelWriter, RebindAwareComponent {
+
+    private static final Logger log = LoggerFactory.getLogger(RebindAwareExpiryWriter.class);
 
     private final RedisChannelWriter delegate;
 
@@ -59,16 +51,22 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     private final boolean applyConnectionTimeout;
 
+    private final Duration relaxedTimeout;
+
     private volatile long timeout = -1;
 
+    private volatile boolean relaxTimeouts = false;
+
+    private boolean registered = false;
+
     /**
-     * Create a new {@link CommandExpiryWriter}.
+     * Create a new {@link RebindAwareExpiryWriter}.
      *
      * @param delegate must not be {@code null}.
      * @param clientOptions must not be {@code null}.
      * @param clientResources must not be {@code null}.
      */
-    private CommandExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions, ClientResources clientResources) {
+    public RebindAwareExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions, ClientResources clientResources) {
 
         LettuceAssert.notNull(delegate, "RedisChannelWriter must not be null");
         LettuceAssert.isTrue(isSupported(clientOptions), "Command timeout not enabled");
@@ -78,17 +76,10 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         this.delegate = delegate;
         this.source = timeoutOptions.getSource();
         this.applyConnectionTimeout = timeoutOptions.isApplyConnectionTimeout();
+        this.relaxedTimeout = timeoutOptions.getRelaxedTimeout();
         this.timeUnit = source.getTimeUnit();
         this.executorService = clientResources.eventExecutorGroup();
         this.timer = clientResources.timer();
-    }
-
-    public static RedisChannelWriter buildCommandExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions, ClientResources clientResources) {
-        if(clientOptions.isProactiveRebindEnabled()){
-            return new RebindAwareExpiryWriter(delegate, clientOptions, clientResources);
-        } else {
-            return new CommandExpiryWriter(delegate, clientOptions, clientResources);
-        }
     }
 
     /**
@@ -129,6 +120,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
 
+        registerAsRebindAwareComponent();
         potentiallyExpire(command, getExecutorService());
         return delegate.write(command);
     }
@@ -137,6 +129,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
     public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> redisCommands) {
 
         ScheduledExecutorService executorService = getExecutorService();
+        registerAsRebindAwareComponent();
 
         for (RedisCommand<K, V, ?> command : redisCommands) {
             potentiallyExpire(command, executorService);
@@ -162,6 +155,8 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     @Override
     public void reset() {
+        relaxTimeouts = false;
+        registered = false;
         delegate.reset();
     }
 
@@ -187,8 +182,14 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
         Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
-                executors.submit(() -> command.completeExceptionally(ExceptionFactory
-                        .createTimeoutException(command.getType().toString(), Duration.ofNanos(timeUnit.toNanos(timeout)))));
+                executors.submit(() -> {
+                    if (relaxTimeouts) {
+                        relaxedAttempt(command, executors);
+                    } else {
+                        command.completeExceptionally(ExceptionFactory.createTimeoutException(command.getType().toString(),
+                                Duration.ofNanos(timeUnit.toNanos(timeout))));
+                    }
+                });
 
             }
         }, timeout, timeUnit);
@@ -197,6 +198,60 @@ public class CommandExpiryWriter implements RedisChannelWriter {
             ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
         }
 
+    }
+
+    // when relaxing the timeouts - instead of expiring immediately, we will start a new timer with 10 seconds
+    private void relaxedAttempt(RedisCommand<?, ?, ?> command, ScheduledExecutorService executors) {
+
+        Timeout commandTimeout = timer.newTimeout(t -> {
+            if (!command.isDone()) {
+                executors.submit(() -> command.completeExceptionally(ExceptionFactory.createTimeoutException(relaxedTimeout)));
+            }
+        }, relaxedTimeout.toMillis(), TimeUnit.MILLISECONDS);
+
+        if (command instanceof CompleteableCommand) {
+            ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
+        }
+    }
+
+    private void registerAsRebindAwareComponent() {
+        //
+
+        if (registered) {
+            return;
+        }
+
+        if (delegate instanceof DefaultEndpoint) {
+            DefaultEndpoint endpoint = (DefaultEndpoint) delegate;
+            ChannelPipeline pipeline = endpoint.channel.pipeline();
+            RebindAwareConnectionWatchdog watchdog = pipeline.get(RebindAwareConnectionWatchdog.class);
+            if (watchdog != null) {
+                watchdog.setRebindListener(this);
+            }
+        }
+
+        registered = true;
+    }
+
+    @Override
+    public void onRebindStarted() {
+        if (!relaxedTimeout.isNegative()) {
+            log.info("Re-bind started, relaxing timeouts with an additional {}ms", relaxedTimeout.toMillis());
+            this.relaxTimeouts = true;
+        } else {
+            log.debug("Re-bind started, but timeout relaxing is disabled");
+            this.relaxTimeouts = false;
+        }
+    }
+
+    @Override
+    public void onRebindCompleted() {
+        // Consider the rebind complete after another relaxed timeout cycle.
+        //
+        // The reasoning behind that is we can't really be sure when all the enqueued commands have
+        // successfully been written to the wire and then the reply was received
+        timer.newTimeout(t -> getExecutorService().submit(() -> this.relaxTimeouts = false), relaxedTimeout.toMillis(),
+                TimeUnit.MILLISECONDS);
     }
 
 }

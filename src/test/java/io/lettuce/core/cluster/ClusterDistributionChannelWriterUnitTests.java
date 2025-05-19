@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
+import io.lettuce.core.RedisChannelWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -230,9 +231,9 @@ class ClusterDistributionChannelWriterUnitTests {
     @Test
     void shouldDisconnectWrappedEndpoint() {
 
-        CommandExpiryWriter expiryWriter = new CommandExpiryWriter(defaultWriter,
+        RedisChannelWriter expiryWriter = CommandExpiryWriter.buildCommandExpiryWriter(defaultWriter,
                 ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build(), clientResources);
-        CommandListenerWriter listenerWriter = new CommandListenerWriter(expiryWriter, Collections.emptyList());
+        RedisChannelWriter listenerWriter = new CommandListenerWriter(expiryWriter, Collections.emptyList());
 
         ClusterDistributionChannelWriter writer = new ClusterDistributionChannelWriter(listenerWriter, ClientOptions.create(),
                 clusterEventListener);
