@@ -627,8 +627,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     }
 
     protected void decode(ChannelHandlerContext ctx, ByteBuf buffer) throws InterruptedException {
-        final boolean rebindInProgress = ctx.channel().hasAttr(REBIND_ATTRIBUTE)
-                && ctx.channel().attr(REBIND_ATTRIBUTE).get() != null
+        final boolean rebindInProgress = ctx.channel().attr(REBIND_ATTRIBUTE).get() != null
                 && ctx.channel().attr(REBIND_ATTRIBUTE).get().equals(RebindState.STARTED);
         if (debugEnabled && rebindInProgress) {
             logger.debug("{} Processing command while rebind is in progress, stack has {} more to process", logPrefix(),

@@ -29,13 +29,21 @@ import static io.lettuce.core.TimeoutOptions.TimeoutSource;
 /**
  * Extension to {@link RedisChannelWriter} that expires commands. Command timeout starts at the time the command is written
  * regardless to {@link #setAutoFlushCommands(boolean) flushing mode} (user-controlled batching).
+ * <p/>
+ * This implementation, compared to the {@link CommandExpiryWriter} implementation, relaxes the timeouts when a re-bind is in
+ * progress. The relaxation is done by starting a new timer with the relaxed timeout value. The relaxed timeout is configured
+ * via {@link TimeoutOptions#getRelaxedTimeout()}.
+ * <p/>
+ * The logic is only applied when the {@link ClientOptions#isProactiveRebindEnabled()} is enabled.
  *
- * @author Mark Paluch
- * @author Tianyi Yang
- * @since 5.1
+ * @author Tihomir Mateev
+ * @since 6.7
  * @see TimeoutOptions
+ * @see RebindAwareComponent
+ * @see RebindAwareConnectionWatchdog
+ * @see ClientOptions#isProactiveRebindEnabled()
  */
-public class RebindAwareExpiryWriter implements RedisChannelWriter, RebindAwareComponent {
+public class RebindAwareExpiryWriter extends CommandExpiryWriter implements RebindAwareComponent {
 
     private static final Logger log = LoggerFactory.getLogger(RebindAwareExpiryWriter.class);
 
@@ -68,9 +76,7 @@ public class RebindAwareExpiryWriter implements RedisChannelWriter, RebindAwareC
      */
     public RebindAwareExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions, ClientResources clientResources) {
 
-        LettuceAssert.notNull(delegate, "RedisChannelWriter must not be null");
-        LettuceAssert.isTrue(isSupported(clientOptions), "Command timeout not enabled");
-        LettuceAssert.notNull(clientResources, "ClientResources must not be null");
+        super(delegate, clientOptions, clientResources);
 
         TimeoutOptions timeoutOptions = clientOptions.getTimeoutOptions();
         this.delegate = delegate;
@@ -82,53 +88,20 @@ public class RebindAwareExpiryWriter implements RedisChannelWriter, RebindAwareC
         this.timer = clientResources.timer();
     }
 
-    /**
-     * Check whether {@link ClientOptions} is configured to timeout commands.
-     *
-     * @param clientOptions must not be {@code null}.
-     * @return {@code true} if {@link ClientOptions} are configured to timeout commands.
-     */
-    public static boolean isSupported(ClientOptions clientOptions) {
-
-        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
-
-        return isSupported(clientOptions.getTimeoutOptions());
-    }
-
-    private static boolean isSupported(TimeoutOptions timeoutOptions) {
-
-        LettuceAssert.notNull(timeoutOptions, "TimeoutOptions must not be null");
-
-        return timeoutOptions.isTimeoutCommands();
-    }
-
-    @Override
-    public void setConnectionFacade(ConnectionFacade connectionFacade) {
-        delegate.setConnectionFacade(connectionFacade);
-    }
-
-    @Override
-    public ClientResources getClientResources() {
-        return delegate.getClientResources();
-    }
-
-    @Override
-    public void setAutoFlushCommands(boolean autoFlush) {
-        delegate.setAutoFlushCommands(autoFlush);
-    }
-
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
-
+        // since the RebindAwareExpiryWriter lives outside the netty pipeline, and since it needs to be registered at a moment
+        // when the pipeline is configured and ready, we can only assume the moment is right if the write() method is called
         registerAsRebindAwareComponent();
-        potentiallyExpire(command, getExecutorService());
+
+        potentiallyExpire(command, executorService);
         return delegate.write(command);
     }
 
     @Override
     public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> redisCommands) {
-
-        ScheduledExecutorService executorService = getExecutorService();
+        // since the RebindAwareExpiryWriter lives outside the netty pipeline, and since it needs to be registered at a moment
+        // when the pipeline is configured and ready, we can only assume the moment is right if the write() method is called
         registerAsRebindAwareComponent();
 
         for (RedisCommand<K, V, ?> command : redisCommands) {
@@ -139,37 +112,10 @@ public class RebindAwareExpiryWriter implements RedisChannelWriter, RebindAwareC
     }
 
     @Override
-    public void flushCommands() {
-        delegate.flushCommands();
-    }
-
-    @Override
-    public void close() {
-        delegate.close();
-    }
-
-    @Override
-    public CompletableFuture<Void> closeAsync() {
-        return delegate.closeAsync();
-    }
-
-    @Override
     public void reset() {
         relaxTimeouts = false;
         registered = false;
-        delegate.reset();
-    }
-
-    public void setTimeout(Duration timeout) {
-        this.timeout = timeUnit.convert(timeout.toNanos(), TimeUnit.NANOSECONDS);
-    }
-
-    public RedisChannelWriter getDelegate() {
-        return delegate;
-    }
-
-    private ScheduledExecutorService getExecutorService() {
-        return this.executorService;
+        super.reset();
     }
 
     private void potentiallyExpire(RedisCommand<?, ?, ?> command, ScheduledExecutorService executors) {
@@ -215,8 +161,6 @@ public class RebindAwareExpiryWriter implements RedisChannelWriter, RebindAwareC
     }
 
     private void registerAsRebindAwareComponent() {
-        //
-
         if (registered) {
             return;
         }
@@ -250,7 +194,7 @@ public class RebindAwareExpiryWriter implements RedisChannelWriter, RebindAwareC
         //
         // The reasoning behind that is we can't really be sure when all the enqueued commands have
         // successfully been written to the wire and then the reply was received
-        timer.newTimeout(t -> getExecutorService().submit(() -> this.relaxTimeouts = false), relaxedTimeout.toMillis(),
+        timer.newTimeout(t -> executorService.submit(() -> this.relaxTimeouts = false), relaxedTimeout.toMillis(),
                 TimeUnit.MILLISECONDS);
     }
 
