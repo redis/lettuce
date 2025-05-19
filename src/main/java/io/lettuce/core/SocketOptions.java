@@ -19,7 +19,6 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.resource.Transports;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
@@ -229,16 +228,7 @@ public class SocketOptions {
          * @return new instance of {@link SocketOptions}
          */
         public SocketOptions build() {
-            SocketOptions options = new SocketOptions(this);
-
-            boolean requiresNative = options.isKeepAlive() || options.isExtendedKeepAlive() || options.isEnableTcpUserTimeout();
-
-            if (requiresNative && !Transports.areNativeTransportsAvailable()) {
-                throw new IllegalStateException(
-                        "The configured SocketOptions (keepAlive or tcpUserTimeout) require native transports (io_uring, epoll, kqueue), which are not available.");
-            }
-
-            return options;
+            return new SocketOptions(this);
         }
 
     }
