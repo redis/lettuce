@@ -548,7 +548,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -634,7 +634,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -680,7 +680,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -798,7 +798,7 @@ public class RedisClusterClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getClusterClientOptions())) {
-            writer = new CommandExpiryWriter(writer, getClusterClientOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getClusterClientOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -1091,6 +1091,7 @@ public class RedisClusterClient extends AbstractRedisClient {
                 getClusterClientOptions().getSocketOptions().getConnectTimeout(), useDynamicRefreshSources());
 
         return topology.thenApply(partitions -> {
+            logger.debug("Topology Refresh Views: {} ", partitions);
 
             if (partitions.isEmpty()) {
                 throw new RedisException(String.format("Cannot retrieve initial cluster partitions from initial URIs %s",
@@ -1108,7 +1109,7 @@ public class RedisClusterClient extends AbstractRedisClient {
             }
 
             topologyRefreshScheduler.activateTopologyRefreshIfNeeded();
-
+            logger.debug("Topology Refresh loadedPartitions: {}", loadedPartitions);
             return loadedPartitions;
         });
     }
