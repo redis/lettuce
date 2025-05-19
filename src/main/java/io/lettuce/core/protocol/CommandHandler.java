@@ -55,6 +55,7 @@ import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracer;
 import io.lettuce.core.tracing.Tracing;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;
@@ -119,6 +120,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private final BackpressureSource backpressureSource = new BackpressureSource();
 
+    private final int defaultReadBufferSize;
+
+    private final boolean createByteBufWhenRecvLargeKey;
+
     private RedisStateMachine rsm;
 
     private Channel channel;
@@ -138,6 +143,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     private boolean pristine;
 
     private Tracing.Endpoint tracedEndpoint;
+
+    private ByteBuf tmpReadBuffer;
+
+    private ByteBufAllocator byteBufAllocator;
 
     /**
      * Initialize a new instance that handles commands from the supplied queue.
@@ -165,6 +174,10 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.tracingEnabled = tracing.isEnabled();
 
         this.decodeBufferPolicy = clientOptions.getDecodeBufferPolicy();
+
+        this.defaultReadBufferSize = clientOptions.getReadBufferSize();
+
+        this.createByteBufWhenRecvLargeKey = clientOptions.isCreateByteBufWhenRecvLargeKey();
     }
 
     public Endpoint getEndpoint() {
@@ -222,7 +235,8 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         setState(LifecycleState.REGISTERED);
 
-        readBuffer = ctx.alloc().buffer(8192 * 8);
+        byteBufAllocator = ctx.alloc();
+        readBuffer = ctx.alloc().buffer(defaultReadBufferSize);
         rsm = new RedisStateMachine();
         ctx.fireChannelRegistered();
     }
@@ -615,6 +629,15 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 logger.trace("{} Buffer: {}", logPrefix(), input.toString(Charset.defaultCharset()).trim());
             }
 
+            // if buffer capacity larger than default capacity, then create a new buffer with double capacity
+            if (createByteBufWhenRecvLargeKey && readBuffer.capacity() == defaultReadBufferSize
+                    && readBuffer.writableBytes() < input.readableBytes() && byteBufAllocator != null) {
+                ByteBuf byteBuf = byteBufAllocator.directBuffer(readBuffer.capacity() << 1);
+                byteBuf.writeBytes(readBuffer);
+                tmpReadBuffer = readBuffer;
+                readBuffer = byteBuf;
+            }
+
             readBuffer.touch("CommandHandler.read(…)");
             readBuffer.writeBytes(input);
 
@@ -642,6 +665,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             }
         }
 
+        boolean decodeComplete = false;
         while (canDecode(buffer)) {
 
             if (isPushDecode(buffer)) {
@@ -702,6 +726,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                                 logger.debug("{} Completing command {}", logPrefix(), command);
                             }
                             complete(command);
+                            decodeComplete = true;
                         } catch (Exception e) {
                             logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
                         }
@@ -712,6 +737,16 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         }
 
         decodeBufferPolicy.afterDecoding(buffer);
+        releaseLargeBufferIfNecessary(buffer, decodeComplete);
+    }
+
+    private void releaseLargeBufferIfNecessary(ByteBuf buffer, boolean decodeComplete) {
+        if (decodeComplete && this.tmpReadBuffer != null) {
+            buffer.release();
+            this.readBuffer = tmpReadBuffer;
+            this.readBuffer.clear();
+            this.tmpReadBuffer = null;
+        }
     }
 
     protected void notifyPushListeners(PushMessage notification) {
