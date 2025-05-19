@@ -49,17 +49,32 @@ public enum CommandKeyword implements ProtocolKeyword {
 
     MIGRATING, IMPORTING, SAVE, SKIPME, SLAVES, STREAM, STORE, SUM, SEGFAULT, SETUSER, TAKEOVER, TRACKING, TRACKINGINFO, TYPE, UNBLOCK, USERS, USAGE, WEIGHTS, WHOAMI,
 
-    WITHMATCHLEN, WITHSCORE, WITHSCORES, WITHVALUES, XOR, XX, FXX, YES, INDENT, NEWLINE, SPACE, GT, LT;
+    WITHMATCHLEN, WITHSCORE, WITHSCORES, WITHVALUES, XOR, XX, FXX, YES, INDENT, NEWLINE, SPACE, GT, LT,
+
+    CAS, EF, SETATTR, M, NOQUANT, BIN, Q8, FILTER, FILTER_EF("FILTER-EF"), TRUTH, NOTHREAD;
 
     public final byte[] bytes;
 
+    private final String keyword;
+
     CommandKeyword() {
-        bytes = name().getBytes(StandardCharsets.US_ASCII);
+        keyword = name();
+        bytes = keyword.getBytes(StandardCharsets.US_ASCII);
+    }
+
+    CommandKeyword(String keyword) {
+        this.keyword = keyword;
+        bytes = keyword.getBytes(StandardCharsets.US_ASCII);
     }
 
     @Override
     public byte[] getBytes() {
         return bytes;
+    }
+
+    @Override
+    public String toString() {
+        return keyword;
     }
 
 }
