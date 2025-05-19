@@ -58,8 +58,8 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
     public RebindAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
             EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
-            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
-            Endpoint endpoint, ConnectionMonitor connectionMonitor) {
+            ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus, Endpoint endpoint,
+            ConnectionMonitor connectionMonitor) {
 
         super(reconnectDelay, clientOptions, bootstrap, timer, reconnectWorkers, socketAddressSupplier, reconnectionListener,
                 connectionFacade, eventBus, endpoint, connectionMonitor);
