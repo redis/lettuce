@@ -61,21 +61,18 @@ public class Transports {
      */
     public static class NativeTransports {
 
-        private static final InternalLogger epollLogger = InternalLoggerFactory.getInstance(EpollProvider.class);
+        private static final InternalLogger transportsLogger = InternalLoggerFactory.getInstance(Transports.class);
 
         static EventLoopResources RESOURCES = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
-                : EpollProvider.isAvailable() ? EpollProvider.getResources() : IOUringProvider.getResources();
-
-        static {
-            if (EpollProvider.isAvailable() && IOUringProvider.isAvailable()) {
-                epollLogger.warn("Both epoll and io_uring native transports are available, epoll has been prioritized.");
-            }
-        }
+                : IOUringProvider.isAvailable() ? IOUringProvider.getResources() : EpollProvider.getResources();
 
         /**
          * @return {@code true} if a native transport is available.
          */
         static boolean isAvailable() {
+            if (EpollProvider.isAvailable() && IOUringProvider.isAvailable()) {
+                transportsLogger.warn("Both epoll and io_uring native transports are available, epoll has been prioritized.");
+            }
             return EpollProvider.isAvailable() || KqueueProvider.isAvailable() || IOUringProvider.isAvailable();
         }
 
