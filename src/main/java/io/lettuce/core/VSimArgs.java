@@ -26,14 +26,25 @@ import io.lettuce.core.protocol.CommandKeyword;
 import java.util.Optional;
 
 /**
- * Argument list builder for the Redis <a href="https://redis.io/commands/vector-sim">VECTOR SIM</a> command. Static import the methods from
- * {@link Builder} and call the methods: {@code count(…)} .
+ * Argument list builder for the Redis <a href="https://redis.io/docs/latest/commands/vsim/">VSIM</a> command. Static import the
+ * methods from {@link Builder} and call the methods: {@code count(…)} .
+ * <p>
+ * Example usage:
+ * 
+ * <pre>
+ * 
+ * {
+ *     &#64;code
+ *     VSimArgs args = VSimArgs.count(10).explorationFactor(200).filter("price < 100").filterEfficiency(10);
+ * }
+ * </pre>
  * <p>
  * {@link VSimArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Tihomir Mateev
  * @since 6.3
  */
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class VSimArgs implements CompositeArgument {
 
     private Optional<Integer> count = Optional.empty();
@@ -50,6 +61,9 @@ public class VSimArgs implements CompositeArgument {
 
     /**
      * Builder entry points for {@link VSimArgs}.
+     * <p>
+     * These static methods provide a convenient way to create new instances of {@link VSimArgs} with specific options set. Each
+     * method creates a new instance and sets the corresponding option.
      */
     public static class Builder {
 
@@ -61,6 +75,8 @@ public class VSimArgs implements CompositeArgument {
 
         /**
          * Creates new {@link VSimArgs} and setting {@literal COUNT}.
+         * <p>
+         * The COUNT option limits the number of returned results to the specified value.
          *
          * @param count the number of results to return.
          * @return new {@link VSimArgs} with {@literal COUNT} set.
@@ -72,6 +88,9 @@ public class VSimArgs implements CompositeArgument {
 
         /**
          * Creates new {@link VSimArgs} and setting {@literal EF}.
+         * <p>
+         * The EF (exploration factor) option controls the search effort. Higher values explore more nodes, improving recall at
+         * the cost of speed. Typical values range from 50 to 1000.
          *
          * @param explorationFactor the exploration factor for the vector search.
          * @return new {@link VSimArgs} with {@literal EF} set.
@@ -83,21 +102,29 @@ public class VSimArgs implements CompositeArgument {
 
         /**
          * Creates new {@link VSimArgs} and setting {@literal FILTER}.
+         * <p>
+         * The FILTER option applies a filter expression to restrict matching elements. Filter expressions can be used to narrow
+         * down search results based on attributes.
          *
          * @param filter the filter expression to apply.
          * @return new {@link VSimArgs} with {@literal FILTER} set.
          * @see VSimArgs#filter(String)
+         * @see <a href="https://redis.io/docs/latest/develop/data-types/vector-sets/filtered-search/">Filter expressions</a>
          */
         public static VSimArgs filter(String filter) {
             return new VSimArgs().filter(filter);
         }
 
         /**
-         * Creates new {@link VSimArgs} and setting {@literal FILTEREFFICIENCY}.
+         * Creates new {@link VSimArgs} and setting {@literal FILTER-EF}.
+         * <p>
+         * The FILTER-EF option limits the number of filtering attempts for the FILTER expression. This controls the maximum
+         * effort spent on filtering during the search process.
          *
-         * @param filterEfficiency the filter efficiency to use.
-         * @return new {@link VSimArgs} with {@literal FILTEREFFICIENCY} set.
+         * @param filterEfficiency the maximum filtering effort to use.
+         * @return new {@link VSimArgs} with {@literal FILTER-EF} set.
          * @see VSimArgs#filterEfficiency(int)
+         * @see <a href="https://redis.io/docs/latest/develop/data-types/vector-sets/filtered-search/">Filter expressions</a>
          */
         public static VSimArgs filterEfficiency(int filterEfficiency) {
             return new VSimArgs().filterEfficiency(filterEfficiency);
@@ -105,6 +132,10 @@ public class VSimArgs implements CompositeArgument {
 
         /**
          * Creates new {@link VSimArgs} and setting {@literal TRUTH}.
+         * <p>
+         * The TRUTH option forces an exact linear scan of all elements, bypassing the HNSW graph. This is useful for
+         * benchmarking or to calculate recall. Note that this is significantly slower with a time complexity of O(N) instead of
+         * O(log(N)).
          *
          * @return new {@link VSimArgs} with {@literal TRUTH} set.
          * @see VSimArgs#truth()
@@ -115,6 +146,9 @@ public class VSimArgs implements CompositeArgument {
 
         /**
          * Creates new {@link VSimArgs} and setting {@literal NOTHREAD}.
+         * <p>
+         * The NOTHREAD option executes the search in the main thread instead of a background thread. This is useful for small
+         * vector sets or benchmarks, but may block the server during execution and increase server latency.
          *
          * @return new {@link VSimArgs} with {@literal NOTHREAD} set.
          * @see VSimArgs#noThread()
@@ -122,10 +156,16 @@ public class VSimArgs implements CompositeArgument {
         public static VSimArgs noThread() {
             return new VSimArgs().noThread();
         }
+
     }
 
     /**
      * Set the number of results to return.
+     * <p>
+     * The COUNT option limits the number of returned results to the specified value. This is useful when you only need a
+     * specific number of the most similar elements.
+     * <p>
+     * Time complexity: O(log(N)) where N is the number of elements in the vector set.
      *
      * @param count the number of results to return.
      * @return {@code this}
@@ -138,6 +178,11 @@ public class VSimArgs implements CompositeArgument {
 
     /**
      * Set the exploration factor for the vector search.
+     * <p>
+     * The EF (exploration factor) option controls the search effort. Higher values explore more nodes, improving recall at the
+     * cost of speed. Typical values range from 50 to 1000.
+     * <p>
+     * Increasing this value will generally improve search quality but reduce performance.
      *
      * @param explorationFactor the exploration factor for the vector search.
      * @return {@code this}
@@ -150,6 +195,11 @@ public class VSimArgs implements CompositeArgument {
 
     /**
      * Set the filter expression to apply.
+     * <p>
+     * The FILTER option applies a filter expression to restrict matching elements. Filter expressions can be used to narrow
+     * down search results based on attributes associated with the vector elements.
+     * <p>
+     * For example, a filter like "price < 100" would only return elements with a price attribute less than 100.
      *
      * @param filter the filter expression to apply.
      * @return {@code this}
@@ -163,8 +213,14 @@ public class VSimArgs implements CompositeArgument {
 
     /**
      * Set the filter efficiency to use.
+     * <p>
+     * The FILTER-EF option limits the number of filtering attempts for the FILTER expression. This controls the maximum effort
+     * spent on filtering during the search process.
+     * <p>
+     * Higher values will spend more effort trying to find elements that match the filter, potentially improving recall for
+     * filtered searches at the cost of performance.
      *
-     * @param filterEfficiency the filter efficiency to use.
+     * @param filterEfficiency the maximum filtering effort to use.
      * @return {@code this}
      */
     public VSimArgs filterEfficiency(int filterEfficiency) {
@@ -175,6 +231,11 @@ public class VSimArgs implements CompositeArgument {
 
     /**
      * Enable truth mode for the vector search.
+     * <p>
+     * The TRUTH option forces an exact linear scan of all elements, bypassing the HNSW graph. This is useful for benchmarking
+     * or to calculate recall. Note that this is significantly slower with a time complexity of O(N) instead of O(log(N)).
+     * <p>
+     * This option is primarily intended for testing and evaluation purposes.
      *
      * @return {@code this}
      */
@@ -184,6 +245,11 @@ public class VSimArgs implements CompositeArgument {
 
     /**
      * Enable or disable truth mode for the vector search.
+     * <p>
+     * The TRUTH option forces an exact linear scan of all elements, bypassing the HNSW graph. This is useful for benchmarking
+     * or to calculate recall. Note that this is significantly slower with a time complexity of O(N) instead of O(log(N)).
+     * <p>
+     * This option is primarily intended for testing and evaluation purposes.
      *
      * @param truth whether to enable truth mode.
      * @return {@code this}
@@ -195,6 +261,11 @@ public class VSimArgs implements CompositeArgument {
 
     /**
      * Disable threading for the vector search.
+     * <p>
+     * The NOTHREAD option executes the search in the main thread instead of a background thread. This is useful for small
+     * vector sets or benchmarks, but may block the server during execution and increase server latency.
+     * <p>
+     * Use this option with caution in production environments.
      *
      * @return {@code this}
      */
@@ -204,6 +275,11 @@ public class VSimArgs implements CompositeArgument {
 
     /**
      * Enable or disable threading for the vector search.
+     * <p>
+     * The NOTHREAD option executes the search in the main thread instead of a background thread. This is useful for small
+     * vector sets or benchmarks, but may block the server during execution and increase server latency.
+     * <p>
+     * Use this option with caution in production environments.
      *
      * @param noThread whether to disable threading.
      * @return {@code this}
@@ -215,21 +291,13 @@ public class VSimArgs implements CompositeArgument {
 
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
-        if (count.isPresent()) {
-            args.add(CommandKeyword.COUNT).add(count.get());
-        }
+        count.ifPresent(integer -> args.add(CommandKeyword.COUNT).add(integer));
 
-        if (explorationFactor.isPresent()) {
-            args.add(CommandKeyword.EF).add(explorationFactor.get());
-        }
+        explorationFactor.ifPresent(integer -> args.add(CommandKeyword.EF).add(integer));
 
-        if (filter.isPresent()) {
-            args.add(CommandKeyword.FILTER).add(filter.get());
-        }
+        filter.ifPresent(s -> args.add(CommandKeyword.FILTER).add(s));
 
-        if (filterEfficiency.isPresent()) {
-            args.add(CommandKeyword.FILTER_EF).add(filterEfficiency.get());
-        }
+        filterEfficiency.ifPresent(integer -> args.add(CommandKeyword.FILTER_EF).add(integer));
 
         if (truth.isPresent() && truth.get()) {
             args.add(CommandKeyword.TRUTH);
@@ -239,4 +307,5 @@ public class VSimArgs implements CompositeArgument {
             args.add(CommandKeyword.NOTHREAD);
         }
     }
+
 }

@@ -16,7 +16,8 @@ import java.lang.annotation.Target;
 /**
  * Annotation to mark APIs as experimental development.
  * <p>
- * Classes, methods, fields and constructors marked with this annotation may be renamed, changed or even removed in a future minor version. This annotation doesn't mean that the implementation has an experimental quality.
+ * Classes, methods, fields and constructors marked with this annotation may be renamed, changed or even removed in a future
+ * minor version. This annotation doesn't mean that the implementation has an experimental quality.
  * <p>
  * If a type is marked with this annotation, all its members are considered experimental.
  *

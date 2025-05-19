@@ -23,6 +23,7 @@ package io.lettuce.core.vector;
 import io.lettuce.core.protocol.CommandKeyword;
 
 public enum QuantizationType {
+
     NO_QUANTIZATION(CommandKeyword.NOQUANT.toString()), BINARY(CommandKeyword.BIN.toString()), Q8(CommandKeyword.Q8.toString());
 
     private final String keyword;
@@ -34,4 +35,5 @@ public enum QuantizationType {
     public String getKeyword() {
         return keyword;
     }
+
 }

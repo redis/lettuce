@@ -20,11 +20,17 @@
 package io.lettuce.core.vector;
 
 public class VectorMetadata {
+
     private Integer dimensionality;
+
     private QuantizationType type;
+
     private Integer size;
+
     private Integer explorationFactor;
+
     private Integer vSetUid;
+
     private Integer maxNodes;
 
     public VectorMetadata(Integer dimensionality, QuantizationType type, Integer size, Integer explorationFactor,
