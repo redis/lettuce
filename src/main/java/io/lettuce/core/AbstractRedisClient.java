@@ -60,7 +60,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.internal.logging.InternalLogger;
@@ -68,20 +67,19 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Base Redis client. This class holds the netty infrastructure, {@link ClientOptions} and the basic connection procedure. This
- * class creates the netty {@link EventLoopGroup}s for NIO ({@link NioEventLoopGroup}) and EPoll (
- * {@link io.netty.channel.epoll.EpollEventLoopGroup}) with a default of {@code Runtime.getRuntime().availableProcessors() * 4}
- * threads. Reuse the instance as much as possible since the {@link EventLoopGroup} instances are expensive and can consume a
- * huge part of your resources, if you create multiple instances.
+ * class creates different Netty {@link EventLoopGroup}s depending on the {@link NativeTransports} used.
  * <p>
- * You can set the number of threads per {@link NioEventLoopGroup} by setting the {@code io.netty.eventLoopThreads} system
- * property to a reasonable number of threads.
+ * You can set the number of threads by using the {@link ClientResources} configuration. For more details, check the
+ * documentation of the {@link DefaultClientResources} class.
  * </p>
  *
  * @author Mark Paluch
  * @author Jongyeol Choi
  * @author Poorva Gokhale
+ * @author Tihomir Mateev
  * @since 3.0
  * @see ClientResources
+ * @see DefaultClientResources
  */
 public abstract class AbstractRedisClient implements AutoCloseable {
 

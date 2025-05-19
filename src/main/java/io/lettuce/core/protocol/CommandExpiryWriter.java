@@ -96,6 +96,25 @@ public class CommandExpiryWriter implements RedisChannelWriter, RebindAwareCompo
     }
 
     /**
+     * Create a new {@link CommandExpiryWriter} or {@link RebindAwareExpiryWriter} depending on the {@link ClientOptions}
+     * configuration.
+     *
+     * @param delegate must not be {@code null}.
+     * @param clientOptions must not be {@code null}.
+     * @param clientResources must not be {@code null}.
+     * @return the {@link CommandExpiryWriter} or {@link RebindAwareExpiryWriter}.
+     * @since 6.7
+     */
+    public static RedisChannelWriter buildCommandExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions,
+            ClientResources clientResources) {
+        if (clientOptions.isProactiveRebindEnabled()) {
+            return new RebindAwareExpiryWriter(delegate, clientOptions, clientResources);
+        } else {
+            return new CommandExpiryWriter(delegate, clientOptions, clientResources);
+        }
+    }
+
+    /**
      * Check whether {@link ClientOptions} is configured to timeout commands.
      *
      * @param clientOptions must not be {@code null}.

@@ -279,6 +279,20 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * Configure whether the driver should listen for server events that indicate the current endpoint is being re-bound.
+         * When enabled, the proactive re-bind will help with the connection handover and reduce the number of failed commands.
+         * This feature requires the server to support proactive re-binds. Defaults to {@code false}. See
+         * {@link #DEFAULT_PROACTIVE_REBIND}.
+         *
+         * @param proactiveRebind true/false
+         * @return {@code this}
+         */
+        public Builder proactiveRebind(boolean proactiveRebind) {
+            this.proactiveRebind = proactiveRebind;
+            return this;
+        }
+
+        /**
          * When {@link #autoReconnect(boolean)} is set to true, this {@link Predicate} is used to filter commands to replay when
          * the connection is reestablished after a disconnect. Returning <code>false</code> means the command will not be
          * filtered out and will be replayed. Defaults to replaying all queued commands.
