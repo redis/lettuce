@@ -43,6 +43,10 @@ public class VectorMetadata {
         this.maxNodes = maxNodes;
     }
 
+    public VectorMetadata() {
+
+    }
+
     public Integer getDimensionality() {
         return dimensionality;
     }

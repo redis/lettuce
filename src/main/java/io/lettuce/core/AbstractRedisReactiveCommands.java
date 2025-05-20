@@ -52,6 +52,8 @@ import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
+import io.lettuce.core.vector.RawVector;
+import io.lettuce.core.vector.VectorMetadata;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import reactor.core.publisher.Flux;
@@ -89,7 +91,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
         RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
         RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
-        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V> {
+        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
+        RedisVectorSetReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -97,11 +100,14 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
 
+    private final RedisVectorSetCommandBuilder<K,V> vectorSetCommandBuilder;
+
     private final Supplier<JsonParser> parser;
 
     private final ClientResources clientResources;
 
     private final boolean tracingEnabled;
+
 
     private volatile EventExecutorGroup scheduler;
 
@@ -118,6 +124,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         this.parser = parser;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
+        this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -1750,6 +1757,126 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<JsonType> jsonType(K key) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonType(key, JsonPath.ROOT_PATH));
+    }
+
+    @Override
+    public Mono<Boolean> vadd(K key, V element, Double... vectors) {
+        return createMono(() -> vectorSetCommandBuilder.vadd(key, -1, element, null, vectors));
+    }
+
+    @Override
+    public Mono<Boolean> vadd(K key, int dimensionality, V element, Double... vectors) {
+        return createMono(() -> vectorSetCommandBuilder.vadd(key,  dimensionality, element, null, vectors));
+    }
+
+    @Override
+    public Mono<Boolean> vadd(K key, V element, VAddArgs args, Double... vectors) {
+        return createMono(() -> vectorSetCommandBuilder.vadd(key, -1, element, args, vectors));
+    }
+
+    @Override
+    public Mono<Boolean> vadd(K key, int dimensionality, V element, VAddArgs args, Double... vectors) {
+        return createMono(() -> vectorSetCommandBuilder.vadd(key, dimensionality, element, args, vectors));
+    }
+
+    @Override
+    public Mono<Long> vcard(K key) {
+        return createMono(() -> vectorSetCommandBuilder.vcard(key));
+    }
+
+    @Override
+    public Flux<V> vdim(K key) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vdim(key));
+    }
+
+    @Override
+    public Flux<Double> vemb(K key, V element) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vemb(key, element));
+    }
+
+    @Override
+    public Mono<RawVector> vembRaw(K key, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vembRaw(key, element));
+    }
+
+    @Override
+    public Mono<String> vgetattr(K key, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vgetattr(key, element));
+    }
+
+    @Override
+    public Mono<VectorMetadata> vinfo(K key) {
+        return createMono(() -> vectorSetCommandBuilder.vinfo(key));
+    }
+
+    @Override
+    public Flux<V> vlinks(K key, V element) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vlinks(key, element));
+    }
+
+    @Override
+    public Flux<V> vlinksWithScores(K key, V element) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vlinksWithScores(key, element));
+    }
+
+    @Override
+    public Mono<V> vrandmember(K key) {
+        return createMono(() -> vectorSetCommandBuilder.vrandmember(key));
+    }
+
+    @Override
+    public Flux<V> vrandmember(K key, int count) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vrandmember(key, count));
+    }
+
+    @Override
+    public Mono<Boolean> vrem(K key, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vrem(key, element));
+    }
+
+    @Override
+    public Mono<Boolean> vsetattr(K key, V element, String json) {
+        return createMono(() -> vectorSetCommandBuilder.vsetattr(key, element, json));
+    }
+
+    @Override
+    public Flux<V> vsim(K key, Double... vectors) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vsim(key, null, vectors));
+    }
+
+    @Override
+    public Flux<V> vsim(K key, V element) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vsim(key,null, element));
+    }
+
+    @Override
+    public Flux<V> vsim(K key, VSimArgs args, Double... vectors) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vsim(key, args, vectors));
+    }
+
+    @Override
+    public Flux<V> vsim(K key, VSimArgs args, V element) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vsim(key, args, element));
+    }
+
+    @Override
+    public Mono<Map<V, Long>> vsimWithScore(K key, Double... vectors) {
+        return createMono(() -> vectorSetCommandBuilder.vsimWithScore(key, null, vectors));
+    }
+
+    @Override
+    public Mono<Map<V, Long>> vsimWithScore(K key, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vsimWithScore(key, null, element));
+    }
+
+    @Override
+    public Mono<Map<V, Long>> vsimWithScore(K key, VSimArgs args, Double... vectors) {
+        return createMono(() -> vectorSetCommandBuilder.vsimWithScore(key, args, vectors));
+    }
+
+    @Override
+    public Mono<Map<V, Long>> vsimWithScore(K key, VSimArgs args, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vsimWithScore(key, args, element));
     }
 
     @Override

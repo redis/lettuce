@@ -17,30 +17,31 @@ import java.util.Optional;
  * methods from {@link Builder} and call the methods: {@code count(…)} .
  * <p>
  * Example usage:
- * 
  * <pre>
- * 
- * {
- *     &#64;code
- *     VSimArgs args = VSimArgs.count(10).explorationFactor(200).filter("price < 100").filterEfficiency(10);
+ * {@code
+ *    VSimArgs args = VSimArgs
+ *                        .count(10)
+ *                        .explorationFactor(200)
+ *                        .filter("price < 100")
+ *                        .filterEfficiency(10);
  * }
  * </pre>
  * <p>
  * {@link VSimArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Tihomir Mateev
- * @since 6.3
+ * @since 6.7
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class VSimArgs implements CompositeArgument {
 
-    private Optional<Integer> count = Optional.empty();
+    private Optional<Long> count = Optional.empty();
 
-    private Optional<Integer> explorationFactor = Optional.empty();
+    private Optional<Long> explorationFactor = Optional.empty();
 
     private Optional<String> filter = Optional.empty();
 
-    private Optional<Integer> filterEfficiency = Optional.empty();
+    private Optional<Long> filterEfficiency = Optional.empty();
 
     private Optional<Boolean> truth = Optional.empty();
 
@@ -67,9 +68,9 @@ public class VSimArgs implements CompositeArgument {
          *
          * @param count the number of results to return.
          * @return new {@link VSimArgs} with {@literal COUNT} set.
-         * @see VSimArgs#count(int)
+         * @see VSimArgs#count(Long)
          */
-        public static VSimArgs count(int count) {
+        public static VSimArgs count(Long count) {
             return new VSimArgs().count(count);
         }
 
@@ -81,9 +82,9 @@ public class VSimArgs implements CompositeArgument {
          *
          * @param explorationFactor the exploration factor for the vector search.
          * @return new {@link VSimArgs} with {@literal EF} set.
-         * @see VSimArgs#explorationFactor(int)
+         * @see VSimArgs#explorationFactor(Long)
          */
-        public static VSimArgs explorationFactor(int explorationFactor) {
+        public static VSimArgs explorationFactor(Long explorationFactor) {
             return new VSimArgs().explorationFactor(explorationFactor);
         }
 
@@ -110,10 +111,10 @@ public class VSimArgs implements CompositeArgument {
          *
          * @param filterEfficiency the maximum filtering effort to use.
          * @return new {@link VSimArgs} with {@literal FILTER-EF} set.
-         * @see VSimArgs#filterEfficiency(int)
+         * @see VSimArgs#filterEfficiency(Long)
          * @see <a href="https://redis.io/docs/latest/develop/data-types/vector-sets/filtered-search/">Filter expressions</a>
          */
-        public static VSimArgs filterEfficiency(int filterEfficiency) {
+        public static VSimArgs filterEfficiency(Long filterEfficiency) {
             return new VSimArgs().filterEfficiency(filterEfficiency);
         }
 
@@ -157,7 +158,7 @@ public class VSimArgs implements CompositeArgument {
      * @param count the number of results to return.
      * @return {@code this}
      */
-    public VSimArgs count(int count) {
+    public VSimArgs count(Long count) {
         LettuceAssert.isTrue(count > 0, "Count must be greater than 0");
         this.count = Optional.of(count);
         return this;
@@ -174,7 +175,7 @@ public class VSimArgs implements CompositeArgument {
      * @param explorationFactor the exploration factor for the vector search.
      * @return {@code this}
      */
-    public VSimArgs explorationFactor(int explorationFactor) {
+    public VSimArgs explorationFactor(Long explorationFactor) {
         LettuceAssert.isTrue(explorationFactor > 0, "Exploration factor must be greater than 0");
         this.explorationFactor = Optional.of(explorationFactor);
         return this;
@@ -210,7 +211,7 @@ public class VSimArgs implements CompositeArgument {
      * @param filterEfficiency the maximum filtering effort to use.
      * @return {@code this}
      */
-    public VSimArgs filterEfficiency(int filterEfficiency) {
+    public VSimArgs filterEfficiency(Long filterEfficiency) {
         LettuceAssert.isTrue(filterEfficiency >= 0, "Filter efficiency must be greater than or equal to 0");
         this.filterEfficiency = Optional.of(filterEfficiency);
         return this;
@@ -278,13 +279,13 @@ public class VSimArgs implements CompositeArgument {
 
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
-        count.ifPresent(integer -> args.add(CommandKeyword.COUNT).add(integer));
+        count.ifPresent(Long -> args.add(CommandKeyword.COUNT).add(Long));
 
-        explorationFactor.ifPresent(integer -> args.add(CommandKeyword.EF).add(integer));
+        explorationFactor.ifPresent(Long -> args.add(CommandKeyword.EF).add(Long));
 
         filter.ifPresent(s -> args.add(CommandKeyword.FILTER).add(s));
 
-        filterEfficiency.ifPresent(integer -> args.add(CommandKeyword.FILTER_EF).add(integer));
+        filterEfficiency.ifPresent(Long -> args.add(CommandKeyword.FILTER_EF).add(Long));
 
         if (truth.isPresent() && truth.get()) {
             args.add(CommandKeyword.TRUTH);

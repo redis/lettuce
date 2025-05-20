@@ -45,11 +45,11 @@ public class VAddArgs implements CompositeArgument {
 
     private Optional<QuantizationType> quantType = Optional.empty();
 
-    private Optional<Integer> explorationFactor = Optional.empty();
+    private Optional<Long> explorationFactor = Optional.empty();
 
     private Optional<String> attributes = Optional.empty();
 
-    private Optional<Integer> maxNodes = Optional.empty();
+    private Optional<Long> maxNodes = Optional.empty();
 
     /**
      * Builder entry points for {@link VAddArgs}.
@@ -110,9 +110,9 @@ public class VAddArgs implements CompositeArgument {
          *
          * @param explorationFactor the exploration factor for the vector search (default: 200).
          * @return new {@link VAddArgs} with {@literal EF} set.
-         * @see VAddArgs#explorationFactor(int)
+         * @see VAddArgs#explorationFactor(Long)
          */
-        public static VAddArgs explorationFactor(int explorationFactor) {
+        public static VAddArgs explorationFactor(Long explorationFactor) {
             return new VAddArgs().explorationFactor(explorationFactor);
         }
 
@@ -129,9 +129,9 @@ public class VAddArgs implements CompositeArgument {
          *
          * @param maxNodes the maximum number of connections per node (default: 16).
          * @return new {@link VAddArgs} with {@literal M} set.
-         * @see VAddArgs#maxNodes(int)
+         * @see VAddArgs#maxNodes(Long)
          */
-        public static VAddArgs maxNodes(int maxNodes) {
+        public static VAddArgs maxNodes(Long maxNodes) {
             return new VAddArgs().maxNodes(maxNodes);
         }
 
@@ -202,7 +202,7 @@ public class VAddArgs implements CompositeArgument {
      * @param explorationFactor the exploration factor for the vector search (default: 200).
      * @return {@code this}
      */
-    public VAddArgs explorationFactor(int explorationFactor) {
+    public VAddArgs explorationFactor(Long explorationFactor) {
         LettuceAssert.isTrue(explorationFactor > 0, "Exploration factor must be greater than 0");
         this.explorationFactor = Optional.of(explorationFactor);
         return this;
@@ -221,7 +221,7 @@ public class VAddArgs implements CompositeArgument {
      * @param maxNodes the maximum number of connections per node (default: 16).
      * @return {@code this}
      */
-    public VAddArgs maxNodes(int maxNodes) {
+    public VAddArgs maxNodes(Long maxNodes) {
         LettuceAssert.isTrue(maxNodes > 0, "Max nodes must be greater than 0");
         this.maxNodes = Optional.of(maxNodes);
         return this;
@@ -264,11 +264,11 @@ public class VAddArgs implements CompositeArgument {
 
         quantType.ifPresent(quantizationType -> args.add(quantizationType.getKeyword()));
 
-        explorationFactor.ifPresent(integer -> args.add(CommandKeyword.EF).add(integer));
+        explorationFactor.ifPresent(Long -> args.add(CommandKeyword.EF).add(Long));
 
         attributes.ifPresent(attr -> args.add(CommandKeyword.SETATTR).add(attr));
 
-        maxNodes.ifPresent(integer -> args.add(CommandKeyword.M).add(integer));
+        maxNodes.ifPresent(Long -> args.add(CommandKeyword.M).add(Long));
     }
 
 }

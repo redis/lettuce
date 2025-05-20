@@ -26,6 +26,10 @@ public class RawVector {
         this.quantizationRange = quantizationRange;
     }
 
+    public RawVector() {
+
+    }
+
     public QuantizationType getType() {
         return type;
     }
