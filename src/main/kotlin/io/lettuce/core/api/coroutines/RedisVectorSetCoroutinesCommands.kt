@@ -8,6 +8,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.VAddArgs
 import io.lettuce.core.VSimArgs
 import io.lettuce.core.annotations.Experimental
@@ -126,7 +127,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * Time complexity: O(1)
      *
      * @param key the key of the vector set
-     * @return the dimensionality of the vector set, or an empty list if the key does not exist
+     * @return the number of vector set elements
      * @since 6.7
      * @see <a href="https://redis.io/docs/latest/commands/vdim/">Redis Documentation: VDIM</a>
      */
@@ -228,7 +229,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/vlinks/">Redis Documentation: VLINKS</a>
      */
     @Experimental
-    suspend fun vlinksWithScores(key: K, element: V): List<V>
+    suspend fun vlinksWithScores(key: K, element: V): Map<V, Double>?
 
     /**
      * Returns a random element from the vector set stored at `key`. This command is useful for sampling elements for
@@ -364,7 +365,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    suspend fun vsim(key: K, element: V, args: VSimArgs): List<V>
+    suspend fun vsim(key: K, args: VSimArgs, element: V): List<V>
 
     /**
      * Finds the most similar vectors to the given query vector in the vector set stored at `key` and returns them with
@@ -381,7 +382,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    suspend fun vsimWithScore(key: K, vararg vectors: Double): Map<V, Long>?
+    suspend fun vsimWithScore(key: K, vararg vectors: Double): Map<V, Double>?
 
     /**
      * Finds the most similar vectors to the given element's vector in the vector set stored at `key` and returns them
@@ -398,7 +399,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    suspend fun vsimWithScore(key: K, element: V): Map<V, Long>?
+    suspend fun vsimWithScore(key: K, element: V): Map<V, Double>?
 
     /**
      * Finds the most similar vectors to the given query vector in the vector set stored at `key` with additional options
@@ -416,7 +417,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    suspend fun vsimWithScore(key: K, args: VSimArgs, vararg vectors: Double): Map<V, Long>?
+    suspend fun vsimWithScore(key: K, args: VSimArgs, vararg vectors: Double): Map<V, Double>?
 
     /**
      * Finds the most similar vectors to the given element's vector in the vector set stored at `key` with additional
@@ -435,7 +436,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    suspend fun vsimWithScore(key: K, element: V, args: VSimArgs): Map<V, Long>?
+    suspend fun vsimWithScore(key: K, args: VSimArgs, element: V): Map<V, Double>?
 
 }
 

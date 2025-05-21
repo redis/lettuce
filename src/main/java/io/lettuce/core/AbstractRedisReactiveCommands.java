@@ -1783,8 +1783,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Flux<V> vdim(K key) {
-        return createDissolvingFlux(() -> vectorSetCommandBuilder.vdim(key));
+    public Mono<Long> vdim(K key) {
+        return createMono(() -> vectorSetCommandBuilder.vdim(key));
     }
 
     @Override
@@ -1813,8 +1813,8 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Flux<V> vlinksWithScores(K key, V element) {
-        return createDissolvingFlux(() -> vectorSetCommandBuilder.vlinksWithScores(key, element));
+    public Mono<Map<V, Double>> vlinksWithScores(K key, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vlinksWithScores(key, element));
     }
 
     @Override
@@ -1858,22 +1858,22 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
-    public Mono<Map<V, Long>> vsimWithScore(K key, Double... vectors) {
+    public Mono<Map<V, Double>> vsimWithScore(K key, Double... vectors) {
         return createMono(() -> vectorSetCommandBuilder.vsimWithScore(key, null, vectors));
     }
 
     @Override
-    public Mono<Map<V, Long>> vsimWithScore(K key, V element) {
+    public Mono<Map<V, Double>> vsimWithScore(K key, V element) {
         return createMono(() -> vectorSetCommandBuilder.vsimWithScore(key, null, element));
     }
 
     @Override
-    public Mono<Map<V, Long>> vsimWithScore(K key, VSimArgs args, Double... vectors) {
+    public Mono<Map<V, Double>> vsimWithScore(K key, VSimArgs args, Double... vectors) {
         return createMono(() -> vectorSetCommandBuilder.vsimWithScore(key, args, vectors));
     }
 
     @Override
-    public Mono<Map<V, Long>> vsimWithScore(K key, VSimArgs args, V element) {
+    public Mono<Map<V, Double>> vsimWithScore(K key, VSimArgs args, V element) {
         return createMono(() -> vectorSetCommandBuilder.vsimWithScore(key, args, element));
     }
 

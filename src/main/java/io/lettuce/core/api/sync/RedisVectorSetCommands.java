@@ -125,12 +125,12 @@ public interface RedisVectorSetCommands<K, V> {
      * Time complexity: O(1)
      *
      * @param key the key of the vector set
-     * @return the dimensionality of the vector set, or an empty list if the key does not exist
+     * @return the number of vector set elements
      * @since 6.7
      * @see <a href="https://redis.io/docs/latest/commands/vdim/">Redis Documentation: VDIM</a>
      */
     @Experimental
-    List<V> vdim(K key);
+    Long vdim(K key);
 
     /**
      * Returns the approximate vector associated with a given {@code element} in the vector set stored at {@code key}.
@@ -227,7 +227,7 @@ public interface RedisVectorSetCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/vlinks/">Redis Documentation: VLINKS</a>
      */
     @Experimental
-    List<V> vlinksWithScores(K key, V element);
+    Map<V, Double> vlinksWithScores(K key, V element);
 
     /**
      * Returns a random element from the vector set stored at {@code key}. This command is useful for sampling elements for
@@ -363,7 +363,7 @@ public interface RedisVectorSetCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    List<V> vsim(K key, V element, VSimArgs args);
+    List<V> vsim(K key, VSimArgs args, V element);
 
     /**
      * Finds the most similar vectors to the given query vector in the vector set stored at {@code key} and returns them with
@@ -380,7 +380,7 @@ public interface RedisVectorSetCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    Map<V, Long> vsimWithScore(K key, Double... vectors);
+    Map<V, Double> vsimWithScore(K key, Double... vectors);
 
     /**
      * Finds the most similar vectors to the given element's vector in the vector set stored at {@code key} and returns them
@@ -397,7 +397,7 @@ public interface RedisVectorSetCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    Map<V, Long> vsimWithScore(K key, V element);
+    Map<V, Double> vsimWithScore(K key, V element);
 
     /**
      * Finds the most similar vectors to the given query vector in the vector set stored at {@code key} with additional options
@@ -415,7 +415,7 @@ public interface RedisVectorSetCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    Map<V, Long> vsimWithScore(K key, VSimArgs args, Double... vectors);
+    Map<V, Double> vsimWithScore(K key, VSimArgs args, Double... vectors);
 
     /**
      * Finds the most similar vectors to the given element's vector in the vector set stored at {@code key} with additional
@@ -434,6 +434,5 @@ public interface RedisVectorSetCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
-    Map<V, Long> vsimWithScore(K key, V element, VSimArgs args);
-
+    Map<V, Double> vsimWithScore(K key, VSimArgs args, V element);
 }

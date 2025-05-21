@@ -142,10 +142,10 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      * @return a new {@link Command} that returns the dimensionality of the vector set
      * @see <a href="https://redis.io/docs/latest/commands/vdim/">Redis Documentation: VDIM</a>
      */
-    public Command<K, V, List<V>> vdim(K key) {
+    public Command<K, V, Long> vdim(K key) {
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        return createCommand(VDIM, new ValueListOutput<>(codec), args);
+        return createCommand(VDIM, new IntegerOutput<>(codec), args);
     }
 
     /**
@@ -175,7 +175,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
         notNullKey(key);
         notNullKey(element);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element).add(RAW);
-        return createCommand(VEMB, new RawVectorOutput<>(codec), args);
+        return createCommand(VEMB, new ComplexOutput<>(codec, RawVectorParser.INSTANCE), args);
     }
 
     /**
@@ -203,7 +203,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     public Command<K, V, VectorMetadata> vinfo(K key) {
         notNullKey(key);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        return createCommand(VINFO, new VectorMetadataOutput<>(codec), args);
+        return createCommand(VINFO, new ComplexOutput<>(codec, VectorMetadataParser.INSTANCE), args);
     }
 
     /**
@@ -229,11 +229,11 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      * @return a new {@link Command} that returns a list of elements with their similarity scores
      * @see <a href="https://redis.io/docs/latest/commands/vlinks/">Redis Documentation: VLINKS</a>
      */
-    public Command<K, V, List<V>> vlinksWithScores(K key, V element) {
+    public Command<K, V, Map<V, Double>> vlinksWithScores(K key, V element) {
         notNullKey(key);
         notNullKey(element);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element).add(WITHSCORES);
-        return createCommand(VLINKS, new ValueListOutput<>(codec), args);
+        return createCommand(VLINKS, new ValueDoubleMapOutput<>(codec), args);
     }
 
     /**
@@ -366,7 +366,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
         notNullKey(key);
         notNullKey(element);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(ELE).addValue(element);
 
         if (vSimArgs != null) {
             vSimArgs.build(args);
@@ -384,7 +384,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      * @return a new {@link Command} that returns a map of elements to their similarity scores
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
-    public Command<K, V, Map<V, Long>> vsimWithScore(K key, Double[] vectors) {
+    public Command<K, V, Map<V, Double>> vsimWithScore(K key, Double[] vectors) {
         return vsimWithScore(key, null, vectors);
     }
 
@@ -397,7 +397,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      * @return a new {@link Command} that returns a map of elements to their similarity scores
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
-    public Command<K, V, Map<V, Long>> vsimWithScore(K key, V element) {
+    public Command<K, V, Map<V, Double>> vsimWithScore(K key, V element) {
         return vsimWithScore(key, null, element);
     }
 
@@ -411,7 +411,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      * @return a new {@link Command} that returns a map of elements to their similarity scores
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
-    public Command<K, V, Map<V, Long>> vsimWithScore(K key, VSimArgs vSimArgs, Double[] vectors) {
+    public Command<K, V, Map<V, Double>> vsimWithScore(K key, VSimArgs vSimArgs, Double[] vectors) {
         notNullKey(key);
         notEmpty(vectors);
 
@@ -431,7 +431,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
             vSimArgs.build(args);
         }
 
-        return createCommand(VSIM, new ValueLongMapOutput<>(codec), args);
+        return createCommand(VSIM, new ValueDoubleMapOutput<>(codec), args);
     }
 
     /**
@@ -444,17 +444,17 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      * @return a new {@link Command} that returns a map of elements to their similarity scores
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
-    public Command<K, V, Map<V, Long>> vsimWithScore(K key, VSimArgs vSimArgs, V element) {
+    public Command<K, V, Map<V, Double>> vsimWithScore(K key, VSimArgs vSimArgs, V element) {
         notNullKey(key);
         notNullKey(element);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element).add(WITHSCORES);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(ELE).addValue(element).add(WITHSCORES);
 
         if (vSimArgs != null) {
             vSimArgs.build(args);
         }
 
-        return createCommand(VSIM, new ValueLongMapOutput<>(codec), args);
+        return createCommand(VSIM, new ValueDoubleMapOutput<>(codec), args);
     }
 
 }

@@ -132,7 +132,7 @@ class RedisVectorSetCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructVdim() {
-        Command<String, String, List<String>> command = builder.vdim(KEY);
+        Command<String, String, Long> command = builder.vdim(KEY);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -203,7 +203,7 @@ class RedisVectorSetCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructVlinksWithScores() {
-        Command<String, String, List<String>> command = builder.vlinksWithScores(KEY, ELEMENT);
+        Command<String, String, Map<String, Double>> command = builder.vlinksWithScores(KEY, ELEMENT);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -284,9 +284,10 @@ class RedisVectorSetCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + 
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" +
                 "$4\r\n" + "VSIM\r\n" + 
-                "$10\r\n" + "vector:set\r\n" + 
+                "$10\r\n" + "vector:set\r\n" +
+                "$3\r\n" + "ELE\r\n" +
                 "$8\r\n" + "element1\r\n");
     }
 
@@ -316,7 +317,7 @@ class RedisVectorSetCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructVsimWithScores() {
-        Command<String, String, Map<String, Long>> command = builder.vsimWithScore(KEY, VECTORS);
+        Command<String, String, Map<String, Double>> command = builder.vsimWithScore(KEY, VECTORS);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -333,13 +334,14 @@ class RedisVectorSetCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructVsimWithElementAndScores() {
-        Command<String, String, Map<String, Long>> command = builder.vsimWithScore(KEY, ELEMENT);
+        Command<String, String, Map<String, Double>> command = builder.vsimWithScore(KEY, ELEMENT);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + 
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" +
                 "$4\r\n" + "VSIM\r\n" + 
-                "$10\r\n" + "vector:set\r\n" + 
+                "$10\r\n" + "vector:set\r\n" +
+                "$3\r\n" + "ELE\r\n" +
                 "$8\r\n" + "element1\r\n" + 
                 "$10\r\n" + "WITHSCORES\r\n");
     }
@@ -350,7 +352,7 @@ class RedisVectorSetCommandBuilderUnitTests {
         args.count(5L);
         args.truth(true);
         
-        Command<String, String, Map<String, Long>> command = builder.vsimWithScore(KEY, args, VECTORS);
+        Command<String, String, Map<String, Double>> command = builder.vsimWithScore(KEY, args, VECTORS);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

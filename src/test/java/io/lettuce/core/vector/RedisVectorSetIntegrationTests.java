@@ -118,10 +118,8 @@ public class RedisVectorSetIntegrationTests {
 
     @Test
     void vdim() {
-        List<String> dim = redis.vdim(VECTOR_SET_KEY);
-        assertThat(dim).isNotEmpty();
-        // The dimensionality should be 3 based on our test vectors
-        assertThat(dim.get(0)).isEqualTo("3");
+        Long dim = redis.vdim(VECTOR_SET_KEY);
+        assertThat(dim).isEqualTo(3L);
     }
 
     @Test
@@ -161,6 +159,12 @@ public class RedisVectorSetIntegrationTests {
         assertThat(info).isNotNull();
         assertThat(info.getSize()).isEqualTo(3);
         assertThat(info.getDimensionality()).isEqualTo(3);
+        assertThat(info.getType()).isEqualTo(QuantizationType.Q8);
+        assertThat(info.getMaxNodeUid()).isNotNull();
+        assertThat(info.getMaxNodes()).isEqualTo(16);
+        assertThat(info.getvSetUid()).isEqualTo(3);
+        assertThat(info.getProjectionInputDim()).isEqualTo(0);
+        assertThat(info.getAttributesCount()).isEqualTo(0);
     }
 
     @Test
@@ -179,8 +183,12 @@ public class RedisVectorSetIntegrationTests {
         redis.vadd(VECTOR_SET_KEY, "item4", 0.11, 0.21, 0.31);
         redis.vadd(VECTOR_SET_KEY, "item5", 0.12, 0.22, 0.32);
 
-        List<String> linksWithScores = redis.vlinksWithScores(VECTOR_SET_KEY, ELEMENT1);
+        Map<String, Double> linksWithScores = redis.vlinksWithScores(VECTOR_SET_KEY, ELEMENT1);
         assertThat(linksWithScores).isNotEmpty();
+        assertThat(linksWithScores.get(ELEMENT2)).isEqualTo(0.9964823722839355D);
+        assertThat(linksWithScores.get(ELEMENT3)).isEqualTo(0.9919525384902954D);
+        assertThat(linksWithScores.get("item4")).isEqualTo(1.0);
+        assertThat(linksWithScores.get("item5")).isEqualTo(0.9997878074645996D);
     }
 
     @Test
@@ -228,14 +236,14 @@ public class RedisVectorSetIntegrationTests {
         assertThat(similar).hasSize(2);
 
         // Test vsim with element and args
-        similar = redis.vsim(VECTOR_SET_KEY, ELEMENT1, args);
+        similar = redis.vsim(VECTOR_SET_KEY, args, ELEMENT1);
         assertThat(similar).hasSize(2);
     }
 
     @Test
     void vsimWithScore() {
         // Test vsimWithScore with vector
-        Map<String, Long> similarWithScores = redis.vsimWithScore(VECTOR_SET_KEY, 0.15, 0.25, 0.35);
+        Map<String, Double> similarWithScores = redis.vsimWithScore(VECTOR_SET_KEY, 0.15, 0.25, 0.35);
         assertThat(similarWithScores).isNotEmpty();
 
         // Test vsimWithScore with element
@@ -249,7 +257,7 @@ public class RedisVectorSetIntegrationTests {
         assertThat(similarWithScores).hasSize(2);
 
         // Test vsimWithScore with element and args
-        similarWithScores = redis.vsimWithScore(VECTOR_SET_KEY, ELEMENT1, args);
+        similarWithScores = redis.vsimWithScore(VECTOR_SET_KEY, args, ELEMENT1);
         assertThat(similarWithScores).hasSize(2);
     }
 

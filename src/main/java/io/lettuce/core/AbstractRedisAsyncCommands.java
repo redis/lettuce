@@ -1716,7 +1716,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> vdim(K key) {
+    public RedisFuture<Long> vdim(K key) {
         return dispatch(vectorSetCommandBuilder.vdim(key));
     }
 
@@ -1746,7 +1746,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> vlinksWithScores(K key, V element) {
+    public RedisFuture<Map<V, Double>> vlinksWithScores(K key, V element) {
         return dispatch(vectorSetCommandBuilder.vlinksWithScores(key, element));
     }
 
@@ -1791,22 +1791,22 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Map<V, Long>> vsimWithScore(K key, Double... vectors) {
+    public RedisFuture<Map<V, Double>> vsimWithScore(K key, Double... vectors) {
         return dispatch(vectorSetCommandBuilder.vsimWithScore(key, null, vectors));
     }
 
     @Override
-    public RedisFuture<Map<V, Long>> vsimWithScore(K key, V element) {
+    public RedisFuture<Map<V, Double>> vsimWithScore(K key, V element) {
         return dispatch(vectorSetCommandBuilder.vsimWithScore(key, null, element));
     }
 
     @Override
-    public RedisFuture<Map<V, Long>> vsimWithScore(K key, VSimArgs args, Double... vectors) {
+    public RedisFuture<Map<V, Double>> vsimWithScore(K key, VSimArgs args, Double... vectors) {
         return dispatch(vectorSetCommandBuilder.vsimWithScore(key, args, vectors));
     }
 
     @Override
-    public RedisFuture<Map<V, Long>> vsimWithScore(K key, VSimArgs args, V element) {
+    public RedisFuture<Map<V, Double>> vsimWithScore(K key, VSimArgs args, V element) {
         return dispatch(vectorSetCommandBuilder.vsimWithScore(key, args, element));
     }
 

@@ -135,7 +135,7 @@ public class RedisVectorSetAdvancedIntegrationTests {
         args.filter("$.category == \"clothing\"");
         
         // Search for vectors similar to item1 with filtering
-        List<String> similar = redis.vsim(VECTOR_SET_KEY, "item1", args);
+        List<String> similar = redis.vsim(VECTOR_SET_KEY, args, "item1");
         assertThat(similar).isNotEmpty();
         
         // All results should be clothing items
@@ -148,12 +148,12 @@ public class RedisVectorSetAdvancedIntegrationTests {
     @Test
     void testSimilaritySearchWithScores() {
         // Search for vectors similar to item1 with scores
-        Map<String, Long> similarWithScores = redis.vsimWithScore(VECTOR_SET_KEY, "item1");
+        Map<String, Double> similarWithScores = redis.vsimWithScore(VECTOR_SET_KEY, "item1");
         assertThat(similarWithScores).isNotEmpty();
         
         // Check that scores are ordered (lower scores are more similar)
-        Long previousScore = null;
-        for (Map.Entry<String, Long> entry : similarWithScores.entrySet()) {
+        Double previousScore = null;
+        for (Map.Entry<String, Double> entry : similarWithScores.entrySet()) {
             if (previousScore != null) {
                 assertThat(entry.getValue()).isGreaterThanOrEqualTo(previousScore);
             }
@@ -214,8 +214,9 @@ public class RedisVectorSetAdvancedIntegrationTests {
         assertThat(links).isNotEmpty();
         
         // Get links with scores
-        List<String> linksWithScores = redis.vlinksWithScores(VECTOR_SET_KEY, "item1");
+        Map<String, Double> linksWithScores = redis.vlinksWithScores(VECTOR_SET_KEY, "item1");
         assertThat(linksWithScores).isNotEmpty();
+        assertThat(linksWithScores.get("item1")).isEqualTo(1.0);
         
         // The links list should have fewer elements than the linksWithScores list
         // because linksWithScores includes both elements and scores
