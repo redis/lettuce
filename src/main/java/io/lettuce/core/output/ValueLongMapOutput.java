@@ -14,9 +14,9 @@ import io.lettuce.core.vector.RawVector;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ValueLongMapOutput<K, V> extends CommandOutput<K, V, Map<V,Long>> {
+public class ValueLongMapOutput<K, V> extends CommandOutput<K, V, Map<V, Long>> {
 
-    public ValueLongMapOutput(RedisCodec<K, V> codec)  {
+    public ValueLongMapOutput(RedisCodec<K, V> codec) {
         super(codec, new HashMap<>());
     }
 

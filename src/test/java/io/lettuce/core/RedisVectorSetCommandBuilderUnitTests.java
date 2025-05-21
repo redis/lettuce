@@ -3,19 +3,6 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package io.lettuce.core;
 
@@ -87,7 +74,7 @@ class RedisVectorSetCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*7\r\n" + 
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*10\r\n" +
                 "$4\r\n" + "VADD\r\n" + 
                 "$10\r\n" + "vector:set\r\n" + 
                 "$6\r\n" + "REDUCE\r\n" + 
@@ -113,7 +100,7 @@ class RedisVectorSetCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*7\r\n" + 
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*16\r\n" +
                 "$4\r\n" + "VADD\r\n" + 
                 "$10\r\n" + "vector:set\r\n" + 
                 "$6\r\n" + "VALUES\r\n" + 
@@ -125,7 +112,11 @@ class RedisVectorSetCommandBuilderUnitTests {
                 "$3\r\n" + "CAS\r\n" + 
                 "$7\r\n" + "NOQUANT\r\n" +
                 "$2\r\n" + "EF\r\n" +
-                "$3\r\n" + "100\r\n");
+                "$3\r\n" + "100\r\n" +
+                "$7\r\n" + "SETATTR\r\n" +
+                "$21\r\n" + "{\"attribute\":\"value\"}\r\n"+
+                "$1\r\n" + "M\r\n" +
+                "$3\r\n" + "100\r\n");;
     }
 
     @Test
@@ -230,7 +221,7 @@ class RedisVectorSetCommandBuilderUnitTests {
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*2\r\n" + 
-                "$10\r\n" + "VRANDMEMBER\r\n" + 
+                "$11\r\n" + "VRANDMEMBER\r\n" +
                 "$10\r\n" + "vector:set\r\n");
     }
 
@@ -241,7 +232,7 @@ class RedisVectorSetCommandBuilderUnitTests {
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + 
-                "$10\r\n" + "VRANDMEMBER\r\n" + 
+                "$11\r\n" + "VRANDMEMBER\r\n" +
                 "$10\r\n" + "vector:set\r\n" + 
                 "$1\r\n" + "3\r\n");
     }
@@ -268,7 +259,7 @@ class RedisVectorSetCommandBuilderUnitTests {
                 "$8\r\n" + "VSETATTR\r\n" + 
                 "$10\r\n" + "vector:set\r\n" + 
                 "$8\r\n" + "element1\r\n" + 
-                "$19\r\n" + "{\"attribute\":\"value\"}\r\n");
+                "$21\r\n" + "{\"attribute\":\"value\"}\r\n");
     }
 
     @Test
@@ -277,7 +268,7 @@ class RedisVectorSetCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + 
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*7\r\n" +
                 "$4\r\n" + "VSIM\r\n" + 
                 "$10\r\n" + "vector:set\r\n" + 
                 "$6\r\n" + "VALUES\r\n" + 
@@ -309,7 +300,7 @@ class RedisVectorSetCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + 
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*11\r\n" +
                 "$4\r\n" + "VSIM\r\n" + 
                 "$10\r\n" + "vector:set\r\n" + 
                 "$6\r\n" + "VALUES\r\n" + 
@@ -329,7 +320,7 @@ class RedisVectorSetCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*6\r\n" + 
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" +
                 "$4\r\n" + "VSIM\r\n" + 
                 "$10\r\n" + "vector:set\r\n" + 
                 "$6\r\n" + "VALUES\r\n" + 
@@ -363,7 +354,7 @@ class RedisVectorSetCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + 
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*11\r\n" +
                 "$4\r\n" + "VSIM\r\n" + 
                 "$10\r\n" + "vector:set\r\n" + 
                 "$6\r\n" + "VALUES\r\n" + 

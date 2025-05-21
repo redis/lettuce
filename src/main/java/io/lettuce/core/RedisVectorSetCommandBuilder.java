@@ -84,7 +84,8 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     }
 
     /**
-     * Create a new {@code VADD} command to add a vector to a vector set with the specified dimensionality and additional options.
+     * Create a new {@code VADD} command to add a vector to a vector set with the specified dimensionality and additional
+     * options.
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param dimensionality the number of dimensions for the vector
@@ -105,7 +106,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
             args.add(dimensionality);
         }
 
-        if(vectors.length > 1) {
+        if (vectors.length > 1) {
             args.add(CommandKeyword.VALUES);
             args.add(vectors.length);
             Arrays.stream(vectors).map(Object::toString).forEach(args::add);
@@ -267,7 +268,8 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param element the name of the element to remove from the vector set, must not be {@code null}
-     * @return a new {@link Command} that returns {@literal true} if the element was removed, {@literal false} if the key or element does not exist
+     * @return a new {@link Command} that returns {@literal true} if the element was removed, {@literal false} if the key or
+     *         element does not exist
      * @see <a href="https://redis.io/docs/latest/commands/vrem/">Redis Documentation: VREM</a>
      */
     public Command<K, V, Boolean> vrem(K key, V element) {
@@ -283,7 +285,8 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      * @param key the key of the vector set, must not be {@code null}
      * @param element the name of the element in the vector set, must not be {@code null}
      * @param json the attributes as a JSON string, must not be {@code null}
-     * @return a new {@link Command} that returns {@literal true} if the attributes were set, {@literal false} if the key or element does not exist
+     * @return a new {@link Command} that returns {@literal true} if the attributes were set, {@literal false} if the key or
+     *         element does not exist
      * @see <a href="https://redis.io/docs/latest/commands/vsetattr/">Redis Documentation: VSETATTR</a>
      */
     public Command<K, V, Boolean> vsetattr(K key, V element, String json) {
@@ -319,7 +322,8 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     }
 
     /**
-     * Create a new {@code VSIM} command to find the most similar vectors to the given query vector in a vector set with additional options.
+     * Create a new {@code VSIM} command to find the most similar vectors to the given query vector in a vector set with
+     * additional options.
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param vSimArgs the additional arguments for the VSIM command
@@ -349,7 +353,8 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     }
 
     /**
-     * Create a new {@code VSIM} command to find the most similar vectors to the given element's vector in a vector set with additional options.
+     * Create a new {@code VSIM} command to find the most similar vectors to the given element's vector in a vector set with
+     * additional options.
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param vSimArgs the additional arguments for the VSIM command
@@ -371,7 +376,8 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     }
 
     /**
-     * Create a new {@code VSIM} command with the WITHSCORES option to find the most similar vectors to the given query vector and return them with their similarity scores.
+     * Create a new {@code VSIM} command with the WITHSCORES option to find the most similar vectors to the given query vector
+     * and return them with their similarity scores.
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param vectors the query vector values as floating point numbers, must not be empty
@@ -383,7 +389,8 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     }
 
     /**
-     * Create a new {@code VSIM} command with the WITHSCORES option to find the most similar vectors to the given element's vector and return them with their similarity scores.
+     * Create a new {@code VSIM} command with the WITHSCORES option to find the most similar vectors to the given element's
+     * vector and return them with their similarity scores.
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param element the name of the element whose vector will be used as the query, must not be {@code null}
@@ -395,7 +402,8 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     }
 
     /**
-     * Create a new {@code VSIM} command with the WITHSCORES option to find the most similar vectors to the given query vector with additional options and return them with their similarity scores.
+     * Create a new {@code VSIM} command with the WITHSCORES option to find the most similar vectors to the given query vector
+     * with additional options and return them with their similarity scores.
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param vSimArgs the additional arguments for the VSIM command
@@ -427,7 +435,8 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     }
 
     /**
-     * Create a new {@code VSIM} command with the WITHSCORES option to find the most similar vectors to the given element's vector with additional options and return them with their similarity scores.
+     * Create a new {@code VSIM} command with the WITHSCORES option to find the most similar vectors to the given element's
+     * vector with additional options and return them with their similarity scores.
      *
      * @param key the key of the vector set, must not be {@code null}
      * @param vSimArgs the additional arguments for the VSIM command

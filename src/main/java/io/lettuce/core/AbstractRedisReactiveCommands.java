@@ -86,13 +86,12 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author Tihomir Mateev
  * @since 4.0
  */
-public abstract class AbstractRedisReactiveCommands<K, V>
-        implements RedisAclReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
-        RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
-        RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
-        RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
-        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
-        RedisVectorSetReactiveCommands<K, V> {
+public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
+        RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
+        RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
+        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
+        BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
+        RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
@@ -100,14 +99,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
 
-    private final RedisVectorSetCommandBuilder<K,V> vectorSetCommandBuilder;
+    private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
     private final ClientResources clientResources;
 
     private final boolean tracingEnabled;
-
 
     private volatile EventExecutorGroup scheduler;
 
@@ -1766,7 +1764,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     @Override
     public Mono<Boolean> vadd(K key, int dimensionality, V element, Double... vectors) {
-        return createMono(() -> vectorSetCommandBuilder.vadd(key,  dimensionality, element, null, vectors));
+        return createMono(() -> vectorSetCommandBuilder.vadd(key, dimensionality, element, null, vectors));
     }
 
     @Override
@@ -1846,7 +1844,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     @Override
     public Flux<V> vsim(K key, V element) {
-        return createDissolvingFlux(() -> vectorSetCommandBuilder.vsim(key,null, element));
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vsim(key, null, element));
     }
 
     @Override

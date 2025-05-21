@@ -1,0 +1,76 @@
+{
+  "vectors": [
+    {
+      "id": "item1",
+      "vector": [0.1, 0.2, 0.3],
+      "metadata": {
+        "category": "electronics",
+        "price": 100.0,
+        "tags": ["smartphone", "mobile"]
+      }
+    },
+    {
+      "id": "item2",
+      "vector": [0.2, 0.3, 0.4],
+      "metadata": {
+        "category": "electronics",
+        "price": 150.0,
+        "tags": ["laptop", "computer"]
+      }
+    },
+    {
+      "id": "item3",
+      "vector": [0.3, 0.4, 0.5],
+      "metadata": {
+        "category": "electronics",
+        "price": 200.0,
+        "tags": ["tablet", "mobile"]
+      }
+    },
+    {
+      "id": "item4",
+      "vector": [0.4, 0.5, 0.6],
+      "metadata": {
+        "category": "home",
+        "price": 50.0,
+        "tags": ["furniture", "chair"]
+      }
+    },
+    {
+      "id": "item5",
+      "vector": [0.5, 0.6, 0.7],
+      "metadata": {
+        "category": "home",
+        "price": 75.0,
+        "tags": ["furniture", "table"]
+      }
+    },
+    {
+      "id": "item6",
+      "vector": [0.6, 0.7, 0.8],
+      "metadata": {
+        "category": "clothing",
+        "price": 25.0,
+        "tags": ["shirt", "apparel"]
+      }
+    },
+    {
+      "id": "item7",
+      "vector": [0.7, 0.8, 0.9],
+      "metadata": {
+        "category": "clothing",
+        "price": 35.0,
+        "tags": ["pants", "apparel"]
+      }
+    },
+    {
+      "id": "item8",
+      "vector": [0.8, 0.9, 1.0],
+      "metadata": {
+        "category": "clothing",
+        "price": 45.0,
+        "tags": ["shoes", "apparel"]
+      }
+    }
+  ]
+}

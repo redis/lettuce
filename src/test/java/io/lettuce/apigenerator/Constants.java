@@ -27,11 +27,13 @@ import java.io.File;
  */
 class Constants {
 
-    public static final String[] TEMPLATE_NAMES = { /*"BaseRedisCommands", "RedisAclCommands", "RedisFunctionCommands",
-            "RedisGeoCommands", "RedisHashCommands", "RedisHLLCommands", "RedisKeyCommands", "RedisListCommands",
-            "RedisScriptingCommands", "RedisSentinelCommands", "RedisServerCommands", "RedisSetCommands",
-            "RedisSortedSetCommands", "RedisStreamCommands", "RedisStringCommands", "RedisTransactionalCommands",
-            "RedisJsonCommands",*/ "RedisVectorSetCommands" };
+    public static final String[] TEMPLATE_NAMES = {
+            /*
+             * "BaseRedisCommands", "RedisAclCommands", "RedisFunctionCommands", "RedisGeoCommands", "RedisHashCommands",
+             * "RedisHLLCommands", "RedisKeyCommands", "RedisListCommands", "RedisScriptingCommands", "RedisSentinelCommands",
+             * "RedisServerCommands", "RedisSetCommands", "RedisSortedSetCommands", "RedisStreamCommands",
+             * "RedisStringCommands", "RedisTransactionalCommands", "RedisJsonCommands",
+             */ "RedisVectorSetCommands" };
 
     public static final File TEMPLATES = new File("src/main/templates");
 

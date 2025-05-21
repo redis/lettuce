@@ -17,13 +17,12 @@ import java.util.Optional;
  * methods from {@link Builder} and call the methods: {@code count(…)} .
  * <p>
  * Example usage:
+ * 
  * <pre>
- * {@code
- *    VSimArgs args = VSimArgs
- *                        .count(10)
- *                        .explorationFactor(200)
- *                        .filter("price < 100")
- *                        .filterEfficiency(10);
+ * 
+ * {
+ *     &#64;code
+ *     VSimArgs args = VSimArgs.count(10).explorationFactor(200).filter("price < 100").filterEfficiency(10);
  * }
  * </pre>
  * <p>

@@ -13,7 +13,7 @@ import io.lettuce.core.vector.VectorMetadata;
 
 public class VectorMetadataOutput<K, V> extends CommandOutput<K, V, VectorMetadata> {
 
-    public VectorMetadataOutput(RedisCodec<K, V> codec)  {
+    public VectorMetadataOutput(RedisCodec<K, V> codec) {
         super(codec, new VectorMetadata());
     }
 
