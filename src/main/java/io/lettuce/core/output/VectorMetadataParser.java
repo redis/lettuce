@@ -19,9 +19,9 @@ import java.util.Map;
 /**
  * Parser for Redis <a href="https://redis.io/docs/latest/commands/vinfo/">VINFO</a> command output.
  * <p>
- * This parser converts the response from the Redis VINFO command into a {@link VectorMetadata} object,
- * which contains information about a vector set including its dimensionality, quantization type, size,
- * and other parameters related to the HNSW graph structure.
+ * This parser converts the response from the Redis VINFO command into a {@link VectorMetadata} object, which contains
+ * information about a vector set including its dimensionality, quantization type, size, and other parameters related to the
+ * HNSW graph structure.
  *
  * @author Tihomir Mateev
  * @since 6.7
@@ -35,18 +35,28 @@ public class VectorMetadataParser implements ComplexDataParser<VectorMetadata> {
     // Field names in the VINFO response
 
     private static final String ATTRIBUTES_COUNT = "attributes-count";
+
     private static final String SIZE = "size";
+
     private static final String M = "hnsw-m";
+
     private static final String VSET_UID = "vset-uid";
+
     private static final String QUANT_TYPE = "quant-type";
+
     private static final String MAX_LEVEL = "max-level";
+
     private static final String VECTOR_DIM = "vector-dim";
+
     private static final String MAX_NODE_UID = "hnsw-max-node-uid";
+
     private static final String PROJECTION_INPUT_DIM = "projection-input-dim";
 
     // Quant types
     private static final String INT8 = "int8";
+
     private static final String FLOAT32 = "float32";
+
     private static final String BINARY = "binary";
 
     /**
@@ -58,9 +68,8 @@ public class VectorMetadataParser implements ComplexDataParser<VectorMetadata> {
     /**
      * Parse the output of the Redis VINFO command and convert it to a {@link VectorMetadata} object.
      * <p>
-     * The VINFO command returns an array of key-value pairs, where each pair consists of a field name
-     * followed by its value. This method extracts the relevant fields and populates a {@link VectorMetadata}
-     * object with the corresponding values.
+     * The VINFO command returns an array of key-value pairs, where each pair consists of a field name followed by its value.
+     * This method extracts the relevant fields and populates a {@link VectorMetadata} object with the corresponding values.
      *
      * @param dynamicData output of VINFO command
      * @return a {@link VectorMetadata} instance containing the parsed information
@@ -69,6 +78,12 @@ public class VectorMetadataParser implements ComplexDataParser<VectorMetadata> {
     @Override
     public VectorMetadata parse(ComplexData dynamicData) {
         List<Object> data = verifyStructure(dynamicData);
+
+        if (data == null) {
+            // Valid response for the case when a vector set does not exist
+            return null;
+        }
+
         VectorMetadata metadata = new VectorMetadata();
 
         // Parse the array of key-value pairs
@@ -125,7 +140,7 @@ public class VectorMetadataParser implements ComplexDataParser<VectorMetadata> {
     private List<Object> verifyStructure(ComplexData vinfoOutput) {
         if (vinfoOutput == null) {
             LOG.warn("Failed while parsing VINFO: vinfoOutput must not be null");
-            return new ArrayList<>();
+            return null;
         }
 
         List<Object> data;
@@ -197,4 +212,5 @@ public class VectorMetadataParser implements ComplexDataParser<VectorMetadata> {
                 return null;
         }
     }
+
 }

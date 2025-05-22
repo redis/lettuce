@@ -47,10 +47,10 @@ class RawVectorParserUnitTests {
         complexData.store(String.valueOf(ByteBuffer.wrap(new byte[] { 1, 2, 3, 4, 5 })));
         complexData.store(3.14);
         complexData.store(0.5);
-        
+
         // Act
         RawVector rawVector = RawVectorParser.INSTANCE.parse(complexData);
-        
+
         // Assert
         assertThat(rawVector).isNotNull();
         assertThat(rawVector.getType()).isEqualTo(QuantizationType.Q8);
@@ -59,7 +59,7 @@ class RawVectorParserUnitTests {
         assertThat(rawVector.beforeNormalization()).isEqualTo(3.14);
         assertThat(rawVector.getQuantizationRange()).isEqualTo(0.5);
     }
-    
+
     @Test
     void shouldParseNoQuantizationRawVector() {
         // Arrange
@@ -67,10 +67,10 @@ class RawVectorParserUnitTests {
         complexData.store("float32");
         complexData.store(String.valueOf(ByteBuffer.wrap(new byte[] { 1, 2, 3, 4, 5 })));
         complexData.store(2.71);
-        
+
         // Act
         RawVector rawVector = RawVectorParser.INSTANCE.parse(complexData);
-        
+
         // Assert
         assertThat(rawVector).isNotNull();
         assertThat(rawVector.getType()).isEqualTo(QuantizationType.NO_QUANTIZATION);
@@ -79,7 +79,7 @@ class RawVectorParserUnitTests {
         assertThat(rawVector.beforeNormalization()).isEqualTo(2.71);
         assertThat(rawVector.getQuantizationRange()).isNull();
     }
-    
+
     @Test
     void shouldParseBinaryRawVector() {
         // Arrange
@@ -87,10 +87,10 @@ class RawVectorParserUnitTests {
         complexData.store("binary");
         complexData.store(String.valueOf(ByteBuffer.wrap(new byte[] { 1, 0, 1, 0, 1 })));
         complexData.store(1.0);
-        
+
         // Act
         RawVector rawVector = RawVectorParser.INSTANCE.parse(complexData);
-        
+
         // Assert
         assertThat(rawVector).isNotNull();
         assertThat(rawVector.getType()).isEqualTo(QuantizationType.BINARY);
@@ -99,7 +99,7 @@ class RawVectorParserUnitTests {
         assertThat(rawVector.beforeNormalization()).isEqualTo(1.0);
         assertThat(rawVector.getQuantizationRange()).isNull();
     }
-    
+
     @Test
     void shouldParseRawVectorWithStringValues() {
         // Arrange
@@ -108,10 +108,10 @@ class RawVectorParserUnitTests {
         complexData.store("binary data");
         complexData.store("3.14");
         complexData.store("0.5");
-        
+
         // Act
         RawVector rawVector = RawVectorParser.INSTANCE.parse(complexData);
-        
+
         // Assert
         assertThat(rawVector).isNotNull();
         assertThat(rawVector.getType()).isEqualTo(QuantizationType.Q8);
@@ -120,7 +120,7 @@ class RawVectorParserUnitTests {
         assertThat(rawVector.beforeNormalization()).isEqualTo(3.14);
         assertThat(rawVector.getQuantizationRange()).isEqualTo(0.5);
     }
-    
+
     @Test
     void shouldHandleUnknownQuantizationType() {
         // Arrange
@@ -128,10 +128,10 @@ class RawVectorParserUnitTests {
         complexData.store("unknown");
         complexData.store(String.valueOf(ByteBuffer.wrap(new byte[] { 1, 2, 3, 4, 5 })));
         complexData.store(1.0);
-        
+
         // Act
         RawVector rawVector = RawVectorParser.INSTANCE.parse(complexData);
-        
+
         // Assert
         assertThat(rawVector).isNotNull();
         assertThat(rawVector.getType()).isNull();
@@ -139,49 +139,46 @@ class RawVectorParserUnitTests {
         assertThat(rawVector.beforeNormalization()).isEqualTo(1.0);
         assertThat(rawVector.getQuantizationRange()).isNull();
     }
-    
+
     @Test
     void shouldThrowExceptionForNullInput() {
         // Act & Assert
-        assertThatThrownBy(() -> RawVectorParser.INSTANCE.parse(null))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> RawVectorParser.INSTANCE.parse(null)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("vembOutput must not be null");
     }
-    
+
     @Test
     void shouldThrowExceptionForEmptyInput() {
         // Arrange
         ArrayComplexData complexData = new ArrayComplexData(1);
-        
+
         // Act & Assert
-        assertThatThrownBy(() -> RawVectorParser.INSTANCE.parse(complexData))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> RawVectorParser.INSTANCE.parse(complexData)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("data must not be null or empty");
     }
-    
+
     @Test
     void shouldThrowExceptionForInsufficientElements() {
         // Arrange
         ArrayComplexData complexData = new ArrayComplexData(2);
         complexData.store("int8");
         complexData.store(String.valueOf(ByteBuffer.wrap(new byte[] { 1, 2, 3, 4, 5 })));
-        
+
         // Act & Assert
-        assertThatThrownBy(() -> RawVectorParser.INSTANCE.parse(complexData))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> RawVectorParser.INSTANCE.parse(complexData)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("data must contain at least 3 elements");
     }
-    
+
     @Test
     void shouldThrowExceptionForNonListInput() {
         // Arrange
         MapComplexData complexData = new MapComplexData(2);
         complexData.storeObject("key");
         complexData.storeObject("value");
-        
+
         // Act & Assert
-        assertThatThrownBy(() -> RawVectorParser.INSTANCE.parse(complexData))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> RawVectorParser.INSTANCE.parse(complexData)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("vembOutput must be a list");
     }
+
 }

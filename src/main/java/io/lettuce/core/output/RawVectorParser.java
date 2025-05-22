@@ -15,16 +15,16 @@ import java.util.List;
 /**
  * Parser for Redis <a href="https://redis.io/docs/latest/commands/vemb/">VEMB</a> command output with the RAW option.
  * <p>
- * This parser converts the response from the Redis VEMB command with the RAW option into a {@link RawVector} object,
- * which contains the raw binary vector data along with metadata such as quantization type, normalization factor,
- * and quantization range.
+ * This parser converts the response from the Redis VEMB command with the RAW option into a {@link RawVector} object, which
+ * contains the raw binary vector data along with metadata such as quantization type, normalization factor, and quantization
+ * range.
  * <p>
  * The VEMB command with RAW option returns the following data:
  * <ol>
- *   <li>The quantization type as a string: "int8" (Q8), "float32" (NOQUANT), or "binary" (BIN)</li>
- *   <li>A binary blob containing the raw vector data</li>
- *   <li>The L2 norm of the vector before normalization</li>
- *   <li>The quantization range (only for Q8 quantization)</li>
+ * <li>The quantization type as a string: "int8" (Q8), "float32" (NOQUANT), or "binary" (BIN)</li>
+ * <li>A binary blob containing the raw vector data</li>
+ * <li>The L2 norm of the vector before normalization</li>
+ * <li>The quantization range (only for Q8 quantization)</li>
  * </ol>
  *
  * @author Tihomir Mateev
@@ -36,7 +36,9 @@ public class RawVectorParser implements ComplexDataParser<RawVector> {
 
     // Quantization type values in the VEMB RAW response
     private static final String INT8 = "int8";
+
     private static final String FLOAT32 = "float32";
+
     private static final String BINARY = "binary";
 
     /**
@@ -50,10 +52,10 @@ public class RawVectorParser implements ComplexDataParser<RawVector> {
      * <p>
      * The VEMB command with RAW option returns an array with the following elements:
      * <ol>
-     *   <li>The quantization type as a string</li>
-     *   <li>A binary blob containing the raw vector data</li>
-     *   <li>The L2 norm of the vector before normalization</li>
-     *   <li>The quantization range (only for Q8 quantization)</li>
+     * <li>The quantization type as a string</li>
+     * <li>A binary blob containing the raw vector data</li>
+     * <li>The L2 norm of the vector before normalization</li>
+     * <li>The quantization range (only for Q8 quantization)</li>
      * </ol>
      *
      * @param dynamicData output of VEMB command with RAW option
@@ -172,4 +174,5 @@ public class RawVectorParser implements ComplexDataParser<RawVector> {
                 return null;
         }
     }
+
 }

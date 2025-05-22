@@ -16,8 +16,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * {@link Map} of values and Doubles output. This output processes Redis responses into a map where
- * keys are of type V (values from the codec) and values are of type Double.
+ * {@link Map} of values and Doubles output. This output processes Redis responses into a map where keys are of type V (values
+ * from the codec) and values are of type Double.
  * <p>
  * This is particularly useful for commands that return elements with scores, such as VSIM with WITHSCORES option.
  *
@@ -32,6 +32,7 @@ public class ValueDoubleMapOutput<K, V> extends CommandOutput<K, V, Map<V, Doubl
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(ValueDoubleMapOutput.class);
 
     private boolean hasKey;
+
     private V key;
 
     /**
@@ -71,7 +72,7 @@ public class ValueDoubleMapOutput<K, V> extends CommandOutput<K, V, Map<V, Doubl
     @Override
     public void set(double number) {
 
-        if(!hasKey){
+        if (!hasKey) {
             LOG.warn("Expected key but got double: " + number);
             return;
         }
@@ -87,4 +88,5 @@ public class ValueDoubleMapOutput<K, V> extends CommandOutput<K, V, Map<V, Doubl
             output = new LinkedHashMap<>(count / 2, 1);
         }
     }
+
 }

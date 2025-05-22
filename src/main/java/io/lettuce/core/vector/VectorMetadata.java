@@ -9,8 +9,8 @@ package io.lettuce.core.vector;
 /**
  * Represents metadata and internal details about a Redis vector set.
  * <p>
- * This class encapsulates information returned by the Redis VINFO command, including size, dimensions,
- * quantization type, and graph structure parameters of a vector set.
+ * This class encapsulates information returned by the Redis VINFO command, including size, dimensions, quantization type, and
+ * graph structure parameters of a vector set.
  *
  * @author Tihomir Mateev
  * @since 6.7
@@ -37,8 +37,8 @@ public class VectorMetadata {
     /**
      * Creates a new empty {@link VectorMetadata} instance.
      * <p>
-     * This constructor creates an empty metadata object. The fields will be populated
-     * when the object is used to parse the response from a Redis VINFO command.
+     * This constructor creates an empty metadata object. The fields will be populated when the object is used to parse the
+     * response from a Redis VINFO command.
      */
     public VectorMetadata() {
         // Default constructor
@@ -87,8 +87,8 @@ public class VectorMetadata {
     /**
      * Gets the maximum number of connections per node in the HNSW graph.
      * <p>
-     * This parameter (also known as M) specifies the maximum number of connections that each node
-     * of the graph will have with other nodes.
+     * This parameter (also known as M) specifies the maximum number of connections that each node of the graph will have with
+     * other nodes.
      *
      * @return the maximum number of connections per node
      */
@@ -154,8 +154,8 @@ public class VectorMetadata {
     /**
      * Sets the maximum number of connections per node in the HNSW graph.
      * <p>
-     * This parameter (also known as M) specifies the maximum number of connections that each node
-     * of the graph will have with other nodes.
+     * This parameter (also known as M) specifies the maximum number of connections that each node of the graph will have with
+     * other nodes.
      *
      * @param maxNodes the maximum number of connections per node
      */
