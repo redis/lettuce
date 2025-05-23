@@ -112,6 +112,10 @@ public enum CommandType implements ProtocolKeyword {
                                     "JSON.OBJLEN"), JSON_SET("JSON.SET"), JSON_STRAPPEND("JSON.STRAPPEND"), JSON_STRLEN(
                                             "JSON.STRLEN"), JSON_TOGGLE("JSON.TOGGLE"), JSON_TYPE("JSON.TYPE"),
 
+    // Vector Set
+
+    VADD, VCARD, VDIM, VEMB, VEMBRAW, VGETATTR, VINFO, VLINKS, VLINKSWITHSCORES, VRANDMEMBER, VREM, VSETATTR, VSIM, VSIMWITHSCORES,
+
     // Others
 
     TIME, WAIT,
