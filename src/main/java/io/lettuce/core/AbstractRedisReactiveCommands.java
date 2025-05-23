@@ -1759,7 +1759,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     @Override
     public Mono<Boolean> vadd(K key, V element, Double... vectors) {
-        return createMono(() -> vectorSetCommandBuilder.vadd(key, -1, element, null, vectors));
+        return createMono(() -> vectorSetCommandBuilder.vadd(key, element, null, vectors));
     }
 
     @Override
@@ -1769,7 +1769,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     @Override
     public Mono<Boolean> vadd(K key, V element, VAddArgs args, Double... vectors) {
-        return createMono(() -> vectorSetCommandBuilder.vadd(key, -1, element, args, vectors));
+        return createMono(() -> vectorSetCommandBuilder.vadd(key, element, args, vectors));
     }
 
     @Override

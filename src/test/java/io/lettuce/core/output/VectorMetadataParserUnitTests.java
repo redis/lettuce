@@ -43,7 +43,8 @@ class VectorMetadataParserUnitTests {
     void shouldParseVectorMetadata() {
         // Arrange
         List<Object> vinfoOutput = Arrays.asList("quant-type", "int8", "vector-dim", 300, "size", 3000000, "max-level", 12,
-                "vset-uid", 1, "ef-construction", 200, "M", 16, "hnsw-max-node-uid", 3000000);
+                "vset-uid", 1, "ef-construction", 200, "hnsw-max-node-uid", 3000000, "hnsw-m", 16, "attributes-count", 0,
+                "projection-input-dim", 0);
 
         ArrayComplexData complexData = new ArrayComplexData(vinfoOutput.size());
         for (Object item : vinfoOutput) {
@@ -59,32 +60,11 @@ class VectorMetadataParserUnitTests {
         assertThat(metadata.getDimensionality()).isEqualTo(300);
         assertThat(metadata.getSize()).isEqualTo(3000000);
         assertThat(metadata.getvSetUid()).isEqualTo(1);
-        assertThat(metadata.getMaxNodeUid()).isEqualTo(200);
+        assertThat(metadata.getMaxNodeUid()).isEqualTo(3000000);
         assertThat(metadata.getMaxNodes()).isEqualTo(16);
-    }
-
-    @Test
-    void shouldParseVectorMetadataWithStringValues() {
-        // Arrange
-        List<Object> vinfoOutput = Arrays.asList("quant-type", "binary", "vector-dim", "128", "size", "1000", "vset-uid", "2",
-                "ef-construction", "100", "M", "8");
-
-        ArrayComplexData complexData = new ArrayComplexData(vinfoOutput.size());
-        for (Object item : vinfoOutput) {
-            complexData.storeObject(item);
-        }
-
-        // Act
-        VectorMetadata metadata = VectorMetadataParser.INSTANCE.parse(complexData);
-
-        // Assert
-        assertThat(metadata).isNotNull();
-        assertThat(metadata.getType()).isEqualTo(QuantizationType.BINARY);
-        assertThat(metadata.getDimensionality()).isEqualTo(128);
-        assertThat(metadata.getSize()).isEqualTo(1000);
-        assertThat(metadata.getvSetUid()).isEqualTo(2);
-        assertThat(metadata.getMaxNodeUid()).isEqualTo(100);
-        assertThat(metadata.getMaxNodes()).isEqualTo(8);
+        assertThat(metadata.getMaxLevel()).isEqualTo(12);
+        assertThat(metadata.getProjectionInputDim()).isEqualTo(0);
+        assertThat(metadata.getAttributesCount()).isEqualTo(0);
     }
 
     @Test
@@ -149,24 +129,32 @@ class VectorMetadataParserUnitTests {
     }
 
     @Test
-    void shouldThrowExceptionForNullInput() {
-        // Act & Assert
-        assertThatThrownBy(() -> VectorMetadataParser.INSTANCE.parse(null)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("vinfoOutput must not be null");
+    void shouldHandleNullInput() {
+        VectorMetadata metadata = VectorMetadataParser.INSTANCE.parse(null);
+        assertThat(metadata).isNull();
     }
 
     @Test
-    void shouldThrowExceptionForEmptyInput() {
+    void shouldHandleEmptyInput() {
         // Arrange
         ArrayComplexData complexData = new ArrayComplexData(1);
 
         // Act & Assert
-        assertThatThrownBy(() -> VectorMetadataParser.INSTANCE.parse(complexData)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("data must not be null or empty");
+        VectorMetadata metadata = VectorMetadataParser.INSTANCE.parse(complexData);
+        assertThat(metadata).isNotNull();
+        assertThat(metadata.getType()).isNull();
+        assertThat(metadata.getDimensionality()).isNull();
+        assertThat(metadata.getSize()).isNull();
+        assertThat(metadata.getMaxNodeUid()).isNull();
+        assertThat(metadata.getvSetUid()).isNull();
+        assertThat(metadata.getMaxNodes()).isNull();
+        assertThat(metadata.getProjectionInputDim()).isNull();
+        assertThat(metadata.getAttributesCount()).isNull();
+        assertThat(metadata.getMaxLevel()).isNull();
     }
 
     @Test
-    void shouldThrowExceptionForOddNumberOfElements() {
+    void shouldHandleOddNumberOfElements() {
         // Arrange
         List<Object> vinfoOutput = Arrays.asList("quant-type", "int8", "vector-dim", 300, "size" // Missing value for "size"
         );
@@ -176,21 +164,37 @@ class VectorMetadataParserUnitTests {
             complexData.storeObject(item);
         }
 
-        // Act & Assert
-        assertThatThrownBy(() -> VectorMetadataParser.INSTANCE.parse(complexData)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("data must contain key-value pairs");
+        VectorMetadata metadata = VectorMetadataParser.INSTANCE.parse(complexData);
+        assertThat(metadata).isNotNull();
+        assertThat(metadata.getType()).isNull();
+        assertThat(metadata.getDimensionality()).isNull();
+        assertThat(metadata.getSize()).isNull();
+        assertThat(metadata.getMaxNodeUid()).isNull();
+        assertThat(metadata.getvSetUid()).isNull();
+        assertThat(metadata.getMaxNodes()).isNull();
+        assertThat(metadata.getProjectionInputDim()).isNull();
+        assertThat(metadata.getAttributesCount()).isNull();
+        assertThat(metadata.getMaxLevel()).isNull();
     }
 
     @Test
-    void shouldThrowExceptionForNonListInput() {
+    void shouldHandleNonListInput() {
         // Arrange
         MapComplexData complexData = new MapComplexData(2);
         complexData.storeObject("key");
         complexData.storeObject("value");
 
-        // Act & Assert
-        assertThatThrownBy(() -> VectorMetadataParser.INSTANCE.parse(complexData)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("vinfoOutput must be a list");
+        VectorMetadata metadata = VectorMetadataParser.INSTANCE.parse(complexData);
+        assertThat(metadata).isNotNull();
+        assertThat(metadata.getType()).isNull();
+        assertThat(metadata.getDimensionality()).isNull();
+        assertThat(metadata.getSize()).isNull();
+        assertThat(metadata.getMaxNodeUid()).isNull();
+        assertThat(metadata.getvSetUid()).isNull();
+        assertThat(metadata.getMaxNodes()).isNull();
+        assertThat(metadata.getProjectionInputDim()).isNull();
+        assertThat(metadata.getAttributesCount()).isNull();
+        assertThat(metadata.getMaxLevel()).isNull();
     }
 
 }

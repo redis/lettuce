@@ -6,7 +6,6 @@
  */
 package io.lettuce.core.output;
 
-import io.lettuce.core.RedisAuthenticationHandler;
 import io.lettuce.core.vector.QuantizationType;
 import io.lettuce.core.vector.VectorMetadata;
 import io.netty.util.internal.logging.InternalLogger;
@@ -33,12 +32,11 @@ public class VectorMetadataParser implements ComplexDataParser<VectorMetadata> {
     public static final VectorMetadataParser INSTANCE = new VectorMetadataParser();
 
     // Field names in the VINFO response
-
     private static final String ATTRIBUTES_COUNT = "attributes-count";
 
     private static final String SIZE = "size";
 
-    private static final String M = "hnsw-m";
+    private static final String MAX_NODES = "hnsw-m";
 
     private static final String VSET_UID = "vset-uid";
 
@@ -109,13 +107,13 @@ public class VectorMetadataParser implements ComplexDataParser<VectorMetadata> {
                     metadata.setDimensionality(parseInteger(value));
                     break;
                 case MAX_LEVEL:
-                    metadata.maxNodeUid(parseInteger(value));
+                    metadata.maxLevel(parseInteger(value));
                     break;
-                case M:
+                case MAX_NODES:
                     metadata.setMaxNodes(parseInteger(value));
                     break;
                 case MAX_NODE_UID:
-                    metadata.setvSetUid(parseInteger(value));
+                    metadata.maxNodeUid(parseInteger(value));
                     break;
                 case PROJECTION_INPUT_DIM:
                     metadata.setProjectionInputDim(parseInteger(value));
@@ -123,7 +121,6 @@ public class VectorMetadataParser implements ComplexDataParser<VectorMetadata> {
                 case VSET_UID:
                     metadata.setvSetUid(parseInteger(value));
                     break;
-                // Other fields can be added here as needed
             }
         }
 

@@ -16,16 +16,6 @@ import java.util.Optional;
  * Argument list builder for the Redis <a href="https://redis.io/docs/latest/commands/vsim/">VSIM</a> command. Static import the
  * methods from {@link Builder} and call the methods: {@code count(…)} .
  * <p>
- * Example usage:
- * 
- * <pre>
- * 
- * {
- *     &#64;code
- *     VSimArgs args = VSimArgs.count(10).explorationFactor(200).filter("price < 100").filterEfficiency(10);
- * }
- * </pre>
- * <p>
  * {@link VSimArgs} is a mutable object and instances should be used only once to avoid shared mutable state.
  *
  * @author Tihomir Mateev

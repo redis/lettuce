@@ -12,6 +12,7 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -31,6 +32,8 @@ public class ValueDoubleMapOutput<K, V> extends CommandOutput<K, V, Map<V, Doubl
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(ValueDoubleMapOutput.class);
 
+    private boolean outputError = false;
+
     private boolean hasKey;
 
     private V key;
@@ -46,40 +49,37 @@ public class ValueDoubleMapOutput<K, V> extends CommandOutput<K, V, Map<V, Doubl
 
     @Override
     public void set(ByteBuffer bytes) {
+        if (outputError) {
+            return;
+        }
+
         if (!hasKey) {
             key = (bytes == null) ? null : codec.decodeValue(bytes);
             hasKey = true;
             return;
         }
 
-        // This should not happen for VSIM with WITHSCORES as scores are always numeric
-        // But we handle it anyway for completeness
-        String strValue = (bytes == null) ? null : codec.decodeValue(bytes).toString();
-        if (strValue != null) {
-            try {
-                output.put(key, Double.parseDouble(strValue));
-            } catch (NumberFormatException e) {
-                output.put(key, 0D); // Default to 0 if parsing fails
-            }
-        } else {
-            output.put(key, 0D);
-        }
-
-        key = null;
-        hasKey = false;
+        LOG.warn("Expected double but got bytes, discarding the result");
+        output = new HashMap<>(0);
+        outputError = true;
     }
 
     @Override
     public void set(double number) {
-
-        if (!hasKey) {
-            LOG.warn("Expected key but got double: " + number);
+        if (outputError) {
             return;
         }
 
-        output.put(key, (Double) number);
-        key = null;
-        hasKey = false;
+        if (hasKey) {
+            output.put(key, number);
+            key = null;
+            hasKey = false;
+            return;
+        }
+
+        LOG.warn("Expected bytes but got double, discarding the result");
+        output = new HashMap<>(0);
+        outputError = true;
     }
 
     @Override

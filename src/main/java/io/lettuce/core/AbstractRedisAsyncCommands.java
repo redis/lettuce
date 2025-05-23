@@ -1692,7 +1692,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Boolean> vadd(K key, V element, Double... vectors) {
-        return dispatch(vectorSetCommandBuilder.vadd(key, -1, element, null, vectors));
+        return dispatch(vectorSetCommandBuilder.vadd(key, element, null, vectors));
     }
 
     @Override
@@ -1702,7 +1702,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Boolean> vadd(K key, V element, VAddArgs args, Double... vectors) {
-        return dispatch(vectorSetCommandBuilder.vadd(key, -1, element, args, vectors));
+        return dispatch(vectorSetCommandBuilder.vadd(key, element, args, vectors));
     }
 
     @Override

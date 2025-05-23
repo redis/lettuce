@@ -52,7 +52,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      * @see <a href="https://redis.io/docs/latest/commands/vadd/">Redis Documentation: VADD</a>
      */
     public Command<K, V, Boolean> vadd(K key, V element, Double[] vectors) {
-        return vadd(key, 0, element, null, vectors);
+        return vadd(key, -1, element, null, vectors);
     }
 
     /**
@@ -80,7 +80,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
      * @see <a href="https://redis.io/docs/latest/commands/vadd/">Redis Documentation: VADD</a>
      */
     public Command<K, V, Boolean> vadd(K key, V element, VAddArgs vAddArgs, Double[] vectors) {
-        return vadd(key, 0, element, vAddArgs, vectors);
+        return vadd(key, -1, element, vAddArgs, vectors);
     }
 
     /**
