@@ -25,101 +25,22 @@ package io.lettuce.core.vector;
  */
 public class VectorMetadata {
 
-    /**
-     * The dimensionality of the vectors in the vector set.
-     * <p>
-     * This represents the number of dimensions (features) in each vector. All vectors in a vector set must have the same
-     * dimensionality. Higher dimensionality vectors can represent more complex data but require more memory and processing
-     * power.
-     * <p>
-     * Corresponds to the {@code vector-dim} field in the VINFO command response.
-     */
     private Integer dimensionality;
 
-    /**
-     * The quantization type used for storing vectors in the vector set.
-     * <p>
-     * Quantization affects how vectors are stored and impacts memory usage, performance, and recall quality.
-     * <p>
-     * Common types include:
-     * <ul>
-     * <li>{@code Q8} - Uses signed 8-bit quantization, balancing memory usage and recall quality</li>
-     * <li>{@code NOQUANT} - Stores vectors without quantization, using more memory but preserving full precision</li>
-     * <li>{@code BIN} - Uses binary quantization, which is faster and uses less memory, but impacts recall quality</li>
-     * </ul>
-     * <p>
-     * Corresponds to the {@code quant-type} field in the VINFO command response.
-     */
     private QuantizationType type;
 
-    /**
-     * The number of elements (vectors) in the vector set.
-     * <p>
-     * This represents the total count of vectors currently stored in the vector set.
-     * <p>
-     * Corresponds to the {@code size} field in the VINFO command response.
-     */
     private Integer size;
 
-    /**
-     * The maximum node UID in the HNSW graph.
-     * <p>
-     * This is an internal identifier used by Redis to track nodes in the HNSW graph.
-     * <p>
-     * Corresponds to the {@code hnsw-max-node-uid} field in the VINFO command response.
-     */
     private Integer maxNodeUid;
 
-    /**
-     * The unique identifier of the vector set.
-     * <p>
-     * This is an internal identifier used by Redis to track the vector set.
-     * <p>
-     * Corresponds to the {@code vset-uid} field in the VINFO command response.
-     */
     private Integer vSetUid;
 
-    /**
-     * The maximum number of connections per node in the HNSW graph.
-     * <p>
-     * This parameter (also known as M) specifies the maximum number of connections that each node of the graph will have with
-     * other nodes. More connections means more memory, but provides for more efficient graph exploration.
-     * <p>
-     * Higher values improve recall at the cost of memory usage and indexing speed.
-     * <p>
-     * Corresponds to the {@code M} field in the VINFO command response.
-     */
     private Integer maxNodes;
 
-    /**
-     * The original dimensionality of vectors before dimensionality reduction.
-     * <p>
-     * When using the REDUCE option with VADD, this field indicates the original dimensionality of the vectors before they were
-     * projected to a lower-dimensional space.
-     * <p>
-     * Corresponds to the {@code projection-input-dim} field in the VINFO command response.
-     */
     private Integer projectionInputDim;
 
-    /**
-     * The number of elements in the vector set that have attributes.
-     * <p>
-     * Attributes are JSON metadata associated with vector elements that can be used for filtering in similarity searches.
-     * <p>
-     * Corresponds to the {@code attributes-count} field in the VINFO command response.
-     */
     private Integer attributesCount;
 
-    /**
-     * The maximum level in the HNSW graph.
-     * <p>
-     * The HNSW algorithm organizes vectors in a hierarchical graph with multiple levels. This parameter indicates the highest
-     * level in the graph structure.
-     * <p>
-     * Higher levels enable faster navigation through the graph during similarity searches.
-     * <p>
-     * Corresponds to the {@code max-level} field in the VINFO command response.
-     */
     private Integer maxLevel;
 
     /**
@@ -291,10 +212,12 @@ public class VectorMetadata {
 
     /**
      * Sets the maximum node UID in the HNSW graph.
+     * <p>
+     * This is an internal identifier used by Redis to track nodes in the HNSW graph.
      *
      * @param value the maximum node UID in the HNSW graph
      */
-    public void maxNodeUid(Integer value) {
+    public void setMaxNodeUid(Integer value) {
         this.maxNodeUid = value;
     }
 
@@ -342,10 +265,13 @@ public class VectorMetadata {
      * Sets the maximum level in the HNSW graph.
      * <p>
      * The HNSW algorithm organizes vectors in a hierarchical graph with multiple levels.
+     * Higher levels enable faster navigation through the graph during similarity searches.
+     * <p>
+     * Corresponds to the {@code max-level} field in the VINFO command response.
      *
      * @param value the maximum level in the HNSW graph
      */
-    public void maxLevel(Integer value) {
+    public void setMaxLevel(Integer value) {
         this.maxLevel = value;
     }
 

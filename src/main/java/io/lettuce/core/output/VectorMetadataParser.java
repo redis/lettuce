@@ -107,13 +107,13 @@ public class VectorMetadataParser implements ComplexDataParser<VectorMetadata> {
                     metadata.setDimensionality(parseInteger(value));
                     break;
                 case MAX_LEVEL:
-                    metadata.maxLevel(parseInteger(value));
+                    metadata.setMaxLevel(parseInteger(value));
                     break;
                 case MAX_NODES:
                     metadata.setMaxNodes(parseInteger(value));
                     break;
                 case MAX_NODE_UID:
-                    metadata.maxNodeUid(parseInteger(value));
+                    metadata.setMaxNodeUid(parseInteger(value));
                     break;
                 case PROJECTION_INPUT_DIM:
                     metadata.setProjectionInputDim(parseInteger(value));
