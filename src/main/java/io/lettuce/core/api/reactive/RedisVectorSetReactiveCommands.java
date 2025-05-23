@@ -436,5 +436,4 @@ public interface RedisVectorSetReactiveCommands<K, V> {
      */
     @Experimental
     Mono<Map<V, Double>> vsimWithScore(K key, VSimArgs args, V element);
-
 }

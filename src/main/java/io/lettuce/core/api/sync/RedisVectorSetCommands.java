@@ -435,5 +435,4 @@ public interface RedisVectorSetCommands<K, V> {
      */
     @Experimental
     Map<V, Double> vsimWithScore(K key, VSimArgs args, V element);
-
 }

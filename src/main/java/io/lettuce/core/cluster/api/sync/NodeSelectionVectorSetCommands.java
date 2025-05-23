@@ -435,5 +435,4 @@ public interface NodeSelectionVectorSetCommands<K, V> {
      */
     @Experimental
     Executions<Map<V, Double>> vsimWithScore(K key, VSimArgs args, V element);
-
 }

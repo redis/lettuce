@@ -435,5 +435,4 @@ public interface NodeSelectionVectorSetAsyncCommands<K, V> {
      */
     @Experimental
     AsyncExecutions<Map<V, Double>> vsimWithScore(K key, VSimArgs args, V element);
-
 }

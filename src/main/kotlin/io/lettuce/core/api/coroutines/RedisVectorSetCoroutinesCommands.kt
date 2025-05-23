@@ -132,7 +132,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/vdim/">Redis Documentation: VDIM</a>
      */
     @Experimental
-    suspend fun vdim(key: K): List<V>
+    suspend fun vdim(key: K): Long?
 
     /**
      * Returns the approximate vector associated with a given `element` in the vector set stored at `key`.

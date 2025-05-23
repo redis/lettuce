@@ -436,5 +436,4 @@ public interface RedisVectorSetAsyncCommands<K, V> {
      */
     @Experimental
     RedisFuture<Map<V, Double>> vsimWithScore(K key, VSimArgs args, V element);
-
 }
