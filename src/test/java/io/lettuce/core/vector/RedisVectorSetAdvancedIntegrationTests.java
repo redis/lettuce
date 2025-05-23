@@ -26,6 +26,7 @@ import io.lettuce.core.VAddArgs;
 import io.lettuce.core.VSimArgs;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -37,6 +38,7 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for Redis Vector Sets based on the examples from the Redis documentation.
@@ -62,6 +64,8 @@ public class RedisVectorSetAdvancedIntegrationTests {
 
     @BeforeEach
     public void prepare() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
+
         redis.flushall();
 
         // Add the example points from the Redis documentation

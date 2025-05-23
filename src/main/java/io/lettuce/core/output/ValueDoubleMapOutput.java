@@ -59,9 +59,17 @@ public class ValueDoubleMapOutput<K, V> extends CommandOutput<K, V, Map<V, Doubl
             return;
         }
 
-        LOG.warn("Expected double but got bytes, discarding the result");
-        output = new HashMap<>(0);
-        outputError = true;
+        // RESP2 does not have a double type, so we are assuming we are parsing it now
+        try {
+            Double value = Double.parseDouble(decodeString(bytes));
+            output.put(key, value);
+            key = null;
+            hasKey = false;
+        } catch (NumberFormatException e) {
+            LOG.warn("Unable to fallback to parsing double from string, discarding the result");
+            output = new HashMap<>(0);
+            outputError = true;
+        }
     }
 
     @Override

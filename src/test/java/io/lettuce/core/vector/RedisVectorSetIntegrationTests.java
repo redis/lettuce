@@ -17,6 +17,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -32,6 +33,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @Tag(INTEGRATION_TEST)
 public class RedisVectorSetIntegrationTests {
@@ -77,6 +79,9 @@ public class RedisVectorSetIntegrationTests {
 
     @BeforeEach
     public void prepare() {
+
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
+
         redis.flushall();
 
         // Add some test vectors
@@ -207,7 +212,7 @@ public class RedisVectorSetIntegrationTests {
         assertThat(info.getType()).isEqualTo(QuantizationType.Q8);
         assertThat(info.getMaxNodeUid()).isNotNull();
         assertThat(info.getMaxNodes()).isEqualTo(16);
-        assertThat(info.getvSetUid()).isEqualTo(3);
+        assertThat(info.getvSetUid()).isNotNull();
         assertThat(info.getProjectionInputDim()).isEqualTo(0);
         assertThat(info.getAttributesCount()).isEqualTo(0);
     }

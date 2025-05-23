@@ -124,18 +124,28 @@ public class ComplexOutput<K, V, T> extends CommandOutput<K, V, T> {
 
     @Override
     public void multiSet(int count) {
+        if (count < 0) {
+            return;
+        }
+
         SetComplexData dynamicData = new SetComplexData(count);
         multi(dynamicData);
     }
 
     @Override
     public void multiArray(int count) {
+        if (count < 0) {
+            return;
+        }
         ArrayComplexData dynamicData = new ArrayComplexData(count);
         multi(dynamicData);
     }
 
     @Override
     public void multiMap(int count) {
+        if (count < 0) {
+            return;
+        }
         MapComplexData dynamicData = new MapComplexData(count);
         multi(dynamicData);
     }
