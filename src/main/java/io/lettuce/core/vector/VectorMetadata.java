@@ -264,8 +264,8 @@ public class VectorMetadata {
     /**
      * Sets the maximum level in the HNSW graph.
      * <p>
-     * The HNSW algorithm organizes vectors in a hierarchical graph with multiple levels.
-     * Higher levels enable faster navigation through the graph during similarity searches.
+     * The HNSW algorithm organizes vectors in a hierarchical graph with multiple levels. Higher levels enable faster navigation
+     * through the graph during similarity searches.
      * <p>
      * Corresponds to the {@code max-level} field in the VINFO command response.
      *
