@@ -2,13 +2,17 @@ package io.lettuce.core.resource;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import io.netty.resolver.AddressResolverGroup;
 
 /**
  * Users may implement this interface to override the normal DNS lookup offered by the OS.
  *
  * @author Mark Paluch
+ * @author Euiyoung Nam
  * @since 4.2
+ * @deprecated since 6.6 replaced by{@link AddressResolverGroup} instead.
  */
+@Deprecated
 public interface DnsResolver {
 
     /**
