@@ -38,26 +38,47 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Topology provider using Redis Standalone and the {@code INFO REPLICATION} output. Replicas are listed as {@code slaveN=...}
- * entries.
+ * entries. This provider parses the {@code INFO REPLICATION} output to discover master and replica nodes, using regular
+ * expression patterns defined in the {@link InfoPatterns} enum.
  *
  * @author Mark Paluch
  * @since 4.1
  */
 class ReplicaTopologyProvider implements TopologyProvider {
 
-    public static final Pattern ROLE_PATTERN = Pattern.compile("^role\\:([a-z]+)$", Pattern.MULTILINE);
+    /**
+     * Enum containing regular expression patterns for parsing Redis {@code INFO REPLICATION} output. Each constant provides a
+     * compiled {@link Pattern} and a {@link Matcher} for convenient pattern matching.
+     */
+    enum InfoPatterns {
 
-    public static final Pattern SLAVE_PATTERN = Pattern.compile("^slave(\\d+)\\:([a-zA-Z\\,\\=\\d\\.\\:\\-]+)$",
-            Pattern.MULTILINE);
+        ROLE(Pattern.compile("^role\\:([a-z]+)$", Pattern.MULTILINE)),
 
-    public static final Pattern MASTER_HOST_PATTERN = Pattern.compile("^master_host\\:([a-zA-Z\\,\\=\\d\\.\\:\\-]+)$",
-            Pattern.MULTILINE);
+        SLAVE(Pattern.compile("^slave(\\d+)\\:([a-zA-Z\\,\\=\\d\\.\\:\\-]+)$", Pattern.MULTILINE)),
 
-    public static final Pattern MASTER_PORT_PATTERN = Pattern.compile("^master_port\\:(\\d+)$", Pattern.MULTILINE);
+        MASTER_HOST(Pattern.compile("^master_host\\:([a-zA-Z\\,\\=\\d\\.\\:\\-]+)$", Pattern.MULTILINE)),
 
-    public static final Pattern IP_PATTERN = Pattern.compile("ip\\=([a-zA-Z\\d\\.\\:\\-]+)");
+        MASTER_PORT(Pattern.compile("^master_port\\:(\\d+)$", Pattern.MULTILINE)),
 
-    public static final Pattern PORT_PATTERN = Pattern.compile("port\\=([\\d]+)");
+        IP(Pattern.compile("ip\\=([a-zA-Z\\d\\.\\:\\-]+)")),
+
+        PORT(Pattern.compile("port\\=([\\d]+)"));
+
+        private final Pattern pattern;
+
+        InfoPatterns(Pattern pattern) {
+            this.pattern = pattern;
+        }
+
+        public Pattern getPattern() {
+            return pattern;
+        }
+
+        public Matcher matcher(String input) {
+            return pattern.matcher(input);
+        }
+
+    }
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ReplicaTopologyProvider.class);
 
@@ -126,7 +147,7 @@ class ReplicaTopologyProvider implements TopologyProvider {
 
     private RedisNodeDescription getCurrentNodeDescription(String info) {
 
-        Matcher matcher = ROLE_PATTERN.matcher(info);
+        Matcher matcher = InfoPatterns.ROLE.matcher(info);
 
         if (!matcher.find()) {
             throw new IllegalStateException("No role property in info " + info);
@@ -139,12 +160,12 @@ class ReplicaTopologyProvider implements TopologyProvider {
 
         List<RedisNodeDescription> replicas = new ArrayList<>();
 
-        Matcher matcher = SLAVE_PATTERN.matcher(info);
+        Matcher matcher = InfoPatterns.SLAVE.matcher(info);
         while (matcher.find()) {
 
             String group = matcher.group(2);
-            String ip = getNested(IP_PATTERN, group, 1);
-            String port = getNested(PORT_PATTERN, group, 1);
+            String ip = getNested(InfoPatterns.IP, group, 1);
+            String port = getNested(InfoPatterns.PORT, group, 1);
 
             replicas.add(new RedisMasterReplicaNode(ip, Integer.parseInt(port), redisURI, RedisInstance.Role.SLAVE));
         }
@@ -154,8 +175,8 @@ class ReplicaTopologyProvider implements TopologyProvider {
 
     private RedisNodeDescription getMasterFromInfo(String info) {
 
-        Matcher masterHostMatcher = MASTER_HOST_PATTERN.matcher(info);
-        Matcher masterPortMatcher = MASTER_PORT_PATTERN.matcher(info);
+        Matcher masterHostMatcher = InfoPatterns.MASTER_HOST.matcher(info);
+        Matcher masterPortMatcher = InfoPatterns.MASTER_PORT.matcher(info);
 
         boolean foundHost = masterHostMatcher.find();
         boolean foundPort = masterPortMatcher.find();
@@ -170,14 +191,15 @@ class ReplicaTopologyProvider implements TopologyProvider {
         return new RedisMasterReplicaNode(host, port, redisURI, RedisInstance.Role.UPSTREAM);
     }
 
-    private String getNested(Pattern pattern, String string, int group) {
+    private String getNested(InfoPatterns pattern, String string, int group) {
 
         Matcher matcher = pattern.matcher(string);
         if (matcher.find()) {
             return matcher.group(group);
         }
 
-        throw new IllegalArgumentException("Cannot extract group " + group + " with pattern " + pattern + " from " + string);
+        throw new IllegalArgumentException(
+                "Cannot extract group " + group + " with pattern " + pattern.getPattern() + " from " + string);
 
     }
 
