@@ -10,14 +10,13 @@ import io.netty.resolver.AddressResolverGroup;
  * @author Mark Paluch
  * @author Euiyoung Nam
  * @since 4.2
- * @deprecated since 6.6 replaced by{@link AddressResolverGroup} instead.
  */
-@Deprecated
 public interface DnsResolver {
 
     /**
      * Java VM default resolver.
      *
+     * @deprecated since 6.7, see {@link AddressResolverGroup}
      * @since 5.1
      */
     static DnsResolver jvmDefault() {

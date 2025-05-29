@@ -788,7 +788,7 @@ public class DefaultClientResources implements ClientResources {
     }
 
     /**
-     * @deprecated since 6.6 replaced by{@link AddressResolverGroup} instead.
+     * @deprecated since 6.7 replaced by{@link AddressResolverGroup} instead.
      **/
     @Deprecated
     @Override

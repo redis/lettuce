@@ -1,5 +1,7 @@
 package io.lettuce.core.resource;
 
+import io.netty.resolver.AddressResolverGroup;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -13,6 +15,8 @@ public enum DnsResolvers implements DnsResolver {
 
     /**
      * Java VM default resolver.
+     *
+     * @deprecated since 6.7. Configure {@link AddressResolverGroup} instead.
      */
     JVM_DEFAULT {
 
