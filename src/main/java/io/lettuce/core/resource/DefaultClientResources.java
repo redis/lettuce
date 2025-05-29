@@ -79,6 +79,7 @@ import reactor.core.scheduler.Schedulers;
  *
  * @author Mark Paluch
  * @author Yohei Ueki
+ * @author Euiyoung Nam
  * @since 3.4
  */
 public class DefaultClientResources implements ClientResources {
@@ -786,6 +787,10 @@ public class DefaultClientResources implements ClientResources {
         return LettuceLists.newList(eventExecutorGroup.iterator()).size();
     }
 
+    /**
+     * @deprecated since 6.7 replaced by{@link AddressResolverGroup} instead.
+     **/
+    @Deprecated
     @Override
     public DnsResolver dnsResolver() {
         return dnsResolver;
