@@ -935,6 +935,12 @@ Lettuce because of two reasons:
     longer releases shaded JAR files, and these limitations are no
     longer relevant for newer versions.
 
+!!! NOTE
+    Having both the `io_uring` and the `epoll` native transports available
+    in the classpath would - by default - load the `io_uring` driver with
+    precedence. Use the `io.lettuce.core.iouring` system property to
+    disable `io_uring` in this case and instead load the `epoll` transport.
+
 See also Netty [documentation on native
 transports](http://netty.io/wiki/native-transports.html).
 
