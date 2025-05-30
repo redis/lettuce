@@ -107,7 +107,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.connection = connection;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
-        this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec);
+        this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
     }
 
     /**
@@ -1736,6 +1736,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<JsonValue>> vgetattrAsJsonValue(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vgetattrAsJsonValue(key, element));
+    }
+
+    @Override
     public RedisFuture<VectorMetadata> vinfo(K key) {
         return dispatch(vectorSetCommandBuilder.vinfo(key));
     }
@@ -1767,6 +1772,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<Boolean> vsetattr(K key, V element, String json) {
+        return dispatch(vectorSetCommandBuilder.vsetattr(key, element, json));
+    }
+
+    @Override
+    public RedisFuture<Boolean> vsetattr(K key, V element, JsonValue json) {
         return dispatch(vectorSetCommandBuilder.vsetattr(key, element, json));
     }
 

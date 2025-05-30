@@ -11,6 +11,7 @@ import java.util.List;
 import io.lettuce.core.VAddArgs;
 import io.lettuce.core.VSimArgs;
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VectorMetadata;
 
@@ -182,6 +183,23 @@ public interface NodeSelectionVectorSetAsyncCommands<K, V> {
     AsyncExecutions<String> vgetattr(K key, V element);
 
     /**
+     * Returns the attributes associated with the specified {@code element} in the vector set stored at {@code key}.
+     * <p>
+     * Attributes are stored as JSON and can contain any metadata associated with the vector element.
+     * <p>
+     * Time complexity: O(1)
+     *
+     * @param key the key of the vector set
+     * @param element the name of the element in the vector set
+     * @return the attributes as a {@link JsonValue}, or {@literal null} if the key or element does not exist or has no
+     *         attributes
+     * @since 6.7
+     * @see <a href="https://redis.io/docs/latest/commands/vgetattr/">Redis Documentation: VGETATTR</a>
+     */
+    @Experimental
+    AsyncExecutions<List<JsonValue>> vgetattrAsJsonValue(K key, V element);
+
+    /**
      * Returns metadata and internal details about the vector set stored at {@code key}.
      * <p>
      * The information includes details such as the number of elements, dimensionality, quantization type, and memory usage.
@@ -296,6 +314,24 @@ public interface NodeSelectionVectorSetAsyncCommands<K, V> {
      */
     @Experimental
     AsyncExecutions<Boolean> vsetattr(K key, V element, String json);
+
+    /**
+     * Sets or updates the attributes for the specified {@code element} in the vector set stored at {@code key}.
+     * <p>
+     * Attributes are stored as JSON and can contain any metadata associated with the vector element. You can also update
+     * existing attributes or delete them by setting an empty string.
+     * <p>
+     * Time complexity: O(1)
+     *
+     * @param key the key of the vector set
+     * @param element the name of the element in the vector set
+     * @param json the attributes as a {@link JsonValue} object
+     * @return {@literal true} if the attributes were set, {@literal false} if the key or element does not exist
+     * @since 6.7
+     * @see <a href="https://redis.io/docs/latest/commands/vsetattr/">Redis Documentation: VSETATTR</a>
+     */
+    @Experimental
+    AsyncExecutions<Boolean> vsetattr(K key, V element, JsonValue json);
 
     /**
      * Finds the most similar vectors to the given query vector in the vector set stored at {@code key}.

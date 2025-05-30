@@ -8,17 +8,21 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.output.*;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VectorMetadata;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static io.lettuce.core.protocol.CommandType.*;
 import static io.lettuce.core.protocol.CommandKeyword.*;
@@ -33,13 +37,18 @@ import static io.lettuce.core.protocol.CommandKeyword.*;
  */
 public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
+    private final Supplier<JsonParser> parser;
+
     /**
      * Initialize a new {@link RedisVectorSetCommandBuilder} with the specified codec.
      *
      * @param codec the codec used to encode/decode keys and values, must not be {@code null}
+     * @param parser
      */
-    public RedisVectorSetCommandBuilder(RedisCodec<K, V> codec) {
+    public RedisVectorSetCommandBuilder(RedisCodec<K, V> codec, Supplier<JsonParser> parser) {
         super(codec);
+
+        this.parser = parser;
     }
 
     /**
@@ -194,6 +203,22 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
     }
 
     /**
+     * Create a new {@code VGETATTR} command to get the attributes associated with an element in a vector set.
+     *
+     * @param key the key of the vector set, must not be {@code null}
+     * @param element the name of the element in the vector set, must not be {@code null}
+     * @return a new {@link Command} that returns the attributes associated with the specified element
+     * @see <a href="https://redis.io/docs/latest/commands/vgetattr/">Redis Documentation: VGETATTR</a>
+     */
+    public Command<K, V, List<JsonValue>> vgetattrAsJsonValue(K key, V element) {
+
+        notNullKey(key);
+        notNullKey(element);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element);
+        return createCommand(VGETATTR, new JsonValueListOutput<>(codec, parser.get()), args);
+    }
+
+    /**
      * Create a new {@code VINFO} command to get information about a vector set.
      *
      * @param key the key of the vector set, must not be {@code null}
@@ -294,6 +319,24 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
         notNullKey(element);
         notNullKey(json);
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element).add(json);
+        return createCommand(VSETATTR, new BooleanOutput<>(codec), args);
+    }
+
+    /**
+     * Create a new {@code VSETATTR} command to set or update the attributes for an element in a vector set.
+     *
+     * @param key the key of the vector set, must not be {@code null}
+     * @param element the name of the element in the vector set, must not be {@code null}
+     * @param json the attributes as a JSON string, must not be {@code null}
+     * @return a new {@link Command} that returns {@literal true} if the attributes were set, {@literal false} if the key or
+     *         element does not exist
+     * @see <a href="https://redis.io/docs/latest/commands/vsetattr/">Redis Documentation: VSETATTR</a>
+     */
+    public Command<K, V, Boolean> vsetattr(K key, V element, JsonValue json) {
+        notNullKey(key);
+        notNullKey(element);
+        notNullKey(json);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(element).add(json.toString());
         return createCommand(VSETATTR, new BooleanOutput<>(codec), args);
     }
 

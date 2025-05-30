@@ -17,6 +17,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.json.JsonValue;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -190,6 +191,22 @@ public class RedisVectorSetIntegrationTests {
         assertThat(attrs).contains("test");
         assertThat(attrs).contains("price");
         assertThat(attrs).contains("10.5");
+    }
+
+    @Test
+    void vgetattrAsJsonValue() {
+        // First set attributes
+        JsonValue jsonValue = redis.getJsonParser().createJsonValue(JSON_ATTRS);
+        Boolean result = redis.vsetattr(VECTOR_SET_KEY, ELEMENT1, jsonValue);
+        assertThat(result).isTrue();
+
+        // Then get and verify attributes
+        List<JsonValue> attrs = redis.vgetattrAsJsonValue(VECTOR_SET_KEY, ELEMENT1);
+        assertThat(attrs).hasSize(1);
+        assertThat(attrs.get(0).isJsonObject()).isTrue();
+        assertThat(attrs.get(0).asJsonObject().size()).isEqualTo(2);
+        assertThat(attrs.get(0).asJsonObject().get("category").asString()).isEqualTo("test");
+        assertThat(attrs.get(0).asJsonObject().get("price").asNumber()).isEqualTo(10.5);
     }
 
     @Test

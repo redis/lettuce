@@ -122,7 +122,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         this.parser = parser;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
-        this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec);
+        this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -1803,6 +1803,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Flux<JsonValue> vgetattrAsJsonValue(K key, V element) {
+        return createDissolvingFlux(() -> vectorSetCommandBuilder.vgetattrAsJsonValue(key, element));
+    }
+
+    @Override
     public Mono<VectorMetadata> vinfo(K key) {
         return createMono(() -> vectorSetCommandBuilder.vinfo(key));
     }
@@ -1834,6 +1839,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
 
     @Override
     public Mono<Boolean> vsetattr(K key, V element, String json) {
+        return createMono(() -> vectorSetCommandBuilder.vsetattr(key, element, json));
+    }
+
+    @Override
+    public Mono<Boolean> vsetattr(K key, V element, JsonValue json) {
         return createMono(() -> vectorSetCommandBuilder.vsetattr(key, element, json));
     }
 

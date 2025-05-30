@@ -7,6 +7,9 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.json.DefaultJsonParser;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VectorMetadata;
@@ -39,7 +42,9 @@ class RedisVectorSetCommandBuilderUnitTests {
 
     private static final String JSON = "{\"attribute\":\"value\"}";
 
-    RedisVectorSetCommandBuilder<String, String> builder = new RedisVectorSetCommandBuilder<>(StringCodec.UTF8);
+    public static final JsonParser PARSER = new DefaultJsonParser();
+
+    RedisVectorSetCommandBuilder<String, String> builder = new RedisVectorSetCommandBuilder<>(StringCodec.UTF8, () -> PARSER);
 
     @Test
     void shouldCorrectlyConstructVadd() {
@@ -145,6 +150,16 @@ class RedisVectorSetCommandBuilderUnitTests {
     }
 
     @Test
+    void shouldCorrectlyConstructVgetattrAsJsonValue() {
+        Command<String, String, List<JsonValue>> command = builder.vgetattrAsJsonValue(KEY, ELEMENT);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*3\r\n" + "$8\r\n" + "VGETATTR\r\n" + "$10\r\n" + "vector:set\r\n" + "$8\r\n" + "element1\r\n");
+    }
+
+    @Test
     void shouldCorrectlyConstructVinfo() {
         Command<String, String, VectorMetadata> command = builder.vinfo(KEY);
         ByteBuf buf = Unpooled.directBuffer();
@@ -207,6 +222,18 @@ class RedisVectorSetCommandBuilderUnitTests {
     @Test
     void shouldCorrectlyConstructVsetattr() {
         Command<String, String, Boolean> command = builder.vsetattr(KEY, ELEMENT, JSON);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$8\r\n" + "VSETATTR\r\n" + "$10\r\n"
+                + "vector:set\r\n" + "$8\r\n" + "element1\r\n" + "$21\r\n" + "{\"attribute\":\"value\"}\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructVsetattrWithJsonValue() {
+
+        JsonValue JSON_VALUE = PARSER.createJsonValue(JSON);
+        Command<String, String, Boolean> command = builder.vsetattr(KEY, ELEMENT, JSON_VALUE);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

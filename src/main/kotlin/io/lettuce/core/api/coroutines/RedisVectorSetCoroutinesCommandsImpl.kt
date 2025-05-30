@@ -11,14 +11,12 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.VAddArgs
 import io.lettuce.core.VSimArgs
 import io.lettuce.core.api.reactive.RedisVectorSetReactiveCommands
+import io.lettuce.core.json.JsonValue
 import io.lettuce.core.vector.RawVector
 import io.lettuce.core.vector.VectorMetadata
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.asFlow
-import kotlin.streams.toList
-
 
 /**
  * Coroutine executed commands (based on reactive commands) for Vector sets.
@@ -55,6 +53,8 @@ internal class RedisVectorSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun vgetattr(key: K, element: V): String? = ops.vgetattr(key, element).awaitFirstOrNull()
 
+    override suspend fun vgetattrAsJsonValue(key: K, element: V): List<JsonValue>? = ops.vgetattrAsJsonValue(key, element).asFlow().toList()
+
     override suspend fun vinfo(key: K): VectorMetadata? = ops.vinfo(key).awaitFirstOrNull()
 
     override suspend fun vlinks(key: K, element: V): List<V> = ops.vlinks(key, element).asFlow().toList()
@@ -68,6 +68,8 @@ internal class RedisVectorSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override suspend fun vrem(key: K, element: V): Boolean? = ops.vrem(key, element).awaitFirstOrNull()
 
     override suspend fun vsetattr(key: K, element: V, json: String): Boolean? = ops.vsetattr(key, element, json).awaitFirstOrNull()
+
+    override suspend fun vsetattr(key: K, element: V, json: JsonValue): Boolean? = ops.vsetattr(key, element, json).awaitFirstOrNull()
 
     override suspend fun vsim(key: K, vararg vectors: Double): List<V> = ops.vsim(key, *vectors.asSequence().toList().toTypedArray()).asFlow().toList()
 
