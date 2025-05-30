@@ -191,6 +191,13 @@ public class RedisVectorSetIntegrationTests {
         assertThat(attrs).contains("test");
         assertThat(attrs).contains("price");
         assertThat(attrs).contains("10.5");
+
+        result = redis.vClearAttributes(VECTOR_SET_KEY, ELEMENT1);
+        assertThat(result).isTrue();
+
+        // Then get and verify attribute
+        attrs = redis.vgetattr(VECTOR_SET_KEY, ELEMENT1);
+        assertThat(attrs).isNull();
     }
 
     @Test

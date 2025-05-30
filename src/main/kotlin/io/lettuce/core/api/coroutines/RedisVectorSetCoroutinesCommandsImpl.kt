@@ -45,6 +45,8 @@ internal class RedisVectorSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun vcard(key: K): Long? = ops.vcard(key).awaitFirstOrNull()
 
+    override suspend fun vClearAttributes(key: K, element: V): Boolean? = ops.vsetattr(key, element, "").awaitFirstOrNull()
+
     override suspend fun vdim(key: K): Long? = ops.vdim(key).awaitFirstOrNull()
 
     override suspend fun vemb(key: K, element: V): List<Double> = ops.vemb(key, element).asFlow().toList()
@@ -53,7 +55,7 @@ internal class RedisVectorSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
 
     override suspend fun vgetattr(key: K, element: V): String? = ops.vgetattr(key, element).awaitFirstOrNull()
 
-    override suspend fun vgetattrAsJsonValue(key: K, element: V): List<JsonValue>? = ops.vgetattrAsJsonValue(key, element).asFlow().toList()
+    override suspend fun vgetattrAsJsonValue(key: K, element: V): List<JsonValue> = ops.vgetattrAsJsonValue(key, element).asFlow().toList()
 
     override suspend fun vinfo(key: K): VectorMetadata? = ops.vinfo(key).awaitFirstOrNull()
 

@@ -7,6 +7,7 @@
 package io.lettuce.core;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.vector.QuantizationType;
@@ -240,6 +241,24 @@ public class VAddArgs implements CompositeArgument {
     public VAddArgs attributes(String attributes) {
         LettuceAssert.notNull(attributes, "Attributes must not be null");
         this.attributes = Optional.of(attributes);
+        return this;
+    }
+
+    /**
+     * Set the attributes for the vector (SETATTR). Works with a {@link JsonValue} object.
+     * <p>
+     * The SETATTR option associates attributes in the form of a JavaScript object to the newly created entry or updates the
+     * attributes (if they already exist). It is the same as calling the VSETATTR command separately.
+     * <p>
+     * Attributes can be used for filtering during similarity searches with the VSIM command.
+     * <p>
+     *
+     * @param attributes the attributes for the vector as JSON strings.
+     * @return {@code this}
+     */
+    public VAddArgs attributes(JsonValue attributes) {
+        LettuceAssert.notNull(attributes, "Attributes must not be null");
+        this.attributes = Optional.of(attributes.toString());
         return this;
     }
 

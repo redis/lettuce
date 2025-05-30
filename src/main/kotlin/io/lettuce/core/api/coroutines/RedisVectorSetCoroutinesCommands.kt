@@ -8,7 +8,6 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.VAddArgs
 import io.lettuce.core.VSimArgs
 import io.lettuce.core.annotations.Experimental
@@ -123,6 +122,20 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
     suspend fun vcard(key: K): Long?
 
     /**
+     * Clears all attributes for the specified `element` in the vector set stored at `key`.
+     * <p>
+     * Time complexity: O(1)
+     *
+     * @param key the key of the vector set
+     * @param element the name of the element in the vector set
+     * @return @literal true} if the attributes were set, {@literal false} if the key or element does not exist
+     * @since 6.7
+     * @see <a href="https://redis.io/docs/latest/commands/vsetattr/">Redis Documentation: VSETATTR</a>
+     */
+    @Experimental
+    suspend fun vClearAttributes(key: K, element: V): Boolean?
+
+    /**
      * Returns the dimensionality of the vector set stored at `key`.
      * <p>
      * Time complexity: O(1)
@@ -193,12 +206,13 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      *
      * @param key the key of the vector set
      * @param element the name of the element in the vector set
-     * @return the attributes as a [JsonValue], or {@literal null} if the key or element does not exist or has no attributes
+     * @return the attributes as a [JsonValue], or {@literal null} if the key or element does not exist or has no
+     *         attributes
      * @since 6.7
      * @see <a href="https://redis.io/docs/latest/commands/vgetattr/">Redis Documentation: VGETATTR</a>
      */
     @Experimental
-    suspend fun vgetattrAsJsonValue(key: K, element: V): List<JsonValue>?
+    suspend fun vgetattrAsJsonValue(key: K, element: V): List<JsonValue>
 
     /**
      * Returns metadata and internal details about the vector set stored at `key`.

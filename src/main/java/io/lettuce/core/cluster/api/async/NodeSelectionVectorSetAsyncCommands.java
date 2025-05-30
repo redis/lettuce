@@ -121,6 +121,20 @@ public interface NodeSelectionVectorSetAsyncCommands<K, V> {
     AsyncExecutions<Long> vcard(K key);
 
     /**
+     * Clears all attributes for the specified {@code element} in the vector set stored at {@code key}.
+     * <p>
+     * Time complexity: O(1)
+     *
+     * @param key the key of the vector set
+     * @param element the name of the element in the vector set
+     * @return {@literal true} if the attributes were set, {@literal false} if the key or element does not exist
+     * @since 6.7
+     * @see <a href="https://redis.io/docs/latest/commands/vsetattr/">Redis Documentation: VSETATTR</a>
+     */
+    @Experimental
+    AsyncExecutions<Boolean> vClearAttributes(K key, V element);
+
+    /**
      * Returns the dimensionality of the vector set stored at {@code key}.
      * <p>
      * Time complexity: O(1)

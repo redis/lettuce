@@ -1783,6 +1783,11 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<Boolean> vClearAttributes(K key, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vsetattr(key, element, ""));
+    }
+
+    @Override
     public Mono<Long> vdim(K key) {
         return createMono(() -> vectorSetCommandBuilder.vdim(key));
     }
