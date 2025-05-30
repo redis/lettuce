@@ -23,6 +23,7 @@ import java.io.File;
 
 /**
  * @author Mark Paluch
+ * @author Tihomir Mateev
  */
 class Constants {
 
@@ -30,7 +31,7 @@ class Constants {
             "RedisGeoCommands", "RedisHashCommands", "RedisHLLCommands", "RedisKeyCommands", "RedisListCommands",
             "RedisScriptingCommands", "RedisSentinelCommands", "RedisServerCommands", "RedisSetCommands",
             "RedisSortedSetCommands", "RedisStreamCommands", "RedisStringCommands", "RedisTransactionalCommands",
-            "RedisJsonCommands" };
+            "RedisJsonCommands", "RedisVectorSetCommands" };
 
     public static final File TEMPLATES = new File("src/main/templates");
 
