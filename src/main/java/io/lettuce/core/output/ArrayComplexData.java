@@ -35,7 +35,12 @@ class ArrayComplexData extends ComplexData {
     private final List<Object> data;
 
     public ArrayComplexData(int count) {
-        data = new ArrayList<>(count);
+        // RESP2 response for array data might end up returning -1 here if there are no results to process
+        if (count > 0) {
+            data = new ArrayList<>(count);
+        } else {
+            data = new ArrayList<>(0);
+        }
     }
 
     @Override

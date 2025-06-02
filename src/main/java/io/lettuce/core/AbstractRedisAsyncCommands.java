@@ -48,6 +48,8 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.vector.RawVector;
+import io.lettuce.core.vector.VectorMetadata;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -79,13 +81,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisKeyAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>, RedisListAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
-        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V> {
+        RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
+        RedisVectorSetAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
     private final RedisCommandBuilder<K, V> commandBuilder;
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
+
+    private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
 
     private final Supplier<JsonParser> parser;
 
@@ -102,6 +107,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.connection = connection;
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
+        this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
     }
 
     /**
@@ -1682,6 +1688,141 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<JsonType>> jsonType(K key) {
         return dispatch(jsonCommandBuilder.jsonType(key, JsonPath.ROOT_PATH));
+    }
+
+    @Override
+    public RedisFuture<Boolean> vadd(K key, V element, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vadd(key, element, null, vectors));
+    }
+
+    @Override
+    public RedisFuture<Boolean> vadd(K key, int dimensionality, V element, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vadd(key, dimensionality, element, null, vectors));
+    }
+
+    @Override
+    public RedisFuture<Boolean> vadd(K key, V element, VAddArgs args, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vadd(key, element, args, vectors));
+    }
+
+    @Override
+    public RedisFuture<Boolean> vadd(K key, int dimensionality, V element, VAddArgs args, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vadd(key, dimensionality, element, args, vectors));
+    }
+
+    @Override
+    public RedisFuture<Long> vcard(K key) {
+        return dispatch(vectorSetCommandBuilder.vcard(key));
+    }
+
+    @Override
+    public RedisFuture<Boolean> vClearAttributes(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vsetattr(key, element, ""));
+    }
+
+    @Override
+    public RedisFuture<Long> vdim(K key) {
+        return dispatch(vectorSetCommandBuilder.vdim(key));
+    }
+
+    @Override
+    public RedisFuture<List<Double>> vemb(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vemb(key, element));
+    }
+
+    @Override
+    public RedisFuture<RawVector> vembRaw(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vembRaw(key, element));
+    }
+
+    @Override
+    public RedisFuture<String> vgetattr(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vgetattr(key, element));
+    }
+
+    @Override
+    public RedisFuture<List<JsonValue>> vgetattrAsJsonValue(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vgetattrAsJsonValue(key, element));
+    }
+
+    @Override
+    public RedisFuture<VectorMetadata> vinfo(K key) {
+        return dispatch(vectorSetCommandBuilder.vinfo(key));
+    }
+
+    @Override
+    public RedisFuture<List<V>> vlinks(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vlinks(key, element));
+    }
+
+    @Override
+    public RedisFuture<Map<V, Double>> vlinksWithScores(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vlinksWithScores(key, element));
+    }
+
+    @Override
+    public RedisFuture<V> vrandmember(K key) {
+        return dispatch(vectorSetCommandBuilder.vrandmember(key));
+    }
+
+    @Override
+    public RedisFuture<List<V>> vrandmember(K key, int count) {
+        return dispatch(vectorSetCommandBuilder.vrandmember(key, count));
+    }
+
+    @Override
+    public RedisFuture<Boolean> vrem(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vrem(key, element));
+    }
+
+    @Override
+    public RedisFuture<Boolean> vsetattr(K key, V element, String json) {
+        return dispatch(vectorSetCommandBuilder.vsetattr(key, element, json));
+    }
+
+    @Override
+    public RedisFuture<Boolean> vsetattr(K key, V element, JsonValue json) {
+        return dispatch(vectorSetCommandBuilder.vsetattr(key, element, json));
+    }
+
+    @Override
+    public RedisFuture<List<V>> vsim(K key, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vsim(key, null, vectors));
+    }
+
+    @Override
+    public RedisFuture<List<V>> vsim(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vsim(key, null, element));
+    }
+
+    @Override
+    public RedisFuture<List<V>> vsim(K key, VSimArgs args, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vsim(key, args, vectors));
+    }
+
+    @Override
+    public RedisFuture<List<V>> vsim(K key, VSimArgs args, V element) {
+        return dispatch(vectorSetCommandBuilder.vsim(key, args, element));
+    }
+
+    @Override
+    public RedisFuture<Map<V, Double>> vsimWithScore(K key, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vsimWithScore(key, null, vectors));
+    }
+
+    @Override
+    public RedisFuture<Map<V, Double>> vsimWithScore(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vsimWithScore(key, null, element));
+    }
+
+    @Override
+    public RedisFuture<Map<V, Double>> vsimWithScore(K key, VSimArgs args, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vsimWithScore(key, args, vectors));
+    }
+
+    @Override
+    public RedisFuture<Map<V, Double>> vsimWithScore(K key, VSimArgs args, V element) {
+        return dispatch(vectorSetCommandBuilder.vsimWithScore(key, args, element));
     }
 
     @Override

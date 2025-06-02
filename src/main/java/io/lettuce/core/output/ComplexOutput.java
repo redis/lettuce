@@ -84,8 +84,9 @@ public class ComplexOutput<K, V, T> extends CommandOutput<K, V, T> {
     @Override
     public void set(ByteBuffer bytes) {
         if (data == null) {
-            throw new RuntimeException("Invalid output received for dynamic aggregate output."
-                    + "ByteBuffer value should have been preceded by some sort of aggregation.");
+            // Sometimes the server would return null for commands that otherwise would end up returning a complex data
+            // structure. In these cases, we should simply return null too.
+            return;
         }
 
         data.storeObject(bytes == null ? null : codec.decodeValue(bytes));
@@ -123,18 +124,28 @@ public class ComplexOutput<K, V, T> extends CommandOutput<K, V, T> {
 
     @Override
     public void multiSet(int count) {
+        if (count < 0) {
+            return;
+        }
+
         SetComplexData dynamicData = new SetComplexData(count);
         multi(dynamicData);
     }
 
     @Override
     public void multiArray(int count) {
+        if (count < 0) {
+            return;
+        }
         ArrayComplexData dynamicData = new ArrayComplexData(count);
         multi(dynamicData);
     }
 
     @Override
     public void multiMap(int count) {
+        if (count < 0) {
+            return;
+        }
         MapComplexData dynamicData = new MapComplexData(count);
         multi(dynamicData);
     }

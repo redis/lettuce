@@ -30,6 +30,7 @@ import io.lettuce.core.json.JsonParser;
  * @param <K> Key type.
  * @param <V> Value type.
  * @author Mark Paluch
+ * @author Tihomir Mateev
  * @since 3.0
  */
 public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, RedisAclAsyncCommands<K, V>,
@@ -37,7 +38,7 @@ public interface RedisAsyncCommands<K, V> extends BaseRedisAsyncCommands<K, V>, 
         RedisHashAsyncCommands<K, V>, RedisHLLAsyncCommands<K, V>, RedisKeyAsyncCommands<K, V>, RedisListAsyncCommands<K, V>,
         RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>, RedisSetAsyncCommands<K, V>,
         RedisSortedSetAsyncCommands<K, V>, RedisStreamAsyncCommands<K, V>, RedisStringAsyncCommands<K, V>,
-        RedisTransactionalAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V> {
+        RedisTransactionalAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>, RedisVectorSetAsyncCommands<K, V> {
 
     /**
      * Authenticate to the server.

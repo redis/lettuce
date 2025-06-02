@@ -53,7 +53,9 @@ open class RedisCoroutinesCommandsImpl<K : Any, V : Any>(
     RedisStreamCoroutinesCommands<K, V> by RedisStreamCoroutinesCommandsImpl(ops),
     RedisStringCoroutinesCommands<K, V> by RedisStringCoroutinesCommandsImpl(ops),
     RedisTransactionalCoroutinesCommands<K, V> by RedisTransactionalCoroutinesCommandsImpl(ops),
-    RedisJsonCoroutinesCommands<K, V> by RedisJsonCoroutinesCommandsImpl(ops) {
+    RedisJsonCoroutinesCommands<K, V> by RedisJsonCoroutinesCommandsImpl(ops),
+    RedisVectorSetCoroutinesCommands<K, V> by RedisVectorSetCoroutinesCommandsImpl(ops) {
+
 
     /**
      * Authenticate to the server.
