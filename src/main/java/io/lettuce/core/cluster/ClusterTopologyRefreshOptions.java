@@ -33,14 +33,19 @@ import io.lettuce.core.internal.LettuceAssert;
  * Options to control the Cluster topology refreshing of {@link RedisClusterClient}.
  *
  * @author Mark Paluch
+ * @author Tihomir Mateev
  * @since 4.2
  */
 public class ClusterTopologyRefreshOptions {
 
-    public static final Set<RefreshTrigger> DEFAULT_ADAPTIVE_REFRESH_TRIGGERS = Collections.emptySet();
+    /**
+     * Since Lettuce 7.0 all adaptive triggers are enabled by default
+     */
+    public static final Set<RefreshTrigger> DEFAULT_ADAPTIVE_REFRESH_TRIGGERS = EnumSet.allOf(RefreshTrigger.class);
 
     public static final long DEFAULT_ADAPTIVE_REFRESH_TIMEOUT = 30;
 
+    @Deprecated
     public static final TimeUnit DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_UNIT = TimeUnit.SECONDS;
 
     public static final Duration DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_DURATION = Duration
@@ -54,6 +59,7 @@ public class ClusterTopologyRefreshOptions {
 
     public static final long DEFAULT_REFRESH_PERIOD = 60;
 
+    @Deprecated
     public static final TimeUnit DEFAULT_REFRESH_PERIOD_UNIT = TimeUnit.SECONDS;
 
     public static final Duration DEFAULT_REFRESH_PERIOD_DURATION = Duration.ofSeconds(DEFAULT_REFRESH_PERIOD);
@@ -159,12 +165,16 @@ public class ClusterTopologyRefreshOptions {
          * Enables adaptive topology refreshing using one or more {@link RefreshTrigger triggers}. Adaptive refresh triggers
          * initiate topology view updates based on events happened during Redis Cluster operations. Adaptive triggers lead to an
          * immediate topology refresh. Adaptive triggered refreshes are rate-limited using a timeout since events can happen on
-         * a large scale. Adaptive refresh triggers are disabled by default. See also
+         * a large scale. Adaptive refresh triggers are all enabled by default. See also
          * {@link #adaptiveRefreshTriggersTimeout(long, TimeUnit)} and {@link RefreshTrigger}.
          *
          * @param refreshTrigger one or more {@link RefreshTrigger} to enabled
          * @return {@code this}
+         * @deprecated Starting from 7.0, this method has no effect as all adaptive triggers are enabled by default.
+         * @see #disableAllAdaptiveRefreshTriggers()
+         * @see #disableAdaptiveRefreshTrigger(RefreshTrigger...)
          */
+        @Deprecated
         public Builder enableAdaptiveRefreshTrigger(RefreshTrigger... refreshTrigger) {
 
             LettuceAssert.notNull(refreshTrigger, "RefreshTriggers must not be null");
@@ -179,13 +189,51 @@ public class ClusterTopologyRefreshOptions {
          * Enables adaptive topology refreshing using all {@link RefreshTrigger triggers}. Adaptive refresh triggers initiate
          * topology view updates based on events happened during Redis Cluster operations. Adaptive triggers lead to an
          * immediate topology refresh. Adaptive triggered refreshes are rate-limited using a timeout since events can happen on
-         * a large scale. Adaptive refresh triggers are disabled by default. See also
+         * a large scale. Adaptive refresh triggers are all enabled by default. See also
+         * {@link #adaptiveRefreshTriggersTimeout(long, TimeUnit)} and {@link RefreshTrigger}.
+         *
+         * @return {@code this}
+         * @deprecated Starting from 7.0, this method has no effect as all adaptive triggers are enabled by default.
+         * @see #disableAllAdaptiveRefreshTriggers()
+         * @see #disableAdaptiveRefreshTrigger(RefreshTrigger...)
+         */
+        @Deprecated
+        public Builder enableAllAdaptiveRefreshTriggers() {
+            adaptiveRefreshTriggers.addAll(EnumSet.allOf(RefreshTrigger.class));
+            return this;
+        }
+
+        /**
+         * Disables adaptive topology refreshing using one or more {@link RefreshTrigger triggers}. Adaptive refresh triggers
+         * initiate topology view updates based on events happened during Redis Cluster operations. Adaptive triggers lead to an
+         * immediate topology refresh. Adaptive triggered refreshes are rate-limited using a timeout since events can happen on
+         * a large scale. Adaptive refresh triggers are all enabled by default. See also
+         * {@link #adaptiveRefreshTriggersTimeout(long, TimeUnit)} and {@link RefreshTrigger}.
+         *
+         * @param refreshTrigger one or more {@link RefreshTrigger} to enabled
+         * @return {@code this}
+         */
+        public Builder disableAdaptiveRefreshTrigger(RefreshTrigger... refreshTrigger) {
+
+            LettuceAssert.notNull(refreshTrigger, "RefreshTriggers must not be null");
+            LettuceAssert.noNullElements(refreshTrigger, "RefreshTriggers must not contain null elements");
+            LettuceAssert.notEmpty(refreshTrigger, "RefreshTriggers must contain at least one element");
+
+            Arrays.asList(refreshTrigger).forEach(adaptiveRefreshTriggers::remove);
+            return this;
+        }
+
+        /**
+         * Disables adaptive topology refreshing using all {@link RefreshTrigger triggers}. Adaptive refresh triggers initiate
+         * topology view updates based on events happened during Redis Cluster operations. Adaptive triggers lead to an
+         * immediate topology refresh. Adaptive triggered refreshes are rate-limited using a timeout since events can happen on
+         * a large scale. Adaptive refresh triggers are all enabled by default. See also
          * {@link #adaptiveRefreshTriggersTimeout(long, TimeUnit)} and {@link RefreshTrigger}.
          *
          * @return {@code this}
          */
-        public Builder enableAllAdaptiveRefreshTriggers() {
-            adaptiveRefreshTriggers.addAll(EnumSet.allOf(RefreshTrigger.class));
+        public Builder disableAllAdaptiveRefreshTriggers() {
+            adaptiveRefreshTriggers.clear();
             return this;
         }
 
