@@ -276,13 +276,17 @@ public class ConnectionBuilder {
 
                 SocketOptions.TcpUserTimeoutOptions tcpUserTimeoutOptions = options.getTcpUserTimeout();
 
+                boolean applied = false;
                 if (IOUringProvider.isAvailable()) {
                     IOUringProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
+                    applied = true;
                 } else if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
                     EpollProvider.applyTcpUserTimeout(bootstrap, tcpUserTimeoutOptions.getTcpUserTimeout());
-                } else {
-                    logger.warn("Cannot apply TCP User Timeout options to channel type " + channelClass.getName());
+                    applied = true;
                 }
+
+                LettuceAssert.assertState(applied,
+                        "TCP User Timeout options could not be applied. Native transports (io_uring or epoll) are required.");
             }
         }
 
@@ -291,17 +295,22 @@ public class ConnectionBuilder {
         if (options.isKeepAlive() && options.isExtendedKeepAlive()) {
 
             SocketOptions.KeepAliveOptions keepAlive = options.getKeepAlive();
+            boolean applied = false;
 
             if (IOUringProvider.isAvailable()) {
                 IOUringProvider.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(), keepAlive.getInterval());
+                applied = true;
             } else if (io.lettuce.core.resource.EpollProvider.isAvailable()) {
                 EpollProvider.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(), keepAlive.getInterval());
+                applied = true;
             } else if (ExtendedNioSocketOptions.isAvailable() && !KqueueProvider.isAvailable()) {
                 ExtendedNioSocketOptions.applyKeepAlive(bootstrap, keepAlive.getCount(), keepAlive.getIdle(),
                         keepAlive.getInterval());
-            } else {
-                logger.warn("Cannot apply extended TCP keepalive options to channel type " + channelClass.getName());
+                applied = true;
             }
+
+            LettuceAssert.assertState(applied,
+                    "Extended TCP keepalive options could not be applied. Native transports (io_uring or epoll) or a compatible NIO transport are required.");
         }
 
     }
