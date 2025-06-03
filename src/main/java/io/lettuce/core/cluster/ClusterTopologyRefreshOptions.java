@@ -212,6 +212,7 @@ public class ClusterTopologyRefreshOptions {
          *
          * @param refreshTrigger one or more {@link RefreshTrigger} to enabled
          * @return {@code this}
+         * @since 7.0
          */
         public Builder disableAdaptiveRefreshTrigger(RefreshTrigger... refreshTrigger) {
 
@@ -231,6 +232,7 @@ public class ClusterTopologyRefreshOptions {
          * {@link #adaptiveRefreshTriggersTimeout(long, TimeUnit)} and {@link RefreshTrigger}.
          *
          * @return {@code this}
+         * @since 7.0
          */
         public Builder disableAllAdaptiveRefreshTriggers() {
             adaptiveRefreshTriggers.clear();
