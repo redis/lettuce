@@ -240,10 +240,6 @@ public class RedisClusterSetupIntegrationTests extends TestSupport {
 
         ClusterSetup.setup2Masters(clusterHelper);
 
-        ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
-                .enableAllAdaptiveRefreshTriggers().build();
-
-        clusterClient.setOptions(ClusterClientOptions.builder().topologyRefreshOptions(clusterTopologyRefreshOptions).build());
         StatefulRedisClusterConnection<String, String> connection = clusterClient.connect();
         RedisAdvancedClusterCommands<String, String> sync = connection.sync();
         RedisAdvancedClusterAsyncCommands<String, String> async = connection.async();
