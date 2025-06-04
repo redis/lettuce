@@ -337,3 +337,4 @@ NodeSelectionInvocationHandler
 getNodeDescription
 NioEventLoopGroup
 brido
+NoClassDefFoundError
