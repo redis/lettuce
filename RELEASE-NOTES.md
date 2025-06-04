@@ -1,7 +1,8 @@
 Lettuce 6.7.1 RELEASE NOTES
 ==============================
 
-The Redis team is delighted to announce the patch release of Lettuce 6.7.1
+The Lettuce team is pleased to announce the Lettuce 6.7.1 service release!
+This release ships with bugfixes and dependency upgrades.
 
 Lettuce 6 supports Redis 2.6+ up to Redis 7.x. In terms of Java runtime, Lettuce requires
 at least Java 8 and works with Java 21.
