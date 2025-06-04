@@ -45,7 +45,7 @@ import io.netty.util.Timer;
  * @since 5.1
  * @see io.lettuce.core.TimeoutOptions
  */
-public class CommandExpiryWriter implements RedisChannelWriter {
+public class CommandExpiryWriter implements RedisChannelWriter, RebindAwareComponent {
 
     private final RedisChannelWriter delegate;
 
@@ -59,7 +59,11 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     private final boolean applyConnectionTimeout;
 
+    private final Duration relaxedTimeout;
+
     private volatile long timeout = -1;
+
+    private volatile boolean relaxTimeouts = false;
 
     /**
      * Create a new {@link CommandExpiryWriter}.
@@ -78,9 +82,36 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         this.delegate = delegate;
         this.source = timeoutOptions.getSource();
         this.applyConnectionTimeout = timeoutOptions.isApplyConnectionTimeout();
+        this.relaxedTimeout = timeoutOptions.getRelaxedTimeout();
         this.timeUnit = source.getTimeUnit();
         this.executorService = clientResources.eventExecutorGroup();
         this.timer = clientResources.timer();
+
+        DefaultEndpoint endpoint = (DefaultEndpoint) delegate;
+        endpoint.getPushListeners().stream().filter(listener -> listener instanceof RebindAwareConnectionWatchdog).findFirst()
+                .ifPresent(listener -> {
+                    RebindAwareConnectionWatchdog watchdog = (RebindAwareConnectionWatchdog) listener;
+                    watchdog.setRebindListener(this);
+                });
+    }
+
+    /**
+     * Create a new {@link CommandExpiryWriter} or {@link RebindAwareExpiryWriter} depending on the {@link ClientOptions}
+     * configuration.
+     *
+     * @param delegate must not be {@code null}.
+     * @param clientOptions must not be {@code null}.
+     * @param clientResources must not be {@code null}.
+     * @return the {@link CommandExpiryWriter} or {@link RebindAwareExpiryWriter}.
+     * @since 6.7
+     */
+    public static RedisChannelWriter buildCommandExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions,
+            ClientResources clientResources) {
+        if (clientOptions.isProactiveRebindEnabled()) {
+            return new RebindAwareExpiryWriter(delegate, clientOptions, clientResources);
+        } else {
+            return new CommandExpiryWriter(delegate, clientOptions, clientResources);
+        }
     }
 
     /**
@@ -154,6 +185,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     @Override
     public void reset() {
+        this.relaxTimeouts = false;
         delegate.reset();
     }
 
@@ -179,8 +211,14 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
         Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
-                executors.submit(() -> command.completeExceptionally(ExceptionFactory
-                        .createTimeoutException(command.getType().toString(), Duration.ofNanos(timeUnit.toNanos(timeout)))));
+                executors.submit(() -> {
+                    if (shouldRelaxTimeoutsGlobally()) {
+                        relaxedAttempt(command, executors);
+                    } else {
+                        command.completeExceptionally(ExceptionFactory.createTimeoutException(command.getType().toString(),
+                                Duration.ofNanos(timeUnit.toNanos(timeout))));
+                    }
+                });
 
             }
         }, timeout, timeUnit);
@@ -189,6 +227,39 @@ public class CommandExpiryWriter implements RedisChannelWriter {
             ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
         }
 
+    }
+
+    public boolean shouldRelaxTimeoutsGlobally() {
+        return relaxTimeouts && !relaxedTimeout.isNegative();
+    }
+
+    // when relaxing the timeouts - instead of expiring immediately, we will start a new timer with 10 seconds
+    private void relaxedAttempt(RedisCommand<?, ?, ?> command, ScheduledExecutorService executors) {
+
+        Timeout commandTimeout = timer.newTimeout(t -> {
+            if (!command.isDone()) {
+                executors.submit(() -> command.completeExceptionally(ExceptionFactory.createTimeoutException(relaxedTimeout)));
+            }
+        }, relaxedTimeout.toMillis(), TimeUnit.MILLISECONDS);
+
+        if (command instanceof CompleteableCommand) {
+            ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
+        }
+    }
+
+    @Override
+    public void onRebindStarted() {
+        this.relaxTimeouts = true;
+    }
+
+    @Override
+    public void onRebindCompleted() {
+        // Consider the rebind complete after another relaxed timeout cycle.
+        //
+        // The reasoning behind that is we can't really be sure when all the enqueued commands have
+        // successfully been written to the wire and then the reply was received
+        timer.newTimeout(t -> getExecutorService().submit(() -> this.relaxTimeouts = false), relaxedTimeout.toMillis(),
+                TimeUnit.MILLISECONDS);
     }
 
 }
