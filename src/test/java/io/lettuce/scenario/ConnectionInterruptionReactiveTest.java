@@ -56,7 +56,7 @@ public class ConnectionInterruptionReactiveTest {
 
     @BeforeAll
     public static void setup() {
-        standalone = Endpoints.DEFAULT.getEndpoint("standalone");
+        standalone = Endpoints.DEFAULT.getEndpoint("re-standalone");
         assumeTrue(standalone != null, "Skipping test because no Redis endpoint is configured!");
     }
 
