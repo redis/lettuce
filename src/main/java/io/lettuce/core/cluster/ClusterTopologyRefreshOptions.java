@@ -38,9 +38,7 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 public class ClusterTopologyRefreshOptions {
 
-    /**
-     * Since Lettuce 7.0 all adaptive triggers are enabled by default
-     */
+    /** Since Lettuce 7.0 all adaptive triggers are enabled by default */
     public static final Set<RefreshTrigger> DEFAULT_ADAPTIVE_REFRESH_TRIGGERS = EnumSet.allOf(RefreshTrigger.class);
 
     public static final long DEFAULT_ADAPTIVE_REFRESH_TIMEOUT = 30;
