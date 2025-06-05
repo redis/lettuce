@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -59,8 +60,9 @@ public class ConnectionInterruptionReactiveTest {
         assumeTrue(standalone != null, "Skipping test because no Redis endpoint is configured!");
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "Reactive Client Recovery on {0}")
     @ValueSource(strings = { "dmc_restart", "network_failure" })
+    @DisplayName("Reactive client should reconnect automatically during connection interruptions")
     public void testWithReactiveCommands(String triggerAction) {
         RedisURI uri = RedisURI.builder(RedisURI.create(standalone.getEndpoints().get(0)))
                 .withAuthentication(standalone.getUsername(), standalone.getPassword()).build();
@@ -115,8 +117,9 @@ public class ConnectionInterruptionReactiveTest {
         client.shutdown();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "PubSub Reconnection on {0}")
     @ValueSource(strings = { "dmc_restart", "network_failure" })
+    @DisplayName("PubSub connections should automatically reconnect and resume message delivery during failures")
     public void testWithPubSub(String triggerAction) {
         RedisURI uri = RedisURI.builder(RedisURI.create(standalone.getEndpoints().get(0)))
                 .withAuthentication(standalone.getUsername(), standalone.getPassword()).build();
