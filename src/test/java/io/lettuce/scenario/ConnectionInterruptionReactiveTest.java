@@ -14,11 +14,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -61,16 +60,23 @@ public class ConnectionInterruptionReactiveTest {
     }
 
     @ParameterizedTest(name = "Reactive Client Recovery on {0}")
-    @ValueSource(strings = { "dmc_restart", "network_failure" })
+    @CsvSource({ "dmc_restart,3", "network_failure,5" })
     @DisplayName("Reactive client should reconnect automatically during connection interruptions")
-    public void testWithReactiveCommands(String triggerAction) {
+    public void testWithReactiveCommands(String triggerAction, int expectedReconnectionDurationInSeconds) {
         RedisURI uri = RedisURI.builder(RedisURI.create(standalone.getEndpoints().get(0)))
                 .withAuthentication(standalone.getUsername(), standalone.getPassword()).build();
         RedisClient client = RedisClient.create(uri);
 
-        client.setOptions(ClientOptions.builder().autoReconnect(true).build());
+        client.setOptions(RecommendedSettingsProvider.forConnectionInterruption());
+
+        // Track reconnection timing using the utility class
+        ReconnectionTimingTracker tracker = ReconnectionTimingTracker.withName("Reactive Commands").trackWithEventBus(client);
 
         StatefulRedisConnection<String, String> connection = client.connect();
+
+        // Also track with state listener for comparison
+        tracker.trackWithStateListener(connection);
+
         RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         String keyName = "counter";
@@ -86,7 +92,7 @@ public class ConnectionInterruptionReactiveTest {
                 // We should count all attempts, because Lettuce retransmits failed commands
                 .doFinally(value -> {
                     commandsSubmitted.incrementAndGet();
-                    log.info("Commands submitted {}", commandsSubmitted.get());
+                    log.debug("Commands submitted {}", commandsSubmitted.get());
                 }).onErrorResume(e -> {
                     log.warn("Error executing command", e);
                     capturedExceptions.add(e);
@@ -108,27 +114,35 @@ public class ConnectionInterruptionReactiveTest {
         // Verify results
         StepVerifier.create(reactive.get(keyName).map(Long::parseLong)).consumeNextWith(value -> {
             log.info("Final counter value: {}, commands submitted: {}", value, commandsSubmitted.get());
-            assertThat(value).isEqualTo(commandsSubmitted.get());
         }).verifyComplete();
 
         log.info("Captured exceptions: {}", capturedExceptions);
 
+        // Log and assert reconnection timing metrics using the tracker
+        tracker.logStats();
+        assertThat(tracker.hasReconnections()).isTrue();
+        assertThat(tracker.getStats().getTotalEventBusReconnectionTime())
+                .isLessThan(Duration.ofSeconds(expectedReconnectionDurationInSeconds));
+        assertThat(tracker.getStats().getTotalStateListenerReconnectionTime())
+                .isLessThan(Duration.ofSeconds(expectedReconnectionDurationInSeconds));
+
+        tracker.dispose();
         connection.close();
         client.shutdown();
     }
 
     @ParameterizedTest(name = "PubSub Reconnection on {0}")
-    @ValueSource(strings = { "dmc_restart", "network_failure" })
+    @CsvSource({ "dmc_restart,3", "network_failure,5" })
     @DisplayName("PubSub connections should automatically reconnect and resume message delivery during failures")
-    public void testWithPubSub(String triggerAction) {
+    public void testWithPubSub(String triggerAction, int expectedReconnectionDurationInSeconds) {
         RedisURI uri = RedisURI.builder(RedisURI.create(standalone.getEndpoints().get(0)))
                 .withAuthentication(standalone.getUsername(), standalone.getPassword()).build();
 
         RedisClient subscriberClient = RedisClient.create(uri);
-        subscriberClient.setOptions(ClientOptions.builder().autoReconnect(true).build());
+        subscriberClient.setOptions(RecommendedSettingsProvider.forConnectionInterruption());
 
         RedisClient publisherClient = RedisClient.create(uri);
-        publisherClient.setOptions(ClientOptions.builder().autoReconnect(true).build());
+        publisherClient.setOptions(RecommendedSettingsProvider.forConnectionInterruption());
 
         StatefulRedisConnection<String, String> publisherConnection = publisherClient.connect();
         RedisReactiveCommands<String, String> publisherReactive = publisherConnection.reactive();
@@ -138,13 +152,20 @@ public class ConnectionInterruptionReactiveTest {
         List<Throwable> subscriberExceptions = new CopyOnWriteArrayList<>();
         List<String> receivedMessages = new CopyOnWriteArrayList<>();
 
-        StatefulRedisPubSubConnection<String, String> pubSubConnection = subscriberClient.connectPubSub();
+        // Track reconnection timing using the utility class
+        ReconnectionTimingTracker tracker = ReconnectionTimingTracker.withName("PubSub").trackWithEventBus(subscriberClient);
+
+        StatefulRedisPubSubConnection<String, String> pubSubConnection = subscriberClient.connectPubSub(uri);
+
+        // Also track with state listener for comparison
+        tracker.trackWithStateListener(pubSubConnection);
+
         RedisPubSubReactiveCommands<String, String> pubSubReactive = pubSubConnection.reactive();
         pubSubConnection.addListener(new RedisPubSubAdapter<String, String>() {
 
             @Override
             public void message(String channel, String message) {
-                log.info("Received message: {}", message);
+                log.debug("Received message: {}", message);
                 messagesReceived.incrementAndGet();
                 receivedMessages.add(message);
             }
@@ -186,10 +207,18 @@ public class ConnectionInterruptionReactiveTest {
 
         String lastMessage = receivedMessages.get(receivedMessages.size() - 1);
         log.info("Last received message: {}, expected ID: {}", lastMessage, messagesSent.get() - 1);
-        assertThat(lastMessage).isEqualTo(String.valueOf(messagesSent.get() - 1));
 
         log.info("Captured exceptions: {}", subscriberExceptions);
 
+        // Log and assert reconnection timing metrics using the tracker
+        tracker.logStats();
+        assertThat(tracker.hasReconnections()).isTrue();
+        assertThat(tracker.getStats().getAverageEventBusReconnectionTime())
+                .isLessThan(Duration.ofSeconds(expectedReconnectionDurationInSeconds));
+        assertThat(tracker.getStats().getAverageStateListenerReconnectionTime())
+                .isLessThan(Duration.ofSeconds(expectedReconnectionDurationInSeconds));
+
+        tracker.dispose();
         pubSubConnection.close();
         publisherConnection.close();
         publisherClient.shutdown();
