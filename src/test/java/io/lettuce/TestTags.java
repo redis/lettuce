@@ -34,4 +34,9 @@ public class TestTags {
      */
     public static final String ENTRA_ID = "entraid";
 
+    /**
+     * Tag for scenario tests
+     */
+    public static final String SCENARIO_TEST = "scenario";
+
 }

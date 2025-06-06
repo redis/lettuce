@@ -16,6 +16,7 @@
         <!--
         <Logger name="org.testcontainers" level="DEBUG"/>
         -->
+        <Logger name="io.lettuce.scenario" level="INFO"/>
         <Root level="FATAL">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
