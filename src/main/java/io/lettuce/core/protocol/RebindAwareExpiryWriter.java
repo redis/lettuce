@@ -10,7 +10,6 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.ExceptionFactory;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.channel.ChannelPipeline;
 import io.netty.util.Timeout;
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -179,23 +177,44 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
 
     @Override
     public void onRebindStarted() {
-        if (!relaxedTimeout.isNegative()) {
-            log.info("Re-bind started, relaxing timeouts with an additional {}ms", relaxedTimeout.toMillis());
-            this.relaxTimeouts = true;
-        } else {
-            log.debug("Re-bind started, but timeout relaxing is disabled");
-            this.relaxTimeouts = false;
-        }
+        enableRelaxedTimeout("Re-bind started");
     }
 
     @Override
     public void onRebindCompleted() {
-        // Consider the rebind complete after another relaxed timeout cycle.
+        disableRelaxedTimeoutDelayed("Re-bind completed");
+    }
+
+    @Override
+    public void onMigrateStarted() {
+        enableRelaxedTimeout("Migration started");
+    }
+
+    @Override
+    public void onMigrateCompleted() {
+        disableRelaxedTimeoutDelayed("Migration completed");
+    }
+
+    private void enableRelaxedTimeout(String reason) {
+        if (!relaxedTimeout.isNegative()) {
+            log.info("{}, relaxing timeouts with an additional {}ms", reason, relaxedTimeout.toMillis());
+            this.relaxTimeouts = true;
+        } else {
+            log.debug("{}, but timeout relaxing is disabled", reason);
+            this.relaxTimeouts = false;
+        }
+    }
+
+    private void disableRelaxedTimeoutDelayed(String reason) {
+        // Consider the operation complete after another relaxed timeout cycle.
         //
         // The reasoning behind that is we can't really be sure when all the enqueued commands have
         // successfully been written to the wire and then the reply was received
-        timer.newTimeout(t -> executorService.submit(() -> this.relaxTimeouts = false), relaxedTimeout.toMillis(),
-                TimeUnit.MILLISECONDS);
+        log.debug("{}, scheduling timeout relaxation disable after {}ms", reason, relaxedTimeout.toMillis());
+        timer.newTimeout(t -> executorService.submit(() -> {
+            log.debug("Disabling timeout relaxation after {}", reason);
+            this.relaxTimeouts = false;
+        }), relaxedTimeout.toMillis(), TimeUnit.MILLISECONDS);
     }
 
 }
