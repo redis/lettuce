@@ -111,7 +111,7 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
                     notifyRebindStarted();
                 }
             }
-        } else if (MIGRATING_MESSAGE_TYPE.equals(mType) || isMigratingMessage(message) ) {
+        } else if (MIGRATING_MESSAGE_TYPE.equals(mType) || isMigratingMessage(message)) {
             logger.info("Shard migration started");
             notifyMigrateStarted();
         } else if (MIGRATED_MESSAGE_TYPE.equals(mType) || isMigratedMessage(message)) {
@@ -127,24 +127,23 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
         }
 
         List<Object> content = message.getContent();
-            if (content.size() != 3) {
-                logger.warn("Invalid MIGRATING message format, expected 1 elements, got {}", content.size());
-                return false;
-            }
-
-            Object msg = content.get(2);
-            if (!(msg instanceof ByteBuffer)) {
-                logger.warn("Invalid MIGRATING message format, expected 1rd element to be a ByteBuffer, got {}",
-                        msg.getClass());
-                return false;
-            }
-
-            String decodedMsg = StringCodec.UTF8.decodeKey((ByteBuffer) msg);
-            if (MIGRATING_MESSAGE_TYPE.equals(decodedMsg.split(";")[0].split("=")[1])) {
-                return true;
-            }
-
+        if (content.size() != 3) {
+            logger.warn("Invalid MIGRATING message format, expected 1 elements, got {}", content.size());
             return false;
+        }
+
+        Object msg = content.get(2);
+        if (!(msg instanceof ByteBuffer)) {
+            logger.warn("Invalid MIGRATING message format, expected 1rd element to be a ByteBuffer, got {}", msg.getClass());
+            return false;
+        }
+
+        String decodedMsg = StringCodec.UTF8.decodeKey((ByteBuffer) msg);
+        if (MIGRATING_MESSAGE_TYPE.equals(decodedMsg.split(";")[0].split("=")[1])) {
+            return true;
+        }
+
+        return false;
     }
 
     private boolean isMigratedMessage(PushMessage message) {
@@ -161,8 +160,7 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
         Object msg = content.get(2);
         if (!(msg instanceof ByteBuffer)) {
-            logger.warn("Invalid MIGRATING message format, expected 1rd element to be a ByteBuffer, got {}",
-                    msg.getClass());
+            logger.warn("Invalid MIGRATING message format, expected 1rd element to be a ByteBuffer, got {}", msg.getClass());
             return false;
         }
 
