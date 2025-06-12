@@ -18,6 +18,16 @@ import io.lettuce.core.ClientOptions;
 public interface RebindAwareComponent {
 
     /**
+     * Called whenever a shard migration is initiated
+     */
+    void onMigrateStarted();
+
+    /**
+     * Called whenever a shard migration is completed
+     */
+    void onMigrateCompleted();
+
+    /**
      * Called whenever a re-bind has been initiated by the remote server
      */
     void onRebindStarted();

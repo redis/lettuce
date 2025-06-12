@@ -46,6 +46,10 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
     private static final String REBIND_MESSAGE_TYPE = "MOVING";
 
+    private static final String MIGRATING_MESSAGE_TYPE = "MIGRATING";
+
+    private static final String MIGRATED_MESSAGE_TYPE = "MIGRATED";
+
     private static final int REBIND_ADDRESS_INDEX = 2;
 
     public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
@@ -88,29 +92,89 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
     @Override
     public void onPushMessage(PushMessage message) {
-        final SocketAddress rebindAddress = getRemoteAddress(message);
-        if (rebindAddress != null) {
-            logger.info("Attempting to rebind to new endpoint '{}'", rebindAddress);
+        String mType = message.getType();
 
-            channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
-            this.reconnectionHandler.setSocketAddressSupplier(rebindAddress);
+        if (REBIND_MESSAGE_TYPE.equals(mType)) {
+            final SocketAddress rebindAddress = getRemoteAddress(message);
+            if (rebindAddress != null) {
+                logger.info("Attempting to rebind to new endpoint '{}'", rebindAddress);
 
-            ChannelPipeline pipeline = channel.pipeline();
-            CommandHandler commandHandler = pipeline.get(CommandHandler.class);
-            if (commandHandler.getStack().isEmpty()) {
-                channel.close().awaitUninterruptibly();
-                channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
-            } else {
-                notifyRebindStarted();
+                channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
+                this.reconnectionHandler.setSocketAddressSupplier(rebindAddress);
+
+                ChannelPipeline pipeline = channel.pipeline();
+                CommandHandler commandHandler = pipeline.get(CommandHandler.class);
+                if (commandHandler.getStack().isEmpty()) {
+                    channel.close().awaitUninterruptibly();
+                    channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
+                } else {
+                    notifyRebindStarted();
+                }
             }
+        } else if (MIGRATING_MESSAGE_TYPE.equals(mType) || isMigratingMessage(message) ) {
+            logger.info("Shard migration started");
+            notifyMigrateStarted();
+        } else if (MIGRATED_MESSAGE_TYPE.equals(mType) || isMigratedMessage(message)) {
+            logger.info("Shard migration completed");
+            notifyMigrateCompleted();
         }
     }
 
-    private SocketAddress getRemoteAddress(PushMessage message) {
+    private boolean isMigratingMessage(PushMessage message) {
 
-        if (!REBIND_MESSAGE_TYPE.equals(message.getType())) {
-            return null;
+        if (!message.getType().equals("message")) {
+            return false;
         }
+
+        List<Object> content = message.getContent();
+            if (content.size() != 3) {
+                logger.warn("Invalid MIGRATING message format, expected 1 elements, got {}", content.size());
+                return false;
+            }
+
+            Object msg = content.get(2);
+            if (!(msg instanceof ByteBuffer)) {
+                logger.warn("Invalid MIGRATING message format, expected 1rd element to be a ByteBuffer, got {}",
+                        msg.getClass());
+                return false;
+            }
+
+            String decodedMsg = StringCodec.UTF8.decodeKey((ByteBuffer) msg);
+            if (MIGRATING_MESSAGE_TYPE.equals(decodedMsg.split(";")[0].split("=")[1])) {
+                return true;
+            }
+
+            return false;
+    }
+
+    private boolean isMigratedMessage(PushMessage message) {
+
+        if (!message.getType().equals("message")) {
+            return false;
+        }
+
+        List<Object> content = message.getContent();
+        if (content.size() != 3) {
+            logger.warn("Invalid MIGRATING message format, expected 1 elements, got {}", content.size());
+            return false;
+        }
+
+        Object msg = content.get(2);
+        if (!(msg instanceof ByteBuffer)) {
+            logger.warn("Invalid MIGRATING message format, expected 1rd element to be a ByteBuffer, got {}",
+                    msg.getClass());
+            return false;
+        }
+
+        String decodedMsg = StringCodec.UTF8.decodeKey((ByteBuffer) msg);
+        if (MIGRATED_MESSAGE_TYPE.equals(decodedMsg.split(";")[0].split("=")[1])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private SocketAddress getRemoteAddress(PushMessage message) {
 
         List<Object> content = message.getContent();
         if (content.size() != 3) {
@@ -153,6 +217,14 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
     private void notifyRebindStarted() {
         this.componentListeners.forEach(RebindAwareComponent::onRebindStarted);
+    }
+
+    private void notifyMigrateStarted() {
+        this.componentListeners.forEach(RebindAwareComponent::onMigrateStarted);
+    }
+
+    private void notifyMigrateCompleted() {
+        this.componentListeners.forEach(RebindAwareComponent::onMigrateCompleted);
     }
 
 }
