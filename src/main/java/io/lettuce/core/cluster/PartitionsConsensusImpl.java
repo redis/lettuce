@@ -47,6 +47,7 @@ class PartitionsConsensusImpl {
             Collections.shuffle(votedList);
             Collections.sort(votedList, (o1, o2) -> Integer.compare(o2.votes, o1.votes));
 
+            votedList.get(0).partitions.updateCache();
             return votedList.get(0).partitions;
         }
 
@@ -87,6 +88,7 @@ class PartitionsConsensusImpl {
             Collections.shuffle(votedList);
             Collections.sort(votedList, (o1, o2) -> Integer.compare(o2.votes, o1.votes));
 
+            votedList.get(0).partitions.updateCache();
             return votedList.get(0).partitions;
         }
 
