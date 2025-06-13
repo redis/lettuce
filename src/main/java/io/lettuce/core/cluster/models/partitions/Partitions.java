@@ -326,6 +326,18 @@ public class Partitions implements Collection<RedisClusterNode> {
         }
     }
 
+    public boolean addAllWithoutCache(Collection<? extends RedisClusterNode> c) {
+
+        LettuceAssert.noNullElements(c, "Partitions must not contain null elements");
+
+        lock.lock();
+        try {
+            return partitions.addAll(c);
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /**
      * Remove all {@link RedisClusterNode nodes} from the {@link Partitions} using elements from the given collection and update
      * the read-view/caches.

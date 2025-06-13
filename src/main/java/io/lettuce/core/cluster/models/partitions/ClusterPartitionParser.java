@@ -168,11 +168,14 @@ public class ClusterPartitionParser {
      * @return the partitions object.
      */
     public static Partitions parse(String nodes) {
+        return parseByCache(nodes,true);
+    }
+
+    public static Partitions parseByCache(String nodes,boolean updateCache) {
 
         Partitions partitions = new Partitions();
 
         try {
-
             String[] lines = nodes.split(Character.toString(TOKEN_NODE_SEPARATOR));
             List<RedisClusterNode> mappedNodes = new ArrayList<>(lines.length);
 
@@ -184,7 +187,13 @@ public class ClusterPartitionParser {
                 }
                 mappedNodes.add(ClusterPartitionParser.parseNode(line));
             }
-            partitions.addAll(mappedNodes);
+
+            if (updateCache) {
+                partitions.addAll(mappedNodes);
+            } else {
+                partitions.addAllWithoutCache(mappedNodes);
+            }
+
         } catch (Exception e) {
             throw new RedisException("Cannot parse " + nodes, e);
         }
