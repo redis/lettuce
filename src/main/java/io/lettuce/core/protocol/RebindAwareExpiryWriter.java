@@ -199,7 +199,8 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
 
     private void enableRelaxedTimeout(String reason) {
         if (relaxTimeout != null) {
-            relaxTimeout.cancel();
+            boolean canceled = relaxTimeout.cancel();
+            log.debug("Canceled previous disable relax timeout task : {}", canceled);
         }
 
         if (!relaxedTimeout.isNegative()) {
@@ -212,12 +213,17 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
     }
 
     private void disableRelaxedTimeoutDelayed(String reason) {
+        if (relaxTimeout != null) {
+            boolean canceled = relaxTimeout.cancel();
+            log.debug("Canceled previous disable relax timeout task : {}", canceled);
+        }
+
         // Consider the operation complete after another relaxed timeout cycle.
         //
         // The reasoning behind that is we can't really be sure when all the enqueued commands have
         // successfully been written to the wire and then the reply was received
         log.debug("{}, scheduling timeout relaxation disable after {}ms", reason, relaxedTimeout.toMillis());
-        relaxTimeout= timer.newTimeout(t -> executorService.submit(() -> {
+        relaxTimeout = timer.newTimeout(t -> executorService.submit(() -> {
             log.debug("Disabling timeout relaxation after {}", reason);
             this.relaxTimeouts = false;
         }), relaxedTimeout.toMillis(), TimeUnit.MILLISECONDS);
