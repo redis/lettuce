@@ -75,7 +75,10 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
         ChannelPipeline pipeline = ctx.channel().pipeline();
         CommandHandler commandHandler = pipeline.get(CommandHandler.class);
-        commandHandler.getEndpoint().addListener(this);
+
+        if (!commandHandler.getEndpoint().getPushListeners().contains(this)) {
+            commandHandler.getEndpoint().addListener(this);
+        }
     }
 
     @Override
