@@ -130,7 +130,7 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
             if (!command.isDone()) {
                 executors.submit(() -> {
                     if (relaxTimeouts) {
-                        relaxedAttempt(command, executors);
+                        relaxedAttempt(command, executors, Duration.ofNanos(timeUnit.toNanos(timeout)));
                     } else {
                         command.completeExceptionally(ExceptionFactory.createTimeoutException(command.getType().toString(),
                                 Duration.ofNanos(timeUnit.toNanos(timeout))));
@@ -147,11 +147,12 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
     }
 
     // when relaxing the timeouts - instead of expiring immediately, we will start a new timer with 10 seconds
-    private void relaxedAttempt(RedisCommand<?, ?, ?> command, ScheduledExecutorService executors) {
+    private void relaxedAttempt(RedisCommand<?, ?, ?> command, ScheduledExecutorService executors, Duration initialTimeout) {
 
         Timeout commandTimeout = timer.newTimeout(t -> {
             if (!command.isDone()) {
-                executors.submit(() -> command.completeExceptionally(ExceptionFactory.createTimeoutException(relaxedTimeout)));
+                executors.submit(() -> command
+                        .completeExceptionally(ExceptionFactory.createTimeoutException(initialTimeout.plus(relaxedTimeout))));
             }
         }, relaxedTimeout.toMillis(), TimeUnit.MILLISECONDS);
 
