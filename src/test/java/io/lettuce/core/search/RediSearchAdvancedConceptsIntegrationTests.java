@@ -3,19 +3,6 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.lettuce.core.search;
@@ -139,13 +126,13 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("article:2", article2);
 
         // Test that custom stop words are ignored in search
-        SearchResults<String, String> results = redis.ftSearch(STOPWORDS_INDEX, "foo", null);
+        SearchReply<String, String> results = redis.ftSearch(STOPWORDS_INDEX, "foo");
         assertThat(results.getCount()).isEqualTo(0); // "foo" should be ignored as stop word
 
-        results = redis.ftSearch(STOPWORDS_INDEX, "guide", null);
+        results = redis.ftSearch(STOPWORDS_INDEX, "guide");
         assertThat(results.getCount()).isEqualTo(1); // "guide" is not a stop word
 
-        results = redis.ftSearch(STOPWORDS_INDEX, "comprehensive", null);
+        results = redis.ftSearch(STOPWORDS_INDEX, "comprehensive");
         assertThat(results.getCount()).isEqualTo(1); // "comprehensive" is not a stop word
 
         // Test NOSTOPWORDS option to bypass stop word filtering
@@ -157,7 +144,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // assertThat(results.getCount()).isEqualTo(1); // "foo" should be found when stop words are disabled
 
         // Cleanup
-        redis.ftDropindex(STOPWORDS_INDEX, false);
+        redis.ftDropindex(STOPWORDS_INDEX);
     }
 
     /**
@@ -189,33 +176,33 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("doc:3", doc3);
 
         // Test 1: Punctuation marks separate tokens
-        SearchResults<String, String> results = redis.ftSearch(TOKENIZATION_INDEX, "hello", null);
+        SearchReply<String, String> results = redis.ftSearch(TOKENIZATION_INDEX, "hello");
         // FIXME seems that doc:2 is created with hello\\-world instead of hello\-world
         assertThat(results.getCount()).isEqualTo(1); // Both "hello-world" and "hello\\-world"
 
-        results = redis.ftSearch(TOKENIZATION_INDEX, "world", null);
+        results = redis.ftSearch(TOKENIZATION_INDEX, "world");
         assertThat(results.getCount()).isEqualTo(1); // Only "hello-world" (not escaped)
 
         // Test 2: Underscores are not separators
-        results = redis.ftSearch(TOKENIZATION_INDEX, "baz_qux", null);
+        results = redis.ftSearch(TOKENIZATION_INDEX, "baz_qux");
         assertThat(results.getCount()).isEqualTo(1); // Underscore keeps the token together
 
         // Test 3: Email addresses are tokenized by punctuation
-        results = redis.ftSearch(TOKENIZATION_INDEX, "test", null);
+        results = redis.ftSearch(TOKENIZATION_INDEX, "test");
         assertThat(results.getCount()).isEqualTo(1);
 
-        results = redis.ftSearch(TOKENIZATION_INDEX, "example", null);
+        results = redis.ftSearch(TOKENIZATION_INDEX, "example");
         assertThat(results.getCount()).isEqualTo(1);
 
         // Test 4: Numbers with punctuation
-        results = redis.ftSearch(TOKENIZATION_INDEX, "2", null);
+        results = redis.ftSearch(TOKENIZATION_INDEX, "2");
         assertThat(results.getCount()).isEqualTo(1); // From "version-2.0"
 
-        results = redis.ftSearch(TOKENIZATION_INDEX, "19", null);
+        results = redis.ftSearch(TOKENIZATION_INDEX, "19");
         assertThat(results.getCount()).isEqualTo(1); // From "price$19.99"
 
         // Cleanup
-        redis.ftDropindex(TOKENIZATION_INDEX, false);
+        redis.ftDropindex(TOKENIZATION_INDEX);
     }
 
     /**
@@ -257,7 +244,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         // Test 1: Sort by first name descending
         SortByArgs<String> sortByFirstName = SortByArgs.<String> builder().attribute("first_name").descending().build();
         SearchArgs<String, String> sortArgs = SearchArgs.<String, String> builder().sortBy(sortByFirstName).build();
-        SearchResults<String, String> results = redis.ftSearch(SORTING_INDEX, "@last_name:jones", sortArgs);
+        SearchReply<String, String> results = redis.ftSearch(SORTING_INDEX, "@last_name:jones", sortArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
@@ -278,7 +265,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getResults().get(2).getFields().get("age")).isEqualTo("36");
 
         // Cleanup
-        redis.ftDropindex(SORTING_INDEX, false);
+        redis.ftDropindex(SORTING_INDEX);
     }
 
     /**
@@ -317,40 +304,40 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("product:3", product3);
 
         // Test 1: Search by category with custom separator
-        SearchResults<String, String> results = redis.ftSearch(TAGS_INDEX, "@categories:{gaming}", null);
+        SearchReply<String, String> results = redis.ftSearch(TAGS_INDEX, "@categories:{gaming}");
         assertThat(results.getCount()).isEqualTo(2); // Gaming laptop and mouse
 
-        results = redis.ftSearch(TAGS_INDEX, "@categories:{computers}", null);
+        results = redis.ftSearch(TAGS_INDEX, "@categories:{computers}");
         assertThat(results.getCount()).isEqualTo(2); // Both laptops
 
         // Test 2: Multiple tags in single filter (OR operation)
-        results = redis.ftSearch(TAGS_INDEX, "@categories:{business|accessories}", null);
+        results = redis.ftSearch(TAGS_INDEX, "@categories:{business|accessories}");
         assertThat(results.getCount()).isEqualTo(2); // Office laptop and gaming mouse
 
         // Test 3: Multiple tag filters (AND operation)
-        results = redis.ftSearch(TAGS_INDEX, "@categories:{electronics} @categories:{gaming}", null);
+        results = redis.ftSearch(TAGS_INDEX, "@categories:{electronics} @categories:{gaming}");
         assertThat(results.getCount()).isEqualTo(2); // Gaming laptop and mouse
 
         // Test 4: Case sensitivity in tags
-        results = redis.ftSearch(TAGS_INDEX, "@tags:{RGB}", null);
+        results = redis.ftSearch(TAGS_INDEX, "@tags:{RGB}");
         assertThat(results.getCount()).isEqualTo(2); // Gaming laptop and mouse (exact case match)
 
-        results = redis.ftSearch(TAGS_INDEX, "@tags:{rgb}", null);
+        results = redis.ftSearch(TAGS_INDEX, "@tags:{rgb}");
         assertThat(results.getCount()).isEqualTo(0); // No match due to case sensitivity
 
         // Test 5: Prefix matching with tags
-        results = redis.ftSearch(TAGS_INDEX, "@tags:{High*}", null);
+        results = redis.ftSearch(TAGS_INDEX, "@tags:{High*}");
         assertThat(results.getCount()).isEqualTo(1); // Gaming laptop with "High-Performance"
 
-        results = redis.ftSearch(TAGS_INDEX, "@tags:{high*}", null);
+        results = redis.ftSearch(TAGS_INDEX, "@tags:{high*}");
         assertThat(results.getCount()).isEqualTo(1); // Office laptop with "high-performance"
 
         // Test 6: Tag with punctuation (hyphen)
-        results = redis.ftSearch(TAGS_INDEX, "@tags:{High\\-Performance}", null);
+        results = redis.ftSearch(TAGS_INDEX, "@tags:{High\\-Performance}");
         assertThat(results.getCount()).isEqualTo(1); // Gaming laptop
 
         // Cleanup
-        redis.ftDropindex(TAGS_INDEX, false);
+        redis.ftDropindex(TAGS_INDEX);
     }
 
     /**
@@ -396,7 +383,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         HighlightArgs<String, String> basicHighlight = HighlightArgs.<String, String> builder().build();
         SearchArgs<String, String> highlightArgs = SearchArgs.<String, String> builder().highlight(basicHighlight).build();
 
-        SearchResults<String, String> results = redis.ftSearch(HIGHLIGHT_INDEX, "Redis", highlightArgs);
+        SearchReply<String, String> results = redis.ftSearch(HIGHLIGHT_INDEX, "Redis", highlightArgs);
         assertThat(results.getCount()).isEqualTo(1);
 
         // Check that highlighting tags are present in the content
@@ -413,7 +400,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getCount()).isEqualTo(2);
 
         // Check custom highlighting tags
-        for (SearchResults.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
             String content = result.getFields().get("content");
             if (content.contains("database")) {
                 assertThat(content).contains("<mark>database</mark>");
@@ -449,7 +436,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(combinedContent).contains("..."); // Default summarization separator
 
         // Cleanup
-        redis.ftDropindex(HIGHLIGHT_INDEX, false);
+        redis.ftDropindex(HIGHLIGHT_INDEX);
     }
 
     /**
@@ -491,14 +478,14 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
         // Test 1: Default BM25 scoring with scores
         SearchArgs<String, String> withScores = SearchArgs.<String, String> builder().withScores().build();
-        SearchResults<String, String> results = redis.ftSearch(SCORING_INDEX, "Redis", withScores);
+        SearchReply<String, String> results = redis.ftSearch(SCORING_INDEX, "Redis", withScores);
 
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
 
         // Verify scores are present and ordered (higher scores first)
         double previousScore = Double.MAX_VALUE;
-        for (SearchResults.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
             assertThat(result.getScore()).isNotNull();
             assertThat(result.getScore()).isLessThanOrEqualTo(previousScore);
             previousScore = result.getScore();
@@ -531,7 +518,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getResults()).hasSize(3);
 
         // Cleanup
-        redis.ftDropindex(SCORING_INDEX, false);
+        redis.ftDropindex(SCORING_INDEX);
     }
 
     /**
@@ -568,12 +555,12 @@ public class RediSearchAdvancedConceptsIntegrationTests {
 
         // Test stemming: searching for "run" should find all variations
         // FIXME Seems like a bug in the server, "runner" needs to also be stemmed, but it is not
-        SearchResults<String, String> results = redis.ftSearch(STEMMING_INDEX, "run", null);
+        SearchReply<String, String> results = redis.ftSearch(STEMMING_INDEX, "run");
         assertThat(results.getCount()).isEqualTo(3); // All forms should be found due to stemming
 
         // Test stemming: searching for "running" should also find all variations
         // FIXME Seems like a bug in the server, "runner" needs to also be stemmed, but it is not
-        results = redis.ftSearch(STEMMING_INDEX, "running", null);
+        results = redis.ftSearch(STEMMING_INDEX, "running");
         assertThat(results.getCount()).isEqualTo(3);
 
         // Test VERBATIM search (disable stemming)
@@ -592,7 +579,7 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         // Cleanup
-        redis.ftDropindex(STEMMING_INDEX, false);
+        redis.ftDropindex(STEMMING_INDEX);
 
         // Test 2: German stemming example from documentation
         FieldArgs<String> germanWordField = TextFieldArgs.<String> builder().name("wort").build();
@@ -609,11 +596,11 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("wort:4", "wort", "stucke");
 
         // Search for "stuck" should find all variations due to German stemming
-        results = redis.ftSearch("idx:german", "@wort:(stuck)", null);
+        results = redis.ftSearch("idx:german", "@wort:(stuck)");
         assertThat(results.getCount()).isEqualTo(4);
 
         // Cleanup
-        redis.ftDropindex("idx:german", false);
+        redis.ftDropindex("idx:german");
     }
 
     /**
@@ -639,14 +626,14 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("person:5", "name", "Jonson");
 
         // Search for "Smith" should find phonetically similar names
-        SearchResults<String, String> results = redis.ftSearch("phonetic-en-idx", "@name:Smith", null);
+        SearchReply<String, String> results = redis.ftSearch("phonetic-en-idx", "@name:Smith");
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2); // Should find Smith and Smyth at minimum
 
         // Search for "Johnson" should find phonetically similar names
-        results = redis.ftSearch("phonetic-en-idx", "@name:Johnson", null);
+        results = redis.ftSearch("phonetic-en-idx", "@name:Johnson");
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2); // Should find Johnson and Jonson at minimum
 
-        redis.ftDropindex("phonetic-en-idx", false);
+        redis.ftDropindex("phonetic-en-idx");
 
         // Test 2: French phonetic matching
         FieldArgs<String> frenchNameField = TextFieldArgs.<String> builder().name("nom")
@@ -664,13 +651,13 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("personne:4", "nom", "Dupond");
 
         // Search should find phonetically similar French names
-        results = redis.ftSearch("phonetic-fr-idx", "@nom:Martin", null);
+        results = redis.ftSearch("phonetic-fr-idx", "@nom:Martin");
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
-        results = redis.ftSearch("phonetic-fr-idx", "@nom:Dupont", null);
+        results = redis.ftSearch("phonetic-fr-idx", "@nom:Dupont");
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
-        redis.ftDropindex("phonetic-fr-idx", false);
+        redis.ftDropindex("phonetic-fr-idx");
 
         // Test 3: Spanish phonetic matching
         FieldArgs<String> spanishNameField = TextFieldArgs.<String> builder().name("nombre")
@@ -688,10 +675,10 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("persona:4", "nombre", "Rodriguez");
 
         // Search should handle accent variations
-        results = redis.ftSearch("phonetic-es-idx", "@nombre:Garcia", null);
+        results = redis.ftSearch("phonetic-es-idx", "@nombre:Garcia");
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
-        redis.ftDropindex("phonetic-es-idx", false);
+        redis.ftDropindex("phonetic-es-idx");
 
         // Test 4: Portuguese phonetic matching
         FieldArgs<String> portugueseNameField = TextFieldArgs.<String> builder().name("nome")
@@ -709,10 +696,10 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("pessoa:4", "nome", "Santtos");
 
         // Search should find phonetically similar Portuguese names
-        results = redis.ftSearch("phonetic-pt-idx", "@nome:Silva", null);
+        results = redis.ftSearch("phonetic-pt-idx", "@nome:Silva");
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
-        redis.ftDropindex("phonetic-pt-idx", false);
+        redis.ftDropindex("phonetic-pt-idx");
     }
 
     /**
@@ -735,10 +722,10 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("stem:3", "content_stemmed", "runner speed");
 
         // Search for "run" should find all variations due to stemming
-        SearchResults<String, String> results = redis.ftSearch("stemming-idx", "@content_stemmed:run", null);
+        SearchReply<String, String> results = redis.ftSearch("stemming-idx", "@content_stemmed:run");
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2); // Should find "running" and "runs"
 
-        redis.ftDropindex("stemming-idx", false);
+        redis.ftDropindex("stemming-idx");
 
         // Test 2: Field with stemming disabled
         FieldArgs<String> noStemmingField = TextFieldArgs.<String> builder().name("content_exact").noStem().build();
@@ -755,18 +742,18 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("nostem:4", "content_exact", "run now");
 
         // Search for "run" should only find exact matches
-        results = redis.ftSearch("nostemming-idx", "@content_exact:run", null);
+        results = redis.ftSearch("nostemming-idx", "@content_exact:run");
         assertThat(results.getCount()).isEqualTo(1); // Only "run now"
 
         // Search for "running" should only find exact matches
-        results = redis.ftSearch("nostemming-idx", "@content_exact:running", null);
+        results = redis.ftSearch("nostemming-idx", "@content_exact:running");
         assertThat(results.getCount()).isEqualTo(1); // Only "running quickly"
 
         // Search for "runs" should only find exact matches
-        results = redis.ftSearch("nostemming-idx", "@content_exact:runs", null);
+        results = redis.ftSearch("nostemming-idx", "@content_exact:runs");
         assertThat(results.getCount()).isEqualTo(1); // Only "runs fast"
 
-        redis.ftDropindex("nostemming-idx", false);
+        redis.ftDropindex("nostemming-idx");
 
         // Test 3: Mixed fields - one with stemming, one without
         FieldArgs<String> mixedStemField = TextFieldArgs.<String> builder().name("stemmed_content").build();
@@ -784,18 +771,18 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hmset("mixed:1", mixedDoc);
 
         // Search in stemmed field should find with "run"
-        results = redis.ftSearch("mixed-idx", "@stemmed_content:run", null);
+        results = redis.ftSearch("mixed-idx", "@stemmed_content:run");
         assertThat(results.getCount()).isEqualTo(1);
 
         // Search in exact field should not find with "run"
-        results = redis.ftSearch("mixed-idx", "@exact_content:run", null);
+        results = redis.ftSearch("mixed-idx", "@exact_content:run");
         assertThat(results.getCount()).isEqualTo(0);
 
         // Search in exact field should find with "running"
-        results = redis.ftSearch("mixed-idx", "@exact_content:running", null);
+        results = redis.ftSearch("mixed-idx", "@exact_content:running");
         assertThat(results.getCount()).isEqualTo(1);
 
-        redis.ftDropindex("mixed-idx", false);
+        redis.ftDropindex("mixed-idx");
     }
 
     /**
@@ -819,10 +806,10 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("normal:4", "title", "Programming Languages");
 
         // Basic search should work
-        SearchResults<String, String> results = redis.ftSearch("normal-idx", "@title:Java*", null);
+        SearchReply<String, String> results = redis.ftSearch("normal-idx", "@title:Java*");
         assertThat(results.getCount()).isEqualTo(2); // JavaScript and Java
 
-        redis.ftDropindex("normal-idx", false);
+        redis.ftDropindex("normal-idx");
 
         // Test 2: Field with suffix trie enabled
         FieldArgs<String> suffixTrieField = TextFieldArgs.<String> builder().name("title").withSuffixTrie().build();
@@ -841,22 +828,22 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("suffix:6", "title", "Script Writing");
 
         // Test prefix matching with suffix trie
-        results = redis.ftSearch("suffix-idx", "@title:Java*", null);
+        results = redis.ftSearch("suffix-idx", "@title:Java*");
         assertThat(results.getCount()).isEqualTo(3); // JavaScript, Java, Advanced JavaScript
 
         // Test suffix matching (should be more efficient with suffix trie)
-        results = redis.ftSearch("suffix-idx", "@title:*Script*", null);
+        results = redis.ftSearch("suffix-idx", "@title:*Script*");
         assertThat(results.getCount()).isEqualTo(4); // JavaScript, Python Scripting, Advanced JavaScript, Script Writing
 
         // Test infix matching
-        results = redis.ftSearch("suffix-idx", "@title:*gram*", null);
+        results = redis.ftSearch("suffix-idx", "@title:*gram*");
         assertThat(results.getCount()).isEqualTo(2); // JavaScript Programming, Programming Languages
 
         // Test exact word matching
-        results = redis.ftSearch("suffix-idx", "@title:Programming", null);
+        results = redis.ftSearch("suffix-idx", "@title:Programming");
         assertThat(results.getCount()).isEqualTo(2); // JavaScript Programming, Programming Languages
 
-        redis.ftDropindex("suffix-idx", false);
+        redis.ftDropindex("suffix-idx");
 
         // Test 3: Autocomplete-style functionality with suffix trie
         FieldArgs<String> autocompleteField = TextFieldArgs.<String> builder().name("product_name").withSuffixTrie().build();
@@ -875,26 +862,26 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("product:6", "product_name", "MacBook Air");
 
         // Autocomplete for "iP" should find iPhone and iPad products
-        results = redis.ftSearch("autocomplete-idx", "@product_name:iP*", null);
+        results = redis.ftSearch("autocomplete-idx", "@product_name:iP*");
         assertThat(results.getCount()).isEqualTo(4); // All iPhone and iPad products
 
         // Autocomplete for "iPhone" should find iPhone products
-        results = redis.ftSearch("autocomplete-idx", "@product_name:iPhone*", null);
+        results = redis.ftSearch("autocomplete-idx", "@product_name:iPhone*");
         assertThat(results.getCount()).isEqualTo(2); // iPhone 15 Pro and Pro Max
 
         // Autocomplete for "Mac" should find MacBook products
-        results = redis.ftSearch("autocomplete-idx", "@product_name:Mac*", null);
+        results = redis.ftSearch("autocomplete-idx", "@product_name:Mac*");
         assertThat(results.getCount()).isEqualTo(2); // MacBook Pro and Air
 
         // Search for products ending with "Pro"
-        results = redis.ftSearch("autocomplete-idx", "@product_name:*Pro", null);
+        results = redis.ftSearch("autocomplete-idx", "@product_name:*Pro");
         assertThat(results.getCount()).isEqualTo(4); // iPhone 15 Pro, iPad Pro, MacBook Pro, iPhone 15 Pro Max
 
         // Search for products containing "Air"
-        results = redis.ftSearch("autocomplete-idx", "@product_name:*Air*", null);
+        results = redis.ftSearch("autocomplete-idx", "@product_name:*Air*");
         assertThat(results.getCount()).isEqualTo(2); // iPad Air, MacBook Air
 
-        redis.ftDropindex("autocomplete-idx", false);
+        redis.ftDropindex("autocomplete-idx");
 
         // Test 4: Performance comparison - complex wildcard queries
         FieldArgs<String> performanceField = TextFieldArgs.<String> builder().name("description").withSuffixTrie().build();
@@ -912,16 +899,16 @@ public class RediSearchAdvancedConceptsIntegrationTests {
         redis.hset("perf:5", "description", "Network performance analysis and troubleshooting");
 
         // Complex wildcard queries that benefit from suffix trie
-        results = redis.ftSearch("performance-idx", "@description:*perform*", null);
+        results = redis.ftSearch("performance-idx", "@description:*perform*");
         assertThat(results.getCount()).isEqualTo(5); // All documents contain "perform"
 
-        results = redis.ftSearch("performance-idx", "@description:*algorithm*", null);
+        results = redis.ftSearch("performance-idx", "@description:*algorithm*");
         assertThat(results.getCount()).isEqualTo(1); // High-performance computing
 
-        results = redis.ftSearch("performance-idx", "@description:*optim*", null);
+        results = redis.ftSearch("performance-idx", "@description:*optim*");
         assertThat(results.getCount()).isEqualTo(1); // Machine learning optimization
 
-        redis.ftDropindex("performance-idx", false);
+        redis.ftDropindex("performance-idx");
     }
 
 }

@@ -133,20 +133,20 @@ public class RedisJsonIndexingIntegrationTests {
         assertThat(redis.jsonSet("item:2", JsonPath.ROOT_PATH, item2)).isEqualTo("OK");
 
         // Test 1: Search for items with "earbuds" in the name
-        SearchResults<String, String> searchResults = redis.ftSearch(ITEM_INDEX, "@name:(earbuds)", null);
-        assertThat(searchResults.getCount()).isEqualTo(1);
-        assertThat(searchResults.getResults()).hasSize(1);
-        assertThat(searchResults.getResults().get(0).getId()).isEqualTo("item:2");
+        SearchReply<String, String> searchReply = redis.ftSearch(ITEM_INDEX, "@name:(earbuds)", null);
+        assertThat(searchReply.getCount()).isEqualTo(1);
+        assertThat(searchReply.getResults()).hasSize(1);
+        assertThat(searchReply.getResults().get(0).getId()).isEqualTo("item:2");
 
         // Test 2: Search for items with "bluetooth" and "headphones" in description
-        searchResults = redis.ftSearch(ITEM_INDEX, "@description:(bluetooth headphones)", null);
-        assertThat(searchResults.getCount()).isEqualTo(2);
-        assertThat(searchResults.getResults()).hasSize(2);
+        searchReply = redis.ftSearch(ITEM_INDEX, "@description:(bluetooth headphones)", null);
+        assertThat(searchReply.getCount()).isEqualTo(2);
+        assertThat(searchReply.getResults()).hasSize(2);
 
         // Test 3: Search for Bluetooth headphones with price less than 70
-        searchResults = redis.ftSearch(ITEM_INDEX, "@description:(bluetooth headphones) @price:[0 70]", null);
-        assertThat(searchResults.getCount()).isEqualTo(1);
-        assertThat(searchResults.getResults().get(0).getId()).isEqualTo("item:2");
+        searchReply = redis.ftSearch(ITEM_INDEX, "@description:(bluetooth headphones) @price:[0 70]", null);
+        assertThat(searchReply.getCount()).isEqualTo(1);
+        assertThat(searchReply.getResults().get(0).getId()).isEqualTo("item:2");
 
         // Cleanup
         redis.ftDropindex(ITEM_INDEX, false);
@@ -186,7 +186,7 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:3", JsonPath.ROOT_PATH, item3);
 
         // Test 1: Search for silver headphones
-        SearchResults<String, String> results = redis.ftSearch(ITEM_INDEX_2,
+        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX_2,
                 "@colors:{silver} (@name:(headphones)|@description:(headphones))", null);
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults().get(0).getId()).isEqualTo("item:1");
@@ -233,7 +233,7 @@ public class RedisJsonIndexingIntegrationTests {
 
         // Test full text search for light colored headphones
         SearchArgs<String, String> returnArgs = SearchArgs.<String, String> builder().returnField("$.colors").build();
-        SearchResults<String, String> results = redis.ftSearch(ITEM_INDEX_3,
+        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX_3,
                 "@colors:(white|light) (@name|description:(headphones))", returnArgs);
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
@@ -272,7 +272,7 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:3", JsonPath.ROOT_PATH, item3);
 
         // Test 1: Search for headphones with max volume between 70 and 80 (inclusive)
-        SearchResults<String, String> results = redis.ftSearch(ITEM_INDEX_4, "@dB:[70 80]", null);
+        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX_4, "@dB:[70 80]", null);
         assertThat(results.getCount()).isEqualTo(2); // item:1 and item:2
 
         // Test 2: Search for items with all values in range [90, 120]
@@ -314,9 +314,9 @@ public class RedisJsonIndexingIntegrationTests {
         // Test 1: Return specific attributes (name and price)
         SearchArgs<String, String> returnArgs = SearchArgs.<String, String> builder().returnField("name").returnField("price")
                 .build();
-        SearchResults<String, String> results = redis.ftSearch(ITEM_INDEX, "@description:(headphones)", returnArgs);
+        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX, "@description:(headphones)", returnArgs);
         assertThat(results.getCount()).isEqualTo(2);
-        for (SearchResults.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
             assertThat(result.getFields()).containsKey("name");
             assertThat(result.getFields()).containsKey("price");
             assertThat(result.getFields()).doesNotContainKey("description");
@@ -328,7 +328,7 @@ public class RedisJsonIndexingIntegrationTests {
                 .build();
         results = redis.ftSearch(ITEM_INDEX, "@description:(headphones)", jsonPathArgs);
         assertThat(results.getCount()).isEqualTo(2);
-        for (SearchResults.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
             assertThat(result.getFields()).containsKey("name");
             assertThat(result.getFields()).containsKey("price");
             assertThat(result.getFields()).containsKey("$.stock");
@@ -365,7 +365,7 @@ public class RedisJsonIndexingIntegrationTests {
         redis.jsonSet("item:2", JsonPath.ROOT_PATH, item2);
 
         // Test 1: Search for wireless items
-        SearchResults<String, String> results = redis.ftSearch(ITEM_INDEX, "@wireless:{true}", null);
+        SearchReply<String, String> results = redis.ftSearch(ITEM_INDEX, "@wireless:{true}", null);
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults().get(0).getId()).isEqualTo("item:1");
 

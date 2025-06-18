@@ -48,7 +48,7 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
-import io.lettuce.core.search.SearchResults;
+import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
@@ -1553,13 +1553,28 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+        return dispatch(searchCommandBuilder.ftCreate(index, null, fieldArgs));
+    }
+
+    @Override
     public RedisFuture<String> ftDropindex(K index, boolean deleteDocumentKeys) {
         return dispatch(searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
     }
 
     @Override
-    public RedisFuture<SearchResults<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+    public RedisFuture<String> ftDropindex(K index) {
+        return dispatch(searchCommandBuilder.ftDropindex(index, false));
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftSearch(index, query, args));
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query) {
+        return dispatch(searchCommandBuilder.ftSearch(index, query, null));
     }
 
     @Override

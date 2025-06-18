@@ -8,7 +8,8 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import io.lettuce.core.search.SearchResults
+import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.search.SearchReply
 import io.lettuce.core.search.arguments.CreateArgs
 import io.lettuce.core.search.arguments.FieldArgs
 import io.lettuce.core.search.arguments.SearchArgs
@@ -27,6 +28,18 @@ import io.lettuce.core.search.arguments.SearchArgs
 interface RediSearchCoroutinesCommands<K : Any, V : Any> {
 
     /**
+     * Create a new index with the given name, default creation arguments, and fieldArgs.
+     *
+     * @param index the index name, as a key
+     * @param fieldArgs the [FieldArgs]s of the index
+     * @return the result of the create command
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
+     * @see CreateArgs
+     */
+    suspend fun ftCreate(index: K, fieldArgs: List<FieldArgs<K>>): String?
+
+    /**
      * Create a new index with the given name, creation arguments, and fieldArgs.
      *
      * @param index the index name, as a key
@@ -38,6 +51,16 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see CreateArgs
      */
     suspend fun ftCreate(index: K, arguments: CreateArgs<K, V>, fieldArgs: List<FieldArgs<K>>): String?
+
+    /**
+     * Drop an index, without deleting any documents.
+     *
+     * @param index the index name, as a key
+     * @return the result of the drop command
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
+     */
+    suspend fun ftDropindex(index: K): String?
 
     /**
      * Drop an index.
@@ -61,14 +84,27 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      *
      * @param index the index name, as a key
      * @param query the query string
-     * @param args the search arguments
-     * @return the result of the search command, see [SearchResults]
+     * @return the result of the search command, see [SearchReply]
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.search/">FT.SEARCH</a>
-     * @see SearchResults
+     * @see SearchReply
      * @see SearchArgs
      */
-    suspend fun ftSearch(index: K, query: V, args: SearchArgs<K, V>): SearchResults<K, V>?
+    suspend fun ftSearch(index: K, query: V): SearchReply<K, V>?
+
+    /**
+     * Search the index with a textual query, returning either documents or just identifiers
+     *
+     * @param index the index name, as a key
+     * @param query the query string
+     * @param args the search arguments
+     * @return the result of the search command, see [SearchReply]
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.search/">FT.SEARCH</a>
+     * @see SearchReply
+     * @see SearchArgs
+     */
+    suspend fun ftSearch(index: K, query: V, args: SearchArgs<K, V>): SearchReply<K, V>?
 
 }
 

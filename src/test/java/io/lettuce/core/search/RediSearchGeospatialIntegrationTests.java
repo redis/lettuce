@@ -3,19 +3,6 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.lettuce.core.search;
@@ -24,7 +11,6 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,7 +28,6 @@ import io.lettuce.core.search.arguments.GeoFieldArgs;
 import io.lettuce.core.search.arguments.GeoshapeFieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
-import io.lettuce.core.search.SearchResults;
 
 /**
  * Integration tests for Redis Search geospatial functionality using GEO and GEOSHAPE fields.
@@ -129,26 +114,26 @@ public class RediSearchGeospatialIntegrationTests {
         redis.hmset("store:3", store3);
 
         // Test 1: Find stores within 50 miles of Denver
-        SearchResults<String, String> results = redis.ftSearch(GEO_INDEX, "@location:[-104.991531 39.742043 50 mi]", null);
+        SearchReply<String, String> results = redis.ftSearch(GEO_INDEX, "@location:[-104.991531 39.742043 50 mi]");
 
         assertThat(results.getCount()).isEqualTo(2); // Denver and Boulder stores
         assertThat(results.getResults()).hasSize(2);
 
         // Test 2: Find stores within 100 miles of Colorado Springs
-        results = redis.ftSearch(GEO_INDEX, "@location:[-104.800644 38.846127 100 mi]", null);
+        results = redis.ftSearch(GEO_INDEX, "@location:[-104.800644 38.846127 100 mi]");
 
         assertThat(results.getCount()).isEqualTo(3); // All stores within 100 miles
         assertThat(results.getResults()).hasSize(3);
 
         // Test 3: Find stores within 20 miles of Denver (should only find Denver store)
-        results = redis.ftSearch(GEO_INDEX, "@location:[-104.991531 39.742043 20 mi]", null);
+        results = redis.ftSearch(GEO_INDEX, "@location:[-104.991531 39.742043 20 mi]");
 
         assertThat(results.getCount()).isEqualTo(1); // Only Denver store
         assertThat(results.getResults()).hasSize(1);
         assertThat(results.getResults().get(0).getFields().get("name")).isEqualTo("Downtown Electronics");
 
         // Cleanup
-        redis.ftDropindex(GEO_INDEX, false);
+        redis.ftDropindex(GEO_INDEX);
     }
 
     /**
@@ -179,13 +164,13 @@ public class RediSearchGeospatialIntegrationTests {
         redis.hmset("product:2", product2);
 
         // Test search for products available near Denver (use smaller radius to be more specific)
-        SearchResults<String, String> results = redis.ftSearch(GEO_INDEX, "@locations:[-104.991531 39.742043 10 mi]", null);
+        SearchReply<String, String> results = redis.ftSearch(GEO_INDEX, "@locations:[-104.991531 39.742043 10 mi]");
 
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults().get(0).getFields().get("product")).isEqualTo("Laptop Pro");
 
         // Cleanup
-        redis.ftDropindex(GEO_INDEX, false);
+        redis.ftDropindex(GEO_INDEX);
     }
 
     /**
@@ -223,13 +208,13 @@ public class RediSearchGeospatialIntegrationTests {
         String manhattanPolygon = "POLYGON ((-74.047 40.680, -74.047 40.820, -73.910 40.820, -73.910 40.680, -74.047 40.680))";
         SearchArgs<String, String> withinArgs = SearchArgs.<String, String> builder().param("area", manhattanPolygon).build();
 
-        SearchResults<String, String> results = redis.ftSearch(GEOSHAPE_INDEX, "@geom:[WITHIN $area]", withinArgs);
+        SearchReply<String, String> results = redis.ftSearch(GEOSHAPE_INDEX, "@geom:[WITHIN $area]", withinArgs);
 
         assertThat(results.getCount()).isEqualTo(3); // All locations are in Manhattan
         assertThat(results.getResults()).hasSize(3);
 
         // Cleanup
-        redis.ftDropindex(GEOSHAPE_INDEX, false);
+        redis.ftDropindex(GEOSHAPE_INDEX);
     }
 
     /**
@@ -278,7 +263,7 @@ public class RediSearchGeospatialIntegrationTests {
         String largeSquare = "POLYGON ((0 0, 0 4, 4 4, 4 0, 0 0))";
         SearchArgs<String, String> withinArgs = SearchArgs.<String, String> builder().param("container", largeSquare).build();
 
-        SearchResults<String, String> results = redis.ftSearch(CARTESIAN_INDEX, "@geom:[WITHIN $container]", withinArgs);
+        SearchReply<String, String> results = redis.ftSearch(CARTESIAN_INDEX, "@geom:[WITHIN $container]", withinArgs);
 
         // Should find small square and center point (both entirely within large square)
         assertThat(results.getCount()).isGreaterThanOrEqualTo(2);
@@ -310,7 +295,7 @@ public class RediSearchGeospatialIntegrationTests {
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         // Cleanup
-        redis.ftDropindex(CARTESIAN_INDEX, false);
+        redis.ftDropindex(CARTESIAN_INDEX);
     }
 
     /**
@@ -350,8 +335,8 @@ public class RediSearchGeospatialIntegrationTests {
         redis.hmset("business:2", business2);
 
         // Test 1: Find restaurants within 30 miles of a location
-        SearchResults<String, String> results = redis.ftSearch(GEO_INDEX,
-                "(@category:restaurant) (@location:[-104.991531 39.742043 30 mi])", null);
+        SearchReply<String, String> results = redis.ftSearch(GEO_INDEX,
+                "(@category:restaurant) (@location:[-104.991531 39.742043 30 mi])");
 
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults().get(0).getFields().get("name")).isEqualTo("Downtown Pizza");
@@ -374,7 +359,7 @@ public class RediSearchGeospatialIntegrationTests {
         assertThat(results.getCount()).isGreaterThanOrEqualTo(0); // May or may not find results depending on exact coordinates
 
         // Cleanup
-        redis.ftDropindex(GEO_INDEX, false);
+        redis.ftDropindex(GEO_INDEX);
     }
 
     /**
@@ -409,19 +394,19 @@ public class RediSearchGeospatialIntegrationTests {
         redis.hmset("poi:3", poi3);
 
         // Test 1: Search with kilometers
-        SearchResults<String, String> results = redis.ftSearch(GEO_INDEX, "@location:[0.0 0.0 2 km]", null);
+        SearchReply<String, String> results = redis.ftSearch(GEO_INDEX, "@location:[0.0 0.0 2 km]");
         assertThat(results.getCount()).isEqualTo(3); // All points within 2 km
 
         // Test 2: Search with miles
-        results = redis.ftSearch(GEO_INDEX, "@location:[0.0 0.0 1 mi]", null);
+        results = redis.ftSearch(GEO_INDEX, "@location:[0.0 0.0 1 mi]");
         assertThat(results.getCount()).isEqualTo(3); // All points within 1 mile
 
         // Test 3: Search with meters
-        results = redis.ftSearch(GEO_INDEX, "@location:[0.0 0.0 500 m]", null);
+        results = redis.ftSearch(GEO_INDEX, "@location:[0.0 0.0 500 m]");
         assertThat(results.getCount()).isEqualTo(1); // Only center point within 500m
 
         // Cleanup
-        redis.ftDropindex(GEO_INDEX, false);
+        redis.ftDropindex(GEO_INDEX);
     }
 
     /**
@@ -448,11 +433,11 @@ public class RediSearchGeospatialIntegrationTests {
         redis.hmset("test:1", validData);
 
         // Test 1: Valid query should work
-        SearchResults<String, String> results = redis.ftSearch(GEO_INDEX, "@location:[-104.991531 39.742043 10 mi]", null);
+        SearchReply<String, String> results = redis.ftSearch(GEO_INDEX, "@location:[-104.991531 39.742043 10 mi]");
         assertThat(results.getCount()).isEqualTo(1);
 
         // Test 2: Query with no results should return empty
-        results = redis.ftSearch(GEO_INDEX, "@location:[0.0 0.0 1 m]", null);
+        results = redis.ftSearch(GEO_INDEX, "@location:[0.0 0.0 1 m]");
         assertThat(results.getCount()).isEqualTo(0);
 
         // Test 3: Valid GEOSHAPE query
@@ -463,7 +448,7 @@ public class RediSearchGeospatialIntegrationTests {
         assertThat(results.getCount()).isEqualTo(1);
 
         // Cleanup
-        redis.ftDropindex(GEO_INDEX, false);
+        redis.ftDropindex(GEO_INDEX);
     }
 
 }

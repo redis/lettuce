@@ -49,7 +49,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
-import io.lettuce.core.search.SearchResults;
+import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
@@ -1618,13 +1618,28 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+        return createMono(() -> searchCommandBuilder.ftCreate(index, null, fieldArgs));
+    }
+
+    @Override
     public Mono<String> ftDropindex(K index, boolean deleteDocumentKeys) {
         return createMono(() -> searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
     }
 
     @Override
-    public Mono<SearchResults<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+    public Mono<String> ftDropindex(K index) {
+        return createMono(() -> searchCommandBuilder.ftDropindex(index, false));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftSearch(index, query, args));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftSearch(K index, V query) {
+        return createMono(() -> searchCommandBuilder.ftSearch(index, query, null));
     }
 
     @Override
