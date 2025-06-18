@@ -116,66 +116,14 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
                     notifyRebindStarted();
                 }
             }
-        } else if (MIGRATING_MESSAGE_TYPE.equals(mType) || isMigratingMessage(message)) {
+        } else if (MIGRATING_MESSAGE_TYPE.equals(mType)) {
             logger.info("Shard migration started");
             notifyMigrateStarted();
-        } else if (MIGRATED_MESSAGE_TYPE.equals(mType) || isMigratedMessage(message)) {
+        } else if (MIGRATED_MESSAGE_TYPE.equals(mType)) {
             logger.info("Shard migration completed");
             Long relaxedTimeoutGracePeriod = getRelaxedTimeoutGracePeriod(message);
             notifyMigrateCompleted(relaxedTimeoutGracePeriod);
         }
-    }
-
-    private boolean isMigratingMessage(PushMessage message) {
-
-        if (!message.getType().equals("message")) {
-            return false;
-        }
-
-        List<Object> content = message.getContent();
-        if (content.size() != 3) {
-            logger.warn("Invalid MIGRATING message format, expected 1 elements, got {}", content.size());
-            return false;
-        }
-
-        Object msg = content.get(2);
-        if (!(msg instanceof ByteBuffer)) {
-            logger.warn("Invalid MIGRATING message format, expected 1rd element to be a ByteBuffer, got {}", msg.getClass());
-            return false;
-        }
-
-        String decodedMsg = StringCodec.UTF8.decodeKey((ByteBuffer) msg);
-        if (MIGRATING_MESSAGE_TYPE.equals(decodedMsg.split(";")[0].split("=")[1])) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private boolean isMigratedMessage(PushMessage message) {
-
-        if (!message.getType().equals("message")) {
-            return false;
-        }
-
-        List<Object> content = message.getContent();
-        if (content.size() == 3) {
-            logger.warn("Invalid MIGRATING message format, expected 1 elements, got {}", content.size());
-            return false;
-        }
-
-        Object msg = content.get(2);
-        if (!(msg instanceof ByteBuffer)) {
-            logger.warn("Invalid MIGRATING message format, expected 1rd element to be a ByteBuffer, got {}", msg.getClass());
-            return false;
-        }
-
-        String decodedMsg = StringCodec.UTF8.decodeKey((ByteBuffer) msg);
-        if (MIGRATED_MESSAGE_TYPE.equals(decodedMsg.split(";")[0].split("=")[1])) {
-            return true;
-        }
-
-        return false;
     }
 
     private Long getRelaxedTimeoutGracePeriod(PushMessage message) {
