@@ -13,7 +13,7 @@ import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
-import io.lettuce.core.search.SearchResults;
+import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SearchResultsParser;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
@@ -72,7 +72,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param searchArgs the search arguments
      * @return the result of the search command
      */
-    public Command<K, V, SearchResults<K, V>> ftSearch(K index, V query, SearchArgs<K, V> searchArgs) {
+    public Command<K, V, SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> searchArgs) {
         notNullKey(index);
         notNullKey(query);
 

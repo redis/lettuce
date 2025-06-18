@@ -15,7 +15,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link SearchResults}.
+ * Unit tests for {@link SearchReply}.
  *
  * @author Tihomir Mateev
  */
@@ -23,7 +23,7 @@ class SearchResultsTest {
 
     @Test
     void testEmptySearchResults() {
-        SearchResults<String, String> results = new SearchResults<>();
+        SearchReply<String, String> results = new SearchReply<>();
 
         assertThat(results.getCount()).isEqualTo(0);
         assertThat(results.getResults()).isEmpty();
@@ -33,11 +33,11 @@ class SearchResultsTest {
 
     @Test
     void testSearchResultsWithData() {
-        SearchResults<String, String> results = new SearchResults<>();
+        SearchReply<String, String> results = new SearchReply<>();
         results.setCount(10);
 
         // Create a search result
-        SearchResults.SearchResult<String, String> result1 = new SearchResults.SearchResult<>("doc1");
+        SearchReply.SearchResult<String, String> result1 = new SearchReply.SearchResult<>("doc1");
         result1.setScore(0.95);
         result1.setPayload("payload1");
         result1.setSortKey("sortkey1");
@@ -50,7 +50,7 @@ class SearchResultsTest {
         results.addResult(result1);
 
         // Create another search result
-        SearchResults.SearchResult<String, String> result2 = new SearchResults.SearchResult<>("doc2");
+        SearchReply.SearchResult<String, String> result2 = new SearchReply.SearchResult<>("doc2");
         result2.setScore(0.87);
 
         Map<String, String> fields2 = new HashMap<>();
@@ -67,7 +67,7 @@ class SearchResultsTest {
 
         assertThat(results.getResults()).hasSize(2);
 
-        SearchResults.SearchResult<String, String> firstResult = results.getResults().get(0);
+        SearchReply.SearchResult<String, String> firstResult = results.getResults().get(0);
         assertThat(firstResult.getId()).isEqualTo("doc1");
         assertThat(firstResult.getScore()).isEqualTo(0.95);
         assertThat(firstResult.getPayload()).isEqualTo("payload1");
@@ -75,7 +75,7 @@ class SearchResultsTest {
         assertThat(firstResult.getFields()).containsEntry("title", "Test Document 1");
         assertThat(firstResult.getFields()).containsEntry("content", "This is test content");
 
-        SearchResults.SearchResult<String, String> secondResult = results.getResults().get(1);
+        SearchReply.SearchResult<String, String> secondResult = results.getResults().get(1);
         assertThat(secondResult.getId()).isEqualTo("doc2");
         assertThat(secondResult.getScore()).isEqualTo(0.87);
         assertThat(secondResult.getPayload()).isNull();
@@ -86,10 +86,10 @@ class SearchResultsTest {
 
     @Test
     void testSearchResultsConstructorWithData() {
-        SearchResults.SearchResult<String, String> result = new SearchResults.SearchResult<>("doc1");
+        SearchReply.SearchResult<String, String> result = new SearchReply.SearchResult<>("doc1");
         result.setScore(0.95);
 
-        SearchResults<String, String> results = new SearchResults<>(5, java.util.Arrays.asList(result));
+        SearchReply<String, String> results = new SearchReply<>(5, java.util.Arrays.asList(result));
 
         assertThat(results.getCount()).isEqualTo(5);
         assertThat(results.size()).isEqualTo(1);
@@ -99,8 +99,8 @@ class SearchResultsTest {
 
     @Test
     void testSearchResultImmutability() {
-        SearchResults<String, String> results = new SearchResults<>();
-        SearchResults.SearchResult<String, String> result = new SearchResults.SearchResult<>("doc1");
+        SearchReply<String, String> results = new SearchReply<>();
+        SearchReply.SearchResult<String, String> result = new SearchReply.SearchResult<>("doc1");
         results.addResult(result);
 
         // The returned list should be unmodifiable

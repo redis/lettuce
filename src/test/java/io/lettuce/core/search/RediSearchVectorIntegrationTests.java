@@ -209,15 +209,15 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryString = ByteBuffer
                 .wrap("*=>[KNN 2 @doc_embedding $BLOB AS vector_score]".getBytes(StandardCharsets.UTF_8));
 
-        SearchResults<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, knnArgs);
+        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, knnArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
         // The results should be sorted by vector similarity (closest first)
         // vector1 and vector2 should be more similar to queryVector than vector3
-        SearchResults.SearchResult<ByteBuffer, ByteBuffer> firstResult = results.getResults().get(0);
-        SearchResults.SearchResult<ByteBuffer, ByteBuffer> secondResult = results.getResults().get(1);
+        SearchReply.SearchResult<ByteBuffer, ByteBuffer> firstResult = results.getResults().get(0);
+        SearchReply.SearchResult<ByteBuffer, ByteBuffer> secondResult = results.getResults().get(1);
 
         // Convert ByteBuffer results back to strings for assertions
         ByteBuffer titleFieldKey = ByteBuffer.wrap("title".getBytes(StandardCharsets.UTF_8));
@@ -228,7 +228,7 @@ public class RediSearchVectorIntegrationTests {
         assertThat(secondTitle).isIn("Redis Vector Search Tutorial", "Advanced Vector Techniques");
 
         // Cleanup
-        redis.ftDropindex(DOCUMENTS_INDEX, false);
+        redis.ftDropindex(DOCUMENTS_INDEX);
     }
 
     /**
@@ -305,11 +305,11 @@ public class RediSearchVectorIntegrationTests {
                 .wrap("(@genre:{action})=>[KNN 3 @movie_embedding $BLOB AS movie_distance]".getBytes(StandardCharsets.UTF_8));
 
         // Search for action movies with vector similarity
-        SearchResults<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, filterArgs);
+        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, filterArgs);
 
         assertThat(results.getCount()).isEqualTo(2); // The Matrix and Heat have action genre
         ByteBuffer genreFieldKey = ByteBuffer.wrap("genre".getBytes(StandardCharsets.UTF_8));
-        for (SearchResults.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
+        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
             String genre = new String(result.getFields().get(genreFieldKey).array(), StandardCharsets.UTF_8);
             assertThat(genre).contains("action");
         }
@@ -337,7 +337,7 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isEqualTo(3);
 
         // Cleanup
-        redis.ftDropindex(MOVIES_INDEX, false);
+        redis.ftDropindex(MOVIES_INDEX);
     }
 
     /**
@@ -406,12 +406,12 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer indexKey = ByteBuffer.wrap(PRODUCTS_INDEX.getBytes(StandardCharsets.UTF_8));
         ByteBuffer queryString = ByteBuffer
                 .wrap("@description_vector:[VECTOR_RANGE 0.5 $BLOB]".getBytes(StandardCharsets.UTF_8));
-        SearchResults<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, rangeArgs);
+        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, rangeArgs);
 
         // Should find electronics products and smart watch (mixed vector)
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
         ByteBuffer typeKey = ByteBuffer.wrap("type".getBytes(StandardCharsets.UTF_8));
-        for (SearchResults.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
+        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
             String productType = new String(result.getFields().get(typeKey).array(), StandardCharsets.UTF_8);
             assertThat(productType).isIn("electronics"); // Electronics should be within range
         }
@@ -438,7 +438,7 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
         // Cleanup
-        redis.ftDropindex(PRODUCTS_INDEX, false);
+        redis.ftDropindex(PRODUCTS_INDEX);
     }
 
     /**
@@ -488,13 +488,13 @@ public class RediSearchVectorIntegrationTests {
             ByteBuffer indexKey = ByteBuffer.wrap(indexName.getBytes(StandardCharsets.UTF_8));
             ByteBuffer queryString = ByteBuffer
                     .wrap("*=>[KNN 2 @embedding $BLOB AS distance]".getBytes(StandardCharsets.UTF_8));
-            SearchResults<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, searchArgs);
+            SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, searchArgs);
 
             assertThat(results.getCount()).isEqualTo(2);
             assertThat(results.getResults()).hasSize(2);
 
             // Cleanup
-            redis.ftDropindex(indexName, false);
+            redis.ftDropindex(indexName);
         }
     }
 
@@ -544,7 +544,7 @@ public class RediSearchVectorIntegrationTests {
 
         ByteBuffer indexKey = ByteBuffer.wrap("json-vector-idx".getBytes(StandardCharsets.UTF_8));
         ByteBuffer queryString = ByteBuffer.wrap("*=>[KNN 3 @vector $BLOB]".getBytes(StandardCharsets.UTF_8));
-        SearchResults<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, adhocArgs);
+        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, adhocArgs);
 
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
@@ -560,7 +560,7 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isEqualTo(2); // Only tech category documents
 
         // Cleanup
-        redis.ftDropindex("json-vector-idx", false);
+        redis.ftDropindex("json-vector-idx");
         redis.del("json:1", "json:2", "json:3");
     }
 
@@ -608,7 +608,7 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer queryString = ByteBuffer
                 .wrap("(@status:{active})=>[KNN 5 @content_vector $BLOB HYBRID_POLICY ADHOC_BF AS task_score]"
                         .getBytes(StandardCharsets.UTF_8));
-        SearchResults<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, adhocArgs);
+        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, adhocArgs);
 
         assertThat(results.getCount()).isGreaterThanOrEqualTo(1);
 
@@ -649,7 +649,7 @@ public class RediSearchVectorIntegrationTests {
         // Verify all results match the filter criteria
         ByteBuffer statusKey = ByteBuffer.wrap("status".getBytes(StandardCharsets.UTF_8));
         ByteBuffer priorityKey = ByteBuffer.wrap("priority".getBytes(StandardCharsets.UTF_8));
-        for (SearchResults.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
+        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
             String status = new String(result.getFields().get(statusKey).array(), StandardCharsets.UTF_8);
             String priorityStr = new String(result.getFields().get(priorityKey).array(), StandardCharsets.UTF_8);
             assertThat(status).isEqualTo("active");
@@ -668,7 +668,7 @@ public class RediSearchVectorIntegrationTests {
         assertThat(results.getCount()).isEqualTo(5);
 
         // Cleanup
-        redis.ftDropindex("tasks-idx", false);
+        redis.ftDropindex("tasks-idx");
     }
 
     /**
@@ -730,20 +730,20 @@ public class RediSearchVectorIntegrationTests {
         ByteBuffer indexKey = ByteBuffer.wrap("precision-idx".getBytes(StandardCharsets.UTF_8));
         ByteBuffer queryString = ByteBuffer
                 .wrap("*=>[KNN 2 @embedding_f64 $BLOB AS distance]".getBytes(StandardCharsets.UTF_8));
-        SearchResults<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, precisionArgs);
+        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, precisionArgs);
 
         assertThat(results.getCount()).isEqualTo(2);
         assertThat(results.getResults()).hasSize(2);
 
         // Verify that the search worked with high precision vectors
         ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes(StandardCharsets.UTF_8));
-        for (SearchResults.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
+        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> result : results.getResults()) {
             String name = new String(result.getFields().get(nameKey).array(), StandardCharsets.UTF_8);
             assertThat(name).contains("High Precision Vector");
         }
 
         // Cleanup
-        redis.ftDropindex("precision-idx", false);
+        redis.ftDropindex("precision-idx");
     }
 
     /**
@@ -777,7 +777,7 @@ public class RediSearchVectorIntegrationTests {
 
         ByteBuffer indexKey = ByteBuffer.wrap("error-test-idx".getBytes(StandardCharsets.UTF_8));
         ByteBuffer queryString = ByteBuffer.wrap("*=>[KNN 1 @test_vector $BLOB]".getBytes(StandardCharsets.UTF_8));
-        SearchResults<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, validArgs);
+        SearchReply<ByteBuffer, ByteBuffer> results = redisBinary.ftSearch(indexKey, queryString, validArgs);
 
         assertThat(results.getCount()).isEqualTo(1);
 
@@ -793,7 +793,7 @@ public class RediSearchVectorIntegrationTests {
                 .isInstanceOf(RedisCommandExecutionException.class).hasMessageContaining("Unknown field");
 
         // Cleanup
-        redis.ftDropindex("error-test-idx", false);
+        redis.ftDropindex("error-test-idx");
     }
 
 }

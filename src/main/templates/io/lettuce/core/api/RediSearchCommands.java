@@ -6,7 +6,7 @@
  */
 package io.lettuce.core.api;
 
-import io.lettuce.core.search.SearchResults;
+import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
@@ -25,6 +25,18 @@ import java.util.List;
 public interface RediSearchCommands<K, V> {
 
     /**
+     * Create a new index with the given name, default creation arguments, and fieldArgs.
+     *
+     * @param index the index name, as a key
+     * @param fieldArgs the {@link FieldArgs}s of the index
+     * @return the result of the create command
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
+     * @see CreateArgs
+     */
+    String ftCreate(K index, List<FieldArgs<K>> fieldArgs);
+
+    /**
      * Create a new index with the given name, creation arguments, and fieldArgs.
      *
      * @param index the index name, as a key
@@ -36,6 +48,16 @@ public interface RediSearchCommands<K, V> {
      * @see CreateArgs
      */
     String ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs);
+
+    /**
+     * Drop an index, without deleting any documents.
+     *
+     * @param index the index name, as a key
+     * @return the result of the drop command
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
+     */
+    String ftDropindex(K index);
 
     /**
      * Drop an index.
@@ -59,13 +81,26 @@ public interface RediSearchCommands<K, V> {
      *
      * @param index the index name, as a key
      * @param query the query string
-     * @param args the search arguments
-     * @return the result of the search command, see {@link SearchResults}
+     * @return the result of the search command, see {@link SearchReply}
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.search/">FT.SEARCH</a>
-     * @see SearchResults
+     * @see SearchReply
      * @see SearchArgs
      */
-    SearchResults<K, V> ftSearch(K index, V query, SearchArgs<K, V> args);
+    SearchReply<K, V> ftSearch(K index, V query);
+
+    /**
+     * Search the index with a textual query, returning either documents or just identifiers
+     *
+     * @param index the index name, as a key
+     * @param query the query string
+     * @param args the search arguments
+     * @return the result of the search command, see {@link SearchReply}
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.search/">FT.SEARCH</a>
+     * @see SearchReply
+     * @see SearchArgs
+     */
+    SearchReply<K, V> ftSearch(K index, V query, SearchArgs<K, V> args);
 
 }

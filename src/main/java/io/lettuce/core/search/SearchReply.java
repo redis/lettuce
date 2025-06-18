@@ -26,27 +26,27 @@ import java.util.Map;
  * @since 6.8
  * @see <a href="https://redis.io/docs/latest/commands/ft.search/">FT.SEARCH</a>
  */
-public class SearchResults<K, V> {
+public class SearchReply<K, V> {
 
     private long count;
 
     private final List<SearchResult<K, V>> results;
 
     /**
-     * Creates a new empty SearchResults instance.
+     * Creates a new empty SearchReply instance.
      */
-    public SearchResults() {
+    public SearchReply() {
         this.count = 0;
         this.results = new ArrayList<>();
     }
 
     /**
-     * Creates a new SearchResults instance with the specified count and results.
+     * Creates a new SearchReply instance with the specified count and results.
      *
      * @param count the total number of matching documents
      * @param results the list of search result documents
      */
-    public SearchResults(long count, List<SearchResult<K, V>> results) {
+    SearchReply(long count, List<SearchResult<K, V>> results) {
         this.count = count;
         this.results = new ArrayList<>(results);
     }
@@ -68,7 +68,7 @@ public class SearchResults<K, V> {
      *
      * @param count the total number of matching documents
      */
-    public void setCount(long count) {
+    void setCount(long count) {
         this.count = count;
     }
 
@@ -121,7 +121,7 @@ public class SearchResults<K, V> {
      */
     public static class SearchResult<K, V> {
 
-        private K id;
+        private final K id;
 
         private Double score;
 
@@ -150,15 +150,6 @@ public class SearchResults<K, V> {
         }
 
         /**
-         * Sets the document ID.
-         *
-         * @param id the document ID
-         */
-        public void setId(K id) {
-            this.id = id;
-        }
-
-        /**
          * Gets the document score.
          * <p>
          * This is only available if WITHSCORES was used in the search.
@@ -174,7 +165,7 @@ public class SearchResults<K, V> {
          *
          * @param score the document score
          */
-        public void setScore(Double score) {
+        void setScore(Double score) {
             this.score = score;
         }
 
@@ -194,7 +185,7 @@ public class SearchResults<K, V> {
          *
          * @param payload the document payload
          */
-        public void setPayload(V payload) {
+        void setPayload(V payload) {
             this.payload = payload;
         }
 
@@ -214,7 +205,7 @@ public class SearchResults<K, V> {
          *
          * @param sortKey the sort key
          */
-        public void setSortKey(V sortKey) {
+        void setSortKey(V sortKey) {
             this.sortKey = sortKey;
         }
 
@@ -231,7 +222,7 @@ public class SearchResults<K, V> {
         }
 
         /**
-         * Sets the document fields.
+         * Adds all the provided fields
          *
          * @param fields the document fields
          */
@@ -239,6 +230,12 @@ public class SearchResults<K, V> {
             this.fields.putAll(fields);
         }
 
+        /**
+         * Adds a single document field
+         *
+         * @param key the field name
+         * @param value the field value
+         */
         public void addFields(K key, V value) {
             this.fields.put(key, value);
         }

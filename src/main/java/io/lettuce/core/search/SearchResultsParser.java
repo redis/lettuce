@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class SearchResultsParser<K, V> implements ComplexDataParser<SearchResults<K, V>> {
+public class SearchResultsParser<K, V> implements ComplexDataParser<SearchReply<K, V>> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(VectorMetadataParser.class);
 
@@ -41,7 +41,7 @@ public class SearchResultsParser<K, V> implements ComplexDataParser<SearchResult
     }
 
     @Override
-    public SearchResults<K, V> parse(ComplexData data) {
+    public SearchReply<K, V> parse(ComplexData data) {
         try {
             data.getDynamicList();
             return new Resp2SearchResultsParser().parse(data);
@@ -50,28 +50,28 @@ public class SearchResultsParser<K, V> implements ComplexDataParser<SearchResult
         }
     }
 
-    class Resp2SearchResultsParser implements ComplexDataParser<SearchResults<K, V>> {
+    class Resp2SearchResultsParser implements ComplexDataParser<SearchReply<K, V>> {
 
         @Override
-        public SearchResults<K, V> parse(ComplexData data) {
-            final SearchResults<K, V> searchResults = new SearchResults<>();
+        public SearchReply<K, V> parse(ComplexData data) {
+            final SearchReply<K, V> searchReply = new SearchReply<>();
 
             final List<Object> resultsList = data.getDynamicList();
 
             if (resultsList == null || resultsList.isEmpty()) {
-                return searchResults;
+                return searchReply;
             }
 
-            searchResults.setCount((Long) resultsList.get(0));
+            searchReply.setCount((Long) resultsList.get(0));
 
             if (resultsList.size() == 1) {
-                return searchResults;
+                return searchReply;
             }
 
             for (int i = 1; i < resultsList.size(); i++) {
 
                 final K id = codec.decodeKey((ByteBuffer) resultsList.get(i));
-                final SearchResults.SearchResult<K, V> searchResult = new SearchResults.SearchResult<>(id);
+                final SearchReply.SearchResult<K, V> searchResult = new SearchReply.SearchResult<>(id);
 
                 if (withScores) {
                     searchResult.setScore(Double.parseDouble(StringCodec.UTF8.decodeKey((ByteBuffer) resultsList.get(i + 1))));
@@ -90,15 +90,15 @@ public class SearchResultsParser<K, V> implements ComplexDataParser<SearchResult
                     i++;
                 }
 
-                searchResults.addResult(searchResult);
+                searchReply.addResult(searchResult);
             }
 
-            return searchResults;
+            return searchReply;
         }
 
     }
 
-    class Resp3SearchResultsParser implements ComplexDataParser<SearchResults<K, V>> {
+    class Resp3SearchResultsParser implements ComplexDataParser<SearchReply<K, V>> {
 
         private final ByteBuffer ATTRIBUTES_KEY = StringCodec.UTF8.encodeKey("attributes");
 
@@ -119,13 +119,13 @@ public class SearchResultsParser<K, V> implements ComplexDataParser<SearchResult
         private final ByteBuffer VALUES_KEY = StringCodec.UTF8.encodeKey("values");
 
         @Override
-        public SearchResults<K, V> parse(ComplexData data) {
-            final SearchResults<K, V> searchResults = new SearchResults<>();
+        public SearchReply<K, V> parse(ComplexData data) {
+            final SearchReply<K, V> searchReply = new SearchReply<>();
 
             final Map<Object, Object> resultsMap = data.getDynamicMap();
 
             if (resultsMap == null || resultsMap.isEmpty()) {
-                return searchResults;
+                return searchReply;
             }
 
             // FIXME Parse attributes? ATTRIBUTES_KEY
@@ -143,7 +143,7 @@ public class SearchResultsParser<K, V> implements ComplexDataParser<SearchResult
                     Map<Object, Object> resultEntry = resultData.getDynamicMap();
 
                     final K id = codec.decodeKey((ByteBuffer) resultEntry.get(ID_KEY));
-                    final SearchResults.SearchResult<K, V> searchResult = new SearchResults.SearchResult<>(id);
+                    final SearchReply.SearchResult<K, V> searchResult = new SearchReply.SearchResult<>(id);
 
                     if (resultEntry.containsKey(SCORE_KEY)) {
                         if (resultEntry.get(SCORE_KEY) instanceof Double) {
@@ -163,12 +163,12 @@ public class SearchResultsParser<K, V> implements ComplexDataParser<SearchResult
                             searchResult.addFields(decodedKey, decodedValue);
                         });
                     }
-                    searchResults.addResult(searchResult);
+                    searchReply.addResult(searchResult);
                 });
             }
 
             if (resultsMap.containsKey(TOTAL_RESULTS_KEY)) {
-                searchResults.setCount((Long) resultsMap.get(TOTAL_RESULTS_KEY));
+                searchReply.setCount((Long) resultsMap.get(TOTAL_RESULTS_KEY));
             }
 
             if (resultsMap.containsKey(WARNING_KEY)) {
@@ -178,7 +178,7 @@ public class SearchResultsParser<K, V> implements ComplexDataParser<SearchResult
                 });
             }
 
-            return searchResults;
+            return searchReply;
         }
 
     }

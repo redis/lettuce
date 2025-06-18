@@ -8,7 +8,7 @@ package io.lettuce.core;
  */
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
-import io.lettuce.core.search.SearchResults;
+import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
@@ -153,7 +153,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtSearchCommandNoSearchArgs() {
-        Command<String, String, SearchResults<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY,
+        Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY,
                 SearchArgs.<String, String> builder().build());
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -173,7 +173,7 @@ class RediSearchCommandBuilderUnitTests {
         SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder().limit(10, 10).returnField("title")
                 .build();
 
-        Command<String, String, SearchResults<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
+        Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -198,7 +198,7 @@ class RediSearchCommandBuilderUnitTests {
         SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
                 .param("poly", "POLYGON((2 2, 2 50, 50 50, 50 2, 2 2))").build();
 
-        Command<String, String, SearchResults<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
+        Command<String, String, SearchReply<String, String>> command = builder.ftSearch(MY_KEY, MY_QUERY, searchArgs);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

@@ -3,19 +3,6 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package io.lettuce.core.search;
@@ -150,29 +137,29 @@ public class RediSearchIntegrationTests {
         assertThat(redis.hmset("blog:post:3", post3)).isEqualTo("OK");
 
         // Test 1: Basic text search
-        SearchResults<String, String> searchResults = redis.ftSearch(BLOG_INDEX, "@title:(Redis)", null);
-        assertThat(searchResults.getCount()).isEqualTo(2);
-        assertThat(searchResults.getResults()).hasSize(2);
-        assertThat(searchResults.getResults().get(1).getFields().get("title")).isEqualTo("Redis Search Tutorial");
-        assertThat(searchResults.getResults().get(0).getFields().get("title")).isEqualTo("Advanced Redis Techniques");
-        assertThat(searchResults.getResults().get(1).getFields().get("author")).isEqualTo("john_doe");
-        assertThat(searchResults.getResults().get(0).getFields().get("author")).isEqualTo("jane_smith");
+        SearchReply<String, String> searchReply = redis.ftSearch(BLOG_INDEX, "@title:(Redis)");
+        assertThat(searchReply.getCount()).isEqualTo(2);
+        assertThat(searchReply.getResults()).hasSize(2);
+        assertThat(searchReply.getResults().get(1).getFields().get("title")).isEqualTo("Redis Search Tutorial");
+        assertThat(searchReply.getResults().get(0).getFields().get("title")).isEqualTo("Advanced Redis Techniques");
+        assertThat(searchReply.getResults().get(1).getFields().get("author")).isEqualTo("john_doe");
+        assertThat(searchReply.getResults().get(0).getFields().get("author")).isEqualTo("jane_smith");
 
         // Test 2: Search with field-specific query
         SearchArgs<String, String> titleSearchArgs = SearchArgs.<String, String> builder().build();
-        searchResults = redis.ftSearch(BLOG_INDEX, "@title:Redis", titleSearchArgs);
-        assertThat(searchResults.getCount()).isEqualTo(2);
+        searchReply = redis.ftSearch(BLOG_INDEX, "@title:Redis", titleSearchArgs);
+        assertThat(searchReply.getCount()).isEqualTo(2);
 
         // Test 3: Tag search
-        searchResults = redis.ftSearch(BLOG_INDEX, "@author:{john_doe}", null);
-        assertThat(searchResults.getCount()).isEqualTo(2);
+        searchReply = redis.ftSearch(BLOG_INDEX, "@author:{john_doe}");
+        assertThat(searchReply.getCount()).isEqualTo(2);
 
         // Test 4: Numeric range search
-        searchResults = redis.ftSearch(BLOG_INDEX, "@views:[100 300]", null);
-        assertThat(searchResults.getCount()).isEqualTo(2);
+        searchReply = redis.ftSearch(BLOG_INDEX, "@views:[100 300]");
+        assertThat(searchReply.getCount()).isEqualTo(2);
 
         // Cleanup
-        redis.ftDropindex(BLOG_INDEX, false);
+        redis.ftDropindex(BLOG_INDEX);
     }
 
     /**
@@ -207,11 +194,11 @@ public class RediSearchIntegrationTests {
 
         // Test 1: Search with WITHSCORES
         SearchArgs<String, String> withScoresArgs = SearchArgs.<String, String> builder().withScores().build();
-        SearchResults<String, String> results = redis.ftSearch(MOVIES_INDEX, "Matrix", withScoresArgs);
+        SearchReply<String, String> results = redis.ftSearch(MOVIES_INDEX, "Matrix", withScoresArgs);
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
         // Verify that scores are present
-        for (SearchResults.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
             assertThat(result.getScore()).isNotNull();
             assertThat(result.getScore()).isGreaterThan(0.0);
         }
@@ -222,7 +209,7 @@ public class RediSearchIntegrationTests {
         assertThat(results.getCount()).isEqualTo(3);
         assertThat(results.getResults()).hasSize(3);
         // Verify that fields are not present
-        for (SearchResults.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
             assertThat(result.getFields()).isEmpty();
         }
 
@@ -240,7 +227,7 @@ public class RediSearchIntegrationTests {
         assertThat(results.getResults()).hasSize(3);
         // Verify sorting order (highest rating first)
         double previousRating = Double.MAX_VALUE;
-        for (SearchResults.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
             double currentRating = Double.parseDouble(result.getFields().get("rating"));
             assertThat(currentRating).isLessThanOrEqualTo(previousRating);
             previousRating = currentRating;
@@ -250,13 +237,13 @@ public class RediSearchIntegrationTests {
         SearchArgs<String, String> returnArgs = SearchArgs.<String, String> builder().returnField("title").build();
         results = redis.ftSearch(MOVIES_INDEX, "Matrix", returnArgs);
         assertThat(results.getCount()).isEqualTo(3);
-        for (SearchResults.SearchResult<String, String> result : results.getResults()) {
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
             assertThat(result.getFields()).containsKey("title");
             assertThat(result.getFields()).doesNotContainKey("rating");
         }
 
         // Cleanup
-        redis.ftDropindex(MOVIES_INDEX, false);
+        redis.ftDropindex(MOVIES_INDEX);
     }
 
     /**
@@ -292,24 +279,24 @@ public class RediSearchIntegrationTests {
         redis.hmset("book:details:3", book3);
 
         // Test 1: Search for books with "databases" category
-        SearchResults<String, String> results = redis.ftSearch(BOOKS_INDEX, "@categories:{databases}", null);
+        SearchReply<String, String> results = redis.ftSearch(BOOKS_INDEX, "@categories:{databases}");
         assertThat(results.getCount()).isEqualTo(3);
 
         // Test 2: Search for books with "nosql" category
-        results = redis.ftSearch(BOOKS_INDEX, "@categories:{nosql}", null);
+        results = redis.ftSearch(BOOKS_INDEX, "@categories:{nosql}");
         assertThat(results.getCount()).isEqualTo(2);
 
         // Test 3: Search for books with "programming" category
-        results = redis.ftSearch(BOOKS_INDEX, "@categories:{programming}", null);
+        results = redis.ftSearch(BOOKS_INDEX, "@categories:{programming}");
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults().get(0).getFields().get("title")).isEqualTo("Redis in Action");
 
         // Test 4: Search for books with multiple categories (OR)
-        results = redis.ftSearch(BOOKS_INDEX, "@categories:{programming|design}", null);
+        results = redis.ftSearch(BOOKS_INDEX, "@categories:{programming|design}");
         assertThat(results.getCount()).isEqualTo(2);
 
         // Cleanup
-        redis.ftDropindex(BOOKS_INDEX, false);
+        redis.ftDropindex(BOOKS_INDEX);
     }
 
     /**
@@ -353,32 +340,32 @@ public class RediSearchIntegrationTests {
         redis.hmset("product:4", product4);
 
         // Test 1: Range query - products between $50 and $500
-        SearchResults<String, String> results = redis.ftSearch(PRODUCTS_INDEX, "@price:[50 500]", null);
+        SearchReply<String, String> results = redis.ftSearch(PRODUCTS_INDEX, "@price:[50 500]");
         assertThat(results.getCount()).isEqualTo(2); // Keyboard and Monitor
 
         // Test 2: Open range query - products over $100
-        results = redis.ftSearch(PRODUCTS_INDEX, "@price:[100 +inf]", null);
+        results = redis.ftSearch(PRODUCTS_INDEX, "@price:[100 +inf]");
         assertThat(results.getCount()).isEqualTo(2); // Laptop and Monitor
 
         // Test 3: Open range query - products under $100
-        results = redis.ftSearch(PRODUCTS_INDEX, "@price:[-inf 100]", null);
+        results = redis.ftSearch(PRODUCTS_INDEX, "@price:[-inf 100]");
         assertThat(results.getCount()).isEqualTo(2); // Mouse and Keyboard
 
         // Test 4: Exact numeric value
-        results = redis.ftSearch(PRODUCTS_INDEX, "@price:[29.99 29.99]", null);
+        results = redis.ftSearch(PRODUCTS_INDEX, "@price:[29.99 29.99]");
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults().get(0).getFields().get("name")).isEqualTo("Mouse");
 
         // Test 5: Stock range query
-        results = redis.ftSearch(PRODUCTS_INDEX, "@stock:[20 60]", null);
+        results = redis.ftSearch(PRODUCTS_INDEX, "@stock:[20 60]");
         assertThat(results.getCount()).isEqualTo(2); // Monitor and Keyboard
 
         // Test 6: Combined query - products with price > 50 AND stock > 20
-        results = redis.ftSearch(PRODUCTS_INDEX, "@price:[50 +inf] @stock:[20 +inf]", null);
+        results = redis.ftSearch(PRODUCTS_INDEX, "@price:[50 +inf] @stock:[20 +inf]");
         assertThat(results.getCount()).isEqualTo(2); // Keyboard and Monitor
 
         // Cleanup
-        redis.ftDropindex(PRODUCTS_INDEX, false);
+        redis.ftDropindex(PRODUCTS_INDEX);
     }
 
     /**
@@ -418,7 +405,7 @@ public class RediSearchIntegrationTests {
         // Test 1: Search with INKEYS (limit search to specific keys)
         SearchArgs<String, String> inKeysArgs = SearchArgs.<String, String> builder().inKey("blog:post:1").inKey("blog:post:2")
                 .build();
-        SearchResults<String, String> results = redis.ftSearch(BLOG_INDEX, "Redis", inKeysArgs);
+        SearchReply<String, String> results = redis.ftSearch(BLOG_INDEX, "Redis", inKeysArgs);
         assertThat(results.getCount()).isEqualTo(2); // Only posts 1 and 2
 
         // Test 2: Search with INFIELDS (limit search to specific fields)
@@ -438,7 +425,7 @@ public class RediSearchIntegrationTests {
         assertThat(results.getCount()).isEqualTo(2); // Posts with tutorial category
 
         // Cleanup
-        redis.ftDropindex(BLOG_INDEX, false);
+        redis.ftDropindex(BLOG_INDEX);
     }
 
     /**
@@ -487,38 +474,38 @@ public class RediSearchIntegrationTests {
         redis.hmset("movie:4", movie4);
 
         // Test 1: Boolean AND operation
-        SearchResults<String, String> results = redis.ftSearch(MOVIES_INDEX, "((@tags:{thriller}) (@tags:{action}))", null);
+        SearchReply<String, String> results = redis.ftSearch(MOVIES_INDEX, "((@tags:{thriller}) (@tags:{action}))");
         assertThat(results.getCount()).isEqualTo(1); // The Matrix
         assertThat(results.getResults().get(0).getFields().get("title")).isEqualTo("The Matrix");
 
         // Test 2: Boolean OR operation
-        results = redis.ftSearch(MOVIES_INDEX, "((@tags:{thriller}) | (@tags:{crime}))", null);
+        results = redis.ftSearch(MOVIES_INDEX, "((@tags:{thriller}) | (@tags:{crime}))");
         assertThat(results.getCount()).isEqualTo(3); // Matrix, Inception, Dark Knight
 
         // Test 3: Boolean NOT operation
-        results = redis.ftSearch(MOVIES_INDEX, "((@tags:{action}) (-@tags:{thriller}))", null);
+        results = redis.ftSearch(MOVIES_INDEX, "((@tags:{action}) (-@tags:{thriller}))");
         assertThat(results.getCount()).isEqualTo(2); // Matrix Reloaded, The Dark Knight
 
         // Test 4: Phrase matching
 
-        results = redis.ftSearch(MOVIES_INDEX, "@title:\"Inception\"", null);
+        results = redis.ftSearch(MOVIES_INDEX, "@title:\"Inception\"");
         assertThat(results.getCount()).isEqualTo(1);
         assertThat(results.getResults().get(0).getFields().get("title")).isEqualTo("Inception");
 
         // Test 5: Wildcard search
-        results = redis.ftSearch(MOVIES_INDEX, "Matrix*", null);
+        results = redis.ftSearch(MOVIES_INDEX, "Matrix*");
         assertThat(results.getCount()).isEqualTo(2); // Both Matrix movies
 
         // Test 6: Complex query with numeric range and text search
-        results = redis.ftSearch(MOVIES_INDEX, "@rating:[8.0 9.5] @tags:{action}", null);
+        results = redis.ftSearch(MOVIES_INDEX, "@rating:[8.0 9.5] @tags:{action}");
         assertThat(results.getCount()).isEqualTo(2); // The Matrix and The Dark Knight
 
         // Test 7: Field-specific search with OR
-        results = redis.ftSearch(MOVIES_INDEX, "@title:(Matrix | Inception)", null);
+        results = redis.ftSearch(MOVIES_INDEX, "@title:(Matrix | Inception)");
         assertThat(results.getCount()).isEqualTo(3); // All Matrix movies and Inception
 
         // Cleanup
-        redis.ftDropindex(MOVIES_INDEX, false);
+        redis.ftDropindex(MOVIES_INDEX);
     }
 
     /**
@@ -540,7 +527,7 @@ public class RediSearchIntegrationTests {
         redis.hmset("blog:post:1", post1);
 
         // Test 1: Search for non-existent term
-        SearchResults<String, String> results = redis.ftSearch(BLOG_INDEX, "nonexistent", null);
+        SearchReply<String, String> results = redis.ftSearch(BLOG_INDEX, "nonexistent");
         assertThat(results.getCount()).isEqualTo(0);
         assertThat(results.getResults()).isEmpty();
 
@@ -559,7 +546,7 @@ public class RediSearchIntegrationTests {
         assertThat(results.getResults().get(0).getScore()).isNotNull();
 
         // Cleanup
-        redis.ftDropindex(BLOG_INDEX, false);
+        redis.ftDropindex(BLOG_INDEX);
     }
 
 }
