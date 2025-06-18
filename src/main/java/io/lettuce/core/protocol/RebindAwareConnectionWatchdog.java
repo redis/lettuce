@@ -52,6 +52,8 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
     private static final int REBIND_ADDRESS_INDEX = 2;
 
+    private static final int MIGRATED_DELAY_RELAX_TIMEOUT_INDEX = 1;
+
     public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
 
     private Channel channel;
@@ -119,7 +121,8 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
             notifyMigrateStarted();
         } else if (MIGRATED_MESSAGE_TYPE.equals(mType) || isMigratedMessage(message)) {
             logger.info("Shard migration completed");
-            notifyMigrateCompleted();
+            Long relaxedTimeoutGracePeriod = getRelaxedTimeoutGracePeriod(message);
+            notifyMigrateCompleted(relaxedTimeoutGracePeriod);
         }
     }
 
@@ -156,7 +159,7 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
         }
 
         List<Object> content = message.getContent();
-        if (content.size() != 3) {
+        if (content.size() == 3) {
             logger.warn("Invalid MIGRATING message format, expected 1 elements, got {}", content.size());
             return false;
         }
@@ -173,6 +176,23 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
         }
 
         return false;
+    }
+
+    private Long getRelaxedTimeoutGracePeriod(PushMessage message) {
+
+        List<Object> content = message.getContent();
+        if (content.size() != 2) {
+            logger.warn("Invalid MIGRATED message format, expected 2 elements, got {}", content.size());
+            return null;
+        }
+
+        Object delayedObject = content.get(MIGRATED_DELAY_RELAX_TIMEOUT_INDEX);
+        if (!(delayedObject instanceof Long)) {
+            logger.warn("Invalid MIGRATED message format, expected 2nd element to be a Long, got {}", delayedObject.getClass());
+            return null;
+        }
+
+        return (Long) delayedObject;
     }
 
     private SocketAddress getRemoteAddress(PushMessage message) {
@@ -224,8 +244,8 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
         this.componentListeners.forEach(RebindAwareComponent::onMigrateStarted);
     }
 
-    private void notifyMigrateCompleted() {
-        this.componentListeners.forEach(RebindAwareComponent::onMigrateCompleted);
+    private void notifyMigrateCompleted(Long relaxedTimeoutGracePeriod) {
+        this.componentListeners.forEach(component -> component.onMigrateCompleted(relaxedTimeoutGracePeriod));
     }
 
 }

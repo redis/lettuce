@@ -185,7 +185,7 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
 
     @Override
     public void onRebindCompleted() {
-        disableRelaxedTimeoutDelayed("Re-bind completed");
+        disableRelaxedTimeoutDelayed("Re-bind completed", relaxedTimeout);
     }
 
     @Override
@@ -194,8 +194,10 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
     }
 
     @Override
-    public void onMigrateCompleted() {
-        disableRelaxedTimeoutDelayed("Migration completed");
+    public void onMigrateCompleted(Long relaxedTimeoutGracePeriod) {
+        Duration gracePeriod = relaxedTimeoutGracePeriod == null ? relaxedTimeout
+                : Duration.ofMillis(relaxedTimeoutGracePeriod);
+        disableRelaxedTimeoutDelayed("Migration completed", gracePeriod);
     }
 
     private void enableRelaxedTimeout(String reason) {
@@ -213,7 +215,7 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
         }
     }
 
-    private void disableRelaxedTimeoutDelayed(String reason) {
+    private void disableRelaxedTimeoutDelayed(String reason, Duration gracePeriod) {
         if (relaxTimeout != null) {
             boolean canceled = relaxTimeout.cancel();
             log.debug("Canceled previous disable relax timeout task : {}", canceled);
@@ -223,11 +225,11 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
         //
         // The reasoning behind that is we can't really be sure when all the enqueued commands have
         // successfully been written to the wire and then the reply was received
-        log.debug("{}, scheduling timeout relaxation disable after {}ms", reason, relaxedTimeout.toMillis());
+        log.debug("{}, scheduling timeout relaxation disable after {}ms", reason, gracePeriod.toMillis());
         relaxTimeout = timer.newTimeout(t -> executorService.submit(() -> {
             log.debug("Disabling timeout relaxation after {}", reason);
             this.relaxTimeouts = false;
-        }), relaxedTimeout.toMillis(), TimeUnit.MILLISECONDS);
+        }), gracePeriod.toMillis(), TimeUnit.MILLISECONDS);
     }
 
 }

@@ -25,7 +25,7 @@ public interface RebindAwareComponent {
     /**
      * Called whenever a shard migration is completed
      */
-    void onMigrateCompleted();
+    void onMigrateCompleted(Long relaxedTimeoutGracePeriod);
 
     /**
      * Called whenever a re-bind has been initiated by the remote server
