@@ -6,12 +6,16 @@ package io.lettuce.core;
  *
  * Licensed under the MIT License.
  */
+import static io.lettuce.core.search.arguments.AggregateArgs.*;
+
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
+import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
@@ -21,6 +25,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 
 import static io.lettuce.TestTags.UNIT_TEST;
@@ -212,6 +217,61 @@ class RediSearchCommandBuilderUnitTests {
                 + "$38\r\n" + "POLYGON((2 2, 2 50, 50 50, 50 2, 2 2))\r\n" //
                 + "$7\r\nDIALECT\r\n" //
                 + "$1\r\n2\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void shouldCorrectlyConstructFtAggregateCommandBasic() {
+        Command<String, String, SearchReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY, null);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$12\r\n" + "FT.AGGREGATE\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$1\r\n" + MY_QUERY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void shouldCorrectlyConstructFtAggregateCommandWithArgs() {
+        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
+                .verbatim()//
+                .load("title")//
+                .groupBy(GroupBy.<String, String> of("category").reduce(Reducer.<String, String> count().as("count")))//
+                .sortBy(SortBy.of("count", SortDirection.DESC))//
+                .apply(Apply.of("@title", "title_upper"))//
+                .limit(0, 10)//
+                .filter("@category:{$category}")//
+                .withCursor(WithCursor.of(10L, Duration.ofSeconds(10)))//
+                .param("category", "electronics")//
+                .scorer("TFIDF")//
+                .addScores()//
+                .dialect(QueryDialects.DIALECT2) //
+                .build();
+
+        Command<String, String, SearchReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY, aggregateArgs);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*42\r\n" + "$12\r\n" + "FT.AGGREGATE\r\n" + "$3\r\n" + "idx\r\n" + "$1\r\n" + "*\r\n"//
+                + "$8\r\n" + "VERBATIM\r\n"//
+                + "$4\r\n" + "LOAD\r\n" + "$1\r\n" + "1\r\n" + "$5\r\n" + "title\r\n"//
+                + "$7\r\n" + "GROUPBY\r\n" + "$1\r\n" + "1\r\n" + "$9\r\n" + "@category\r\n"//
+                + "$6\r\n" + "REDUCE\r\n" + "$5\r\n" + "COUNT\r\n" + "$1\r\n" + "0\r\n" + "$2\r\n" + "AS\r\n" + "$5\r\n"
+                + "count\r\n"//
+                + "$6\r\n" + "SORTBY\r\n" + "$1\r\n" + "2\r\n" + "$6\r\n" + "@count\r\n" + "$4\r\n" + "DESC\r\n"//
+                + "$5\r\n" + "APPLY\r\n" + "$6\r\n" + "@title\r\n" + "$2\r\n" + "AS\r\n" + "$11\r\n" + "title_upper\r\n"//
+                + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "0\r\n" + "$2\r\n" + "10\r\n"//
+                + "$6\r\n" + "FILTER\r\n" + "$21\r\n" + "@category:{$category}\r\n"//
+                + "$10\r\n" + "WITHCURSOR\r\n" + "$5\r\n" + "COUNT\r\n" + "$2\r\n" + "10\r\n" + "$7\r\n" + "MAXIDLE\r\n"
+                + "$5\r\n" + "10000\r\n"//
+                + "$6\r\n" + "PARAMS\r\n" + "$1\r\n" + "2\r\n" + "$8\r\n" + "category\r\n" + "$11\r\n" + "electronics\r\n"//
+                + "$6\r\n" + "SCORER\r\n" + "$5\r\n" + "TFIDF\r\n"//
+                + "$9\r\n" + "ADDSCORES\r\n"//
+                + "$7\r\n" + "DIALECT\r\n" + "$1\r\n2\r\n";//
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }

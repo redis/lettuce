@@ -49,6 +49,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
@@ -1574,7 +1575,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query) {
-        return dispatch(searchCommandBuilder.ftSearch(index, query, null));
+        return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftAggregate(index, query, args));
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K, V>> ftAggregate(K index, V query) {
+        return dispatch(searchCommandBuilder.ftAggregate(index, query, null));
     }
 
     @Override

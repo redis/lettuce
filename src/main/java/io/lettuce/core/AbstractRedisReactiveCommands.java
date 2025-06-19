@@ -50,6 +50,7 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
@@ -1639,7 +1640,17 @@ public abstract class AbstractRedisReactiveCommands<K, V>
 
     @Override
     public Mono<SearchReply<K, V>> ftSearch(K index, V query) {
-        return createMono(() -> searchCommandBuilder.ftSearch(index, query, null));
+        return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftAggregate(index, query, args));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftAggregate(K index, V query) {
+        return createMono(() -> searchCommandBuilder.ftAggregate(index, query, null));
     }
 
     @Override

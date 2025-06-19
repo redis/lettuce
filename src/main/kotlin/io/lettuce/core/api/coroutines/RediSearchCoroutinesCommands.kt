@@ -8,8 +8,8 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.search.SearchReply
+import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
 import io.lettuce.core.search.arguments.FieldArgs
 import io.lettuce.core.search.arguments.SearchArgs
@@ -105,6 +105,33 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see SearchArgs
      */
     suspend fun ftSearch(index: K, query: V, args: SearchArgs<K, V>): SearchReply<K, V>?
+
+    /**
+     * Run a search query on an index and perform aggregate transformations on the results
+     *
+     * @param index the index name, as a key
+     * @param query the query string
+     * @return the result of the aggregate command, see [SearchReply]
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aggregate/">FT.AGGREGATE</a>
+     * @see SearchReply
+     * @see AggregateArgs
+     */
+    suspend fun ftAggregate(index: K, query: V): SearchReply<K, V>?
+
+    /**
+     * Run a search query on an index and perform aggregate transformations on the results
+     *
+     * @param index the index name, as a key
+     * @param query the query string
+     * @param args the aggregate arguments
+     * @return the result of the aggregate command, see [SearchReply]
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aggregate/">FT.AGGREGATE</a>
+     * @see SearchReply
+     * @see AggregateArgs
+     */
+    suspend fun ftAggregate(index: K, query: V, args: AggregateArgs<K, V>): SearchReply<K, V>?
 
 }
 
