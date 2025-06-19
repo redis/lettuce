@@ -11,7 +11,6 @@ import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
-import io.lettuce.core.output.VectorMetadataParser;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -22,9 +21,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class SearchResultsParser<K, V> implements ComplexDataParser<SearchReply<K, V>> {
+public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K, V>> {
 
-    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(VectorMetadataParser.class);
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SearchReplyParser.class);
 
     private final RedisCodec<K, V> codec;
 
@@ -32,7 +31,7 @@ public class SearchResultsParser<K, V> implements ComplexDataParser<SearchReply<
 
     private final boolean withContent;
 
-    public SearchResultsParser(RedisCodec<K, V> codec, SearchArgs<K, V> args) {
+    public SearchReplyParser(RedisCodec<K, V> codec, SearchArgs<K, V> args) {
         this.codec = codec;
         this.withScores = args != null && args.isWithScores();
         // this.withPayloads = args != null && args.isWithPayloads();
@@ -142,8 +141,13 @@ public class SearchResultsParser<K, V> implements ComplexDataParser<SearchReply<
                     ComplexData resultData = (ComplexData) result;
                     Map<Object, Object> resultEntry = resultData.getDynamicMap();
 
-                    final K id = codec.decodeKey((ByteBuffer) resultEntry.get(ID_KEY));
-                    final SearchReply.SearchResult<K, V> searchResult = new SearchReply.SearchResult<>(id);
+                    SearchReply.SearchResult<K, V> searchResult;
+                    if (resultEntry.containsKey(ID_KEY)) {
+                        final K id = codec.decodeKey((ByteBuffer) resultEntry.get(ID_KEY));
+                        searchResult = new SearchReply.SearchResult<>(id);
+                    } else {
+                        searchResult = new SearchReply.SearchResult<>();
+                    }
 
                     if (resultEntry.containsKey(SCORE_KEY)) {
                         if (resultEntry.get(SCORE_KEY) instanceof Double) {

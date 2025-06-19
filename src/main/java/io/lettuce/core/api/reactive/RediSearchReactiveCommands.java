@@ -8,6 +8,7 @@ package io.lettuce.core.api.reactive;
 
 import java.util.List;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
@@ -103,5 +104,32 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see SearchArgs
      */
     Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args);
+
+    /**
+     * Run a search query on an index and perform aggregate transformations on the results
+     *
+     * @param index the index name, as a key
+     * @param query the query string
+     * @return the result of the aggregate command, see {@link SearchReply}
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aggregate/">FT.AGGREGATE</a>
+     * @see SearchReply
+     * @see AggregateArgs
+     */
+    Mono<SearchReply<K, V>> ftAggregate(K index, V query);
+
+    /**
+     * Run a search query on an index and perform aggregate transformations on the results
+     *
+     * @param index the index name, as a key
+     * @param query the query string
+     * @param args the aggregate arguments
+     * @return the result of the aggregate command, see {@link SearchReply}
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aggregate/">FT.AGGREGATE</a>
+     * @see SearchReply
+     * @see AggregateArgs
+     */
+    Mono<SearchReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args);
 
 }

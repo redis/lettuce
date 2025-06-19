@@ -10,6 +10,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands
 import io.lettuce.core.search.SearchReply
+import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
 import io.lettuce.core.search.arguments.FieldArgs
 import io.lettuce.core.search.arguments.SearchArgs
@@ -44,4 +45,12 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
 
     override suspend fun ftSearch(index: K, query: V, args: SearchArgs<K, V>): SearchReply<K, V>? =
         ops.ftSearch(index, query, args).awaitFirstOrNull()
+
+    override suspend fun ftAggregate(index: K, query: V, args: AggregateArgs<K, V>): SearchReply<K, V>? {
+        return ops.ftAggregate(index, query, args).awaitFirstOrNull()
+    }
+
+    override suspend fun ftAggregate(index: K, query: V): SearchReply<K, V>? {
+        return ops.ftAggregate(index, query).awaitFirstOrNull()
+    }
 }

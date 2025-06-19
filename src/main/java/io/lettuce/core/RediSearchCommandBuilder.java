@@ -14,7 +14,8 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.search.SearchReply;
-import io.lettuce.core.search.SearchResultsParser;
+import io.lettuce.core.search.SearchReplyParser;
+import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
@@ -83,7 +84,29 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             searchArgs.build(args);
         }
 
-        return createCommand(FT_SEARCH, new EncodedComplexOutput<>(codec, new SearchResultsParser<>(codec, searchArgs)), args);
+        return createCommand(FT_SEARCH, new EncodedComplexOutput<>(codec, new SearchReplyParser<>(codec, searchArgs)), args);
+    }
+
+    /**
+     * Run a search query on an index and perform aggregate transformations on the results.
+     *
+     * @param index the index name
+     * @param query the query
+     * @param aggregateArgs the aggregate arguments
+     * @return the result of the aggregate command
+     */
+    public Command<K, V, SearchReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> aggregateArgs) {
+        notNullKey(index);
+        notNullKey(query);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
+        args.addValue(query);
+
+        if (aggregateArgs != null) {
+            aggregateArgs.build(args);
+        }
+
+        return createCommand(FT_AGGREGATE, new EncodedComplexOutput<>(codec, new SearchReplyParser<>(codec, null)), args);
     }
 
     /**

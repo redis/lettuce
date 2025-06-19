@@ -140,6 +140,10 @@ public class SearchReply<K, V> {
             this.id = id;
         }
 
+        public SearchResult() {
+            this.id = null;
+        }
+
         /**
          * Gets the document ID.
          *
