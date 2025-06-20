@@ -46,6 +46,7 @@ import static io.lettuce.core.internal.LettuceStrings.string;
 import static io.lettuce.core.protocol.CommandKeyword.*;
 import static io.lettuce.core.protocol.CommandType.*;
 import static io.lettuce.core.protocol.CommandType.COPY;
+import static io.lettuce.core.protocol.CommandType.DEL;
 import static io.lettuce.core.protocol.CommandType.SAVE;
 
 /**

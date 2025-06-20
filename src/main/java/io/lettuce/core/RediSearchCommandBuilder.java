@@ -110,6 +110,57 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     /**
+     * Read next results from an existing cursor.
+     *
+     * @param index the index name
+     * @param cursorId the cursor id
+     * @param count the number of results to read
+     * @return the result of the cursor read command
+     */
+    public Command<K, V, SearchReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+        notNullKey(index);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).addKey(index);
+        args.add(cursorId);
+        args.add(CommandKeyword.COUNT);
+        args.add(count);
+
+        return createCommand(FT_CURSOR, new EncodedComplexOutput<>(codec, new SearchReplyParser<>(codec, null)), args);
+    }
+
+    /**
+     * Read next results from an existing cursor.
+     *
+     * @param index the index name
+     * @param cursorId the cursor id
+     * @return the result of the cursor read command
+     */
+    public Command<K, V, SearchReply<K, V>> ftCursorread(K index, long cursorId) {
+        notNullKey(index);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).addKey(index);
+        args.add(cursorId);
+
+        return createCommand(FT_CURSOR, new EncodedComplexOutput<>(codec, new SearchReplyParser<>(codec, null)), args);
+    }
+
+    /**
+     * Delete a cursor.
+     *
+     * @param index the index name
+     * @param cursorId the cursor id
+     * @return the result of the cursor delete command
+     */
+    public Command<K, V, String> ftCursordel(K index, long cursorId) {
+        notNullKey(index);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.DEL).addKey(index);
+        args.add(cursorId);
+
+        return createCommand(FT_CURSOR, new StatusOutput<>(codec), args);
+    }
+
+    /**
      * Drop the index with the given name.
      *
      * @param index the index name

@@ -32,12 +32,15 @@ public class SearchReply<K, V> {
 
     private final List<SearchResult<K, V>> results;
 
+    private Long cursorId;
+
     /**
      * Creates a new empty SearchReply instance.
      */
     public SearchReply() {
         this.count = 0;
         this.results = new ArrayList<>();
+        this.cursorId = null;
     }
 
     /**
@@ -49,6 +52,7 @@ public class SearchReply<K, V> {
     SearchReply(long count, List<SearchResult<K, V>> results) {
         this.count = count;
         this.results = new ArrayList<>(results);
+        this.cursorId = null;
     }
 
     /**
@@ -111,6 +115,27 @@ public class SearchReply<K, V> {
      */
     public boolean isEmpty() {
         return results.isEmpty();
+    }
+
+    /**
+     * Gets the cursor ID for paginated results.
+     * <p>
+     * This is only available when using cursor-based pagination with FT.AGGREGATE WITHCURSOR. A cursor ID of 0 indicates that
+     * there are no more results to fetch.
+     *
+     * @return the cursor ID, or null if cursor-based pagination is not being used
+     */
+    public Long getCursorId() {
+        return cursorId;
+    }
+
+    /**
+     * Sets the cursor ID for paginated results.
+     *
+     * @param cursorId the cursor ID
+     */
+    void setCursorId(Long cursorId) {
+        this.cursorId = cursorId;
     }
 
     /**

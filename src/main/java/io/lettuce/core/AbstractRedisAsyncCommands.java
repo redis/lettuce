@@ -1589,6 +1589,21 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<SearchReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+        return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, count));
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K, V>> ftCursorread(K index, long cursorId) {
+        return dispatch(searchCommandBuilder.ftCursorread(index, cursorId));
+    }
+
+    @Override
+    public RedisFuture<String> ftCursordel(K index, long cursorId) {
+        return dispatch(searchCommandBuilder.ftCursordel(index, cursorId));
+    }
+
+    @Override
     public RedisFuture<List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue... values) {
         return dispatch(jsonCommandBuilder.jsonArrappend(key, jsonPath, values));
     }

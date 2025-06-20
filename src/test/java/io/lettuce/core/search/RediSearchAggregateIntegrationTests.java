@@ -9,6 +9,7 @@ package io.lettuce.core.search;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -660,6 +661,325 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         assertThat(redis.ftDropindex("filter-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldPerformAggregationWithBasicCursor() {
+        // Create an index
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
+                TextFieldArgs.<String> builder().name("category").build());
+
+        assertThat(redis.ftCreate("cursor-basic-test-idx", fields)).isEqualTo("OK");
+
+        // Add test documents
+        Map<String, String> doc1 = new HashMap<>();
+        doc1.put("title", "Document 1");
+        doc1.put("category", "tech");
+        assertThat(redis.hmset("doc:1", doc1)).isEqualTo("OK");
+
+        Map<String, String> doc2 = new HashMap<>();
+        doc2.put("title", "Document 2");
+        doc2.put("category", "tech");
+        assertThat(redis.hmset("doc:2", doc2)).isEqualTo("OK");
+
+        Map<String, String> doc3 = new HashMap<>();
+        doc3.put("title", "Document 3");
+        doc3.put("category", "science");
+        assertThat(redis.hmset("doc:3", doc3)).isEqualTo("OK");
+
+        // Perform aggregation with cursor
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
+                .withCursor(AggregateArgs.WithCursor.of(2L)).build();
+
+        SearchReply<String, String> result = redis.ftAggregate("cursor-basic-test-idx", "*", args);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCursorId()).isNotNull();
+        assertThat(result.getCursorId()).isNotEqualTo(0L); // Should have a valid cursor ID
+        assertThat(result.getResults()).hasSize(2); // Should return 2 results per page
+
+        // Read next page from cursor
+        Long cursorId = result.getCursorId();
+        SearchReply<String, String> nextResult = redis.ftCursorread("cursor-basic-test-idx", cursorId);
+
+        assertThat(nextResult).isNotNull();
+        assertThat(nextResult.getResults()).hasSize(1); // Should return remaining 1 result
+        assertThat(nextResult.getCursorId()).isEqualTo(0L); // Should indicate end of results
+
+        assertThat(redis.ftDropindex("cursor-basic-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldPerformAggregationWithCursorAndCount() {
+        // Create an index
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
+                NumericFieldArgs.<String> builder().name("score").build());
+
+        assertThat(redis.ftCreate("cursor-count-test-idx", fields)).isEqualTo("OK");
+
+        // Add multiple test documents
+        for (int i = 1; i <= 10; i++) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("title", "Document " + i);
+            doc.put("score", String.valueOf(i * 10));
+            assertThat(redis.hmset("doc:" + i, doc)).isEqualTo("OK");
+        }
+
+        // Perform aggregation with cursor and custom count
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
+                .withCursor(AggregateArgs.WithCursor.of(3L)).build();
+
+        SearchReply<String, String> result = redis.ftAggregate("cursor-count-test-idx", "*", args);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCursorId()).isNotNull();
+        assertThat(result.getCursorId()).isNotEqualTo(0L);
+        assertThat(result.getResults()).hasSize(3); // Should return 3 results per page
+
+        // Read next page with different count
+        Long cursorId = result.getCursorId();
+        SearchReply<String, String> nextResult = redis.ftCursorread("cursor-count-test-idx", cursorId, 5);
+
+        assertThat(nextResult).isNotNull();
+        assertThat(nextResult.getResults()).hasSize(5); // Should return 5 results as specified
+        assertThat(nextResult.getCursorId()).isNotNull();
+        assertThat(nextResult.getCursorId()).isNotEqualTo(0L); // Should still have more results
+
+        // Read final page
+        cursorId = nextResult.getCursorId();
+        SearchReply<String, String> finalResult = redis.ftCursorread("cursor-count-test-idx", cursorId);
+
+        assertThat(finalResult).isNotNull();
+        assertThat(finalResult.getResults()).hasSize(2); // Should return remaining 2 results
+        assertThat(finalResult.getCursorId()).isEqualTo(0L); // Should indicate end of results
+
+        assertThat(redis.ftDropindex("cursor-count-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldPerformAggregationWithCursorAndMaxIdle() {
+        // Create an index
+        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+
+        assertThat(redis.ftCreate("cursor-maxidle-test-idx", fields)).isEqualTo("OK");
+
+        // Add test documents
+        for (int i = 1; i <= 5; i++) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("title", "Document " + i);
+            assertThat(redis.hmset("doc:" + i, doc)).isEqualTo("OK");
+        }
+
+        // Perform aggregation with cursor and custom max idle timeout
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
+                .withCursor(AggregateArgs.WithCursor.of(2L, java.time.Duration.ofSeconds(10))).build();
+
+        SearchReply<String, String> result = redis.ftAggregate("cursor-maxidle-test-idx", "*", args);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCursorId()).isNotNull();
+        assertThat(result.getCursorId()).isNotEqualTo(0L);
+        assertThat(result.getResults()).hasSize(2);
+
+        // Read from cursor should work within timeout
+        Long cursorId = result.getCursorId();
+        SearchReply<String, String> nextResult = redis.ftCursorread("cursor-maxidle-test-idx", cursorId);
+
+        assertThat(nextResult).isNotNull();
+        assertThat(nextResult.getResults()).hasSize(2);
+
+        assertThat(redis.ftDropindex("cursor-maxidle-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldDeleteCursorExplicitly() {
+        // Create an index
+        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+
+        assertThat(redis.ftCreate("cursor-delete-test-idx", fields)).isEqualTo("OK");
+
+        // Add test documents
+        for (int i = 1; i <= 5; i++) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("title", "Document " + i);
+            assertThat(redis.hmset("doc:" + i, doc)).isEqualTo("OK");
+        }
+
+        // Perform aggregation with cursor
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
+                .withCursor(AggregateArgs.WithCursor.of(2L)).build();
+
+        SearchReply<String, String> result = redis.ftAggregate("cursor-delete-test-idx", "*", args);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCursorId()).isNotNull();
+        assertThat(result.getCursorId()).isNotEqualTo(0L);
+
+        // Delete the cursor explicitly
+        Long cursorId = result.getCursorId();
+        String deleteResult = redis.ftCursordel("cursor-delete-test-idx", cursorId);
+
+        assertThat(deleteResult).isEqualTo("OK");
+
+        assertThat(redis.ftDropindex("cursor-delete-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldHandleCursorPaginationCompletely() {
+        // Create an index
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
+                NumericFieldArgs.<String> builder().name("id").sortable().build());
+
+        assertThat(redis.ftCreate("cursor-pagination-test-idx", fields)).isEqualTo("OK");
+
+        // Add test documents
+        for (int i = 1; i <= 15; i++) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("title", "Document " + i);
+            doc.put("id", String.valueOf(i));
+            assertThat(redis.hmset("doc:" + i, doc)).isEqualTo("OK");
+        }
+
+        // Perform aggregation with cursor and sorting
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
+                .sortBy("id", AggregateArgs.SortDirection.ASC).withCursor(AggregateArgs.WithCursor.of(4L))
+                .dialect(QueryDialects.DIALECT2).build();
+
+        SearchReply<String, String> result = redis.ftAggregate("cursor-pagination-test-idx", "*", args);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCursorId()).isNotNull();
+        assertThat(result.getCursorId()).isNotEqualTo(0L);
+        assertThat(result.getResults()).hasSize(4);
+
+        // Collect all results by paginating through cursor
+        List<SearchReply.SearchResult<String, String>> allResults = new ArrayList<>(result.getResults());
+        Long cursorId = result.getCursorId();
+
+        while (cursorId != null && cursorId != 0L) {
+            SearchReply<String, String> nextResult = redis.ftCursorread("cursor-pagination-test-idx", cursorId);
+            assertThat(nextResult).isNotNull();
+
+            allResults.addAll(nextResult.getResults());
+            cursorId = nextResult.getCursorId();
+        }
+
+        // Verify we got all 15 results
+        assertThat(allResults).hasSize(15);
+
+        // Verify results are sorted by id
+        for (int i = 0; i < allResults.size(); i++) {
+            String expectedId = String.valueOf(i + 1);
+            assertThat(allResults.get(i).getFields().get("id")).isEqualTo(expectedId);
+        }
+
+        assertThat(redis.ftDropindex("cursor-pagination-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldPerformCursorWithComplexAggregation() {
+        // Create an index with multiple field types
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
+                TextFieldArgs.<String> builder().name("category").build(),
+                NumericFieldArgs.<String> builder().name("price").build(),
+                NumericFieldArgs.<String> builder().name("rating").build());
+
+        assertThat(redis.ftCreate("cursor-complex-test-idx", fields)).isEqualTo("OK");
+
+        // Add test documents
+        Map<String, String> product1 = new HashMap<>();
+        product1.put("title", "iPhone 13");
+        product1.put("category", "electronics");
+        product1.put("price", "999");
+        product1.put("rating", "4.5");
+        assertThat(redis.hmset("product:1", product1)).isEqualTo("OK");
+
+        Map<String, String> product2 = new HashMap<>();
+        product2.put("title", "Samsung Galaxy");
+        product2.put("category", "electronics");
+        product2.put("price", "799");
+        product2.put("rating", "4.3");
+        assertThat(redis.hmset("product:2", product2)).isEqualTo("OK");
+
+        Map<String, String> product3 = new HashMap<>();
+        product3.put("title", "MacBook Pro");
+        product3.put("category", "computers");
+        product3.put("price", "2499");
+        product3.put("rating", "4.8");
+        assertThat(redis.hmset("product:3", product3)).isEqualTo("OK");
+
+        Map<String, String> product4 = new HashMap<>();
+        product4.put("title", "Dell XPS");
+        product4.put("category", "computers");
+        product4.put("price", "1299");
+        product4.put("rating", "4.2");
+        assertThat(redis.hmset("product:4", product4)).isEqualTo("OK");
+
+        Map<String, String> product5 = new HashMap<>();
+        product5.put("title", "iPad Air");
+        product5.put("category", "electronics");
+        product5.put("price", "599");
+        product5.put("rating", "4.4");
+        assertThat(redis.hmset("product:5", product5)).isEqualTo("OK");
+
+        // Perform complex aggregation with groupby, reducers, and cursor
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
+                .groupBy(AggregateArgs.GroupBy.<String, String> of("category")
+                        .reduce(AggregateArgs.Reducer.<String, String> count().as("count"))
+                        .reduce(AggregateArgs.Reducer.<String, String> avg("@price").as("avg_price")))
+                .withCursor(AggregateArgs.WithCursor.of(1L)).dialect(QueryDialects.DIALECT2).build();
+
+        SearchReply<String, String> result = redis.ftAggregate("cursor-complex-test-idx", "*", args);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCursorId()).isNotNull();
+        assertThat(result.getCursorId()).isNotEqualTo(0L);
+        assertThat(result.getResults()).hasSize(1); // Should return 1 group per page
+
+        // Verify first group has expected fields
+        SearchReply.SearchResult<String, String> firstGroup = result.getResults().get(0);
+        assertThat(firstGroup.getFields()).containsKey("category");
+        assertThat(firstGroup.getFields()).containsKey("count");
+        assertThat(firstGroup.getFields()).containsKey("avg_price");
+
+        // Read next group from cursor
+        Long cursorId = result.getCursorId();
+        SearchReply<String, String> nextResult = redis.ftCursorread("cursor-complex-test-idx", cursorId);
+
+        assertThat(nextResult).isNotNull();
+        assertThat(nextResult.getResults()).hasSize(1); // Should return second group
+        assertThat(nextResult.getCursorId()).isEqualTo(0L); // Should indicate end of results
+
+        // Verify second group has expected fields
+        SearchReply.SearchResult<String, String> secondGroup = nextResult.getResults().get(0);
+        assertThat(secondGroup.getFields()).containsKey("category");
+        assertThat(secondGroup.getFields()).containsKey("count");
+        assertThat(secondGroup.getFields()).containsKey("avg_price");
+
+        assertThat(redis.ftDropindex("cursor-complex-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldHandleEmptyResultsWithCursor() {
+        // Create an index
+        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+
+        assertThat(redis.ftCreate("cursor-empty-test-idx", fields)).isEqualTo("OK");
+
+        // Don't add any documents
+
+        // Perform aggregation with cursor on empty index
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().loadAll()
+                .withCursor(AggregateArgs.WithCursor.of(5L)).build();
+
+        SearchReply<String, String> result = redis.ftAggregate("cursor-empty-test-idx", "*", args);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getCount()).isEqualTo(0);
+        assertThat(result.getResults()).isEmpty();
+        assertThat(result.getCursorId()).isEqualTo(0L); // Should indicate no more results
+
+        assertThat(redis.ftDropindex("cursor-empty-test-idx")).isEqualTo("OK");
     }
 
 }

@@ -53,4 +53,16 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftAggregate(index: K, query: V): SearchReply<K, V>? {
         return ops.ftAggregate(index, query).awaitFirstOrNull()
     }
+
+    override suspend fun ftCursorread(index: K, cursorId: Long): SearchReply<K, V>? {
+        return ops.ftCursorread(index, cursorId).awaitFirstOrNull()
+    }
+
+    override suspend fun ftCursorread(index: K, cursorId: Long, count: Int): SearchReply<K, V>? {
+        return ops.ftCursorread(index, cursorId, count).awaitFirstOrNull()
+    }
+
+    override suspend fun ftCursordel(index: K, cursorId: Long): String? {
+        return ops.ftCursordel(index, cursorId).awaitFirstOrNull()
+    }
 }
