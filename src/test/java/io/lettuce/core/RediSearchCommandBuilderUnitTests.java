@@ -6,6 +6,7 @@ package io.lettuce.core;
  *
  * Licensed under the MIT License.
  */
+import static io.lettuce.core.protocol.CommandType.FT_CURSOR;
 import static io.lettuce.core.search.arguments.AggregateArgs.*;
 
 import io.lettuce.core.codec.StringCodec;
@@ -273,6 +274,53 @@ class RediSearchCommandBuilderUnitTests {
                 + "$9\r\n" + "ADDSCORES\r\n"//
                 + "$7\r\n" + "DIALECT\r\n" + "$1\r\n2\r\n";//
 
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void shouldCorrectlyConstructFtCursorreadCommandWithCount() {
+        Command<String, String, SearchReply<String, String>> command = builder.ftCursorread("idx", 123L, 10);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*6\r\n" //
+                + "$9\r\n" + "FT.CURSOR\r\n" + "$4\r\n" + "READ\r\n" //
+                + "$3\r\n" + "idx\r\n" //
+                + "$3\r\n" + "123\r\n" //
+                + "$5\r\n" + "COUNT\r\n" //
+                + "$2\r\n" + "10\r\n";
+
+        assertThat(command.getType()).isEqualTo(FT_CURSOR);
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void shouldCorrectlyConstructFtCursorreadCommandWithoutCount() {
+        Command<String, String, SearchReply<String, String>> command = builder.ftCursorread("idx", 456L);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*4\r\n" //
+                + "$9\r\n" + "FT.CURSOR\r\n" + "$4\r\n" + "READ\r\n" //
+                + "$3\r\n" + "idx\r\n" //
+                + "$3\r\n" + "456\r\n";
+
+        assertThat(command.getType()).isEqualTo(FT_CURSOR);
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void shouldCorrectlyConstructFtCursordelCommand() {
+        Command<String, String, String> command = builder.ftCursordel("idx", 123L);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*4\r\n" //
+                + "$9\r\n" + "FT.CURSOR\r\n" + "$3\r\n" + "DEL\r\n" //
+                + "$3\r\n" + "idx\r\n" //
+                + "$3\r\n" + "123\r\n";
+
+        assertThat(command.getType()).isEqualTo(FT_CURSOR);
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }
 

@@ -8,6 +8,8 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.search.SearchReply
 import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
@@ -28,110 +30,416 @@ import io.lettuce.core.search.arguments.SearchArgs
 interface RediSearchCoroutinesCommands<K : Any, V : Any> {
 
     /**
-     * Create a new index with the given name, default creation arguments, and fieldArgs.
+     * Create a new search index with the given name and field definitions using default settings.
+     *
+     * <p>
+     * This command creates a new search index that enables full-text search, filtering, and aggregation capabilities on Redis
+     * data structures. The index will use default settings for data type (HASH), key prefixes (all keys), and other
+     * configuration options.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(K) at creation where K is the number of fields, O(N) if scanning the keyspace is
+     * triggered, where N is the number of keys in the keyspace
+     * </p>
      *
      * @param index the index name, as a key
-     * @param fieldArgs the [FieldArgs]s of the index
-     * @return the result of the create command
-     * @since 6.8
+     * @param fieldArgs the [FieldArgs] list defining the searchable fields and their types
+     * @return @code "OK"} if the index was created successfully
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      * @see CreateArgs
+     * @see FieldArgs
+     * @see #ftCreate(Any, CreateArgs, List)
+     * @see #ftDropindex(Any)
      */
+    @Experimental
     suspend fun ftCreate(index: K, fieldArgs: List<FieldArgs<K>>): String?
 
     /**
-     * Create a new index with the given name, creation arguments, and fieldArgs.
+     * Create a new search index with the given name, custom configuration, and field definitions.
+     *
+     * <p>
+     * This command creates a new search index with advanced configuration options that control how the index behaves, what data
+     * it indexes, and how it processes documents. This variant provides full control over index creation parameters.
+     * </p>
+     *
+     * <p>
+     * The [CreateArgs] parameter allows you to specify:
+     * </p>
+     * <ul>
+     * <li><strong>Data type:</strong> HASH (default) or JSON documents</li>
+     * <li><strong>Key prefixes:</strong> Which keys to index based on prefix patterns</li>
+     * <li><strong>Filters:</strong> Conditional indexing based on field values</li>
+     * <li><strong>Language settings:</strong> Default language and language field for stemming</li>
+     * <li><strong>Performance options:</strong> NOOFFSETS, NOHL, NOFIELDS, NOFREQS for memory optimization</li>
+     * <li><strong>Temporary indexes:</strong> Auto-expiring indexes for short-term use</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(K) at creation where K is the number of fields, O(N) if scanning the keyspace is
+     * triggered, where N is the number of keys in the keyspace
+     * </p>
      *
      * @param index the index name, as a key
-     * @param arguments the index [CreateArgs]
-     * @param fieldArgs the [FieldArgs]s of the index
-     * @return the result of the create command
+     * @param arguments the index [CreateArgs] containing configuration options
+     * @param fieldArgs the [FieldArgs] list defining the searchable fields and their types
+     * @return @code "OK"} if the index was created successfully
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      * @see CreateArgs
+     * @see FieldArgs
+     * @see #ftCreate(Any, List)
+     * @see #ftDropindex(Any)
      */
+    @Experimental
     suspend fun ftCreate(index: K, arguments: CreateArgs<K, V>, fieldArgs: List<FieldArgs<K>>): String?
 
     /**
-     * Drop an index, without deleting any documents.
+     * Drop a search index without deleting the associated documents.
+     *
+     * <p>
+     * This command removes the search index and all its associated metadata, but preserves the original documents (hashes or
+     * JSON objects) that were indexed. This is the safe default behavior that allows you to recreate the index later without
+     * losing data.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
      *
      * @param index the index name, as a key
-     * @return the result of the drop command
+     * @return @code "OK"} if the index was successfully dropped
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
+     * @see #ftDropindex(Any, boolean)
+     * @see #ftCreate(Any, List)
      */
+    @Experimental
     suspend fun ftDropindex(index: K): String?
 
     /**
-     * Drop an index.
-     * <p/>
-     * By default, <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a> does not delete the documents
-     * associated with the index. Adding the <code>deleteDocuments</code> option deletes the documents as well. If an index
-     * creation is still running (<a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a> is running
-     * asynchronously), only the document hashes that have already been indexed are deleted. The document hashes left to be
-     * indexed remain in the database.
+     * Drop a search index with optional document deletion.
+     *
+     * <p>
+     * This command removes the search index and optionally deletes all associated documents. When `deleteDocuments` is
+     * `true`, this operation becomes destructive and will permanently remove both the index and all indexed documents
+     * from Redis.
+     * </p>
+     *
+     * <p>
+     * <strong>Asynchronous Behavior:</strong> If an index creation is still running ([ftCreate(Any, List)] is running
+     * asynchronously), only the document hashes that have already been indexed are deleted. Documents that are queued for
+     * indexing but not yet processed will remain in the database.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1) or O(N) if documents are deleted, where N is the number of keys in the keyspace
+     * </p>
      *
      * @param index the index name, as a key
-     * @param deleteDocuments if true, delete the documents as well
-     * @return the result of the drop command
+     * @param deleteDocuments if `true`, delete the indexed documents as well; if `false`, preserve documents
+     * @return @code "OK"} if the index was successfully dropped
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
+     * @see #ftDropindex(Any)
+     * @see #ftCreate(Any, List)
      */
+    @Experimental
     suspend fun ftDropindex(index: K, deleteDocuments: Boolean): String?
 
     /**
-     * Search the index with a textual query, returning either documents or just identifiers
+     * Search the index with a textual query using default search options.
+     *
+     * <p>
+     * This command performs a full-text search on the specified index using the provided query string. It returns matching
+     * documents with their content and metadata. This is the basic search variant that uses default search behavior without
+     * additional filtering, sorting, or result customization.
+     * </p>
+     *
+     * <p>
+     * The query follows RediSearch query syntax, supporting:
+     * </p>
+     * <ul>
+     * <li><strong>Simple text search:</strong> {@code "hello world"} - searches for documents containing both terms</li>
+     * <li><strong>Field-specific search:</strong> {@code "@title:redis"} - searches within specific fields</li>
+     * <li><strong>Boolean operators:</strong> {@code "redis AND search"} or {@code "redis | search"}</li>
+     * <li><strong>Phrase search:</strong> {@code "\"exact phrase\""} - searches for exact phrase matches</li>
+     * <li><strong>Wildcard search:</strong> {@code "redi*"} - prefix matching</li>
+     * <li><strong>Numeric ranges:</strong> {@code "@price:[100 200]"} - numeric field filtering</li>
+     * <li><strong>Geographic search:</strong> {@code "@location:[lon lat radius unit]"} - geo-spatial queries</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the number of results in the result set
+     * </p>
      *
      * @param index the index name, as a key
-     * @param query the query string
-     * @return the result of the search command, see [SearchReply]
+     * @param query the query string following RediSearch query syntax
+     * @return the result of the search command containing matching documents, see [SearchReply]
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.search/">FT.SEARCH</a>
+     * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/query/">Query syntax</a>
      * @see SearchReply
      * @see SearchArgs
+     * @see #ftSearch(Any, Any, SearchArgs)
      */
+    @Experimental
     suspend fun ftSearch(index: K, query: V): SearchReply<K, V>?
 
     /**
-     * Search the index with a textual query, returning either documents or just identifiers
+     * Search the index with a textual query using advanced search options and filters.
+     *
+     * <p>
+     * This command performs a full-text search on the specified index with advanced configuration options provided through
+     * [SearchArgs]. This variant allows fine-grained control over search behavior, result formatting, filtering, sorting,
+     * and pagination.
+     * </p>
+     *
+     * <p>
+     * The [SearchArgs] parameter enables you to specify:
+     * </p>
+     * <ul>
+     * <li><strong>Result options:</strong> NOCONTENT, WITHSCORES, WITHPAYLOADS, WITHSORTKEYS</li>
+     * <li><strong>Query behavior:</strong> VERBATIM (no stemming), NOSTOPWORDS</li>
+     * <li><strong>Filtering:</strong> Numeric filters, geo filters, field filters</li>
+     * <li><strong>Result customization:</strong> RETURN specific fields, SUMMARIZE, HIGHLIGHT</li>
+     * <li><strong>Sorting and pagination:</strong> SORTBY, LIMIT offset and count</li>
+     * <li><strong>Performance options:</strong> TIMEOUT, SLOP, INORDER</li>
+     * <li><strong>Language and scoring:</strong> LANGUAGE, SCORER, EXPLAINSCORE</li>
+     * </ul>
+     *
+     * <h3>Performance Considerations:</h3>
+     * <ul>
+     * <li>Use NOCONTENT when you only need document IDs</li>
+     * <li>Specify RETURN fields to limit data transfer</li>
+     * <li>Use SORTABLE fields for efficient sorting</li>
+     * <li>Apply filters to reduce result set size</li>
+     * <li>Use LIMIT for pagination to avoid large result sets</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the number of results in the result set. Complexity varies based on
+     * query type, filters, and sorting requirements.
+     * </p>
      *
      * @param index the index name, as a key
-     * @param query the query string
-     * @param args the search arguments
-     * @return the result of the search command, see [SearchReply]
+     * @param query the query string following RediSearch query syntax
+     * @param args the search arguments containing advanced options and filters
+     * @return the result of the search command containing matching documents and metadata, see [SearchReply]
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.search/">FT.SEARCH</a>
+     * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/query/">Query syntax</a>
+     * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/">Advanced concepts</a>
      * @see SearchReply
      * @see SearchArgs
+     * @see #ftSearch(Any, Any)
      */
+    @Experimental
     suspend fun ftSearch(index: K, query: V, args: SearchArgs<K, V>): SearchReply<K, V>?
 
     /**
-     * Run a search query on an index and perform aggregate transformations on the results
+     * Run a search query on an index and perform basic aggregate transformations using default options.
+     *
+     * <p>
+     * This command executes a search query and applies aggregation operations to transform and analyze the results. Unlike
+     * [ftSearch(Any, Any)], which returns individual documents, FT.AGGREGATE processes the result set through a
+     * pipeline of transformations to produce analytical insights, summaries, and computed values.
+     * </p>
+     *
+     * <p>
+     * This basic variant uses default aggregation behavior without additional pipeline operations. For advanced aggregations
+     * with grouping, sorting, filtering, and custom transformations, use [ftAggregate(Any, Any, AggregateArgs)].
+     * </p>
+     *
+     * <p>
+     * Common use cases for aggregations include:
+     * </p>
+     * <ul>
+     * <li><strong>Analytics:</strong> Count documents, calculate averages, find min/max values</li>
+     * <li><strong>Reporting:</strong> Group data by categories, time periods, or geographic regions</li>
+     * <li><strong>Data transformation:</strong> Apply mathematical functions, format dates, extract values</li>
+     * <li><strong>Performance optimization:</strong> Process large datasets server-side instead of client-side</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1) base complexity, but depends on the query and number of results processed
+     * </p>
      *
      * @param index the index name, as a key
-     * @param query the query string
-     * @return the result of the aggregate command, see [SearchReply]
+     * @param query the base filtering query that retrieves documents for aggregation
+     * @return the result of the aggregate command containing processed results, see [SearchReply]
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aggregate/">FT.AGGREGATE</a>
+     * @see <a href=
+     *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/">Aggregations</a>
      * @see SearchReply
      * @see AggregateArgs
+     * @see #ftAggregate(Any, Any, AggregateArgs)
      */
+    @Experimental
     suspend fun ftAggregate(index: K, query: V): SearchReply<K, V>?
 
     /**
-     * Run a search query on an index and perform aggregate transformations on the results
+     * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
+     *
+     * <p>
+     * This command executes a search query and applies a sophisticated aggregation pipeline to transform, group, sort, and
+     * analyze the results. The [AggregateArgs] parameter defines a series of operations that process the data
+     * server-side, enabling powerful analytics and data transformation capabilities directly within Redis.
+     * </p>
+     *
+     * <p>
+     * The aggregation pipeline supports the following operations:
+     * </p>
+     * <ul>
+     * <li><strong>LOAD:</strong> Load specific document attributes for processing</li>
+     * <li><strong>GROUPBY:</strong> Group results by one or more properties</li>
+     * <li><strong>REDUCE:</strong> Apply reduction functions (COUNT, SUM, AVG, MIN, MAX, etc.)</li>
+     * <li><strong>SORTBY:</strong> Sort results by specified properties</li>
+     * <li><strong>APPLY:</strong> Apply mathematical expressions and transformations</li>
+     * <li><strong>FILTER:</strong> Filter results based on computed values</li>
+     * <li><strong>LIMIT:</strong> Paginate results efficiently</li>
+     * <li><strong>WITHCURSOR:</strong> Enable cursor-based pagination for large result sets</li>
+     * </ul>
+     *
+     * <h3>Performance Considerations:</h3>
+     * <ul>
+     * <li>Use SORTABLE fields for efficient grouping and sorting operations</li>
+     * <li>Apply filters early in the pipeline to reduce processing overhead</li>
+     * <li>Use WITHCURSOR for large result sets to avoid memory issues</li>
+     * <li>Load only necessary attributes to minimize data transfer</li>
+     * <li>Consider using LIMIT to restrict result set size</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> Non-deterministic, depends on the query and aggregation operations performed. Generally
+     * linear to the number of results processed through the pipeline.
+     * </p>
      *
      * @param index the index name, as a key
-     * @param query the query string
-     * @param args the aggregate arguments
-     * @return the result of the aggregate command, see [SearchReply]
+     * @param query the base filtering query that retrieves documents for aggregation
+     * @param args the aggregate arguments defining the processing pipeline and operations
+     * @return the result of the aggregate command containing processed and transformed results, see [SearchReply]
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aggregate/">FT.AGGREGATE</a>
+     * @see <a href=
+     *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/">Aggregations</a>
+     * @see <a href=
+     *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
+     *      API</a>
      * @see SearchReply
      * @see AggregateArgs
+     * @see #ftAggregate(Any, Any)
+     * @see #ftCursorread(Any, long)
      */
+    @Experimental
     suspend fun ftAggregate(index: K, query: V, args: AggregateArgs<K, V>): SearchReply<K, V>?
+
+    /**
+     * Read next results from an existing cursor.
+     *
+     * <p>
+     * This command is used to read the next batch of results from a cursor created by
+     * [ftAggregate(Any, Any, AggregateArgs)] with the `WITHCURSOR` option. Cursors provide an efficient way
+     * to iterate through large result sets without loading all results into memory at once.
+     * </p>
+     *
+     * <p>
+     * The `count` parameter overrides the `COUNT` value specified in the original `FT.AGGREGATE` command,
+     * allowing you to control the batch size for this specific read operation.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index name, as a key
+     * @param cursorId the cursor id obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
+     * @param count the number of results to read. This parameter overrides the `COUNT` specified in `FT.AGGREGATE`
+     * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
+     *         [SearchReply]
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-read/">FT.CURSOR READ</a>
+     * @see <a href=
+     *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
+     *      API</a>
+     * @see SearchReply
+     * @see #ftAggregate(Any, Any, AggregateArgs)
+     */
+    @Experimental
+    suspend fun ftCursorread(index: K, cursorId: Long, count: Int): SearchReply<K, V>?
+
+    /**
+     * Read next results from an existing cursor using the default batch size.
+     *
+     * <p>
+     * This command is used to read the next batch of results from a cursor created by
+     * [ftAggregate(Any, Any, AggregateArgs)] with the `WITHCURSOR` option. This variant uses the default
+     * batch size that was specified in the original `FT.AGGREGATE` command's `WITHCURSOR` clause.
+     * </p>
+     *
+     * <p>
+     * Cursors provide an efficient way to iterate through large result sets without loading all results into memory at once.
+     * When the cursor is exhausted (no more results), the returned [SearchReply] will have a cursor id of 0.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index name, as a key
+     * @param cursorId the cursor id obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
+     * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
+     *         [SearchReply]
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-read/">FT.CURSOR READ</a>
+     * @see <a href=
+     *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
+     *      API</a>
+     * @see SearchReply
+     * @see #ftAggregate(Any, Any, AggregateArgs)
+     */
+    @Experimental
+    suspend fun ftCursorread(index: K, cursorId: Long): SearchReply<K, V>?
+
+    /**
+     * Delete a cursor and free its associated resources.
+     *
+     * <p>
+     * This command is used to explicitly delete a cursor created by [ftAggregate(Any, Any, AggregateArgs)] with
+     * the `WITHCURSOR` option. Deleting a cursor frees up server resources and should be done when you no longer need to
+     * read more results from the cursor.
+     * </p>
+     *
+     * <p>
+     * <strong>Important:</strong> Cursors have a default timeout and will be automatically deleted by Redis if not accessed
+     * within the timeout period. However, it's good practice to explicitly delete cursors when you're finished with them to
+     * free up resources immediately.
+     * </p>
+     *
+     * <p>
+     * Once a cursor is deleted, any subsequent attempts to read from it using [ftCursorread(Any, long)] or
+     * [ftCursorread(Any, long, Integer)] will result in an error.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index name, as a key
+     * @param cursorId the cursor id obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
+     * @return @code "OK"} if the cursor was successfully deleted
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-del/">FT.CURSOR DEL</a>
+     * @see <a href=
+     *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
+     *      API</a>
+     * @see #ftAggregate(Any, Any, AggregateArgs)
+     * @see #ftCursorread(Any, long)
+     * @see #ftCursorread(Any, long, Integer)
+     */
+    @Experimental
+    suspend fun ftCursordel(index: K, cursorId: Long): String?
 
 }
 

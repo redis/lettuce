@@ -1604,6 +1604,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> ftCursordel(K index, long cursorId) {
+        return createMono(() -> searchCommandBuilder.ftCursordel(index, cursorId));
+    }
+
+    @Override
     public Mono<String> ftDropindex(K index, boolean deleteDocumentKeys) {
         return createMono(() -> searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
     }
@@ -1631,6 +1636,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<SearchReply<K, V>> ftAggregate(K index, V query) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, null));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, count));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftCursorread(K index, long cursorId) {
+        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId));
     }
 
     @Override

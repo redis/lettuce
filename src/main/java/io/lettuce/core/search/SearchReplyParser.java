@@ -61,13 +61,43 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                 return searchReply;
             }
 
-            searchReply.setCount((Long) resultsList.get(0));
+            // Check if this is a cursor response (has 2 elements: results array and cursor id)
+            if (resultsList.size() == 2 && resultsList.get(1) instanceof Long) {
+                // This is a cursor response: [results_array, cursor_id]
+                List<Object> actualResults = ((ComplexData) resultsList.get(0)).getDynamicList();
+                Long cursorId = (Long) resultsList.get(1);
 
-            if (resultsList.size() == 1) {
-                return searchReply;
+                searchReply.setCursorId(cursorId);
+
+                if (actualResults == null || actualResults.isEmpty()) {
+                    return searchReply;
+                }
+
+                searchReply.setCount((Long) actualResults.get(0));
+
+                if (actualResults.size() == 1) {
+                    return searchReply;
+                }
+
+                // Parse the actual results
+                parseResults(searchReply, actualResults, 1);
+            } else {
+                // Regular search response
+                searchReply.setCount((Long) resultsList.get(0));
+
+                if (resultsList.size() == 1) {
+                    return searchReply;
+                }
+
+                // Parse the results
+                parseResults(searchReply, resultsList, 1);
             }
 
-            for (int i = 1; i < resultsList.size(); i++) {
+            return searchReply;
+        }
+
+        private void parseResults(SearchReply<K, V> searchReply, List<Object> resultsList, int startIndex) {
+            for (int i = startIndex; i < resultsList.size(); i++) {
 
                 final K id = codec.decodeKey((ByteBuffer) resultsList.get(i));
                 final SearchReply.SearchResult<K, V> searchResult = new SearchReply.SearchResult<>(id);
@@ -91,8 +121,6 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
 
                 searchReply.addResult(searchResult);
             }
-
-            return searchReply;
         }
 
     }
@@ -116,6 +144,8 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
         private final ByteBuffer EXTRA_ATTRIBUTES_KEY = StringCodec.UTF8.encodeKey("extra_attributes");
 
         private final ByteBuffer VALUES_KEY = StringCodec.UTF8.encodeKey("values");
+
+        private final ByteBuffer CURSOR_KEY = StringCodec.UTF8.encodeKey("cursor");
 
         @Override
         public SearchReply<K, V> parse(ComplexData data) {
@@ -173,6 +203,10 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
 
             if (resultsMap.containsKey(TOTAL_RESULTS_KEY)) {
                 searchReply.setCount((Long) resultsMap.get(TOTAL_RESULTS_KEY));
+            }
+
+            if (resultsMap.containsKey(CURSOR_KEY)) {
+                searchReply.setCursorId((Long) resultsMap.get(CURSOR_KEY));
             }
 
             if (resultsMap.containsKey(WARNING_KEY)) {
