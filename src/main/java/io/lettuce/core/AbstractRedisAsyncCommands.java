@@ -2095,12 +2095,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<K>> keys(K pattern) {
+    public RedisFuture<List<K>> keys(String pattern) {
         return dispatch(commandBuilder.keys(pattern));
     }
 
     @Override
-    public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, String pattern) {
         return dispatch(commandBuilder.keys(channel, pattern));
     }
 

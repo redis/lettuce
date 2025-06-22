@@ -219,7 +219,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param pattern the pattern type: patternkey (pattern).
      * @return List<K> array-reply list of keys matching `pattern`.
      */
-    fun keys(pattern: K): Flow<K>
+    fun keys(pattern: String): Flow<K>
 
     /**
      * Atomically transfer a key from a Redis instance to another one.

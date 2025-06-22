@@ -108,7 +108,7 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun expiretime(key: K): Long? =
         ops.expiretime(key).awaitFirstOrNull()
 
-    override fun keys(pattern: K): Flow<K> = ops.keys(pattern).asFlow()
+    override fun keys(pattern: String): Flow<K> = ops.keys(pattern).asFlow()
 
     override suspend fun migrate(
         host: String,

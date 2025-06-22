@@ -284,9 +284,9 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @param pattern the pattern type: patternkey (pattern)
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyCommands#keys(Object)
+     * @see RedisKeyCommands#keys(String)
      */
-    List<K> keys(K pattern);
+    List<K> keys(String pattern);
 
     /**
      * Find all keys matching the given pattern on all cluster upstream nodes.
@@ -294,9 +294,9 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyCommands#keys(KeyStreamingChannel, Object)
+     * @see RedisKeyCommands#keys(KeyStreamingChannel, String)
      */
-    Long keys(KeyStreamingChannel<K> channel, K pattern);
+    Long keys(KeyStreamingChannel<K> channel, String pattern);
 
     /**
      * Return a random key from the keyspace on a random master.

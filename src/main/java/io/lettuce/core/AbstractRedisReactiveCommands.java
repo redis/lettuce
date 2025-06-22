@@ -2160,12 +2160,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<K> keys(K pattern) {
+    public Flux<K> keys(String pattern) {
         return createDissolvingFlux(() -> commandBuilder.keys(pattern));
     }
 
     @Override
-    public Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    public Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern) {
         return createMono(() -> commandBuilder.keys(channel, pattern));
     }
 
