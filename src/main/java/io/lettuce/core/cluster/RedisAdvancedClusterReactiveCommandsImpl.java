@@ -265,14 +265,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Flux<K> keys(K pattern) {
-
-        Map<String, Publisher<K>> publishers = executeOnUpstream(commands -> commands.keys(pattern));
-        return Flux.merge(publishers.values());
-    }
-
-    @Override
-    public Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    public Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern) {
 
         Map<String, Publisher<Long>> publishers = executeOnUpstream(commands -> commands.keys(channel, pattern));
         return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);

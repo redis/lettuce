@@ -1900,17 +1900,19 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CommandType.INFO, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, List<K>> keys(K pattern) {
+    Command<K, V, List<K>> keys(String pattern) {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
 
-        return createCommand(KEYS, new KeyListOutput<>(codec), pattern);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(pattern);
+        return createCommand(KEYS, new KeyListOutput<>(codec), args);
     }
 
-    Command<K, V, Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    Command<K, V, Long> keys(KeyStreamingChannel<K> channel, String pattern) {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
         notNull(channel);
 
-        return createCommand(KEYS, new KeyStreamingOutput<>(codec, channel), pattern);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(pattern);
+        return createCommand(KEYS, new KeyStreamingOutput<>(codec, channel), args);
     }
 
     Command<K, V, Date> lastsave() {
