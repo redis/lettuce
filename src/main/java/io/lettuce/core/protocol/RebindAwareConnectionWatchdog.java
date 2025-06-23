@@ -50,11 +50,17 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
     private static final String MIGRATED_MESSAGE_TYPE = "MIGRATED";
 
+    private static final String FAILING_OVER_MESSAGE_TYPE = "FAILING_OVER";
+
+    private static final String FAILED_OVER_MESSAGE_TYPE = "FAILED_OVER";
+
     private static final int REBIND_ADDRESS_INDEX = 2;
 
-    private static final int MIGRATED_DELAY_RELAX_TIMEOUT_INDEX = 1;
-
     public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
+
+    private static final int FAILING_OVER_SHARDS_INDEX = 2;
+
+    private static final int FAILED_OVER_SHARDS_INDEX = 1;
 
     private Channel channel;
 
@@ -102,7 +108,7 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
         if (REBIND_MESSAGE_TYPE.equals(mType)) {
             final SocketAddress rebindAddress = getRemoteAddress(message);
             if (rebindAddress != null) {
-                logger.info("Attempting to rebind to new endpoint '{}'", rebindAddress);
+                logger.debug("Attempting to rebind to new endpoint '{}'", rebindAddress);
 
                 channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
                 this.reconnectionHandler.setSocketAddressSupplier(rebindAddress);
@@ -117,30 +123,62 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
                 }
             }
         } else if (MIGRATING_MESSAGE_TYPE.equals(mType)) {
-            logger.info("Shard migration started");
+            logger.debug("Shard migration started");
             notifyMigrateStarted();
         } else if (MIGRATED_MESSAGE_TYPE.equals(mType)) {
-            logger.info("Shard migration completed");
-            Long relaxedTimeoutGracePeriod = getRelaxedTimeoutGracePeriod(message);
-            notifyMigrateCompleted(relaxedTimeoutGracePeriod);
+            logger.debug("Shard migration completed");
+            notifyMigrateCompleted();
+        } else if (FAILING_OVER_MESSAGE_TYPE.equals(mType)) {
+            logger.debug("Failover started");
+            notifyFailoverStarted(getFailingOverShards(message));
+        } else if (FAILED_OVER_MESSAGE_TYPE.equals(mType)) {
+            logger.debug("Failover completed");
+            notifyFailoverCompleted(getFailedOverShards(message));
         }
     }
 
-    private Long getRelaxedTimeoutGracePeriod(PushMessage message) {
+    private String getFailingOverShards(PushMessage message) {
+        List<Object> content = message.getContent(StringCodec.UTF8::decodeValue);
 
-        List<Object> content = message.getContent();
-        if (content.size() != 2) {
-            logger.warn("Invalid MIGRATED message format, expected 2 elements, got {}", content.size());
+        if (content.size() < 3) {
+            logger.warn("Invalid failing over message format, expected at least 3 elements, got {}", content.size());
             return null;
         }
 
-        Object delayedObject = content.get(MIGRATED_DELAY_RELAX_TIMEOUT_INDEX);
-        if (!(delayedObject instanceof Long)) {
-            logger.warn("Invalid MIGRATED message format, expected 2nd element to be a Long, got {}", delayedObject.getClass());
+        Object shardsObject = content.get(FAILING_OVER_SHARDS_INDEX);
+
+        if (!(shardsObject instanceof String)) {
+            logger.warn("Invalid failing over message format, expected 3rd element to be a List, got {}",
+                    shardsObject != null ? shardsObject.getClass() : "null");
             return null;
         }
 
-        return (Long) delayedObject;
+        @SuppressWarnings("unchecked")
+        String shards = (String) shardsObject;
+        return shards;
+    }
+
+    private String getFailedOverShards(PushMessage message) {
+        List<Object> content = message.getContent(StringCodec.UTF8::decodeValue);
+
+        if (content.size() < 2) {
+            logger.warn("Invalid failed over message format, expected at least 2 elements, got {}", content.size());
+            return null;
+        }
+
+        Object shardsObject = content.get(FAILED_OVER_SHARDS_INDEX);
+
+        if (!(shardsObject instanceof String)) {
+            logger.warn("Invalid failed over message format, expected 2rd element to be a String, got {}",
+                    shardsObject != null ? shardsObject.getClass() : "null");
+            return null;
+        }
+
+        // expected to be a list of strings ["1","2"]
+
+        @SuppressWarnings("unchecked")
+        String shards = (String) shardsObject;
+        return shards;
     }
 
     private SocketAddress getRemoteAddress(PushMessage message) {
@@ -192,8 +230,16 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
         this.componentListeners.forEach(RebindAwareComponent::onMigrateStarted);
     }
 
-    private void notifyMigrateCompleted(Long relaxedTimeoutGracePeriod) {
-        this.componentListeners.forEach(component -> component.onMigrateCompleted(relaxedTimeoutGracePeriod));
+    private void notifyMigrateCompleted() {
+        this.componentListeners.forEach(RebindAwareComponent::onMigrateCompleted);
+    }
+
+    private void notifyFailoverStarted(String shards) {
+        this.componentListeners.forEach(component -> component.onFailoverStarted(shards));
+    }
+
+    private void notifyFailoverCompleted(String shards) {
+        this.componentListeners.forEach(component -> component.onFailoverCompleted(shards));
     }
 
 }

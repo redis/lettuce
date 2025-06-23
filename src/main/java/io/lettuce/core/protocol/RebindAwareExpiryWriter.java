@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -194,10 +195,18 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
     }
 
     @Override
-    public void onMigrateCompleted(Long relaxedTimeoutGracePeriod) {
-        Duration gracePeriod = relaxedTimeoutGracePeriod == null ? relaxedTimeout
-                : Duration.ofMillis(relaxedTimeoutGracePeriod);
-        disableRelaxedTimeoutDelayed("Migration completed", gracePeriod);
+    public void onMigrateCompleted() {
+        disableRelaxedTimeoutDelayed("Migration completed", relaxedTimeout);
+    }
+
+    @Override
+    public void onFailoverStarted(String shards) {
+        enableRelaxedTimeout("Failover started for shards: " + shards);
+    }
+
+    @Override
+    public void onFailoverCompleted(String shards) {
+        disableRelaxedTimeoutDelayed("Failover completed: " + shards, relaxedTimeout);
     }
 
     private void enableRelaxedTimeout(String reason) {
