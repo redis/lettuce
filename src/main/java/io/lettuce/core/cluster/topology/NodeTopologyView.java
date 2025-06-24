@@ -174,6 +174,7 @@ class NodeTopologyView {
         TopologyComparators.SortAction sortAction = TopologyComparators.SortAction.getSortAction();
 
         sortAction.sort(getPartitions());
+        getPartitions().updateReadView();
     }
 
     public boolean canContribute() {

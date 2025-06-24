@@ -1,9 +1,6 @@
 package io.lettuce.core.cluster;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.Partitions;
@@ -31,12 +28,16 @@ class PartitionsConsensusImpl {
 
             List<VotedPartitions> votedList = new ArrayList<>();
 
+            Map<String, RedisClusterNode> nodes = new HashMap<>(current.size());
+            for (RedisClusterNode knownNode : current) {
+                nodes.put(knownNode.getNodeId(), knownNode);
+            }
+
             for (Partitions partitions : topologyViews.values()) {
 
                 int knownNodes = 0;
-                for (RedisClusterNode knownNode : current) {
-
-                    if (partitions.getPartitionByNodeId(knownNode.getNodeId()) != null) {
+                for (RedisClusterNode node : partitions) {
+                    if (nodes.containsKey(node.getNodeId())) {
                         knownNodes++;
                     }
                 }

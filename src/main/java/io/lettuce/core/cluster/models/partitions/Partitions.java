@@ -334,6 +334,10 @@ public class Partitions implements Collection<RedisClusterNode> {
         this.nodeReadView = Collections.unmodifiableCollection(c);
     }
 
+    public void updateReadView() {
+        this.nodeReadView = Collections.unmodifiableCollection(partitions);
+    }
+
     /**
      * Remove all {@link RedisClusterNode nodes} from the {@link Partitions} using elements from the given collection and update
      * the read-view/caches.
