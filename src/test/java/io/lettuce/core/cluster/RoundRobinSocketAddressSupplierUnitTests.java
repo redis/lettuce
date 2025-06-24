@@ -47,30 +47,31 @@ import io.lettuce.core.resource.SocketAddressResolver;
  *
  * @author Mark Paluch
  * @author Christian Lang
+ * @author Hari Mani
  */
 @Tag(UNIT_TEST)
 @ExtendWith(MockitoExtension.class)
 class RoundRobinSocketAddressSupplierUnitTests {
 
-    private static RedisURI hap1 = new RedisURI("127.0.0.1", 1, Duration.ofSeconds(1));
+    private static final RedisURI hap1 = new RedisURI("127.0.0.1", 1, Duration.ofSeconds(1));
 
-    private static RedisURI hap2 = new RedisURI("127.0.0.1", 2, Duration.ofSeconds(1));
+    private static final RedisURI hap2 = new RedisURI("127.0.0.1", 2, Duration.ofSeconds(1));
 
-    private static RedisURI hap3 = new RedisURI("127.0.0.1", 3, Duration.ofSeconds(1));
+    private static final RedisURI hap3 = new RedisURI("127.0.0.1", 3, Duration.ofSeconds(1));
 
-    private static RedisURI hap4 = new RedisURI("127.0.0.1", 4, Duration.ofSeconds(1));
+    private static final RedisURI hap4 = new RedisURI("127.0.0.1", 4, Duration.ofSeconds(1));
 
-    private static RedisURI hap5 = new RedisURI("127.0.0.0", 5, Duration.ofSeconds(1));
+    private static final RedisURI hap5 = new RedisURI("127.0.0.0", 5, Duration.ofSeconds(1));
 
-    private static InetSocketAddress addr1 = new InetSocketAddress(hap1.getHost(), hap1.getPort());
+    private static final InetSocketAddress addr1 = InetSocketAddress.createUnresolved(hap1.getHost(), hap1.getPort());
 
-    private static InetSocketAddress addr2 = new InetSocketAddress(hap2.getHost(), hap2.getPort());
+    private static final InetSocketAddress addr2 = InetSocketAddress.createUnresolved(hap2.getHost(), hap2.getPort());
 
-    private static InetSocketAddress addr3 = new InetSocketAddress(hap3.getHost(), hap3.getPort());
+    private static final InetSocketAddress addr3 = InetSocketAddress.createUnresolved(hap3.getHost(), hap3.getPort());
 
-    private static InetSocketAddress addr4 = new InetSocketAddress(hap4.getHost(), hap4.getPort());
+    private static final InetSocketAddress addr4 = InetSocketAddress.createUnresolved(hap4.getHost(), hap4.getPort());
 
-    private static InetSocketAddress addr5 = new InetSocketAddress(hap5.getHost(), hap5.getPort());
+    private static final InetSocketAddress addr5 = InetSocketAddress.createUnresolved(hap5.getHost(), hap5.getPort());
 
     private static Partitions partitions;
 
