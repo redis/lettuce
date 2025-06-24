@@ -71,7 +71,7 @@ public class ConnectionWatchdog extends ChannelInboundHandlerAdapter {
 
     private final EventExecutorGroup reconnectWorkers;
 
-    private final ReconnectionHandler reconnectionHandler;
+    protected final ReconnectionHandler reconnectionHandler;
 
     private final ReconnectionListener reconnectionListener;
 
