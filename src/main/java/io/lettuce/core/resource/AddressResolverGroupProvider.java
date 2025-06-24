@@ -19,11 +19,19 @@ import io.netty.resolver.dns.DnsNameResolverBuilder;
  * @author Yohei Ueki
  * @author Mark Paluch
  * @author Euiyoung Nam
+ * @author Hari Mani
  * @since 6.1
  */
 class AddressResolverGroupProvider {
 
-    private static final AddressResolverGroup<?> ADDRESS_RESOLVER_GROUP = DefaultDnsAddressResolverGroupWrapper.INSTANCE;
+    private static final AddressResolverGroup<?> ADDRESS_RESOLVER_GROUP = new DnsAddressResolverGroup(
+        new DnsNameResolverBuilder().channelType(Transports.datagramChannelClass())
+            .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))
+            .cnameCache(new DefaultDnsCnameCache()).resolveCache(new DefaultDnsCache()));
+
+    // to prevent instantiation of factory class
+    private AddressResolverGroupProvider() {
+    }
 
     /**
      * Returns the {@link AddressResolverGroup} for DNS resolution.
@@ -34,15 +42,4 @@ class AddressResolverGroupProvider {
     static AddressResolverGroup<?> addressResolverGroup() {
         return ADDRESS_RESOLVER_GROUP;
     }
-
-    // Wraps DnsAddressResolverGroup to avoid NoClassDefFoundError.
-    private static class DefaultDnsAddressResolverGroupWrapper {
-
-        static AddressResolverGroup<?> INSTANCE = new DnsAddressResolverGroup(
-                new DnsNameResolverBuilder().channelType(Transports.datagramChannelClass())
-                        .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))
-                        .cnameCache(new DefaultDnsCnameCache()).resolveCache(new DefaultDnsCache()));
-
-    }
-
 }
