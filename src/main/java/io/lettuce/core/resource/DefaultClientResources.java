@@ -38,7 +38,12 @@ import io.lettuce.core.metrics.DefaultCommandLatencyCollectorOptions;
 import io.lettuce.core.metrics.MetricCollector;
 import io.lettuce.core.resource.Delay.StatefulDelay;
 import io.lettuce.core.tracing.Tracing;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.resolver.AddressResolverGroup;
+import io.netty.resolver.dns.DefaultDnsCache;
+import io.netty.resolver.dns.DefaultDnsCnameCache;
+import io.netty.resolver.dns.DnsAddressResolverGroup;
+import io.netty.resolver.dns.DnsNameResolverBuilder;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
@@ -114,8 +119,10 @@ public class DefaultClientResources implements ClientResources {
     /**
      * Default {@link AddressResolverGroup}.
      */
-    public static final AddressResolverGroup<?> DEFAULT_ADDRESS_RESOLVER_GROUP = AddressResolverGroupProvider
-            .addressResolverGroup();
+    public static final AddressResolverGroup<?> DEFAULT_ADDRESS_RESOLVER_GROUP = new DnsAddressResolverGroup(
+            new DnsNameResolverBuilder().datagramChannelType(Transports.datagramChannelClass())
+                    .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))
+                    .cnameCache(new DefaultDnsCnameCache()).resolveCache(new DefaultDnsCache()));
 
     static {
 

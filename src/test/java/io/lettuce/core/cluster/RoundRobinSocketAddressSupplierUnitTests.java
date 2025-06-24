@@ -80,7 +80,7 @@ class RoundRobinSocketAddressSupplierUnitTests {
     @BeforeEach
     void before() {
 
-        when(clientResourcesMock.socketAddressResolver()).thenReturn(SocketAddressResolver.create(DnsResolvers.JVM_DEFAULT));
+        when(clientResourcesMock.socketAddressResolver()).thenReturn(SocketAddressResolver.create(DnsResolvers.UNRESOLVED));
 
         partitions = new Partitions();
         partitions.addPartition(new RedisClusterNode(hap1, "1", true, "", 0, 0, 0, new ArrayList<>(), new HashSet<>()));
