@@ -25,9 +25,9 @@ import io.netty.resolver.dns.DnsNameResolverBuilder;
 class AddressResolverGroupProvider {
 
     private static final AddressResolverGroup<?> ADDRESS_RESOLVER_GROUP = new DnsAddressResolverGroup(
-        new DnsNameResolverBuilder().channelType(Transports.datagramChannelClass())
-            .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))
-            .cnameCache(new DefaultDnsCnameCache()).resolveCache(new DefaultDnsCache()));
+            new DnsNameResolverBuilder().channelType(Transports.datagramChannelClass())
+                    .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))
+                    .cnameCache(new DefaultDnsCnameCache()).resolveCache(new DefaultDnsCache()));
 
     // to prevent instantiation of factory class
     private AddressResolverGroupProvider() {
@@ -42,4 +42,5 @@ class AddressResolverGroupProvider {
     static AddressResolverGroup<?> addressResolverGroup() {
         return ADDRESS_RESOLVER_GROUP;
     }
+
 }
