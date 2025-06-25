@@ -9,6 +9,7 @@ import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonArray;
 import io.lettuce.core.json.JsonObject;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.json.arguments.JsonRangeArgs;
 
 import java.util.concurrent.CompletableFuture;
 import java.nio.ByteBuffer;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class JsonExample {
 
     @Test
-    public void  run() {
+    public void run() {
         RedisClient redisClient = RedisClient.create("redis://localhost:6379");
 
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
@@ -185,7 +186,6 @@ public class JsonExample {
             // STEP_END
             arr.join();
 
-            /*
             // STEP_START arr2
             CompletableFuture<Void> arr2 = asyncCommands.jsonSet("riders", JsonPath.ROOT_PATH, parser.createJsonArray())
             .thenCompose(r -> {
@@ -194,11 +194,11 @@ public class JsonExample {
                 assertThat(r).isEqualTo("OK");
                 // REMOVE_END
 
-                return asyncCommands.jsonArrappend("riders", JsonPath.ROOT_PATH, parser.createJsonValue("\"Norem\""));
+                return asyncCommands.jsonArrinsert("riders", JsonPath.ROOT_PATH, 0, parser.createJsonValue("\"Norem\""));
             }).thenCompose(res11 -> {
-                System.out.println(res11); // >>> [4]
+                System.out.println(res11); // >>> [1]
                 // REMOVE_START
-                assertThat(res11.toString()).isEqualTo("[4]");
+                assertThat(res11.toString()).isEqualTo("[1]");
                 // REMOVE_END
 
                 return asyncCommands.jsonGet("riders", JsonPath.ROOT_PATH);
@@ -207,10 +207,10 @@ public class JsonExample {
             .thenCompose(res12 -> {
                 System.out.println(res12); // >>> ["Norem"]
                 // REMOVE_START
-                assertThat(res12.toString()).isEqualTo("[[\"Norem\"]]");
+                assertThat(res12.toString()).isEqualTo("[[[\"Norem\"]]]");
                 // REMOVE_END
 
-                return asyncCommands.jsonArrinsert("riders", JsonPath.ROOT_PATH, 1, parser.createJsonValue("Prickett"), parser.createJsonValue("Royce"), parser.createJsonValue("Castilla"));
+                return asyncCommands.jsonArrinsert("riders", JsonPath.ROOT_PATH, 1, parser.createJsonValue("\"Prickett\""), parser.createJsonValue("\"Royce\""), parser.createJsonValue("\"Castilla\""));
             })
             .thenCompose(res13 -> {
                 System.out.println(res13); // >>> [4]
@@ -234,22 +234,22 @@ public class JsonExample {
                 return asyncCommands.jsonGet("riders", JsonPath.ROOT_PATH);
             })
             .thenCompose(res16 -> {
-                System.out.println(res16); // >>> ["Prickett"]
+                System.out.println(res16); // >>> [[["Prickett"]]]
                 // REMOVE_START
-                assertThat(res16.toString()).isEqualTo("[[\"Prickett\"]]");
+                assertThat(res16.toString()).isEqualTo("[[[\"Prickett\"]]]");
                 // REMOVE_END
                 return asyncCommands.jsonArrpop("riders", JsonPath.ROOT_PATH, 0);
             })
             .thenCompose(res17 -> {
-                System.out.println(res17); // >>> "Prickett"
+                System.out.println(res17); // >>> ["Prickett"]
                 // REMOVE_START
-                assertThat(res17).isEqualTo("Prickett");
+                assertThat(res17.toString()).isEqualTo("[\"Prickett\"]");
                 // REMOVE_END
                 return asyncCommands.jsonArrpop("riders", JsonPath.ROOT_PATH);
             })
             // REMOVE_START
             .thenApply(res -> {
-                assertThat(res).isEqualTo(null);
+                assertThat(res.toString()).isEqualTo("[null]");
                 return res;
             })
             // REMOVE_END
@@ -258,7 +258,6 @@ public class JsonExample {
             .toCompletableFuture();
             // STEP_END
             arr2.join();
-            */
 
             // STEP_START obj
             JsonObject bikeObj = parser.createJsonObject()
