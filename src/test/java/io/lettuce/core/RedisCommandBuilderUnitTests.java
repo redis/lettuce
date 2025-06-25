@@ -253,4 +253,48 @@ class RedisCommandBuilderUnitTests {
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*2\r\n$7\r\nCLUSTER\r\n$5\r\nLINKS\r\n");
     }
 
+    @Test
+    void shouldCorrectlyConstructBitopDiff() {
+
+        Command<String, String, ?> command = sut.bitopDiff("dest", "key1", "key2", "key3");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n$5\r\nBITOP\r\n$4\r\nDIFF\r\n$4\r\ndest\r\n$4\r\nkey1\r\n$4\r\nkey2\r\n$4\r\nkey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBitopDiff1() {
+
+        Command<String, String, ?> command = sut.bitopDiff1("dest", "key1", "key2", "key3");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n$5\r\nBITOP\r\n$5\r\nDIFF1\r\n$4\r\ndest\r\n$4\r\nkey1\r\n$4\r\nkey2\r\n$4\r\nkey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBitopAndor() {
+
+        Command<String, String, ?> command = sut.bitopAndor("dest", "key1", "key2", "key3");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n$5\r\nBITOP\r\n$5\r\nANDOR\r\n$4\r\ndest\r\n$4\r\nkey1\r\n$4\r\nkey2\r\n$4\r\nkey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructBitopOne() {
+
+        Command<String, String, ?> command = sut.bitopOne("dest", "key1", "key2", "key3");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n$5\r\nBITOP\r\n$3\r\nONE\r\n$4\r\ndest\r\n$4\r\nkey1\r\n$4\r\nkey2\r\n$4\r\nkey3\r\n");
+    }
+
 }
