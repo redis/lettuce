@@ -1114,11 +1114,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public void flushCommands() {
-        connection.flushCommands();
-    }
-
-    @Override
     public RedisFuture<String> flushall() {
         return dispatch(commandBuilder.flushall());
     }
@@ -2601,11 +2596,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<V> setGet(K key, V value, SetArgs setArgs) {
         return dispatch(commandBuilder.setGet(key, value, setArgs));
-    }
-
-    @Override
-    public void setAutoFlushCommands(boolean autoFlush) {
-        connection.setAutoFlushCommands(autoFlush);
     }
 
     @Override

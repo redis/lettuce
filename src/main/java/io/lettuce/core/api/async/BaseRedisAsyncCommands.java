@@ -217,5 +217,4 @@ public interface BaseRedisAsyncCommands<K, V> {
      */
     @Deprecated
     void flushCommands();
-
 }
