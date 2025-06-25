@@ -44,9 +44,11 @@ import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.TestSupport;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
+import io.netty.buffer.ByteBuf;
 
 /**
  * @author Will Glozer
@@ -61,6 +63,23 @@ public class BitCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
 
+    private RedisCodec<String, String> oneByteStringCodec = new BitStringCodec() {
+
+        @Override
+        public void encodeValue(String oneByte, ByteBuf target) {
+            byte value = 0;
+            for (int i = 0; i < 8; i++) {
+                if (oneByte.charAt(i) == '1') {
+                    value |= (1 << i);
+                }
+            }
+            target.writeByte(value);
+        }
+
+    };
+
+    private RedisCommands<String, String> byteString;
+
     protected RedisCommands<String, String> bitstring;
 
     @Inject
@@ -73,6 +92,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     void setUp() {
         this.redis.flushall();
         this.bitstring = client.connect(new BitStringCodec()).sync();
+        byteString = client.connect(oneByteStringCodec).sync();
     }
 
     @AfterEach
@@ -314,13 +334,10 @@ public class BitCommandIntegrationTests extends TestSupport {
     void bitopDiff() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.1.240"));
         // Test DIFF: X ∧ ¬(Y1 ∨ Y2 ∨ …)
-        // Set up test data: foo has bits 0,1,2 set, bar has bit 1 set, baz has bit 2
-        // set
-        redis.setbit("foo", 0, 1);
-        redis.setbit("foo", 1, 1);
-        redis.setbit("foo", 2, 1);
-        redis.setbit("bar", 1, 1);
-        redis.setbit("baz", 2, 1);
+        // Set up test data: foo has bits 0,1,2 set, bar has bit 1 set, baz has bit 2 set
+        byteString.set("foo", "00000111");
+        byteString.set("bar", "00000010");
+        byteString.set("baz", "00000100");
 
         // DIFF should return bits in foo that are not in bar OR baz
         // foo: 00000111 (bits 0,1,2 set), bar: 00000010 (bit 1 set), baz: 00000100 (bit 2 set)
@@ -334,14 +351,10 @@ public class BitCommandIntegrationTests extends TestSupport {
     void bitopDiff1() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.1.240"));
         // Test DIFF1: ¬X ∧ (Y1 ∨ Y2 ∨ …)
-        // Set up test data: foo has bits 0,1 set, bar has bit 1,2 set, baz has bit 2,3
-        // set
-        redis.setbit("foo", 0, 1);
-        redis.setbit("foo", 1, 1);
-        redis.setbit("bar", 1, 1);
-        redis.setbit("bar", 2, 1);
-        redis.setbit("baz", 2, 1);
-        redis.setbit("baz", 3, 1);
+        // Set up test data: foo has bits 0,1 set, bar has bit 1,2 set, baz has bit 2,3 set
+        byteString.set("foo", "00000011");
+        byteString.set("bar", "00000110");
+        byteString.set("baz", "00001100");
 
         // DIFF1 should return bits in (bar OR baz) that are not in foo
         // foo: 00000011 (bits 0,1 set), bar: 00000110 (bits 1,2 set), baz: 00001100 (bits 2,3 set)
@@ -355,14 +368,10 @@ public class BitCommandIntegrationTests extends TestSupport {
     void bitopAndor() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.1.240"));
         // Test ANDOR: X ∧ (Y1 ∨ Y2 ∨ …)
-        // Set up test data: foo has bits 0,1,2 set, bar has bit 1 set, baz has bit 2,3
-        // set
-        redis.setbit("foo", 0, 1);
-        redis.setbit("foo", 1, 1);
-        redis.setbit("foo", 2, 1);
-        redis.setbit("bar", 1, 1);
-        redis.setbit("baz", 2, 1);
-        redis.setbit("baz", 3, 1);
+        // Set up test data: foo has bits 0,1,2 set, bar has bit 1 set, baz has bit 2,3 set
+        byteString.set("foo", "00000111");
+        byteString.set("bar", "00000010");
+        byteString.set("baz", "00001100");
 
         // ANDOR should return bits in foo that are also in (bar OR baz)
         // foo: 00000111 (bits 0,1,2 set), bar: 00000010 (bit 1 set), baz: 00001100 (bits 2,3 set)
@@ -376,14 +385,10 @@ public class BitCommandIntegrationTests extends TestSupport {
     void bitopOne() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.1.240"));
         // Test ONE: members of exactly one of the given keys
-        // Set up test data: foo has bits 0,1 set, bar has bit 1,2 set, baz has bit 2,3
-        // set
-        redis.setbit("foo", 0, 1);
-        redis.setbit("foo", 1, 1);
-        redis.setbit("bar", 1, 1);
-        redis.setbit("bar", 2, 1);
-        redis.setbit("baz", 2, 1);
-        redis.setbit("baz", 3, 1);
+        // Set up test data: foo has bits 0,1 set, bar has bit 1,2 set, baz has bit 2,3 set
+        byteString.set("foo", "00000011");
+        byteString.set("bar", "00000110");
+        byteString.set("baz", "00001100");
 
         // ONE should return bits that appear in exactly one key
         // foo: 00000011 (bits 0,1 set), bar: 00000110 (bits 1,2 set), baz: 00001100 (bits 2,3 set)
@@ -400,10 +405,8 @@ public class BitCommandIntegrationTests extends TestSupport {
     void bitopOneWithTwoKeys() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.1.240"));
         // Test ONE with two keys (should be equivalent to XOR)
-        redis.setbit("foo", 0, 1);
-        redis.setbit("foo", 1, 1);
-        redis.setbit("bar", 1, 1);
-        redis.setbit("bar", 2, 1);
+        byteString.set("foo", "00000011");
+        byteString.set("bar", "00000110");
 
         // ONE with two keys should be same as XOR
         // foo: 00000011 (bits 0,1 set), bar: 00000110 (bits 1,2 set)
@@ -423,28 +426,16 @@ public class BitCommandIntegrationTests extends TestSupport {
         // X = 11110000 (bits 4,5,6,7), Y1 = 10101010 (bits 1,3,5,7), Y2 = 01010101 (bits 0,2,4,6), Y3 = 11001100 (bits 2,3,6,7)
 
         // Set X = 11110000 (bits 4,5,6,7 set)
-        redis.setbit("X", 4, 1);
-        redis.setbit("X", 5, 1);
-        redis.setbit("X", 6, 1);
-        redis.setbit("X", 7, 1);
+        byteString.set("X", "11110000");
 
         // Set Y1 = 10101010 (bits 1,3,5,7 set)
-        redis.setbit("Y1", 1, 1);
-        redis.setbit("Y1", 3, 1);
-        redis.setbit("Y1", 5, 1);
-        redis.setbit("Y1", 7, 1);
+        byteString.set("Y1", "10101010");
 
         // Set Y2 = 01010101 (bits 0,2,4,6 set)
-        redis.setbit("Y2", 0, 1);
-        redis.setbit("Y2", 2, 1);
-        redis.setbit("Y2", 4, 1);
-        redis.setbit("Y2", 6, 1);
+        byteString.set("Y2", "01010101");
 
         // Set Y3 = 11001100 (bits 2,3,6,7 set)
-        redis.setbit("Y3", 2, 1);
-        redis.setbit("Y3", 3, 1);
-        redis.setbit("Y3", 6, 1);
-        redis.setbit("Y3", 7, 1);
+        byteString.set("Y3", "11001100");
 
         // Test DIFF: X ∧ ¬(Y1 ∨ Y2 ∨ Y3)
         // Y1 ∨ Y2 ∨ Y3 = all bits 0-7 are set = 11111111
@@ -483,16 +474,10 @@ public class BitCommandIntegrationTests extends TestSupport {
         // Test with two operands: key1=10101010 (bits 1,3,5,7), key2=11001100 (bits 2,3,6,7)
 
         // Set key1 = 10101010 (bits 1,3,5,7 set)
-        redis.setbit("key1", 1, 1);
-        redis.setbit("key1", 3, 1);
-        redis.setbit("key1", 5, 1);
-        redis.setbit("key1", 7, 1);
+        byteString.set("key1", "10101010");
 
         // Set key2 = 11001100 (bits 2,3,6,7 set)
-        redis.setbit("key2", 2, 1);
-        redis.setbit("key2", 3, 1);
-        redis.setbit("key2", 6, 1);
-        redis.setbit("key2", 7, 1);
+        byteString.set("key2", "11001100");
 
         // Test DIFF: key1 ∧ ¬key2 = 10101010 ∧ ¬11001100 = 10101010 ∧ 00110011 = 00100010
         assertThat(redis.bitopDiff("diff2_result", "key1", "key2")).isEqualTo(1);
@@ -514,10 +499,7 @@ public class BitCommandIntegrationTests extends TestSupport {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.1.240"));
         // Test edge cases with empty keys and minimum operand requirements
         // Set nonempty = 11110000 (bits 4,5,6,7 set)
-        redis.setbit("nonempty", 4, 1);
-        redis.setbit("nonempty", 5, 1);
-        redis.setbit("nonempty", 6, 1);
-        redis.setbit("nonempty", 7, 1);
+        byteString.set("nonempty", "11110000");
 
         // DIFF with empty key should return the first key
         assertThat(redis.bitopDiff("edge_result", "nonempty", "nonexistent")).isEqualTo(1);
@@ -542,8 +524,7 @@ public class BitCommandIntegrationTests extends TestSupport {
     void bitopMinimumOperandRequirements() {
         assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.1.240"));
         // Test minimum operand requirements for each BITOP operation
-        redis.setbit("test_key", 0, 1);
-        redis.setbit("test_key", 1, 1);
+        byteString.set("test_key", "00000011");
 
         // Operations that work with single operand
         assertThat(redis.bitopOne("single_one", "test_key")).isEqualTo(1);
