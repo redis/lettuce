@@ -66,10 +66,11 @@ class AtMostOnceIntegrationTests {
 
     @BeforeEach
     void before() {
-        RedisCommands<String, String> connection = client.connect().sync();
-        connection.flushall();
-        connection.flushdb();
-        connection.getStatefulConnection().close();
+        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+            RedisCommands<String, String> command = connection.sync();
+            command.flushall();
+            command.flushdb();
+        }
     }
 
     @AfterEach
@@ -99,13 +100,12 @@ class AtMostOnceIntegrationTests {
 
     @Test
     void basicOperations() {
+        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+            RedisCommands<String, String> command = connection.sync();
 
-        RedisCommands<String, String> connection = client.connect().sync();
-
-        connection.set(key, "1");
-        assertThat(connection.get("key")).isEqualTo("1");
-
-        connection.getStatefulConnection().close();
+            command.set(key, "1");
+            assertThat(command.get("key")).isEqualTo("1");
+        }
     }
 
     @Test
@@ -294,13 +294,10 @@ class AtMostOnceIntegrationTests {
 
     @Test
     void commandsCancelledOnDisconnect() {
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-
-        try {
+        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
 
             RedisAsyncCommands<String, String> async = connection.async();
-            async.setAutoFlushCommands(false);
+            connection.setAutoFlushCommands(false);
             async.quit();
 
             RedisFuture<Long> incr = async.incr(key);
@@ -312,8 +309,6 @@ class AtMostOnceIntegrationTests {
         } catch (Exception e) {
             assertThat(e).hasRootCauseInstanceOf(RedisException.class).hasMessageContaining("Connection disconnected");
         }
-
-        connection.close();
     }
 
     private Throwable getException(RedisFuture<?> command) {

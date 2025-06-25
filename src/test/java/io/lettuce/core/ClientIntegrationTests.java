@@ -29,6 +29,7 @@ import io.netty.channel.Channel;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -36,19 +37,21 @@ class ClientIntegrationTests extends TestSupport {
 
     private final RedisClient client;
 
+    private final StatefulRedisConnection<String, String> connection;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
-    ClientIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
+    ClientIntegrationTests(@New final RedisClient client, @New final StatefulRedisConnection<String, String> connection) {
         this.client = client;
+        this.connection = connection;
         this.redis = connection.sync();
         this.redis.flushall();
     }
 
     @Test
     @Inject
-    void close(@New StatefulRedisConnection<String, String> connection) {
-
+    void close() {
         connection.close();
         assertThatThrownBy(() -> connection.sync().get(key)).isInstanceOf(RedisException.class);
     }
@@ -73,31 +76,12 @@ class ClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void statefulConnectionFromSync() {
-        assertThat(redis.getStatefulConnection().sync()).isSameAs(redis);
-    }
-
-    @Test
-    void statefulConnectionFromAsync() {
-        RedisAsyncCommands<String, String> async = client.connect().async();
-        assertThat(async.getStatefulConnection().async()).isSameAs(async);
-        async.getStatefulConnection().close();
-    }
-
-    @Test
-    void statefulConnectionFromReactive() {
-        RedisAsyncCommands<String, String> async = client.connect().async();
-        assertThat(async.getStatefulConnection().reactive().getStatefulConnection()).isSameAs(async.getStatefulConnection());
-        async.getStatefulConnection().close();
-    }
-
-    @Test
     void timeout() {
 
-        redis.setTimeout(Duration.ofNanos(100));
+        connection.setTimeout(Duration.ofNanos(100));
         assertThatThrownBy(() -> redis.blpop(1, "unknown")).isInstanceOf(RedisCommandTimeoutException.class);
 
-        redis.setTimeout(Duration.ofSeconds(60));
+        connection.setTimeout(Duration.ofSeconds(60));
     }
 
     @Test
@@ -139,11 +123,11 @@ class ClientIntegrationTests extends TestSupport {
 
         MyListener listener = new MyListener();
 
-        redis.getStatefulConnection().addListener(listener);
+        connection.addListener(listener);
         redis.quit();
         Thread.sleep(100);
 
-        Wait.untilTrue(redis::isOpen).waitOrTimeout();
+        Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
         assertThat(listener.connect).hasValueGreaterThan(0);
         assertThat(listener.disconnect).hasValueGreaterThan(0);
