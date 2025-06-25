@@ -184,37 +184,40 @@ public interface NodeSelectionStringAsyncCommands<K, V> {
     AsyncExecutions<Long> bitopXor(K destination, K... keys);
 
     /**
-     * Perform bitwise DIFF between strings. Members of the first key that are not members of any of the other keys. Equivalent
+     * Perform bitwise DIFF between strings. Members of the source key that are not members of any of the other keys. Equivalent
      * to: X ∧ ¬(Y1 ∨ Y2 ∨ …)
      *
      * @param destination result key of the operation.
-     * @param keys operation input key names.
+     * @param sourceKey the source key (X) for comparison.
+     * @param keys one or more additional keys (Y1, Y2, ...). At least one key is required.
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
      *         input string.
      */
-    AsyncExecutions<Long> bitopDiff(K destination, K... keys);
+    AsyncExecutions<Long> bitopDiff(K destination, K sourceKey, K... keys);
 
     /**
-     * Perform bitwise DIFF1 between strings. Members of one or more of the other keys that are not members of the first key.
+     * Perform bitwise DIFF1 between strings. Members of one or more of the keys that are not members of the source key.
      * Equivalent to: ¬X ∧ (Y1 ∨ Y2 ∨ …)
      *
      * @param destination result key of the operation.
-     * @param keys operation input key names.
+     * @param sourceKey the source key (X) for comparison.
+     * @param keys one or more additional keys (Y1, Y2, ...). At least one key is required.
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
      *         input string.
      */
-    AsyncExecutions<Long> bitopDiff1(K destination, K... keys);
+    AsyncExecutions<Long> bitopDiff1(K destination, K sourceKey, K... keys);
 
     /**
-     * Perform bitwise ANDOR between strings. Members of the first key that are also members of one or more of the other keys.
+     * Perform bitwise ANDOR between strings. Members of the source key that are also members of one or more of the other keys.
      * Equivalent to: X ∧ (Y1 ∨ Y2 ∨ …)
      *
      * @param destination result key of the operation.
-     * @param keys operation input key names.
+     * @param sourceKey the source key (X) for comparison.
+     * @param keys one or more additional keys (Y1, Y2, ...). At least one key is required.
      * @return Long integer-reply The size of the string stored in the destination key, that is equal to the size of the longest
      *         input string.
      */
-    AsyncExecutions<Long> bitopAndor(K destination, K... keys);
+    AsyncExecutions<Long> bitopAndor(K destination, K sourceKey, K... keys);
 
     /**
      * Perform bitwise ONE between strings. Members of exactly one of the given keys. For two keys this is equivalent to XOR.
