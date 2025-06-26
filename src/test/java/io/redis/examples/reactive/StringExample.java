@@ -69,10 +69,11 @@ public class StringExample {
 
             Mono<Void> mset = reactiveCommands.mset(bikeMap).doOnNext(System.out::println) // OK
                     .flatMap(v -> reactiveCommands.mget("bike:1", "bike:2", "bike:3").collectList()).doOnNext(res -> {
+                        // REMOVE_START
                         List<KeyValue<String, String>> expected = new ArrayList<>(
                                 Arrays.asList(KeyValue.just("bike:1", "Deimos"), KeyValue.just("bike:2", "Ares"),
                                         KeyValue.just("bike:3", "Vanth")));
-                        // REMOVE_START
+                        
                         assertThat(res).isEqualTo(expected);
                         // REMOVE_END
                         System.out.println(res); // [KeyValue[bike:1, Deimos], KeyValue[bike:2, Ares], KeyValue[bike:3, Vanth]]
