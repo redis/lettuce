@@ -6,14 +6,12 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.StatefulRedisConnection;
 // REMOVE_START
 import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 // REMOVE_END
+
 import reactor.core.publisher.Mono;
 
 import java.util.*;
-
-// REMOVE_START
-import static org.assertj.core.api.Assertions.assertThat;
-// REMOVE_END
 
 public class HashExample {
 
