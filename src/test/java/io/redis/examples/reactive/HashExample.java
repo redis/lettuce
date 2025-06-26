@@ -27,8 +27,7 @@ public class HashExample {
             RedisReactiveCommands<String, String> reactiveCommands = connection.reactive();
             // REMOVE_START
             // Clean up any existing data
-            Mono<Void> cleanup = reactiveCommands
-                    .del("bike:1", "bike:1:stats").then();
+            Mono<Void> cleanup = reactiveCommands.del("bike:1", "bike:1:stats").then();
             cleanup.block();
             // REMOVE_END
 
@@ -47,43 +46,45 @@ public class HashExample {
             });
 
             setGetAll.block();
-            
+
             Mono<String> getModel = reactiveCommands.hget("bike:1", "model").doOnNext(result -> {
                 System.out.println(result); // >>> Deimos
                 // REMOVE_START
                 assertThat(result).isEqualTo("Deimos");
                 // REMOVE_END
             });
-            
+
             Mono<String> getPrice = reactiveCommands.hget("bike:1", "price").doOnNext(result -> {
                 System.out.println(result); // >>> 4972
                 // REMOVE_START
                 assertThat(result).isEqualTo("4972");
                 // REMOVE_END
             });
-            
+
             Mono<List<KeyValue<String, String>>> getAll = reactiveCommands.hgetall("bike:1").collectList().doOnNext(result -> {
                 System.out.println(result);
-                // >>>  [KeyValue[type, Enduro bikes], KeyValue[brand, Ergonom],
-                //        KeyValue[price, 4972], KeyValue[model, Deimos]]
+                // >>> [KeyValue[type, Enduro bikes], KeyValue[brand, Ergonom],
+                // KeyValue[price, 4972], KeyValue[model, Deimos]]
                 // REMOVE_START
                 List<KeyValue<String, String>> expected = new ArrayList<>(
-                                Arrays.asList(KeyValue.just("price", "4972"), KeyValue.just("model", "Deimos"),KeyValue.just("type", "Enduro bikes"), KeyValue.just("brand", "Ergonom")));
+                        Arrays.asList(KeyValue.just("price", "4972"), KeyValue.just("model", "Deimos"),
+                                KeyValue.just("type", "Enduro bikes"), KeyValue.just("brand", "Ergonom")));
                 assertThat(result).isEqualTo(expected);
                 // REMOVE_END
             });
             // STEP_END
 
             // STEP_START hmget
-            Mono<List<KeyValue<String, String>>> hmGet = reactiveCommands.hmget("bike:1", "model", "price").collectList().doOnNext(result -> {
-                System.out.println(result);
-                // >>> [KeyValue[model, Deimos], KeyValue[price, 4972]]
-                // REMOVE_START
-                List<KeyValue<String, String>> expected = new ArrayList<>(
+            Mono<List<KeyValue<String, String>>> hmGet = reactiveCommands.hmget("bike:1", "model", "price").collectList()
+                    .doOnNext(result -> {
+                        System.out.println(result);
+                        // >>> [KeyValue[model, Deimos], KeyValue[price, 4972]]
+                        // REMOVE_START
+                        List<KeyValue<String, String>> expected = new ArrayList<>(
                                 Arrays.asList(KeyValue.just("model", "Deimos"), KeyValue.just("price", "4972")));
-                assertThat(result).isEqualTo(expected);
-                // REMOVE_END
-            });
+                        assertThat(result).isEqualTo(expected);
+                        // REMOVE_END
+                    });
             // STEP_END
 
             Mono.when(getModel, getPrice, getAll, hmGet).block();
@@ -130,7 +131,7 @@ public class HashExample {
                 assertThat(result).isEqualTo(1L);
                 // REMOVE_END
             }).then();
-            
+
             incrByGetMget.block();
 
             Mono<String> getRides = reactiveCommands.hget("bike:1:stats", "rides").doOnNext(result -> {
@@ -140,18 +141,19 @@ public class HashExample {
                 // REMOVE_END
             });
 
-            Mono<List<KeyValue<String, String>>> getCrashesOwners = reactiveCommands.hmget("bike:1:stats", "crashes", "owners").collectList().doOnNext(result -> {
-                System.out.println(result);
-                // >>> [KeyValue[crashes, 1], KeyValue[owners, 1]]
-                // REMOVE_START
-                List<KeyValue<String, String>> expected = new ArrayList<>(
+            Mono<List<KeyValue<String, String>>> getCrashesOwners = reactiveCommands.hmget("bike:1:stats", "crashes", "owners")
+                    .collectList().doOnNext(result -> {
+                        System.out.println(result);
+                        // >>> [KeyValue[crashes, 1], KeyValue[owners, 1]]
+                        // REMOVE_START
+                        List<KeyValue<String, String>> expected = new ArrayList<>(
                                 Arrays.asList(KeyValue.just("crashes", "1"), KeyValue.just("owners", "1")));
-            
-                assertThat(result).isEqualTo(expected);
-                // REMOVE_END
-            });
+
+                        assertThat(result).isEqualTo(expected);
+                        // REMOVE_END
+                    });
             // STEP_END
-            
+
             Mono.when(getRides, getCrashesOwners).block();
         } finally {
             redisClient.shutdown();
