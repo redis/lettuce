@@ -73,7 +73,7 @@ public class StringExample {
                         List<KeyValue<String, String>> expected = new ArrayList<>(
                                 Arrays.asList(KeyValue.just("bike:1", "Deimos"), KeyValue.just("bike:2", "Ares"),
                                         KeyValue.just("bike:3", "Vanth")));
-                        
+
                         assertThat(res).isEqualTo(expected);
                         // REMOVE_END
                         System.out.println(res); // [KeyValue[bike:1, Deimos], KeyValue[bike:2, Ares], KeyValue[bike:3, Vanth]]
