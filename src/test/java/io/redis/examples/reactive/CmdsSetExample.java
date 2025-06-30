@@ -21,8 +21,7 @@ public class CmdsSetExample {
             RedisReactiveCommands<String, String> reactiveCommands = connection.reactive();
             // REMOVE_START
             // Clean up any existing data
-            Mono<Void> cleanup = reactiveCommands
-                    .del("myset").then();
+            Mono<Void> cleanup = reactiveCommands.del("myset").then();
             cleanup.block();
             // REMOVE_END
 
@@ -73,9 +72,9 @@ public class CmdsSetExample {
             // HIDE_START
             smembers.block();
             // HIDE_END
-        }
-        finally {
+        } finally {
             redisClient.shutdown();
         }
     }
+
 }

@@ -82,9 +82,9 @@ public class CmdsSetExample {
             // HIDE_START
             smembers.join();
             // HIDE_END
-        }
-        finally {
+        } finally {
             redisClient.shutdown();
         }
     }
+
 }
