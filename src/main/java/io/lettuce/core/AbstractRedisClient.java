@@ -109,8 +109,6 @@ public abstract class AbstractRedisClient implements AutoCloseable {
 
     private volatile ClientOptions clientOptions = ClientOptions.create();
 
-    private volatile Duration defaultTimeout = RedisURI.DEFAULT_TIMEOUT_DURATION;
-
     /**
      * Create a new instance with client resources.
      *
@@ -132,36 +130,6 @@ public abstract class AbstractRedisClient implements AutoCloseable {
 
     protected int getChannelCount() {
         return channels.size();
-    }
-
-    /**
-     * Set the default timeout for connections created by this client. The timeout applies to connection attempts and
-     * non-blocking commands.
-     *
-     * @param timeout default connection timeout, must not be {@code null}.
-     * @since 5.0
-     * @deprecated since 6.2, use {@link RedisURI#getTimeout()} to control timeouts.
-     */
-    @Deprecated
-    public void setDefaultTimeout(Duration timeout) {
-
-        LettuceAssert.notNull(timeout, "Timeout duration must not be null");
-        LettuceAssert.isTrue(!timeout.isNegative(), "Timeout duration must be greater or equal to zero");
-
-        this.defaultTimeout = timeout;
-    }
-
-    /**
-     * Set the default timeout for connections created by this client. The timeout applies to connection attempts and
-     * non-blocking commands.
-     *
-     * @param timeout Default connection timeout.
-     * @param unit Unit of time for the timeout.
-     * @deprecated since 6.2, use {@link RedisURI#getTimeout()} to control timeouts.
-     */
-    @Deprecated
-    public void setDefaultTimeout(long timeout, TimeUnit unit) {
-        setDefaultTimeout(Duration.ofNanos(unit.toNanos(timeout)));
     }
 
     /**

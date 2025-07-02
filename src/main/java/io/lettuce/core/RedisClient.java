@@ -105,7 +105,6 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(redisURI);
 
         this.redisURI = redisURI;
-        setDefaultTimeout(redisURI.getTimeout());
     }
 
     /**
