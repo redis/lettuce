@@ -135,17 +135,6 @@ public abstract class AbstractRedisClient implements AutoCloseable {
     }
 
     /**
-     * Returns the default {@link Duration timeout} for commands.
-     *
-     * @return the default {@link Duration timeout} for commands.
-     * @deprecated since 6.2, use {@link RedisURI#getTimeout()} to control timeouts.
-     */
-    @Deprecated
-    public Duration getDefaultTimeout() {
-        return defaultTimeout;
-    }
-
-    /**
      * Set the default timeout for connections created by this client. The timeout applies to connection attempts and
      * non-blocking commands.
      *
