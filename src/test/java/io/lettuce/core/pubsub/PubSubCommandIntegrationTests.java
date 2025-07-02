@@ -132,12 +132,14 @@ class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
 
             client.setOptions(
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
-            RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-            connection.getStatefulConnection().addListener(listener);
-            connection.auth(passwd);
+            try (final StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub()) {
+                RedisPubSubAsyncCommands<String, String> commands = connection.async();
+                connection.addListener(listener);
+                commands.auth(passwd);
 
-            connection.subscribe(channel);
-            assertThat(channels.take()).isEqualTo(channel);
+                commands.subscribe(channel);
+                assertThat(channels.take()).isEqualTo(channel);
+            }
         });
     }
 
@@ -148,12 +150,14 @@ class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
 
             client.setOptions(
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
-            RedisPubSubAsyncCommands<String, String> connection = client.connectPubSub().async();
-            connection.getStatefulConnection().addListener(listener);
-            connection.auth(username, passwd);
+            try (final StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub()) {
+                RedisPubSubAsyncCommands<String, String> commands = connection.async();
+                connection.addListener(listener);
+                commands.auth(username, passwd);
 
-            connection.subscribe(channel);
-            assertThat(channels.take()).isEqualTo(channel);
+                commands.subscribe(channel);
+                assertThat(channels.take()).isEqualTo(channel);
+            }
         });
     }
 
@@ -167,7 +171,7 @@ class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
 
             try (final StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub()) {
                 RedisPubSubAsyncCommands<String, String> command = client.connectPubSub().async();
-                command.getStatefulConnection().addListener(listener);
+                connection.addListener(listener);
                 command.auth(passwd);
 
                 command.clientSetname("authWithReconnect");
@@ -198,7 +202,7 @@ class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
 
             try (final StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub()) {
                 RedisPubSubAsyncCommands<String, String> command = connection.async();
-                command.getStatefulConnection().addListener(listener);
+                connection.addListener(listener);
                 command.auth(username, passwd);
                 command.clientSetname("authWithReconnect");
                 command.subscribe(channel).get();
@@ -271,7 +275,7 @@ class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
         assertThat(counts.take()).isNotNull();
 
         AtomicReference<PushMessage> messageRef = new AtomicReference<>();
-        pubsub.getStatefulConnection().addListener(messageRef::set);
+        pubSubConnection.addListener(messageRef::set);
 
         redis.publish(channel, message);
         assertThat(messages.take()).isEqualTo(message);
@@ -579,7 +583,7 @@ class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
 
         };
 
-        pubsub.getStatefulConnection().addListener(adapter);
+        pubSubConnection.addListener(adapter);
         pubsub.subscribe(channel);
         pubsub.psubscribe(pattern);
 
@@ -601,7 +605,7 @@ class PubSubCommandIntegrationTests extends AbstractRedisClientTest {
         assertThat(channels.take()).isEqualTo(channel);
         assertThat(messages.take()).isEqualTo(message);
 
-        pubsub.getStatefulConnection().removeListener(listener);
+        pubSubConnection.removeListener(listener);
 
         redis.publish(channel, message);
         assertThat(channels.poll(10, TimeUnit.MILLISECONDS)).isNull();

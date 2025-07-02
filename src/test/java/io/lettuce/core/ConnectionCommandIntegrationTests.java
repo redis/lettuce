@@ -54,6 +54,7 @@ import io.lettuce.test.settings.TestSettings;
  * @author Will Glozer
  * @author Mark Paluch
  * @author Tugdual Grall
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -61,12 +62,15 @@ class ConnectionCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
 
+    private final StatefulRedisConnection<String, String> cnxn;
+
     private final RedisCommands<String, String> redis;
 
     @Inject
     ConnectionCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         this.client = client;
-        this.redis = connection.sync();
+        this.cnxn = connection;
+        this.redis = this.cnxn.sync();
     }
 
     @BeforeEach
@@ -88,9 +92,10 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             assertThat(connection.set(key, value)).isEqualTo("OK");
 
             RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
-            RedisCommands<String, String> authConnection = client.connect(redisURI).sync();
-            authConnection.ping();
-            authConnection.getStatefulConnection().close();
+            try (final StatefulRedisConnection<String, String> cnxn = client.connect(redisURI)) {
+                RedisCommands<String, String> authConnection = cnxn.sync();
+                authConnection.ping();
+            }
         });
     }
 
@@ -119,9 +124,10 @@ class ConnectionCommandIntegrationTests extends TestSupport {
             assertThat(connection.del("cached:demo")).isEqualTo(1);
 
             RedisURI redisURI = RedisURI.Builder.redis(host, port).withDatabase(2).withPassword(passwd).build();
-            RedisCommands<String, String> authConnection = client.connect(redisURI).sync();
-            authConnection.ping();
-            authConnection.getStatefulConnection().close();
+            try (final StatefulRedisConnection<String, String> cnxn = client.connect(redisURI)) {
+                RedisCommands<String, String> authConnection = cnxn.sync();
+                authConnection.ping();
+            }
         });
     }
 
@@ -185,15 +191,11 @@ class ConnectionCommandIntegrationTests extends TestSupport {
                 ClientOptions.builder().pingBeforeActivateConnection(false).protocolVersion(ProtocolVersion.RESP2).build());
         RedisCommands<String, String> connTestResp2 = null;
 
-        try {
-            connTestResp2 = clientResp2.connect().sync();
+        try (final StatefulRedisConnection<String, String> resp2Connection = clientResp2.connect()) {
+            connTestResp2 = resp2Connection.sync();
             assertThat(redis.ping()).isEqualTo("PONG");
-        } catch (Exception e) {
         } finally {
             assertThat(connTestResp2).isNotNull();
-            if (connTestResp2 != null) {
-                connTestResp2.getStatefulConnection().close();
-            }
         }
         clientResp2.shutdown();
     }
@@ -227,15 +229,15 @@ class ConnectionCommandIntegrationTests extends TestSupport {
 
             client.setOptions(
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
-            RedisCommands<String, String> connection = client.connect().sync();
-            assertThat(connection.auth(passwd)).isEqualTo("OK");
-            assertThat(connection.set(key, value)).isEqualTo("OK");
-            connection.quit();
+            try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+                RedisCommands<String, String> commands = connection.sync();
+                assertThat(commands.auth(passwd)).isEqualTo("OK");
+                assertThat(commands.set(key, value)).isEqualTo("OK");
+                commands.quit();
 
-            Delay.delay(Duration.ofMillis(100));
-            assertThat(connection.get(key)).isEqualTo(value);
-
-            connection.getStatefulConnection().close();
+                Delay.delay(Duration.ofMillis(100));
+                assertThat(commands.get(key)).isEqualTo(value);
+            }
         });
     }
 
@@ -246,23 +248,23 @@ class ConnectionCommandIntegrationTests extends TestSupport {
 
             client.setOptions(
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
-            RedisCommands<String, String> connection = client.connect().sync();
-            assertThat(connection.auth(passwd)).isEqualTo("OK");
-            assertThat(connection.set(key, value)).isEqualTo("OK");
-            connection.quit();
+            try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+                RedisCommands<String, String> commands = connection.sync();
+                assertThat(commands.auth(passwd)).isEqualTo("OK");
+                assertThat(commands.set(key, value)).isEqualTo("OK");
+                commands.quit();
 
-            Delay.delay(Duration.ofMillis(100));
-            assertThat(connection.get(key)).isEqualTo(value);
+                Delay.delay(Duration.ofMillis(100));
+                assertThat(commands.get(key)).isEqualTo(value);
 
-            // reconnect with username/password
-            assertThat(connection.auth(username, passwd)).isEqualTo("OK");
-            assertThat(connection.set(key, value)).isEqualTo("OK");
-            connection.quit();
+                // reconnect with username/password
+                assertThat(commands.auth(username, passwd)).isEqualTo("OK");
+                assertThat(commands.set(key, value)).isEqualTo("OK");
+                commands.quit();
 
-            Delay.delay(Duration.ofMillis(100));
-            assertThat(connection.get(key)).isEqualTo(value);
-
-            connection.getStatefulConnection().close();
+                Delay.delay(Duration.ofMillis(100));
+                assertThat(commands.get(key)).isEqualTo(value);
+            }
         });
     }
 
@@ -272,7 +274,7 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         redis.set(key, value);
         redis.quit();
 
-        Wait.untilTrue(redis::isOpen).waitOrTimeout();
+        Wait.untilTrue(cnxn::isOpen).waitOrTimeout();
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
@@ -280,24 +282,24 @@ class ConnectionCommandIntegrationTests extends TestSupport {
     void getSetReconnect() {
         redis.set(key, value);
         redis.quit();
-        Wait.untilTrue(redis::isOpen).waitOrTimeout();
+        Wait.untilTrue(cnxn::isOpen).waitOrTimeout();
         assertThat(redis.get(key)).isEqualTo(value);
     }
 
     @Test
     void authInvalidPassword() {
-        RedisAsyncCommands<String, String> async = client.connect().async();
+        final StatefulRedisConnection<String, String> connection = client.connect();
         try {
+            final RedisAsyncCommands<String, String> async = connection.async();
             TestFutures.awaitOrTimeout(async.auth("invalid"));
             fail("Authenticated with invalid password");
         } catch (RedisException e) {
             assertThat(e.getMessage()).startsWith("ERR").contains("AUTH");
-            StatefulRedisConnectionImpl<String, String> statefulRedisCommands = (StatefulRedisConnectionImpl) async
-                    .getStatefulConnection();
-            assertThat(statefulRedisCommands.getConnectionState().getCredentialsProvider().resolveCredentials().block()
-                    .getPassword()).isNull();
+            StatefulRedisConnectionImpl<String, String> connectionImpl = (StatefulRedisConnectionImpl<String, String>) connection;
+            assertThat(connectionImpl.getConnectionState().getCredentialsProvider().resolveCredentials().block().getPassword())
+                    .isNull();
         } finally {
-            async.getStatefulConnection().close();
+            connection.close();
         }
     }
 
@@ -308,48 +310,46 @@ class ConnectionCommandIntegrationTests extends TestSupport {
         WithPassword.run(client, () -> {
             client.setOptions(
                     ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false).build());
-            RedisCommands<String, String> connection = client.connect().sync();
+            try (StatefulRedisConnection<String, String> connection = client.connect()) {
+                RedisCommands<String, String> commands = connection.sync();
 
-            assertThat(connection.auth(username, passwd)).isEqualTo("OK");
+                assertThat(commands.auth(username, passwd)).isEqualTo("OK");
 
-            assertThatThrownBy(() -> connection.auth(username, "invalid"))
-                    .hasMessageContaining("WRONGPASS invalid username-password pair");
+                assertThatThrownBy(() -> commands.auth(username, "invalid"))
+                        .hasMessageContaining("WRONGPASS invalid username-password pair");
 
-            assertThat(connection.auth(aclUsername, aclPasswd)).isEqualTo("OK");
+                assertThat(commands.auth(aclUsername, aclPasswd)).isEqualTo("OK");
 
-            assertThatThrownBy(() -> connection.auth(aclUsername, "invalid"))
-                    .hasMessageContaining("WRONGPASS invalid username-password pair");
-
-            connection.getStatefulConnection().close();
+                assertThatThrownBy(() -> commands.auth(aclUsername, "invalid"))
+                        .hasMessageContaining("WRONGPASS invalid username-password pair");
+            }
         });
     }
 
     @Test
     @EnabledOnCommand("ACL")
     void authInvalidDefaultPasswordNoACL() {
-        RedisAsyncCommands<String, String> async = client.connect().async();
         // When the database is not secured the AUTH default invalid command returns OK
-        try {
+        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+            final RedisAsyncCommands<String, String> async = connection.async();
             Future<String> auth = async.auth(username, "invalid");
             assertThat(TestFutures.getOrTimeout(auth)).isEqualTo("OK");
-        } finally {
-            async.getStatefulConnection().close();
         }
     }
 
     @Test
     void authInvalidUsernamePasswordNoACL() {
-        RedisAsyncCommands<String, String> async = client.connect().async();
+        final StatefulRedisConnection<String, String> connection = client.connect();
         try {
+            final RedisAsyncCommands<String, String> async = connection.async();
             TestFutures.awaitOrTimeout(async.select(1024));
             fail("Selected invalid db index");
         } catch (RedisException e) {
             assertThat(e.getMessage()).startsWith("ERR");
-            StatefulRedisConnectionImpl<String, String> statefulRedisCommands = (StatefulRedisConnectionImpl) async
-                    .getStatefulConnection();
-            assertThat(statefulRedisCommands.getConnectionState()).extracting("db").isEqualTo(0);
+            final StatefulRedisConnectionImpl<String, String> connectionImpl = (StatefulRedisConnectionImpl<String, String>) connection;
+            assertThat(connectionImpl.getConnectionState()).extracting("db").isEqualTo(0);
         } finally {
-            async.getStatefulConnection().close();
+            connection.close();
         }
     }
 

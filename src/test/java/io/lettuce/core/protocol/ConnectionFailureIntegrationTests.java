@@ -21,9 +21,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.commons.util.ReflectionUtils;
-
-import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -41,6 +38,7 @@ import io.netty.channel.local.LocalAddress;
 
 /**
  * @author Mark Paluch
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -101,10 +99,9 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build();
         redisUri.setTimeout(Duration.ofSeconds(5));
 
-        try {
-            RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
-                    .getConnectionWatchdog(connection.getStatefulConnection());
+        try (final StatefulRedisConnection<String, String> cnxn = client.connect(redisUri)) {
+            RedisAsyncCommands<String, String> commands = cnxn.async();
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(cnxn);
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
             assertThat(connectionWatchdog.isReconnectSuspended()).isFalse();
@@ -113,15 +110,13 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
             redisUri.setPort(TestSettings.nonexistentPort());
 
-            connection.quit();
-            Wait.untilTrue(() -> connectionWatchdog.isReconnectSuspended()).waitOrTimeout();
+            commands.quit();
+            Wait.untilTrue(connectionWatchdog::isReconnectSuspended).waitOrTimeout();
 
             assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
 
-            assertThatThrownBy(() -> TestFutures.awaitOrTimeout(connection.info())).hasRootCauseInstanceOf(RedisException.class)
+            assertThatThrownBy(() -> TestFutures.awaitOrTimeout(commands.info())).hasRootCauseInstanceOf(RedisException.class)
                     .hasMessageContaining("Invalid first byte");
-
-            connection.getStatefulConnection().close();
         } finally {
             ts.shutdown();
         }
@@ -145,12 +140,11 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
         redisUri.setTimeout(Duration.ofSeconds(5));
 
-        try {
+        try (final StatefulRedisConnection<String, String> connection = client.connect(redisUri)) {
             final BlockingQueue<ConnectionEvents.Reconnect> events = new LinkedBlockingDeque<>();
 
-            RedisAsyncCommands<String, String> connection = client.connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
-                    .getConnectionWatchdog(connection.getStatefulConnection());
+            RedisAsyncCommands<String, String> commands = connection.async();
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection);
 
             ReconnectionListener reconnectionListener = events::offer;
 
@@ -160,9 +154,8 @@ class ConnectionFailureIntegrationTests extends TestSupport {
 
             redisUri.setPort(TestSettings.nonexistentPort());
 
-            connection.quit();
+            commands.quit();
             Wait.untilTrue(() -> events.size() > 1).waitOrTimeout();
-            connection.getStatefulConnection().close();
 
             ConnectionEvents.Reconnect event1 = events.take();
             assertThat(event1.getAttempt()).isEqualTo(1);
@@ -174,6 +167,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
             ts.shutdown();
         }
     }
+
 
     @Test
     void emitEventOnReconnectFailure() throws Exception {
@@ -188,23 +182,19 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         client.setOptions(
                 ClientOptions.builder().timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
-        try {
-            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
-                    .connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
-                    .getConnectionWatchdog(connection.getStatefulConnection());
+        try (final StatefulRedisConnection<String, String> connection = client.connect(redisUri)) {
+            RedisAsyncCommandsImpl<String, String> commands = (RedisAsyncCommandsImpl<String, String>) connection.async();
+            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection);
 
             redisUri.setPort(TestSettings.nonexistentPort());
 
             client.getResources().eventBus().get().subscribe(queue::add);
 
-            connection.quit();
-            Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
+            commands.quit();
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
             connectionWatchdog.run(0);
             Delay.delay(Duration.ofMillis(500));
-
-            connection.getStatefulConnection().close();
 
             assertThat(queue).isNotEmpty();
 

@@ -27,6 +27,7 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -58,15 +59,13 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
 
         assumeTrue(CanConnect.to(host(), port(1)));
 
-        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(1)).build())
-                .async();
-        try {
+        final RedisURI redisURI = RedisURI.Builder.redis(host(), port(1)).build();
+        try (final StatefulRedisConnection<String, String> cnxn = client.connect(redisURI)) {
+            final RedisAsyncCommands<String, String> commands = cnxn.async();
             commands.debugSegfault();
 
-            Wait.untilTrue(() -> !commands.getStatefulConnection().isOpen()).waitOrTimeout();
-            assertThat(commands.getStatefulConnection().isOpen()).isFalse();
-        } finally {
-            commands.getStatefulConnection().close();
+            Wait.untilTrue(() -> !cnxn.isOpen()).waitOrTimeout();
+            assertThat(cnxn.isOpen()).isFalse();
         }
     }
 
@@ -115,19 +114,14 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
     void shutdown() {
 
         assumeTrue(CanConnect.to(host(), port(7)));
-
-        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(2)).build())
-                .async();
-        try {
-
+        final RedisURI redisURI = RedisURI.Builder.redis(host(), port(2)).build();
+        try (final StatefulRedisConnection<String, String> cnxn = client.connect(redisURI)) {
+            final RedisAsyncCommands<String, String> commands = cnxn.async();
             commands.shutdown(true);
             commands.shutdown(false);
-            Wait.untilTrue(() -> !commands.getStatefulConnection().isOpen()).waitOrTimeout();
+            Wait.untilTrue(() -> !cnxn.isOpen()).waitOrTimeout();
 
-            assertThat(commands.getStatefulConnection().isOpen()).isFalse();
-
-        } finally {
-            commands.getStatefulConnection().close();
+            assertThat(cnxn.isOpen()).isFalse();
         }
     }
 
