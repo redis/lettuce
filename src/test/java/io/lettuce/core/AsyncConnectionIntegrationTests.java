@@ -44,6 +44,7 @@ import io.lettuce.test.TestFutures;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -51,16 +52,13 @@ class AsyncConnectionIntegrationTests extends TestSupport {
 
     private final RedisClient client;
 
-    private final StatefulRedisConnection<String, String> connection;
-
     private final RedisAsyncCommands<String, String> async;
 
     @Inject
     AsyncConnectionIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
         this.client = client;
-        this.connection = connection;
         this.async = connection.async();
-        this.connection.sync().flushall();
+        connection.sync().flushall();
     }
 
     @Test
@@ -121,8 +119,6 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         Delay.delay(Duration.ofMillis(100));
 
         assertThat(run).hasSize(1);
-
-        connection.getStatefulConnection().close();
     }
 
     @Test
@@ -130,14 +126,7 @@ class AsyncConnectionIntegrationTests extends TestSupport {
 
         final List<Object> run = new ArrayList<>();
 
-        Runnable listener = new Runnable() {
-
-            @Override
-            public void run() {
-                run.add(new Object());
-            }
-
-        };
+        Runnable listener = () -> run.add(new Object());
 
         RedisAsyncCommands<String, String> connection = client.connect().async();
 
@@ -147,8 +136,6 @@ class AsyncConnectionIntegrationTests extends TestSupport {
         set.thenRun(listener);
 
         assertThat(run).hasSize(1);
-
-        connection.getStatefulConnection().close();
     }
 
     @Test
