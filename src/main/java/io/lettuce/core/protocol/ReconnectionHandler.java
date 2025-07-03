@@ -157,10 +157,6 @@ class ReconnectionHandler {
                         return;
                     }
 
-                    if (clientOptions.isCancelCommandsOnReconnectFailure()) {
-                        connectionFacade.reset();
-                    }
-
                     if (clientOptions.isSuspendReconnectOnProtocolFailure()) {
 
                         logger.error("Disabling autoReconnect due to initialization failure", throwable);

@@ -130,9 +130,7 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         Builder builder = new Builder();
-        builder.autoReconnect(clientOptions.isAutoReconnect())
-                .cancelCommandsOnReconnectFailure(clientOptions.isCancelCommandsOnReconnectFailure())
-                .decodeBufferPolicy(clientOptions.getDecodeBufferPolicy())
+        builder.autoReconnect(clientOptions.isAutoReconnect()).decodeBufferPolicy(clientOptions.getDecodeBufferPolicy())
                 .disconnectedBehavior(clientOptions.getDisconnectedBehavior())
                 .reauthenticateBehavior(clientOptions.getReauthenticateBehaviour())
                 .pingBeforeActivateConnection(clientOptions.isPingBeforeActivateConnection())
@@ -190,20 +188,6 @@ public class ClusterClientOptions extends ClientOptions {
         @Deprecated
         public Builder bufferUsageRatio(int bufferUsageRatio) {
             super.bufferUsageRatio(bufferUsageRatio);
-            return this;
-        }
-
-        /**
-         *
-         * @param cancelCommandsOnReconnectFailure true/false
-         * @return
-         * @deprecated since 6.2, to be removed with 7.0. This feature is unsafe and may cause protocol offsets if true (i.e.
-         *             Redis commands are completed with previous command values).
-         */
-        @Override
-        @Deprecated
-        public Builder cancelCommandsOnReconnectFailure(boolean cancelCommandsOnReconnectFailure) {
-            super.cancelCommandsOnReconnectFailure(cancelCommandsOnReconnectFailure);
             return this;
         }
 
@@ -360,14 +344,14 @@ public class ClusterClientOptions extends ClientOptions {
 
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .reauthenticateBehavior(getReauthenticateBehaviour()).maxRedirects(getMaxRedirects())
-                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
-                .protocolVersion(getConfiguredProtocolVersion()).readOnlyCommands(getReadOnlyCommands())
-                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).socketOptions(getSocketOptions())
-                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
-                .timeoutOptions(getTimeoutOptions()).topologyRefreshOptions(getTopologyRefreshOptions())
+        builder.autoReconnect(isAutoReconnect()).decodeBufferPolicy(getDecodeBufferPolicy())
+                .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
+                .maxRedirects(getMaxRedirects()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
+                .readOnlyCommands(getReadOnlyCommands()).requestQueueSize(getRequestQueueSize())
+                .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
+                .topologyRefreshOptions(getTopologyRefreshOptions())
                 .validateClusterNodeMembership(isValidateClusterNodeMembership()).nodeFilter(getNodeFilter());
 
         return builder;
