@@ -321,6 +321,45 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(BITOP, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, Long> bitopDiff(K destination, K sourceKey, K... keys) {
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sourceKey, "Source key " + MUST_NOT_BE_NULL);
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(DIFF).addKey(destination).addKey(sourceKey).addKeys(keys);
+        return createCommand(BITOP, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> bitopDiff1(K destination, K sourceKey, K... keys) {
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sourceKey, "Source key " + MUST_NOT_BE_NULL);
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(DIFF1).addKey(destination).addKey(sourceKey).addKeys(keys);
+        return createCommand(BITOP, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> bitopAndor(K destination, K sourceKey, K... keys) {
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(sourceKey, "Source key " + MUST_NOT_BE_NULL);
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(ANDOR).addKey(destination).addKey(sourceKey).addKeys(keys);
+        return createCommand(BITOP, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> bitopOne(K destination, K... keys) {
+        LettuceAssert.notNull(destination, "Destination " + MUST_NOT_BE_NULL);
+        notEmpty(keys);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec);
+        args.add(ONE).addKey(destination).addKeys(keys);
+        return createCommand(BITOP, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, Long> bitpos(K key, boolean state) {
         notNullKey(key);
 
