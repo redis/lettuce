@@ -382,26 +382,6 @@ that the command would not be filtered out.</p>
 enabled.</p></td>
 </tr>
 <tr>
-<td>Cancel commands on reconnect failure</td>
-<td><code>cancelCommandsOnReconnectFailure</code></td>
-<td><code>false</code></td>
-</tr>
-<tr>
-<td colspan="3"><p>Since: 3.1, 4.0</p>
-<p><strong>This flag is deprecated and should not be used as it can lead
-to race conditions and protocol offsets. SSL is natively supported by
-Lettuce and does no longer requires the use of SSL tunnels where
-protocol traffic can get out of sync.</strong></p>
-<p>If this flag is <code>true</code> any queued commands will be
-canceled when a reconnect fails within the activation sequence. The
-reconnect itself has two phases: Socket connection and
-protocol/connection activation. In case a connect timeout occurs, a
-connection reset, host lookup fails, this does not affect the
-cancellation of commands. In contrast, where the protocol/connection
-activation fails due to SSL errors or PING before activating connection
-failure, queued commands are canceled.</p></td>
-</tr>
-<tr>
 <td>Policy how to reclaim decode buffer memory</td>
 <td><code>decodeBufferPolicy</code></td>
 <td><code>ratio-based at 75%</code></td>
