@@ -41,7 +41,8 @@ public class ClusterTopologyRefreshOptions {
     /** Since Lettuce 7.0 all adaptive triggers are enabled by default */
     public static final Set<RefreshTrigger> DEFAULT_ADAPTIVE_REFRESH_TRIGGERS = EnumSet.allOf(RefreshTrigger.class);
 
-    public static final long DEFAULT_ADAPTIVE_REFRESH_TIMEOUT = 30;
+    /** Since Lettuce 7.0 the default adaptive refresh timeout is 5 seconds */
+    public static final long DEFAULT_ADAPTIVE_REFRESH_TIMEOUT = 5;
 
     @Deprecated
     public static final TimeUnit DEFAULT_ADAPTIVE_REFRESH_TIMEOUT_UNIT = TimeUnit.SECONDS;
