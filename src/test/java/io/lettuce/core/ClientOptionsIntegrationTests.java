@@ -61,10 +61,13 @@ import io.netty.channel.Channel;
  * Integration tests for effects configured via {@link ClientOptions}.
  *
  * @author Mark Paluch
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 class ClientOptionsIntegrationTests extends TestSupport {
+
+    private static final TimeoutOptions DISABLE_COMMAND_TIMEOUT = TimeoutOptions.builder().timeoutCommands(false).build();
 
     private final RedisClient client;
 
@@ -94,46 +97,44 @@ class ClientOptionsIntegrationTests extends TestSupport {
 
     @Test
     void requestQueueSize() {
+        client.setOptions(ClientOptions.builder().requestQueueSize(10).timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+            getConnectionWatchdog(connection).setListenOnChannelInactive(false);
+            final RedisAsyncCommands<String, String> async = connection.async();
 
-        client.setOptions(ClientOptions.builder().requestQueueSize(10)
-                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+            async.quit();
 
-        StatefulRedisConnection<String, String> connection = client.connect();
-        getConnectionWatchdog(connection).setListenOnChannelInactive(false);
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
 
-        connection.async().quit();
+            for (int i = 0; i < 10; i++) {
+                connection.async().ping();
+            }
 
-        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
-
-        for (int i = 0; i < 10; i++) {
-            connection.async().ping();
+            assertThatThrownBy(() -> connection.async().ping().toCompletableFuture().join())
+                    .hasMessageContaining("Request queue size exceeded");
+            assertThatThrownBy(() -> connection.sync().ping()).hasMessageContaining("Request queue size exceeded");
         }
-
-        assertThatThrownBy(() -> connection.async().ping().toCompletableFuture().join())
-                .hasMessageContaining("Request queue size exceeded");
-        assertThatThrownBy(() -> connection.sync().ping()).hasMessageContaining("Request queue size exceeded");
-
-        connection.close();
     }
 
     @Test
     void requestQueueSizeAppliedForReconnect() {
-        client.setOptions(ClientOptions.builder().requestQueueSize(10)
-                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
-        final StatefulRedisConnection<String, String> connection = client.connect();
-        final RedisAsyncCommands<String, String> commands = connection.async();
-        testHitRequestQueueLimit(commands, connection);
+        client.setOptions(ClientOptions.builder().requestQueueSize(10).timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+            final RedisAsyncCommands<String, String> commands = connection.async();
+            testHitRequestQueueLimit(commands, connection);
+        }
     }
 
     @Test
     void testHitRequestQueueLimitReconnectWithAuthCommand() {
         WithPassword.run(client, () -> {
             client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false)
-                    .requestQueueSize(10).timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
-            final StatefulRedisConnection<String, String> connection = client.connect();
-            final RedisAsyncCommands<String, String> commands = connection.async();
-            commands.auth(passwd);
-            testHitRequestQueueLimit(commands, connection);
+                    .requestQueueSize(10).timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
+            try (StatefulRedisConnection<String, String> connection = client.connect()) {
+                final RedisAsyncCommands<String, String> commands = connection.async();
+                commands.auth(passwd);
+                testHitRequestQueueLimit(commands, connection);
+            }
         });
     }
 
@@ -142,37 +143,38 @@ class ClientOptionsIntegrationTests extends TestSupport {
     void testHitRequestQueueLimitReconnectWithAuthUsernamePasswordCommand() {
         WithPassword.run(client, () -> {
             client.setOptions(ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).pingBeforeActivateConnection(false)
-                    .requestQueueSize(10).timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
-            final StatefulRedisConnection<String, String> connection = client.connect();
-            final RedisAsyncCommands<String, String> commands = connection.async();
-            commands.auth(username, passwd);
-            testHitRequestQueueLimit(commands, connection);
+                    .requestQueueSize(10).timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
+            try (StatefulRedisConnection<String, String> connection = client.connect()) {
+                final RedisAsyncCommands<String, String> commands = connection.async();
+                commands.auth(username, passwd);
+                testHitRequestQueueLimit(commands, connection);
+            }
         });
     }
 
     @Test
     void testHitRequestQueueLimitReconnectWithUriAuth() {
         WithPassword.run(client, () -> {
-            client.setOptions(ClientOptions.builder().requestQueueSize(10)
-                    .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+            client.setOptions(ClientOptions.builder().requestQueueSize(10).timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
             final RedisURI redisURI = RedisURI.create(host, port);
             redisURI.setAuthentication(passwd);
-            final StatefulRedisConnection<String, String> connection = client.connect(redisURI);
-            final RedisAsyncCommands<String, String> commands = connection.async();
-            testHitRequestQueueLimit(commands, connection);
+            try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
+                final RedisAsyncCommands<String, String> commands = connection.async();
+                testHitRequestQueueLimit(commands, connection);
+            }
         });
     }
 
     @Test
     void testHitRequestQueueLimitReconnectWithUriAuthPingCommand() {
         WithPassword.run(client, () -> {
-            client.setOptions(ClientOptions.builder().requestQueueSize(10)
-                    .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+            client.setOptions(ClientOptions.builder().requestQueueSize(10).timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
             final RedisURI redisURI = RedisURI.create(host, port);
             redisURI.setAuthentication(passwd);
-            final StatefulRedisConnection<String, String> connection = client.connect(redisURI);
-            RedisAsyncCommands<String, String> commands = connection.async();
-            testHitRequestQueueLimit(commands, connection);
+            try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
+                final RedisAsyncCommands<String, String> commands = connection.async();
+                testHitRequestQueueLimit(commands, connection);
+            }
         });
     }
 
@@ -197,51 +199,47 @@ class ClientOptionsIntegrationTests extends TestSupport {
         for (RedisFuture<String> ping : pings) {
             assertThat(TestFutures.getOrTimeout(ping)).isEqualTo("PONG");
         }
-        connection.close();
     }
 
     @Test
     void requestQueueSizeOvercommittedReconnect() {
+        client.setOptions(ClientOptions.builder().requestQueueSize(10).timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
 
-        client.setOptions(ClientOptions.builder().requestQueueSize(10)
-                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
+            ConnectionWatchdog watchdog = getConnectionWatchdog(connection);
 
-        StatefulRedisConnection<String, String> connection = client.connect();
-        ConnectionWatchdog watchdog = getConnectionWatchdog(connection);
+            watchdog.setListenOnChannelInactive(false);
 
-        watchdog.setListenOnChannelInactive(false);
+            Queue<Object> buffer = getStack(connection);
+            List<RedisFuture<String>> pings = new ArrayList<>();
+            for (int i = 0; i < 11; i++) {
 
-        Queue<Object> buffer = getStack(connection);
-        List<RedisFuture<String>> pings = new ArrayList<>();
-        for (int i = 0; i < 11; i++) {
+                AsyncCommand<String, String, String> command = new AsyncCommand<>(
+                        new Command<>(CommandType.PING, new StatusOutput<>(StringCodec.UTF8)));
+                pings.add(command);
+                buffer.add(command);
+            }
 
-            AsyncCommand<String, String, String> command = new AsyncCommand<>(
-                    new Command<>(CommandType.PING, new StatusOutput<>(StringCodec.UTF8)));
-            pings.add(command);
-            buffer.add(command);
+            getChannel(connection).disconnect();
+
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+
+            watchdog.setListenOnChannelInactive(true);
+            watchdog.scheduleReconnect();
+
+            for (int i = 0; i < 10; i++) {
+                assertThat(TestFutures.getOrTimeout(pings.get(i))).isEqualTo("PONG");
+            }
+
+            assertThatThrownBy(() -> TestFutures.awaitOrTimeout(pings.get(10))).hasCauseInstanceOf(IllegalStateException.class)
+                    .hasMessage("java.lang.IllegalStateException: Queue full");
         }
-
-        getChannel(connection).disconnect();
-
-        Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
-
-        watchdog.setListenOnChannelInactive(true);
-        watchdog.scheduleReconnect();
-
-        for (int i = 0; i < 10; i++) {
-            assertThat(TestFutures.getOrTimeout(pings.get(i))).isEqualTo("PONG");
-        }
-
-        assertThatThrownBy(() -> TestFutures.awaitOrTimeout(pings.get(10))).hasCauseInstanceOf(IllegalStateException.class)
-                .hasMessage("java.lang.IllegalStateException: Queue full");
-
-        connection.close();
     }
 
     @Test
     void disconnectedWithoutReconnect() {
         client.setOptions(ClientOptions.builder().autoReconnect(false).build());
-        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
             RedisAsyncCommands<String, String> commands = connection.async();
             commands.quit();
             Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
@@ -254,8 +252,8 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Test
     void disconnectedRejectCommands() {
         client.setOptions(ClientOptions.builder().disconnectedBehavior(ClientOptions.DisconnectedBehavior.REJECT_COMMANDS)
-                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
-        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+                .timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
             RedisAsyncCommands<String, String> commands = connection.async();
             getConnectionWatchdog(connection).setListenOnChannelInactive(false);
             commands.quit();
@@ -270,7 +268,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
     void disconnectedAcceptCommands() {
         client.setOptions(ClientOptions.builder().autoReconnect(false)
                 .disconnectedBehavior(ClientOptions.DisconnectedBehavior.ACCEPT_COMMANDS).build());
-        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
             RedisAsyncCommands<String, String> commands = connection.async();
             commands.quit();
             Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
@@ -282,7 +280,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
     @Inject
     void pingBeforeConnect(StatefulRedisConnection<String, String> sharedConnection) {
         sharedConnection.sync().set(key, value);
-        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
             RedisCommands<String, String> commands = connection.sync();
             String result = commands.get(key);
             assertThat(result).isEqualTo(value);
@@ -311,7 +309,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
     void connectWithAuthentication() {
         WithPassword.run(client, () -> {
             RedisURI redisURI = RedisURI.Builder.redis(host, port).withPassword(passwd).build();
-            try (final StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
+            try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
                 final RedisCommands<String, String> commands = connection.sync();
                 String result = commands.info();
                 assertThat(result).contains("memory");
@@ -345,7 +343,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
         WithPassword.run(client, () -> {
             RedisURI redisURI = RedisURI.Builder.redis(host, 6443).withPassword(passwd).withVerifyPeer(false).withSsl(true)
                     .build();
-            try (final StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
+            try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
                 final RedisCommands<String, String> commands = connection.sync();
                 String result = commands.info();
                 assertThat(result).contains("memory");
@@ -440,8 +438,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
 
     @Test
     void pingBeforeConnectWithQueuedCommandsAndReconnect() throws Exception {
-        client.setOptions(
-                ClientOptions.builder().timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+        client.setOptions(ClientOptions.builder().timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
         StatefulRedisConnection<String, String> controlConnection = client.connect();
 
         StatefulRedisConnection<String, String> redisConnection = client.connect(RedisURI.create("redis://localhost:6479/5"));
@@ -483,8 +480,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
         WithPassword.run(client, () -> {
 
             RedisURI redisURI = RedisURI.Builder.redis(host, port).withPassword(passwd).withDatabase(5).build();
-            client.setOptions(
-                    ClientOptions.builder().timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+            client.setOptions(ClientOptions.builder().timeoutOptions(DISABLE_COMMAND_TIMEOUT).build());
             StatefulRedisConnection<String, String> controlConnection = client.connect(redisURI);
 
             StatefulRedisConnection<String, String> redisConnection = client.connect(redisURI);

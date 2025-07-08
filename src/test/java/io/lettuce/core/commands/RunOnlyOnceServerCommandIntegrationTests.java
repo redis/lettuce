@@ -36,15 +36,11 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
 
-    private final StatefulRedisConnection<String, String> connection;
-
     private final RedisCommands<String, String> redis;
 
     @Inject
     RunOnlyOnceServerCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
-
         this.client = client;
-        this.connection = connection;
         this.redis = connection.sync();
     }
 
@@ -56,16 +52,14 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
     @Disabled
     @Order(1)
     void debugSegfault() {
-
         assumeTrue(CanConnect.to(host(), port(1)));
-
         final RedisURI redisURI = RedisURI.Builder.redis(host(), port(1)).build();
-        try (final StatefulRedisConnection<String, String> cnxn = client.connect(redisURI)) {
-            final RedisAsyncCommands<String, String> commands = cnxn.async();
+        try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
+            final RedisAsyncCommands<String, String> commands = connection.async();
             commands.debugSegfault();
 
-            Wait.untilTrue(() -> !cnxn.isOpen()).waitOrTimeout();
-            assertThat(cnxn.isOpen()).isFalse();
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+            assertThat(connection.isOpen()).isFalse();
         }
     }
 
@@ -112,10 +106,9 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
     @Test
     @Order(4)
     void shutdown() {
-
         assumeTrue(CanConnect.to(host(), port(7)));
         final RedisURI redisURI = RedisURI.Builder.redis(host(), port(2)).build();
-        try (final StatefulRedisConnection<String, String> cnxn = client.connect(redisURI)) {
+        try (StatefulRedisConnection<String, String> cnxn = client.connect(redisURI)) {
             final RedisAsyncCommands<String, String> commands = cnxn.async();
             commands.shutdown(true);
             commands.shutdown(false);

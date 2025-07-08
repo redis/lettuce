@@ -42,14 +42,14 @@ class ConnectMethodsIntegrationTests {
 
     @Test
     void standaloneAsync() {
-        try(final StatefulRedisConnection<String, String> connection = redisClient.connect()) {
+        try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
             connection.async();
         }
     }
 
     @Test
     void standaloneReactive() {
-        try(final StatefulRedisConnection<String, String> connection = redisClient.connect()) {
+        try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
             connection.reactive();
         }
     }
@@ -83,21 +83,21 @@ class ConnectMethodsIntegrationTests {
     // Sentinel
     @Test
     void sentinelSync() {
-        try(final StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel()) {
+        try (StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel()) {
             connection.sync();
         }
     }
 
     @Test
     void sentinelAsync() {
-        try(final StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel()) {
+        try (StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel()) {
             connection.async();
         }
     }
 
     @Test
     void sentinelReactive() {
-        try(final StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel()) {
+        try (StatefulRedisSentinelConnection<String, String> connection = redisClient.connectSentinel()) {
             connection.reactive();
         }
     }
@@ -110,21 +110,21 @@ class ConnectMethodsIntegrationTests {
     // Cluster
     @Test
     void clusterSync() {
-        try(final StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
+        try (StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
             connection.sync();
         }
     }
 
     @Test
     void clusterAsync() {
-        try(final StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
+        try (StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
             connection.async();
         }
     }
 
     @Test
     void clusterReactive() {
-        try(final StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
+        try (StatefulRedisClusterConnection<String, String> connection = clusterClient.connect()) {
             connection.reactive();
         }
     }
@@ -136,21 +136,21 @@ class ConnectMethodsIntegrationTests {
 
     @Test
     void clusterPubSubSync() {
-        try(final StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub()) {
+        try (StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub()) {
             connection.sync();
         }
     }
 
     @Test
     void clusterPubSubAsync() {
-        try(final StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub()) {
+        try (StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub()) {
             connection.async();
         }
     }
 
     @Test
     void clusterPubSubReactive() {
-        try(final StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub()) {
+        try (StatefulRedisClusterPubSubConnection<String, String> connection = clusterClient.connectPubSub()) {
             connection.reactive();
         }
     }
@@ -163,26 +163,26 @@ class ConnectMethodsIntegrationTests {
     // Advanced Cluster
     @Test
     void advancedClusterSync() {
-        StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect();
-        RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
-        statefulConnection.getConnection(uri.getHost(), uri.getPort()).sync();
-        statefulConnection.close();
+        try (StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect()) {
+            RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
+            statefulConnection.getConnection(uri.getHost(), uri.getPort()).sync();
+        }
     }
 
     @Test
     void advancedClusterAsync() {
-        StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect();
-        RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
-        statefulConnection.getConnection(uri.getHost(), uri.getPort()).sync();
-        statefulConnection.close();
+        try (StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect()) {
+            RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
+            statefulConnection.getConnection(uri.getHost(), uri.getPort()).sync();
+        }
     }
 
     @Test
     void advancedClusterReactive() {
-        StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect();
-        RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
-        statefulConnection.getConnection(uri.getHost(), uri.getPort()).reactive();
-        statefulConnection.close();
+        try (StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect()) {
+            RedisURI uri = clusterClient.getPartitions().getPartition(0).getUri();
+            statefulConnection.getConnection(uri.getHost(), uri.getPort()).reactive();
+        }
     }
 
     @Test
@@ -193,9 +193,9 @@ class ConnectMethodsIntegrationTests {
     // Cluster node selection
     @Test
     void nodeSelectionClusterAsync() {
-        StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect();
-        AsyncNodeSelection<String, String> masters = statefulConnection.async().masters();
-        statefulConnection.close();
+        try (StatefulRedisClusterConnection<String, String> statefulConnection = clusterClient.connect()) {
+            AsyncNodeSelection<String, String> masters = statefulConnection.async().masters();
+        }
     }
 
 }
