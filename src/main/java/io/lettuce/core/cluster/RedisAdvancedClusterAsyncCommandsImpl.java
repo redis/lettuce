@@ -148,22 +148,22 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
             RedisURI uri = redisClusterNode.getUri();
 
-            CompletableFuture<RedisClusterAsyncCommands<K, V>> byNodeId = getConnectionAsync(redisClusterNode.getNodeId());
+            CompletableFuture<StatefulRedisConnection<K, V>> byNodeId = getStatefulConnection(redisClusterNode.getNodeId());
 
             executions.put("NodeId: " + redisClusterNode.getNodeId(), byNodeId.thenCompose(c -> {
 
                 if (c.isOpen()) {
-                    return c.clientSetname(name);
+                    return c.async().clientSetname(name);
                 }
                 return ok;
             }));
 
-            CompletableFuture<RedisClusterAsyncCommands<K, V>> byHost = getConnectionAsync(uri.getHost(), uri.getPort());
+            CompletableFuture<StatefulRedisConnection<K, V>> byHost = getStatefulConnection(uri.getHost(), uri.getPort());
 
             executions.put("HostAndPort: " + redisClusterNode.getNodeId(), byHost.thenCompose(c -> {
 
                 if (c.isOpen()) {
-                    return c.clientSetname(name);
+                    return c.async().clientSetname(name);
                 }
                 return ok;
             }));
@@ -596,9 +596,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return getStatefulConnection().getConnection(host, port).async();
     }
 
-    private CompletableFuture<RedisClusterAsyncCommands<K, V>> getConnectionAsync(String nodeId) {
-        return getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, nodeId)
-                .thenApply(StatefulRedisConnection::async);
+    private CompletableFuture<StatefulRedisConnection<K, V>> getStatefulConnection(String nodeId) {
+        return getConnectionProvider().getConnectionAsync(ConnectionIntent.WRITE, nodeId);
+    }
+
+    private CompletableFuture<StatefulRedisConnection<K, V>> getStatefulConnection(String host, int port) {
+        return getConnectionProvider().getConnectionAsync(ConnectionIntent.WRITE, host, port);
     }
 
     private CompletableFuture<RedisClusterAsyncCommands<K, V>> getConnectionAsync(String host, int port) {
