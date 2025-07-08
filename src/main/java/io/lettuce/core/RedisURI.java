@@ -1769,26 +1769,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         /**
          * Configures authentication. Empty password is supported (although not recommended for security reasons).
-         * <p>
-         * This method is deprecated as of Lettuce 6.0. The reason is that {@link String} has a strong caching affinity and the
-         * JVM cannot easily GC {@code String} instances. Therefore, we suggest using either {@code char[]} or a custom
-         * {@link CharSequence} (e.g. {@link StringBuilder} or netty's {@link io.netty.util.AsciiString}).
-         *
-         * @param password the password
-         * @return the builder
-         * @deprecated since 6.0. Use {@link #withPassword(CharSequence)} or {@link #withPassword(char[])} to avoid String
-         *             caching.
-         */
-        @Deprecated
-        public Builder withPassword(String password) {
-
-            LettuceAssert.notNull(password, "Password must not be null");
-
-            return withPassword(password.toCharArray());
-        }
-
-        /**
-         * Configures authentication. Empty password is supported (although not recommended for security reasons).
          *
          * @param password the password
          * @return the builder
