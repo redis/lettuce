@@ -492,10 +492,6 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> commandBuilder.clientUnblock(id, type));
     }
 
-    public void close() {
-        connection.close();
-    }
-
     @Override
     public Mono<String> clusterAddSlots(int... slots) {
         return createMono(() -> commandBuilder.clusterAddslots(slots));
@@ -1178,11 +1174,6 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public void flushCommands() {
-        connection.flushCommands();
-    }
-
-    @Override
     public Mono<String> flushall() {
         return createMono(commandBuilder::flushall);
     }
@@ -1616,11 +1607,6 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> info(String section) {
         return createMono(() -> commandBuilder.info(section));
-    }
-
-    @Override
-    public boolean isOpen() {
-        return connection.isOpen();
     }
 
     @Override
@@ -2686,11 +2672,6 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<V> setGet(K key, V value, SetArgs setArgs) {
         return createMono(() -> commandBuilder.setGet(key, value, setArgs));
-    }
-
-    @Override
-    public void setAutoFlushCommands(boolean autoFlush) {
-        connection.setAutoFlushCommands(autoFlush);
     }
 
     @Override
