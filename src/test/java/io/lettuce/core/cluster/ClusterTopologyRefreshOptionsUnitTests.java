@@ -25,6 +25,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
         ClusterTopologyRefreshOptions options = ClusterTopologyRefreshOptions.builder()//
                 .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.MINUTES)//
                 .dynamicRefreshSources(false) //
+                .disableAllAdaptiveRefreshTriggers()//
                 .enableAdaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//
                 .adaptiveRefreshTriggersTimeout(15, TimeUnit.MILLISECONDS)//
                 .closeStaleConnections(false)//
@@ -46,6 +47,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
         ClusterTopologyRefreshOptions master = ClusterTopologyRefreshOptions.builder()//
                 .enablePeriodicRefresh(true).refreshPeriod(10, TimeUnit.MINUTES)//
                 .dynamicRefreshSources(false) //
+                .disableAllAdaptiveRefreshTriggers()//
                 .enableAdaptiveRefreshTrigger(RefreshTrigger.MOVED_REDIRECT)//
                 .adaptiveRefreshTriggersTimeout(15, TimeUnit.MILLISECONDS)//
                 .closeStaleConnections(false)//
