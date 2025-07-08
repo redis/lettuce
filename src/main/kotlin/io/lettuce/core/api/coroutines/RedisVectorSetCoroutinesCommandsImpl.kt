@@ -27,7 +27,6 @@ import kotlinx.coroutines.reactive.asFlow
  * @since 6.7
  */
 @ExperimentalLettuceCoroutinesApi
-
 internal class RedisVectorSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisVectorSetReactiveCommands<K, V>) :
     RedisVectorSetCoroutinesCommands<K, V> {
 
