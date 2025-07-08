@@ -1531,11 +1531,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public boolean isOpen() {
-        return connection.isOpen();
-    }
-
-    @Override
     public RedisFuture<List<Long>> jsonArrappend(K key, JsonPath jsonPath, JsonValue... values) {
         return dispatch(jsonCommandBuilder.jsonArrappend(key, jsonPath, values));
     }
