@@ -66,7 +66,7 @@ class AtMostOnceIntegrationTests {
 
     @BeforeEach
     void before() {
-        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
             RedisCommands<String, String> command = connection.sync();
             command.flushall();
             command.flushdb();
@@ -100,7 +100,7 @@ class AtMostOnceIntegrationTests {
 
     @Test
     void basicOperations() {
-        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
             RedisCommands<String, String> command = connection.sync();
 
             command.set(key, "1");
@@ -294,7 +294,7 @@ class AtMostOnceIntegrationTests {
 
     @Test
     void commandsCancelledOnDisconnect() {
-        try (final StatefulRedisConnection<String, String> connection = client.connect()) {
+        try (StatefulRedisConnection<String, String> connection = client.connect()) {
 
             RedisAsyncCommands<String, String> async = connection.async();
             connection.setAutoFlushCommands(false);

@@ -19,27 +19,26 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.TestTags.INTEGRATION_TEST;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
-
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.test.Delay;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.TestFutures;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import javax.enterprise.inject.New;
+import javax.inject.Inject;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Will Glozer
@@ -50,13 +49,10 @@ import io.lettuce.test.TestFutures;
 @ExtendWith(LettuceExtension.class)
 class AsyncConnectionIntegrationTests extends TestSupport {
 
-    private final RedisClient client;
-
     private final RedisAsyncCommands<String, String> async;
 
     @Inject
-    AsyncConnectionIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
-        this.client = client;
+    AsyncConnectionIntegrationTests(@New final StatefulRedisConnection<String, String> connection) {
         this.async = connection.async();
         connection.sync().flushall();
     }
@@ -92,28 +88,22 @@ class AsyncConnectionIntegrationTests extends TestSupport {
 
     @Test
     void futureListener() {
-
-        final List<Object> run = new ArrayList<>();
-
-        Runnable listener = () -> run.add(new Object());
-
-        List<RedisFuture<?>> futures = new ArrayList<>();
-
+        // using 'key' causes issues for some strange reason so using a fresh key
+        final String listKey = "list:" + key;
+        final List<RedisFuture<?>> futures = new ArrayList<>();
         for (int i = 0; i < 1000; i++) {
-            futures.add(async.lpush(key, "" + i));
+            futures.add(async.lpush(listKey, "" + i));
         }
-
         TestFutures.awaitOrTimeout(futures);
 
-        RedisAsyncCommands<String, String> connection = client.connect().async();
-
-        Long len = TestFutures.getOrTimeout(connection.llen(key));
+        Long len = TestFutures.getOrTimeout(async.llen(listKey));
         assertThat(len.intValue()).isEqualTo(1000);
 
-        RedisFuture<List<String>> sort = connection.sort(key);
+        RedisFuture<List<String>> sort = async.sort(listKey);
         assertThat(sort.isCancelled()).isFalse();
 
-        sort.thenRun(listener);
+        final List<Object> run = new ArrayList<>();
+        sort.thenRun(() -> run.add(new Object()));
 
         TestFutures.awaitOrTimeout(sort);
         Delay.delay(Duration.ofMillis(100));
@@ -123,17 +113,11 @@ class AsyncConnectionIntegrationTests extends TestSupport {
 
     @Test
     void futureListenerCompleted() {
-
-        final List<Object> run = new ArrayList<>();
-
-        Runnable listener = () -> run.add(new Object());
-
-        RedisAsyncCommands<String, String> connection = client.connect().async();
-
-        RedisFuture<String> set = connection.set(key, value);
+        final RedisFuture<String> set = async.set(key, value);
         TestFutures.awaitOrTimeout(set);
 
-        set.thenRun(listener);
+        final List<Object> run = new ArrayList<>();
+        set.thenRun(() -> run.add(new Object()));
 
         assertThat(run).hasSize(1);
     }

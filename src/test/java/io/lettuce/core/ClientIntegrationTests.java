@@ -50,7 +50,6 @@ class ClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    @Inject
     void close() {
         connection.close();
         assertThatThrownBy(() -> connection.sync().get(key)).isInstanceOf(RedisException.class);
@@ -135,13 +134,9 @@ class ClientIntegrationTests extends TestSupport {
 
     @Test
     void interrupt() {
-
-        StatefulRedisConnection<String, String> connection = client.connect();
         Thread.currentThread().interrupt();
         assertThatThrownBy(() -> connection.sync().blpop(0, key)).isInstanceOf(RedisCommandInterruptedException.class);
-        Thread.interrupted();
-
-        connection.closeAsync();
+        assertThat(Thread.interrupted()).isTrue();
     }
 
     @Test
@@ -197,40 +192,34 @@ class ClientIntegrationTests extends TestSupport {
 
     @Test
     void standaloneConnectionShouldSetClientName() {
-
-        RedisURI redisURI = RedisURI.create(host, port);
+        final RedisURI redisURI = RedisURI.create(host, port);
         redisURI.setClientName("my-client");
+        try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
 
-        StatefulRedisConnection<String, String> connection = client.connect(redisURI);
+            assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
-        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+            connection.sync().quit();
+            Delay.delay(Duration.ofMillis(100));
+            Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
-        connection.sync().quit();
-        Delay.delay(Duration.ofMillis(100));
-        Wait.untilTrue(connection::isOpen).waitOrTimeout();
-
-        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
-
-        connection.close();
+            assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+        }
     }
 
     @Test
     void pubSubConnectionShouldSetClientName() {
-
-        RedisURI redisURI = RedisURI.create(host, port);
+        final RedisURI redisURI = RedisURI.create(host, port);
         redisURI.setClientName("my-client");
+        try (StatefulRedisConnection<String, String> connection = client.connectPubSub(redisURI)) {
 
-        StatefulRedisConnection<String, String> connection = client.connectPubSub(redisURI);
+            assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
 
-        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+            connection.sync().quit();
+            Delay.delay(Duration.ofMillis(100));
+            Wait.untilTrue(connection::isOpen).waitOrTimeout();
 
-        connection.sync().quit();
-        Delay.delay(Duration.ofMillis(100));
-        Wait.untilTrue(connection::isOpen).waitOrTimeout();
-
-        assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
-
-        connection.close();
+            assertThat(connection.sync().clientGetname()).isEqualTo(redisURI.getClientName());
+        }
     }
 
 }

@@ -89,7 +89,6 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     AdvancedClusterClientIntegrationTests(RedisClusterClient clusterClient,
             StatefulRedisClusterConnection<String, String> clusterConnection) {
         this.clusterClient = clusterClient;
-
         this.clusterConnection = clusterConnection;
         this.async = clusterConnection.async();
         this.sync = clusterConnection.sync();
@@ -235,7 +234,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
             expectation.add(kv(key, "value-" + key));
         }
 
-        List<KeyValue<String, String>> result = sync.mget(keys.toArray(new String[keys.size()]));
+        List<KeyValue<String, String>> result = sync.mget(keys.toArray(new String[0]));
 
         assertThat(result).hasSize(keys.size());
         assertThat(result).isEqualTo(expectation);
@@ -257,7 +256,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         List<String> keys = prepareKeys();
 
-        Long result = sync.del(keys.toArray(new String[keys.size()]));
+        Long result = sync.del(keys.toArray(new String[0]));
 
         assertThat(result).isEqualTo(25);
 
@@ -284,7 +283,7 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
 
         List<String> keys = prepareKeys();
 
-        Long result = sync.unlink(keys.toArray(new String[keys.size()]));
+        Long result = sync.unlink(keys.toArray(new String[0]));
 
         assertThat(result).isEqualTo(25);
 

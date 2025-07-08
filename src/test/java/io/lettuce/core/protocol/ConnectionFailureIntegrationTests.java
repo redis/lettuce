@@ -99,7 +99,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         RedisURI redisUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).build();
         redisUri.setTimeout(Duration.ofSeconds(5));
 
-        try (final StatefulRedisConnection<String, String> cnxn = client.connect(redisUri)) {
+        try (StatefulRedisConnection<String, String> cnxn = client.connect(redisUri)) {
             RedisAsyncCommands<String, String> commands = cnxn.async();
             ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(cnxn);
 
@@ -140,7 +140,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
         redisUri.setTimeout(Duration.ofSeconds(5));
 
-        try (final StatefulRedisConnection<String, String> connection = client.connect(redisUri)) {
+        try (StatefulRedisConnection<String, String> connection = client.connect(redisUri)) {
             final BlockingQueue<ConnectionEvents.Reconnect> events = new LinkedBlockingDeque<>();
 
             RedisAsyncCommands<String, String> commands = connection.async();
@@ -182,7 +182,7 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         client.setOptions(
                 ClientOptions.builder().timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
-        try (final StatefulRedisConnection<String, String> connection = client.connect(redisUri)) {
+        try (StatefulRedisConnection<String, String> connection = client.connect(redisUri)) {
             RedisAsyncCommandsImpl<String, String> commands = (RedisAsyncCommandsImpl<String, String>) connection.async();
             ConnectionWatchdog connectionWatchdog = ConnectionTestUtil.getConnectionWatchdog(connection);
 
