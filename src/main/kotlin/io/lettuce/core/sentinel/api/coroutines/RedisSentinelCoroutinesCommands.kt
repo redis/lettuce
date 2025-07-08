@@ -246,11 +246,5 @@ interface RedisSentinelCoroutinesCommands<K : Any, V : Any> {
      */
     fun <T : Any> dispatch(type: ProtocolKeyword, output: CommandOutput<K, V, T>, args: CommandArgs<K, V>): Flow<T>
 
-    /**
-     *
-     * @return @code true} if the connection is open (connected and not closed).
-     */
-    fun isOpen(): Boolean
-
 }
 

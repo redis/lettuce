@@ -249,12 +249,6 @@ public interface RedisSentinelCommands<K, V> {
 
     /**
      *
-     * @return {@code true} if the connection is open (connected and not closed).
-     */
-    boolean isOpen();
-
-    /**
-     *
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();

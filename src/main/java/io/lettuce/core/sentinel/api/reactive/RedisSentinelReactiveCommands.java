@@ -250,11 +250,6 @@ public interface RedisSentinelReactiveCommands<K, V> {
     <T> Flux<T> dispatch(ProtocolKeyword type, CommandOutput<K, V, ?> output, CommandArgs<K, V> args);
 
     /**
-     * @return {@code true} if the connection is open (connected and not closed).
-     */
-    boolean isOpen();
-
-    /**
      * @return the underlying connection.
      */
     StatefulRedisSentinelConnection<K, V> getStatefulConnection();
