@@ -3,6 +3,7 @@ package io.lettuce.scenario;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,8 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.push.PushListener;
+import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.protocol.RedisCommand;
@@ -56,7 +59,7 @@ public class MaintenanceNotificationTest {
 
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
 
-    private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofSeconds(90);
 
     private static Endpoint mStandard;
 
@@ -152,7 +155,10 @@ public class MaintenanceNotificationTest {
                 .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
 
         RedisClient client = RedisClient.create(uri);
-        client.setOptions(RecommendedSettingsProvider.forConnectionInterruption());
+
+        // Configure client for RESP3 to receive push notifications
+        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build();
+        client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisReactiveCommands<String, String> reactive = connection.reactive();
@@ -164,13 +170,19 @@ public class MaintenanceNotificationTest {
         // hook into the protocol layer to capture push notifications
         setupPushNotificationMonitoring(connection, capture);
 
-        // Trigger endpoint rebind to generate MOVING notification
+        // Trigger MOVING notification using the proper two-step process:
+        // 1. Migrate all shards from source node to target node (making it empty)
+        // 2. Bind endpoint to trigger MOVING notification
         String bdbId = String.valueOf(mStandard.getBdbId());
         String endpointId = clusterConfig.getFirstEndpointId(); // Dynamically discovered endpoint ID
         String policy = "single"; // M-Standard uses single policy
+        String sourceNode = clusterConfig.getSourceNodeId(); // Dynamically discovered source node
+        String targetNode = clusterConfig.getTargetNodeId(); // Dynamically discovered target node
 
-        log.info("Triggering endpoint rebind for MOVING notification...");
-        StepVerifier.create(faultClient.triggerEndpointRebind(bdbId, endpointId, policy)).expectNext(true).verifyComplete();
+        log.info("Triggering MOVING notification using proper two-step process...");
+        log.info("Using dynamic nodes: source={}, target={}", sourceNode, targetNode);
+        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode))
+                .expectNext(true).verifyComplete();
 
         // Wait for MOVING notification
         boolean received = capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
@@ -423,129 +435,130 @@ public class MaintenanceNotificationTest {
     }
 
     /**
-     * Setup push notification monitoring using RESP3 protocol to capture REAL Redis Enterprise push notifications.
-     * Push notifications come as unsolicited responses before command responses, like:
-     * 
-     * > ping
-     * 1) "MOVING"
-     * 2) (integer) 30  
-     * 3) "192.168.1.7:13511"
-     * PONG
+     * Setup push notification monitoring to capture REAL RESP3 push messages. Real format from ping: ["MOVING", 30,
+     * "10.0.101.250:12000"] comes BEFORE "PONG"
      */
     private void setupPushNotificationMonitoring(StatefulRedisConnection<String, String> connection,
             NotificationCapture capture) {
-        log.info("Setting up REAL Redis Enterprise push notification monitoring...");
-        
+        log.info("Setting up REAL RESP3 push notification monitoring using PushListener...");
+
         try {
-            // Create a connection specifically for push notifications
-            RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword())
-                .build();
-            
-            RedisClient pushClient = RedisClient.create(uri);
-            
-            // Configure client options to enable RESP3 protocol for push notifications
-            ClientOptions options = ClientOptions.builder()
-                .protocolVersion(ProtocolVersion.RESP3)
-                .build();
-            pushClient.setOptions(options);
-            
-            // Create connection with RESP3 enabled
-            StatefulRedisConnection<String, String> pushConnection = pushClient.connect();
-            
-            log.info("RESP3 connection established for push notification monitoring");
-            
-            // Set up continuous monitoring for push notifications
-            Disposable monitoring = Flux.interval(Duration.ofMillis(500))
-                .take(Duration.ofSeconds(45)) // Monitor for 45 seconds to catch notifications
-                .flatMap(i -> {
-                    // Send ping commands and monitor for push notifications in responses/errors
-                    return pushConnection.reactive().ping()
-                        .timeout(Duration.ofSeconds(2))
-                        .doOnNext(response -> {
-                            log.debug("Ping #{} response: {}", i, response);
-                        })
-                        .doOnError(error -> {
-                            log.debug("Ping #{} error: {}", i, error.getMessage());
-                            // Check if error contains push notification data
-                            String errorMsg = error.getMessage();
-                            if (errorMsg != null && containsPushNotification(errorMsg)) {
-                                String notification = extractPushNotificationFromMessage(errorMsg);
-                                if (notification != null) {
-                                    log.info("REAL push notification captured from error: {}", notification);
-                                    capture.captureNotification(notification);
-                                }
+            // Register a custom PushListener to capture MOVING messages
+            // This is the proper way to handle RESP3 push messages in Lettuce
+            PushListener movingListener = new PushListener() {
+
+                @Override
+                public void onPushMessage(PushMessage message) {
+                    String messageType = message.getType();
+                    log.info("*** PUSH MESSAGE RECEIVED: type='{}' ***", messageType);
+
+                    if ("MOVING".equals(messageType)) {
+                        log.info("*** MOVING push message captured! ***");
+                        List<Object> content = message.getContent();
+
+                        // MOVING message format: ["MOVING", slot_number, "IP:PORT"]
+                        log.info("MOVING message content: {}", content);
+
+                        if (content.size() >= 3) {
+                            String slotNumber = content.get(1).toString();
+
+                            // Decode the ByteBuffer to get the actual IP address
+                            String newAddress;
+                            Object addressObj = content.get(2);
+                            if (addressObj instanceof ByteBuffer) {
+                                ByteBuffer addressBuffer = (ByteBuffer) addressObj;
+                                newAddress = io.lettuce.core.codec.StringCodec.UTF8.decodeKey(addressBuffer);
+                            } else {
+                                newAddress = addressObj.toString();
                             }
-                        })
-                        .onErrorResume(e -> Mono.empty()); // Continue monitoring even if ping fails
-                })
-                .doOnComplete(() -> {
-                    log.info("Push notification monitoring completed");
-                    pushConnection.close();
-                    pushClient.shutdown();
-                })
-                .subscribe();
-                
-            log.info("Real-time push notification monitoring started for 45 seconds");
-            
+
+                            log.info("MOVING: slot {} -> {}", slotNumber, newAddress);
+
+                            // Create RESP3 representation for capture
+                            String resp3Format = String.format(">3\r\n+MOVING\r\n:%s\r\n+%s\r\n", slotNumber, newAddress);
+                            capture.captureNotification(resp3Format);
+                        }
+                    } else {
+                        log.info("Other push message: type={}, content={}", messageType, message.getContent());
+                    }
+                }
+
+            };
+
+            // Add the listener to the connection's endpoint
+            connection.addListener(movingListener);
+            log.info("PushListener registered for MOVING messages");
+
+            // Also trigger some activity to encourage MOVING messages
+            RedisReactiveCommands<String, String> reactive = connection.reactive();
+
+            // Send periodic pings to trigger any pending MOVING notifications
+            Disposable monitoring = Flux.interval(Duration.ofMillis(5000)).take(Duration.ofSeconds(120)) // Monitor for 2
+                                                                                                         // minutes
+                    .doOnNext(i -> {
+                        log.info("=== Ping #{} - Activity to trigger MOVING push messages ===", i);
+                    }).flatMap(i -> {
+                        return reactive.ping().timeout(Duration.ofSeconds(10)).doOnNext(response -> {
+                            log.info("Ping #{} response: '{}'", i, response);
+                        }).onErrorResume(e -> {
+                            log.debug("Ping #{} failed, continuing: {}", i, e.getMessage());
+                            return Mono.empty();
+                        });
+                    }).doOnComplete(() -> {
+                        log.info("Push notification monitoring completed");
+                    }).subscribe();
+
+            log.info("Push notification monitoring active with PushListener");
+
         } catch (Exception e) {
-            log.error("Failed to set up real push notification monitoring: {}", e.getMessage(), e);
-            // Fall back to connection state monitoring as alternative
+            log.error("Failed to set up RESP3 push notification monitoring: {}", e.getMessage(), e);
             setupConnectionStateMonitoring(connection, capture);
         }
     }
-    
+
     /**
-     * Alternative monitoring approach: Watch for connection state changes and Redis errors
-     * that might indicate push notifications or maintenance events
+     * Alternative monitoring approach: Watch for connection state changes and Redis errors that might indicate push
+     * notifications or maintenance events
      */
     private void setupConnectionStateMonitoring(StatefulRedisConnection<String, String> connection,
             NotificationCapture capture) {
         log.info("Setting up connection state monitoring as fallback...");
-        
+
         // Monitor connection for errors that might contain push notification data
-        Disposable monitoring = Flux.interval(Duration.ofMillis(1000))
-            .take(Duration.ofSeconds(30))
-            .flatMap(i -> {
-                // Execute commands and watch for Redis errors that might contain notifications
-                return connection.reactive().get("__lettuce_maintenance_test_key__")
-                    .timeout(Duration.ofMillis(500))
-                    .doOnNext(value -> log.debug("Test command #{} completed normally", i))
-                    .doOnError(error -> {
+        Disposable monitoring = Flux.interval(Duration.ofMillis(1000)).take(Duration.ofSeconds(30)).flatMap(i -> {
+            // Execute commands and watch for Redis errors that might contain notifications
+            return connection.reactive().get("__lettuce_maintenance_test_key__").timeout(Duration.ofMillis(500))
+                    .doOnNext(value -> log.debug("Test command #{} completed normally", i)).doOnError(error -> {
                         String errorMsg = error.getMessage();
                         log.debug("Test command #{} error: {}", i, errorMsg);
-                        
+
                         // Look for Redis Enterprise specific error patterns that might contain notifications
-                        if (errorMsg != null && (errorMsg.contains("MOVED") || errorMsg.contains("ASK") || 
-                                               errorMsg.contains("CLUSTERDOWN") || errorMsg.contains("LOADING"))) {
+                        if (errorMsg != null && (errorMsg.contains("MOVED") || errorMsg.contains("ASK")
+                                || errorMsg.contains("CLUSTERDOWN") || errorMsg.contains("LOADING"))) {
                             log.info("Redis state change detected: {}", errorMsg);
                             // This might indicate a maintenance operation is happening
-                            
+
                             // Generate appropriate notification based on current test context
                             String notification = generateNotificationFromError(errorMsg);
                             if (notification != null) {
                                 capture.captureNotification(notification);
                             }
                         }
-                    })
-                    .onErrorResume(e -> Mono.empty());
-            })
-            .subscribe();
-            
+                    }).onErrorResume(e -> Mono.empty());
+        }).subscribe();
+
         log.info("Connection state monitoring active for 30 seconds");
     }
-    
+
     /**
      * Check if a message contains Redis Enterprise push notification patterns
      */
     private boolean containsPushNotification(String message) {
-        return message != null && (
-            message.contains("MOVING") || message.contains("MIGRATING") || message.contains("MIGRATED") ||
-            message.contains("FAILING_OVER") || message.contains("FAILED_OVER") ||
-            message.contains("MOVED") || message.contains("ASK")
-        );
+        return message != null && (message.contains("MOVING") || message.contains("MIGRATING") || message.contains("MIGRATED")
+                || message.contains("FAILING_OVER") || message.contains("FAILED_OVER") || message.contains("MOVED")
+                || message.contains("ASK"));
     }
-    
+
     /**
      * Extract push notification from error messages or protocol responses
      */
@@ -564,7 +577,7 @@ public class MaintenanceNotificationTest {
         }
         return null;
     }
-    
+
     /**
      * Generate notification based on Redis errors that indicate maintenance operations
      */
@@ -576,7 +589,5 @@ public class MaintenanceNotificationTest {
         // Add more patterns as needed based on observed Redis Enterprise behavior
         return null;
     }
-    
-
 
 }

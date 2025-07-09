@@ -234,8 +234,9 @@ public class FaultInjectionClient {
                         // Properly parse JSON response using ObjectMapper
                         com.fasterxml.jackson.databind.JsonNode statusResponse = objectMapper.readTree(result);
                         String status = statusResponse.has("status") ? statusResponse.get("status").asText() : null;
-                        String error = statusResponse.has("error") && !statusResponse.get("error").isNull() 
-                            ? statusResponse.get("error").asText() : null;
+                        String error = statusResponse.has("error") && !statusResponse.get("error").isNull()
+                                ? statusResponse.get("error").asText()
+                                : null;
 
                         log.debug("Parsed status: {}, error: {}", status, error);
 
@@ -244,7 +245,8 @@ public class FaultInjectionClient {
                         }
 
                         if ("failed".equals(status) || error != null) {
-                            return Mono.error(new RuntimeException("Rladmin command failed: status=" + status + ", error=" + error));
+                            return Mono.error(
+                                    new RuntimeException("Rladmin command failed: status=" + status + ", error=" + error));
                         }
 
                         if ("pending".equals(status)) {
@@ -499,6 +501,76 @@ public class FaultInjectionClient {
             }
         }
 
+    }
+
+    /**
+     * Triggers a MOVING notification by following the proper two-step process: 1. Find which node the endpoint is pointing
+     * towards 2. Migrate all shards from that node to another node (making it an "empty node") 3. Bind endpoint to trigger the
+     * MOVING notification
+     *
+     * @param bdbId the BDB ID
+     * @param endpointId the endpoint ID to rebind
+     * @param policy the policy to use for rebinding (typically "single")
+     * @param sourceNode the source node ID to migrate from
+     * @param targetNode the target node ID to migrate to
+     * @return a Mono that emits true when the operation sequence is completed
+     */
+    public Mono<Boolean> triggerMovingNotification(String bdbId, String endpointId, String policy, String sourceNode,
+            String targetNode) {
+        // Enhanced parameter validation
+        if (endpointId == null || endpointId.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Endpoint ID cannot be null or empty"));
+        }
+        if (policy == null || policy.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Policy cannot be null or empty"));
+        }
+        if (sourceNode == null || sourceNode.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Source node cannot be null or empty"));
+        }
+        if (targetNode == null || targetNode.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Target node cannot be null or empty"));
+        }
+
+        log.info("Triggering MOVING notification for endpoint {} with policy {} on BDB {} (migrate from node {} to node {})",
+                endpointId, policy, bdbId, sourceNode, targetNode);
+
+        // Step 1: Migrate all shards from source node to target node
+        String migrateCommand = String.format("migrate node %s all_shards target_node %s", sourceNode, targetNode);
+
+        return executeRladminCommand(bdbId, migrateCommand, Duration.ofSeconds(5), Duration.ofSeconds(180))
+                .doOnSuccess(success -> log.info("Successfully migrated all shards from node {} to node {} on BDB {}",
+                        sourceNode, targetNode, bdbId))
+                .doOnError(error -> log.error("Failed to migrate shards from node {} to node {} on BDB {}: {}", sourceNode,
+                        targetNode, bdbId, error.getMessage()))
+                .flatMap(migrationSuccess -> {
+                    if (migrationSuccess) {
+                        // Step 2: Now bind the endpoint to trigger MOVING notification
+                        String bindCommand = String.format("bind endpoint %s policy %s", endpointId, policy);
+                        log.info("Executing bind command after migration: {}", bindCommand);
+
+                        return executeRladminCommand(bdbId, bindCommand, Duration.ofSeconds(3), Duration.ofSeconds(120))
+                                .doOnSuccess(bindSuccess -> log.info("Successfully bound endpoint {} after migration on BDB {}",
+                                        endpointId, bdbId))
+                                .doOnError(bindError -> log.error("Failed to bind endpoint {} after migration on BDB {}: {}",
+                                        endpointId, bdbId, bindError.getMessage()));
+                    } else {
+                        return Mono.error(new RuntimeException("Migration failed, cannot proceed with endpoint bind"));
+                    }
+                });
+    }
+
+    /**
+     * Triggers a MOVING notification with default node selection (fallback method). WARNING: This method uses hardcoded node
+     * IDs and should be avoided in favor of dynamic discovery.
+     */
+    public Mono<Boolean> triggerMovingNotification(String bdbId, String endpointId, String policy) {
+        // Use default nodes if not specified (typical Redis Enterprise cluster nodes)
+        String sourceNode = "1";
+        String targetNode = "2";
+
+        log.warn("Using hardcoded default nodes for MOVING notification: source={}, target={}", sourceNode, targetNode);
+        log.warn("Consider using the overloaded method with dynamic node discovery instead");
+        return triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode);
     }
 
 }
