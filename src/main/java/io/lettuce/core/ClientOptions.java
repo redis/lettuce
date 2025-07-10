@@ -51,6 +51,8 @@ public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
 
+    public static final boolean DEFAULT_SUPPORT_MAINTENANCE_EVENTS = false;
+
     public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
     public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
@@ -93,6 +95,8 @@ public class ClientOptions implements Serializable {
 
     private final boolean autoReconnect;
 
+    private final boolean supportMaintenanceEvents;
+
     private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
 
     private final DecodeBufferPolicy decodeBufferPolicy;
@@ -127,6 +131,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
+        this.supportMaintenanceEvents = builder.supportMaintenanceEvents;
         this.replayFilter = builder.replayFilter;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.disconnectedBehavior = builder.disconnectedBehavior;
@@ -147,6 +152,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(ClientOptions original) {
         this.autoReconnect = original.isAutoReconnect();
+        this.supportMaintenanceEvents = original.supportsMaintenanceEvents();
         this.replayFilter = original.getReplayFilter();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
@@ -200,6 +206,8 @@ public class ClientOptions implements Serializable {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
+        private boolean supportMaintenanceEvents = DEFAULT_SUPPORT_MAINTENANCE_EVENTS;
+
         private Predicate<RedisCommand<?, ?, ?>> replayFilter = DEFAULT_REPLAY_FILTER;
 
         private DecodeBufferPolicy decodeBufferPolicy = DecodeBufferPolicies.ratio(DEFAULT_BUFFER_USAGE_RATIO);
@@ -244,6 +252,21 @@ public class ClientOptions implements Serializable {
          */
         public Builder autoReconnect(boolean autoReconnect) {
             this.autoReconnect = autoReconnect;
+            return this;
+        }
+
+        /**
+         * Configure whether the driver should listen for server events that notify on current maintenance activities. When
+         * enabled, this option will help with the connection handover and reduce the number of failed commands. This feature
+         * requires the server to support maintenance events. Defaults to {@code false}. See
+         * {@link #DEFAULT_SUPPORT_MAINTENANCE_EVENTS}.
+         *
+         * @param supportEvents true/false
+         * @return {@code this}
+         * @since 7.0
+         */
+        public Builder supportMaintenanceEvents(boolean supportEvents) {
+            this.supportMaintenanceEvents = supportEvents;
             return this;
         }
 
@@ -507,7 +530,8 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
+        builder.autoReconnect(isAutoReconnect()).supportMaintenanceEvents(supportsMaintenanceEvents())
+                .replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
                 .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
                 .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
                 .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
@@ -529,6 +553,18 @@ public class ClientOptions implements Serializable {
      */
     public boolean isAutoReconnect() {
         return autoReconnect;
+    }
+
+    /**
+     * Returns whether the client supports maintenance events.
+     *
+     * @return {@code true} if maintenance events are supported.
+     * @since 7.0
+     * @see #DEFAULT_SUPPORT_MAINTENANCE_EVENTS
+     * @see #supportsMaintenanceEvents()
+     */
+    public boolean supportsMaintenanceEvents() {
+        return supportMaintenanceEvents;
     }
 
     /**
