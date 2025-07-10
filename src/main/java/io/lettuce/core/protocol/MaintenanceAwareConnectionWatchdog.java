@@ -33,16 +33,16 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * An extension to {@link ConnectionWatchdog} that supports re-bind events.
+ * An extension to {@link ConnectionWatchdog} that intercepts maintenance events.
  *
  * @author Tihomir Mateev
- * @since 6.7
- * @see ClientOptions#isProactiveRebindEnabled()
+ * @since 7.0
+ * @see ClientOptions#supportsMaintenanceEvents()
  */
 @ChannelHandler.Sharable
-public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements PushListener {
+public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog implements PushListener {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RebindAwareConnectionWatchdog.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(MaintenanceAwareConnectionWatchdog.class);
 
     private static final String REBIND_MESSAGE_TYPE = "MOVING";
 
@@ -64,10 +64,10 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
 
     private Channel channel;
 
-    private final Set<RebindAwareComponent> componentListeners = new HashSet<>();
+    private final Set<MaintenanceAwareComponent> componentListeners = new HashSet<>();
 
-    public RebindAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap, Timer timer,
-            EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
+    public MaintenanceAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap,
+            Timer timer, EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
             ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
             Endpoint endpoint) {
 
@@ -214,24 +214,24 @@ public class RebindAwareConnectionWatchdog extends ConnectionWatchdog implements
      *
      * @param component the component to register
      */
-    public void setRebindListener(RebindAwareComponent component) {
+    public void setMaintenanceEventListener(MaintenanceAwareComponent component) {
         this.componentListeners.add(component);
     }
 
     private void notifyRebindCompleted() {
-        this.componentListeners.forEach(RebindAwareComponent::onRebindCompleted);
+        this.componentListeners.forEach(MaintenanceAwareComponent::onRebindCompleted);
     }
 
     private void notifyRebindStarted() {
-        this.componentListeners.forEach(RebindAwareComponent::onRebindStarted);
+        this.componentListeners.forEach(MaintenanceAwareComponent::onRebindStarted);
     }
 
     private void notifyMigrateStarted() {
-        this.componentListeners.forEach(RebindAwareComponent::onMigrateStarted);
+        this.componentListeners.forEach(MaintenanceAwareComponent::onMigrateStarted);
     }
 
     private void notifyMigrateCompleted() {
-        this.componentListeners.forEach(RebindAwareComponent::onMigrateCompleted);
+        this.componentListeners.forEach(MaintenanceAwareComponent::onMigrateCompleted);
     }
 
     private void notifyFailoverStarted(String shards) {

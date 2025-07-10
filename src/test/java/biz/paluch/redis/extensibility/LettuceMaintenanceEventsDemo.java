@@ -18,11 +18,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-public class LettuceRebindDemo {
+public class LettuceMaintenanceEventsDemo {
 
     public static final String ADDRESS = System.getenv("REBIND_DEMO_ADDRESS");
 
-    public static final Logger logger = Logger.getLogger(LettuceRebindDemo.class.getName());
+    public static final Logger logger = Logger.getLogger(LettuceMaintenanceEventsDemo.class.getName());
 
     public static final String KEY = "rebind:" + UUID.randomUUID().getLeastSignificantBits();
 
@@ -30,9 +30,9 @@ public class LettuceRebindDemo {
 
         TimeoutOptions timeoutOpts = TimeoutOptions.builder().timeoutCommands().fixedTimeout(Duration.ofMillis(250))
                 // (optional) relax timeouts during re-bind to decrease risk of timeouts
-                .proactiveTimeoutsRelaxing(Duration.ofMillis(750)).build();
+                .timeoutsRelaxingDuringMaintenance(Duration.ofMillis(750)).build();
         // (required) enable proactive re-bind by enabling it in the ClientOptions
-        ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts).proactiveRebind(true).build();
+        ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts).supportMaintenanceEvents(true).build();
 
         RedisClient redisClient = RedisClient.create(RedisURI.create(ADDRESS == null ? "redis://localhost:6379" : ADDRESS));
         redisClient.setOptions(options);

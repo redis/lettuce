@@ -118,18 +118,20 @@ public class TimeoutOptions implements Serializable {
         }
 
         /**
-         * Enable proactive timeout relaxing. Disabled by default, see {@link #DEFAULT_RELAXED_TIMEOUT}.
+         * Enable timeout relaxing during maintenance events. Disabled by default, see {@link #DEFAULT_RELAXED_TIMEOUT}.
          * <p/>
-         * If the Redis server supports this, and the client is set up to use it by the
-         * {@link ClientOptions#isProactiveRebindEnabled()} option, the client would listen to notifications that the current
+         * If the Redis server supports sending maintenance events, and the client is set up to use that by the
+         * {@link ClientOptions#supportsMaintenanceEvents()} option, the client would listen to notifications that the current
          * endpoint is about to go down (as part of some maintenance activity, for example). In such cases, the driver could
          * extend the existing timeout settings for newly issued commands, or such that are in flight, to make sure they do not
          * time out during this process. These commands could be either a part of the offline buffer or waiting for a reply.
          *
          * @param duration {@link Duration} to relax timeouts proactively, must not be {@code null}.
          * @return {@code this}
+         * @since 7.0
+         * @see ClientOptions#supportsMaintenanceEvents()
          */
-        public Builder proactiveTimeoutsRelaxing(Duration duration) {
+        public Builder timeoutsRelaxingDuringMaintenance(Duration duration) {
             LettuceAssert.notNull(duration, "Duration must not be null");
 
             this.relaxedTimeout = duration;
@@ -208,6 +210,7 @@ public class TimeoutOptions implements Serializable {
 
     /**
      * @return the {@link Duration} to relax timeouts proactively, {@link #DISABLED_TIMEOUT} if disabled.
+     * @since 7.0
      */
     public Duration getRelaxedTimeout() {
         return relaxedTimeout;

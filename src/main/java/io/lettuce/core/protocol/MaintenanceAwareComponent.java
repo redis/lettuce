@@ -8,17 +8,14 @@ package io.lettuce.core.protocol;
 
 import io.lettuce.core.ClientOptions;
 
-import java.util.List;
-import java.util.Set;
-
 /**
- * Interface for components that are aware of re-bind events.
+ * Interface for components that are aware of maintenance events.
  *
  * @author Tihomir Mateev
- * @since 6.7
- * @see ClientOptions#isProactiveRebindEnabled()
+ * @since 7.0
+ * @see ClientOptions#supportsMaintenanceEvents()
  */
-public interface RebindAwareComponent {
+public interface MaintenanceAwareComponent {
 
     /**
      * Called whenever a shard migration is initiated
@@ -31,12 +28,12 @@ public interface RebindAwareComponent {
     void onMigrateCompleted();
 
     /**
-     * Called whenever a fail over is initiated
+     * Called whenever a failover is initiated
      */
     void onFailoverStarted(String shards);
 
     /**
-     * Called whenever a fail over is completed
+     * Called whenever a failover is completed
      */
     void onFailoverCompleted(String shards);
 

@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import io.lettuce.core.protocol.RebindAwareConnectionWatchdog;
+import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog;
 import jdk.net.ExtendedSocketOptions;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
@@ -155,8 +155,8 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
 
         ConnectionWatchdog watchdog;
-        if (clientOptions.isProactiveRebindEnabled()) {
-            watchdog = new RebindAwareConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
+        if (clientOptions.supportsMaintenanceEvents()) {
+            watchdog = new MaintenanceAwareConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
                     clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
                     connection, clientResources.eventBus(), endpoint);
         } else {

@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -33,18 +32,18 @@ import static io.lettuce.core.TimeoutOptions.TimeoutSource;
  * progress. The relaxation is done by starting a new timer with the relaxed timeout value. The relaxed timeout is configured
  * via {@link TimeoutOptions#getRelaxedTimeout()}.
  * <p/>
- * The logic is only applied when the {@link ClientOptions#isProactiveRebindEnabled()} is enabled.
+ * The logic is only applied when the {@link ClientOptions#supportsMaintenanceEvents()} is enabled.
  *
  * @author Tihomir Mateev
- * @since 6.7
+ * @since 7.0
  * @see TimeoutOptions
- * @see RebindAwareComponent
- * @see RebindAwareConnectionWatchdog
- * @see ClientOptions#isProactiveRebindEnabled()
+ * @see MaintenanceAwareComponent
+ * @see MaintenanceAwareConnectionWatchdog
+ * @see ClientOptions#supportsMaintenanceEvents()
  */
-public class RebindAwareExpiryWriter extends CommandExpiryWriter implements RebindAwareComponent {
+public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements MaintenanceAwareComponent {
 
-    private static final Logger log = LoggerFactory.getLogger(RebindAwareExpiryWriter.class);
+    private static final Logger log = LoggerFactory.getLogger(MaintenanceAwareExpiryWriter.class);
 
     private final RedisChannelWriter delegate;
 
@@ -69,13 +68,14 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
     private Timeout relaxTimeout;
 
     /**
-     * Create a new {@link RebindAwareExpiryWriter}.
+     * Create a new {@link MaintenanceAwareExpiryWriter}.
      *
      * @param delegate must not be {@code null}.
      * @param clientOptions must not be {@code null}.
      * @param clientResources must not be {@code null}.
      */
-    public RebindAwareExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions, ClientResources clientResources) {
+    public MaintenanceAwareExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions,
+            ClientResources clientResources) {
 
         super(delegate, clientOptions, clientResources);
 
@@ -91,9 +91,10 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
 
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
-        // since the RebindAwareExpiryWriter lives outside the netty pipeline, and since it needs to be registered at a moment
+        // since the MaintenanceAwareExpiryWriter lives outside the netty pipeline, and since it needs to be registered at a
+        // moment
         // when the pipeline is configured and ready, we can only assume the moment is right if the write() method is called
-        registerAsRebindAwareComponent();
+        registerAsMaintenanceAwareComponent();
 
         potentiallyExpire(command, executorService);
         return delegate.write(command);
@@ -101,9 +102,10 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
 
     @Override
     public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> redisCommands) {
-        // since the RebindAwareExpiryWriter lives outside the netty pipeline, and since it needs to be registered at a moment
+        // since the MaintenanceAwareExpiryWriter lives outside the netty pipeline, and since it needs to be registered at a
+        // moment
         // when the pipeline is configured and ready, we can only assume the moment is right if the write() method is called
-        registerAsRebindAwareComponent();
+        registerAsMaintenanceAwareComponent();
 
         for (RedisCommand<K, V, ?> command : redisCommands) {
             potentiallyExpire(command, executorService);
@@ -162,7 +164,7 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
         }
     }
 
-    private void registerAsRebindAwareComponent() {
+    private void registerAsMaintenanceAwareComponent() {
         if (registered) {
             return;
         }
@@ -170,9 +172,9 @@ public class RebindAwareExpiryWriter extends CommandExpiryWriter implements Rebi
         if (delegate instanceof DefaultEndpoint) {
             DefaultEndpoint endpoint = (DefaultEndpoint) delegate;
             ChannelPipeline pipeline = endpoint.channel.pipeline();
-            RebindAwareConnectionWatchdog watchdog = pipeline.get(RebindAwareConnectionWatchdog.class);
+            MaintenanceAwareConnectionWatchdog watchdog = pipeline.get(MaintenanceAwareConnectionWatchdog.class);
             if (watchdog != null) {
-                watchdog.setRebindListener(this);
+                watchdog.setMaintenanceEventListener(this);
             }
         }
 

@@ -20,7 +20,7 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.core.ConnectionEvents.*;
-import static io.lettuce.core.protocol.RebindAwareConnectionWatchdog.REBIND_ATTRIBUTE;
+import static io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
 import java.net.SocketAddress;

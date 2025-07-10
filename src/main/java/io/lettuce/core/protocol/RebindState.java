@@ -12,8 +12,8 @@ import io.lettuce.core.ClientOptions;
  * The current step of the re-bind process
  *
  * @author Tihomir Mateev
- * @since 6.7
- * @see ClientOptions#isProactiveRebindEnabled()
+ * @since 7.0
+ * @see ClientOptions#supportsMaintenanceEvents()
  */
 public enum RebindState {
     /**

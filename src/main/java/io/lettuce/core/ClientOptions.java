@@ -52,7 +52,7 @@ public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
 
-    public static final boolean DEFAULT_PROACTIVE_REBIND = false;
+    public static final boolean DEFAULT_SUPPORT_MAINTENANCE_EVENTS = false;
 
     public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
@@ -98,7 +98,7 @@ public class ClientOptions implements Serializable {
 
     private final boolean autoReconnect;
 
-    private final boolean proactiveRebind;
+    private final boolean supportMaintenanceEvents;
 
     private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
 
@@ -136,7 +136,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
-        this.proactiveRebind = builder.proactiveRebind;
+        this.supportMaintenanceEvents = builder.supportMaintenanceEvents;
         this.replayFilter = builder.replayFilter;
         this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
@@ -158,7 +158,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(ClientOptions original) {
         this.autoReconnect = original.isAutoReconnect();
-        this.proactiveRebind = original.isProactiveRebindEnabled();
+        this.supportMaintenanceEvents = original.supportsMaintenanceEvents();
         this.replayFilter = original.getReplayFilter();
         this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
@@ -213,7 +213,7 @@ public class ClientOptions implements Serializable {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
-        private boolean proactiveRebind = DEFAULT_PROACTIVE_REBIND;
+        private boolean supportMaintenanceEvents = DEFAULT_SUPPORT_MAINTENANCE_EVENTS;
 
         private Predicate<RedisCommand<?, ?, ?>> replayFilter = DEFAULT_REPLAY_FILTER;
 
@@ -265,16 +265,17 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Configure whether the driver should listen for server events that indicate the current endpoint is being re-bound.
-         * When enabled, the proactive re-bind will help with the connection handover and reduce the number of failed commands.
-         * This feature requires the server to support proactive re-binds. Defaults to {@code false}. See
-         * {@link #DEFAULT_PROACTIVE_REBIND}.
+         * Configure whether the driver should listen for server events that notify on current maintenance activities. When
+         * enabled, this option will help with the connection handover and reduce the number of failed commands. This feature
+         * requires the server to support maintenance events. Defaults to {@code false}. See
+         * {@link #DEFAULT_SUPPORT_MAINTENANCE_EVENTS}.
          *
-         * @param proactiveRebind true/false
+         * @param supportEvents true/false
          * @return {@code this}
+         * @since 7.0
          */
-        public Builder proactiveRebind(boolean proactiveRebind) {
-            this.proactiveRebind = proactiveRebind;
+        public Builder supportMaintenanceEvents(boolean supportEvents) {
+            this.supportMaintenanceEvents = supportEvents;
             return this;
         }
 
@@ -573,7 +574,7 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).proactiveRebind(isProactiveRebindEnabled())
+        builder.autoReconnect(isAutoReconnect()).supportMaintenanceEvents(supportsMaintenanceEvents())
                 .cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure()).replayFilter(getReplayFilter())
                 .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
                 .reauthenticateBehavior(getReauthenticateBehaviour()).readOnlyCommands(getReadOnlyCommands())
@@ -600,16 +601,15 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Controls auto-reconnect behavior on connections. If auto-reconnect is {@code true} (default), it is enabled. As soon as a
-     * connection gets closed/reset without the intention to close it, the client will try to reconnect and re-issue any queued
-     * commands.
+     * Returns whether the client supports maintenance events.
      *
-     * This flag has also the effect that disconnected connections will refuse commands and cancel these with an exception.
-     *
-     * @return {@code true} if auto-reconnect is enabled.
+     * @return {@code true} if maintenance events are supported.
+     * @since 7.0
+     * @see #DEFAULT_SUPPORT_MAINTENANCE_EVENTS
+     * @see #supportsMaintenanceEvents()
      */
-    public boolean isProactiveRebindEnabled() {
-        return proactiveRebind;
+    public boolean supportsMaintenanceEvents() {
+        return supportMaintenanceEvents;
     }
 
     /**
