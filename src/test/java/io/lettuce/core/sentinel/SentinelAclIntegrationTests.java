@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.RedisCredentials;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
@@ -20,6 +21,7 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
+import reactor.core.publisher.Mono;
 
 /**
  * Integration tests for Redis Sentinel using ACL authentication.
@@ -49,13 +51,13 @@ public class SentinelAclIntegrationTests extends TestSupport {
 
         // sentinel node auth
         for (RedisURI sentinel : redisURI.getSentinels()) {
-            sentinel.setPassword(TestSettings.password());
+            sentinel.setAuthentication(TestSettings.password());
         }
 
         // sentinel node auth
         for (RedisURI sentinel : sentinelWithAcl.getSentinels()) {
-            sentinel.setUsername(TestSettings.aclUsername());
-            sentinel.setPassword(TestSettings.aclPassword());
+            sentinel.setCredentialsProvider(
+                    () -> Mono.just(RedisCredentials.just(TestSettings.aclUsername(), TestSettings.aclPassword())));
         }
     }
 
