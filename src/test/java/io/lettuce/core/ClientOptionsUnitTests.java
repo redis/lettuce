@@ -104,12 +104,73 @@ class ClientOptionsUnitTests {
 
     }
 
+    @Test
+    void testSupportMaintenanceEventsDefault() {
+        ClientOptions options = ClientOptions.create();
+        assertThat(options.supportsMaintenanceEvents()).isFalse();
+        assertThat(options.supportsMaintenanceEvents()).isEqualTo(ClientOptions.DEFAULT_SUPPORT_MAINTENANCE_EVENTS);
+    }
+
+    @Test
+    void testSupportMaintenanceEventsBuilder() {
+        ClientOptions options = ClientOptions.builder().supportMaintenanceEvents(true).build();
+        assertThat(options.supportsMaintenanceEvents()).isTrue();
+    }
+
+    @Test
+    void testSupportMaintenanceEventsBuilderFalse() {
+        ClientOptions options = ClientOptions.builder().supportMaintenanceEvents(false).build();
+        assertThat(options.supportsMaintenanceEvents()).isFalse();
+    }
+
+    @Test
+    void testSupportMaintenanceEventsBuilderChaining() {
+        // Test that the builder method returns the correct type for method chaining
+        ClientOptions options = ClientOptions.builder()
+                .supportMaintenanceEvents(true)
+                .autoReconnect(false)
+                .scriptCharset(StandardCharsets.UTF_8)
+                .build();
+
+        assertThat(options.supportsMaintenanceEvents()).isTrue();
+        assertThat(options.isAutoReconnect()).isFalse();
+        assertThat(options.getScriptCharset()).isEqualTo(StandardCharsets.UTF_8);
+    }
+
+    @Test
+    void testSupportMaintenanceEventsCopy() {
+        ClientOptions original = ClientOptions.builder().supportMaintenanceEvents(true).build();
+        ClientOptions copy = ClientOptions.copyOf(original);
+
+        assertThat(copy.supportsMaintenanceEvents()).isTrue();
+        assertThat(copy.supportsMaintenanceEvents()).isEqualTo(original.supportsMaintenanceEvents());
+    }
+
+    @Test
+    void testSupportMaintenanceEventsMutate() {
+        ClientOptions original = ClientOptions.builder().supportMaintenanceEvents(false).build();
+        ClientOptions mutated = original.mutate().supportMaintenanceEvents(true).build();
+
+        assertThat(original.supportsMaintenanceEvents()).isFalse();
+        assertThat(mutated.supportsMaintenanceEvents()).isTrue();
+    }
+
+    @Test
+    void testSupportMaintenanceEventsConstantValue() {
+        // Verify that the default constant matches the actual default behavior
+        assertThat(ClientOptions.DEFAULT_SUPPORT_MAINTENANCE_EVENTS).isFalse();
+
+        ClientOptions defaultOptions = ClientOptions.create();
+        assertThat(defaultOptions.supportsMaintenanceEvents()).isEqualTo(ClientOptions.DEFAULT_SUPPORT_MAINTENANCE_EVENTS);
+    }
+
     void checkAssertions(ClientOptions sut) {
         assertThat(sut.isAutoReconnect()).isTrue();
         assertThat(sut.isCancelCommandsOnReconnectFailure()).isFalse();
         assertThat(sut.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
         assertThat(sut.isSuspendReconnectOnProtocolFailure()).isFalse();
         assertThat(sut.getDisconnectedBehavior()).isEqualTo(ClientOptions.DisconnectedBehavior.DEFAULT);
+        assertThat(sut.supportsMaintenanceEvents()).isFalse(); // Add maintenance events check to default assertions
     }
 
 }
