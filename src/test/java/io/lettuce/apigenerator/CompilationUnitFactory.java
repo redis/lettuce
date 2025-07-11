@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.github.javaparser.printer.configuration.imports.EclipseImportOrderingStrategy;
@@ -239,7 +240,9 @@ class CompilationUnitFactory {
         // Check if import is used in types
         boolean usedInTypes = declaringClass.findFirst(Type.class, t -> {
             String fullType = t.toString();
-            return fullType.contains(importIdentifier);
+            // Match patterns like: Flux<X<Long>>, X, X<Long> where X is importIdentifier
+            String regex = "\\b" + Pattern.quote(importIdentifier) + "(?:<[^>]*>)?\\b";
+            return Pattern.compile(regex).matcher(fullType).find();
         }).isPresent();
 
         // Check if import is used in annotations
