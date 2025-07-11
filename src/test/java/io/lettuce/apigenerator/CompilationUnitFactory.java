@@ -37,6 +37,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import com.github.javaparser.printer.configuration.imports.EclipseImportOrderingStrategy;
 import org.apache.commons.lang3.StringUtils;
 
 import com.github.javaparser.StaticJavaParser;
@@ -55,6 +56,9 @@ import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.ast.type.TypeParameter;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import com.github.javaparser.printer.DefaultPrettyPrinter;
+import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration;
+import com.github.javaparser.printer.configuration.DefaultConfigurationOption;
 
 /**
  * @author Mark Paluch
@@ -179,9 +183,17 @@ class CompilationUnitFactory {
     }
 
     private void writeResult() throws IOException {
+        // Configure PrettyPrinter with IntelliJ import ordering strategy
+        DefaultPrinterConfiguration config = new DefaultPrinterConfiguration();
+        DefaultConfigurationOption option = new DefaultConfigurationOption(
+                DefaultPrinterConfiguration.ConfigOption.SORT_IMPORTS_STRATEGY, new EclipseImportOrderingStrategy());
+        config.addOption(option);
+
+        DefaultPrettyPrinter printer = new DefaultPrettyPrinter(config);
+        String formattedCode = printer.print(result);
 
         FileOutputStream fos = new FileOutputStream(target);
-        fos.write(result.toString().getBytes());
+        fos.write(formattedCode.getBytes());
         fos.close();
     }
 
@@ -218,13 +230,7 @@ class CompilationUnitFactory {
                     String importIdentifier = i.getName().getIdentifier();
 
                     return fullType.contains(importIdentifier);
-                }).isPresent()).sorted((o1, o2) -> {
-                    if (o1.getNameAsString().startsWith("java"))
-                        return -1;
-                    if (o2.getNameAsString().startsWith("java"))
-                        return 1;
-                    return o1.getNameAsString().compareTo(o2.getNameAsString());
-                }).collect(Collectors.toList());
+                }).isPresent()).collect(Collectors.toList());
 
         result.setImports(NodeList.nodeList(optimizedImports));
     }
