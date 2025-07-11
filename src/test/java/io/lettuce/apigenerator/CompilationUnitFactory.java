@@ -185,8 +185,10 @@ class CompilationUnitFactory {
     private void writeResult() throws IOException {
         // Configure PrettyPrinter with IntelliJ import ordering strategy
         DefaultPrinterConfiguration config = new DefaultPrinterConfiguration();
+        EclipseImportOrderingStrategy strategy = new EclipseImportOrderingStrategy();
+        strategy.setSortImportsAlphabetically(true);
         DefaultConfigurationOption option = new DefaultConfigurationOption(
-                DefaultPrinterConfiguration.ConfigOption.SORT_IMPORTS_STRATEGY, new EclipseImportOrderingStrategy());
+                DefaultPrinterConfiguration.ConfigOption.SORT_IMPORTS_STRATEGY, strategy);
         config.addOption(option);
 
         DefaultPrettyPrinter printer = new DefaultPrettyPrinter(config);
