@@ -26,6 +26,7 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.output.CommandOutput;
+import io.lettuce.core.json.JsonParser;
 
 /**
  * ${intent} for basic commands.
@@ -229,5 +230,11 @@ public interface BaseRedisCommands<K, V> {
      */
     @Deprecated
     void flushCommands();
+
+    /**
+     * @return the currently configured instance of the {@link JsonParser}
+     * @since 6.5
+     */
+    JsonParser getJsonParser();
 
 }
