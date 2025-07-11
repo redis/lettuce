@@ -280,7 +280,7 @@ public class RedisClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getOptions())) {
-            writer = new CommandExpiryWriter(writer, getOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -413,7 +413,7 @@ public class RedisClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getOptions())) {
-            writer = new CommandExpiryWriter(writer, getOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
@@ -580,7 +580,7 @@ public class RedisClient extends AbstractRedisClient {
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getOptions())) {
-            writer = new CommandExpiryWriter(writer, getOptions(), getResources());
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getOptions(), getResources());
         }
 
         if (CommandListenerWriter.isSupported(getCommandListeners())) {
