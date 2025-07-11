@@ -50,6 +50,7 @@ import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.comments.JavadocComment;
+import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.Name;
 import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
@@ -227,14 +228,27 @@ class CompilationUnitFactory {
         ClassOrInterfaceDeclaration declaringClass = (ClassOrInterfaceDeclaration) result.getChildNodes().get(1);
 
         List<ImportDeclaration> optimizedImports = result.getImports().stream()
-                .filter(i -> i.isAsterisk() || i.isStatic() || declaringClass.findFirst(Type.class, t -> {
-                    String fullType = t.toString();
-                    String importIdentifier = i.getName().getIdentifier();
-
-                    return fullType.contains(importIdentifier);
-                }).isPresent()).collect(Collectors.toList());
+                .filter(i -> i.isAsterisk() || i.isStatic() || isImportUsed(declaringClass, i)).collect(Collectors.toList());
 
         result.setImports(NodeList.nodeList(optimizedImports));
+    }
+
+    private boolean isImportUsed(ClassOrInterfaceDeclaration declaringClass, ImportDeclaration importDeclaration) {
+        String importIdentifier = importDeclaration.getName().getIdentifier();
+
+        // Check if import is used in types
+        boolean usedInTypes = declaringClass.findFirst(Type.class, t -> {
+            String fullType = t.toString();
+            return fullType.contains(importIdentifier);
+        }).isPresent();
+
+        // Check if import is used in annotations
+        boolean usedInAnnotations = declaringClass.findFirst(AnnotationExpr.class, a -> {
+            String annotationName = a.getNameAsString();
+            return annotationName.equals(importIdentifier);
+        }).isPresent();
+
+        return usedInTypes || usedInAnnotations;
     }
 
     /**
