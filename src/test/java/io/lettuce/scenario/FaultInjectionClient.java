@@ -355,7 +355,7 @@ public class FaultInjectionClient {
 
         // Use proper migrate command format: migrate node <source> all_shards target_node <target>
         String migrateCommand = String.format("migrate node %s all_shards target_node %s", sourceNode, targetNode);
-        Duration operationTimeout = Duration.ofSeconds(120); // Node migration (up to 2 minutes)
+        Duration operationTimeout = Duration.ofSeconds(300); // Node migration (up to 5 minutes for complex operations)
 
         log.info("Triggering migration from node {} to node {} on BDB {} (triggered by shard {})", sourceNode, targetNode,
                 bdbId, shardId != null ? shardId : "all");
