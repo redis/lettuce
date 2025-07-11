@@ -29,7 +29,6 @@ import io.lettuce.core.LcsArgs;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.StrAlgoArgs;
 import io.lettuce.core.StringMatchResult;
-import io.lettuce.core.Value;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 
 /**
