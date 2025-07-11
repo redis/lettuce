@@ -211,8 +211,6 @@ class MaintenanceAwareExpiryWriterUnitTests {
         verify(timer).newTimeout(any(TimerTask.class), eq(100L), eq(TimeUnit.MILLISECONDS));
     }
 
-
-
     @Test
     void testRegisterAsMaintenanceAwareComponentWithDefaultEndpoint() {
         // Given
@@ -510,4 +508,5 @@ class MaintenanceAwareExpiryWriterUnitTests {
         // Then - each completion should schedule timeout disable
         verify(timer, times(3)).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
     }
+
 }

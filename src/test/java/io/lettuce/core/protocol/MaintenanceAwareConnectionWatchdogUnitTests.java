@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 
-
 /**
  * Unit tests for {@link MaintenanceAwareConnectionWatchdog}.
  *
@@ -120,8 +119,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         when(endpoint.getId()).thenReturn("test-endpoint");
 
-        watchdog = new MaintenanceAwareConnectionWatchdog(reconnectDelay, clientOptions, realBootstrap, timer,
-                reconnectWorkers, socketAddressSupplier, reconnectionListener, connectionFacade, eventBus, endpoint);
+        watchdog = new MaintenanceAwareConnectionWatchdog(reconnectDelay, clientOptions, realBootstrap, timer, reconnectWorkers,
+                socketAddressSupplier, reconnectionListener, connectionFacade, eventBus, endpoint);
 
         // Set up the reconnectionHandler field using ReflectionTestUtils
         setField(watchdog, "reconnectionHandler", reconnectionHandler);
@@ -498,4 +497,5 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         assertThat(MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE).isNotNull();
         assertThat(MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE.name()).isEqualTo("rebindAddress");
     }
+
 }
