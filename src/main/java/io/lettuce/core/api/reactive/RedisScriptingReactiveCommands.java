@@ -19,10 +19,10 @@
  */
 package io.lettuce.core.api.reactive;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.ScriptOutputType;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Reactive executed commands for Scripting. {@link java.lang.String Lua scripts} are encoded by using the configured

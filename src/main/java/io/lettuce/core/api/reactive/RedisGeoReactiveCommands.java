@@ -19,8 +19,6 @@
  */
 package io.lettuce.core.api.reactive;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.GeoAddArgs;
 import io.lettuce.core.GeoArgs;
 import io.lettuce.core.GeoCoordinates;
@@ -29,6 +27,8 @@ import io.lettuce.core.GeoSearch;
 import io.lettuce.core.GeoValue;
 import io.lettuce.core.GeoWithin;
 import io.lettuce.core.Value;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Reactive executed commands for the Geo-API.
