@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.JavaToken;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
@@ -132,7 +132,7 @@ class KotlinCompilationUnitFactory {
     }
 
     public void create() throws Exception {
-        CompilationUnit template = JavaParser.parse(templateFile);
+        CompilationUnit template = StaticJavaParser.parse(templateFile);
 
         JavaToken license = template.getTokenRange().get().getBegin();
         result.append(license.asString().replaceAll("Copyright ([\\d]{4})-([\\d]{4})", "Copyright 2020-$2"));

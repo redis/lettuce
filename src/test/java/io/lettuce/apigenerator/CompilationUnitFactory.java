@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +39,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.github.javaparser.JavaParser;
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Modifier;
@@ -130,10 +129,10 @@ class CompilationUnitFactory {
 
         result.setPackageDeclaration(new PackageDeclaration(new Name(targetPackage)));
 
-        template = JavaParser.parse(templateFile);
+        template = StaticJavaParser.parse(templateFile);
 
         ClassOrInterfaceDeclaration templateTypeDeclaration = (ClassOrInterfaceDeclaration) template.getTypes().get(0);
-        resultType = new ClassOrInterfaceDeclaration(EnumSet.of(Modifier.PUBLIC), true, targetName);
+        resultType = new ClassOrInterfaceDeclaration(new NodeList<>(new Modifier(Modifier.Keyword.PUBLIC)), true, targetName);
         if (templateTypeDeclaration.getExtendedTypes() != null) {
             resultType.setExtendedTypes(templateTypeDeclaration.getExtendedTypes());
         }
