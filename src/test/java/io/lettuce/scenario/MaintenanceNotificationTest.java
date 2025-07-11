@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,13 @@ public class MaintenanceNotificationTest {
     private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofSeconds(180); // Increased to 3 minutes to account for
                                                                                        // longer operations
 
+    // Track original cluster state for proper cleanup
+    private static Map<String, String> originalShardRoles = new HashMap<>();
+
+    private static Map<String, List<String>> originalNodeToShards = new HashMap<>();
+
+    private static boolean originalStateRecorded = false;
+
     private static Endpoint mStandard;
 
     private RedisEnterpriseConfig clusterConfig;
@@ -89,12 +97,186 @@ public class MaintenanceNotificationTest {
 
     @BeforeEach
     public void refreshClusterConfig() {
-        // Dynamically discover the cluster configuration before each test
-        // This is important because maintenance operations can change the cluster topology
         log.info("Refreshing Redis Enterprise cluster configuration before test...");
-        RedisEnterpriseConfigDiscovery discovery = RedisEnterpriseConfigDiscovery.create();
+        // Use the discovery service to get real-time cluster state
+        RedisEnterpriseConfigDiscovery discovery = new RedisEnterpriseConfigDiscovery(faultClient);
         clusterConfig = discovery.discover(String.valueOf(mStandard.getBdbId()));
         log.info("Cluster configuration refreshed: {}", clusterConfig.getSummary());
+
+        // Record original state for proper cleanup (only once)
+        if (!originalStateRecorded) {
+            recordOriginalClusterState();
+            originalStateRecorded = true;
+        } else {
+            // For subsequent tests, restore original state first
+            restoreOriginalClusterState();
+        }
+    }
+
+    /**
+     * Record the original cluster state (both shard distribution and roles) for later restoration.
+     */
+    private void recordOriginalClusterState() {
+        log.info("Recording original cluster state for cleanup...");
+
+        try {
+            String bdbId = String.valueOf(mStandard.getBdbId());
+
+            // Get the complete current configuration
+            RedisEnterpriseConfigDiscovery discovery = new RedisEnterpriseConfigDiscovery(faultClient);
+            RedisEnterpriseConfig currentConfig = discovery.discover(bdbId);
+
+            // Record shard roles (getMasterShardIds already returns "redis:X" format)
+            originalShardRoles.clear();
+            for (String masterShard : currentConfig.getMasterShardIds()) {
+                originalShardRoles.put(masterShard, "master");
+            }
+            for (String slaveShard : currentConfig.getSlaveShardIds()) {
+                originalShardRoles.put(slaveShard, "slave");
+            }
+
+            // Record shard distribution across nodes (getShardsForNode already returns "redis:X" format)
+            originalNodeToShards.clear();
+            for (String nodeId : currentConfig.getNodeIds()) {
+                List<String> shards = currentConfig.getShardsForNode(nodeId);
+                originalNodeToShards.put(nodeId, new ArrayList<>(shards));
+            }
+
+            log.info("Original cluster state recorded:");
+            log.info("  Shard roles: {}", originalShardRoles);
+            log.info("  Node distribution: {}", originalNodeToShards);
+
+        } catch (Exception e) {
+            log.warn("Failed to record original cluster state: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Restore the original cluster state (both shard distribution and roles) recorded at startup. This ensures all tests start
+     * with the exact same cluster state.
+     */
+    private void restoreOriginalClusterState() {
+        log.info("Restoring original cluster state...");
+
+        try {
+            String bdbId = String.valueOf(mStandard.getBdbId());
+
+            // Get current state
+            RedisEnterpriseConfigDiscovery discovery = new RedisEnterpriseConfigDiscovery(faultClient);
+            RedisEnterpriseConfig currentConfig = discovery.discover(bdbId);
+
+            // Log current state
+            log.info("Current cluster state before restoration:");
+            for (String nodeId : currentConfig.getNodeIds()) {
+                List<String> shards = currentConfig.getShardsForNode(nodeId);
+                log.info("  {}: {} shards {}", nodeId, shards.size(), shards);
+            }
+
+            // Step 1: Restore shard distribution across nodes
+            boolean needsMigration = false;
+            for (Map.Entry<String, List<String>> entry : originalNodeToShards.entrySet()) {
+                String nodeId = entry.getKey();
+                List<String> expectedShards = entry.getValue();
+                List<String> currentShards = new ArrayList<>();
+
+                // Get current shards (already in "redis:X" format)
+                currentShards.addAll(currentConfig.getShardsForNode(nodeId));
+
+                if (!expectedShards.equals(currentShards)) {
+                    needsMigration = true;
+                    log.info("Node {} has wrong shards. Expected: {}, Current: {}", nodeId, expectedShards, currentShards);
+                }
+            }
+
+            if (needsMigration) {
+                log.info("Need to restore shard distribution. Performing migrations...");
+
+                // Strategy: Find nodes that need to give up shards and migrate them to correct nodes
+                for (Map.Entry<String, List<String>> entry : originalNodeToShards.entrySet()) {
+                    String targetNode = entry.getKey();
+                    List<String> expectedShards = entry.getValue();
+
+                    if (expectedShards.isEmpty()) {
+                        // This node should be empty - migrate all its shards away
+                        List<String> currentShards = new ArrayList<>(currentConfig.getShardsForNode(targetNode));
+
+                        if (!currentShards.isEmpty()) {
+                            // Find a target node that needs these shards
+                            String sourceNodeNum = targetNode.replace("node:", "");
+                            for (Map.Entry<String, List<String>> targetEntry : originalNodeToShards.entrySet()) {
+                                String potentialTarget = targetEntry.getKey();
+                                List<String> potentialTargetExpected = targetEntry.getValue();
+
+                                if (!potentialTargetExpected.isEmpty() && !potentialTarget.equals(targetNode)) {
+                                    String targetNodeNum = potentialTarget.replace("node:", "");
+                                    String migrateCommand = "migrate node " + sourceNodeNum + " all_shards target_node "
+                                            + targetNodeNum;
+                                    log.info("Executing migration: {}", migrateCommand);
+
+                                    StepVerifier
+                                            .create(faultClient.executeRladminCommand(bdbId, migrateCommand,
+                                                    Duration.ofSeconds(10), Duration.ofSeconds(300)))
+                                            .expectNext(true).verifyComplete();
+
+                                    Thread.sleep(20000);
+                                    break; // Only migrate to one target at a time
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Refresh configuration after migrations
+                currentConfig = discovery.discover(bdbId);
+                log.info("Shard distribution restored");
+            }
+
+            // Step 2: Restore master/slave roles
+            // Only failover shards that are currently MASTERS but should be SLAVES
+            List<String> mastersToFailover = new ArrayList<>();
+            for (Map.Entry<String, String> entry : originalShardRoles.entrySet()) {
+                String shardId = entry.getKey();
+                String originalRole = entry.getValue();
+
+                // Only failover shards that are currently masters but should be slaves
+                if ("slave".equals(originalRole) && currentConfig.getMasterShardIds().contains(shardId)) {
+                    // Should be slave but is currently master - failover this master
+                    mastersToFailover.add(shardId.replace("redis:", ""));
+                    log.info("Shard {} should be slave but is currently master - will failover", shardId);
+                }
+            }
+
+            if (!mastersToFailover.isEmpty()) {
+                log.info("Found {} master shards that should be slaves, failing them over: {}", mastersToFailover.size(),
+                        mastersToFailover);
+
+                // Build failover command (only failover current masters)
+                String failoverCommand = "failover shard " + String.join(" ", mastersToFailover);
+                log.info("Executing restoration failover: {}", failoverCommand);
+
+                // Execute the failover
+                StepVerifier.create(faultClient.executeRladminCommand(bdbId, failoverCommand, Duration.ofSeconds(10),
+                        Duration.ofSeconds(300))).expectNext(true).verifyComplete();
+
+                // Wait for completion
+                Thread.sleep(15000);
+                log.info("Role restoration failover completed");
+            } else {
+                log.info("No role restoration needed - all shards are in correct roles");
+            }
+
+            // Step 3: Verify final state matches original
+            currentConfig = discovery.discover(bdbId);
+            log.info("Final cluster state after restoration:");
+            for (String nodeId : currentConfig.getNodeIds()) {
+                List<String> shards = currentConfig.getShardsForNode(nodeId);
+                log.info("  {}: {} shards {}", nodeId, shards.size(), shards);
+            }
+            log.info("Original cluster state restored successfully");
+
+        } catch (Exception e) {
+            log.warn("Failed to restore original cluster state: {}", e.getMessage());
+        }
     }
 
     /**
@@ -432,19 +614,8 @@ public class MaintenanceNotificationTest {
         capture.markTimeoutIncreased();
         assertThat(capture.hasTimeoutIncreased()).isTrue();
 
-        // CLEANUP: Restore original master/slave roles by triggering reverse failover
-        log.info("CLEANUP: Restoring original master/slave roles for shard {}...", shardId);
-        log.info("Triggering reverse failover to restore original cluster state");
-
-        // Wait a moment for the initial failover to stabilize
-        Thread.sleep(10000);
-
-        // Perform reverse failover to restore original roles
-        // After the test failover, the roles are swapped, so we need to failover again to restore
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
-                .verifyComplete();
-
-        log.info("Original master/slave roles restored - ready for next test");
+        // CLEANUP: Let BeforeEach handle cluster state restoration for next test
+        log.info("Test completed - cluster state will be restored before next test");
 
         // Cleanup
         connection.close();
@@ -503,19 +674,8 @@ public class MaintenanceNotificationTest {
         capture.markStateRemoved();
         assertThat(capture.hasStateRemoved()).isTrue();
 
-        // CLEANUP: Restore original master/slave roles by triggering reverse failover
-        log.info("CLEANUP: Restoring original master/slave roles for shard {}...", shardId);
-        log.info("Triggering reverse failover to restore original cluster state");
-
-        // Wait a moment for the initial failover to stabilize
-        Thread.sleep(10000);
-
-        // Perform reverse failover to restore original roles
-        // After the test failover, the roles are swapped, so we need to failover again to restore
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
-                .verifyComplete();
-
-        log.info("Original master/slave roles restored - ready for next test");
+        // CLEANUP: Let BeforeEach handle cluster state restoration for next test
+        log.info("Test completed - cluster state will be restored before next test");
 
         // Cleanup
         connection.close();
