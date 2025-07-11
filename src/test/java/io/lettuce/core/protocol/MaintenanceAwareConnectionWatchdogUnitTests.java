@@ -9,7 +9,8 @@ package io.lettuce.core.protocol;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static io.lettuce.test.ReflectionTestUtils.setField;
+
 import static org.mockito.Mockito.*;
 
 import io.lettuce.core.ClientOptions;
@@ -19,11 +20,8 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.EventBus;
 import io.lettuce.core.resource.Delay;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.bootstrap.BootstrapConfig;
 import io.netty.channel.*;
 import io.netty.util.Attribute;
-import io.netty.util.AttributeKey;
-import io.netty.util.AttributeMap;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,8 +40,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
+
 
 /**
  * Unit tests for {@link MaintenanceAwareConnectionWatchdog}.
@@ -125,14 +123,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         watchdog = new MaintenanceAwareConnectionWatchdog(reconnectDelay, clientOptions, realBootstrap, timer,
                 reconnectWorkers, socketAddressSupplier, reconnectionListener, connectionFacade, eventBus, endpoint);
 
-        // Set up the reconnectionHandler field using reflection since it's protected
-        try {
-            java.lang.reflect.Field field = ConnectionWatchdog.class.getDeclaredField("reconnectionHandler");
-            field.setAccessible(true);
-            field.set(watchdog, reconnectionHandler);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // Set up the reconnectionHandler field using ReflectionTestUtils
+        setField(watchdog, "reconnectionHandler", reconnectionHandler);
     }
 
     @Test
@@ -161,7 +153,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(channel.pipeline()).thenReturn(pipeline);
         when(pipeline.get(CommandHandler.class)).thenReturn(commandHandler);
         when(commandHandler.getEndpoint()).thenReturn(endpoint);
-        when(endpoint.getPushListeners()).thenReturn(Arrays.asList(watchdog));
+        when(endpoint.getPushListeners()).thenReturn(Collections.singletonList(watchdog));
         when(channel.remoteAddress()).thenReturn(mock(SocketAddress.class));
 
         // When
@@ -226,14 +218,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(commandStack.isEmpty()).thenReturn(true);
         when(channel.close()).thenReturn(mock(ChannelFuture.class));
 
-        // Set up channel field
-        try {
-            java.lang.reflect.Field field = MaintenanceAwareConnectionWatchdog.class.getDeclaredField("channel");
-            field.setAccessible(true);
-            field.set(watchdog, channel);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // Set up channel field using ReflectionTestUtils
+        setField(watchdog, "channel", channel);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -263,14 +249,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(commandHandler.getStack()).thenReturn(commandStack);
         when(commandStack.isEmpty()).thenReturn(false);
 
-        // Set up channel field
-        try {
-            java.lang.reflect.Field field = MaintenanceAwareConnectionWatchdog.class.getDeclaredField("channel");
-            field.setAccessible(true);
-            field.set(watchdog, channel);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // Set up channel field using ReflectionTestUtils
+        setField(watchdog, "channel", channel);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -292,14 +272,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("MOVING");
         when(pushMessage.getContent()).thenReturn(content);
 
-        // Set up channel field
-        try {
-            java.lang.reflect.Field field = MaintenanceAwareConnectionWatchdog.class.getDeclaredField("channel");
-            field.setAccessible(true);
-            field.set(watchdog, channel);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // Set up channel field using ReflectionTestUtils
+        setField(watchdog, "channel", channel);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -415,7 +389,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageFailedOverWithInvalidContent() {
         // Given
-        List<Object> content = Arrays.asList("FAILED_OVER"); // Missing shards
+        List<Object> content = Collections.singletonList("FAILED_OVER"); // Missing shards
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
         when(pushMessage.getContent(any())).thenReturn(content);
 
@@ -468,14 +442,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("MOVING");
         when(pushMessage.getContent()).thenReturn(content);
 
-        // Set up channel field
-        try {
-            java.lang.reflect.Field field = MaintenanceAwareConnectionWatchdog.class.getDeclaredField("channel");
-            field.setAccessible(true);
-            field.set(watchdog, channel);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // Set up channel field using ReflectionTestUtils
+        setField(watchdog, "channel", channel);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -496,14 +464,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         when(pushMessage.getType()).thenReturn("MOVING");
         when(pushMessage.getContent()).thenReturn(content);
 
-        // Set up channel field
-        try {
-            java.lang.reflect.Field field = MaintenanceAwareConnectionWatchdog.class.getDeclaredField("channel");
-            field.setAccessible(true);
-            field.set(watchdog, channel);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        // Set up channel field using ReflectionTestUtils
+        setField(watchdog, "channel", channel);
 
         watchdog.setMaintenanceEventListener(component1);
 
