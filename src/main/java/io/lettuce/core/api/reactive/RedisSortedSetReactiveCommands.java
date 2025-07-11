@@ -547,8 +547,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return Long count of elements in the specified range.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrange}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrange}.
      */
     @Deprecated
     Mono<Long> zrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
@@ -571,8 +571,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return Long count of elements in the specified range.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangeWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangeWithScores}.
      */
     @Deprecated
     Mono<Long> zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
@@ -706,8 +706,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified score range.
      * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max);
@@ -721,8 +721,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified score range.
      * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max);
@@ -735,8 +735,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
@@ -752,8 +752,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified score range.
      * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, double min, double max, long offset, long count);
@@ -769,8 +769,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified score range.
      * @deprecated Use {@link #zrangebyscore(ValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, String min, String max, long offset, long count);
@@ -784,8 +784,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
@@ -872,8 +872,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified score range.
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max);
@@ -887,8 +887,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified score range.
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max);
@@ -901,8 +901,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
@@ -918,8 +918,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified score range.
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double min, double max, long offset,
@@ -936,8 +936,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified score range.
      * @deprecated Use {@link #zrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit limit)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String min, String max, long offset,
@@ -952,8 +952,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified score range.
      * @since 4.3
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
@@ -1112,8 +1112,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return Long count of elements in the specified range.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrange}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrange}.
      */
     @Deprecated
     Mono<Long> zrevrange(ValueStreamingChannel<V> channel, K key, long start, long stop);
@@ -1136,8 +1136,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param start the start.
      * @param stop the stop.
      * @return Long count of elements in the specified range.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangeWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangeWithScores}.
      */
     @Deprecated
     Mono<Long> zrevrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
@@ -1245,8 +1245,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param min min score.
      * @return Long count of elements in the specified range.
      * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min);
@@ -1260,8 +1260,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified range.
      * @deprecated Use {@link #zrevrangebyscore(java.lang.Object, Range)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min);
@@ -1274,8 +1274,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param range the range.
      * @return Long count of elements in the specified range.
      * @since 4.3
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
@@ -1291,8 +1291,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified range.
      * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, double max, double min, long offset, long count);
@@ -1308,8 +1308,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified range.
      * @deprecated Use {@link #zrevrangebyscoreWithScores(java.lang.Object, Range, Limit)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, String max, String min, long offset, long count);
@@ -1323,8 +1323,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified range.
      * @since 4.3
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscore}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscore}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscore(ValueStreamingChannel<V> channel, K key, Range<? extends Number> range, Limit limit);
@@ -1411,8 +1411,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified range.
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min);
@@ -1426,8 +1426,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param max max score.
      * @return Long count of elements in the specified range.
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min);
@@ -1439,8 +1439,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key.
      * @param range the range.
      * @return Long count of elements in the specified range.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range);
@@ -1456,8 +1456,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified range.
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, double max, double min, long offset,
@@ -1474,8 +1474,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param count the count.
      * @return Long count of elements in the specified range.
      * @deprecated Use {@link #zrevrangebyscoreWithScores(ScoredValueStreamingChannel, java.lang.Object, Range, Limit)}.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, String max, String min, long offset,
@@ -1490,8 +1490,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param limit the limit.
      * @return Long count of elements in the specified range.
      * @since 4.3
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zrevrangebyscoreWithScores}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zrevrangebyscoreWithScores}.
      */
     @Deprecated
     Mono<Long> zrevrangebyscoreWithScores(ScoredValueStreamingChannel<V> channel, K key, Range<? extends Number> range,
@@ -1598,8 +1598,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param channel streaming channel that receives a call for every scored value.
      * @param key the key.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zscan}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key);
@@ -1611,8 +1611,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zscan}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanArgs scanArgs);
@@ -1625,8 +1625,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @param scanArgs scan arguments.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zscan}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor, ScanArgs scanArgs);
@@ -1638,8 +1638,8 @@ public interface RedisSortedSetReactiveCommands<K, V> {
      * @param key the key.
      * @param scanCursor cursor to resume from a previous scan, must not be {@code null}.
      * @return StreamScanCursor scan cursor.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #zscan}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #zscan}.
      */
     @Deprecated
     Mono<StreamScanCursor> zscan(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor);

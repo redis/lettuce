@@ -119,7 +119,7 @@ public class CreateReactiveApi {
                 commentText = commentText.replaceAll("List&lt;(.*)&gt;", "$1").replaceAll("Set&lt;(.*)&gt;", "$1");
 
                 if (isStreamingChannelMethod(method)) {
-                    commentText += "* @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #"
+                    commentText += "* @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #"
                             + method.getNameAsString() + "}.";
                 }
 

@@ -344,8 +344,8 @@ public interface RedisStringReactiveCommands<K, V> {
      * @param channel the channel.
      * @param keys the keys.
      * @return Long array-reply list of values at the specified keys.
-     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
-     *             {@link #mget}.
+     * @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the
+     *             {@link org.reactivestreams.Publisher} returned by {@link #mget}.
      */
     @Deprecated
     Mono<Long> mget(KeyValueStreamingChannel<K, V> channel, K... keys);
