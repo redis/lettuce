@@ -55,7 +55,7 @@ import static io.lettuce.TestTags.API_GENERATOR;
 public class CreateReactiveApi {
 
     public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
-            "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+            "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands", "getJsonParser");
 
     public static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "evalReadOnly",
             "evalshaReadOnly", "fcall", "fcallReadOnly", "dispatch");
