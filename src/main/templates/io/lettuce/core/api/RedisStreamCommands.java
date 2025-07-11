@@ -22,11 +22,23 @@ package io.lettuce.core.api;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.*;
+import io.lettuce.core.Consumer;
+import io.lettuce.core.KeyValue;
+import io.lettuce.core.Limit;
+import io.lettuce.core.Range;
+import io.lettuce.core.Value;
+import io.lettuce.core.XAddArgs;
+import io.lettuce.core.XAutoClaimArgs;
+import io.lettuce.core.XClaimArgs;
+import io.lettuce.core.XGroupCreateArgs;
+import io.lettuce.core.XPendingArgs;
+import io.lettuce.core.XReadArgs;
 import io.lettuce.core.XReadArgs.StreamOffset;
+import io.lettuce.core.XTrimArgs;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
+import io.lettuce.core.models.stream.StreamMessage;
 
 /**
  * ${intent} for Streams.

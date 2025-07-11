@@ -1,8 +1,16 @@
 package io.lettuce.core;
 
-import io.lettuce.core.*;
 import java.util.List;
 import java.util.Set;
+
+import io.lettuce.core.GeoAddArgs;
+import io.lettuce.core.GeoArgs;
+import io.lettuce.core.GeoCoordinates;
+import io.lettuce.core.GeoRadiusStoreArgs;
+import io.lettuce.core.GeoSearch;
+import io.lettuce.core.GeoValue;
+import io.lettuce.core.GeoWithin;
+import io.lettuce.core.Value;
 
 /**
  * ${intent} for the Geo-API.
