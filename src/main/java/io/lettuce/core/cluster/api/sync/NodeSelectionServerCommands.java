@@ -27,8 +27,8 @@ import io.lettuce.core.ClientListArgs;
 import io.lettuce.core.FlushMode;
 import io.lettuce.core.KillArgs;
 import io.lettuce.core.TrackingArgs;
-import io.lettuce.core.UnblockType;
 import io.lettuce.core.TrackingInfo;
+import io.lettuce.core.UnblockType;
 import io.lettuce.core.protocol.CommandType;
 
 /**

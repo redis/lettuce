@@ -19,13 +19,14 @@
  */
 package io.lettuce.core;
 
-import io.lettuce.core.*;
-import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.protocol.RedisCommand;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import io.lettuce.core.AclCategory;
+import io.lettuce.core.AclSetuserArgs;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.RedisCommand;
 
 /**
  * ${intent} for the ACL-API.

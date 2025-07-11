@@ -7,6 +7,7 @@
 package io.lettuce.core.cluster.api.sync;
 
 import java.util.List;
+
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonType;
 import io.lettuce.core.json.JsonValue;

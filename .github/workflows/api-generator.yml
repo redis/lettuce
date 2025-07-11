@@ -1,0 +1,134 @@
+name: API Generator Tests
+
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
+    branches:
+      - main
+      - '[0-9].*'
+  pull_request:
+    branches:
+      - main
+      - '[0-9].*'
+  workflow_dispatch:
+
+env:
+  # Files to ignore when checking for changes after generation and formatting
+  # Add one file per line, using shell glob patterns
+  IGNORED_FILES: |
+    src/main/java/io/lettuce/core/cluster/api/async/BaseNodeSelectionAsyncCommands.java
+
+jobs:
+  api-generator:
+    name: API Generator Tests and Formatting
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        
+      - name: Set Java up in the runner
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'maven'
+          
+      - name: Setup Maven
+        uses: s4u/setup-maven-action@v1.8.0
+        with:
+          java-version: 8
+          
+      - name: Maven offline
+        run: |
+          mvn -q dependency:go-offline
+        continue-on-error: true
+
+      - name: Run API generator tests (excluding Kotlin)
+        run: |
+          mvn test -Dgroups="api_generator" -Dtest='!CreateKotlinCoroutinesApi'
+        env:
+          JVM_OPTS: -Xmx3200m
+          TERM: dumb
+          
+      - name: Run formatter
+        run: |
+          mvn formatter:format
+        env:
+          JVM_OPTS: -Xmx3200m
+          TERM: dumb
+          
+      - name: Check for changes after generation and formatting
+        run: |
+          # Get all changed files
+          CHANGED_FILES=$(git status --porcelain)
+
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "Files changed after generation and formatting:"
+            echo "$CHANGED_FILES"
+            echo ""
+
+            # Filter out ignored files
+            FILTERED_FILES=""
+            while IFS= read -r file; do
+              if [ -n "$file" ]; then
+                # Extract filename from git status output (remove status prefix)
+                filename=$(echo "$file" | sed 's/^...//')
+
+                # Check if file should be ignored
+                should_ignore=false
+                while IFS= read -r ignore_pattern; do
+                  if [ -n "$ignore_pattern" ] && [[ "$filename" == $ignore_pattern ]]; then
+                    echo "🔇 Ignoring changes in: $filename"
+                    should_ignore=true
+                    break
+                  fi
+                done <<< "$IGNORED_FILES"
+
+                # Add to filtered list if not ignored
+                if [ "$should_ignore" = false ]; then
+                  FILTERED_FILES="$FILTERED_FILES$file"$'\n'
+                fi
+              fi
+            done <<< "$CHANGED_FILES"
+
+            # Check if there are any non-ignored changes
+            if [ -n "$(echo "$FILTERED_FILES" | tr -d '\n')" ]; then
+              echo ""
+              echo "❌ Code changes detected after running API generators and formatter!"
+              echo "The following files have been modified (excluding ignored files):"
+              echo "$FILTERED_FILES"
+              echo ""
+              echo "Git diff (excluding ignored files):"
+              while IFS= read -r file; do
+                if [ -n "$file" ]; then
+                  filename=$(echo "$file" | sed 's/^...//')
+                  should_ignore=false
+                  while IFS= read -r ignore_pattern; do
+                    if [ -n "$ignore_pattern" ] && [[ "$filename" == $ignore_pattern ]]; then
+                      should_ignore=true
+                      break
+                    fi
+                  done <<< "$IGNORED_FILES"
+
+                  if [ "$should_ignore" = false ]; then
+                    echo "--- Changes in: $filename ---"
+                    git diff "$filename"
+                    echo ""
+                  fi
+                fi
+              done <<< "$CHANGED_FILES"
+              echo ""
+              echo "This indicates that the generated code is not up to date with the templates"
+              echo "or that the code formatting is inconsistent."
+              echo "Please run the API generators and formatter locally and commit the changes."
+              exit 1
+            else
+              echo "✅ All changes are in ignored files. Generated code and formatting are up to date!"
+            fi
+          else
+            echo "✅ No changes detected. Generated code and formatting are up to date!"
+          fi

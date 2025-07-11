@@ -41,7 +41,7 @@ import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.expr.MarkerAnnotationExpr;
 import com.github.javaparser.ast.type.ClassOrInterfaceType;
 import com.github.javaparser.ast.type.Type;
-import com.github.javaparser.printer.PrettyPrinterConfiguration;
+import com.github.javaparser.printer.configuration.PrettyPrinterConfiguration;
 
 import io.lettuce.core.internal.LettuceSets;
 
@@ -55,7 +55,7 @@ import static io.lettuce.TestTags.API_GENERATOR;
 public class CreateReactiveApi {
 
     public static Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("digest", "close", "isOpen",
-            "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands");
+            "BaseRedisCommands.reset", "getStatefulConnection", "setAutoFlushCommands", "flushCommands", "getJsonParser");
 
     public static Set<String> FORCE_FLUX_RESULT = LettuceSets.unmodifiableSet("eval", "evalsha", "evalReadOnly",
             "evalshaReadOnly", "fcall", "fcallReadOnly", "dispatch");
@@ -119,7 +119,7 @@ public class CreateReactiveApi {
                 commentText = commentText.replaceAll("List&lt;(.*)&gt;", "$1").replaceAll("Set&lt;(.*)&gt;", "$1");
 
                 if (isStreamingChannelMethod(method)) {
-                    commentText += "* @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #"
+                    commentText += "* @deprecated StreamingChannel methods are deprecated in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by {@link #"
                             + method.getNameAsString() + "}.";
                 }
 

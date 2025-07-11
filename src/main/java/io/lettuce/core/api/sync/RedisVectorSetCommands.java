@@ -6,8 +6,9 @@
  */
 package io.lettuce.core.api.sync;
 
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
+
 import io.lettuce.core.VAddArgs;
 import io.lettuce.core.VSimArgs;
 import io.lettuce.core.annotations.Experimental;

@@ -47,7 +47,7 @@ class CreateAsyncApi {
 
     public static final Set<String> KEEP_METHOD_RESULT_TYPE = LettuceSets.unmodifiableSet("shutdown", "debugOom",
             "debugSegfault", "digest", "close", "isOpen", "BaseRedisCommands.reset", "getStatefulConnection",
-            "setAutoFlushCommands", "flushCommands");
+            "setAutoFlushCommands", "flushCommands", "getJsonParser");
 
     /**
      * Mutate type comment.
