@@ -38,7 +38,7 @@ import io.lettuce.core.XTrimArgs;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
-import io.lettuce.core.models.stream.StreamMessage;
+import io.lettuce.core.StreamMessage;
 
 /**
  * ${intent} for Streams.
