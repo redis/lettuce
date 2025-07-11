@@ -230,7 +230,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param pattern the pattern type: patternkey (pattern).
      * @return K array-reply list of keys matching {@code pattern}.
      */
-    Flux<K> keys(K pattern);
+    Flux<K> keys(String pattern);
 
     /**
      * Find all keys matching the given pattern.
@@ -242,7 +242,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      *             {@link #keys}.
      */
     @Deprecated
-    Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern);
+    Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern);
 
     /**
      * Atomically transfer a key from a Redis instance to another one.
