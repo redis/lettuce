@@ -46,17 +46,10 @@ jobs:
         run: |
           mvn -q dependency:go-offline
         continue-on-error: true
-        
-      - name: Compile project
-        run: |
-          mvn compile test-compile
-        env:
-          JVM_OPTS: -Xmx3200m
-          TERM: dumb
 
       - name: Run API generator tests (excluding Kotlin)
         run: |
-          mvn surefire:test -Dgroups="api_generator" -Dtest="io.lettuce.apigenerator.*,!io.lettuce.apigenerator.CreateKotlinCoroutinesApi"
+          mvn test -Dgroups="api_generator" -Dtest='!CreateKotlinCoroutinesApi'
         env:
           JVM_OPTS: -Xmx3200m
           TERM: dumb
