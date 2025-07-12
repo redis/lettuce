@@ -31,11 +31,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.cluster.ClusterTestSettings;
+import io.lettuce.test.settings.TestSettings;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.internal.LettuceSets;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 /**
  * Unit tests for {@link RedisURI}
@@ -211,13 +214,19 @@ class RedisURIUnitTests {
         String uri = "redis-sentinel://" + translatedPassword + "@h1:1234,h2:1234,h3:1234/0?sentinelMasterId=masterId";
         RedisURI redisURI = RedisURI.create(uri);
         assertThat(redisURI.getSentinels().get(0).getHost()).isEqualTo("h1");
-        assertThat(redisURI.getPassword()).isEqualTo(password.toCharArray());
+        StepVerifier.create(redisURI.getCredentialsProvider().resolveCredentials()).assertNext(credentials -> {
+            assertThat(credentials.getUsername()).isNull();
+            assertThat(credentials.getPassword()).isEqualTo(password.toCharArray());
+        }).verifyComplete();
 
         // redis standalone
         uri = "redis://" + translatedPassword + "@h1:1234/0";
         redisURI = RedisURI.create(uri);
         assertThat(redisURI.getHost()).isEqualTo("h1");
-        assertThat(redisURI.getPassword()).isEqualTo(password.toCharArray());
+        StepVerifier.create(redisURI.getCredentialsProvider().resolveCredentials()).assertNext(credentials -> {
+            assertThat(credentials.getUsername()).isNull();
+            assertThat(credentials.getPassword()).isEqualTo(password.toCharArray());
+        }).verifyComplete();
     }
 
     @Test
@@ -341,22 +350,23 @@ class RedisURIUnitTests {
     void shouldApplyAuthentication() {
 
         RedisURI source = new RedisURI();
-        source.setUsername("foo");
-        source.setPassword("bar");
+        source.setAuthentication("foo", "bar".toCharArray());
 
         RedisURI target = new RedisURI();
-
         target.applyAuthentication(source);
 
-        assertThat(target.getUsername()).isEqualTo("foo");
-        assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
+        StepVerifier.create(target.getCredentialsProvider().resolveCredentials()).assertNext(credentials -> {
+            assertThat(credentials.getUsername()).isEqualTo("foo");
+            assertThat(credentials.getPassword()).isEqualTo("bar".toCharArray());
+        }).verifyComplete();
 
-        source.setUsername(null);
-
+        source.setCredentialsProvider(new StaticCredentialsProvider(null, "bar".toCharArray()));
         target.applyAuthentication(source);
 
-        assertThat(target.getUsername()).isNull();
-        assertThat(target.getPassword()).isEqualTo("bar".toCharArray());
+        StepVerifier.create(target.getCredentialsProvider().resolveCredentials()).assertNext(credentials -> {
+            assertThat(credentials.getUsername()).isNull();
+            assertThat(credentials.getPassword()).isEqualTo("bar".toCharArray());
+        }).verifyComplete();
 
         RedisCredentialsProvider provider = () -> Mono
                 .just(RedisCredentials.just("suppliedUsername", "suppliedPassword".toCharArray()));
@@ -367,8 +377,10 @@ class RedisURIUnitTests {
         RedisURI targetCp = new RedisURI();
         targetCp.applyAuthentication(sourceCp);
 
-        assertThat(targetCp.getUsername()).isNull();
-        assertThat(targetCp.getPassword()).isNull();
+        StepVerifier.create(targetCp.getCredentialsProvider().resolveCredentials()).assertNext(credentials -> {
+            assertThat(credentials.getUsername()).isEqualTo("suppliedUsername");
+            assertThat(credentials.getPassword()).isEqualTo("suppliedPassword".toCharArray());
+        }).verifyComplete();
         assertThat(sourceCp.getCredentialsProvider()).isEqualTo(targetCp.getCredentialsProvider());
     }
 

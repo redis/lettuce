@@ -75,8 +75,8 @@ class StaticMasterReplicaIntegrationTests extends AbstractRedisClientTest {
         this.connection2.auth(passwd);
         this.connection2.configSet("masterauth", passwd.toString());
 
-        node1.setPassword(passwd);
-        node2.setPassword(passwd);
+        node1.setAuthentication(passwd);
+        node2.setAuthentication(passwd);
 
         connection = MasterReplica.connect(client, StringCodec.UTF8, Arrays.asList(upstream, replica));
         connection.setReadFrom(ReadFrom.REPLICA);

@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.lettuce.core.RedisCredentials;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -23,6 +24,7 @@ import io.lettuce.core.models.role.RedisInstance;
 import io.lettuce.core.models.role.RoleParser;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.settings.TestSettings;
+import reactor.core.publisher.Mono;
 
 /**
  * @author Mark Paluch
@@ -72,8 +74,8 @@ class StaticMasterSlaveIntegrationTests extends AbstractRedisClientTest {
         this.connection2.auth(passwd);
         this.connection2.configSet("masterauth", passwd.toString());
 
-        upstream.setPassword(passwd);
-        replica.setPassword(passwd);
+        upstream.setAuthentication(passwd);
+        replica.setAuthentication(passwd);
 
         connection = MasterSlave.connect(client, StringCodec.UTF8, Arrays.asList(upstream, replica));
         connection.setReadFrom(ReadFrom.REPLICA);

@@ -164,7 +164,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
             ;
 
             RedisURI redisURI = RedisURI.create(host, port);
-            redisURI.setPassword(passwd);
+            redisURI.setAuthentication(passwd);
 
             RedisAsyncCommands<String, String> connection = client.connect(redisURI).async();
             testHitRequestQueueLimit(connection);
@@ -180,7 +180,7 @@ class ClientOptionsIntegrationTests extends TestSupport {
                     .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
 
             RedisURI redisURI = RedisURI.create(host, port);
-            redisURI.setPassword(passwd);
+            redisURI.setAuthentication(passwd);
 
             RedisAsyncCommands<String, String> connection = client.connect(redisURI).async();
             testHitRequestQueueLimit(connection);
