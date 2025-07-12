@@ -181,19 +181,6 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         /**
-         * @param bufferUsageRatio the buffer usage ratio. Must be between {@code 0} and {@code 2^31-1}, typically a value
-         *        between 1 and 10 representing 50% to 90%.
-         * @return {@code this}
-         * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
-         */
-        @Override
-        @Deprecated
-        public Builder bufferUsageRatio(int bufferUsageRatio) {
-            super.bufferUsageRatio(bufferUsageRatio);
-            return this;
-        }
-
-        /**
          *
          * @param cancelCommandsOnReconnectFailure true/false
          * @return
