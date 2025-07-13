@@ -175,62 +175,6 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         }
     }
 
-    /**
-     * Simulates a failure on reconnect by changing the port to a invalid server and triggering a reconnect. Meanwhile a command
-     * is fired to the connection and the watchdog is triggered afterwards to reconnect.
-     *
-     * Expectation: Queued commands are canceled (reset), subsequent commands contain the connection exception.
-     *
-     * @throws Exception
-     */
-    @Test
-    void cancelCommandsOnReconnectFailure() throws Exception {
-
-        client.setOptions(ClientOptions.builder().cancelCommandsOnReconnectFailure(true)
-                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
-
-        RandomResponseServer ts = getRandomResponseServer();
-
-        RedisURI redisUri = RedisURI.create(defaultRedisUri.toURI());
-
-        try {
-            RedisAsyncCommandsImpl<String, String> connection = (RedisAsyncCommandsImpl<String, String>) client
-                    .connect(redisUri).async();
-            ConnectionWatchdog connectionWatchdog = ConnectionTestUtil
-                    .getConnectionWatchdog(connection.getStatefulConnection());
-
-            assertThat(connectionWatchdog.isListenOnChannelInactive()).isTrue();
-
-            connectionWatchdog.setReconnectSuspended(true);
-            redisUri.setPort(TestSettings.nonexistentPort());
-
-            connection.quit();
-            Wait.untilTrue(() -> !connection.getStatefulConnection().isOpen()).waitOrTimeout();
-
-            RedisFuture<String> set1 = connection.set(key, value);
-            RedisFuture<String> set2 = connection.set(key, value);
-
-            assertThat(set1.isDone()).isFalse();
-            assertThat(set1.isCancelled()).isFalse();
-
-            assertThat(connection.getStatefulConnection().isOpen()).isFalse();
-            connectionWatchdog.setReconnectSuspended(false);
-            connectionWatchdog.run(0);
-            Delay.delay(Duration.ofMillis(500));
-            assertThat(connection.getStatefulConnection().isOpen()).isFalse();
-
-            assertThatThrownBy(set1::get).isInstanceOf(CancellationException.class).hasNoCause();
-            assertThatThrownBy(set2::get).isInstanceOf(CancellationException.class).hasNoCause();
-
-            assertThatThrownBy(() -> TestFutures.awaitOrTimeout(connection.info())).isInstanceOf(RedisException.class)
-                    .hasMessageContaining("Invalid first byte");
-
-            connection.getStatefulConnection().close();
-        } finally {
-            ts.shutdown();
-        }
-    }
-
     @Test
     void emitEventOnReconnectFailure() throws Exception {
 

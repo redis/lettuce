@@ -41,7 +41,6 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.isValidateClusterNodeMembership()).isEqualTo(options.isValidateClusterNodeMembership());
         assertThat(copy.getRequestQueueSize()).isEqualTo(options.getRequestQueueSize());
         assertThat(copy.isAutoReconnect()).isEqualTo(options.isAutoReconnect());
-        assertThat(copy.isCancelCommandsOnReconnectFailure()).isEqualTo(options.isCancelCommandsOnReconnectFailure());
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
         assertThat(copy.getScriptCharset()).isEqualTo(StandardCharsets.UTF_8);
@@ -73,8 +72,6 @@ class ClusterClientOptionsUnitTests {
         assertThat(clusterClientOptions.getRequestQueueSize()).isEqualTo(clusterClientOptions.getRequestQueueSize());
         assertThat(clusterClientOptions.isAutoReconnect()).isEqualTo(clusterClientOptions.isAutoReconnect());
         assertThat(clusterClientOptions.isCloseStaleConnections()).isEqualTo(clusterClientOptions.isCloseStaleConnections());
-        assertThat(clusterClientOptions.isCancelCommandsOnReconnectFailure())
-                .isEqualTo(clusterClientOptions.isCancelCommandsOnReconnectFailure());
         assertThat(clusterClientOptions.isPublishOnScheduler()).isEqualTo(clusterClientOptions.isPublishOnScheduler());
         assertThat(clusterClientOptions.isSuspendReconnectOnProtocolFailure())
                 .isEqualTo(clusterClientOptions.isSuspendReconnectOnProtocolFailure());
@@ -97,7 +94,6 @@ class ClusterClientOptionsUnitTests {
         assertThat(copy.isValidateClusterNodeMembership()).isEqualTo(options.isValidateClusterNodeMembership());
         assertThat(copy.getRequestQueueSize()).isEqualTo(options.getRequestQueueSize());
         assertThat(copy.isAutoReconnect()).isEqualTo(options.isAutoReconnect());
-        assertThat(copy.isCancelCommandsOnReconnectFailure()).isEqualTo(options.isCancelCommandsOnReconnectFailure());
         assertThat(copy.isSuspendReconnectOnProtocolFailure()).isEqualTo(options.isSuspendReconnectOnProtocolFailure());
         assertThat(copy.getMaxRedirects()).isEqualTo(options.getMaxRedirects());
         assertThat(copy.getScriptCharset()).isEqualTo(options.getScriptCharset());

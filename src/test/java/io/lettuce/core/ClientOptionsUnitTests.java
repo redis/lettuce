@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolVersion;
-import reactor.core.publisher.Mono;
 
 /**
  * Unit tests for {@link ClientOptions}.
@@ -106,7 +105,6 @@ class ClientOptionsUnitTests {
 
     void checkAssertions(ClientOptions sut) {
         assertThat(sut.isAutoReconnect()).isTrue();
-        assertThat(sut.isCancelCommandsOnReconnectFailure()).isFalse();
         assertThat(sut.getProtocolVersion()).isEqualTo(ProtocolVersion.RESP3);
         assertThat(sut.isSuspendReconnectOnProtocolFailure()).isFalse();
         assertThat(sut.getDisconnectedBehavior()).isEqualTo(ClientOptions.DisconnectedBehavior.DEFAULT);
