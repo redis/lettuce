@@ -195,8 +195,8 @@ the error message. `RedisException` is a `RuntimeException`.
 ### Examples
 
 ``` java
-RedisClient client = RedisClient.create(RedisURI.create("localhost", 6379));
-client.setDefaultTimeout(20, TimeUnit.SECONDS);
+RedisURI uri = new RedisURI("localhost", 6379, Duration.ofSeconds(20));
+RedisClient client = RedisClient.create(uri);
 
 // …
 

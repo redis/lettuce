@@ -27,10 +27,10 @@ Multiple threads may share one connection if they avoid blocking and transaction
   </p>
 
   <p>
-    All connections inherit a default timeout from their {@link io.lettuce.core.RedisClient}
+    All connections inherit a default timeout from their {@link io.lettuce.core.RedisURI}
     and will throw a {@link io.lettuce.core.RedisException} when non-blocking commands fail
     to return a result before the timeout expires. The timeout defaults to 60 seconds and
-    may be changed via {@link io.lettuce.core.RedisClient#setDefaultTimeout} or for
+    may be changed via {@link io.lettuce.core.RedisURI#setTimeout} or for
     each individual connection.
   </p>
 </body>

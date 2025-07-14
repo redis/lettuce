@@ -190,7 +190,6 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
     public void afterEach(ExtensionContext context) {
 
         DefaultRedisClient.get().setOptions(ClientOptions.builder().build());
-        DefaultRedisClient.get().setDefaultTimeout(Duration.ofSeconds(60));
 
         ExtensionContext.Store store = getStore(context);
         CloseAfterTest closeables = store.get(CloseAfterTest.class, CloseAfterTest.class);

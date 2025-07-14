@@ -198,7 +198,6 @@ public class RedisClusterClient extends AbstractRedisClient {
         this.initialUris = Collections.unmodifiableList(LettuceLists.newList(redisURIs));
         this.refresh = createTopologyRefresh();
 
-        setDefaultTimeout(getFirstUri().getTimeout());
         setOptions(ClusterClientOptions.create());
     }
 
