@@ -136,23 +136,23 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         for (RedisClusterNode redisClusterNode : getStatefulConnection().getPartitions()) {
 
-            Mono<RedisClusterReactiveCommands<K, V>> byNodeId = getConnectionReactive(redisClusterNode.getNodeId());
+            Mono<StatefulRedisConnection<K, V>> byNodeId = getStatefulConnection(redisClusterNode.getNodeId());
 
             publishers.add(byNodeId.flatMap(conn -> {
 
                 if (conn.isOpen()) {
-                    return conn.clientSetname(name);
+                    return conn.reactive().clientSetname(name);
                 }
                 return Mono.empty();
             }));
 
-            Mono<RedisClusterReactiveCommands<K, V>> byHost = getConnectionReactive(redisClusterNode.getUri().getHost(),
+            Mono<StatefulRedisConnection<K, V>> byHost = getStatefulConnection(redisClusterNode.getUri().getHost(),
                     redisClusterNode.getUri().getPort());
 
             publishers.add(byHost.flatMap(conn -> {
 
                 if (conn.isOpen()) {
-                    return conn.clientSetname(name);
+                    return conn.reactive().clientSetname(name);
                 }
                 return Mono.empty();
             }));
@@ -441,6 +441,10 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return getStatefulConnection().getConnection(nodeId).reactive();
     }
 
+    private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(String nodeId) {
+        return getMono(getConnectionProvider().getConnectionAsync(ConnectionIntent.WRITE, nodeId));
+    }
+
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String nodeId) {
         return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, nodeId))
                 .map(StatefulRedisConnection::reactive);
@@ -454,6 +458,10 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String host, int port) {
         return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, host, port))
                 .map(StatefulRedisConnection::reactive);
+    }
+
+    private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(String host, int port) {
+        return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, host, port));
     }
 
     @Override

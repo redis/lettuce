@@ -27,6 +27,7 @@ import io.lettuce.test.settings.TestSettings;
 /**
  * @author Will Glozer
  * @author Mark Paluch
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
@@ -35,15 +36,11 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
 
     private final RedisClient client;
 
-    private final StatefulRedisConnection<String, String> connection;
-
     private final RedisCommands<String, String> redis;
 
     @Inject
     RunOnlyOnceServerCommandIntegrationTests(RedisClient client, StatefulRedisConnection<String, String> connection) {
-
         this.client = client;
-        this.connection = connection;
         this.redis = connection.sync();
     }
 
@@ -55,18 +52,14 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
     @Disabled
     @Order(1)
     void debugSegfault() {
-
         assumeTrue(CanConnect.to(host(), port(1)));
-
-        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(1)).build())
-                .async();
-        try {
+        final RedisURI redisURI = RedisURI.Builder.redis(host(), port(1)).build();
+        try (StatefulRedisConnection<String, String> connection = client.connect(redisURI)) {
+            final RedisAsyncCommands<String, String> commands = connection.async();
             commands.debugSegfault();
 
-            Wait.untilTrue(() -> !commands.getStatefulConnection().isOpen()).waitOrTimeout();
-            assertThat(commands.getStatefulConnection().isOpen()).isFalse();
-        } finally {
-            commands.getStatefulConnection().close();
+            Wait.untilTrue(() -> !connection.isOpen()).waitOrTimeout();
+            assertThat(connection.isOpen()).isFalse();
         }
     }
 
@@ -113,21 +106,15 @@ class RunOnlyOnceServerCommandIntegrationTests extends TestSupport {
     @Test
     @Order(4)
     void shutdown() {
-
         assumeTrue(CanConnect.to(host(), port(7)));
-
-        final RedisAsyncCommands<String, String> commands = client.connect(RedisURI.Builder.redis(host(), port(2)).build())
-                .async();
-        try {
-
+        final RedisURI redisURI = RedisURI.Builder.redis(host(), port(2)).build();
+        try (StatefulRedisConnection<String, String> cnxn = client.connect(redisURI)) {
+            final RedisAsyncCommands<String, String> commands = cnxn.async();
             commands.shutdown(true);
             commands.shutdown(false);
-            Wait.untilTrue(() -> !commands.getStatefulConnection().isOpen()).waitOrTimeout();
+            Wait.untilTrue(() -> !cnxn.isOpen()).waitOrTimeout();
 
-            assertThat(commands.getStatefulConnection().isOpen()).isFalse();
-
-        } finally {
-            commands.getStatefulConnection().close();
+            assertThat(cnxn.isOpen()).isFalse();
         }
     }
 
