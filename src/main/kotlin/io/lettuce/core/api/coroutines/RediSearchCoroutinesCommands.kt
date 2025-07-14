@@ -10,6 +10,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.annotations.Experimental
+import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
 import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
@@ -277,7 +278,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(Any, Any, AggregateArgs)
      */
     @Experimental
-    suspend fun ftAggregate(index: K, query: V): SearchReply<K, V>?
+    suspend fun ftAggregate(index: K, query: V): AggregationReply<K, V>?
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -333,7 +334,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCursorread(Any, long)
      */
     @Experimental
-    suspend fun ftAggregate(index: K, query: V, args: AggregateArgs<K, V>): SearchReply<K, V>?
+    suspend fun ftAggregate(index: K, query: V, args: AggregateArgs<K, V>): AggregationReply<K, V>?
 
     /**
      * Read next results from an existing cursor.
@@ -367,7 +368,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(Any, Any, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: K, cursorId: Long, count: Int): SearchReply<K, V>?
+    suspend fun ftCursorread(index: K, cursorId: Long, count: Int): AggregationReply<K, V>?
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -400,7 +401,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(Any, Any, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: K, cursorId: Long): SearchReply<K, V>?
+    suspend fun ftCursorread(index: K, cursorId: Long): AggregationReply<K, V>?
 
     /**
      * Delete a cursor and free its associated resources.

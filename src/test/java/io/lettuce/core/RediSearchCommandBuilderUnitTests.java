@@ -11,6 +11,7 @@ import static io.lettuce.core.search.arguments.AggregateArgs.*;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -224,7 +226,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtAggregateCommandBasic() {
-        Command<String, String, SearchReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY, null);
+        Command<String, String, AggregationReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY, null);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -253,7 +255,8 @@ class RediSearchCommandBuilderUnitTests {
                 .dialect(QueryDialects.DIALECT2) //
                 .build();
 
-        Command<String, String, SearchReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY, aggregateArgs);
+        Command<String, String, AggregationReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY,
+                aggregateArgs);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -279,7 +282,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtCursorreadCommandWithCount() {
-        Command<String, String, SearchReply<String, String>> command = builder.ftCursorread("idx", 123L, 10);
+        Command<String, String, AggregationReply<String, String>> command = builder.ftCursorread("idx", 123L, 10);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
@@ -296,7 +299,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtCursorreadCommandWithoutCount() {
-        Command<String, String, SearchReply<String, String>> command = builder.ftCursorread("idx", 456L);
+        Command<String, String, AggregationReply<String, String>> command = builder.ftCursorread("idx", 456L);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 

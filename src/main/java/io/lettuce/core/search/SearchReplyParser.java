@@ -42,7 +42,6 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
     @Override
     public SearchReply<K, V> parse(ComplexData data) {
         try {
-            data.getDynamicList();
             return new Resp2SearchResultsParser().parse(data);
         } catch (UnsupportedOperationException e) {
             return new Resp3SearchResultsParser().parse(data);

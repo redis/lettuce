@@ -9,6 +9,7 @@ package io.lettuce.core.api.sync;
 import java.util.List;
 
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
@@ -275,7 +276,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    SearchReply<K, V> ftAggregate(K index, V query);
+    AggregationReply<K, V> ftAggregate(K index, V query);
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -331,7 +332,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftCursorread(Object, long)
      */
     @Experimental
-    SearchReply<K, V> ftAggregate(K index, V query, AggregateArgs<K, V> args);
+    AggregationReply<K, V> ftAggregate(K index, V query, AggregateArgs<K, V> args);
 
     /**
      * Read next results from an existing cursor.
@@ -365,7 +366,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    SearchReply<K, V> ftCursorread(K index, long cursorId, int count);
+    AggregationReply<K, V> ftCursorread(K index, long cursorId, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -398,7 +399,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    SearchReply<K, V> ftCursorread(K index, long cursorId);
+    AggregationReply<K, V> ftCursorread(K index, long cursorId);
 
     /**
      * Delete a cursor and free its associated resources.

@@ -9,11 +9,13 @@ package io.lettuce.core.search;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -223,6 +225,9 @@ public class RediSearchGeospatialIntegrationTests {
      */
     @Test
     void testGeoshapePolygonSpatialRelationships() {
+        // 7.2 has a different behavior, but we do not want to test corner cases for old versions
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         // Create index with GEOSHAPE field using Cartesian coordinates for easier testing
         FieldArgs<String> geomField = GeoshapeFieldArgs.<String> builder().name("geom").flat().build();
         FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
@@ -304,6 +309,9 @@ public class RediSearchGeospatialIntegrationTests {
      */
     @Test
     void testComplexGeospatialQueries() {
+        // 7.2 has a different behavior, but we do not want to test corner cases for old versions
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+
         // Create index with mixed field types including geospatial
         FieldArgs<String> locationField = GeoFieldArgs.<String> builder().name("location").build();
         FieldArgs<String> serviceAreaField = GeoshapeFieldArgs.<String> builder().name("service_area").spherical().build();

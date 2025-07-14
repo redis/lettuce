@@ -49,6 +49,7 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
@@ -1649,23 +1650,23 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, args));
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftAggregate(K index, V query) {
+    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, null));
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
         return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, count));
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftCursorread(K index, long cursorId) {
-        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId));
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId) {
+        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, -1));
     }
 
     @Override

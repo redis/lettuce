@@ -9,11 +9,13 @@ package io.lettuce.core.api.reactive;
 import java.util.List;
 
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -276,7 +278,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftAggregate(K index, V query);
+    Mono<AggregationReply<K, V>> ftAggregate(K index, V query);
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -332,7 +334,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftCursorread(Object, long)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args);
+    Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args);
 
     /**
      * Read next results from an existing cursor.
@@ -366,7 +368,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftCursorread(K index, long cursorId, int count);
+    Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -399,7 +401,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftCursorread(K index, long cursorId);
+    Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId);
 
     /**
      * Delete a cursor and free its associated resources.

@@ -13,6 +13,8 @@ import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
+import io.lettuce.core.search.AggregateReplyParser;
+import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SearchReplyParser;
 import io.lettuce.core.search.arguments.AggregateArgs;
@@ -95,7 +97,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param aggregateArgs the aggregate arguments
      * @return the result of the aggregate command
      */
-    public Command<K, V, SearchReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> aggregateArgs) {
+    public Command<K, V, AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> aggregateArgs) {
         notNullKey(index);
         notNullKey(query);
 
@@ -106,7 +108,23 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
             aggregateArgs.build(args);
         }
 
-        return createCommand(FT_AGGREGATE, new EncodedComplexOutput<>(codec, new SearchReplyParser<>(codec, null)), args);
+        return createCommand(FT_AGGREGATE, new EncodedComplexOutput<>(codec, new AggregateReplyParser<>(codec, null)), args);
+    }
+
+    /**
+     * Read next results from an existing cursor.
+     *
+     * @param index the index name
+     * @param cursorId the cursor id
+     * @return the result of the cursor read command
+     */
+    public Command<K, V, AggregationReply<K, V>> ftCursorread(K index, long cursorId) {
+        notNullKey(index);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).addKey(index);
+        args.add(cursorId);
+
+        return createCommand(FT_CURSOR, new EncodedComplexOutput<>(codec, new AggregateReplyParser<>(codec, null)), args);
     }
 
     /**
@@ -117,7 +135,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param count the number of results to read
      * @return the result of the cursor read command
      */
-    public Command<K, V, SearchReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+    public Command<K, V, AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
         notNullKey(index);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).addKey(index);
@@ -125,23 +143,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.add(CommandKeyword.COUNT);
         args.add(count);
 
-        return createCommand(FT_CURSOR, new EncodedComplexOutput<>(codec, new SearchReplyParser<>(codec, null)), args);
-    }
-
-    /**
-     * Read next results from an existing cursor.
-     *
-     * @param index the index name
-     * @param cursorId the cursor id
-     * @return the result of the cursor read command
-     */
-    public Command<K, V, SearchReply<K, V>> ftCursorread(K index, long cursorId) {
-        notNullKey(index);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).addKey(index);
-        args.add(cursorId);
-
-        return createCommand(FT_CURSOR, new EncodedComplexOutput<>(codec, new SearchReplyParser<>(codec, null)), args);
+        return createCommand(FT_CURSOR, new EncodedComplexOutput<>(codec, new AggregateReplyParser<>(codec, null)), args);
     }
 
     /**

@@ -9,11 +9,14 @@ package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands
+import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
 import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
 import io.lettuce.core.search.arguments.FieldArgs
 import io.lettuce.core.search.arguments.SearchArgs
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 
 /**
@@ -46,21 +49,20 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftSearch(index: K, query: V, args: SearchArgs<K, V>): SearchReply<K, V>? =
         ops.ftSearch(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: K, query: V, args: AggregateArgs<K, V>): SearchReply<K, V>? {
-        return ops.ftAggregate(index, query, args).awaitFirstOrNull()
-    }
+    override suspend fun ftAggregate(index: K, query: V, args: AggregateArgs<K, V>): AggregationReply<K, V>? =
+        ops.ftAggregate(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: K, query: V): SearchReply<K, V>? {
-        return ops.ftAggregate(index, query).awaitFirstOrNull()
-    }
 
-    override suspend fun ftCursorread(index: K, cursorId: Long): SearchReply<K, V>? {
-        return ops.ftCursorread(index, cursorId).awaitFirstOrNull()
-    }
+    override suspend fun ftAggregate(index: K, query: V): AggregationReply<K, V>? =
+        ops.ftAggregate(index, query).awaitFirstOrNull()
 
-    override suspend fun ftCursorread(index: K, cursorId: Long, count: Int): SearchReply<K, V>? {
-        return ops.ftCursorread(index, cursorId, count).awaitFirstOrNull()
-    }
+    override suspend fun ftCursorread(index: K, cursorId: Long): AggregationReply<K, V>? =
+        ops.ftCursorread(index, cursorId).awaitFirstOrNull()
+
+
+    override suspend fun ftCursorread(index: K, cursorId: Long, count: Int): AggregationReply<K, V>? =
+        ops.ftCursorread(index, cursorId, count).awaitFirstOrNull()
+
 
     override suspend fun ftCursordel(index: K, cursorId: Long): String? {
         return ops.ftCursordel(index, cursorId).awaitFirstOrNull()

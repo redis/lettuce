@@ -36,6 +36,7 @@ import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.json.JsonValue;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -53,6 +54,7 @@ import java.util.Map;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for Redis Vector Search functionality using FT.SEARCH command with vector fields.
@@ -751,6 +753,9 @@ public class RediSearchVectorIntegrationTests {
      */
     @Test
     void testVectorSearchErrorHandling() {
+        // 7.4 and 7.2 have a different behavior, but we do not want to test corner cases for old versions
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
+
         // Create a simple vector index
         FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("test_vector").flat()
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
