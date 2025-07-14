@@ -404,17 +404,13 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         if (reliability == Reliability.AT_MOST_ONCE) {
 
             // cancel on exceptions and remove from queue, because there is no housekeeping
-            for (RedisCommand<?, ?, ?> command : commands) {
-                channelWrite(channel, command).addListener(AtMostOnceWriteListener.newInstance(this, command));
-            }
+            channelWrite(channel, commands).addListener(AtMostOnceWriteListener.newInstance(this, commands));
         }
 
         if (reliability == Reliability.AT_LEAST_ONCE) {
 
             // commands are ok to stay within the queue, reconnect will retrigger them
-            for (RedisCommand<?, ?, ?> command : commands) {
-                channelWrite(channel, command).addListener(RetryListener.newInstance(this, command));
-            }
+            channelWrite(channel, commands).addListener(RetryListener.newInstance(this, commands));
         }
 
         channelFlush(channel);
@@ -436,6 +432,15 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         }
 
         return channel.write(command);
+    }
+
+    private ChannelFuture channelWrite(Channel channel, Collection<? extends RedisCommand<?, ?, ?>> commands) {
+
+        if (debugEnabled) {
+            logger.debug("{} write() channelWrite command {}", logPrefix(), commands);
+        }
+
+        return channel.write(commands);
     }
 
     private ChannelFuture channelWriteAndFlush(Channel channel, RedisCommand<?, ?, ?> command) {
