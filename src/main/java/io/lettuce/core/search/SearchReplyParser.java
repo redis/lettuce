@@ -4,7 +4,6 @@
  *
  * Licensed under the MIT License.
  */
-
 package io.lettuce.core.search;
 
 import io.lettuce.core.codec.RedisCodec;
@@ -21,6 +20,28 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Parser for Redis Search (RediSearch) command responses that converts raw Redis data into structured {@link SearchReply}
+ * objects. This parser handles both RESP2 and RESP3 protocol responses and supports various search result formats including
+ * results with scores, content, IDs, and cursor-based pagination.
+ *
+ * <p>
+ * The parser automatically detects the Redis protocol version and switches between RESP2 and RESP3 parsing strategies. It
+ * supports the following search result features:
+ * </p>
+ * <ul>
+ * <li>Document IDs and content fields</li>
+ * <li>Search scores when requested with WITHSCORES</li>
+ * <li>Cursor-based pagination for large result sets</li>
+ * <li>Warning messages from Redis</li>
+ * <li>Total result counts</li>
+ * </ul>
+ *
+ * @param <K> the type of keys used in the search results
+ * @param <V> the type of values used in the search results
+ * @author Redis Ltd.
+ * @since 7.0
+ */
 public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K, V>> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SearchReplyParser.class);
@@ -33,6 +54,20 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
 
     private final boolean withIds;
 
+    /**
+     * Creates a new SearchReplyParser configured based on the provided search arguments. This constructor analyzes the search
+     * arguments to determine which components of the search results should be parsed and included in the final
+     * {@link SearchReply}.
+     *
+     * @param codec the Redis codec used for encoding/decoding keys and values. Must not be {@code null}.
+     * @param args the search arguments that determine parsing behavior. If {@code null}, default parsing behavior is used (with
+     *        content, without scores, with IDs).
+     *        <ul>
+     *        <li>If {@code args.isWithScores()} is {@code true}, search scores will be parsed and included</li>
+     *        <li>If {@code args.isNoContent()} is {@code true}, document content will be excluded from parsing</li>
+     *        <li>Document IDs are always parsed when using this constructor</li>
+     *        </ul>
+     */
     public SearchReplyParser(RedisCodec<K, V> codec, SearchArgs<K, V> args) {
         this.codec = codec;
         this.withScores = args != null && args.isWithScores();
@@ -40,6 +75,21 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
         this.withIds = true;
     }
 
+    /**
+     * Creates a new SearchReplyParser with default parsing configuration. This constructor is typically used for aggregation
+     * results or other search operations where specific search arguments are not available.
+     *
+     * <p>
+     * Default configuration:
+     * </p>
+     * <ul>
+     * <li>Scores are not parsed ({@code withScores = false})</li>
+     * <li>Content is parsed ({@code withContent = true})</li>
+     * <li>IDs are not parsed ({@code withIds = false})</li>
+     * </ul>
+     *
+     * @param codec the Redis codec used for encoding/decoding keys and values. Must not be {@code null}.
+     */
     public SearchReplyParser(RedisCodec<K, V> codec) {
         this.codec = codec;
         this.withScores = false;
@@ -47,12 +97,26 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
         this.withIds = false;
     }
 
+    /**
+     * Parses Redis Search command response data into a structured {@link SearchReply} object. This method automatically detects
+     * the Redis protocol version (RESP2 or RESP3) and uses the appropriate parsing strategy.
+     *
+     * @param data the complex data structure returned by Redis containing the search results. Must not be {@code null}.
+     * @return a {@link SearchReply} containing the parsed search results. Never {@code null}. Returns an empty
+     *         {@link SearchReply} if parsing fails.
+     */
     @Override
     public SearchReply<K, V> parse(ComplexData data) {
         try {
-            return new Resp2SearchResultsParser().parse(data);
-        } catch (UnsupportedOperationException e) {
-            return new Resp3SearchResultsParser().parse(data);
+            try {
+                return new Resp2SearchResultsParser().parse(data);
+            } catch (UnsupportedOperationException e) {
+                // automagically switch to RESP3 parsing if you encounter a ComplexData type different then an array
+                return new Resp3SearchResultsParser().parse(data);
+            }
+        } catch (Exception e) {
+            LOG.warn("Unable to parse the result from Redis", e);
+            return new SearchReply<>();
         }
     }
 
@@ -87,7 +151,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                 }
 
                 // Parse the actual results
-                parseResults(searchReply, actualResults, 1);
+                parseResults(searchReply, actualResults);
             } else {
                 // Regular search response
                 searchReply.setCount((Long) resultsList.get(0));
@@ -97,14 +161,14 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                 }
 
                 // Parse the results
-                parseResults(searchReply, resultsList, 1);
+                parseResults(searchReply, resultsList);
             }
 
             return searchReply;
         }
 
-        private void parseResults(SearchReply<K, V> searchReply, List<Object> resultsList, int startIndex) {
-            for (int i = startIndex; i < resultsList.size();) {
+        private void parseResults(SearchReply<K, V> searchReply, List<Object> resultsList) {
+            for (int i = 1; i < resultsList.size();) {
 
                 K id = codec.decodeKey(StringCodec.UTF8.encodeKey("0"));
                 if (withIds) {
@@ -176,9 +240,6 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
             if (resultsMap.containsKey(RESULTS_KEY)) {
                 ComplexData results = (ComplexData) resultsMap.get(RESULTS_KEY);
 
-                List<String> a = resultsMap.keySet().stream().map(o -> (ByteBuffer) o).map(StringCodec.UTF8::decodeKey)
-                        .collect(Collectors.toList());
-
                 results.getDynamicList().forEach(result -> {
                     ComplexData resultData = (ComplexData) result;
                     Map<Object, Object> resultEntry = resultData.getDynamicMap();
@@ -224,7 +285,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
             if (resultsMap.containsKey(WARNING_KEY)) {
                 ComplexData warning = (ComplexData) resultsMap.get(WARNING_KEY);
                 warning.getDynamicList().forEach(warningEntry -> {
-                    LOG.warn("Warning while parsing search results: {}", warningEntry);
+                    searchReply.addWarning(codec.decodeValue((ByteBuffer) warningEntry));
                 });
             }
 

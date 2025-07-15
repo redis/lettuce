@@ -327,8 +327,8 @@ public class AggregateArgs<K, V> {
          * </pre>
          *
          * <p>
-         * Use {@link io.lettuce.core.search.commands.FT#CURSOR_READ} and {@link io.lettuce.core.search.commands.FT#CURSOR_DEL}
-         * to iterate through and manage the cursor.
+         * Use {@link io.lettuce.core.api.RediSearchCommands#ftCursorread(Object, long)} and
+         * {@link io.lettuce.core.api.RediSearchCommands#ftCursordel(Object, long)} to iterate through and manage the cursor.
          * </p>
          *
          * @param withCursor the cursor specification with count and optional idle timeout

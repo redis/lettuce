@@ -9,8 +9,6 @@ package io.lettuce.core.search;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
-import io.lettuce.core.search.arguments.AggregateArgs;
-import io.lettuce.core.search.arguments.SearchArgs;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -23,17 +21,6 @@ import java.util.List;
  * FT.AGGREGATE command returns an array where each element represents a separate aggregation result that can be parsed by the
  * {@link SearchReplyParser}.
  * <p>
- * The structure of the FT.AGGREGATE response is typically:
- * 
- * <pre>
- * [
- *   [count1, result1_1, result1_2, ...],  // First aggregation result
- *   [count2, result2_1, result2_2, ...],  // Second aggregation result
- *   ...
- * ]
- * </pre>
- * 
- * Each inner array follows the same format as FT.SEARCH results and can be parsed using {@link SearchReplyParser}.
  *
  * @param <K> Key type.
  * @param <V> Value type.
@@ -104,15 +91,9 @@ public class AggregateReplyParser<K, V> implements ComplexDataParser<Aggregation
             return reply;
 
         } catch (Exception e) {
-            LOG.warn(">>>>>>>", e);
+            LOG.warn("Error while parsing the result returned from Redis", e);
             return reply;
         }
     }
-
-    // RESP3 FLAT Y
-    // RESP3 ARRAY Y
-
-    // RESP2 FLAT N
-    // RESP2 ARRAY N
 
 }
