@@ -1560,6 +1560,36 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> ftAliasadd(K alias, K index) {
+        return dispatch(searchCommandBuilder.ftAliasadd(alias, index));
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasupdate(K alias, K index) {
+        return dispatch(searchCommandBuilder.ftAliasupdate(alias, index));
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasdel(K alias) {
+        return dispatch(searchCommandBuilder.ftAliasdel(alias));
+    }
+
+    @Override
+    public RedisFuture<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+        return dispatch(searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftTagvals(K index, K fieldName) {
+        return dispatch(searchCommandBuilder.ftTagvals(index, fieldName));
+    }
+
+    @Override
+    public RedisFuture<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs) {
+        return dispatch(searchCommandBuilder.ftAlter(index, false, fieldArgs));
+    }
+
+    @Override
     public RedisFuture<String> ftDropindex(K index, boolean deleteDocumentKeys) {
         return dispatch(searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
     }

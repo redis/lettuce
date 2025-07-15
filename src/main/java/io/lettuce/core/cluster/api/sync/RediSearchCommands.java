@@ -94,6 +94,88 @@ public interface RediSearchCommands<K, V> {
     Executions<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs);
 
     /**
+     * Add new attributes to an existing search index.
+     *
+     * <p>
+     * This command allows you to extend an existing search index by adding new searchable fields without recreating the entire
+     * index. The new attributes will be applied to future document updates and can optionally be applied to existing documents
+     * through reindexing.
+     * </p>
+     *
+     * <p>
+     * Key features and considerations:
+     * </p>
+     * <ul>
+     * <li><strong>Non-destructive:</strong> Existing index structure and data remain intact</li>
+     * <li><strong>Incremental indexing:</strong> New fields are indexed as documents are updated</li>
+     * <li><strong>Reindexing control:</strong> Option to skip initial scan for performance</li>
+     * <li><strong>Field limitations:</strong> Text field limits may apply based on index creation options</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important notes:</strong>
+     * </p>
+     * <ul>
+     * <li>If the index was created without {@code MAXTEXTFIELDS}, you may be limited to 32 total text attributes</li>
+     * <li>New attributes are only indexed for documents that are updated after the ALTER command</li>
+     * <li>Use {@code SKIPINITIALSCAN} to avoid scanning existing documents if immediate indexing is not required</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the number of keys in the keyspace if initial scan is performed, O(1)
+     * if {@code SKIPINITIALSCAN} is used
+     * </p>
+     *
+     * @param index the index name, as a key
+     * @param skipInitialScan if {@code true}, skip scanning and indexing existing documents; if {@code false}, scan and index
+     *        existing documents with the new attributes
+     * @param fieldArgs the {@link FieldArgs} list defining the new searchable fields and their types to add
+     * @return {@code "OK"} if the index was successfully altered
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
+     * @see FieldArgs
+     * @see #ftCreate(Object, List)
+     * @see #ftCreate(Object, CreateArgs, List)
+     */
+    @Experimental
+    Executions<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs);
+
+    /**
+     * Add new attributes to an existing search index.
+     *
+     * <p>
+     * This command allows you to extend an existing search index by adding new searchable fields without recreating the entire
+     * index. The new attributes will be applied to future document updates and can optionally be applied to existing documents
+     * through reindexing.
+     * </p>
+     *
+     * <p>
+     * Key features and considerations:
+     * </p>
+     * <ul>
+     * <li><strong>Non-destructive:</strong> Existing index structure and data remain intact</li>
+     * <li><strong>Incremental indexing:</strong> New fields are indexed as documents are updated</li>
+     * <li><strong>Reindexing control:</strong> Option to skip initial scan for performance</li>
+     * <li><strong>Field limitations:</strong> Text field limits may apply based on index creation options</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the number of keys in the keyspace if initial scan is performed
+     * </p>
+     *
+     * @param index the index name, as a key
+     * @param fieldArgs the {@link FieldArgs} list defining the new searchable fields and their types to add
+     * @return {@code "OK"} if the index was successfully altered
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
+     * @see FieldArgs
+     * @see #ftCreate(Object, List)
+     * @see #ftCreate(Object, CreateArgs, List)
+     */
+    @Experimental
+    Executions<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs);
+
+    /**
      * Drop a search index without deleting the associated documents.
      *
      * <p>

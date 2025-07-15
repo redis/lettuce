@@ -9,6 +9,7 @@ package io.lettuce.core.search;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.search.arguments.CreateArgs;
@@ -27,10 +28,12 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Integration tests for Redis Search functionality using FT.SEARCH command.
@@ -547,6 +550,201 @@ public class RediSearchIntegrationTests {
 
         // Cleanup
         redis.ftDropindex(BLOG_INDEX);
+    }
+
+    /**
+     * Test FT.ALTER command to add new fields to an existing index.
+     */
+    @Test
+    void testFtAlterAddingNewFields() {
+        String testIndex = "alter-test-idx";
+
+        // Create initial index with one field
+        List<FieldArgs<String>> initialFields = Collections
+                .singletonList(TextFieldArgs.<String> builder().name("title").build());
+
+        assertThat(redis.ftCreate(testIndex, initialFields)).isEqualTo("OK");
+
+        // Add some test data
+        Map<String, String> doc1 = new HashMap<>();
+        doc1.put("title", "Test Document");
+        redis.hset("doc:1", doc1);
+
+        // Verify initial search works
+        SearchReply<String, String> initialSearch = redis.ftSearch(testIndex, "Test");
+        assertThat(initialSearch.getCount()).isEqualTo(1);
+
+        // Add new fields to the index
+        List<FieldArgs<String>> newFields = Arrays.asList(
+                NumericFieldArgs.<String> builder().name("published_at").sortable().build(),
+                TextFieldArgs.<String> builder().name("author").build());
+
+        assertThat(redis.ftAlter(testIndex, false, newFields)).isEqualTo("OK");
+
+        // Update existing document with new fields
+        Map<String, String> updateDoc1 = new HashMap<>();
+        updateDoc1.put("published_at", "1640995200");
+        updateDoc1.put("author", "John Doe");
+        redis.hset("doc:1", updateDoc1);
+
+        // Add new document with all fields
+        Map<String, String> doc2 = new HashMap<>();
+        doc2.put("title", "Another Document");
+        doc2.put("published_at", "1641081600");
+        doc2.put("author", "Jane Smith");
+        redis.hset("doc:2", doc2);
+
+        // Verify search still works and new fields are indexed
+        SearchReply<String, String> searchAfterAlter = redis.ftSearch(testIndex, "Document");
+        assertThat(searchAfterAlter.getCount()).isEqualTo(2);
+
+        // Search by new field
+        SearchReply<String, String> authorSearch = redis.ftSearch(testIndex, "@author:John");
+        assertThat(authorSearch.getCount()).isEqualTo(1);
+        assertThat(authorSearch.getResults().get(0).getId()).isEqualTo("doc:1");
+
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.ALTER command with SKIPINITIALSCAN option.
+     */
+    @Test
+    void testFtAlterWithSkipInitialScan() {
+        String testIndex = "alter-skip-test-idx";
+
+        // Create initial index
+        List<FieldArgs<String>> initialFields = Collections
+                .singletonList(TextFieldArgs.<String> builder().name("title").build());
+
+        assertThat(redis.ftCreate(testIndex, initialFields)).isEqualTo("OK");
+
+        // Add test data before altering
+        Map<String, String> doc1 = new HashMap<>();
+        doc1.put("title", "Existing Document");
+        doc1.put("category", "Technology");
+        redis.hset("doc:1", doc1);
+
+        // Add new field with SKIPINITIALSCAN
+        List<FieldArgs<String>> newFields = Collections
+                .singletonList(TextFieldArgs.<String> builder().name("category").build());
+
+        assertThat(redis.ftAlter(testIndex, true, newFields)).isEqualTo("OK");
+
+        // The existing document should not be indexed for the new field due to SKIPINITIALSCAN
+        SearchReply<String, String> categorySearch = redis.ftSearch(testIndex, "@category:Technology");
+        assertThat(categorySearch.getCount()).isEqualTo(0);
+
+        // But new documents should be indexed for the new field
+        Map<String, String> doc2 = new HashMap<>();
+        doc2.put("title", "New Document");
+        doc2.put("category", "Science");
+        redis.hset("doc:2", doc2);
+
+        SearchReply<String, String> newCategorySearch = redis.ftSearch(testIndex, "@category:Science");
+        assertThat(newCategorySearch.getCount()).isEqualTo(1);
+        assertThat(newCategorySearch.getResults().get(0).getId()).isEqualTo("doc:2");
+
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.ALIASADD, FT.ALIASUPDATE, and FT.ALIASDEL commands.
+     */
+    @Test
+    void testFtAliasCommands() {
+        String testIndex = "alias-test-idx";
+        String testIndex2 = "alias-test-idx2";
+        String alias = "test-alias";
+
+        // Create test indexes
+        List<FieldArgs<String>> fields = Collections.singletonList(TextFieldArgs.<String> builder().name("title").build());
+
+        assertThat(redis.ftCreate(testIndex, fields)).isEqualTo("OK");
+        assertThat(redis.ftCreate(testIndex2, fields)).isEqualTo("OK");
+
+        // Test FT.ALIASADD
+        assertThat(redis.ftAliasadd(alias, testIndex)).isEqualTo("OK");
+
+        // Add test data and verify alias works
+        Map<String, String> doc = new HashMap<>();
+        doc.put("title", "Test Document");
+        redis.hset("doc:1", doc);
+
+        // Search using alias should work
+        SearchReply<String, String> aliasSearch = redis.ftSearch(alias, "Test");
+        assertThat(aliasSearch.getCount()).isEqualTo(1);
+
+        // Test FT.ALIASUPDATE - switch alias to different index
+        assertThat(redis.ftAliasupdate(alias, testIndex2)).isEqualTo("OK");
+
+        // Add different data to second index
+        Map<String, String> doc2 = new HashMap<>();
+        doc2.put("title", "Different Document");
+        redis.hset("doc:2", doc2);
+
+        // Search using alias should now return results from second index
+        SearchReply<String, String> updatedAliasSearch = redis.ftSearch(alias, "Different");
+        assertThat(updatedAliasSearch.getCount()).isEqualTo(1);
+        assertThat(updatedAliasSearch.getResults().get(0).getId()).isEqualTo("doc:2");
+
+        // Test FT.ALIASDEL
+        assertThat(redis.ftAliasdel(alias)).isEqualTo("OK");
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+        assertThat(redis.ftDropindex(testIndex2)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.TAGVALS command to retrieve distinct values from a tag field.
+     */
+    @Test
+    void testFtTagvals() {
+        String testIndex = "tagvals-test-idx";
+
+        // Create index with a tag field
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
+                TagFieldArgs.<String> builder().name("category").build());
+
+        assertThat(redis.ftCreate(testIndex, fields)).isEqualTo("OK");
+
+        // Add test data with different tag values
+        Map<String, String> doc1 = new HashMap<>();
+        doc1.put("title", "Document 1");
+        doc1.put("category", "Technology");
+        redis.hset("doc:1", doc1);
+
+        Map<String, String> doc2 = new HashMap<>();
+        doc2.put("title", "Document 2");
+        doc2.put("category", "Science");
+        redis.hset("doc:2", doc2);
+
+        Map<String, String> doc3 = new HashMap<>();
+        doc3.put("title", "Document 3");
+        doc3.put("category", "Technology"); // Duplicate category
+        redis.hset("doc:3", doc3);
+
+        Map<String, String> doc4 = new HashMap<>();
+        doc4.put("title", "Document 4");
+        doc4.put("category", "Arts");
+        redis.hset("doc:4", doc4);
+
+        // Test FT.TAGVALS to get distinct tag values
+        List<String> tagValues = redis.ftTagvals(testIndex, "category");
+
+        // Should return distinct values (Technology, Science, Arts)
+        assertThat(tagValues).hasSize(3);
+        assertThat(tagValues).containsExactlyInAnyOrder("Technology".toLowerCase(), "Science".toLowerCase(),
+                "Arts".toLowerCase());
+
+        // Test with non-existent field should return empty list
+
+        Exception exception = assertThrows(RedisCommandExecutionException.class, () -> {
+            List<String> emptyTagValues = redis.ftTagvals(testIndex, "nonexistent");
+        });
+
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
     }
 
 }

@@ -31,4 +31,7 @@ public class RediSearchResp2IntegrationTests extends RediSearchIntegrationTests 
         return ClientOptions.builder().protocolVersion(ProtocolVersion.RESP2).build();
     }
 
+    // All tests from the parent class will run with RESP2 protocol
+    // This includes the alias commands and tagvals tests added to the parent class
+
 }
