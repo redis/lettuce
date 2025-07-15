@@ -31,12 +31,20 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
 
     private final boolean withContent;
 
+    private final boolean withIds;
+
     public SearchReplyParser(RedisCodec<K, V> codec, SearchArgs<K, V> args) {
         this.codec = codec;
         this.withScores = args != null && args.isWithScores();
-        // this.withPayloads = args != null && args.isWithPayloads();
-        // this.withSortKeys = args != null && args.isWithSortKeys();
         this.withContent = args == null || !args.isNoContent();
+        this.withIds = true;
+    }
+
+    public SearchReplyParser(RedisCodec<K, V> codec) {
+        this.codec = codec;
+        this.withScores = false;
+        this.withContent = true;
+        this.withIds = false;
     }
 
     @Override
@@ -96,18 +104,23 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
         }
 
         private void parseResults(SearchReply<K, V> searchReply, List<Object> resultsList, int startIndex) {
-            for (int i = startIndex; i < resultsList.size(); i++) {
+            for (int i = startIndex; i < resultsList.size();) {
 
-                final K id = codec.decodeKey((ByteBuffer) resultsList.get(i));
+                K id = codec.decodeKey(StringCodec.UTF8.encodeKey("0"));
+                if (withIds) {
+                    id = codec.decodeKey((ByteBuffer) resultsList.get(i));
+                    i++;
+                }
+
                 final SearchReply.SearchResult<K, V> searchResult = new SearchReply.SearchResult<>(id);
 
                 if (withScores) {
-                    searchResult.setScore(Double.parseDouble(StringCodec.UTF8.decodeKey((ByteBuffer) resultsList.get(i + 1))));
+                    searchResult.setScore(Double.parseDouble(StringCodec.UTF8.decodeKey((ByteBuffer) resultsList.get(i))));
                     i++;
                 }
 
                 if (withContent) {
-                    ComplexData resultData = (ComplexData) resultsList.get(i + 1);
+                    ComplexData resultData = (ComplexData) resultsList.get(i);
                     List<Object> resultEntries = resultData.getDynamicList();
 
                     Map<K, V> resultEntriesProcessed = IntStream.range(0, resultEntries.size() / 2).boxed()

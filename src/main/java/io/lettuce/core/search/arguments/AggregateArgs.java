@@ -574,6 +574,10 @@ public class AggregateArgs<K, V> {
         args.add(dialect.toString());
     }
 
+    public Optional<WithCursor> getWithCursor() {
+        return withCursor;
+    }
+
     // Helper classes
     public static class LoadField<K> {
 

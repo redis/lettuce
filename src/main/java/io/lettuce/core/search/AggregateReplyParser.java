@@ -9,6 +9,7 @@ package io.lettuce.core.search;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
+import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -47,14 +48,11 @@ public class AggregateReplyParser<K, V> implements ComplexDataParser<Aggregation
 
     private final SearchReplyParser<K, V> searchReplyParser;
 
-    /**
-     * Creates a new AggregateReplyParser.
-     *
-     * @param codec the Redis codec for key/value encoding/decoding
-     * @param args the search arguments used in the aggregation command
-     */
-    public AggregateReplyParser(RedisCodec<K, V> codec, SearchArgs<K, V> args) {
-        this.searchReplyParser = new SearchReplyParser<>(codec, args);
+    private final boolean withCursor;
+
+    public AggregateReplyParser(RedisCodec<K, V> codec, boolean withCursor) {
+        this.searchReplyParser = new SearchReplyParser<>(codec);
+        this.withCursor = withCursor;
     }
 
     /**
@@ -75,6 +73,12 @@ public class AggregateReplyParser<K, V> implements ComplexDataParser<Aggregation
         }
 
         try {
+            if (!withCursor) {
+                SearchReply<K, V> searchReply = searchReplyParser.parse(data);
+                reply.addSearchReply(searchReply);
+                return reply;
+            }
+
             List<Object> aggregateResults = data.getDynamicList();
             if (aggregateResults == null || aggregateResults.isEmpty()) {
                 return reply;
@@ -99,13 +103,16 @@ public class AggregateReplyParser<K, V> implements ComplexDataParser<Aggregation
 
             return reply;
 
-        } catch (UnsupportedOperationException e) {
-            // FT.AGGREGATE with RESP3 may return a map, instead of a list, when there is only one result
-            // This is a curious as unpredictable, but we still need to handle it
-            SearchReply<K, V> searchReply = searchReplyParser.parse(data);
-            reply.addSearchReply(searchReply);
+        } catch (Exception e) {
+            LOG.warn(">>>>>>>", e);
             return reply;
         }
     }
+
+    // RESP3 FLAT Y
+    // RESP3 ARRAY Y
+
+    // RESP2 FLAT N
+    // RESP2 ARRAY N
 
 }

@@ -104,27 +104,15 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
         args.addValue(query);
 
+        boolean withCursor = false;
+
         if (aggregateArgs != null) {
             aggregateArgs.build(args);
+            withCursor = aggregateArgs.getWithCursor() != null && aggregateArgs.getWithCursor().isPresent();
         }
 
-        return createCommand(FT_AGGREGATE, new EncodedComplexOutput<>(codec, new AggregateReplyParser<>(codec, null)), args);
-    }
-
-    /**
-     * Read next results from an existing cursor.
-     *
-     * @param index the index name
-     * @param cursorId the cursor id
-     * @return the result of the cursor read command
-     */
-    public Command<K, V, AggregationReply<K, V>> ftCursorread(K index, long cursorId) {
-        notNullKey(index);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).addKey(index);
-        args.add(cursorId);
-
-        return createCommand(FT_CURSOR, new EncodedComplexOutput<>(codec, new AggregateReplyParser<>(codec, null)), args);
+        return createCommand(FT_AGGREGATE, new EncodedComplexOutput<>(codec, new AggregateReplyParser<>(codec, withCursor)),
+                args);
     }
 
     /**
@@ -140,10 +128,13 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).addKey(index);
         args.add(cursorId);
-        args.add(CommandKeyword.COUNT);
-        args.add(count);
 
-        return createCommand(FT_CURSOR, new EncodedComplexOutput<>(codec, new AggregateReplyParser<>(codec, null)), args);
+        if (count >= 0) {
+            args.add(CommandKeyword.COUNT);
+            args.add(count);
+        }
+
+        return createCommand(FT_CURSOR, new EncodedComplexOutput<>(codec, new AggregateReplyParser<>(codec, true)), args);
     }
 
     /**

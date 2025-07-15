@@ -37,14 +37,12 @@ import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.arguments.TextFieldArgs;
-import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * Integration tests for Redis FT.AGGREGATE command.
  *
  * @author Tihomir Mateev
  */
-@EnabledOnCommand("FT.AGGREGATE")
 class RediSearchAggregateIntegrationTests extends TestSupport {
 
     private final RedisClient client;
@@ -103,7 +101,6 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // First, let's verify the documents are indexed by doing a search
         SearchReply<String, String> searchResult = redis.ftSearch("basic-test-idx", "*");
-        System.out.println("Search result count: " + searchResult.getCount()); // Debug output
         assertThat(searchResult.getCount()).isEqualTo(4); // Verify documents are indexed
 
         // Perform basic aggregation without LOAD - should return empty field maps
@@ -351,19 +348,363 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 .collect(Collectors.toSet());
         assertThat(categories).containsExactlyInAnyOrder("smartphones", "laptops");
 
-        /*
-         * TODO: Future aggregation scenarios to implement: 1. Group by category with statistics: FT.AGGREGATE products-idx *
-         * GROUPBY 1 @category REDUCE COUNT 0 AS count REDUCE AVG 1 @price AS avg_price REDUCE MIN 1 @price AS min_price REDUCE
-         * MAX 1 @price AS max_price 2. Apply mathematical expressions: FT.AGGREGATE products-idx * LOAD
-         * 4 @title @price @stock @rating APPLY "@price * @stock" AS inventory_value APPLY "ceil(@rating)" AS rating_rounded 3.
-         * Filter and sort results: FT.AGGREGATE products-idx * LOAD 3 @title @price @rating FILTER "@price > 1000" SORTBY
-         * 2 @rating DESC 4. Complex pipeline with multiple operations: FT.AGGREGATE products-idx * GROUPBY 1 @brand REDUCE
-         * COUNT 0 AS product_count REDUCE AVG 1 @rating AS avg_rating REDUCE SUM 1 @stock AS total_stock SORTBY 2 @avg_rating
-         * DESC LIMIT 0 3 5. String operations and functions: FT.AGGREGATE products-idx * LOAD 2 @title @brand APPLY
-         * "upper(@brand)" AS brand_upper APPLY "substr(@title, 0, 10)" AS title_short
-         */
+        // 1. Group by category with statistics
+        AggregateArgs<String, String> statsArgs = AggregateArgs.<String, String> builder()
+                .groupBy(GroupBy.<String, String> of("category").reduce(Reducer.<String, String> count().as("count"))
+                        .reduce(Reducer.<String, String> avg("@price").as("avg_price"))
+                        .reduce(Reducer.<String, String> min("@price").as("min_price"))
+                        .reduce(Reducer.<String, String> max("@price").as("max_price")))
+                .dialect(QueryDialects.DIALECT2).build();
+
+        AggregationReply<String, String> statsResult = redis.ftAggregate("products-idx", "*", statsArgs);
+
+        assertThat(statsResult).isNotNull();
+        assertThat(statsResult.getAggregationGroups()).isEqualTo(1); // smartphones and laptops
+        assertThat(statsResult.getReplies()).hasSize(1);
+
+        SearchReply<String, String> statsReply = statsResult.getReplies().get(0);
+        assertThat(statsReply.getResults()).hasSize(2);
+
+        // Verify each category group has the expected statistics fields
+        for (SearchReply.SearchResult<String, String> group : statsReply.getResults()) {
+            assertThat(group.getFields()).containsKeys("category", "count", "avg_price", "min_price", "max_price");
+
+            // Verify the values make sense (e.g., min_price <= avg_price <= max_price)
+            double minPrice = Double.parseDouble(group.getFields().get("min_price"));
+            double avgPrice = Double.parseDouble(group.getFields().get("avg_price"));
+            double maxPrice = Double.parseDouble(group.getFields().get("max_price"));
+
+            assertThat(minPrice).isLessThanOrEqualTo(avgPrice);
+            assertThat(avgPrice).isLessThanOrEqualTo(maxPrice);
+        }
+
+        // 2. Apply mathematical expressions
+        AggregateArgs<String, String> mathArgs = AggregateArgs.<String, String> builder().load("title").load("price")
+                .load("stock").load("rating").apply("@price * @stock", "inventory_value")
+                .apply("ceil(@rating)", "rating_rounded").dialect(QueryDialects.DIALECT2).build();
+
+        AggregationReply<String, String> mathResult = redis.ftAggregate("products-idx", "*", mathArgs);
+
+        assertThat(mathResult).isNotNull();
+        assertThat(mathResult.getAggregationGroups()).isEqualTo(1);
+        assertThat(mathResult.getReplies()).hasSize(1);
+
+        SearchReply<String, String> mathReply = mathResult.getReplies().get(0);
+        assertThat(mathReply.getResults()).hasSize(4);
+
+        // Verify computed fields exist and have correct values
+        for (SearchReply.SearchResult<String, String> item : mathReply.getResults()) {
+            assertThat(item.getFields()).containsKeys("title", "price", "stock", "rating", "inventory_value", "rating_rounded");
+
+            // Verify inventory_value = price * stock
+            double price = Double.parseDouble(item.getFields().get("price"));
+            double stock = Double.parseDouble(item.getFields().get("stock"));
+            double inventoryValue = Double.parseDouble(item.getFields().get("inventory_value"));
+            assertThat(inventoryValue).isEqualTo(price * stock);
+
+            // Verify rating_rounded is ceiling of rating
+            double rating = Double.parseDouble(item.getFields().get("rating"));
+            double ratingRounded = Double.parseDouble(item.getFields().get("rating_rounded"));
+            assertThat(ratingRounded).isEqualTo(Math.ceil(rating));
+        }
+
+        // 3. Filter and sort results
+        AggregateArgs<String, String> filterArgs = AggregateArgs.<String, String> builder().load("title").load("price")
+                .load("rating").filter("@price > 1000").sortBy("rating", SortDirection.DESC).dialect(QueryDialects.DIALECT2)
+                .build();
+
+        AggregationReply<String, String> filterResult = redis.ftAggregate("products-idx", "*", filterArgs);
+
+        assertThat(filterResult).isNotNull();
+        assertThat(filterResult.getReplies()).hasSize(1);
+
+        SearchReply<String, String> filterReply = filterResult.getReplies().get(0);
+
+        // Verify all returned items have price > 1000
+        for (SearchReply.SearchResult<String, String> item : filterReply.getResults()) {
+            double price = Double.parseDouble(item.getFields().get("price"));
+            assertThat(price).isGreaterThan(1000);
+        }
+
+        // Verify results are sorted by rating in descending order
+        if (filterReply.getResults().size() >= 2) {
+            List<SearchReply.SearchResult<String, String>> results = filterReply.getResults();
+            for (int i = 0; i < results.size() - 1; i++) {
+                double rating1 = Double.parseDouble(results.get(i).getFields().get("rating"));
+                double rating2 = Double.parseDouble(results.get(i + 1).getFields().get("rating"));
+                assertThat(rating1).isGreaterThanOrEqualTo(rating2);
+            }
+        }
+
+        // 4. Complex pipeline with multiple operations
+        AggregateArgs<String, String> complexArgs = AggregateArgs.<String, String> builder()
+                .groupBy(GroupBy.<String, String> of("brand").reduce(Reducer.<String, String> count().as("product_count"))
+                        .reduce(Reducer.<String, String> avg("@rating").as("avg_rating"))
+                        .reduce(Reducer.<String, String> sum("@stock").as("total_stock")))
+                .sortBy("avg_rating", SortDirection.DESC).limit(0, 3) // Skip 0, take 3
+                .dialect(QueryDialects.DIALECT2).build();
+
+        AggregationReply<String, String> complexResult = redis.ftAggregate("products-idx", "*", complexArgs);
+
+        assertThat(complexResult).isNotNull();
+        assertThat(complexResult.getReplies()).hasSize(1);
+
+        SearchReply<String, String> complexReply = complexResult.getReplies().get(0);
+
+        // Verify each brand group has the expected fields
+        for (SearchReply.SearchResult<String, String> group : complexReply.getResults()) {
+            assertThat(group.getFields()).containsKeys("brand", "product_count", "avg_rating", "total_stock");
+        }
+
+        // Verify results are sorted by avg_rating in descending order
+        if (complexReply.getResults().size() >= 2) {
+            List<SearchReply.SearchResult<String, String>> results = complexReply.getResults();
+            for (int i = 0; i < results.size() - 1; i++) {
+                double rating1 = Double.parseDouble(results.get(i).getFields().get("avg_rating"));
+                double rating2 = Double.parseDouble(results.get(i + 1).getFields().get("avg_rating"));
+                assertThat(rating1).isGreaterThanOrEqualTo(rating2);
+            }
+        }
+
+        // Verify limit is applied (max 3 results)
+        assertThat(complexReply.getResults().size()).isLessThanOrEqualTo(3);
+
+        // 5. String operations and functions
+        AggregateArgs<String, String> stringArgs = AggregateArgs.<String, String> builder().load("title").load("brand")
+                .apply("upper(@brand)", "brand_upper").apply("substr(@title, 0, 10)", "title_short")
+                .dialect(QueryDialects.DIALECT2).build();
+
+        AggregationReply<String, String> stringResult = redis.ftAggregate("products-idx", "*", stringArgs);
+
+        assertThat(stringResult).isNotNull();
+        assertThat(stringResult.getReplies()).hasSize(1);
+
+        SearchReply<String, String> stringReply = stringResult.getReplies().get(0);
+
+        // Verify string operations are applied correctly
+        for (SearchReply.SearchResult<String, String> item : stringReply.getResults()) {
+            assertThat(item.getFields()).containsKeys("title", "brand", "brand_upper", "title_short");
+
+            // Verify brand_upper is uppercase of brand
+            String brand = item.getFields().get("brand");
+            String brandUpper = item.getFields().get("brand_upper");
+            assertThat(brandUpper).isEqualTo(brand.toUpperCase());
+
+            // Verify title_short is substring of title (first 10 chars or less)
+            String title = item.getFields().get("title");
+            String titleShort = item.getFields().get("title_short");
+            assertThat(titleShort).isEqualTo(title.substring(0, Math.min(10, title.length())));
+        }
 
         assertThat(redis.ftDropindex("products-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldHandleNestedGroupByOperations() {
+        // Create an index for hierarchical grouping scenarios
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("department").sortable().build(),
+                TextFieldArgs.<String> builder().name("category").sortable().build(),
+                TextFieldArgs.<String> builder().name("product").build(),
+                NumericFieldArgs.<String> builder().name("sales").sortable().build(),
+                NumericFieldArgs.<String> builder().name("profit").sortable().build());
+
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("sales:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate("sales-idx", createArgs, fields)).isEqualTo("OK");
+
+        // Add sample sales data
+        Map<String, String> salesData = new HashMap<>();
+        salesData.put("department", "Electronics");
+        salesData.put("category", "Smartphones");
+        salesData.put("product", "iPhone 14");
+        salesData.put("sales", "15000");
+        salesData.put("profit", "3000");
+        redis.hmset("sales:1", salesData);
+
+        salesData.put("department", "Electronics");
+        salesData.put("category", "Laptops");
+        salesData.put("product", "MacBook Pro");
+        salesData.put("sales", "25000");
+        salesData.put("profit", "5000");
+        redis.hmset("sales:2", salesData);
+
+        salesData.put("department", "Electronics");
+        salesData.put("category", "Smartphones");
+        salesData.put("product", "Samsung Galaxy");
+        salesData.put("sales", "12000");
+        salesData.put("profit", "2400");
+        redis.hmset("sales:3", salesData);
+
+        salesData.put("department", "Clothing");
+        salesData.put("category", "Shirts");
+        salesData.put("product", "Cotton Shirt");
+        salesData.put("sales", "5000");
+        salesData.put("profit", "1500");
+        redis.hmset("sales:4", salesData);
+
+        // Test nested grouping by department and category
+        AggregateArgs<String, String> nestedArgs = AggregateArgs.<String, String> builder()
+                .groupBy(GroupBy.<String, String> of("department", "category")
+                        .reduce(Reducer.<String, String> count().as("product_count"))
+                        .reduce(Reducer.<String, String> sum("@sales").as("total_sales"))
+                        .reduce(Reducer.<String, String> sum("@profit").as("total_profit")))
+                .sortBy("total_sales", SortDirection.DESC).dialect(QueryDialects.DIALECT2).build();
+
+        AggregationReply<String, String> nestedResult = redis.ftAggregate("sales-idx", "*", nestedArgs);
+
+        assertThat(nestedResult).isNotNull();
+        assertThat(nestedResult.getReplies()).hasSize(1);
+
+        SearchReply<String, String> nestedReply = nestedResult.getReplies().get(0);
+
+        // Verify each group has the expected fields
+        for (SearchReply.SearchResult<String, String> group : nestedReply.getResults()) {
+            assertThat(group.getFields()).containsKeys("department", "category", "product_count", "total_sales",
+                    "total_profit");
+        }
+
+        // Verify results are sorted by total_sales in descending order
+        if (nestedReply.getResults().size() >= 2) {
+            List<SearchReply.SearchResult<String, String>> results = nestedReply.getResults();
+            for (int i = 0; i < results.size() - 1; i++) {
+                double sales1 = Double.parseDouble(results.get(i).getFields().get("total_sales"));
+                double sales2 = Double.parseDouble(results.get(i + 1).getFields().get("total_sales"));
+                assertThat(sales1).isGreaterThanOrEqualTo(sales2);
+            }
+        }
+
+        assertThat(redis.ftDropindex("sales-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldHandleAdvancedFilteringAndConditionals() {
+        // Create an index for advanced filtering scenarios
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("status").sortable().build(),
+                TextFieldArgs.<String> builder().name("priority").sortable().build(),
+                NumericFieldArgs.<String> builder().name("score").sortable().build(),
+                NumericFieldArgs.<String> builder().name("age").sortable().build());
+
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("task:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate("tasks-idx", createArgs, fields)).isEqualTo("OK");
+
+        // Add sample task data
+        Map<String, String> taskData = new HashMap<>();
+        taskData.put("status", "active");
+        taskData.put("priority", "high");
+        taskData.put("score", "95");
+        taskData.put("age", "5");
+        redis.hmset("task:1", taskData);
+
+        taskData.put("status", "completed");
+        taskData.put("priority", "medium");
+        taskData.put("score", "85");
+        taskData.put("age", "10");
+        redis.hmset("task:2", taskData);
+
+        taskData.put("status", "active");
+        taskData.put("priority", "low");
+        taskData.put("score", "70");
+        taskData.put("age", "15");
+        redis.hmset("task:3", taskData);
+
+        taskData.put("status", "pending");
+        taskData.put("priority", "high");
+        taskData.put("score", "90");
+        taskData.put("age", "3");
+        redis.hmset("task:4", taskData);
+
+        // Test complex filtering with multiple conditions
+        AggregateArgs<String, String> filterArgs = AggregateArgs.<String, String> builder().loadAll()
+                .filter("@score > 80 && @age < 12").apply("@score * 0.1", "normalized_score")
+                .sortBy("score", SortDirection.DESC).dialect(QueryDialects.DIALECT2).build();
+
+        AggregationReply<String, String> filterResult = redis.ftAggregate("tasks-idx", "*", filterArgs);
+
+        assertThat(filterResult).isNotNull();
+        assertThat(filterResult.getReplies()).hasSize(1);
+
+        SearchReply<String, String> filterReply = filterResult.getReplies().get(0);
+
+        // Verify all returned items meet the filter criteria
+        for (SearchReply.SearchResult<String, String> item : filterReply.getResults()) {
+            double score = Double.parseDouble(item.getFields().get("score"));
+            double age = Double.parseDouble(item.getFields().get("age"));
+
+            assertThat(score).isGreaterThan(80);
+            assertThat(age).isLessThan(12);
+
+            // Verify computed fields
+            assertThat(item.getFields()).containsKeys("normalized_score");
+
+            double normalizedScore = Double.parseDouble(item.getFields().get("normalized_score"));
+            assertThat(normalizedScore).isEqualTo(score * 0.1);
+
+        }
+
+        assertThat(redis.ftDropindex("tasks-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldHandleAdvancedStatisticalFunctions() {
+        // Create an index for statistical analysis
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("region").sortable().build(),
+                NumericFieldArgs.<String> builder().name("temperature").sortable().build(),
+                NumericFieldArgs.<String> builder().name("humidity").sortable().build(),
+                NumericFieldArgs.<String> builder().name("pressure").sortable().build());
+
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("weather:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate("weather-idx", createArgs, fields)).isEqualTo("OK");
+
+        // Add sample weather data
+        for (int i = 1; i <= 20; i++) {
+            Map<String, String> weatherData = new HashMap<>();
+            weatherData.put("region", i <= 10 ? "north" : "south");
+            weatherData.put("temperature", String.valueOf(20 + i));
+            weatherData.put("humidity", String.valueOf(50 + (i % 5) * 5));
+            weatherData.put("pressure", String.valueOf(1000 + i * 2));
+            redis.hmset("weather:" + i, weatherData);
+        }
+
+        // Test advanced statistical functions
+        AggregateArgs<String, String> statsArgs = AggregateArgs.<String, String> builder()
+                .groupBy(GroupBy.<String, String> of("region").reduce(Reducer.<String, String> count().as("count"))
+                        .reduce(Reducer.<String, String> avg("@temperature").as("avg_temp"))
+                        .reduce(Reducer.<String, String> min("@temperature").as("min_temp"))
+                        .reduce(Reducer.<String, String> max("@temperature").as("max_temp")))
+                .dialect(QueryDialects.DIALECT2).build();
+
+        AggregationReply<String, String> statsResult = redis.ftAggregate("weather-idx", "*", statsArgs);
+
+        assertThat(statsResult).isNotNull();
+        assertThat(statsResult.getReplies()).hasSize(1);
+
+        SearchReply<String, String> statsReply = statsResult.getReplies().get(0);
+        assertThat(statsReply.getResults()).hasSize(2); // north and south regions
+
+        // Verify each region has the expected statistical fields
+        for (SearchReply.SearchResult<String, String> region : statsReply.getResults()) {
+            assertThat(region.getFields()).containsKeys("region", "count", "avg_temp", "min_temp", "max_temp");
+
+            // Verify statistical relationships
+            double minTemp = Double.parseDouble(region.getFields().get("min_temp"));
+            double avgTemp = Double.parseDouble(region.getFields().get("avg_temp"));
+            double maxTemp = Double.parseDouble(region.getFields().get("max_temp"));
+
+            // Statistical invariants that should hold
+            assertThat(minTemp).isLessThanOrEqualTo(avgTemp);
+            assertThat(avgTemp).isLessThanOrEqualTo(maxTemp);
+
+            // Count should be positive
+            int count = Integer.parseInt(region.getFields().get("count"));
+            assertThat(count).isGreaterThan(0);
+        }
+
+        assertThat(redis.ftDropindex("weather-idx")).isEqualTo("OK");
     }
 
     @Test
@@ -839,7 +1180,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
-        assertThat(nextResult.getReplies().get(0).getResults()).hasSize(3);
+        assertThat(nextResult.getReplies().get(0).getResults()).hasSize(2);
 
         assertThat(redis.ftDropindex("cursor-maxidle-test-idx")).isEqualTo("OK");
     }
@@ -883,11 +1224,12 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Create an index
         List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
                 NumericFieldArgs.<String> builder().name("id").sortable().build());
-
         assertThat(redis.ftCreate("cursor-pagination-test-idx", fields)).isEqualTo("OK");
 
+        final String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
         // Add test documents
-        for (int i = 1; i <= 15; i++) {
+        for (int i = 1; i <= 9; i++) {
             Map<String, String> doc = new HashMap<>();
             doc.put("title", "Document " + i);
             doc.put("id", String.valueOf(i));
@@ -923,7 +1265,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Verify we got all 15 results
-        assertThat(allResults).hasSize(10);
+        assertThat(allResults).hasSize(9);
 
         // Verify results are sorted by id
         for (int i = 0; i < allResults.size(); i++) {

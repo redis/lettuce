@@ -299,7 +299,7 @@ class RediSearchCommandBuilderUnitTests {
 
     @Test
     void shouldCorrectlyConstructFtCursorreadCommandWithoutCount() {
-        Command<String, String, AggregationReply<String, String>> command = builder.ftCursorread("idx", 456L);
+        Command<String, String, AggregationReply<String, String>> command = builder.ftCursorread("idx", 456L, -1);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
