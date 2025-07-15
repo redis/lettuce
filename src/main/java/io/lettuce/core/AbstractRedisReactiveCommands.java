@@ -49,6 +49,12 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.arguments.AggregateArgs;
+import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
@@ -86,18 +92,21 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author Tihomir Mateev
  * @since 4.0
  */
-public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclReactiveCommands<K, V>,
-        RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>, RedisStringReactiveCommands<K, V>,
-        RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>, RedisSortedSetReactiveCommands<K, V>,
-        RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>, RedisHLLReactiveCommands<K, V>,
-        BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>, RedisGeoReactiveCommands<K, V>,
-        RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>, RedisVectorSetReactiveCommands<K, V> {
+public abstract class AbstractRedisReactiveCommands<K, V>
+        implements RedisAclReactiveCommands<K, V>, RedisHashReactiveCommands<K, V>, RedisKeyReactiveCommands<K, V>,
+        RedisStringReactiveCommands<K, V>, RedisListReactiveCommands<K, V>, RedisSetReactiveCommands<K, V>,
+        RedisSortedSetReactiveCommands<K, V>, RedisScriptingReactiveCommands<K, V>, RedisServerReactiveCommands<K, V>,
+        RedisHLLReactiveCommands<K, V>, BaseRedisReactiveCommands<K, V>, RedisTransactionalReactiveCommands<K, V>,
+        RedisGeoReactiveCommands<K, V>, RedisClusterReactiveCommands<K, V>, RedisJsonReactiveCommands<K, V>,
+        RedisVectorSetReactiveCommands<K, V>, RediSearchReactiveCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
     private final RedisCommandBuilder<K, V> commandBuilder;
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
+
+    private final RediSearchCommandBuilder<K, V> searchCommandBuilder;
 
     private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
 
@@ -123,6 +132,7 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
         this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
+        this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
         this.clientResources = connection.getResources();
         this.tracingEnabled = clientResources.tracing().isEnabled();
     }
@@ -1602,6 +1612,61 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public boolean isOpen() {
         return connection.isOpen();
+    }
+
+    @Override
+    public Mono<String> ftCreate(K index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
+        return createMono(() -> searchCommandBuilder.ftCreate(index, options, fieldArgs));
+    }
+
+    @Override
+    public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+        return createMono(() -> searchCommandBuilder.ftCreate(index, null, fieldArgs));
+    }
+
+    @Override
+    public Mono<String> ftCursordel(K index, long cursorId) {
+        return createMono(() -> searchCommandBuilder.ftCursordel(index, cursorId));
+    }
+
+    @Override
+    public Mono<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+        return createMono(() -> searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
+    }
+
+    @Override
+    public Mono<String> ftDropindex(K index) {
+        return createMono(() -> searchCommandBuilder.ftDropindex(index, false));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftSearch(index, query, args));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftSearch(K index, V query) {
+        return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftAggregate(index, query, args));
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query) {
+        return createMono(() -> searchCommandBuilder.ftAggregate(index, query, null));
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, count));
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId) {
+        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, -1));
     }
 
     @Override
