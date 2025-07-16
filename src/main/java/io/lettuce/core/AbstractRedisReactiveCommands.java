@@ -51,10 +51,13 @@ import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
@@ -1647,6 +1650,36 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<V> ftTagvals(K index, K fieldName) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftTagvals(index, fieldName));
+    }
+
+    @Override
+    public Mono<Long> ftSugadd(K key, V string, double score) {
+        return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score));
+    }
+
+    @Override
+    public Mono<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score, args));
+    }
+
+    @Override
+    public Mono<Boolean> ftSugdel(K key, V string) {
+        return createMono(() -> searchCommandBuilder.ftSugdel(key, string));
+    }
+
+    @Override
+    public Flux<Suggestion<V>> ftSugget(K key, V prefix) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix));
+    }
+
+    @Override
+    public Flux<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix, args));
+    }
+
+    @Override
+    public Mono<Long> ftSuglen(K key) {
+        return createMono(() -> searchCommandBuilder.ftSuglen(key));
     }
 
     @Override

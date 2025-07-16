@@ -15,8 +15,11 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
+import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import org.junit.jupiter.api.AfterAll;
@@ -745,6 +748,78 @@ public class RediSearchIntegrationTests {
         });
 
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.SUGADD, FT.SUGGET, FT.SUGDEL, and FT.SUGLEN commands for auto-complete functionality.
+     */
+    @Test
+    void testFtSuggestionCommands() {
+        String suggestionKey = "autocomplete:cities";
+
+        // Test FT.SUGADD - Add suggestions with different scores
+        assertThat(redis.ftSugadd(suggestionKey, "New York", 1.0)).isEqualTo(1L);
+        assertThat(redis.ftSugadd(suggestionKey, "New Orleans", 0.8)).isEqualTo(2L);
+        assertThat(redis.ftSugadd(suggestionKey, "Newark", 0.6)).isEqualTo(3L);
+        assertThat(redis.ftSugadd(suggestionKey, "Boston", 0.9)).isEqualTo(4L);
+        assertThat(redis.ftSugadd(suggestionKey, "Barcelona", 0.7)).isEqualTo(5L);
+
+        // Test FT.SUGLEN - Get dictionary size
+        assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(5L);
+
+        // Test FT.SUGGET - Get suggestions for prefix
+        List<Suggestion<String>> suggestions = redis.ftSugget(suggestionKey, "New");
+        assertThat(suggestions).hasSize(3);
+        assertThat(suggestions.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans", "Newark");
+
+        // Test FT.SUGGET with MAX limit
+        SugGetArgs<String, String> maxArgs = SugGetArgs.Builder.<String, String>max(2);
+        List<Suggestion<String>> limitedSuggestions = redis.ftSugget(suggestionKey, "New", maxArgs);
+        assertThat(limitedSuggestions).hasSize(2);
+
+        // Test FT.SUGGET with FUZZY matching
+        SugGetArgs<String, String> fuzzyArgs = SugGetArgs.Builder.<String, String>fuzzy();
+        List<Suggestion<String>> fuzzySuggestions = redis.ftSugget(suggestionKey, "Bost", fuzzyArgs);
+        assertThat(fuzzySuggestions.stream().map(Suggestion::getValue)).contains("Boston");
+
+        // Test FT.SUGDEL - Delete a suggestion
+        assertThat(redis.ftSugdel(suggestionKey, "Newark")).isTrue();
+        assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(4L);
+
+        // Verify deletion
+        List<Suggestion<String>> afterDeletion = redis.ftSugget(suggestionKey, "New");
+        assertThat(afterDeletion).hasSize(2);
+        assertThat(afterDeletion.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans");
+
+        // Test deleting non-existent suggestion
+        assertThat(redis.ftSugdel(suggestionKey, "NonExistent")).isFalse();
+
+        // Test FT.SUGADD with INCR and PAYLOAD
+        SugAddArgs<String, String> incrArgs = SugAddArgs.Builder.<String, String>incr().payload("US-East");
+        assertThat(redis.ftSugadd(suggestionKey, "New York", 0.5, incrArgs)).isEqualTo(4L);
+
+        // Test FT.SUGGET with WITHSCORES and WITHPAYLOADS
+        SugGetArgs<String, String> withExtrasArgs = SugGetArgs.Builder.<String, String>withScores().withPayloads();
+        List<Suggestion<String>> detailedSuggestions = redis.ftSugget(suggestionKey, "New", withExtrasArgs);
+        assertThat(detailedSuggestions).isNotEmpty();
+
+        // Verify that suggestions with scores and payloads are properly parsed
+        for (Suggestion<String> suggestion : detailedSuggestions) {
+            assertThat(suggestion.getValue()).isNotNull();
+            if ("New York".equals(suggestion.getValue())) {
+                assertThat(suggestion.hasScore()).isTrue();
+                assertThat(suggestion.hasPayload()).isTrue();
+                assertThat(suggestion.getPayload()).isEqualTo("US-East");
+            }
+        }
+
+        // Cleanup - delete all suggestions
+        redis.ftSugdel(suggestionKey, "New York");
+        redis.ftSugdel(suggestionKey, "New Orleans");
+        redis.ftSugdel(suggestionKey, "Boston");
+        redis.ftSugdel(suggestionKey, "Barcelona");
+
+        assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(0L);
     }
 
 }

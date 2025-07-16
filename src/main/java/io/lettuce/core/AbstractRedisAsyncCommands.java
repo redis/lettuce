@@ -50,10 +50,13 @@ import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VectorMetadata;
 
@@ -1582,6 +1585,36 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<V>> ftTagvals(K index, K fieldName) {
         return dispatch(searchCommandBuilder.ftTagvals(index, fieldName));
+    }
+
+    @Override
+    public RedisFuture<Long> ftSugadd(K key, V string, double score) {
+        return dispatch(searchCommandBuilder.ftSugadd(key, string, score));
+    }
+
+    @Override
+    public RedisFuture<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftSugadd(key, string, score, args));
+    }
+
+    @Override
+    public RedisFuture<Boolean> ftSugdel(K key, V string) {
+        return dispatch(searchCommandBuilder.ftSugdel(key, string));
+    }
+
+    @Override
+    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix) {
+        return dispatch(searchCommandBuilder.ftSugget(key, prefix));
+    }
+
+    @Override
+    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftSugget(key, prefix, args));
+    }
+
+    @Override
+    public RedisFuture<Long> ftSuglen(K key) {
+        return dispatch(searchCommandBuilder.ftSuglen(key));
     }
 
     @Override

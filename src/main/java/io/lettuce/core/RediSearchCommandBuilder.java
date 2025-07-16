@@ -7,7 +7,11 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.output.BooleanOutput;
+import io.lettuce.core.output.ComplexOutput;
 import io.lettuce.core.output.EncodedComplexOutput;
+import io.lettuce.core.output.IntegerOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
@@ -18,10 +22,14 @@ import io.lettuce.core.search.AggregateReplyParser;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SearchReplyParser;
+import io.lettuce.core.search.Suggestion;
+import io.lettuce.core.search.SuggestionParser;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
 
 import java.util.List;
 
@@ -242,6 +250,108 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index).addKey(fieldName);
 
         return createCommand(FT_TAGVALS, new ValueListOutput<>(codec), args);
+    }
+
+    /**
+     * Add a suggestion string to an auto-complete suggestion dictionary.
+     *
+     * @param key the suggestion dictionary key
+     * @param string the suggestion string to index
+     * @param score the floating point number of the suggestion string's weight
+     * @return the result of the sugadd command
+     */
+    public Command<K, V, Long> ftSugadd(K key, V string, double score) {
+        return ftSugadd(key, string, score, null);
+    }
+
+    /**
+     * Add a suggestion string to an auto-complete suggestion dictionary.
+     *
+     * @param key the suggestion dictionary key
+     * @param string the suggestion string to index
+     * @param score the floating point number of the suggestion string's weight
+     * @param args the suggestion add arguments
+     * @return the result of the sugadd command
+     */
+    public Command<K, V, Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
+        notNullKey(key);
+        LettuceAssert.notNull(string, "String must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).addValue(string).add(score);
+
+        if (args != null) {
+            args.build(commandArgs);
+        }
+
+        return createCommand(FT_SUGADD, new IntegerOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Delete a string from a suggestion dictionary.
+     *
+     * @param key the suggestion dictionary key
+     * @param string the suggestion string to delete
+     * @return the result of the sugdel command
+     */
+    public Command<K, V, Boolean> ftSugdel(K key, V string) {
+        notNullKey(key);
+        LettuceAssert.notNull(string, "String must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).addValue(string);
+
+        return createCommand(FT_SUGDEL, new BooleanOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Get completion suggestions for a prefix.
+     *
+     * @param key the suggestion dictionary key
+     * @param prefix the prefix to complete on
+     * @return the result of the sugget command
+     */
+    public Command<K, V, List<Suggestion<V>>> ftSugget(K key, V prefix) {
+        return ftSugget(key, prefix, null);
+    }
+
+    /**
+     * Get completion suggestions for a prefix.
+     *
+     * @param key the suggestion dictionary key
+     * @param prefix the prefix to complete on
+     * @param args the suggestion get arguments
+     * @return the result of the sugget command
+     */
+    public Command<K, V, List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+        notNullKey(key);
+        LettuceAssert.notNull(prefix, "Prefix must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).addValue(prefix);
+
+        boolean withScores = false;
+        boolean withPayloads = false;
+
+        if (args != null) {
+            withScores = args.isWithScores();
+            withPayloads = args.isWithPayloads();
+            args.build(commandArgs);
+        }
+
+        SuggestionParser<V> parser = new SuggestionParser<>(withScores, withPayloads);
+        return createCommand(FT_SUGGET, new ComplexOutput<>(codec, parser), commandArgs);
+    }
+
+    /**
+     * Get the size of an auto-complete suggestion dictionary.
+     *
+     * @param key the suggestion dictionary key
+     * @return the result of the suglen command
+     */
+    public Command<K, V, Long> ftSuglen(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
+
+        return createCommand(FT_SUGLEN, new IntegerOutput<>(codec), commandArgs);
     }
 
     /**

@@ -11,10 +11,13 @@ import java.util.List;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -353,15 +356,176 @@ public interface RediSearchReactiveCommands<K, V> {
      *
      * @param index the index name containing the tag field
      * @param fieldName the name of the Tag field defined in the index schema
-     * @return a flux of all distinct values indexed in the specified tag field. The flux emits the raw tag values as they were
-     *         indexed (lowercase, whitespace removed).
-     * @since 7.0
+     * @return a list of all distinct values indexed in the specified tag field. The list contains the raw tag values as they
+     *         were indexed (lowercase, whitespace removed).
+     * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
      * @see #ftCreate(Object, List)
      * @see #ftCreate(Object, CreateArgs, List)
      */
     @Experimental
     Flux<V> ftTagvals(K index, K fieldName);
+
+    /**
+     * Add a suggestion string to an auto-complete suggestion dictionary.
+     *
+     * <p>
+     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score.
+     * The auto-complete suggestion dictionary is disconnected from the index definitions and leaves creating
+     * and updating suggestions dictionaries to the user.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Auto-completion:</strong> Build type-ahead search functionality</li>
+     * <li><strong>Search suggestions:</strong> Provide query suggestions to users</li>
+     * <li><strong>Fuzzy matching:</strong> Support approximate string matching</li>
+     * <li><strong>Weighted results:</strong> Control suggestion ranking with scores</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param suggestion the suggestion string to index
+     * @param score the floating point number of the suggestion string's weight
+     * @return the current size of the suggestion dictionary after adding the suggestion
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
+     * @see #ftSugadd(Object, Object, double, SugAddArgs)
+     * @see #ftSugget(Object, Object)
+     * @see #ftSugdel(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Mono<Long> ftSugadd(K key, V suggestion, double score);
+
+    /**
+     * Add a suggestion string to an auto-complete suggestion dictionary with additional options.
+     *
+     * <p>
+     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score
+     * and optional arguments for incremental updates and payload storage.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param suggestion the suggestion string to index
+     * @param score the floating point number of the suggestion string's weight
+     * @param args the suggestion add arguments (INCR, PAYLOAD)
+     * @return the current size of the suggestion dictionary after adding the suggestion
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
+     * @see #ftSugadd(Object, Object, double)
+     * @see #ftSugget(Object, Object, SugGetArgs)
+     * @see #ftSugdel(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Mono<Long> ftSugadd(K key, V suggestion, double score, SugAddArgs<K, V> args);
+
+    /**
+     * Delete a string from a suggestion dictionary.
+     *
+     * <p>
+     * This command removes a suggestion string from an auto-complete suggestion dictionary.
+     * Only the exact string match will be removed from the dictionary.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param suggestion the suggestion string to delete
+     * @return {@code true} if the string was found and deleted, {@code false} otherwise
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugdel/">FT.SUGDEL</a>
+     * @see #ftSugadd(Object, Object, double)
+     * @see #ftSugget(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Mono<Boolean> ftSugdel(K key, V suggestion);
+
+    /**
+     * Get completion suggestions for a prefix.
+     *
+     * <p>
+     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary.
+     * By default, it returns up to 5 suggestions that match the given prefix.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param prefix the prefix to complete on
+     * @return a list of suggestions matching the prefix
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
+     * @see #ftSugget(Object, Object, SugGetArgs)
+     * @see #ftSugadd(Object, Object, double)
+     * @see #ftSugdel(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Flux<Suggestion<V>> ftSugget(K key, V prefix);
+
+    /**
+     * Get completion suggestions for a prefix with additional options.
+     *
+     * <p>
+     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary
+     * with optional arguments for fuzzy matching, score inclusion, payload inclusion, and result limiting.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param prefix the prefix to complete on
+     * @param args the suggestion get arguments (FUZZY, WITHSCORES, WITHPAYLOADS, MAX)
+     * @return a list of suggestions matching the prefix, optionally with scores and payloads
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
+     * @see #ftSugget(Object, Object)
+     * @see #ftSugadd(Object, Object, double, SugAddArgs)
+     * @see #ftSugdel(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Flux<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs<K, V> args);
+
+    /**
+     * Get the size of an auto-complete suggestion dictionary.
+     *
+     * <p>
+     * This command returns the current number of suggestions stored in the auto-complete suggestion dictionary.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @return the current size of the suggestion dictionary
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.suglen/">FT.SUGLEN</a>
+     * @see #ftSugadd(Object, Object, double)
+     * @see #ftSugget(Object, Object)
+     * @see #ftSugdel(Object, Object)
+     */
+    @Experimental
+    Mono<Long> ftSuglen(K key);
 
     /**
      * Drop a search index without deleting the associated documents.
@@ -709,5 +873,4 @@ public interface RediSearchReactiveCommands<K, V> {
      */
     @Experimental
     Mono<String> ftCursordel(K index, long cursorId);
-
 }

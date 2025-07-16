@@ -18,7 +18,10 @@ import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
+import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.netty.buffer.ByteBuf;
@@ -215,6 +218,107 @@ class RediSearchCommandBuilderUnitTests {
                 + "$10\r\n" + "FT.TAGVALS\r\n" //
                 + "$3\r\n" + MY_KEY + "\r\n" //
                 + "$5\r\n" + FIELD1_NAME + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGADD key string score
+    @Test
+    void shouldCorrectlyConstructFtSugaddCommand() {
+        Command<String, String, Long> command = builder.ftSugadd(MY_KEY, "suggestion", 1.0);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*4\r\n" //
+                + "$9\r\n" + "FT.SUGADD\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$10\r\n" + "suggestion\r\n" //
+                + "$3\r\n" + "1.0\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGADD key string score INCR PAYLOAD payload
+    @Test
+    void shouldCorrectlyConstructFtSugaddCommandWithArgs() {
+        SugAddArgs<String, String> args = SugAddArgs.Builder.<String, String>incr().payload("test-payload");
+        Command<String, String, Long> command = builder.ftSugadd(MY_KEY, "suggestion", 1.0, args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*7\r\n" //
+                + "$9\r\n" + "FT.SUGADD\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$10\r\n" + "suggestion\r\n" //
+                + "$3\r\n" + "1.0\r\n" //
+                + "$4\r\n" + "INCR\r\n" //
+                + "$7\r\n" + "PAYLOAD\r\n" //
+                + "$12\r\n" + "test-payload\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGDEL key string
+    @Test
+    void shouldCorrectlyConstructFtSugdelCommand() {
+        Command<String, String, Boolean> command = builder.ftSugdel(MY_KEY, "suggestion");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$9\r\n" + "FT.SUGDEL\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$10\r\n" + "suggestion\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGGET key prefix
+    @Test
+    void shouldCorrectlyConstructFtSuggetCommand() {
+        Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$9\r\n" + "FT.SUGGET\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$3\r\n" + "pre\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGGET key prefix FUZZY WITHSCORES WITHPAYLOADS MAX 10
+    @Test
+    void shouldCorrectlyConstructFtSuggetCommandWithArgs() {
+        SugGetArgs<String, String> args = SugGetArgs.Builder.<String, String>fuzzy().withScores().withPayloads().max(10);
+        Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre", args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*8\r\n" //
+                + "$9\r\n" + "FT.SUGGET\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$3\r\n" + "pre\r\n" //
+                + "$5\r\n" + "FUZZY\r\n" //
+                + "$10\r\n" + "WITHSCORES\r\n" //
+                + "$12\r\n" + "WITHPAYLOADS\r\n" //
+                + "$3\r\n" + "MAX\r\n" //
+                + "$2\r\n" + "10\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGLEN key
+    @Test
+    void shouldCorrectlyConstructFtSuglenCommand() {
+        Command<String, String, Long> command = builder.ftSuglen(MY_KEY);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*2\r\n" //
+                + "$9\r\n" + "FT.SUGLEN\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n";
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }

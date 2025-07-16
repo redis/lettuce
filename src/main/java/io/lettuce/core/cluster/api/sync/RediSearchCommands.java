@@ -11,10 +11,13 @@ import java.util.List;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
 
 /**
  * Synchronous executed commands on a node selection for RediSearch functionality
@@ -92,6 +95,136 @@ public interface RediSearchCommands<K, V> {
      */
     @Experimental
     Executions<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs);
+
+    /**
+     * Add an alias to a search index.
+     *
+     * <p>
+     * This command creates an alias that points to an existing search index, allowing applications to reference the index by an
+     * alternative name. Aliases provide a level of indirection that enables transparent index management and migration
+     * strategies.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Index abstraction:</strong> Applications can use stable alias names while underlying indexes change</li>
+     * <li><strong>Blue-green deployments:</strong> Switch traffic between old and new indexes seamlessly</li>
+     * <li><strong>A/B testing:</strong> Route different application instances to different indexes</li>
+     * <li><strong>Maintenance windows:</strong> Redirect queries during index rebuilds or migrations</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important notes:</strong>
+     * </p>
+     * <ul>
+     * <li>An index can have multiple aliases, but an alias can only point to one index</li>
+     * <li>Aliases cannot reference other aliases (no alias chaining)</li>
+     * <li>If the alias already exists, this command will fail with an error</li>
+     * <li>Use {@link #ftAliasupdate(Object, Object)} to reassign an existing alias</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param alias the alias name to create
+     * @param index the target index name that the alias will point to
+     * @return {@code "OK"} if the alias was successfully created
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aliasadd/">FT.ALIASADD</a>
+     * @see #ftAliasupdate(Object, Object)
+     * @see #ftAliasdel(Object)
+     */
+    @Experimental
+    Executions<String> ftAliasadd(K alias, K index);
+
+    /**
+     * Update an existing alias to point to a different search index.
+     *
+     * <p>
+     * This command updates an existing alias to point to a different index, or creates the alias if it doesn't exist. Unlike
+     * {@link #ftAliasadd(Object, Object)}, this command will succeed even if the alias already exists, making it useful for
+     * atomic alias updates during index migrations.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Atomic updates:</strong> Change alias target without downtime</li>
+     * <li><strong>Index migration:</strong> Seamlessly switch from old to new index versions</li>
+     * <li><strong>Rollback capability:</strong> Quickly revert to previous index if issues arise</li>
+     * <li><strong>Blue-green deployments:</strong> Switch production traffic between index versions</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important notes:</strong>
+     * </p>
+     * <ul>
+     * <li>If the alias doesn't exist, it will be created (same as {@code ftAliasadd})</li>
+     * <li>If the alias exists, it will be updated to point to the new index</li>
+     * <li>The previous index association is removed automatically</li>
+     * <li>This operation is atomic - no intermediate state where alias is undefined</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param alias the alias name to update or create
+     * @param index the target index name that the alias will point to
+     * @return {@code "OK"} if the alias was successfully updated
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aliasupdate/">FT.ALIASUPDATE</a>
+     * @see #ftAliasadd(Object, Object)
+     * @see #ftAliasdel(Object)
+     */
+    @Experimental
+    Executions<String> ftAliasupdate(K alias, K index);
+
+    /**
+     * Remove an alias from a search index.
+     *
+     * <p>
+     * This command removes an existing alias, breaking the association between the alias name and its target index. The
+     * underlying index remains unchanged and accessible by its original name.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Cleanup:</strong> Remove unused or obsolete aliases</li>
+     * <li><strong>Security:</strong> Revoke access to indexes through specific alias names</li>
+     * <li><strong>Maintenance:</strong> Temporarily disable access during maintenance windows</li>
+     * <li><strong>Resource management:</strong> Clean up aliases before index deletion</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important notes:</strong>
+     * </p>
+     * <ul>
+     * <li>Only the alias is removed - the target index is not affected</li>
+     * <li>If the alias doesn't exist, this command will fail with an error</li>
+     * <li>Applications using the alias will receive errors after deletion</li>
+     * <li>Consider using {@link #ftAliasupdate(Object, Object)} to redirect before deletion</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param alias the alias name to remove
+     * @return {@code "OK"} if the alias was successfully removed
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aliasdel/">FT.ALIASDEL</a>
+     * @see #ftAliasadd(Object, Object)
+     * @see #ftAliasupdate(Object, Object)
+     */
+    @Experimental
+    Executions<String> ftAliasdel(K alias);
 
     /**
      * Add new attributes to an existing search index.
@@ -174,6 +307,223 @@ public interface RediSearchCommands<K, V> {
      */
     @Experimental
     Executions<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs);
+
+    /**
+     * Return a distinct set of values indexed in a Tag field.
+     *
+     * <p>
+     * This command retrieves all unique values that have been indexed in a specific Tag field within a search index. It's
+     * particularly useful for discovering the range of values available in categorical fields such as cities, categories,
+     * status values, or any other enumerated data.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Data exploration:</strong> Discover all possible values in a tag field</li>
+     * <li><strong>Filter building:</strong> Populate dropdown lists or filter options in applications</li>
+     * <li><strong>Data validation:</strong> Verify expected values are present in the index</li>
+     * <li><strong>Analytics:</strong> Understand the distribution of categorical data</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important limitations:</strong>
+     * </p>
+     * <ul>
+     * <li>Only works with Tag fields defined in the index schema</li>
+     * <li>No paging or sorting is provided - all values are returned at once</li>
+     * <li>Tags are not alphabetically sorted in the response</li>
+     * <li>Returned strings are lowercase with whitespaces removed</li>
+     * <li>Performance scales with the number of unique values (O(N) complexity)</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Example usage scenarios:</strong>
+     * </p>
+     * <ul>
+     * <li>Retrieving all available product categories for an e-commerce filter</li>
+     * <li>Getting all city names indexed for location-based searches</li>
+     * <li>Listing all status values (active, inactive, pending) for administrative interfaces</li>
+     * <li>Discovering all tags or labels applied to content</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the number of distinct values in the tag field
+     * </p>
+     *
+     * @param index the index name containing the tag field
+     * @param fieldName the name of the Tag field defined in the index schema
+     * @return a list of all distinct values indexed in the specified tag field. The list contains the raw tag values as they
+     *         were indexed (lowercase, whitespace removed).
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
+     * @see #ftCreate(Object, List)
+     * @see #ftCreate(Object, CreateArgs, List)
+     */
+    @Experimental
+    Executions<List<V>> ftTagvals(K index, K fieldName);
+
+    /**
+     * Add a suggestion string to an auto-complete suggestion dictionary.
+     *
+     * <p>
+     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score.
+     * The auto-complete suggestion dictionary is disconnected from the index definitions and leaves creating
+     * and updating suggestions dictionaries to the user.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Auto-completion:</strong> Build type-ahead search functionality</li>
+     * <li><strong>Search suggestions:</strong> Provide query suggestions to users</li>
+     * <li><strong>Fuzzy matching:</strong> Support approximate string matching</li>
+     * <li><strong>Weighted results:</strong> Control suggestion ranking with scores</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param suggestion the suggestion string to index
+     * @param score the floating point number of the suggestion string's weight
+     * @return the current size of the suggestion dictionary after adding the suggestion
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
+     * @see #ftSugadd(Object, Object, double, SugAddArgs)
+     * @see #ftSugget(Object, Object)
+     * @see #ftSugdel(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Executions<Long> ftSugadd(K key, V suggestion, double score);
+
+    /**
+     * Add a suggestion string to an auto-complete suggestion dictionary with additional options.
+     *
+     * <p>
+     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score
+     * and optional arguments for incremental updates and payload storage.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param suggestion the suggestion string to index
+     * @param score the floating point number of the suggestion string's weight
+     * @param args the suggestion add arguments (INCR, PAYLOAD)
+     * @return the current size of the suggestion dictionary after adding the suggestion
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugadd/">FT.SUGADD</a>
+     * @see #ftSugadd(Object, Object, double)
+     * @see #ftSugget(Object, Object, SugGetArgs)
+     * @see #ftSugdel(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Executions<Long> ftSugadd(K key, V suggestion, double score, SugAddArgs<K, V> args);
+
+    /**
+     * Delete a string from a suggestion dictionary.
+     *
+     * <p>
+     * This command removes a suggestion string from an auto-complete suggestion dictionary.
+     * Only the exact string match will be removed from the dictionary.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param suggestion the suggestion string to delete
+     * @return {@code true} if the string was found and deleted, {@code false} otherwise
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugdel/">FT.SUGDEL</a>
+     * @see #ftSugadd(Object, Object, double)
+     * @see #ftSugget(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Executions<Boolean> ftSugdel(K key, V suggestion);
+
+    /**
+     * Get completion suggestions for a prefix.
+     *
+     * <p>
+     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary.
+     * By default, it returns up to 5 suggestions that match the given prefix.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param prefix the prefix to complete on
+     * @return a list of suggestions matching the prefix
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
+     * @see #ftSugget(Object, Object, SugGetArgs)
+     * @see #ftSugadd(Object, Object, double)
+     * @see #ftSugdel(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Executions<List<Suggestion<V>>> ftSugget(K key, V prefix);
+
+    /**
+     * Get completion suggestions for a prefix with additional options.
+     *
+     * <p>
+     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary
+     * with optional arguments for fuzzy matching, score inclusion, payload inclusion, and result limiting.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @param prefix the prefix to complete on
+     * @param args the suggestion get arguments (FUZZY, WITHSCORES, WITHPAYLOADS, MAX)
+     * @return a list of suggestions matching the prefix, optionally with scores and payloads
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.sugget/">FT.SUGGET</a>
+     * @see #ftSugget(Object, Object)
+     * @see #ftSugadd(Object, Object, double, SugAddArgs)
+     * @see #ftSugdel(Object, Object)
+     * @see #ftSuglen(Object)
+     */
+    @Experimental
+    Executions<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args);
+
+    /**
+     * Get the size of an auto-complete suggestion dictionary.
+     *
+     * <p>
+     * This command returns the current number of suggestions stored in the auto-complete suggestion dictionary.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param key the suggestion dictionary key
+     * @return the current size of the suggestion dictionary
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.suglen/">FT.SUGLEN</a>
+     * @see #ftSugadd(Object, Object, double)
+     * @see #ftSugget(Object, Object)
+     * @see #ftSugdel(Object, Object)
+     */
+    @Experimental
+    Executions<Long> ftSuglen(K key);
 
     /**
      * Drop a search index without deleting the associated documents.
@@ -521,5 +871,4 @@ public interface RediSearchCommands<K, V> {
      */
     @Experimental
     Executions<String> ftCursordel(K index, long cursorId);
-
 }
