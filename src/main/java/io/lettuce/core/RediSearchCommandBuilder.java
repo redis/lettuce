@@ -9,6 +9,7 @@ package io.lettuce.core;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.StatusOutput;
+import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -151,6 +152,96 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         args.add(cursorId);
 
         return createCommand(FT_CURSOR, new StatusOutput<>(codec), args);
+    }
+
+    /**
+     * Add an alias to an index.
+     *
+     * @param alias the alias name
+     * @param index the index name
+     * @return the result of the alias add command
+     */
+    public Command<K, V, String> ftAliasadd(K alias, K index) {
+        notNullKey(alias);
+        notNullKey(index);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(alias).addKey(index);
+
+        return createCommand(FT_ALIASADD, new StatusOutput<>(codec), args);
+    }
+
+    /**
+     * Update an alias to point to a different index.
+     *
+     * @param alias the alias name
+     * @param index the index name
+     * @return the result of the alias update command
+     */
+    public Command<K, V, String> ftAliasupdate(K alias, K index) {
+        notNullKey(alias);
+        notNullKey(index);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(alias).addKey(index);
+
+        return createCommand(FT_ALIASUPDATE, new StatusOutput<>(codec), args);
+    }
+
+    /**
+     * Remove an alias from an index.
+     *
+     * @param alias the alias name
+     * @return the result of the alias delete command
+     */
+    public Command<K, V, String> ftAliasdel(K alias) {
+        notNullKey(alias);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(alias);
+
+        return createCommand(FT_ALIASDEL, new StatusOutput<>(codec), args);
+    }
+
+    /**
+     * Add new attributes to an existing index.
+     *
+     * @param index the index name
+     * @param skipInitialScan whether to skip the initial scan of existing documents
+     * @param fieldArgs the field arguments for the new attributes to add
+     * @return the result of the alter command
+     */
+    public Command<K, V, String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+        notNullKey(index);
+        notEmpty(fieldArgs.toArray());
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
+
+        if (skipInitialScan) {
+            args.add(CommandKeyword.SKIPINITIALSCAN);
+        }
+
+        args.add(CommandKeyword.SCHEMA);
+        args.add(CommandKeyword.ADD);
+
+        for (FieldArgs<K> arg : fieldArgs) {
+            arg.build(args);
+        }
+
+        return createCommand(FT_ALTER, new StatusOutput<>(codec), args);
+    }
+
+    /**
+     * Return distinct values indexed in a Tag field.
+     *
+     * @param index the index name
+     * @param fieldName the name of a Tag field defined in the schema
+     * @return the result of the tagvals command
+     */
+    public Command<K, V, List<V>> ftTagvals(K index, K fieldName) {
+        notNullKey(index);
+        notNullKey(fieldName);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index).addKey(fieldName);
+
+        return createCommand(FT_TAGVALS, new ValueListOutput<>(codec), args);
     }
 
     /**

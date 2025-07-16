@@ -93,6 +93,274 @@ public interface RediSearchCommands<K, V> {
     String ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs);
 
     /**
+     * Add an alias to a search index.
+     *
+     * <p>
+     * This command creates an alias that points to an existing search index, allowing applications to reference the index by an
+     * alternative name. Aliases provide a level of indirection that enables transparent index management and migration
+     * strategies.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Index abstraction:</strong> Applications can use stable alias names while underlying indexes change</li>
+     * <li><strong>Blue-green deployments:</strong> Switch traffic between old and new indexes seamlessly</li>
+     * <li><strong>A/B testing:</strong> Route different application instances to different indexes</li>
+     * <li><strong>Maintenance windows:</strong> Redirect queries during index rebuilds or migrations</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important notes:</strong>
+     * </p>
+     * <ul>
+     * <li>An index can have multiple aliases, but an alias can only point to one index</li>
+     * <li>Aliases cannot reference other aliases (no alias chaining)</li>
+     * <li>If the alias already exists, this command will fail with an error</li>
+     * <li>Use {@link #ftAliasupdate(Object, Object)} to reassign an existing alias</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param alias the alias name to create
+     * @param index the target index name that the alias will point to
+     * @return {@code "OK"} if the alias was successfully created
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aliasadd/">FT.ALIASADD</a>
+     * @see #ftAliasupdate(Object, Object)
+     * @see #ftAliasdel(Object)
+     */
+    @Experimental
+    String ftAliasadd(K alias, K index);
+
+    /**
+     * Update an existing alias to point to a different search index.
+     *
+     * <p>
+     * This command updates an existing alias to point to a different index, or creates the alias if it doesn't exist. Unlike
+     * {@link #ftAliasadd(Object, Object)}, this command will succeed even if the alias already exists, making it useful for
+     * atomic alias updates during index migrations.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Atomic updates:</strong> Change alias target without downtime</li>
+     * <li><strong>Index migration:</strong> Seamlessly switch from old to new index versions</li>
+     * <li><strong>Rollback capability:</strong> Quickly revert to previous index if issues arise</li>
+     * <li><strong>Blue-green deployments:</strong> Switch production traffic between index versions</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important notes:</strong>
+     * </p>
+     * <ul>
+     * <li>If the alias doesn't exist, it will be created (same as {@code ftAliasadd})</li>
+     * <li>If the alias exists, it will be updated to point to the new index</li>
+     * <li>The previous index association is removed automatically</li>
+     * <li>This operation is atomic - no intermediate state where alias is undefined</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param alias the alias name to update or create
+     * @param index the target index name that the alias will point to
+     * @return {@code "OK"} if the alias was successfully updated
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aliasupdate/">FT.ALIASUPDATE</a>
+     * @see #ftAliasadd(Object, Object)
+     * @see #ftAliasdel(Object)
+     */
+    @Experimental
+    String ftAliasupdate(K alias, K index);
+
+    /**
+     * Remove an alias from a search index.
+     *
+     * <p>
+     * This command removes an existing alias, breaking the association between the alias name and its target index. The
+     * underlying index remains unchanged and accessible by its original name.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Cleanup:</strong> Remove unused or obsolete aliases</li>
+     * <li><strong>Security:</strong> Revoke access to indexes through specific alias names</li>
+     * <li><strong>Maintenance:</strong> Temporarily disable access during maintenance windows</li>
+     * <li><strong>Resource management:</strong> Clean up aliases before index deletion</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important notes:</strong>
+     * </p>
+     * <ul>
+     * <li>Only the alias is removed - the target index is not affected</li>
+     * <li>If the alias doesn't exist, this command will fail with an error</li>
+     * <li>Applications using the alias will receive errors after deletion</li>
+     * <li>Consider using {@link #ftAliasupdate(Object, Object)} to redirect before deletion</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param alias the alias name to remove
+     * @return {@code "OK"} if the alias was successfully removed
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.aliasdel/">FT.ALIASDEL</a>
+     * @see #ftAliasadd(Object, Object)
+     * @see #ftAliasupdate(Object, Object)
+     */
+    @Experimental
+    String ftAliasdel(K alias);
+
+    /**
+     * Add new attributes to an existing search index.
+     *
+     * <p>
+     * This command allows you to extend an existing search index by adding new searchable fields without recreating the entire
+     * index. The new attributes will be applied to future document updates and can optionally be applied to existing documents
+     * through reindexing.
+     * </p>
+     *
+     * <p>
+     * Key features and considerations:
+     * </p>
+     * <ul>
+     * <li><strong>Non-destructive:</strong> Existing index structure and data remain intact</li>
+     * <li><strong>Incremental indexing:</strong> New fields are indexed as documents are updated</li>
+     * <li><strong>Reindexing control:</strong> Option to skip initial scan for performance</li>
+     * <li><strong>Field limitations:</strong> Text field limits may apply based on index creation options</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important notes:</strong>
+     * </p>
+     * <ul>
+     * <li>If the index was created without {@code MAXTEXTFIELDS}, you may be limited to 32 total text attributes</li>
+     * <li>New attributes are only indexed for documents that are updated after the ALTER command</li>
+     * <li>Use {@code SKIPINITIALSCAN} to avoid scanning existing documents if immediate indexing is not required</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the number of keys in the keyspace if initial scan is performed, O(1)
+     * if {@code SKIPINITIALSCAN} is used
+     * </p>
+     *
+     * @param index the index name, as a key
+     * @param skipInitialScan if {@code true}, skip scanning and indexing existing documents; if {@code false}, scan and index
+     *        existing documents with the new attributes
+     * @param fieldArgs the {@link FieldArgs} list defining the new searchable fields and their types to add
+     * @return {@code "OK"} if the index was successfully altered
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
+     * @see FieldArgs
+     * @see #ftCreate(Object, List)
+     * @see #ftCreate(Object, CreateArgs, List)
+     */
+    @Experimental
+    String ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs);
+
+    /**
+     * Add new attributes to an existing search index.
+     *
+     * <p>
+     * This command allows you to extend an existing search index by adding new searchable fields without recreating the entire
+     * index. The new attributes will be applied to future document updates and can optionally be applied to existing documents
+     * through reindexing.
+     * </p>
+     *
+     * <p>
+     * Key features and considerations:
+     * </p>
+     * <ul>
+     * <li><strong>Non-destructive:</strong> Existing index structure and data remain intact</li>
+     * <li><strong>Incremental indexing:</strong> New fields are indexed as documents are updated</li>
+     * <li><strong>Reindexing control:</strong> Option to skip initial scan for performance</li>
+     * <li><strong>Field limitations:</strong> Text field limits may apply based on index creation options</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the number of keys in the keyspace if initial scan is performed
+     * </p>
+     *
+     * @param index the index name, as a key
+     * @param fieldArgs the {@link FieldArgs} list defining the new searchable fields and their types to add
+     * @return {@code "OK"} if the index was successfully altered
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
+     * @see FieldArgs
+     * @see #ftCreate(Object, List)
+     * @see #ftCreate(Object, CreateArgs, List)
+     */
+    @Experimental
+    String ftAlter(K index, List<FieldArgs<K>> fieldArgs);
+
+    /**
+     * Return a distinct set of values indexed in a Tag field.
+     *
+     * <p>
+     * This command retrieves all unique values that have been indexed in a specific Tag field within a search index. It's
+     * particularly useful for discovering the range of values available in categorical fields such as cities, categories,
+     * status values, or any other enumerated data.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Data exploration:</strong> Discover all possible values in a tag field</li>
+     * <li><strong>Filter building:</strong> Populate dropdown lists or filter options in applications</li>
+     * <li><strong>Data validation:</strong> Verify expected values are present in the index</li>
+     * <li><strong>Analytics:</strong> Understand the distribution of categorical data</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Important limitations:</strong>
+     * </p>
+     * <ul>
+     * <li>Only works with Tag fields defined in the index schema</li>
+     * <li>No paging or sorting is provided - all values are returned at once</li>
+     * <li>Tags are not alphabetically sorted in the response</li>
+     * <li>Returned strings are lowercase with whitespaces removed</li>
+     * <li>Performance scales with the number of unique values (O(N) complexity)</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Example usage scenarios:</strong>
+     * </p>
+     * <ul>
+     * <li>Retrieving all available product categories for an e-commerce filter</li>
+     * <li>Getting all city names indexed for location-based searches</li>
+     * <li>Listing all status values (active, inactive, pending) for administrative interfaces</li>
+     * <li>Discovering all tags or labels applied to content</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the number of distinct values in the tag field
+     * </p>
+     *
+     * @param index the index name containing the tag field
+     * @param fieldName the name of the Tag field defined in the index schema
+     * @return a list of all distinct values indexed in the specified tag field. The list contains the raw tag values as they
+     *         were indexed (lowercase, whitespace removed).
+     * @since 7.0
+     * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
+     * @see #ftCreate(Object, List)
+     * @see #ftCreate(Object, CreateArgs, List)
+     */
+    @Experimental
+    List<V> ftTagvals(K index, K fieldName);
+
+    /**
      * Drop a search index without deleting the associated documents.
      *
      * <p>

@@ -37,6 +37,24 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftCreate(index: K, fieldArgs: List<FieldArgs<K>>): String? =
         ops.ftCreate(index, fieldArgs).awaitFirstOrNull()
 
+    override suspend fun ftAliasadd(alias: K, index: K): String? =
+        ops.ftAliasadd(alias, index).awaitFirstOrNull()
+
+    override suspend fun ftAliasupdate(alias: K, index: K): String? =
+        ops.ftAliasupdate(alias, index).awaitFirstOrNull()
+
+    override suspend fun ftAliasdel(alias: K): String? =
+        ops.ftAliasdel(alias).awaitFirstOrNull()
+
+    override suspend fun ftAlter(index: K, skipInitialScan: Boolean, fieldArgs: List<FieldArgs<K>>): String? =
+        ops.ftAlter(index, skipInitialScan, fieldArgs).awaitFirstOrNull()
+
+     override suspend fun ftTagvals(index: K, fieldName: K): List<V> =
+         ops.ftTagvals(index, fieldName).asFlow().toList()
+
+    override suspend fun ftAlter(index: K, fieldArgs: List<FieldArgs<K>>): String? =
+        ops.ftAlter(index, fieldArgs).awaitFirstOrNull()
+
     override suspend fun ftDropindex(index: K, deleteDocuments: Boolean): String? =
         ops.ftDropindex(index, deleteDocuments).awaitFirstOrNull()
 

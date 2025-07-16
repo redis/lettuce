@@ -29,6 +29,8 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -154,6 +156,110 @@ class RediSearchCommandBuilderUnitTests {
                 + "$12\r\n" + "FT.DROPINDEX\r\n" //
                 + "$3\r\n" + MY_KEY + "\r\n" //
                 + "$2\r\n" + "DD\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.ALIASADD alias idx
+    @Test
+    void shouldCorrectlyConstructFtAliasaddCommand() {
+        Command<String, String, String> command = builder.ftAliasadd("alias", MY_KEY);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$11\r\n" + "FT.ALIASADD\r\n" //
+                + "$5\r\n" + "alias\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.ALIASUPDATE alias idx
+    @Test
+    void shouldCorrectlyConstructFtAliasupdateCommand() {
+        Command<String, String, String> command = builder.ftAliasupdate("alias", MY_KEY);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$14\r\n" + "FT.ALIASUPDATE\r\n" //
+                + "$5\r\n" + "alias\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.ALIASDEL alias
+    @Test
+    void shouldCorrectlyConstructFtAliasdelCommand() {
+        Command<String, String, String> command = builder.ftAliasdel("alias");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*2\r\n" //
+                + "$11\r\n" + "FT.ALIASDEL\r\n" //
+                + "$5\r\n" + "alias\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.TAGVALS idx field
+    @Test
+    void shouldCorrectlyConstructFtTagvalsCommand() {
+        Command<String, String, List<String>> command = builder.ftTagvals(MY_KEY, FIELD1_NAME);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$10\r\n" + "FT.TAGVALS\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$5\r\n" + FIELD1_NAME + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.ALTER idx SCHEMA ADD title TEXT
+    @Test
+    void shouldCorrectlyConstructFtAlterCommand() {
+        FieldArgs<String> fieldArgs = TextFieldArgs.<String> builder().name(FIELD1_NAME).build();
+
+        Command<String, String, String> command = builder.ftAlter(MY_KEY, false, Collections.singletonList(fieldArgs));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*6\r\n" //
+                + "$8\r\n" + "FT.ALTER\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$6\r\n" + "SCHEMA\r\n" //
+                + "$3\r\n" + "ADD\r\n" //
+                + "$5\r\n" + FIELD1_NAME + "\r\n" //
+                + "$4\r\n" + "TEXT\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.ALTER idx SKIPINITIALSCAN SCHEMA ADD title TEXT published_at NUMERIC SORTABLE
+    @Test
+    void shouldCorrectlyConstructFtAlterCommandWithSkipInitialScan() {
+        FieldArgs<String> fieldArgs1 = TextFieldArgs.<String> builder().name(FIELD1_NAME).build();
+        FieldArgs<String> fieldArgs2 = NumericFieldArgs.<String> builder().name(FIELD2_NAME).sortable().build();
+
+        Command<String, String, String> command = builder.ftAlter(MY_KEY, true, Arrays.asList(fieldArgs1, fieldArgs2));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*10\r\n" //
+                + "$8\r\n" + "FT.ALTER\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$15\r\n" + "SKIPINITIALSCAN\r\n" //
+                + "$6\r\n" + "SCHEMA\r\n" //
+                + "$3\r\n" + "ADD\r\n" //
+                + "$5\r\n" + FIELD1_NAME + "\r\n" //
+                + "$4\r\n" + "TEXT\r\n" //
+                + "$12\r\n" + FIELD2_NAME + "\r\n" //
+                + "$7\r\n" + "NUMERIC\r\n" //
+                + "$8\r\n" + "SORTABLE\r\n";
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }

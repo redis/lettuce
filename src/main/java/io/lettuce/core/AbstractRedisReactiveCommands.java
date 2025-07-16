@@ -1625,6 +1625,36 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<String> ftAliasadd(K alias, K index) {
+        return createMono(() -> searchCommandBuilder.ftAliasadd(alias, index));
+    }
+
+    @Override
+    public Mono<String> ftAliasupdate(K alias, K index) {
+        return createMono(() -> searchCommandBuilder.ftAliasupdate(alias, index));
+    }
+
+    @Override
+    public Mono<String> ftAliasdel(K alias) {
+        return createMono(() -> searchCommandBuilder.ftAliasdel(alias));
+    }
+
+    @Override
+    public Mono<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+        return createMono(() -> searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
+    }
+
+    @Override
+    public Flux<V> ftTagvals(K index, K fieldName) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftTagvals(index, fieldName));
+    }
+
+    @Override
+    public Mono<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs) {
+        return createMono(() -> searchCommandBuilder.ftAlter(index, false, fieldArgs));
+    }
+
+    @Override
     public Mono<String> ftCursordel(K index, long cursorId) {
         return createMono(() -> searchCommandBuilder.ftCursordel(index, cursorId));
     }
