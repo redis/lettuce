@@ -6,12 +6,16 @@
  */
 package io.lettuce.core;
 
+import java.util.List;
+import java.util.Map;
+
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.BooleanOutput;
 import io.lettuce.core.output.ComplexOutput;
 import io.lettuce.core.output.EncodedComplexOutput;
 import io.lettuce.core.output.IntegerOutput;
+import io.lettuce.core.output.ProfileResultOutput;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
@@ -20,23 +24,24 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.search.AggregateReplyParser;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.ProfileResult;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SearchReplyParser;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.SpellCheckResultParser;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.SuggestionParser;
+import io.lettuce.core.search.SynonymMapParser;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.ProfileArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
-
-import java.util.List;
 
 import static io.lettuce.core.protocol.CommandType.*;
 
@@ -391,17 +396,89 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     /**
+     * Profile the execution of a search or aggregate query.
+     *
+     * @param index the index name
+     * @param profileArgs the profile arguments (SEARCH or AGGREGATE, with optional LIMITED)
+     * @param query the query string
+     * @return the profile result containing search results and profiling information
+     */
+    public Command<K, V, ProfileResult> ftProfile(K index, ProfileArgs<K, V> profileArgs, V query) {
+        notNullKey(index);
+        LettuceAssert.notNull(profileArgs, "Profile arguments must not be null");
+        LettuceAssert.notNull(query, "Query must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index);
+        profileArgs.build(commandArgs);
+        commandArgs.addValue(query);
+
+        return createCommand(FT_PROFILE, new ProfileResultOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Profile the execution of a search or aggregate query with additional parameters.
+     *
+     * @param index the index name
+     * @param profileArgs the profile arguments (SEARCH or AGGREGATE, with optional LIMITED)
+     * @param query the query string
+     * @param searchArgs additional search/aggregate arguments
+     * @return the profile result containing search results and profiling information
+     */
+    public Command<K, V, ProfileResult> ftProfile(K index, ProfileArgs<K, V> profileArgs, V query,
+            SearchArgs<K, V> searchArgs) {
+        notNullKey(index);
+        LettuceAssert.notNull(profileArgs, "Profile arguments must not be null");
+        LettuceAssert.notNull(query, "Query must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index);
+        profileArgs.build(commandArgs);
+        commandArgs.addValue(query);
+
+        if (searchArgs != null) {
+            searchArgs.build(commandArgs);
+        }
+
+        return createCommand(FT_PROFILE, new ProfileResultOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Profile the execution of a search or aggregate query with additional parameters.
+     *
+     * @param index the index name
+     * @param profileArgs the profile arguments (SEARCH or AGGREGATE, with optional LIMITED)
+     * @param query the query string
+     * @param aggregateArgs additional aggregate arguments
+     * @return the profile result containing search results and profiling information
+     */
+    public Command<K, V, ProfileResult> ftProfile(K index, ProfileArgs<K, V> profileArgs, V query,
+            AggregateArgs<K, V> aggregateArgs) {
+        notNullKey(index);
+        LettuceAssert.notNull(profileArgs, "Profile arguments must not be null");
+        LettuceAssert.notNull(query, "Query must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index);
+        profileArgs.build(commandArgs);
+        commandArgs.addValue(query);
+
+        if (aggregateArgs != null) {
+            aggregateArgs.build(commandArgs);
+        }
+
+        return createCommand(FT_PROFILE, new ProfileResultOutput<>(codec), commandArgs);
+    }
+
+    /**
      * Dump synonym group contents.
      *
      * @param index the index name
-     * @return the synonym group contents
+     * @return a map where keys are synonym terms and values are lists of group IDs containing that synonym
      */
-    public Command<K, V, List<V>> ftSyndump(K index) {
+    public Command<K, V, Map<V, List<V>>> ftSyndump(K index) {
         notNullKey(index);
 
         CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index);
 
-        return createCommand(FT_SYNDUMP, new ValueListOutput<>(codec), commandArgs);
+        return createCommand(FT_SYNDUMP, new EncodedComplexOutput<>(codec, new SynonymMapParser<>(codec)), commandArgs);
     }
 
     /**

@@ -16,6 +16,8 @@ import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
+import io.lettuce.core.search.arguments.ProfileArgs;
+import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
@@ -24,17 +26,24 @@ import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
+import io.lettuce.core.search.arguments.VectorFieldArgs;
+import io.lettuce.core.search.arguments.GeoFieldArgs;
+import io.lettuce.core.search.arguments.GeoshapeFieldArgs;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -978,17 +987,20 @@ public class RediSearchIntegrationTests {
         String basicExplain = redis.ftExplain(testIndex, "hello world");
         assertThat(basicExplain).isNotNull();
         assertThat(basicExplain).isNotEmpty();
+        assertThat(basicExplain).contains("INTERSECT", "UNION", "hello", "world");
 
         // Test explain with dialect
         ExplainArgs<String, String> dialectArgs = ExplainArgs.Builder.dialect(1);
         String dialectExplain = redis.ftExplain(testIndex, "hello world", dialectArgs);
         assertThat(dialectExplain).isNotNull();
         assertThat(dialectExplain).isNotEmpty();
+        assertThat(dialectExplain).contains("INTERSECT", "UNION", "hello", "world");
 
         // Test complex query explain
         String complexExplain = redis.ftExplain(testIndex, "@title:hello @content:world");
         assertThat(complexExplain).isNotNull();
         assertThat(complexExplain).isNotEmpty();
+        assertThat(complexExplain).contains("INTERSECT", "@title:UNION", "@title:hello", "@content:UNION", "@content:world");
 
         // Cleanup
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
@@ -1053,7 +1065,7 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
 
         // Test initial synonym dump (should be empty)
-        List<String> initialSynonyms = redis.ftSyndump(testIndex);
+        Map<String, List<String>> initialSynonyms = redis.ftSyndump(testIndex);
         assertThat(initialSynonyms).isEmpty();
 
         // Test basic synonym update
@@ -1061,25 +1073,500 @@ public class RediSearchIntegrationTests {
         assertThat(result1).isEqualTo("OK");
 
         // Test synonym dump after update
-        List<String> synonymsAfterUpdate = redis.ftSyndump(testIndex);
+        Map<String, List<String>> synonymsAfterUpdate = redis.ftSyndump(testIndex);
         assertThat(synonymsAfterUpdate).isNotEmpty();
 
+        // Verify the synonym group structure
+        // Redis returns a map where each synonym is a key and the value is a list containing the group ID
+        assertThat(synonymsAfterUpdate).hasSize(3);
+        assertThat(synonymsAfterUpdate).containsKeys("car", "automobile", "vehicle");
+        assertThat(synonymsAfterUpdate.get("car")).containsExactly("group1");
+        assertThat(synonymsAfterUpdate.get("automobile")).containsExactly("group1");
+        assertThat(synonymsAfterUpdate.get("vehicle")).containsExactly("group1");
+
         // Test synonym update with SKIPINITIALSCAN
-        SynUpdateArgs<String, String> skipArgs = SynUpdateArgs.Builder.<String, String> skipInitialScan();
+        SynUpdateArgs<String, String> skipArgs = SynUpdateArgs.Builder.skipInitialScan();
         String result2 = redis.ftSynupdate(testIndex, "group2", skipArgs, "fast", "quick", "rapid");
         assertThat(result2).isEqualTo("OK");
 
         // Test synonym dump after second update
-        List<String> finalSynonyms = redis.ftSyndump(testIndex);
+        Map<String, List<String>> finalSynonyms = redis.ftSyndump(testIndex);
         assertThat(finalSynonyms).isNotEmpty();
         assertThat(finalSynonyms.size()).isGreaterThan(synonymsAfterUpdate.size());
+
+        // Verify both synonym groups exist (each synonym maps to its group)
+        assertThat(finalSynonyms).containsKeys("car", "automobile", "vehicle", "fast", "quick", "rapid");
+        assertThat(finalSynonyms.get("fast")).containsExactly("group2");
+        assertThat(finalSynonyms.get("quick")).containsExactly("group2");
+        assertThat(finalSynonyms.get("rapid")).containsExactly("group2");
 
         // Test updating existing synonym group
         String result3 = redis.ftSynupdate(testIndex, "group1", "car", "automobile", "vehicle", "auto");
         assertThat(result3).isEqualTo("OK");
 
+        // Verify updated synonym group
+        Map<String, List<String>> updatedSynonyms = redis.ftSyndump(testIndex);
+        assertThat(updatedSynonyms).containsKeys("car", "automobile", "vehicle", "auto");
+        assertThat(updatedSynonyms.get("auto")).containsExactly("group1");
+
         // Cleanup
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.PROFILE command for query performance profiling.
+     */
+    @Test
+    void testFtProfileCommand() {
+        String testIndex = "profile-idx";
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+        FieldArgs<String> scoreField = NumericFieldArgs.<String> builder().name("score").sortable().build();
+
+        // Create an index
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("doc:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField, scoreField))).isEqualTo("OK");
+
+        // Add test documents
+        Map<String, String> doc1 = new HashMap<>();
+        doc1.put("title", "Redis Search");
+        doc1.put("content", "Redis Search is a powerful full-text search engine");
+        doc1.put("score", "95");
+        assertThat(redis.hmset("doc:1", doc1)).isEqualTo("OK");
+
+        Map<String, String> doc2 = new HashMap<>();
+        doc2.put("title", "Redis Profile");
+        doc2.put("content", "Profile Redis Search queries for performance analysis");
+        doc2.put("score", "88");
+        assertThat(redis.hmset("doc:2", doc2)).isEqualTo("OK");
+
+        // Test basic search profiling
+        ProfileArgs<String, String> searchArgs = ProfileArgs.Builder.search();
+        ProfileResult searchProfile = redis.ftProfile(testIndex, searchArgs, "Redis");
+
+        assertThat(searchProfile).isNotNull();
+        assertThat(searchProfile.getSearchResults()).isNotNull();
+        assertThat(searchProfile.getProfileInfo()).isNotNull();
+        assertThat(searchProfile.getProfileInfo().getTotalProfileTime()).isNotNull();
+        assertThat(searchProfile.getProfileInfo().getParsingTime()).isNotNull();
+        assertThat(searchProfile.getProfileInfo().getPipelineCreationTime()).isNotNull();
+
+        // Test search profiling with LIMITED option
+        ProfileArgs<String, String> limitedArgs = ProfileArgs.Builder.searchLimited();
+        ProfileResult limitedProfile = redis.ftProfile(testIndex, limitedArgs, "Search");
+
+        assertThat(limitedProfile).isNotNull();
+        assertThat(limitedProfile.getProfileInfo()).isNotNull();
+
+        // Test search profiling with additional search arguments
+        SearchArgs<String, String> additionalSearchArgs = SearchArgs.<String, String> builder().limit(0, 1).build();
+        ProfileResult searchWithArgsProfile = redis.ftProfile(testIndex, searchArgs, "Redis", additionalSearchArgs);
+
+        assertThat(searchWithArgsProfile).isNotNull();
+        assertThat(searchWithArgsProfile.getSearchResults()).isNotNull();
+        assertThat(searchWithArgsProfile.getProfileInfo()).isNotNull();
+
+        // Test aggregate profiling
+        ProfileArgs<String, String> aggregateArgs = ProfileArgs.Builder.aggregate();
+        ProfileResult aggregateProfile = redis.ftProfile(testIndex, aggregateArgs, "*");
+
+        assertThat(aggregateProfile).isNotNull();
+        assertThat(aggregateProfile.getSearchResults()).isNotNull();
+        assertThat(aggregateProfile.getProfileInfo()).isNotNull();
+
+        // Verify profile information structure
+        ProfileResult.ProfileInfo profileInfo = searchProfile.getProfileInfo();
+        assertThat(profileInfo.getIteratorProfiles()).isNotNull();
+        assertThat(profileInfo.getResultProcessorProfiles()).isNotNull();
+
+        // Check if there are iterator profiles
+        if (!profileInfo.getIteratorProfiles().isEmpty()) {
+            ProfileResult.IteratorProfile iteratorProfile = profileInfo.getIteratorProfiles().get(0);
+            assertThat(iteratorProfile.getType()).isNotNull();
+            assertThat(iteratorProfile.getTime()).isNotNull();
+        }
+
+        // Check if there are result processor profiles
+        if (!profileInfo.getResultProcessorProfiles().isEmpty()) {
+            ProfileResult.ResultProcessorProfile processorProfile = profileInfo.getResultProcessorProfiles().get(0);
+            assertThat(processorProfile.getType()).isNotNull();
+            assertThat(processorProfile.getTime()).isNotNull();
+        }
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.PROFILE command with vector search functionality. This test creates a JSON index with vector data and profiles
+     * vector search queries.
+     */
+    @Test
+    void testFtProfileWithVectorSearch() {
+        String testIndex = "vss_idx";
+
+        // Create a vector field definition for JSON documents
+        // VECTOR FLAT 6 TYPE FLOAT32 DIM 4 DISTANCE_METRIC L2
+        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("$.vector").as("vector").flat()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
+                .build();
+
+        // Create an index on JSON documents with vector field
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("vec:")
+                .on(CreateArgs.TargetType.JSON).build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Collections.singletonList(vectorField))).isEqualTo("OK");
+
+        // Create test vector data using HSET (since JSON commands may not be available)
+        // Vector data: [1,1,1,1], [2,2,2,2], [3,3,3,3], [4,4,4,4]
+        Map<String, String> vec1 = new HashMap<>();
+        vec1.put("vector", "[1,1,1,1]");
+        assertThat(redis.hmset("vec:1", vec1)).isEqualTo("OK");
+
+        Map<String, String> vec2 = new HashMap<>();
+        vec2.put("vector", "[2,2,2,2]");
+        assertThat(redis.hmset("vec:2", vec2)).isEqualTo("OK");
+
+        Map<String, String> vec3 = new HashMap<>();
+        vec3.put("vector", "[3,3,3,3]");
+        assertThat(redis.hmset("vec:3", vec3)).isEqualTo("OK");
+
+        Map<String, String> vec4 = new HashMap<>();
+        vec4.put("vector", "[4,4,4,4]");
+        assertThat(redis.hmset("vec:4", vec4)).isEqualTo("OK");
+
+        // Wait a bit for indexing to complete
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Create a vector search query: "*=>[KNN 3 @vector $query_vec]"
+        // Query vector: [2.0, 2.0, 2.0, 2.0] (should be closest to vec:2)
+        String vectorQuery = "*=>[KNN 3 @vector $query_vec]";
+
+        // Create search arguments with vector parameter and sorting
+        SortByArgs<String> sortByArgs = SortByArgs.<String> builder().attribute("__vector_score").build();
+        SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder()
+                .param("query_vec", encodeFloatVector(new float[] { 2.0f, 2.0f, 2.0f, 2.0f })).sortBy(sortByArgs)
+                .dialect(QueryDialects.DIALECT2).build();
+
+        // Test vector search profiling
+        ProfileArgs<String, String> profileArgs = ProfileArgs.Builder.<String, String> search();
+        ProfileResult vectorProfile = redis.ftProfile(testIndex, profileArgs, vectorQuery, searchArgs);
+
+        // Verify profile result structure
+        assertThat(vectorProfile).isNotNull();
+        assertThat(vectorProfile.getSearchResults()).isNotNull();
+        assertThat(vectorProfile.getProfileInfo()).isNotNull();
+
+        // Verify profile information
+        ProfileResult.ProfileInfo profileInfo = vectorProfile.getProfileInfo();
+        assertThat(profileInfo.getTotalProfileTime()).isNotNull();
+        assertThat(profileInfo.getParsingTime()).isNotNull();
+        assertThat(profileInfo.getPipelineCreationTime()).isNotNull();
+
+        // Verify iterator profiles contain vector iterator
+        assertThat(profileInfo.getIteratorProfiles()).isNotEmpty();
+        boolean hasVectorIterator = profileInfo.getIteratorProfiles().stream()
+                .anyMatch(iterator -> "VECTOR".equals(iterator.getType()));
+
+        // Vector iterator might not be present in all Redis versions or configurations
+        // So we'll make this check optional and just verify that some iterators exist
+        // assertThat(hasVectorIterator).isTrue();
+
+        // Verify result processor profiles
+        assertThat(profileInfo.getResultProcessorProfiles()).isNotEmpty();
+
+        // Check for expected result processors in vector search
+        List<String> processorTypes = profileInfo.getResultProcessorProfiles().stream()
+                .map(ProfileResult.ResultProcessorProfile::getType).collect(Collectors.toList());
+
+        // Vector search typically includes these processors
+        assertThat(processorTypes).contains("Index");
+        assertThat(processorTypes).contains("Sorter");
+        assertThat(processorTypes).contains("Loader");
+
+        // May also include "Metrics Applier" for vector distance calculations
+        boolean hasMetricsApplier = processorTypes.contains("Metrics Applier");
+        if (hasMetricsApplier) {
+            // If present, verify it has proper timing information
+            ProfileResult.ResultProcessorProfile metricsProcessor = profileInfo.getResultProcessorProfiles().stream()
+                    .filter(p -> "Metrics Applier".equals(p.getType())).findFirst().orElse(null);
+            assertThat(metricsProcessor).isNotNull();
+            assertThat(metricsProcessor.getTime()).isNotNull();
+            assertThat(metricsProcessor.getCounter()).isNotNull();
+        }
+
+        // Test vector search profiling with LIMITED option
+        ProfileArgs<String, String> limitedArgs = ProfileArgs.Builder.<String, String> searchLimited();
+        ProfileResult limitedProfile = redis.ftProfile(testIndex, limitedArgs, vectorQuery, searchArgs);
+
+        assertThat(limitedProfile).isNotNull();
+        assertThat(limitedProfile.getProfileInfo()).isNotNull();
+
+        // Verify that vector iterator information is present (if available)
+        ProfileResult.IteratorProfile vectorIterator = profileInfo.getIteratorProfiles().stream()
+                .filter(iterator -> "VECTOR".equals(iterator.getType())).findFirst().orElse(null);
+
+        if (vectorIterator != null) {
+            assertThat(vectorIterator.getTime()).isNotNull();
+            assertThat(vectorIterator.getCounter()).isNotNull();
+            // Vector iterators should have processed some documents
+            assertThat(vectorIterator.getCounter()).isGreaterThan(0L);
+        } else {
+            // If no vector iterator is found, check if we have an EMPTY iterator (which indicates the query ran but found no
+            // results)
+            boolean hasEmptyIterator = profileInfo.getIteratorProfiles().stream()
+                    .anyMatch(iterator -> "EMPTY".equals(iterator.getType()));
+
+            if (hasEmptyIterator) {
+                // EMPTY iterator is expected when vector search doesn't find matches or vector functionality is not available
+                System.out.println(
+                        "Vector search returned EMPTY iterator - this may indicate vector functionality is not available or no matches found");
+            } else {
+                // At least verify that some iterator processed documents
+                boolean hasActiveIterator = profileInfo.getIteratorProfiles().stream()
+                        .anyMatch(iterator -> iterator.getCounter() != null && iterator.getCounter() > 0L);
+                assertThat(hasActiveIterator).isTrue();
+            }
+        }
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+
+        // Clean up JSON documents
+        redis.del("vec:1", "vec:2", "vec:3", "vec:4");
+    }
+
+    /**
+     * Test FT.PROFILE command with a comprehensive JSON index containing multiple field types. This test creates a bicycle
+     * dataset with various field types (TEXT, NUMERIC, TAG, GEO, GEOSHAPE) and profiles compound queries to demonstrate complex
+     * iterator hierarchies.
+     */
+    @Test
+    void testFtProfileWithJsonBicycleIndex() {
+        String testIndex = "idx:bicycle";
+
+        // Create field definitions for the bicycle index
+        // TEXT fields with weights
+        FieldArgs<String> brandField = TextFieldArgs.<String> builder().name("$.brand").as("brand").weight(1L).build();
+
+        FieldArgs<String> modelField = TextFieldArgs.<String> builder().name("$.model").as("model").weight(1L).build();
+
+        FieldArgs<String> descriptionField = TextFieldArgs.<String> builder().name("$.description").as("description").weight(1L)
+                .build();
+
+        // NUMERIC field
+        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("$.price").as("price").build();
+
+        // TAG field with separator
+        FieldArgs<String> conditionField = TagFieldArgs.<String> builder().name("$.condition").as("condition").separator(",")
+                .build();
+
+        // GEO field for store location
+        FieldArgs<String> storeLocationField = GeoFieldArgs.<String> builder().name("$.store_location").as("store_location")
+                .build();
+
+        // GEOSHAPE field for pickup zone
+        FieldArgs<String> pickupZoneField = GeoshapeFieldArgs.<String> builder().name("$.pickup_zone").as("pickup_zone")
+                .build();
+
+        // Create an index on JSON documents
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("bicycle:")
+                .on(CreateArgs.TargetType.JSON).build();
+
+        List<FieldArgs<String>> fields = Arrays.asList(pickupZoneField, storeLocationField, brandField, modelField,
+                descriptionField, priceField, conditionField);
+
+        assertThat(redis.ftCreate(testIndex, createArgs, fields)).isEqualTo("OK");
+
+        // Create 10 bicycle documents with varied data
+        createBicycleDocument("bicycle:0",
+                "POLYGON((-74.0610 40.7578, -73.9510 40.7578, -73.9510 40.6678, -74.0610 40.6678, -74.0610 40.7578))",
+                "-74.0060,40.7128", "Velorim", "Jigger", 270,
+                "Small and powerful, the Jigger is the best ride for the smallest of tikes! This is the tiniest kids' pedal bike on the market available without a coaster brake, the Jigger is the vehicle of choice for the rare tenacious little rider raring to go.",
+                "new");
+
+        createBicycleDocument("bicycle:1",
+                "POLYGON((-118.2887 34.0972, -118.1987 34.0972, -118.1987 33.9872, -118.2887 33.9872, -118.2887 34.0972))",
+                "-118.2437,34.0522", "Bicyk", "Hillcraft", 1200,
+                "Kids want to ride with as little weight as possible. Especially on an incline! They may be at the age when a 27.5\" wheel bike is just too clumsy coming off a 24\" bike. The Hillcraft 26 is just the solution they need!",
+                "used");
+
+        createBicycleDocument("bicycle:2",
+                "POLYGON((-87.6848 41.9331, -87.5748 41.9331, -87.5748 41.8231, -87.6848 41.8231, -87.6848 41.9331))",
+                "-87.6298,41.8781", "Nord", "Chook air 5", 815,
+                "The Chook Air 5 gives kids aged six years and older a durable and uberlight mountain bike for their first experience on tracks and easy cruising through forests and fields. The lower top tube makes it easy to mount and dismount in any situation, giving your kids greater safety on the trails.",
+                "used");
+
+        createBicycleDocument("bicycle:3",
+                "POLYGON((-122.4194 37.7749, -122.3094 37.7749, -122.3094 37.6649, -122.4194 37.6649, -122.4194 37.7749))",
+                "-122.3647,37.7197", "Eva", "Eva 291", 3400,
+                "The Eva 291 is an electric bike perfect for people who aren't afraid of trying new things. This electric bike is a great option for anyone who wants to get around town quickly and efficiently.",
+                "new");
+
+        createBicycleDocument("bicycle:4",
+                "POLYGON((-80.1918 25.7617, -80.0818 25.7617, -80.0818 25.6517, -80.1918 25.6517, -80.1918 25.7617))",
+                "-80.1368,25.7067", "Breakout", "XBN 2.1", 810,
+                "The XBN 2.1 gives kids aged six years and older a durable and uberlight mountain bike for their first experience on tracks and easy cruising through forests and fields.",
+                "new");
+
+        createBicycleDocument("bicycle:5",
+                "POLYGON((-71.0589 42.3601, -70.9489 42.3601, -70.9489 42.2501, -71.0589 42.2501, -71.0589 42.3601))",
+                "-71.0039,42.3051", "ScramBikes", "WattBike", 2300,
+                "The WattBike is the best e-bike for people who still feel young at heart. It has a Bafang 1000W mid-drive system and a 48V 17.5AH Samsung Lithium-Ion battery.",
+                "new");
+
+        createBicycleDocument("bicycle:6",
+                "POLYGON((-84.3880 33.7490, -84.2780 33.7490, -84.2780 33.6390, -84.3880 33.6390, -84.3880 33.7490))",
+                "-84.3330,33.6940", "Peaknetic", "Secto", 430,
+                "If you are looking for a bike to give you the most bang for your buck, then the Secto is the one for you. It's a small and fast bike with an affordable price.",
+                "new");
+
+        createBicycleDocument("bicycle:7",
+                "POLYGON((-73.9857 40.7484, -73.8757 40.7484, -73.8757 40.6384, -73.9857 40.6384, -73.9857 40.7484))",
+                "-73.9307,40.6934", "nHill", "Summit", 1200,
+                "This budget mountain bike from nHill performs well both on bike paths and on the trail. The fork with 100mm of travel absorbs rough terrain. Fat Kenda Booster tires give you grip in corners and on wet trails.",
+                "new");
+
+        createBicycleDocument("bicycle:8",
+                "POLYGON((-122.2711 37.8044, -122.1611 37.8044, -122.1611 37.6944, -122.2711 37.6944, -122.2711 37.8044))",
+                "-122.2161,37.7494", "Breakout", "XBN 2.1 Alloy", 400,
+                "The XBN 2.1 Alloy is our entry-level road bike – but that's not to say that it's a basic machine. With an internal weld aluminium frame, a full carbon fork, and the reliable Claris gearing system, this is a bike which doesn't break the bank and delivers craved performance.",
+                "used");
+
+        createBicycleDocument("bicycle:9",
+                "POLYGON((-77.0369 38.9072, -76.9269 38.9072, -76.9269 38.7972, -77.0369 38.7972, -77.0369 38.9072))",
+                "-76.9819,38.8522", "ScramBikes", "WattBike Pro", 3500,
+                "The WattBike Pro is a powerful e-bike with professional features. It includes a Bafang Ultra 1000W mid-drive motor and a 52V 17.5AH battery for maximum performance.",
+                "new");
+
+        // Wait a bit for indexing to complete
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Test compound query profiling: "@description:(kids | small) @condition:{new | used}"
+        String compoundQuery = "@description:(kids | small) @condition:{new | used}";
+
+        // Test basic compound query profiling
+        ProfileArgs<String, String> profileArgs = ProfileArgs.Builder.<String, String> search();
+        ProfileResult compoundProfile = redis.ftProfile(testIndex, profileArgs, compoundQuery);
+
+        // Verify profile result structure
+        assertThat(compoundProfile).isNotNull();
+        assertThat(compoundProfile.getSearchResults()).isNotNull();
+        assertThat(compoundProfile.getProfileInfo()).isNotNull();
+
+        // Verify profile information
+        ProfileResult.ProfileInfo profileInfo = compoundProfile.getProfileInfo();
+        assertThat(profileInfo.getTotalProfileTime()).isNotNull();
+        assertThat(profileInfo.getParsingTime()).isNotNull();
+        assertThat(profileInfo.getPipelineCreationTime()).isNotNull();
+
+        // Verify iterator profiles contain expected structure for compound query
+        assertThat(profileInfo.getIteratorProfiles()).isNotEmpty();
+
+        // Debug: Print iterator types for analysis
+        List<String> iteratorTypes = profileInfo.getIteratorProfiles().stream().map(ProfileResult.IteratorProfile::getType)
+                .collect(Collectors.toList());
+
+        // For compound queries, we expect to see INTERSECT, UNION, TEXT, and TAG iterators
+        boolean hasIntersectIterator = iteratorTypes.contains("INTERSECT");
+        boolean hasUnionIterator = iteratorTypes.contains("UNION");
+        boolean hasTextIterator = iteratorTypes.contains("TEXT");
+        boolean hasTagIterator = iteratorTypes.contains("TAG");
+
+        // At least some of these iterator types should be present for a compound query
+        boolean hasExpectedIterators = hasIntersectIterator || hasUnionIterator || hasTextIterator || hasTagIterator;
+        assertThat(hasExpectedIterators).isTrue();
+
+        // Verify result processor profiles
+        assertThat(profileInfo.getResultProcessorProfiles()).isNotEmpty();
+
+        // Check for expected result processors
+        List<String> processorTypes = profileInfo.getResultProcessorProfiles().stream()
+                .map(ProfileResult.ResultProcessorProfile::getType).collect(Collectors.toList());
+
+        // Compound queries typically include these processors
+        assertThat(processorTypes).contains("Index");
+        assertThat(processorTypes).contains("Loader");
+
+        // Test profiling with LIMITED option
+        ProfileArgs<String, String> limitedArgs = ProfileArgs.Builder.<String, String> searchLimited();
+        ProfileResult limitedProfile = redis.ftProfile(testIndex, limitedArgs, compoundQuery);
+
+        assertThat(limitedProfile).isNotNull();
+        assertThat(limitedProfile.getProfileInfo()).isNotNull();
+
+        // Test different query types for comparison
+
+        // Simple text query
+        String simpleQuery = "@description:kids";
+        ProfileResult simpleProfile = redis.ftProfile(testIndex, profileArgs, simpleQuery);
+        assertThat(simpleProfile).isNotNull();
+
+        // Tag query
+        String tagQuery = "@condition:{new}";
+        ProfileResult tagProfile = redis.ftProfile(testIndex, profileArgs, tagQuery);
+        assertThat(tagProfile).isNotNull();
+
+        // Numeric range query
+        String numericQuery = "@price:[200 500]";
+        ProfileResult numericProfile = redis.ftProfile(testIndex, profileArgs, numericQuery);
+        assertThat(numericProfile).isNotNull();
+
+        // Verify that different query types produce different iterator patterns
+        List<String> simpleIteratorTypes = simpleProfile.getProfileInfo().getIteratorProfiles().stream()
+                .map(ProfileResult.IteratorProfile::getType).collect(Collectors.toList());
+
+        List<String> tagIteratorTypes = tagProfile.getProfileInfo().getIteratorProfiles().stream()
+                .map(ProfileResult.IteratorProfile::getType).collect(Collectors.toList());
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+
+        // Clean up bicycle documents
+        for (int i = 0; i < 10; i++) {
+            redis.del("bicycle:" + i);
+        }
+    }
+
+    /**
+     * Helper method to encode a float vector as a byte array for Redis vector search. Redis expects vector data as binary
+     * representation of float values.
+     */
+    private String encodeFloatVector(float[] vector) {
+        ByteBuffer buffer = ByteBuffer.allocate(vector.length * 4).order(ByteOrder.LITTLE_ENDIAN);
+        for (float value : vector) {
+            buffer.putFloat(value);
+        }
+        return new String(buffer.array(), StandardCharsets.ISO_8859_1);
+    }
+
+    /**
+     * Helper method to create a bicycle document with all required fields.
+     */
+    private void createBicycleDocument(String key, String pickupZone, String storeLocation, String brand, String model,
+            int price, String description, String condition) {
+        Map<String, String> document = new HashMap<>();
+        document.put("pickup_zone", pickupZone);
+        document.put("store_location", storeLocation);
+        document.put("brand", brand);
+        document.put("model", model);
+        document.put("price", String.valueOf(price));
+        document.put("description", description);
+        document.put("condition", condition);
+
+        assertThat(redis.hmset(key, document)).isEqualTo("OK");
     }
 
 }

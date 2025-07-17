@@ -10,6 +10,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands
 import io.lettuce.core.search.AggregationReply
+import io.lettuce.core.search.ProfileResult
 import io.lettuce.core.search.SearchReply
 import io.lettuce.core.search.SpellCheckResult
 import io.lettuce.core.search.Suggestion
@@ -17,6 +18,7 @@ import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
 import io.lettuce.core.search.arguments.ExplainArgs
 import io.lettuce.core.search.arguments.FieldArgs
+import io.lettuce.core.search.arguments.ProfileArgs
 import io.lettuce.core.search.arguments.SearchArgs
 import io.lettuce.core.search.arguments.SpellCheckArgs
 import io.lettuce.core.search.arguments.SugAddArgs
@@ -129,8 +131,8 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftSynupdate(index: K, synonymGroupId: V, args: SynUpdateArgs<K, V>, vararg terms: V): String? =
         ops.ftSynupdate(index, synonymGroupId, args, *terms).awaitFirstOrNull()
 
-    override suspend fun ftSyndump(index: K): List<V> =
-        ops.ftSyndump(index).asFlow().toList()
+    override suspend fun ftSyndump(index: K): Map<V, List<V>> =
+        ops.ftSyndump(index).awaitFirstOrNull()!!
 
     override suspend fun ftExplain(index: K, query: V): String? =
         ops.ftExplain(index, query).awaitFirstOrNull()
@@ -140,4 +142,14 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
 
     override suspend fun ftList(): List<V> =
         ops.ftList().asFlow().toList()
+
+    override suspend fun ftProfile(index: K, profileArgs: ProfileArgs<K, V>, query: V): ProfileResult? =
+        ops.ftProfile(index, profileArgs, query).awaitFirstOrNull()
+
+    override suspend fun ftProfile(index: K, profileArgs: ProfileArgs<K, V>, query: V, searchArgs: SearchArgs<K, V>): ProfileResult? =
+        ops.ftProfile(index, profileArgs, query, searchArgs).awaitFirstOrNull()
+
+    override suspend fun ftProfile(index: K, profileArgs: ProfileArgs<K, V>, query: V, aggregateArgs: AggregateArgs<K, V>): ProfileResult? =
+        ops.ftProfile(index, profileArgs, query, aggregateArgs).awaitFirstOrNull()
+
 }

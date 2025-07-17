@@ -8,9 +8,9 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.search.AggregationReply
+import io.lettuce.core.search.ProfileResult
 import io.lettuce.core.search.SearchReply
 import io.lettuce.core.search.SpellCheckResult
 import io.lettuce.core.search.Suggestion
@@ -18,6 +18,7 @@ import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
 import io.lettuce.core.search.arguments.ExplainArgs
 import io.lettuce.core.search.arguments.FieldArgs
+import io.lettuce.core.search.arguments.ProfileArgs
 import io.lettuce.core.search.arguments.SearchArgs
 import io.lettuce.core.search.arguments.SpellCheckArgs
 import io.lettuce.core.search.arguments.SugAddArgs
@@ -530,9 +531,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Return the execution plan for a complex query.
      *
      * <p>
-     * This command returns a string representing the execution plan that Redis Search
-     * will use to execute the given query. This is useful for understanding how the
-     * query will be processed and for optimizing query performance.
+     * This command returns a string representing the execution plan that Redis Search will use to execute the given query. This
+     * is useful for understanding how the query will be processed and for optimizing query performance.
      * </p>
      *
      * <p>
@@ -564,8 +564,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Return the execution plan for a complex query with additional options.
      *
      * <p>
-     * This command returns a string representing the execution plan that Redis Search
-     * will use to execute the given query under the specified dialect version.
+     * This command returns a string representing the execution plan that Redis Search will use to execute the given query under
+     * the specified dialect version.
      * </p>
      *
      * <p>
@@ -595,8 +595,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Return a list of all existing indexes.
      *
      * <p>
-     * This command returns an array with the names of all existing indexes in the database.
-     * This is useful for discovering available indexes and managing index lifecycle.
+     * This command returns an array with the names of all existing indexes in the database. This is useful for discovering
+     * available indexes and managing index lifecycle.
      * </p>
      *
      * <p>
@@ -614,9 +614,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * </p>
      *
      * <p>
-     * <strong>Note:</strong> This is a temporary command (indicated by the underscore prefix).
-     * In the future, a SCAN-type command will be added for use when a database contains
-     * a large number of indices.
+     * <strong>Note:</strong> This is a temporary command (indicated by the underscore prefix). In the future, a SCAN-type
+     * command will be added for use when a database contains a large number of indices.
      * </p>
      *
      * @return a list of index names
@@ -629,11 +628,111 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
     suspend fun ftList(): List<V>
 
     /**
+     * Profile the execution of a search or aggregate query to collect performance details.
+     *
+     * <p>
+     * This command applies FT.SEARCH or FT.AGGREGATE command to collect performance details. It returns both the search results
+     * and detailed profiling information including iterator profiles, result processor profiles, and timing data.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Performance analysis:</strong> Identify bottlenecks in query execution</li>
+     * <li><strong>Query optimization:</strong> Understand how queries are processed</li>
+     * <li><strong>Iterator analysis:</strong> Examine index iterator performance</li>
+     * <li><strong>Result processing:</strong> Analyze result processor efficiency</li>
+     * <li><strong>Debugging:</strong> Troubleshoot slow or complex queries</li>
+     * </ul>
+     *
+     * <p>
+     * Profile types:
+     * </p>
+     * <ul>
+     * <li><strong>SEARCH:</strong> Profile FT.SEARCH command execution</li>
+     * <li><strong>AGGREGATE:</strong> Profile FT.AGGREGATE command execution</li>
+     * <li><strong>LIMITED:</strong> Remove details of reader iterators to reduce output size</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the complexity of the underlying query
+     * </p>
+     *
+     * @param index the index name
+     * @param profileArgs the profile arguments (SEARCH or AGGREGATE, with optional LIMITED)
+     * @param query the query string to profile
+     * @return the profile result containing search results and profiling information
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.profile/">FT.PROFILE</a>
+     * @see #ftProfile(Any, ProfileArgs, Any, SearchArgs)
+     * @see #ftProfile(Any, ProfileArgs, Any, AggregateArgs)
+     * @see #ftSearch(Any, Any)
+     * @see #ftAggregate(Any, Any)
+     */
+    @Experimental
+    suspend fun ftProfile(index: K, profileArgs: ProfileArgs<K, V>, query: V): ProfileResult?
+
+    /**
+     * Profile the execution of a search query with additional search arguments.
+     *
+     * <p>
+     * This command applies FT.SEARCH command with additional search arguments to collect performance details. It returns both
+     * the search results and detailed profiling information including iterator profiles, result processor profiles, and timing
+     * data.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the complexity of the underlying query
+     * </p>
+     *
+     * @param index the index name
+     * @param profileArgs the profile arguments (SEARCH with optional LIMITED)
+     * @param query the query string to profile
+     * @param searchArgs additional search arguments (LIMIT, SORTBY, etc.)
+     * @return the profile result containing search results and profiling information
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.profile/">FT.PROFILE</a>
+     * @see #ftProfile(Any, ProfileArgs, Any)
+     * @see #ftProfile(Any, ProfileArgs, Any, AggregateArgs)
+     * @see #ftSearch(Any, Any, SearchArgs)
+     */
+    @Experimental
+    suspend fun ftProfile(index: K, profileArgs: ProfileArgs<K, V>, query: V, searchArgs: SearchArgs<K, V>): ProfileResult?
+
+    /**
+     * Profile the execution of an aggregate query with additional aggregate arguments.
+     *
+     * <p>
+     * This command applies FT.AGGREGATE command with additional aggregate arguments to collect performance details. It returns
+     * both the aggregation results and detailed profiling information including iterator profiles, result processor profiles,
+     * and timing data.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N) where N is the complexity of the underlying query
+     * </p>
+     *
+     * @param index the index name
+     * @param profileArgs the profile arguments (AGGREGATE with optional LIMITED)
+     * @param query the query string to profile
+     * @param aggregateArgs additional aggregate arguments (GROUPBY, APPLY, etc.)
+     * @return the profile result containing aggregation results and profiling information
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.profile/">FT.PROFILE</a>
+     * @see #ftProfile(Any, ProfileArgs, Any)
+     * @see #ftProfile(Any, ProfileArgs, Any, SearchArgs)
+     * @see #ftAggregate(Any, Any, AggregateArgs)
+     */
+    @Experimental
+    suspend fun ftProfile(index: K, profileArgs: ProfileArgs<K, V>, query: V, aggregateArgs: AggregateArgs<K, V>): ProfileResult?
+
+    /**
      * Dump synonym group contents.
      *
      * <p>
-     * This command returns the contents of a synonym group. Synonym groups are used
-     * to define terms that should be treated as equivalent during search operations.
+     * This command returns the contents of a synonym group. Synonym groups are used to define terms that should be treated as
+     * equivalent during search operations.
      * </p>
      *
      * <p>
@@ -651,22 +750,21 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * </p>
      *
      * @param index the index name
-     * @return the synonym group contents
+     * @return a map where keys are terms and values are lists of synonyms for each term
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.syndump/">FT.SYNDUMP</a>
      * @see #ftSynupdate(Any, Any, Any[])
      * @see #ftSynupdate(Any, Any, SynUpdateArgs, Any[])
      */
     @Experimental
-    suspend fun ftSyndump(index: K): List<V>
+    suspend fun ftSyndump(index: K): Map<V, List<V>>?
 
     /**
      * Update a synonym group with additional terms.
      *
      * <p>
-     * This command creates or updates a synonym group with the specified terms.
-     * All terms in a synonym group are treated as equivalent during search operations.
-     * The command triggers a scan of all documents by default.
+     * This command creates or updates a synonym group with the specified terms. All terms in a synonym group are treated as
+     * equivalent during search operations. The command triggers a scan of all documents by default.
      * </p>
      *
      * <p>
@@ -699,9 +797,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Update a synonym group with additional terms and options.
      *
      * <p>
-     * This command creates or updates a synonym group with the specified terms and options.
-     * The SKIPINITIALSCAN option can be used to avoid scanning existing documents,
-     * affecting only documents indexed after the update.
+     * This command creates or updates a synonym group with the specified terms and options. The SKIPINITIALSCAN option can be
+     * used to avoid scanning existing documents, affecting only documents indexed after the update.
      * </p>
      *
      * <p>

@@ -49,6 +49,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.ProfileResult;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -56,6 +57,7 @@ import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.ProfileArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
@@ -1632,7 +1634,23 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> ftSyndump(K index) {
+    public RedisFuture<ProfileResult> ftProfile(K index, ProfileArgs<K, V> profileArgs, V query) {
+        return dispatch(searchCommandBuilder.ftProfile(index, profileArgs, query));
+    }
+
+    @Override
+    public RedisFuture<ProfileResult> ftProfile(K index, ProfileArgs<K, V> profileArgs, V query, SearchArgs<K, V> searchArgs) {
+        return dispatch(searchCommandBuilder.ftProfile(index, profileArgs, query, searchArgs));
+    }
+
+    @Override
+    public RedisFuture<ProfileResult> ftProfile(K index, ProfileArgs<K, V> profileArgs, V query,
+            AggregateArgs<K, V> aggregateArgs) {
+        return dispatch(searchCommandBuilder.ftProfile(index, profileArgs, query, aggregateArgs));
+    }
+
+    @Override
+    public RedisFuture<Map<V, List<V>>> ftSyndump(K index) {
         return dispatch(searchCommandBuilder.ftSyndump(index));
     }
 

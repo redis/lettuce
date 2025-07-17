@@ -50,6 +50,7 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.ProfileResult;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -57,6 +58,7 @@ import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.ProfileArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
@@ -1697,8 +1699,23 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Flux<V> ftSyndump(K index) {
-        return createDissolvingFlux(() -> searchCommandBuilder.ftSyndump(index));
+    public Mono<ProfileResult> ftProfile(K index, ProfileArgs<K, V> profileArgs, V query) {
+        return createMono(() -> searchCommandBuilder.ftProfile(index, profileArgs, query));
+    }
+
+    @Override
+    public Mono<ProfileResult> ftProfile(K index, ProfileArgs<K, V> profileArgs, V query, SearchArgs<K, V> searchArgs) {
+        return createMono(() -> searchCommandBuilder.ftProfile(index, profileArgs, query, searchArgs));
+    }
+
+    @Override
+    public Mono<ProfileResult> ftProfile(K index, ProfileArgs<K, V> profileArgs, V query, AggregateArgs<K, V> aggregateArgs) {
+        return createMono(() -> searchCommandBuilder.ftProfile(index, profileArgs, query, aggregateArgs));
+    }
+
+    @Override
+    public Mono<Map<V, List<V>>> ftSyndump(K index) {
+        return createMono(() -> searchCommandBuilder.ftSyndump(index));
     }
 
     @Override
