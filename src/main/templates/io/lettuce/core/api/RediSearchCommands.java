@@ -364,6 +364,86 @@ public interface RediSearchCommands<K, V> {
     List<V> ftTagvals(K index, K fieldName);
 
     /**
+     * Add terms to a dictionary.
+     *
+     * <p>
+     * This command adds one or more terms to a dictionary. Dictionaries are used for storing
+     * custom stopwords, synonyms, and other term lists that can be referenced in search operations.
+     * The dictionary is created if it doesn't exist.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Stopwords:</strong> Create custom stopword lists for filtering</li>
+     * <li><strong>Synonyms:</strong> Build synonym dictionaries for query expansion</li>
+     * <li><strong>Custom terms:</strong> Store domain-specific terminology</li>
+     * <li><strong>Blacklists:</strong> Maintain lists of prohibited terms</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param dict the dictionary name
+     * @param terms the terms to add to the dictionary
+     * @return the number of new terms that were added
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.dictadd/">FT.DICTADD</a>
+     * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
+     * @see #ftDictdel(Object, Object[])
+     * @see #ftDictdump(Object)
+     */
+    @Experimental
+    Long ftDictadd(K dict, V... terms);
+
+    /**
+     * Delete terms from a dictionary.
+     *
+     * <p>
+     * This command removes one or more terms from a dictionary. Only exact matches
+     * will be removed from the dictionary. Non-existent terms are ignored.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param dict the dictionary name
+     * @param terms the terms to delete from the dictionary
+     * @return the number of terms that were deleted
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.dictdel/">FT.DICTDEL</a>
+     * @see #ftDictadd(Object, Object[])
+     * @see #ftDictdump(Object)
+     */
+    @Experimental
+    Long ftDictdel(K dict, V... terms);
+
+    /**
+     * Dump all terms in a dictionary.
+     *
+     * <p>
+     * This command returns all terms stored in the specified dictionary.
+     * The terms are returned in no particular order.
+     * </p>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(N), where N is the size of the dictionary
+     * </p>
+     *
+     * @param dict the dictionary name
+     * @return a list of all terms in the dictionary
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.dictdump/">FT.DICTDUMP</a>
+     * @see #ftDictadd(Object, Object[])
+     * @see #ftDictdel(Object, Object[])
+     */
+    @Experimental
+    List<V> ftDictdump(K dict);
+
+    /**
      * Add a suggestion string to an auto-complete suggestion dictionary.
      *
      * <p>

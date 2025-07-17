@@ -822,4 +822,50 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(0L);
     }
 
+    /**
+     * Test FT.DICTADD, FT.DICTDEL, and FT.DICTDUMP commands for dictionary functionality.
+     */
+    @Test
+    void testFtDictionaryCommands() {
+        String dictKey = "stopwords:english";
+
+        // Test FT.DICTADD - Add terms to dictionary
+        assertThat(redis.ftDictadd(dictKey, "the", "and", "or")).isEqualTo(3L);
+        assertThat(redis.ftDictadd(dictKey, "but", "not")).isEqualTo(2L);
+
+        // Test adding duplicate terms (should return 0 for duplicates)
+        assertThat(redis.ftDictadd(dictKey, "the", "and")).isEqualTo(0L);
+
+        // Test FT.DICTDUMP - Get all terms in dictionary
+        List<String> allTerms = redis.ftDictdump(dictKey);
+        assertThat(allTerms).hasSize(5);
+        assertThat(allTerms).containsExactlyInAnyOrder("the", "and", "or", "but", "not");
+
+        // Test FT.DICTDEL - Delete terms from dictionary
+        assertThat(redis.ftDictdel(dictKey, "or", "not")).isEqualTo(2L);
+
+        // Test deleting non-existent terms
+        assertThat(redis.ftDictdel(dictKey, "nonexistent")).isEqualTo(0L);
+
+        // Verify deletion
+        List<String> remainingTerms = redis.ftDictdump(dictKey);
+        assertThat(remainingTerms).hasSize(3);
+        assertThat(remainingTerms).containsExactlyInAnyOrder("the", "and", "but");
+
+        // Test adding more terms
+        assertThat(redis.ftDictadd(dictKey, "with", "from", "by")).isEqualTo(3L);
+
+        // Final verification
+        List<String> finalTerms = redis.ftDictdump(dictKey);
+        assertThat(finalTerms).hasSize(6);
+        assertThat(finalTerms).containsExactlyInAnyOrder("the", "and", "but", "with", "from", "by");
+
+        // Cleanup - delete all terms
+        redis.ftDictdel(dictKey, finalTerms.toArray(new String[0]));
+
+        // Verify empty dictionary
+        List<String> emptyDict = redis.ftDictdump(dictKey);
+        assertThat(emptyDict).isEmpty();
+    }
+
 }

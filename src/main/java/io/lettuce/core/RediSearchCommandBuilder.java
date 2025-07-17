@@ -253,6 +253,64 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     /**
+     * Add terms to a dictionary.
+     *
+     * @param dict the dictionary name
+     * @param terms the terms to add to the dictionary
+     * @return the result of the dictadd command
+     */
+    @SafeVarargs
+    public final Command<K, V, Long> ftDictadd(K dict, V... terms) {
+        notNullKey(dict);
+        LettuceAssert.notNull(terms, "Terms must not be null");
+        LettuceAssert.isTrue(terms.length > 0, "At least one term must be provided");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
+        for (V term : terms) {
+            LettuceAssert.notNull(term, "Term must not be null");
+            commandArgs.addValue(term);
+        }
+
+        return createCommand(FT_DICTADD, new IntegerOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Delete terms from a dictionary.
+     *
+     * @param dict the dictionary name
+     * @param terms the terms to delete from the dictionary
+     * @return the result of the dictdel command
+     */
+    @SafeVarargs
+    public final Command<K, V, Long> ftDictdel(K dict, V... terms) {
+        notNullKey(dict);
+        LettuceAssert.notNull(terms, "Terms must not be null");
+        LettuceAssert.isTrue(terms.length > 0, "At least one term must be provided");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
+        for (V term : terms) {
+            LettuceAssert.notNull(term, "Term must not be null");
+            commandArgs.addValue(term);
+        }
+
+        return createCommand(FT_DICTDEL, new IntegerOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Dump all terms in a dictionary.
+     *
+     * @param dict the dictionary name
+     * @return the result of the dictdump command
+     */
+    public Command<K, V, List<V>> ftDictdump(K dict) {
+        notNullKey(dict);
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
+
+        return createCommand(FT_DICTDUMP, new ValueListOutput<>(codec), commandArgs);
+    }
+
+    /**
      * Add a suggestion string to an auto-complete suggestion dictionary.
      *
      * @param key the suggestion dictionary key

@@ -222,6 +222,52 @@ class RediSearchCommandBuilderUnitTests {
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }
 
+    // FT.DICTADD dict term1 term2
+    @Test
+    void shouldCorrectlyConstructFtDictaddCommand() {
+        Command<String, String, Long> command = builder.ftDictadd(MY_KEY, "term1", "term2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*4\r\n" //
+                + "$10\r\n" + "FT.DICTADD\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.DICTDEL dict term1 term2
+    @Test
+    void shouldCorrectlyConstructFtDictdelCommand() {
+        Command<String, String, Long> command = builder.ftDictdel(MY_KEY, "term1", "term2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*4\r\n" //
+                + "$10\r\n" + "FT.DICTDEL\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.DICTDUMP dict
+    @Test
+    void shouldCorrectlyConstructFtDictdumpCommand() {
+        Command<String, String, List<String>> command = builder.ftDictdump(MY_KEY);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*2\r\n" //
+                + "$11\r\n" + "FT.DICTDUMP\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
     // FT.SUGADD key string score
     @Test
     void shouldCorrectlyConstructFtSugaddCommand() {

@@ -1588,6 +1588,21 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> ftDictadd(K dict, V... terms) {
+        return dispatch(searchCommandBuilder.ftDictadd(dict, terms));
+    }
+
+    @Override
+    public RedisFuture<Long> ftDictdel(K dict, V... terms) {
+        return dispatch(searchCommandBuilder.ftDictdel(dict, terms));
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftDictdump(K dict) {
+        return dispatch(searchCommandBuilder.ftDictdump(dict));
+    }
+
+    @Override
     public RedisFuture<Long> ftSugadd(K key, V string, double score) {
         return dispatch(searchCommandBuilder.ftSugadd(key, string, score));
     }

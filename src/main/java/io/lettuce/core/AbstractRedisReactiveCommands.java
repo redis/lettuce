@@ -1653,6 +1653,21 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> ftDictadd(K dict, V... terms) {
+        return createMono(() -> searchCommandBuilder.ftDictadd(dict, terms));
+    }
+
+    @Override
+    public Mono<Long> ftDictdel(K dict, V... terms) {
+        return createMono(() -> searchCommandBuilder.ftDictdel(dict, terms));
+    }
+
+    @Override
+    public Flux<V> ftDictdump(K dict) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftDictdump(dict));
+    }
+
+    @Override
     public Mono<Long> ftSugadd(K key, V string, double score) {
         return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score));
     }

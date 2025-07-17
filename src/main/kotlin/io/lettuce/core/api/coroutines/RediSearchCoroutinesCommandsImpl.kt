@@ -86,6 +86,15 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
         return ops.ftCursordel(index, cursorId).awaitFirstOrNull()
     }
 
+    override suspend fun ftDictadd(dict: K, vararg terms: V): Long? =
+        ops.ftDictadd(dict, *terms).awaitFirstOrNull()
+
+    override suspend fun ftDictdel(dict: K, vararg terms: V): Long? =
+        ops.ftDictdel(dict, *terms).awaitFirstOrNull()
+
+    override suspend fun ftDictdump(dict: K): List<V> =
+        ops.ftDictdump(dict).asFlow().toList()
+
     override suspend fun ftSugadd(key: K, suggestion: V, score: Double): Long? =
         ops.ftSugadd(key, suggestion, score).awaitFirstOrNull()
 
