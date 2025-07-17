@@ -51,11 +51,13 @@ import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.tracing.TraceContext;
@@ -1650,6 +1652,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<V> ftTagvals(K index, K fieldName) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftTagvals(index, fieldName));
+    }
+
+    @Override
+    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+        return createMono(() -> searchCommandBuilder.ftSpellcheck(index, query));
+    }
+
+    @Override
+    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftSpellcheck(index, query, args));
     }
 
     @Override

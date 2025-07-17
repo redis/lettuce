@@ -22,12 +22,15 @@ import io.lettuce.core.search.AggregateReplyParser;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SearchReplyParser;
+import io.lettuce.core.search.SpellCheckResult;
+import io.lettuce.core.search.SpellCheckResultParser;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.SuggestionParser;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 
@@ -250,6 +253,39 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index).addKey(fieldName);
 
         return createCommand(FT_TAGVALS, new ValueListOutput<>(codec), args);
+    }
+
+    /**
+     * Perform spelling correction on a query.
+     *
+     * @param index the index name
+     * @param query the search query
+     * @return the result of the spellcheck command
+     */
+    public Command<K, V, SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+        return ftSpellcheck(index, query, null);
+    }
+
+    /**
+     * Perform spelling correction on a query.
+     *
+     * @param index the index name
+     * @param query the search query
+     * @param args the spellcheck arguments
+     * @return the result of the spellcheck command
+     */
+    public Command<K, V, SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+        notNullKey(index);
+        LettuceAssert.notNull(query, "Query must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index).addValue(query);
+
+        if (args != null) {
+            args.build(commandArgs);
+        }
+
+        SpellCheckResultParser<K, V> parser = new SpellCheckResultParser<>(codec);
+        return createCommand(FT_SPELLCHECK, new EncodedComplexOutput<>(codec, parser), commandArgs);
     }
 
     /**

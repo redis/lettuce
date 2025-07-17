@@ -11,11 +11,13 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands
 import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
+import io.lettuce.core.search.SpellCheckResult
 import io.lettuce.core.search.Suggestion
 import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
 import io.lettuce.core.search.arguments.FieldArgs
 import io.lettuce.core.search.arguments.SearchArgs
+import io.lettuce.core.search.arguments.SpellCheckArgs
 import io.lettuce.core.search.arguments.SugAddArgs
 import io.lettuce.core.search.arguments.SugGetArgs
 import kotlinx.coroutines.flow.toList
@@ -94,6 +96,12 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
 
     override suspend fun ftDictdump(dict: K): List<V> =
         ops.ftDictdump(dict).asFlow().toList()
+
+    override suspend fun ftSpellcheck(index: K, query: V): SpellCheckResult<V>? =
+        ops.ftSpellcheck(index, query).awaitFirstOrNull()
+
+    override suspend fun ftSpellcheck(index: K, query: V, args: SpellCheckArgs<K, V>): SpellCheckResult<V>? =
+        ops.ftSpellcheck(index, query, args).awaitFirstOrNull()
 
     override suspend fun ftSugadd(key: K, suggestion: V, score: Double): Long? =
         ops.ftSugadd(key, suggestion, score).awaitFirstOrNull()

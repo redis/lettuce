@@ -8,14 +8,17 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
+import io.lettuce.core.search.SpellCheckResult
 import io.lettuce.core.search.Suggestion
 import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
 import io.lettuce.core.search.arguments.FieldArgs
 import io.lettuce.core.search.arguments.SearchArgs
+import io.lettuce.core.search.arguments.SpellCheckArgs
 import io.lettuce.core.search.arguments.SugAddArgs
 import io.lettuce.core.search.arguments.SugGetArgs
 
@@ -366,6 +369,85 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
     suspend fun ftTagvals(index: K, fieldName: K): List<V>
 
     /**
+     * Perform spelling correction on a query, returning suggestions for misspelled terms.
+     *
+     * <p>
+     * This command analyzes the query for misspelled terms and provides spelling suggestions
+     * based on the indexed terms and optionally custom dictionaries. A misspelled term is
+     * a full text term (word) that is:
+     * </p>
+     * <ul>
+     * <li>Not a stop word</li>
+     * <li>Not in the index</li>
+     * <li>At least 3 characters long</li>
+     * </ul>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Query correction:</strong> Improve search experience by suggesting corrections</li>
+     * <li><strong>Typo handling:</strong> Handle common typing mistakes and misspellings</li>
+     * <li><strong>Search enhancement:</strong> Increase search success rates</li>
+     * <li><strong>User experience:</strong> Provide "did you mean" functionality</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index with the indexed terms
+     * @param query the search query to check for spelling errors
+     * @return spell check result containing misspelled terms and their suggestions
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
+     * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
+     * @see #ftSpellcheck(Any, Any, SpellCheckArgs)
+     * @see #ftDictadd(Any, Any[])
+     * @see #ftDictdel(Any, Any[])
+     * @see #ftDictdump(Any)
+     */
+    @Experimental
+    suspend fun ftSpellcheck(index: K, query: V): SpellCheckResult<V>?
+
+    /**
+     * Perform spelling correction on a query with additional options.
+     *
+     * <p>
+     * This command analyzes the query for misspelled terms and provides spelling suggestions
+     * with configurable options for distance, custom dictionaries, and dialect.
+     * </p>
+     *
+     * <p>
+     * Available options:
+     * </p>
+     * <ul>
+     * <li><strong>DISTANCE:</strong> Maximum Levenshtein distance for suggestions (default: 1, max: 4)</li>
+     * <li><strong>TERMS INCLUDE:</strong> Include terms from custom dictionaries as suggestions</li>
+     * <li><strong>TERMS EXCLUDE:</strong> Exclude terms from custom dictionaries from suggestions</li>
+     * <li><strong>DIALECT:</strong> Specify dialect version for query execution</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index with the indexed terms
+     * @param query the search query to check for spelling errors
+     * @param args the spellcheck arguments (distance, terms, dialect)
+     * @return spell check result containing misspelled terms and their suggestions
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
+     * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
+     * @see #ftSpellcheck(Any, Any)
+     * @see #ftDictadd(Any, Any[])
+     * @see #ftDictdel(Any, Any[])
+     * @see #ftDictdump(Any)
+     */
+    @Experimental
+    suspend fun ftSpellcheck(index: K, query: V, args: SpellCheckArgs<K, V>): SpellCheckResult<V>?
+
+    /**
      * Add terms to a dictionary.
      *
      * <p>
@@ -393,6 +475,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return the number of new terms that were added
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictadd/">FT.DICTADD</a>
+     * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
      * @see #ftDictdel(Any, Any[])
      * @see #ftDictdump(Any)
      */

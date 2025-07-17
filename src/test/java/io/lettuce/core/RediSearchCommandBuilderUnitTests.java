@@ -18,8 +18,10 @@ import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
+import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
@@ -222,6 +224,47 @@ class RediSearchCommandBuilderUnitTests {
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }
 
+    // FT.SPELLCHECK index query
+    @Test
+    void shouldCorrectlyConstructFtSpellcheckCommand() {
+        Command<String, String, SpellCheckResult<String>> command = builder.ftSpellcheck(MY_KEY, "hello wrold");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$13\r\n" + "FT.SPELLCHECK\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$11\r\n" + "hello wrold\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SPELLCHECK index query DISTANCE 2 TERMS INCLUDE dict term1 term2 DIALECT 1
+    @Test
+    void shouldCorrectlyConstructFtSpellcheckCommandWithArgs() {
+        SpellCheckArgs<String, String> args = SpellCheckArgs.Builder.<String, String> distance(2)
+                .termsInclude("dict", "term1", "term2").dialect(1);
+        Command<String, String, SpellCheckResult<String>> command = builder.ftSpellcheck(MY_KEY, "hello wrold", args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*12\r\n" //
+                + "$13\r\n" + "FT.SPELLCHECK\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$11\r\n" + "hello wrold\r\n" //
+                + "$8\r\n" + "DISTANCE\r\n" //
+                + "$1\r\n" + "2\r\n" //
+                + "$5\r\n" + "TERMS\r\n" //
+                + "$7\r\n" + "INCLUDE\r\n" //
+                + "$4\r\n" + "dict\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n" //
+                + "$7\r\n" + "DIALECT\r\n" //
+                + "$1\r\n" + "1\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
     // FT.DICTADD dict term1 term2
     @Test
     void shouldCorrectlyConstructFtDictaddCommand() {
@@ -287,7 +330,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SUGADD key string score INCR PAYLOAD payload
     @Test
     void shouldCorrectlyConstructFtSugaddCommandWithArgs() {
-        SugAddArgs<String, String> args = SugAddArgs.Builder.<String, String>incr().payload("test-payload");
+        SugAddArgs<String, String> args = SugAddArgs.Builder.<String, String> incr().payload("test-payload");
         Command<String, String, Long> command = builder.ftSugadd(MY_KEY, "suggestion", 1.0, args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
@@ -337,7 +380,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.SUGGET key prefix FUZZY WITHSCORES WITHPAYLOADS MAX 10
     @Test
     void shouldCorrectlyConstructFtSuggetCommandWithArgs() {
-        SugGetArgs<String, String> args = SugGetArgs.Builder.<String, String>fuzzy().withScores().withPayloads().max(10);
+        SugGetArgs<String, String> args = SugGetArgs.Builder.<String, String> fuzzy().withScores().withPayloads().max(10);
         Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre", args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);

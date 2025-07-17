@@ -15,9 +15,11 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
+import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
@@ -770,15 +772,16 @@ public class RediSearchIntegrationTests {
         // Test FT.SUGGET - Get suggestions for prefix
         List<Suggestion<String>> suggestions = redis.ftSugget(suggestionKey, "New");
         assertThat(suggestions).hasSize(3);
-        assertThat(suggestions.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans", "Newark");
+        assertThat(suggestions.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans",
+                "Newark");
 
         // Test FT.SUGGET with MAX limit
-        SugGetArgs<String, String> maxArgs = SugGetArgs.Builder.<String, String>max(2);
+        SugGetArgs<String, String> maxArgs = SugGetArgs.Builder.<String, String> max(2);
         List<Suggestion<String>> limitedSuggestions = redis.ftSugget(suggestionKey, "New", maxArgs);
         assertThat(limitedSuggestions).hasSize(2);
 
         // Test FT.SUGGET with FUZZY matching
-        SugGetArgs<String, String> fuzzyArgs = SugGetArgs.Builder.<String, String>fuzzy();
+        SugGetArgs<String, String> fuzzyArgs = SugGetArgs.Builder.<String, String> fuzzy();
         List<Suggestion<String>> fuzzySuggestions = redis.ftSugget(suggestionKey, "Bost", fuzzyArgs);
         assertThat(fuzzySuggestions.stream().map(Suggestion::getValue)).contains("Boston");
 
@@ -795,11 +798,11 @@ public class RediSearchIntegrationTests {
         assertThat(redis.ftSugdel(suggestionKey, "NonExistent")).isFalse();
 
         // Test FT.SUGADD with INCR and PAYLOAD
-        SugAddArgs<String, String> incrArgs = SugAddArgs.Builder.<String, String>incr().payload("US-East");
+        SugAddArgs<String, String> incrArgs = SugAddArgs.Builder.<String, String> incr().payload("US-East");
         assertThat(redis.ftSugadd(suggestionKey, "New York", 0.5, incrArgs)).isEqualTo(4L);
 
         // Test FT.SUGGET with WITHSCORES and WITHPAYLOADS
-        SugGetArgs<String, String> withExtrasArgs = SugGetArgs.Builder.<String, String>withScores().withPayloads();
+        SugGetArgs<String, String> withExtrasArgs = SugGetArgs.Builder.<String, String> withScores().withPayloads();
         List<Suggestion<String>> detailedSuggestions = redis.ftSugget(suggestionKey, "New", withExtrasArgs);
         assertThat(detailedSuggestions).isNotEmpty();
 
@@ -866,6 +869,92 @@ public class RediSearchIntegrationTests {
         // Verify empty dictionary
         List<String> emptyDict = redis.ftDictdump(dictKey);
         assertThat(emptyDict).isEmpty();
+    }
+
+    /**
+     * Test FT.SPELLCHECK command for spelling correction functionality.
+     */
+    @Test
+    void testFtSpellcheckCommand() {
+        String testIndex = "spellcheck-idx";
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+
+        // Create an index with some documents
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("doc:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
+
+        // Add some documents to build the vocabulary
+        Map<String, String> doc1 = new HashMap<>();
+        doc1.put("title", "Redis Search");
+        doc1.put("content", "Redis is a fast in-memory database");
+        redis.hmset("doc:1", doc1);
+
+        Map<String, String> doc2 = new HashMap<>();
+        doc2.put("title", "Database Performance");
+        doc2.put("content", "Performance optimization techniques");
+        redis.hmset("doc:2", doc2);
+
+        Map<String, String> doc3 = new HashMap<>();
+        doc3.put("title", "Memory Management");
+        doc3.put("content", "Efficient memory usage patterns");
+        redis.hmset("doc:3", doc3);
+
+        Map<String, String> doc4 = new HashMap<>();
+        doc4.put("title", "Search Engine");
+        doc4.put("content", "Full text search capabilities");
+        redis.hmset("doc:4", doc4);
+
+        // Test basic spellcheck with misspelled words
+        SpellCheckResult<String> result = redis.ftSpellcheck(testIndex, "reids serch");
+        assertThat(result.hasMisspelledTerms()).isTrue();
+        assertThat(result.getMisspelledTermCount()).isEqualTo(2);
+
+        // Check first misspelled term "reids"
+        SpellCheckResult.MisspelledTerm<String> firstTerm = result.getMisspelledTerms().get(0);
+        assertThat(firstTerm.getTerm()).isEqualTo("reids");
+        assertThat(firstTerm.hasSuggestions()).isFalse();
+
+        // Check second misspelled term "serch"
+        SpellCheckResult.MisspelledTerm<String> secondTerm = result.getMisspelledTerms().get(1);
+        assertThat(secondTerm.getTerm()).isEqualTo("serch");
+        assertThat(secondTerm.hasSuggestions()).isTrue();
+
+        // Check if "search" is suggested for "serch"
+        boolean hasSearchSuggestion = secondTerm.getSuggestions().stream()
+                .anyMatch(suggestion -> "search".equalsIgnoreCase(suggestion.getSuggestion()));
+        assertThat(hasSearchSuggestion).isTrue();
+
+        // Test spellcheck with distance parameter
+        SpellCheckArgs<String, String> distanceArgs = SpellCheckArgs.Builder.<String, String> distance(2);
+        SpellCheckResult<String> distanceResult = redis.ftSpellcheck(testIndex, "databse", distanceArgs);
+        assertThat(distanceResult.hasMisspelledTerms()).isTrue();
+
+        // Test spellcheck with custom dictionary
+        String dictKey = "custom-dict";
+        redis.ftDictadd(dictKey, "elasticsearch", "solr", "lucene");
+
+        SpellCheckArgs<String, String> includeArgs = SpellCheckArgs.Builder.<String, String> termsInclude(dictKey);
+        SpellCheckResult<String> includeResult = redis.ftSpellcheck(testIndex, "elasticsearh", includeArgs);
+        assertThat(includeResult.hasMisspelledTerms()).isTrue();
+
+        // Test spellcheck with exclude dictionary
+        SpellCheckArgs<String, String> excludeArgs = SpellCheckArgs.Builder.<String, String> termsExclude(dictKey);
+        SpellCheckResult<String> excludeResult = redis.ftSpellcheck(testIndex, "elasticsearh", excludeArgs);
+        assertThat(excludeResult.hasMisspelledTerms()).isTrue();
+
+        // Test spellcheck with correct words (should return no misspelled terms)
+        SpellCheckResult<String> correctResult = redis.ftSpellcheck(testIndex, "redis search");
+        assertThat(correctResult.hasMisspelledTerms()).isFalse();
+        assertThat(correctResult.getMisspelledTermCount()).isEqualTo(0);
+
+        // Cleanup
+        redis.ftDictdel(dictKey, "elasticsearch", "solr", "lucene");
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
     }
 
 }

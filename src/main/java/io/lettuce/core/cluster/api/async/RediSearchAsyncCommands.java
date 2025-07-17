@@ -11,11 +11,13 @@ import java.util.List;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 
@@ -365,12 +367,89 @@ public interface RediSearchAsyncCommands<K, V> {
     AsyncExecutions<List<V>> ftTagvals(K index, K fieldName);
 
     /**
+     * Perform spelling correction on a query, returning suggestions for misspelled terms.
+     *
+     * <p>
+     * This command analyzes the query for misspelled terms and provides spelling suggestions based on the indexed terms and
+     * optionally custom dictionaries. A misspelled term is a full text term (word) that is:
+     * </p>
+     * <ul>
+     * <li>Not a stop word</li>
+     * <li>Not in the index</li>
+     * <li>At least 3 characters long</li>
+     * </ul>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Query correction:</strong> Improve search experience by suggesting corrections</li>
+     * <li><strong>Typo handling:</strong> Handle common typing mistakes and misspellings</li>
+     * <li><strong>Search enhancement:</strong> Increase search success rates</li>
+     * <li><strong>User experience:</strong> Provide "did you mean" functionality</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index with the indexed terms
+     * @param query the search query to check for spelling errors
+     * @return spell check result containing misspelled terms and their suggestions
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
+     * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
+     * @see #ftSpellcheck(Object, Object, SpellCheckArgs)
+     * @see #ftDictadd(Object, Object[])
+     * @see #ftDictdel(Object, Object[])
+     * @see #ftDictdump(Object)
+     */
+    @Experimental
+    AsyncExecutions<SpellCheckResult<V>> ftSpellcheck(K index, V query);
+
+    /**
+     * Perform spelling correction on a query with additional options.
+     *
+     * <p>
+     * This command analyzes the query for misspelled terms and provides spelling suggestions with configurable options for
+     * distance, custom dictionaries, and dialect.
+     * </p>
+     *
+     * <p>
+     * Available options:
+     * </p>
+     * <ul>
+     * <li><strong>DISTANCE:</strong> Maximum Levenshtein distance for suggestions (default: 1, max: 4)</li>
+     * <li><strong>TERMS INCLUDE:</strong> Include terms from custom dictionaries as suggestions</li>
+     * <li><strong>TERMS EXCLUDE:</strong> Exclude terms from custom dictionaries from suggestions</li>
+     * <li><strong>DIALECT:</strong> Specify dialect version for query execution</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index with the indexed terms
+     * @param query the search query to check for spelling errors
+     * @param args the spellcheck arguments (distance, terms, dialect)
+     * @return spell check result containing misspelled terms and their suggestions
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
+     * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
+     * @see #ftSpellcheck(Object, Object)
+     * @see #ftDictadd(Object, Object[])
+     * @see #ftDictdel(Object, Object[])
+     * @see #ftDictdump(Object)
+     */
+    @Experimental
+    AsyncExecutions<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args);
+
+    /**
      * Add terms to a dictionary.
      *
      * <p>
-     * This command adds one or more terms to a dictionary. Dictionaries are used for storing
-     * custom stopwords, synonyms, and other term lists that can be referenced in search operations.
-     * The dictionary is created if it doesn't exist.
+     * This command adds one or more terms to a dictionary. Dictionaries are used for storing custom stopwords, synonyms, and
+     * other term lists that can be referenced in search operations. The dictionary is created if it doesn't exist.
      * </p>
      *
      * <p>
@@ -392,6 +471,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @return the number of new terms that were added
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictadd/">FT.DICTADD</a>
+     * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
      * @see #ftDictdel(Object, Object[])
      * @see #ftDictdump(Object)
      */
@@ -402,8 +482,8 @@ public interface RediSearchAsyncCommands<K, V> {
      * Delete terms from a dictionary.
      *
      * <p>
-     * This command removes one or more terms from a dictionary. Only exact matches
-     * will be removed from the dictionary. Non-existent terms are ignored.
+     * This command removes one or more terms from a dictionary. Only exact matches will be removed from the dictionary.
+     * Non-existent terms are ignored.
      * </p>
      *
      * <p>
@@ -425,8 +505,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * Dump all terms in a dictionary.
      *
      * <p>
-     * This command returns all terms stored in the specified dictionary.
-     * The terms are returned in no particular order.
+     * This command returns all terms stored in the specified dictionary. The terms are returned in no particular order.
      * </p>
      *
      * <p>
@@ -447,9 +526,9 @@ public interface RediSearchAsyncCommands<K, V> {
      * Add a suggestion string to an auto-complete suggestion dictionary.
      *
      * <p>
-     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score.
-     * The auto-complete suggestion dictionary is disconnected from the index definitions and leaves creating
-     * and updating suggestions dictionaries to the user.
+     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score. The auto-complete
+     * suggestion dictionary is disconnected from the index definitions and leaves creating and updating suggestions
+     * dictionaries to the user.
      * </p>
      *
      * <p>
@@ -484,8 +563,8 @@ public interface RediSearchAsyncCommands<K, V> {
      * Add a suggestion string to an auto-complete suggestion dictionary with additional options.
      *
      * <p>
-     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score
-     * and optional arguments for incremental updates and payload storage.
+     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score and optional
+     * arguments for incremental updates and payload storage.
      * </p>
      *
      * <p>
@@ -511,8 +590,8 @@ public interface RediSearchAsyncCommands<K, V> {
      * Delete a string from a suggestion dictionary.
      *
      * <p>
-     * This command removes a suggestion string from an auto-complete suggestion dictionary.
-     * Only the exact string match will be removed from the dictionary.
+     * This command removes a suggestion string from an auto-complete suggestion dictionary. Only the exact string match will be
+     * removed from the dictionary.
      * </p>
      *
      * <p>
@@ -535,8 +614,8 @@ public interface RediSearchAsyncCommands<K, V> {
      * Get completion suggestions for a prefix.
      *
      * <p>
-     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary.
-     * By default, it returns up to 5 suggestions that match the given prefix.
+     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary. By default, it
+     * returns up to 5 suggestions that match the given prefix.
      * </p>
      *
      * <p>
@@ -560,8 +639,8 @@ public interface RediSearchAsyncCommands<K, V> {
      * Get completion suggestions for a prefix with additional options.
      *
      * <p>
-     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary
-     * with optional arguments for fuzzy matching, score inclusion, payload inclusion, and result limiting.
+     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary with optional
+     * arguments for fuzzy matching, score inclusion, payload inclusion, and result limiting.
      * </p>
      *
      * <p>
@@ -950,4 +1029,5 @@ public interface RediSearchAsyncCommands<K, V> {
      */
     @Experimental
     AsyncExecutions<String> ftCursordel(K index, long cursorId);
+
 }

@@ -40,7 +40,7 @@ import java.util.stream.IntStream;
  * @param <K> the type of keys used in the search results
  * @param <V> the type of values used in the search results
  * @author Redis Ltd.
- * @since 7.0
+ * @since 6.8
  */
 public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K, V>> {
 
