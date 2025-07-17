@@ -80,10 +80,18 @@ public class SentinelServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    public void clientGetSetname() {
+    public void clientGetNameReturnsNullWhenNotSet() {
         assertThat(sentinel.clientGetname()).isNull();
+    }
+
+    @Test
+    public void clientSetNameWithNonEmptyStringSetsNameAndReturnsOk() {
         assertThat(sentinel.clientSetname("test")).isEqualTo("OK");
         assertThat(sentinel.clientGetname()).isEqualTo("test");
+    }
+
+    @Test
+    public void clientSetNameWithEmptyStringClearsNameAndReturnsOk() {
         assertThat(sentinel.clientSetname("")).isEqualTo("OK");
         assertThat(sentinel.clientGetname()).isNull();
     }
