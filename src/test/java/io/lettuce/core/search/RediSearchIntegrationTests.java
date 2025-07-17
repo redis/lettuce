@@ -15,11 +15,13 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import org.junit.jupiter.api.AfterAll;
@@ -952,6 +954,131 @@ public class RediSearchIntegrationTests {
 
         // Cleanup
         redis.ftDictdel(dictKey, "elasticsearch", "solr", "lucene");
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.EXPLAIN command for query execution plan analysis.
+     */
+    @Test
+    void testFtExplainCommand() {
+        String testIndex = "explain-idx";
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+
+        // Create an index
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("doc:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
+
+        // Test basic explain
+        String basicExplain = redis.ftExplain(testIndex, "hello world");
+        assertThat(basicExplain).isNotNull();
+        assertThat(basicExplain).isNotEmpty();
+
+        // Test explain with dialect
+        ExplainArgs<String, String> dialectArgs = ExplainArgs.Builder.dialect(1);
+        String dialectExplain = redis.ftExplain(testIndex, "hello world", dialectArgs);
+        assertThat(dialectExplain).isNotNull();
+        assertThat(dialectExplain).isNotEmpty();
+
+        // Test complex query explain
+        String complexExplain = redis.ftExplain(testIndex, "@title:hello @content:world");
+        assertThat(complexExplain).isNotNull();
+        assertThat(complexExplain).isNotEmpty();
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT._LIST command for listing all indexes.
+     */
+    @Test
+    void testFtListCommand() {
+        String testIndex1 = "list-idx-1";
+        String testIndex2 = "list-idx-2";
+
+        // Get initial list of indexes
+        List<String> initialIndexes = redis.ftList();
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+
+        // Create first index
+        CreateArgs<String, String> createArgs1 = CreateArgs.<String, String> builder().addPrefix("doc1:")
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate(testIndex1, createArgs1, Collections.singletonList(titleField))).isEqualTo("OK");
+
+        // Create second index
+        CreateArgs<String, String> createArgs2 = CreateArgs.<String, String> builder().addPrefix("doc2:")
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate(testIndex2, createArgs2, Collections.singletonList(titleField))).isEqualTo("OK");
+
+        // Get updated list of indexes
+        List<String> updatedIndexes = redis.ftList();
+
+        // Verify that the new indexes are in the list
+        assertThat(updatedIndexes).contains(testIndex1, testIndex2);
+        assertThat(updatedIndexes.size()).isEqualTo(initialIndexes.size() + 2);
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex1)).isEqualTo("OK");
+        assertThat(redis.ftDropindex(testIndex2)).isEqualTo("OK");
+
+        // Verify indexes are removed
+        List<String> finalIndexes = redis.ftList();
+        assertThat(finalIndexes).doesNotContain(testIndex1, testIndex2);
+        assertThat(finalIndexes.size()).isEqualTo(initialIndexes.size());
+    }
+
+    /**
+     * Test FT.SYNDUMP and FT.SYNUPDATE commands for synonym management.
+     */
+    @Test
+    void testFtSynonymCommands() {
+        String testIndex = "synonym-idx";
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+
+        // Create an index
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("doc:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
+
+        // Test initial synonym dump (should be empty)
+        List<String> initialSynonyms = redis.ftSyndump(testIndex);
+        assertThat(initialSynonyms).isEmpty();
+
+        // Test basic synonym update
+        String result1 = redis.ftSynupdate(testIndex, "group1", "car", "automobile", "vehicle");
+        assertThat(result1).isEqualTo("OK");
+
+        // Test synonym dump after update
+        List<String> synonymsAfterUpdate = redis.ftSyndump(testIndex);
+        assertThat(synonymsAfterUpdate).isNotEmpty();
+
+        // Test synonym update with SKIPINITIALSCAN
+        SynUpdateArgs<String, String> skipArgs = SynUpdateArgs.Builder.<String, String> skipInitialScan();
+        String result2 = redis.ftSynupdate(testIndex, "group2", skipArgs, "fast", "quick", "rapid");
+        assertThat(result2).isEqualTo("OK");
+
+        // Test synonym dump after second update
+        List<String> finalSynonyms = redis.ftSyndump(testIndex);
+        assertThat(finalSynonyms).isNotEmpty();
+        assertThat(finalSynonyms.size()).isGreaterThan(synonymsAfterUpdate.size());
+
+        // Test updating existing synonym group
+        String result3 = redis.ftSynupdate(testIndex, "group1", "car", "automobile", "vehicle", "auto");
+        assertThat(result3).isEqualTo("OK");
+
+        // Cleanup
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
     }
 

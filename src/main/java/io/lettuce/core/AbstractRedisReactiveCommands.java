@@ -55,11 +55,13 @@ import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
@@ -1677,6 +1679,36 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<V> ftDictdump(K dict) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftDictdump(dict));
+    }
+
+    @Override
+    public Mono<String> ftExplain(K index, V query) {
+        return createMono(() -> searchCommandBuilder.ftExplain(index, query));
+    }
+
+    @Override
+    public Mono<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftExplain(index, query, args));
+    }
+
+    @Override
+    public Flux<V> ftList() {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftList());
+    }
+
+    @Override
+    public Flux<V> ftSyndump(K index) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftSyndump(index));
+    }
+
+    @Override
+    public Mono<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+        return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, terms));
+    }
+
+    @Override
+    public Mono<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+        return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, args, terms));
     }
 
     @Override

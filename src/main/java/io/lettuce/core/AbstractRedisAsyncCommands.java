@@ -54,11 +54,13 @@ import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VectorMetadata;
 
@@ -1612,6 +1614,36 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<V>> ftDictdump(K dict) {
         return dispatch(searchCommandBuilder.ftDictdump(dict));
+    }
+
+    @Override
+    public RedisFuture<String> ftExplain(K index, V query) {
+        return dispatch(searchCommandBuilder.ftExplain(index, query));
+    }
+
+    @Override
+    public RedisFuture<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftExplain(index, query, args));
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftList() {
+        return dispatch(searchCommandBuilder.ftList());
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftSyndump(K index) {
+        return dispatch(searchCommandBuilder.ftSyndump(index));
+    }
+
+    @Override
+    public RedisFuture<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+        return dispatch(searchCommandBuilder.ftSynupdate(index, synonymGroupId, terms));
+    }
+
+    @Override
+    public RedisFuture<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+        return dispatch(searchCommandBuilder.ftSynupdate(index, synonymGroupId, args, terms));
     }
 
     @Override

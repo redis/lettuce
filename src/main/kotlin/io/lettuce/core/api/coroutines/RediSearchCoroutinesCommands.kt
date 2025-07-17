@@ -8,6 +8,7 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
@@ -15,11 +16,13 @@ import io.lettuce.core.search.SpellCheckResult
 import io.lettuce.core.search.Suggestion
 import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
+import io.lettuce.core.search.arguments.ExplainArgs
 import io.lettuce.core.search.arguments.FieldArgs
 import io.lettuce.core.search.arguments.SearchArgs
 import io.lettuce.core.search.arguments.SpellCheckArgs
 import io.lettuce.core.search.arguments.SugAddArgs
 import io.lettuce.core.search.arguments.SugGetArgs
+import io.lettuce.core.search.arguments.SynUpdateArgs
 
 /**
  * Coroutine executed commands for RediSearch functionality
@@ -371,9 +374,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Perform spelling correction on a query, returning suggestions for misspelled terms.
      *
      * <p>
-     * This command analyzes the query for misspelled terms and provides spelling suggestions
-     * based on the indexed terms and optionally custom dictionaries. A misspelled term is
-     * a full text term (word) that is:
+     * This command analyzes the query for misspelled terms and provides spelling suggestions based on the indexed terms and
+     * optionally custom dictionaries. A misspelled term is a full text term (word) that is:
      * </p>
      * <ul>
      * <li>Not a stop word</li>
@@ -413,8 +415,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Perform spelling correction on a query with additional options.
      *
      * <p>
-     * This command analyzes the query for misspelled terms and provides spelling suggestions
-     * with configurable options for distance, custom dictionaries, and dialect.
+     * This command analyzes the query for misspelled terms and provides spelling suggestions with configurable options for
+     * distance, custom dictionaries, and dialect.
      * </p>
      *
      * <p>
@@ -450,9 +452,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Add terms to a dictionary.
      *
      * <p>
-     * This command adds one or more terms to a dictionary. Dictionaries are used for storing
-     * custom stopwords, synonyms, and other term lists that can be referenced in search operations.
-     * The dictionary is created if it doesn't exist.
+     * This command adds one or more terms to a dictionary. Dictionaries are used for storing custom stopwords, synonyms, and
+     * other term lists that can be referenced in search operations. The dictionary is created if it doesn't exist.
      * </p>
      *
      * <p>
@@ -485,8 +486,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Delete terms from a dictionary.
      *
      * <p>
-     * This command removes one or more terms from a dictionary. Only exact matches
-     * will be removed from the dictionary. Non-existent terms are ignored.
+     * This command removes one or more terms from a dictionary. Only exact matches will be removed from the dictionary.
+     * Non-existent terms are ignored.
      * </p>
      *
      * <p>
@@ -508,8 +509,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Dump all terms in a dictionary.
      *
      * <p>
-     * This command returns all terms stored in the specified dictionary.
-     * The terms are returned in no particular order.
+     * This command returns all terms stored in the specified dictionary. The terms are returned in no particular order.
      * </p>
      *
      * <p>
@@ -527,12 +527,214 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
     suspend fun ftDictdump(dict: K): List<V>
 
     /**
+     * Return the execution plan for a complex query.
+     *
+     * <p>
+     * This command returns a string representing the execution plan that Redis Search
+     * will use to execute the given query. This is useful for understanding how the
+     * query will be processed and for optimizing query performance.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Query optimization:</strong> Understand how queries are executed</li>
+     * <li><strong>Performance analysis:</strong> Identify potential bottlenecks</li>
+     * <li><strong>Debugging:</strong> Troubleshoot complex query behavior</li>
+     * <li><strong>Learning:</strong> Understand Redis Search query processing</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index name
+     * @param query the search query to explain
+     * @return the execution plan as a string
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.explain/">FT.EXPLAIN</a>
+     * @see #ftExplain(Any, Any, ExplainArgs)
+     * @see #ftSearch(Any, Any)
+     */
+    @Experimental
+    suspend fun ftExplain(index: K, query: V): String?
+
+    /**
+     * Return the execution plan for a complex query with additional options.
+     *
+     * <p>
+     * This command returns a string representing the execution plan that Redis Search
+     * will use to execute the given query under the specified dialect version.
+     * </p>
+     *
+     * <p>
+     * Available options:
+     * </p>
+     * <ul>
+     * <li><strong>DIALECT:</strong> Specify dialect version for query execution</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index name
+     * @param query the search query to explain
+     * @param args the explain arguments (dialect)
+     * @return the execution plan as a string
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.explain/">FT.EXPLAIN</a>
+     * @see #ftExplain(Any, Any)
+     * @see #ftSearch(Any, Any)
+     */
+    @Experimental
+    suspend fun ftExplain(index: K, query: V, args: ExplainArgs<K, V>): String?
+
+    /**
+     * Return a list of all existing indexes.
+     *
+     * <p>
+     * This command returns an array with the names of all existing indexes in the database.
+     * This is useful for discovering available indexes and managing index lifecycle.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Index discovery:</strong> Find all available search indexes</li>
+     * <li><strong>Management:</strong> List indexes for administrative operations</li>
+     * <li><strong>Monitoring:</strong> Track index creation and deletion</li>
+     * <li><strong>Debugging:</strong> Verify index existence</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * <p>
+     * <strong>Note:</strong> This is a temporary command (indicated by the underscore prefix).
+     * In the future, a SCAN-type command will be added for use when a database contains
+     * a large number of indices.
+     * </p>
+     *
+     * @return a list of index names
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft._list/">FT._LIST</a>
+     * @see #ftCreate(Any, CreateArgs, FieldArgs[])
+     * @see #ftDropindex(Any)
+     */
+    @Experimental
+    suspend fun ftList(): List<V>
+
+    /**
+     * Dump synonym group contents.
+     *
+     * <p>
+     * This command returns the contents of a synonym group. Synonym groups are used
+     * to define terms that should be treated as equivalent during search operations.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Synonym management:</strong> View current synonym definitions</li>
+     * <li><strong>Query expansion:</strong> Understand how terms are expanded</li>
+     * <li><strong>Debugging:</strong> Verify synonym group contents</li>
+     * <li><strong>Administration:</strong> Audit synonym configurations</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index name
+     * @return the synonym group contents
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.syndump/">FT.SYNDUMP</a>
+     * @see #ftSynupdate(Any, Any, Any[])
+     * @see #ftSynupdate(Any, Any, SynUpdateArgs, Any[])
+     */
+    @Experimental
+    suspend fun ftSyndump(index: K): List<V>
+
+    /**
+     * Update a synonym group with additional terms.
+     *
+     * <p>
+     * This command creates or updates a synonym group with the specified terms.
+     * All terms in a synonym group are treated as equivalent during search operations.
+     * The command triggers a scan of all documents by default.
+     * </p>
+     *
+     * <p>
+     * Key features and use cases:
+     * </p>
+     * <ul>
+     * <li><strong>Synonym creation:</strong> Define equivalent terms for search</li>
+     * <li><strong>Query expansion:</strong> Improve search recall with synonyms</li>
+     * <li><strong>Language support:</strong> Handle different languages and dialects</li>
+     * <li><strong>Domain terminology:</strong> Map technical terms to common language</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index name
+     * @param synonymGroupId the synonym group identifier
+     * @param terms the terms to add to the synonym group
+     * @return OK if executed correctly
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
+     * @see #ftSynupdate(Any, Any, SynUpdateArgs, Any[])
+     * @see #ftSyndump(Any)
+     */
+    @Experimental
+    suspend fun ftSynupdate(index: K, synonymGroupId: V, vararg terms: V): String?
+
+    /**
+     * Update a synonym group with additional terms and options.
+     *
+     * <p>
+     * This command creates or updates a synonym group with the specified terms and options.
+     * The SKIPINITIALSCAN option can be used to avoid scanning existing documents,
+     * affecting only documents indexed after the update.
+     * </p>
+     *
+     * <p>
+     * Available options:
+     * </p>
+     * <ul>
+     * <li><strong>SKIPINITIALSCAN:</strong> Skip scanning existing documents</li>
+     * </ul>
+     *
+     * <p>
+     * <strong>Time complexity:</strong> O(1)
+     * </p>
+     *
+     * @param index the index name
+     * @param synonymGroupId the synonym group identifier
+     * @param args the synupdate arguments (skipInitialScan)
+     * @param terms the terms to add to the synonym group
+     * @return OK if executed correctly
+     * @since 6.8
+     * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
+     * @see #ftSynupdate(Any, Any, Any[])
+     * @see #ftSyndump(Any)
+     */
+    @Experimental
+    suspend fun ftSynupdate(index: K, synonymGroupId: V, args: SynUpdateArgs<K, V>, vararg terms: V): String?
+
+    /**
      * Add a suggestion string to an auto-complete suggestion dictionary.
      *
      * <p>
-     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score.
-     * The auto-complete suggestion dictionary is disconnected from the index definitions and leaves creating
-     * and updating suggestions dictionaries to the user.
+     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score. The auto-complete
+     * suggestion dictionary is disconnected from the index definitions and leaves creating and updating suggestions
+     * dictionaries to the user.
      * </p>
      *
      * <p>
@@ -567,8 +769,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Add a suggestion string to an auto-complete suggestion dictionary with additional options.
      *
      * <p>
-     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score
-     * and optional arguments for incremental updates and payload storage.
+     * This command adds a suggestion string to an auto-complete suggestion dictionary with a specified score and optional
+     * arguments for incremental updates and payload storage.
      * </p>
      *
      * <p>
@@ -594,8 +796,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Delete a string from a suggestion dictionary.
      *
      * <p>
-     * This command removes a suggestion string from an auto-complete suggestion dictionary.
-     * Only the exact string match will be removed from the dictionary.
+     * This command removes a suggestion string from an auto-complete suggestion dictionary. Only the exact string match will be
+     * removed from the dictionary.
      * </p>
      *
      * <p>
@@ -618,8 +820,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Get completion suggestions for a prefix.
      *
      * <p>
-     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary.
-     * By default, it returns up to 5 suggestions that match the given prefix.
+     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary. By default, it
+     * returns up to 5 suggestions that match the given prefix.
      * </p>
      *
      * <p>
@@ -643,8 +845,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * Get completion suggestions for a prefix with additional options.
      *
      * <p>
-     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary
-     * with optional arguments for fuzzy matching, score inclusion, payload inclusion, and result limiting.
+     * This command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary with optional
+     * arguments for fuzzy matching, score inclusion, payload inclusion, and result limiting.
      * </p>
      *
      * <p>

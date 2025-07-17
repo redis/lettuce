@@ -15,11 +15,13 @@ import io.lettuce.core.search.SpellCheckResult
 import io.lettuce.core.search.Suggestion
 import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
+import io.lettuce.core.search.arguments.ExplainArgs
 import io.lettuce.core.search.arguments.FieldArgs
 import io.lettuce.core.search.arguments.SearchArgs
 import io.lettuce.core.search.arguments.SpellCheckArgs
 import io.lettuce.core.search.arguments.SugAddArgs
 import io.lettuce.core.search.arguments.SugGetArgs
+import io.lettuce.core.search.arguments.SynUpdateArgs
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -120,4 +122,22 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
 
     override suspend fun ftSuglen(key: K): Long? =
         ops.ftSuglen(key).awaitFirstOrNull()
+
+    override suspend fun ftSynupdate(index: K, synonymGroupId: V, vararg terms: V): String? =
+        ops.ftSynupdate(index, synonymGroupId, *terms).awaitFirstOrNull()
+
+    override suspend fun ftSynupdate(index: K, synonymGroupId: V, args: SynUpdateArgs<K, V>, vararg terms: V): String? =
+        ops.ftSynupdate(index, synonymGroupId, args, *terms).awaitFirstOrNull()
+
+    override suspend fun ftSyndump(index: K): List<V> =
+        ops.ftSyndump(index).asFlow().toList()
+
+    override suspend fun ftExplain(index: K, query: V): String? =
+        ops.ftExplain(index, query).awaitFirstOrNull()
+
+    override suspend fun ftExplain(index: K, query: V, args: ExplainArgs<K, V>): String? =
+        ops.ftExplain(index, query, args).awaitFirstOrNull()
+
+    override suspend fun ftList(): List<V> =
+        ops.ftList().asFlow().toList()
 }

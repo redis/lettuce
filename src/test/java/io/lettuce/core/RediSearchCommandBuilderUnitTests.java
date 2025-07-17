@@ -20,10 +20,12 @@ import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
+import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.netty.buffer.ByteBuf;
@@ -307,6 +309,102 @@ class RediSearchCommandBuilderUnitTests {
         String result = "*2\r\n" //
                 + "$11\r\n" + "FT.DICTDUMP\r\n" //
                 + "$3\r\n" + MY_KEY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.EXPLAIN index query
+    @Test
+    void shouldCorrectlyConstructFtExplainCommand() {
+        Command<String, String, String> command = builder.ftExplain(MY_KEY, "hello world");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$10\r\n" + "FT.EXPLAIN\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$11\r\n" + "hello world\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.EXPLAIN index query DIALECT 1
+    @Test
+    void shouldCorrectlyConstructFtExplainCommandWithArgs() {
+        ExplainArgs<String, String> args = ExplainArgs.Builder.<String, String> dialect(1);
+        Command<String, String, String> command = builder.ftExplain(MY_KEY, "hello world", args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*5\r\n" //
+                + "$10\r\n" + "FT.EXPLAIN\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$11\r\n" + "hello world\r\n" //
+                + "$7\r\n" + "DIALECT\r\n" //
+                + "$1\r\n" + "1\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT._LIST
+    @Test
+    void shouldCorrectlyConstructFtListCommand() {
+        Command<String, String, List<String>> command = builder.ftList();
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*1\r\n" //
+                + "$8\r\n" + "FT._LIST\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SYNDUMP index
+    @Test
+    void shouldCorrectlyConstructFtSyndumpCommand() {
+        Command<String, String, List<String>> command = builder.ftSyndump(MY_KEY);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*2\r\n" //
+                + "$10\r\n" + "FT.SYNDUMP\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SYNUPDATE index synonymGroupId term1 term2
+    @Test
+    void shouldCorrectlyConstructFtSynupdateCommand() {
+        Command<String, String, String> command = builder.ftSynupdate(MY_KEY, "group1", "term1", "term2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*5\r\n" //
+                + "$12\r\n" + "FT.SYNUPDATE\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$6\r\n" + "group1\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SYNUPDATE index synonymGroupId SKIPINITIALSCAN term1 term2
+    @Test
+    void shouldCorrectlyConstructFtSynupdateCommandWithArgs() {
+        SynUpdateArgs<String, String> args = SynUpdateArgs.Builder.<String, String> skipInitialScan();
+        Command<String, String, String> command = builder.ftSynupdate(MY_KEY, "group1", args, "term1", "term2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*6\r\n" //
+                + "$12\r\n" + "FT.SYNUPDATE\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$6\r\n" + "group1\r\n" //
+                + "$15\r\n" + "SKIPINITIALSCAN\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n";
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }

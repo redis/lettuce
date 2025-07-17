@@ -28,11 +28,13 @@ import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.SuggestionParser;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 
 import java.util.List;
 
@@ -344,6 +346,105 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
 
         return createCommand(FT_DICTDUMP, new ValueListOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Return the execution plan for a complex query.
+     *
+     * @param index the index name
+     * @param query the search query
+     * @return the execution plan as a string
+     */
+    public Command<K, V, String> ftExplain(K index, V query) {
+        return ftExplain(index, query, null);
+    }
+
+    /**
+     * Return the execution plan for a complex query.
+     *
+     * @param index the index name
+     * @param query the search query
+     * @param args the explain arguments
+     * @return the execution plan as a string
+     */
+    public Command<K, V, String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+        notNullKey(index);
+        LettuceAssert.notNull(query, "Query must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index).addValue(query);
+
+        if (args != null) {
+            args.build(commandArgs);
+        }
+
+        return createCommand(FT_EXPLAIN, new StatusOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Return a list of all existing indexes.
+     *
+     * @return the list of index names
+     */
+    public Command<K, V, List<V>> ftList() {
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec);
+        return createCommand(FT_LIST, new ValueListOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Dump synonym group contents.
+     *
+     * @param index the index name
+     * @return the synonym group contents
+     */
+    public Command<K, V, List<V>> ftSyndump(K index) {
+        notNullKey(index);
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index);
+
+        return createCommand(FT_SYNDUMP, new ValueListOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Update a synonym group with additional terms.
+     *
+     * @param index the index name
+     * @param synonymGroupId the synonym group ID
+     * @param terms the terms to add to the synonym group
+     * @return the result of the synupdate command
+     */
+    @SafeVarargs
+    public final Command<K, V, String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+        return ftSynupdate(index, synonymGroupId, null, terms);
+    }
+
+    /**
+     * Update a synonym group with additional terms.
+     *
+     * @param index the index name
+     * @param synonymGroupId the synonym group ID
+     * @param args the synupdate arguments
+     * @param terms the terms to add to the synonym group
+     * @return the result of the synupdate command
+     */
+    @SafeVarargs
+    public final Command<K, V, String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+        notNullKey(index);
+        LettuceAssert.notNull(synonymGroupId, "Synonym group ID must not be null");
+        LettuceAssert.notNull(terms, "Terms must not be null");
+        LettuceAssert.isTrue(terms.length > 0, "At least one term must be provided");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index).addValue(synonymGroupId);
+
+        if (args != null) {
+            args.build(commandArgs);
+        }
+
+        for (V term : terms) {
+            LettuceAssert.notNull(term, "Term must not be null");
+            commandArgs.addValue(term);
+        }
+
+        return createCommand(FT_SYNUPDATE, new StatusOutput<>(codec), commandArgs);
     }
 
     /**

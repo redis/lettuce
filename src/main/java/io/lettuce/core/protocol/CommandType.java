@@ -120,9 +120,10 @@ public enum CommandType implements ProtocolKeyword {
     FT_AGGREGATE("FT.AGGREGATE"), FT_ALIASADD("FT.ALIASADD"), FT_ALIASDEL("FT.ALIASDEL"), FT_ALIASUPDATE(
             "FT.ALIASUPDATE"), FT_ALTER("FT.ALTER"), FT_CREATE("FT.CREATE"), FT_CURSOR("FT.CURSOR"), FT_DICTADD(
                     "FT.DICTADD"), FT_DICTDEL("FT.DICTDEL"), FT_DICTDUMP("FT.DICTDUMP"), FT_DROPINDEX(
-                            "FT.DROPINDEX"), FT_SEARCH("FT.SEARCH"), FT_SPELLCHECK("FT.SPELLCHECK"), FT_SUGADD(
-                                    "FT.SUGADD"), FT_SUGDEL("FT.SUGDEL"), FT_SUGGET(
-                                            "FT.SUGGET"), FT_SUGLEN("FT.SUGLEN"), FT_TAGVALS("FT.TAGVALS"),
+                            "FT.DROPINDEX"), FT_EXPLAIN("FT.EXPLAIN"), FT_LIST("FT._LIST"), FT_SEARCH(
+                                    "FT.SEARCH"), FT_SPELLCHECK("FT.SPELLCHECK"), FT_SUGADD("FT.SUGADD"), FT_SUGDEL(
+                                            "FT.SUGDEL"), FT_SUGGET("FT.SUGGET"), FT_SUGLEN("FT.SUGLEN"), FT_SYNDUMP(
+                                                    "FT.SYNDUMP"), FT_SYNUPDATE("FT.SYNUPDATE"), FT_TAGVALS("FT.TAGVALS"),
 
     // Others
 
