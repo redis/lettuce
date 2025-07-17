@@ -11,8 +11,8 @@ import io.lettuce.core.protocol.CommandArgs;
 /**
  * Arguments for the FT.SUGADD command.
  * <p>
- * This class provides a builder pattern for constructing arguments for adding suggestions to an auto-complete dictionary.
- * The FT.SUGADD command adds a suggestion string to an auto-complete suggestion dictionary with a specified score.
+ * This class provides a builder pattern for constructing arguments for adding suggestions to an auto-complete dictionary. The
+ * FT.SUGADD command adds a suggestion string to an auto-complete suggestion dictionary with a specified score.
  * </p>
  *
  * @param <K> Key type.
@@ -61,8 +61,8 @@ public class SugAddArgs<K, V> {
     }
 
     /**
-     * Increment the existing entry of the suggestion by the given score, instead of replacing the score.
-     * This is useful for updating the dictionary based on user queries in real time.
+     * Increment the existing entry of the suggestion by the given score, instead of replacing the score. This is useful for
+     * updating the dictionary based on user queries in real time.
      *
      * @return {@code this} {@link SugAddArgs}.
      */

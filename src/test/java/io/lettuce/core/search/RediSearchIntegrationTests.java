@@ -15,8 +15,6 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
-import io.lettuce.core.search.SpellCheckResult;
-import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
@@ -745,8 +743,8 @@ public class RediSearchIntegrationTests {
 
         // Test with non-existent field should return empty list
 
-        Exception exception = assertThrows(RedisCommandExecutionException.class, () -> {
-            List<String> emptyTagValues = redis.ftTagvals(testIndex, "nonexistent");
+        assertThrows(RedisCommandExecutionException.class, () -> {
+            redis.ftTagvals(testIndex, "nonexistent");
         });
 
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
@@ -776,12 +774,12 @@ public class RediSearchIntegrationTests {
                 "Newark");
 
         // Test FT.SUGGET with MAX limit
-        SugGetArgs<String, String> maxArgs = SugGetArgs.Builder.<String, String> max(2);
+        SugGetArgs<String, String> maxArgs = SugGetArgs.Builder.max(2);
         List<Suggestion<String>> limitedSuggestions = redis.ftSugget(suggestionKey, "New", maxArgs);
         assertThat(limitedSuggestions).hasSize(2);
 
         // Test FT.SUGGET with FUZZY matching
-        SugGetArgs<String, String> fuzzyArgs = SugGetArgs.Builder.<String, String> fuzzy();
+        SugGetArgs<String, String> fuzzyArgs = SugGetArgs.Builder.fuzzy();
         List<Suggestion<String>> fuzzySuggestions = redis.ftSugget(suggestionKey, "Bost", fuzzyArgs);
         assertThat(fuzzySuggestions.stream().map(Suggestion::getValue)).contains("Boston");
 
@@ -930,7 +928,7 @@ public class RediSearchIntegrationTests {
         assertThat(hasSearchSuggestion).isTrue();
 
         // Test spellcheck with distance parameter
-        SpellCheckArgs<String, String> distanceArgs = SpellCheckArgs.Builder.<String, String> distance(2);
+        SpellCheckArgs<String, String> distanceArgs = SpellCheckArgs.Builder.distance(2);
         SpellCheckResult<String> distanceResult = redis.ftSpellcheck(testIndex, "databse", distanceArgs);
         assertThat(distanceResult.hasMisspelledTerms()).isTrue();
 
@@ -938,12 +936,12 @@ public class RediSearchIntegrationTests {
         String dictKey = "custom-dict";
         redis.ftDictadd(dictKey, "elasticsearch", "solr", "lucene");
 
-        SpellCheckArgs<String, String> includeArgs = SpellCheckArgs.Builder.<String, String> termsInclude(dictKey);
+        SpellCheckArgs<String, String> includeArgs = SpellCheckArgs.Builder.termsInclude(dictKey);
         SpellCheckResult<String> includeResult = redis.ftSpellcheck(testIndex, "elasticsearh", includeArgs);
         assertThat(includeResult.hasMisspelledTerms()).isTrue();
 
         // Test spellcheck with exclude dictionary
-        SpellCheckArgs<String, String> excludeArgs = SpellCheckArgs.Builder.<String, String> termsExclude(dictKey);
+        SpellCheckArgs<String, String> excludeArgs = SpellCheckArgs.Builder.termsExclude(dictKey);
         SpellCheckResult<String> excludeResult = redis.ftSpellcheck(testIndex, "elasticsearh", excludeArgs);
         assertThat(excludeResult.hasMisspelledTerms()).isTrue();
 

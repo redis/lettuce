@@ -119,8 +119,7 @@ class SuggestionParserUnitTests {
     void shouldThrowExceptionForNullData() {
         SuggestionParser<String> parser = new SuggestionParser<>(false, false);
 
-        assertThatThrownBy(() -> parser.parse(null))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> parser.parse(null)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Failed while parsing FT.SUGGET: data must not be null");
     }
 
@@ -132,8 +131,7 @@ class SuggestionParserUnitTests {
         data.store("suggestion2");
         data.store("suggestion3");
 
-        assertThatThrownBy(() -> parser.parse(data))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> parser.parse(data)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Failed while parsing FT.SUGGET with WITHSCORES: expected even number of elements");
     }
 
@@ -145,8 +143,7 @@ class SuggestionParserUnitTests {
         data.store("payload1");
         data.store("suggestion2");
 
-        assertThatThrownBy(() -> parser.parse(data))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> parser.parse(data)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Failed while parsing FT.SUGGET with WITHPAYLOADS: expected even number of elements");
     }
 
@@ -160,8 +157,7 @@ class SuggestionParserUnitTests {
         data.store("suggestion2");
         data.store("2.0");
 
-        assertThatThrownBy(() -> parser.parse(data))
-                .isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> parser.parse(data)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Failed while parsing FT.SUGGET with WITHSCORES and WITHPAYLOADS: expected multiple of 3 elements");
     }
 

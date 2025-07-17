@@ -11,8 +11,8 @@ import io.lettuce.core.protocol.CommandArgs;
 /**
  * Arguments for the FT.SUGGET command.
  * <p>
- * This class provides a builder pattern for constructing arguments for getting completion suggestions from an auto-complete dictionary.
- * The FT.SUGGET command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary.
+ * This class provides a builder pattern for constructing arguments for getting completion suggestions from an auto-complete
+ * dictionary. The FT.SUGGET command retrieves completion suggestions for a prefix from an auto-complete suggestion dictionary.
  * </p>
  *
  * @param <K> Key type.
@@ -105,7 +105,8 @@ public class SugGetArgs<K, V> {
     }
 
     /**
-     * Return optional payloads saved along with the suggestions. If no payload is present for an entry, it returns a null reply.
+     * Return optional payloads saved along with the suggestions. If no payload is present for an entry, it returns a null
+     * reply.
      *
      * @return {@code this} {@link SugGetArgs}.
      */

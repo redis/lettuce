@@ -15,8 +15,8 @@ import java.util.List;
 /**
  * Parser for Redis FT.SUGGET command output.
  * <p>
- * This parser converts the response from the Redis FT.SUGGET command into a list of {@link Suggestion} objects.
- * The FT.SUGGET command can return different formats depending on the options used:
+ * This parser converts the response from the Redis FT.SUGGET command into a list of {@link Suggestion} objects. The FT.SUGGET
+ * command can return different formats depending on the options used:
  * </p>
  * <ul>
  * <li><strong>Basic format:</strong> Just the suggestion strings</li>
@@ -76,17 +76,17 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
             return suggestions;
         }
 
-        for(int i=0; i<elements.size();) {
+        for (int i = 0; i < elements.size();) {
 
             V value = (V) elements.get(i++);
             Suggestion<V> suggestion = new Suggestion<>(value);
 
-            if(withScores){
+            if (withScores) {
                 Double score = parseScore(elements.get(i++));
                 suggestion.setScore(score);
             }
 
-            if(withPayloads){
+            if (withPayloads) {
                 V payload = (V) elements.get(i++);
                 suggestion.setPayload(payload);
             }
@@ -107,7 +107,7 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
         if (scoreObj == null) {
             return null;
         }
-        
+
         if (scoreObj instanceof Double) {
             return (Double) scoreObj;
         }
@@ -115,7 +115,7 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
         if (scoreObj instanceof Number) {
             return ((Number) scoreObj).doubleValue();
         }
-        
+
         return 0.0;
     }
 

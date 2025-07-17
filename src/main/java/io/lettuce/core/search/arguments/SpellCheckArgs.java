@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
 
 /**
  * Argument list builder for the Redis <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a> command.
@@ -153,7 +154,7 @@ public class SpellCheckArgs<K, V> {
      */
     public void build(CommandArgs<K, V> args) {
         if (distance != null) {
-            args.add("DISTANCE").add(distance);
+            args.add(CommandKeyword.DISTANCE).add(distance);
         }
 
         for (TermsClause<K, V> clause : termsClauses) {
@@ -161,7 +162,7 @@ public class SpellCheckArgs<K, V> {
         }
 
         if (dialect != null) {
-            args.add("DIALECT").add(dialect);
+            args.add(CommandKeyword.DIALECT).add(dialect);
         }
     }
 
@@ -188,8 +189,8 @@ public class SpellCheckArgs<K, V> {
         }
 
         void build(CommandArgs<K, V> args) {
-            args.add("TERMS").add(type.name()).addKey(dictionary);
-            if (terms != null && terms.length > 0) {
+            args.add(CommandKeyword.TERMS).add(type.name()).addKey(dictionary);
+            if (terms != null) {
                 for (V term : terms) {
                     args.addValue(term);
                 }

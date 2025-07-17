@@ -11,8 +11,8 @@ import java.util.Objects;
 /**
  * Represents a suggestion returned by the FT.SUGGET command.
  * <p>
- * A suggestion contains the suggestion string itself, and optionally a score and payload
- * when the FT.SUGGET command is called with WITHSCORES and/or WITHPAYLOADS options.
+ * A suggestion contains the suggestion string itself, and optionally a score and payload when the FT.SUGGET command is called
+ * with WITHSCORES and/or WITHPAYLOADS options.
  * </p>
  *
  * @param <V> Value type.
@@ -91,12 +91,12 @@ public class Suggestion<V> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Suggestion<?> that = (Suggestion<?>) o;
-        return Objects.equals(value, that.value) &&
-                Objects.equals(score, that.score) &&
-                Objects.equals(payload, that.payload);
+        return Objects.equals(value, that.value) && Objects.equals(score, that.score) && Objects.equals(payload, that.payload);
     }
 
     @Override

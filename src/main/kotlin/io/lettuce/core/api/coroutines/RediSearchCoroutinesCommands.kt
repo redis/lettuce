@@ -8,7 +8,6 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
