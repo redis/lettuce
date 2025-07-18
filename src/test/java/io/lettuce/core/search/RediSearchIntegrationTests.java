@@ -754,10 +754,7 @@ public class RediSearchIntegrationTests {
 
         // Test with non-existent field should return empty list
 
-        assertThrows(RedisCommandExecutionException.class, () -> {
-            redis.ftTagvals(testIndex, "nonexistent");
-        });
-
+        assertThrows(RedisCommandExecutionException.class, () -> redis.ftTagvals(testIndex, "nonexistent"));
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
     }
 
@@ -1304,7 +1301,7 @@ public class RediSearchIntegrationTests {
         }
 
         // Test vector search profiling with LIMITED option
-        ProfileArgs<String, String> limitedArgs = ProfileArgs.Builder.<String, String> searchLimited();
+        ProfileArgs<String, String> limitedArgs = ProfileArgs.Builder.searchLimited();
         ProfileResult limitedProfile = redis.ftProfile(testIndex, limitedArgs, vectorQuery, searchArgs);
 
         assertThat(limitedProfile).isNotNull();
@@ -1458,7 +1455,7 @@ public class RediSearchIntegrationTests {
         String compoundQuery = "@description:(kids | small) @condition:{new | used}";
 
         // Test basic compound query profiling
-        ProfileArgs<String, String> profileArgs = ProfileArgs.Builder.<String, String> search();
+        ProfileArgs<String, String> profileArgs = ProfileArgs.Builder.search();
         ProfileResult compoundProfile = redis.ftProfile(testIndex, profileArgs, compoundQuery);
 
         // Verify profile result structure
@@ -1501,7 +1498,7 @@ public class RediSearchIntegrationTests {
         assertThat(processorTypes).contains("Loader");
 
         // Test profiling with LIMITED option
-        ProfileArgs<String, String> limitedArgs = ProfileArgs.Builder.<String, String> searchLimited();
+        ProfileArgs<String, String> limitedArgs = ProfileArgs.Builder.searchLimited();
         ProfileResult limitedProfile = redis.ftProfile(testIndex, limitedArgs, compoundQuery);
 
         assertThat(limitedProfile).isNotNull();

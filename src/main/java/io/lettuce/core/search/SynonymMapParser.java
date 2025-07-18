@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
 
@@ -108,11 +107,10 @@ public class SynonymMapParser<K, V> implements ComplexDataParser<Map<V, List<V>>
             V term = codec.decodeValue((ByteBuffer) entry.getKey());
 
             // Decode the synonyms (value - should be a list)
-            List<V> synonyms = new ArrayList<>();
             Object synonymsData = entry.getValue();
 
             List<Object> synonymsList = ((ComplexData) synonymsData).getDynamicList();
-            synonyms = synonymsList.stream().map(synonym -> codec.decodeValue((ByteBuffer) synonym))
+            List<V> synonyms = synonymsList.stream().map(synonym -> codec.decodeValue((ByteBuffer) synonym))
                     .collect(Collectors.toList());
 
             synonymMap.put(term, synonyms);
