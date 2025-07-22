@@ -11,10 +11,17 @@ import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands
 import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
+import io.lettuce.core.search.SpellCheckResult
+import io.lettuce.core.search.Suggestion
 import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
+import io.lettuce.core.search.arguments.ExplainArgs
 import io.lettuce.core.search.arguments.FieldArgs
 import io.lettuce.core.search.arguments.SearchArgs
+import io.lettuce.core.search.arguments.SpellCheckArgs
+import io.lettuce.core.search.arguments.SugAddArgs
+import io.lettuce.core.search.arguments.SugGetArgs
+import io.lettuce.core.search.arguments.SynUpdateArgs
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -70,19 +77,70 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftAggregate(index: K, query: V, args: AggregateArgs<K, V>): AggregationReply<K, V>? =
         ops.ftAggregate(index, query, args).awaitFirstOrNull()
 
-
     override suspend fun ftAggregate(index: K, query: V): AggregationReply<K, V>? =
         ops.ftAggregate(index, query).awaitFirstOrNull()
 
     override suspend fun ftCursorread(index: K, cursorId: Long): AggregationReply<K, V>? =
         ops.ftCursorread(index, cursorId).awaitFirstOrNull()
 
-
     override suspend fun ftCursorread(index: K, cursorId: Long, count: Int): AggregationReply<K, V>? =
         ops.ftCursorread(index, cursorId, count).awaitFirstOrNull()
-
 
     override suspend fun ftCursordel(index: K, cursorId: Long): String? {
         return ops.ftCursordel(index, cursorId).awaitFirstOrNull()
     }
+
+    override suspend fun ftDictadd(dict: K, vararg terms: V): Long? =
+        ops.ftDictadd(dict, *terms).awaitFirstOrNull()
+
+    override suspend fun ftDictdel(dict: K, vararg terms: V): Long? =
+        ops.ftDictdel(dict, *terms).awaitFirstOrNull()
+
+    override suspend fun ftDictdump(dict: K): List<V> =
+        ops.ftDictdump(dict).asFlow().toList()
+
+    override suspend fun ftSpellcheck(index: K, query: V): SpellCheckResult<V>? =
+        ops.ftSpellcheck(index, query).awaitFirstOrNull()
+
+    override suspend fun ftSpellcheck(index: K, query: V, args: SpellCheckArgs<K, V>): SpellCheckResult<V>? =
+        ops.ftSpellcheck(index, query, args).awaitFirstOrNull()
+
+    override suspend fun ftSugadd(key: K, suggestion: V, score: Double): Long? =
+        ops.ftSugadd(key, suggestion, score).awaitFirstOrNull()
+
+    override suspend fun ftSugadd(key: K, suggestion: V, score: Double, args: SugAddArgs<K, V>): Long? =
+        ops.ftSugadd(key, suggestion, score, args).awaitFirstOrNull()
+
+    override suspend fun ftSugdel(key: K, suggestion: V): Boolean? =
+        ops.ftSugdel(key, suggestion).awaitFirstOrNull()
+
+    override suspend fun ftSugget(key: K, prefix: V): List<Suggestion<V>> =
+        ops.ftSugget(key, prefix).asFlow().toList()
+
+    override suspend fun ftSugget(key: K, prefix: V, args: SugGetArgs<K, V>): List<Suggestion<V>> =
+        ops.ftSugget(key, prefix, args).asFlow().toList()
+
+    override suspend fun ftSuglen(key: K): Long? =
+        ops.ftSuglen(key).awaitFirstOrNull()
+
+    override suspend fun ftSynupdate(index: K, synonymGroupId: V, vararg terms: V): String? =
+        ops.ftSynupdate(index, synonymGroupId, *terms).awaitFirstOrNull()
+
+    override suspend fun ftSynupdate(index: K, synonymGroupId: V, args: SynUpdateArgs<K, V>, vararg terms: V): String? =
+        ops.ftSynupdate(index, synonymGroupId, args, *terms).awaitFirstOrNull()
+
+    override suspend fun ftSyndump(index: K): Map<V, List<V>> =
+        ops.ftSyndump(index).awaitFirstOrNull()!!
+
+    override suspend fun ftExplain(index: K, query: V): String? =
+        ops.ftExplain(index, query).awaitFirstOrNull()
+
+    override suspend fun ftExplain(index: K, query: V, args: ExplainArgs<K, V>): String? =
+        ops.ftExplain(index, query, args).awaitFirstOrNull()
+
+    override suspend fun ftList(): List<V> =
+        ops.ftList().asFlow().toList()
+
+
+
 }

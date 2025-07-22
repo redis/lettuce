@@ -18,7 +18,14 @@ import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
+import io.lettuce.core.search.SpellCheckResult;
+import io.lettuce.core.search.Suggestion;
+import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.netty.buffer.ByteBuf;
@@ -31,6 +38,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -215,6 +223,290 @@ class RediSearchCommandBuilderUnitTests {
                 + "$10\r\n" + "FT.TAGVALS\r\n" //
                 + "$3\r\n" + MY_KEY + "\r\n" //
                 + "$5\r\n" + FIELD1_NAME + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SPELLCHECK index query
+    @Test
+    void shouldCorrectlyConstructFtSpellcheckCommand() {
+        Command<String, String, SpellCheckResult<String>> command = builder.ftSpellcheck(MY_KEY, "hello wrold");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$13\r\n" + "FT.SPELLCHECK\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$11\r\n" + "hello wrold\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SPELLCHECK index query DISTANCE 2 TERMS INCLUDE dict term1 term2 DIALECT 1
+    @Test
+    void shouldCorrectlyConstructFtSpellcheckCommandWithArgs() {
+        SpellCheckArgs<String, String> args = SpellCheckArgs.Builder.<String, String> distance(2)
+                .termsInclude("dict", "term1", "term2").dialect(1);
+        Command<String, String, SpellCheckResult<String>> command = builder.ftSpellcheck(MY_KEY, "hello wrold", args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*12\r\n" //
+                + "$13\r\n" + "FT.SPELLCHECK\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$11\r\n" + "hello wrold\r\n" //
+                + "$8\r\n" + "DISTANCE\r\n" //
+                + "$1\r\n" + "2\r\n" //
+                + "$5\r\n" + "TERMS\r\n" //
+                + "$7\r\n" + "INCLUDE\r\n" //
+                + "$4\r\n" + "dict\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n" //
+                + "$7\r\n" + "DIALECT\r\n" //
+                + "$1\r\n" + "1\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.DICTADD dict term1 term2
+    @Test
+    void shouldCorrectlyConstructFtDictaddCommand() {
+        Command<String, String, Long> command = builder.ftDictadd(MY_KEY, "term1", "term2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*4\r\n" //
+                + "$10\r\n" + "FT.DICTADD\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.DICTDEL dict term1 term2
+    @Test
+    void shouldCorrectlyConstructFtDictdelCommand() {
+        Command<String, String, Long> command = builder.ftDictdel(MY_KEY, "term1", "term2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*4\r\n" //
+                + "$10\r\n" + "FT.DICTDEL\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.DICTDUMP dict
+    @Test
+    void shouldCorrectlyConstructFtDictdumpCommand() {
+        Command<String, String, List<String>> command = builder.ftDictdump(MY_KEY);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*2\r\n" //
+                + "$11\r\n" + "FT.DICTDUMP\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.EXPLAIN index query
+    @Test
+    void shouldCorrectlyConstructFtExplainCommand() {
+        Command<String, String, String> command = builder.ftExplain(MY_KEY, "hello world");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$10\r\n" + "FT.EXPLAIN\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$11\r\n" + "hello world\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.EXPLAIN index query DIALECT 1
+    @Test
+    void shouldCorrectlyConstructFtExplainCommandWithArgs() {
+        ExplainArgs<String, String> args = ExplainArgs.Builder.dialect(QueryDialects.DIALECT1);
+        Command<String, String, String> command = builder.ftExplain(MY_KEY, "hello world", args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*5\r\n" //
+                + "$10\r\n" + "FT.EXPLAIN\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$11\r\n" + "hello world\r\n" //
+                + "$7\r\n" + "DIALECT\r\n" //
+                + "$1\r\n" + "1\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT._LIST
+    @Test
+    void shouldCorrectlyConstructFtListCommand() {
+        Command<String, String, List<String>> command = builder.ftList();
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*1\r\n" //
+                + "$8\r\n" + "FT._LIST\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SYNDUMP index
+    @Test
+    void shouldCorrectlyConstructFtSyndumpCommand() {
+        Command<String, String, Map<String, List<String>>> command = builder.ftSyndump(MY_KEY);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*2\r\n" //
+                + "$10\r\n" + "FT.SYNDUMP\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SYNUPDATE index synonymGroupId term1 term2
+    @Test
+    void shouldCorrectlyConstructFtSynupdateCommand() {
+        Command<String, String, String> command = builder.ftSynupdate(MY_KEY, "group1", "term1", "term2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*5\r\n" //
+                + "$12\r\n" + "FT.SYNUPDATE\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$6\r\n" + "group1\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SYNUPDATE index synonymGroupId SKIPINITIALSCAN term1 term2
+    @Test
+    void shouldCorrectlyConstructFtSynupdateCommandWithArgs() {
+        SynUpdateArgs<String, String> args = SynUpdateArgs.Builder.skipInitialScan();
+        Command<String, String, String> command = builder.ftSynupdate(MY_KEY, "group1", args, "term1", "term2");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*6\r\n" //
+                + "$12\r\n" + "FT.SYNUPDATE\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$6\r\n" + "group1\r\n" //
+                + "$15\r\n" + "SKIPINITIALSCAN\r\n" //
+                + "$5\r\n" + "term1\r\n" //
+                + "$5\r\n" + "term2\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGADD key string score
+    @Test
+    void shouldCorrectlyConstructFtSugaddCommand() {
+        Command<String, String, Long> command = builder.ftSugadd(MY_KEY, "suggestion", 1.0);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*4\r\n" //
+                + "$9\r\n" + "FT.SUGADD\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$10\r\n" + "suggestion\r\n" //
+                + "$3\r\n" + "1.0\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGADD key string score INCR PAYLOAD payload
+    @Test
+    void shouldCorrectlyConstructFtSugaddCommandWithArgs() {
+        SugAddArgs<String, String> args = SugAddArgs.Builder.<String, String> incr().payload("test-payload");
+        Command<String, String, Long> command = builder.ftSugadd(MY_KEY, "suggestion", 1.0, args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*7\r\n" //
+                + "$9\r\n" + "FT.SUGADD\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$10\r\n" + "suggestion\r\n" //
+                + "$3\r\n" + "1.0\r\n" //
+                + "$4\r\n" + "INCR\r\n" //
+                + "$7\r\n" + "PAYLOAD\r\n" //
+                + "$12\r\n" + "test-payload\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGDEL key string
+    @Test
+    void shouldCorrectlyConstructFtSugdelCommand() {
+        Command<String, String, Boolean> command = builder.ftSugdel(MY_KEY, "suggestion");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$9\r\n" + "FT.SUGDEL\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$10\r\n" + "suggestion\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGGET key prefix
+    @Test
+    void shouldCorrectlyConstructFtSuggetCommand() {
+        Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*3\r\n" //
+                + "$9\r\n" + "FT.SUGGET\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$3\r\n" + "pre\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGGET key prefix FUZZY WITHSCORES WITHPAYLOADS MAX 10
+    @Test
+    void shouldCorrectlyConstructFtSuggetCommandWithArgs() {
+        SugGetArgs<String, String> args = SugGetArgs.Builder.<String, String> fuzzy().withScores().withPayloads().max(10);
+        Command<String, String, List<Suggestion<String>>> command = builder.ftSugget(MY_KEY, "pre", args);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*8\r\n" //
+                + "$9\r\n" + "FT.SUGGET\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n" //
+                + "$3\r\n" + "pre\r\n" //
+                + "$5\r\n" + "FUZZY\r\n" //
+                + "$10\r\n" + "WITHSCORES\r\n" //
+                + "$12\r\n" + "WITHPAYLOADS\r\n" //
+                + "$3\r\n" + "MAX\r\n" //
+                + "$2\r\n" + "10\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    // FT.SUGLEN key
+    @Test
+    void shouldCorrectlyConstructFtSuglenCommand() {
+        Command<String, String, Long> command = builder.ftSuglen(MY_KEY);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        String result = "*2\r\n" //
+                + "$9\r\n" + "FT.SUGLEN\r\n" //
+                + "$3\r\n" + MY_KEY + "\r\n";
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }

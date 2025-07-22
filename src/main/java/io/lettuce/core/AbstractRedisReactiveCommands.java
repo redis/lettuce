@@ -51,10 +51,17 @@ import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.SpellCheckResult;
+import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
@@ -1647,6 +1654,91 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<V> ftTagvals(K index, K fieldName) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftTagvals(index, fieldName));
+    }
+
+    @Override
+    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+        return createMono(() -> searchCommandBuilder.ftSpellcheck(index, query));
+    }
+
+    @Override
+    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftSpellcheck(index, query, args));
+    }
+
+    @Override
+    public Mono<Long> ftDictadd(K dict, V... terms) {
+        return createMono(() -> searchCommandBuilder.ftDictadd(dict, terms));
+    }
+
+    @Override
+    public Mono<Long> ftDictdel(K dict, V... terms) {
+        return createMono(() -> searchCommandBuilder.ftDictdel(dict, terms));
+    }
+
+    @Override
+    public Flux<V> ftDictdump(K dict) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftDictdump(dict));
+    }
+
+    @Override
+    public Mono<String> ftExplain(K index, V query) {
+        return createMono(() -> searchCommandBuilder.ftExplain(index, query));
+    }
+
+    @Override
+    public Mono<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftExplain(index, query, args));
+    }
+
+    @Override
+    public Flux<V> ftList() {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftList());
+    }
+
+    @Override
+    public Mono<Map<V, List<V>>> ftSyndump(K index) {
+        return createMono(() -> searchCommandBuilder.ftSyndump(index));
+    }
+
+    @Override
+    public Mono<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+        return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, terms));
+    }
+
+    @Override
+    public Mono<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+        return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, args, terms));
+    }
+
+    @Override
+    public Mono<Long> ftSugadd(K key, V string, double score) {
+        return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score));
+    }
+
+    @Override
+    public Mono<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftSugadd(key, string, score, args));
+    }
+
+    @Override
+    public Mono<Boolean> ftSugdel(K key, V string) {
+        return createMono(() -> searchCommandBuilder.ftSugdel(key, string));
+    }
+
+    @Override
+    public Flux<Suggestion<V>> ftSugget(K key, V prefix) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix));
+    }
+
+    @Override
+    public Flux<Suggestion<V>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+        return createDissolvingFlux(() -> searchCommandBuilder.ftSugget(key, prefix, args));
+    }
+
+    @Override
+    public Mono<Long> ftSuglen(K key) {
+        return createMono(() -> searchCommandBuilder.ftSuglen(key));
     }
 
     @Override

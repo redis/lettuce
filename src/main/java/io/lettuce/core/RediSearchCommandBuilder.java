@@ -6,8 +6,16 @@
  */
 package io.lettuce.core;
 
+import java.util.List;
+import java.util.Map;
+
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.output.BooleanOutput;
+import io.lettuce.core.output.ComplexOutput;
 import io.lettuce.core.output.EncodedComplexOutput;
+import io.lettuce.core.output.IntegerOutput;
+
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.output.ValueListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
@@ -16,14 +24,24 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.search.AggregateReplyParser;
 import io.lettuce.core.search.AggregationReply;
+
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SearchReplyParser;
+import io.lettuce.core.search.SpellCheckResult;
+import io.lettuce.core.search.SpellCheckResultParser;
+import io.lettuce.core.search.Suggestion;
+import io.lettuce.core.search.SuggestionParser;
+import io.lettuce.core.search.SynonymMapParser;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
-import io.lettuce.core.search.arguments.SearchArgs;
 
-import java.util.List;
+import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 
 import static io.lettuce.core.protocol.CommandType.*;
 
@@ -242,6 +260,298 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index).addKey(fieldName);
 
         return createCommand(FT_TAGVALS, new ValueListOutput<>(codec), args);
+    }
+
+    /**
+     * Perform spelling correction on a query.
+     *
+     * @param index the index name
+     * @param query the search query
+     * @return the result of the spellcheck command
+     */
+    public Command<K, V, SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+        return ftSpellcheck(index, query, null);
+    }
+
+    /**
+     * Perform spelling correction on a query.
+     *
+     * @param index the index name
+     * @param query the search query
+     * @param args the spellcheck arguments
+     * @return the result of the spellcheck command
+     */
+    public Command<K, V, SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+        notNullKey(index);
+        LettuceAssert.notNull(query, "Query must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index).addValue(query);
+
+        if (args != null) {
+            args.build(commandArgs);
+        }
+
+        SpellCheckResultParser<K, V> parser = new SpellCheckResultParser<>(codec);
+        return createCommand(FT_SPELLCHECK, new EncodedComplexOutput<>(codec, parser), commandArgs);
+    }
+
+    /**
+     * Add terms to a dictionary.
+     *
+     * @param dict the dictionary name
+     * @param terms the terms to add to the dictionary
+     * @return the result of the dictadd command
+     */
+    @SafeVarargs
+    public final Command<K, V, Long> ftDictadd(K dict, V... terms) {
+        notNullKey(dict);
+        LettuceAssert.notNull(terms, "Terms must not be null");
+        LettuceAssert.isTrue(terms.length > 0, "At least one term must be provided");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
+        for (V term : terms) {
+            LettuceAssert.notNull(term, "Term must not be null");
+            commandArgs.addValue(term);
+        }
+
+        return createCommand(FT_DICTADD, new IntegerOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Delete terms from a dictionary.
+     *
+     * @param dict the dictionary name
+     * @param terms the terms to delete from the dictionary
+     * @return the result of the dictdel command
+     */
+    @SafeVarargs
+    public final Command<K, V, Long> ftDictdel(K dict, V... terms) {
+        notNullKey(dict);
+        LettuceAssert.notNull(terms, "Terms must not be null");
+        LettuceAssert.isTrue(terms.length > 0, "At least one term must be provided");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
+        for (V term : terms) {
+            LettuceAssert.notNull(term, "Term must not be null");
+            commandArgs.addValue(term);
+        }
+
+        return createCommand(FT_DICTDEL, new IntegerOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Dump all terms in a dictionary.
+     *
+     * @param dict the dictionary name
+     * @return the result of the dictdump command
+     */
+    public Command<K, V, List<V>> ftDictdump(K dict) {
+        notNullKey(dict);
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
+
+        return createCommand(FT_DICTDUMP, new ValueListOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Return the execution plan for a complex query.
+     *
+     * @param index the index name
+     * @param query the search query
+     * @return the execution plan as a string
+     */
+    public Command<K, V, String> ftExplain(K index, V query) {
+        return ftExplain(index, query, null);
+    }
+
+    /**
+     * Return the execution plan for a complex query.
+     *
+     * @param index the index name
+     * @param query the search query
+     * @param args the explain arguments
+     * @return the execution plan as a string
+     */
+    public Command<K, V, String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+        notNullKey(index);
+        LettuceAssert.notNull(query, "Query must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index).addValue(query);
+
+        if (args != null) {
+            args.build(commandArgs);
+        }
+
+        return createCommand(FT_EXPLAIN, new StatusOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Return a list of all existing indexes.
+     *
+     * @return the list of index names
+     */
+    public Command<K, V, List<V>> ftList() {
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec);
+        return createCommand(FT_LIST, new ValueListOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Dump synonym group contents.
+     *
+     * @param index the index name
+     * @return a map where keys are synonym terms and values are lists of group IDs containing that synonym
+     */
+    public Command<K, V, Map<V, List<V>>> ftSyndump(K index) {
+        notNullKey(index);
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index);
+
+        return createCommand(FT_SYNDUMP, new EncodedComplexOutput<>(codec, new SynonymMapParser<>(codec)), commandArgs);
+    }
+
+    /**
+     * Update a synonym group with additional terms.
+     *
+     * @param index the index name
+     * @param synonymGroupId the synonym group ID
+     * @param terms the terms to add to the synonym group
+     * @return the result of the synupdate command
+     */
+    @SafeVarargs
+    public final Command<K, V, String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+        return ftSynupdate(index, synonymGroupId, null, terms);
+    }
+
+    /**
+     * Update a synonym group with additional terms.
+     *
+     * @param index the index name
+     * @param synonymGroupId the synonym group ID
+     * @param args the synupdate arguments
+     * @param terms the terms to add to the synonym group
+     * @return the result of the synupdate command
+     */
+    @SafeVarargs
+    public final Command<K, V, String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+        notNullKey(index);
+        LettuceAssert.notNull(synonymGroupId, "Synonym group ID must not be null");
+        LettuceAssert.notNull(terms, "Terms must not be null");
+        LettuceAssert.isTrue(terms.length > 0, "At least one term must be provided");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index).addValue(synonymGroupId);
+
+        if (args != null) {
+            args.build(commandArgs);
+        }
+
+        for (V term : terms) {
+            LettuceAssert.notNull(term, "Term must not be null");
+            commandArgs.addValue(term);
+        }
+
+        return createCommand(FT_SYNUPDATE, new StatusOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Add a suggestion string to an auto-complete suggestion dictionary.
+     *
+     * @param key the suggestion dictionary key
+     * @param string the suggestion string to index
+     * @param score the floating point number of the suggestion string's weight
+     * @return the result of the sugadd command
+     */
+    public Command<K, V, Long> ftSugadd(K key, V string, double score) {
+        return ftSugadd(key, string, score, null);
+    }
+
+    /**
+     * Add a suggestion string to an auto-complete suggestion dictionary.
+     *
+     * @param key the suggestion dictionary key
+     * @param string the suggestion string to index
+     * @param score the floating point number of the suggestion string's weight
+     * @param args the suggestion add arguments
+     * @return the result of the sugadd command
+     */
+    public Command<K, V, Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
+        notNullKey(key);
+        LettuceAssert.notNull(string, "String must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).addValue(string).add(score);
+
+        if (args != null) {
+            args.build(commandArgs);
+        }
+
+        return createCommand(FT_SUGADD, new IntegerOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Delete a string from a suggestion dictionary.
+     *
+     * @param key the suggestion dictionary key
+     * @param string the suggestion string to delete
+     * @return the result of the sugdel command
+     */
+    public Command<K, V, Boolean> ftSugdel(K key, V string) {
+        notNullKey(key);
+        LettuceAssert.notNull(string, "String must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).addValue(string);
+
+        return createCommand(FT_SUGDEL, new BooleanOutput<>(codec), commandArgs);
+    }
+
+    /**
+     * Get completion suggestions for a prefix.
+     *
+     * @param key the suggestion dictionary key
+     * @param prefix the prefix to complete on
+     * @return the result of the sugget command
+     */
+    public Command<K, V, List<Suggestion<V>>> ftSugget(K key, V prefix) {
+        return ftSugget(key, prefix, null);
+    }
+
+    /**
+     * Get completion suggestions for a prefix.
+     *
+     * @param key the suggestion dictionary key
+     * @param prefix the prefix to complete on
+     * @param args the suggestion get arguments
+     * @return the result of the sugget command
+     */
+    public Command<K, V, List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+        notNullKey(key);
+        LettuceAssert.notNull(prefix, "Prefix must not be null");
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key).addValue(prefix);
+
+        boolean withScores = false;
+        boolean withPayloads = false;
+
+        if (args != null) {
+            withScores = args.isWithScores();
+            withPayloads = args.isWithPayloads();
+            args.build(commandArgs);
+        }
+
+        SuggestionParser<V> parser = new SuggestionParser<>(withScores, withPayloads);
+        return createCommand(FT_SUGGET, new ComplexOutput<>(codec, parser), commandArgs);
+    }
+
+    /**
+     * Get the size of an auto-complete suggestion dictionary.
+     *
+     * @param key the suggestion dictionary key
+     * @return the result of the suglen command
+     */
+    public Command<K, V, Long> ftSuglen(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(key);
+
+        return createCommand(FT_SUGLEN, new IntegerOutput<>(codec), commandArgs);
     }
 
     /**

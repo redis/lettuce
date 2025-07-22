@@ -15,21 +15,35 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
+
+import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
+import io.lettuce.core.search.arguments.VectorFieldArgs;
+import io.lettuce.core.search.arguments.GeoFieldArgs;
+import io.lettuce.core.search.arguments.GeoshapeFieldArgs;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -740,11 +754,389 @@ public class RediSearchIntegrationTests {
 
         // Test with non-existent field should return empty list
 
-        Exception exception = assertThrows(RedisCommandExecutionException.class, () -> {
-            List<String> emptyTagValues = redis.ftTagvals(testIndex, "nonexistent");
-        });
-
+        assertThrows(RedisCommandExecutionException.class, () -> redis.ftTagvals(testIndex, "nonexistent"));
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.SUGADD, FT.SUGGET, FT.SUGDEL, and FT.SUGLEN commands for auto-complete functionality.
+     */
+    @Test
+    void testFtSuggestionCommands() {
+        String suggestionKey = "autocomplete:cities";
+
+        // Test FT.SUGADD - Add suggestions with different scores
+        assertThat(redis.ftSugadd(suggestionKey, "New York", 1.0)).isEqualTo(1L);
+        assertThat(redis.ftSugadd(suggestionKey, "New Orleans", 0.8)).isEqualTo(2L);
+        assertThat(redis.ftSugadd(suggestionKey, "Newark", 0.6)).isEqualTo(3L);
+        assertThat(redis.ftSugadd(suggestionKey, "Boston", 0.9)).isEqualTo(4L);
+        assertThat(redis.ftSugadd(suggestionKey, "Barcelona", 0.7)).isEqualTo(5L);
+
+        // Test FT.SUGLEN - Get dictionary size
+        assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(5L);
+
+        // Test FT.SUGGET - Get suggestions for prefix
+        List<Suggestion<String>> suggestions = redis.ftSugget(suggestionKey, "New");
+        assertThat(suggestions).hasSize(3);
+        assertThat(suggestions.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans",
+                "Newark");
+
+        // Test FT.SUGGET with MAX limit
+        SugGetArgs<String, String> maxArgs = SugGetArgs.Builder.max(2);
+        List<Suggestion<String>> limitedSuggestions = redis.ftSugget(suggestionKey, "New", maxArgs);
+        assertThat(limitedSuggestions).hasSize(2);
+
+        // Test FT.SUGGET with FUZZY matching
+        SugGetArgs<String, String> fuzzyArgs = SugGetArgs.Builder.fuzzy();
+        List<Suggestion<String>> fuzzySuggestions = redis.ftSugget(suggestionKey, "Bost", fuzzyArgs);
+        assertThat(fuzzySuggestions.stream().map(Suggestion::getValue)).contains("Boston");
+
+        // Test FT.SUGDEL - Delete a suggestion
+        assertThat(redis.ftSugdel(suggestionKey, "Newark")).isTrue();
+        assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(4L);
+
+        // Verify deletion
+        List<Suggestion<String>> afterDeletion = redis.ftSugget(suggestionKey, "New");
+        assertThat(afterDeletion).hasSize(2);
+        assertThat(afterDeletion.stream().map(Suggestion::getValue)).containsExactlyInAnyOrder("New York", "New Orleans");
+
+        // Test deleting non-existent suggestion
+        assertThat(redis.ftSugdel(suggestionKey, "NonExistent")).isFalse();
+
+        // Test FT.SUGADD with INCR and PAYLOAD
+        SugAddArgs<String, String> incrArgs = SugAddArgs.Builder.<String, String> incr().payload("US-East");
+        assertThat(redis.ftSugadd(suggestionKey, "New York", 0.5, incrArgs)).isEqualTo(4L);
+
+        // Test FT.SUGGET with WITHSCORES and WITHPAYLOADS
+        SugGetArgs<String, String> withExtrasArgs = SugGetArgs.Builder.<String, String> withScores().withPayloads();
+        List<Suggestion<String>> detailedSuggestions = redis.ftSugget(suggestionKey, "New", withExtrasArgs);
+        assertThat(detailedSuggestions).isNotEmpty();
+
+        // Verify that suggestions with scores and payloads are properly parsed
+        for (Suggestion<String> suggestion : detailedSuggestions) {
+            assertThat(suggestion.getValue()).isNotNull();
+            if ("New York".equals(suggestion.getValue())) {
+                assertThat(suggestion.hasScore()).isTrue();
+                assertThat(suggestion.hasPayload()).isTrue();
+                assertThat(suggestion.getPayload()).isEqualTo("US-East");
+            }
+        }
+
+        // Cleanup - delete all suggestions
+        redis.ftSugdel(suggestionKey, "New York");
+        redis.ftSugdel(suggestionKey, "New Orleans");
+        redis.ftSugdel(suggestionKey, "Boston");
+        redis.ftSugdel(suggestionKey, "Barcelona");
+
+        assertThat(redis.ftSuglen(suggestionKey)).isEqualTo(0L);
+    }
+
+    /**
+     * Test FT.DICTADD, FT.DICTDEL, and FT.DICTDUMP commands for dictionary functionality.
+     */
+    @Test
+    void testFtDictionaryCommands() {
+        String dictKey = "stopwords:english";
+
+        // Test FT.DICTADD - Add terms to dictionary
+        assertThat(redis.ftDictadd(dictKey, "the", "and", "or")).isEqualTo(3L);
+        assertThat(redis.ftDictadd(dictKey, "but", "not")).isEqualTo(2L);
+
+        // Test adding duplicate terms (should return 0 for duplicates)
+        assertThat(redis.ftDictadd(dictKey, "the", "and")).isEqualTo(0L);
+
+        // Test FT.DICTDUMP - Get all terms in dictionary
+        List<String> allTerms = redis.ftDictdump(dictKey);
+        assertThat(allTerms).hasSize(5);
+        assertThat(allTerms).containsExactlyInAnyOrder("the", "and", "or", "but", "not");
+
+        // Test FT.DICTDEL - Delete terms from dictionary
+        assertThat(redis.ftDictdel(dictKey, "or", "not")).isEqualTo(2L);
+
+        // Test deleting non-existent terms
+        assertThat(redis.ftDictdel(dictKey, "nonexistent")).isEqualTo(0L);
+
+        // Verify deletion
+        List<String> remainingTerms = redis.ftDictdump(dictKey);
+        assertThat(remainingTerms).hasSize(3);
+        assertThat(remainingTerms).containsExactlyInAnyOrder("the", "and", "but");
+
+        // Test adding more terms
+        assertThat(redis.ftDictadd(dictKey, "with", "from", "by")).isEqualTo(3L);
+
+        // Final verification
+        List<String> finalTerms = redis.ftDictdump(dictKey);
+        assertThat(finalTerms).hasSize(6);
+        assertThat(finalTerms).containsExactlyInAnyOrder("the", "and", "but", "with", "from", "by");
+
+        // Cleanup - delete all terms
+        redis.ftDictdel(dictKey, finalTerms.toArray(new String[0]));
+
+        // Verify empty dictionary
+        List<String> emptyDict = redis.ftDictdump(dictKey);
+        assertThat(emptyDict).isEmpty();
+    }
+
+    /**
+     * Test FT.SPELLCHECK command for spelling correction functionality.
+     */
+    @Test
+    void testFtSpellcheckCommand() {
+        String testIndex = "spellcheck-idx";
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+
+        // Create an index with some documents
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("doc:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
+
+        // Add some documents to build the vocabulary
+        Map<String, String> doc1 = new HashMap<>();
+        doc1.put("title", "Redis Search");
+        doc1.put("content", "Redis is a fast in-memory database");
+        redis.hmset("doc:1", doc1);
+
+        Map<String, String> doc2 = new HashMap<>();
+        doc2.put("title", "Database Performance");
+        doc2.put("content", "Performance optimization techniques");
+        redis.hmset("doc:2", doc2);
+
+        Map<String, String> doc3 = new HashMap<>();
+        doc3.put("title", "Memory Management");
+        doc3.put("content", "Efficient memory usage patterns");
+        redis.hmset("doc:3", doc3);
+
+        Map<String, String> doc4 = new HashMap<>();
+        doc4.put("title", "Search Engine");
+        doc4.put("content", "Full text search capabilities");
+        redis.hmset("doc:4", doc4);
+
+        // Test basic spellcheck with misspelled words
+        SpellCheckResult<String> result = redis.ftSpellcheck(testIndex, "reids serch");
+        assertThat(result.hasMisspelledTerms()).isTrue();
+        assertThat(result.getMisspelledTermCount()).isEqualTo(2);
+
+        // Check first misspelled term "reids"
+        SpellCheckResult.MisspelledTerm<String> firstTerm = result.getMisspelledTerms().get(0);
+        assertThat(firstTerm.getTerm()).isEqualTo("reids");
+        assertThat(firstTerm.hasSuggestions()).isFalse();
+
+        // Check second misspelled term "serch"
+        SpellCheckResult.MisspelledTerm<String> secondTerm = result.getMisspelledTerms().get(1);
+        assertThat(secondTerm.getTerm()).isEqualTo("serch");
+        assertThat(secondTerm.hasSuggestions()).isTrue();
+
+        // Check if "search" is suggested for "serch"
+        boolean hasSearchSuggestion = secondTerm.getSuggestions().stream()
+                .anyMatch(suggestion -> "search".equalsIgnoreCase(suggestion.getSuggestion()));
+        assertThat(hasSearchSuggestion).isTrue();
+
+        // Test spellcheck with distance parameter
+        SpellCheckArgs<String, String> distanceArgs = SpellCheckArgs.Builder.distance(2);
+        SpellCheckResult<String> distanceResult = redis.ftSpellcheck(testIndex, "databse", distanceArgs);
+        assertThat(distanceResult.hasMisspelledTerms()).isTrue();
+
+        // Test spellcheck with custom dictionary
+        String dictKey = "custom-dict";
+        redis.ftDictadd(dictKey, "elasticsearch", "solr", "lucene");
+
+        SpellCheckArgs<String, String> includeArgs = SpellCheckArgs.Builder.termsInclude(dictKey);
+        SpellCheckResult<String> includeResult = redis.ftSpellcheck(testIndex, "elasticsearh", includeArgs);
+        assertThat(includeResult.hasMisspelledTerms()).isTrue();
+
+        // Test spellcheck with exclude dictionary
+        SpellCheckArgs<String, String> excludeArgs = SpellCheckArgs.Builder.termsExclude(dictKey);
+        SpellCheckResult<String> excludeResult = redis.ftSpellcheck(testIndex, "elasticsearh", excludeArgs);
+        assertThat(excludeResult.hasMisspelledTerms()).isTrue();
+
+        // Test spellcheck with correct words (should return no misspelled terms)
+        SpellCheckResult<String> correctResult = redis.ftSpellcheck(testIndex, "redis search");
+        assertThat(correctResult.hasMisspelledTerms()).isFalse();
+        assertThat(correctResult.getMisspelledTermCount()).isEqualTo(0);
+
+        // Cleanup
+        redis.ftDictdel(dictKey, "elasticsearch", "solr", "lucene");
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT.EXPLAIN command for query execution plan analysis.
+     */
+    @Test
+    void testFtExplainCommand() {
+        String testIndex = "explain-idx";
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+
+        // Create an index
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("doc:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
+
+        // Test basic explain
+        String basicExplain = redis.ftExplain(testIndex, "hello world");
+        assertThat(basicExplain).isNotNull();
+        assertThat(basicExplain).isNotEmpty();
+        assertThat(basicExplain).contains("INTERSECT", "UNION", "hello", "world");
+
+        // Test explain with dialect
+        ExplainArgs<String, String> dialectArgs = ExplainArgs.Builder.dialect(QueryDialects.DIALECT1);
+        String dialectExplain = redis.ftExplain(testIndex, "hello world", dialectArgs);
+        assertThat(dialectExplain).isNotNull();
+        assertThat(dialectExplain).isNotEmpty();
+        assertThat(dialectExplain).contains("INTERSECT", "UNION", "hello", "world");
+
+        // Test complex query explain
+        String complexExplain = redis.ftExplain(testIndex, "@title:hello @content:world");
+        assertThat(complexExplain).isNotNull();
+        assertThat(complexExplain).isNotEmpty();
+        assertThat(complexExplain).contains("INTERSECT", "@title:UNION", "@title:hello", "@content:UNION", "@content:world");
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test FT._LIST command for listing all indexes.
+     */
+    @Test
+    void testFtListCommand() {
+        String testIndex1 = "list-idx-1";
+        String testIndex2 = "list-idx-2";
+
+        // Get initial list of indexes
+        List<String> initialIndexes = redis.ftList();
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+
+        // Create first index
+        CreateArgs<String, String> createArgs1 = CreateArgs.<String, String> builder().addPrefix("doc1:")
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate(testIndex1, createArgs1, Collections.singletonList(titleField))).isEqualTo("OK");
+
+        // Create second index
+        CreateArgs<String, String> createArgs2 = CreateArgs.<String, String> builder().addPrefix("doc2:")
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate(testIndex2, createArgs2, Collections.singletonList(titleField))).isEqualTo("OK");
+
+        // Get updated list of indexes
+        List<String> updatedIndexes = redis.ftList();
+
+        // Verify that the new indexes are in the list
+        assertThat(updatedIndexes).contains(testIndex1, testIndex2);
+        assertThat(updatedIndexes.size()).isEqualTo(initialIndexes.size() + 2);
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex1)).isEqualTo("OK");
+        assertThat(redis.ftDropindex(testIndex2)).isEqualTo("OK");
+
+        // Verify indexes are removed
+        List<String> finalIndexes = redis.ftList();
+        assertThat(finalIndexes).doesNotContain(testIndex1, testIndex2);
+        assertThat(finalIndexes.size()).isEqualTo(initialIndexes.size());
+    }
+
+    /**
+     * Test FT.SYNDUMP and FT.SYNUPDATE commands for synonym management.
+     */
+    @Test
+    void testFtSynonymCommands() {
+        String testIndex = "synonym-idx";
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+
+        // Create an index
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("doc:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField))).isEqualTo("OK");
+
+        // Test initial synonym dump (should be empty)
+        Map<String, List<String>> initialSynonyms = redis.ftSyndump(testIndex);
+        assertThat(initialSynonyms).isEmpty();
+
+        // Test basic synonym update
+        String result1 = redis.ftSynupdate(testIndex, "group1", "car", "automobile", "vehicle");
+        assertThat(result1).isEqualTo("OK");
+
+        // Test synonym dump after update
+        Map<String, List<String>> synonymsAfterUpdate = redis.ftSyndump(testIndex);
+        assertThat(synonymsAfterUpdate).isNotEmpty();
+
+        // Verify the synonym group structure
+        // Redis returns a map where each synonym is a key and the value is a list containing the group ID
+        assertThat(synonymsAfterUpdate).hasSize(3);
+        assertThat(synonymsAfterUpdate).containsKeys("car", "automobile", "vehicle");
+        assertThat(synonymsAfterUpdate.get("car")).containsExactly("group1");
+        assertThat(synonymsAfterUpdate.get("automobile")).containsExactly("group1");
+        assertThat(synonymsAfterUpdate.get("vehicle")).containsExactly("group1");
+
+        // Test synonym update with SKIPINITIALSCAN
+        SynUpdateArgs<String, String> skipArgs = SynUpdateArgs.Builder.skipInitialScan();
+        String result2 = redis.ftSynupdate(testIndex, "group2", skipArgs, "fast", "quick", "rapid");
+        assertThat(result2).isEqualTo("OK");
+
+        // Test synonym dump after second update
+        Map<String, List<String>> finalSynonyms = redis.ftSyndump(testIndex);
+        assertThat(finalSynonyms).isNotEmpty();
+        assertThat(finalSynonyms.size()).isGreaterThan(synonymsAfterUpdate.size());
+
+        // Verify both synonym groups exist (each synonym maps to its group)
+        assertThat(finalSynonyms).containsKeys("car", "automobile", "vehicle", "fast", "quick", "rapid");
+        assertThat(finalSynonyms.get("fast")).containsExactly("group2");
+        assertThat(finalSynonyms.get("quick")).containsExactly("group2");
+        assertThat(finalSynonyms.get("rapid")).containsExactly("group2");
+
+        // Test updating existing synonym group
+        String result3 = redis.ftSynupdate(testIndex, "group1", "car", "automobile", "vehicle", "auto");
+        assertThat(result3).isEqualTo("OK");
+
+        // Verify updated synonym group
+        Map<String, List<String>> updatedSynonyms = redis.ftSyndump(testIndex);
+        assertThat(updatedSynonyms).containsKeys("car", "automobile", "vehicle", "auto");
+        assertThat(updatedSynonyms.get("auto")).containsExactly("group1");
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Helper method to encode a float vector as a byte array for Redis vector search. Redis expects vector data as binary
+     * representation of float values.
+     */
+    private String encodeFloatVector(float[] vector) {
+        ByteBuffer buffer = ByteBuffer.allocate(vector.length * 4).order(ByteOrder.LITTLE_ENDIAN);
+        for (float value : vector) {
+            buffer.putFloat(value);
+        }
+        return new String(buffer.array(), StandardCharsets.ISO_8859_1);
+    }
+
+    /**
+     * Helper method to create a bicycle document with all required fields.
+     */
+    private void createBicycleDocument(String key, String pickupZone, String storeLocation, String brand, String model,
+            int price, String description, String condition) {
+        Map<String, String> document = new HashMap<>();
+        document.put("pickup_zone", pickupZone);
+        document.put("store_location", storeLocation);
+        document.put("brand", brand);
+        document.put("model", model);
+        document.put("price", String.valueOf(price));
+        document.put("description", description);
+        document.put("condition", condition);
+
+        assertThat(redis.hmset(key, document)).isEqualTo("OK");
     }
 
 }
