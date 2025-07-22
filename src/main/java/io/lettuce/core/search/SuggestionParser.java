@@ -8,6 +8,8 @@ package io.lettuce.core.search;
 
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,8 @@ import java.util.List;
  * @since 6.8
  */
 public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>>> {
+
+    private static final InternalLogger LOG = InternalLoggerFactory.getInstance(SuggestionParser.class);
 
     private final boolean withScores;
 
@@ -60,7 +64,6 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
      *
      * @param data output of FT.SUGGET command
      * @return a list of {@link Suggestion} objects
-     * @throws IllegalArgumentException if the input data is null or has an invalid format
      */
     @Override
     @SuppressWarnings("unchecked")
@@ -76,17 +79,25 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
             return suggestions;
         }
 
+        int divisor = 1;
+        divisor += withScores ? 1 : 0;
+        divisor += withPayloads ? 1 : 0;
+        if (elements.size() % divisor != 0) {
+            LOG.warn("Failed while parsing FT.SUGGET: expected elements to be dividable by {}", divisor);
+            return suggestions;
+        }
+
         for (int i = 0; i < elements.size();) {
 
             V value = (V) elements.get(i++);
             Suggestion<V> suggestion = new Suggestion<>(value);
 
-            if (withScores) {
+            if (withScores && i + 1 <= elements.size()) {
                 Double score = parseScore(elements.get(i++));
                 suggestion.setScore(score);
             }
 
-            if (withPayloads) {
+            if (withPayloads && i + 1 <= elements.size()) {
                 V payload = (V) elements.get(i++);
                 suggestion.setPayload(payload);
             }
@@ -110,10 +121,6 @@ public class SuggestionParser<V> implements ComplexDataParser<List<Suggestion<V>
 
         if (scoreObj instanceof Double) {
             return (Double) scoreObj;
-        }
-
-        if (scoreObj instanceof Number) {
-            return ((Number) scoreObj).doubleValue();
         }
 
         return 0.0;

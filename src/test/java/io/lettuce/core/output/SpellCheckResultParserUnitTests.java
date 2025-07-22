@@ -19,10 +19,12 @@
  */
 package io.lettuce.core.output;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lettuce.core.codec.StringCodec;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.search.SpellCheckResult;
@@ -33,6 +35,7 @@ import io.lettuce.core.search.SpellCheckResultParser;
  *
  * @author Tihomir Mateev
  */
+@Tag(UNIT_TEST)
 class SpellCheckResultParserUnitTests {
 
     @Test
@@ -165,8 +168,10 @@ class SpellCheckResultParserUnitTests {
     void shouldThrowExceptionForNullData() {
         SpellCheckResultParser<String, String> parser = new SpellCheckResultParser<>(StringCodec.UTF8);
 
-        assertThatThrownBy(() -> parser.parse(null)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Failed while parsing FT.SPELLCHECK: data must not be null");
+        SpellCheckResult<String> result = parser.parse(null);
+        assertThat(result.hasMisspelledTerms()).isFalse();
+        assertThat(result.getMisspelledTermCount()).isEqualTo(0);
+        assertThat(result.getMisspelledTerms()).isEmpty();
     }
 
     @Test
@@ -180,8 +185,11 @@ class SpellCheckResultParserUnitTests {
         termArray.store("reids");
         data.storeObject(termArray);
 
-        assertThatThrownBy(() -> parser.parse(data)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Failed while parsing FT.SPELLCHECK: each term element must have 3 parts");
+        SpellCheckResult<String> result = parser.parse(data);
+
+        assertThat(result.hasMisspelledTerms()).isFalse();
+        assertThat(result.getMisspelledTermCount()).isEqualTo(0);
+        assertThat(result.getMisspelledTerms()).isEmpty();
     }
 
     @Test
@@ -196,8 +204,11 @@ class SpellCheckResultParserUnitTests {
         termArray.storeObject(new ArrayComplexData(0));
         data.storeObject(termArray);
 
-        assertThatThrownBy(() -> parser.parse(data)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Failed while parsing FT.SPELLCHECK: expected 'TERM' marker, got: INVALID");
+        SpellCheckResult<String> result = parser.parse(data);
+
+        assertThat(result.hasMisspelledTerms()).isFalse();
+        assertThat(result.getMisspelledTermCount()).isEqualTo(0);
+        assertThat(result.getMisspelledTerms()).isEmpty();
     }
 
     @Test

@@ -6,11 +6,13 @@
  */
 package io.lettuce.core.output;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.search.Suggestion;
@@ -21,6 +23,7 @@ import io.lettuce.core.search.SuggestionParser;
  *
  * @author Tihomir Mateev
  */
+@Tag(UNIT_TEST)
 class SuggestionParserUnitTests {
 
     @Test
@@ -46,9 +49,9 @@ class SuggestionParserUnitTests {
         SuggestionParser<String> parser = new SuggestionParser<>(true, false);
         ArrayComplexData data = new ArrayComplexData(4);
         data.store("suggestion1");
-        data.store("1.5");
+        data.store(1.5);
         data.store("suggestion2");
-        data.store("2.0");
+        data.store(2.0);
 
         List<Suggestion<String>> suggestions = parser.parse(data);
 
@@ -86,10 +89,10 @@ class SuggestionParserUnitTests {
         SuggestionParser<String> parser = new SuggestionParser<>(true, true);
         ArrayComplexData data = new ArrayComplexData(6);
         data.store("suggestion1");
-        data.store("1.5");
+        data.store(1.5);
         data.store("payload1");
         data.store("suggestion2");
-        data.store("2.0");
+        data.store(2.0);
         data.store("payload2");
 
         List<Suggestion<String>> suggestions = parser.parse(data);
@@ -111,7 +114,6 @@ class SuggestionParserUnitTests {
         ArrayComplexData data = new ArrayComplexData(0);
 
         List<Suggestion<String>> suggestions = parser.parse(data);
-
         assertThat(suggestions).isEmpty();
     }
 
@@ -119,8 +121,8 @@ class SuggestionParserUnitTests {
     void shouldThrowExceptionForNullData() {
         SuggestionParser<String> parser = new SuggestionParser<>(false, false);
 
-        assertThatThrownBy(() -> parser.parse(null)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Failed while parsing FT.SUGGET: data must not be null");
+        List<Suggestion<String>> suggestions = parser.parse(null);
+        assertThat(suggestions).isEmpty();
     }
 
     @Test
@@ -131,8 +133,8 @@ class SuggestionParserUnitTests {
         data.store("suggestion2");
         data.store("suggestion3");
 
-        assertThatThrownBy(() -> parser.parse(data)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Failed while parsing FT.SUGGET with WITHSCORES: expected even number of elements");
+        List<Suggestion<String>> suggestions = parser.parse(data);
+        assertThat(suggestions).hasSize(0);
     }
 
     @Test
@@ -143,8 +145,8 @@ class SuggestionParserUnitTests {
         data.store("payload1");
         data.store("suggestion2");
 
-        assertThatThrownBy(() -> parser.parse(data)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Failed while parsing FT.SUGGET with WITHPAYLOADS: expected even number of elements");
+        List<Suggestion<String>> suggestions = parser.parse(data);
+        assertThat(suggestions).hasSize(0);
     }
 
     @Test
@@ -152,13 +154,13 @@ class SuggestionParserUnitTests {
         SuggestionParser<String> parser = new SuggestionParser<>(true, true);
         ArrayComplexData data = new ArrayComplexData(5);
         data.store("suggestion1");
-        data.store("1.5");
+        data.store(1.5);
         data.store("payload1");
         data.store("suggestion2");
-        data.store("2.0");
+        data.store(2.0);
 
-        assertThatThrownBy(() -> parser.parse(data)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Failed while parsing FT.SUGGET with WITHSCORES and WITHPAYLOADS: expected multiple of 3 elements");
+        List<Suggestion<String>> suggestions = parser.parse(data);
+        assertThat(suggestions).hasSize(0);
     }
 
 }

@@ -19,12 +19,12 @@
  */
 package io.lettuce.core.output;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.codec.StringCodec;
@@ -35,6 +35,7 @@ import io.lettuce.core.search.SynonymMapParser;
  *
  * @author Tihomir Mateev
  */
+@Tag(UNIT_TEST)
 class SynonymMapParserUnitTests {
 
     private final StringCodec codec = StringCodec.UTF8;
@@ -43,24 +44,25 @@ class SynonymMapParserUnitTests {
 
     @Test
     void shouldParseResp2Format() {
+
         // RESP2: ["term1", ["synonym1", "synonym2"], "term2", ["synonym3"]]
         ComplexData data = new ArrayComplexData(4);
 
         // Add term1
-        data.store("term1");
+        data.storeObject(StringCodec.UTF8.encodeKey("term1"));
 
         // Add synonyms for term1
         ComplexData synonyms1 = new ArrayComplexData(2);
-        synonyms1.store("synonym1");
-        synonyms1.store("synonym2");
+        synonyms1.storeObject(StringCodec.UTF8.encodeKey("synonym1"));
+        synonyms1.storeObject(StringCodec.UTF8.encodeKey("synonym2"));
         data.storeObject(synonyms1);
 
         // Add term2
-        data.store("term2");
+        data.storeObject(StringCodec.UTF8.encodeKey("term2"));
 
         // Add synonyms for term2
         ComplexData synonyms2 = new ArrayComplexData(1);
-        synonyms2.store("synonym3");
+        synonyms2.storeObject(StringCodec.UTF8.encodeKey("synonym3"));
         data.storeObject(synonyms2);
 
         Map<String, List<String>> result = parser.parse(data);
@@ -76,16 +78,16 @@ class SynonymMapParserUnitTests {
         ComplexData data = new MapComplexData(2);
 
         // Add term1 and its synonyms
-        data.store("term1");
+        data.storeObject(StringCodec.UTF8.encodeKey("term1"));
         ComplexData synonyms1 = new ArrayComplexData(2);
-        synonyms1.store("synonym1");
-        synonyms1.store("synonym2");
+        synonyms1.storeObject(StringCodec.UTF8.encodeKey("synonym1"));
+        synonyms1.storeObject(StringCodec.UTF8.encodeKey("synonym2"));
         data.storeObject(synonyms1);
 
         // Add term2 and its synonyms
-        data.store("term2");
+        data.storeObject(StringCodec.UTF8.encodeKey("term2"));
         ComplexData synonyms2 = new ArrayComplexData(1);
-        synonyms2.store("synonym3");
+        synonyms2.storeObject(StringCodec.UTF8.encodeKey("synonym3"));
         data.storeObject(synonyms2);
 
         Map<String, List<String>> result = parser.parse(data);
@@ -116,9 +118,11 @@ class SynonymMapParserUnitTests {
     @Test
     void shouldHandleSingleSynonymResp2() {
         // RESP2: ["term1", "synonym1"] (single synonym, not in array)
-        ComplexData data = new ArrayComplexData(2);
-        data.store("term1");
-        data.store("synonym1");
+        ComplexData data = new ArrayComplexData(1);
+        data.storeObject(StringCodec.UTF8.encodeKey("term1"));
+        ComplexData synonymData = new ArrayComplexData(1);
+        synonymData.storeObject(StringCodec.UTF8.encodeKey("synonym1"));
+        data.storeObject(synonymData);
 
         Map<String, List<String>> result = parser.parse(data);
 
@@ -130,8 +134,10 @@ class SynonymMapParserUnitTests {
     void shouldHandleSingleSynonymResp3() {
         // RESP3: {"term1": "synonym1"} (single synonym, not in array)
         ComplexData data = new MapComplexData(1);
-        data.store("term1");
-        data.store("synonym1");
+        data.storeObject(StringCodec.UTF8.encodeKey("term1"));
+        ComplexData synonymData = new ArrayComplexData(1);
+        synonymData.storeObject(StringCodec.UTF8.encodeKey("synonym1"));
+        data.storeObject(synonymData);
 
         Map<String, List<String>> result = parser.parse(data);
 
@@ -141,21 +147,9 @@ class SynonymMapParserUnitTests {
 
     @Test
     void shouldThrowExceptionForNullData() {
-        assertThatThrownBy(() -> parser.parse(null)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Failed while parsing FT.SYNDUMP: data must not be null");
-    }
+        Map<String, List<String>> result = parser.parse(null);
+        assertThat(result).isEmpty();
 
-    @Test
-    void shouldHandleStringValues() {
-        // Test with already decoded string values (e.g., in test scenarios)
-        ComplexData data = new ArrayComplexData(2);
-        data.storeObject("term1");
-        data.storeObject("synonym1");
-
-        Map<String, List<String>> result = parser.parse(data);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get("term1")).containsExactly("synonym1");
     }
 
 }
