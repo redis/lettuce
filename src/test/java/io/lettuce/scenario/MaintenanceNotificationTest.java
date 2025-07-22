@@ -60,8 +60,6 @@ public class MaintenanceNotificationTest {
 
     private static final Duration PING_TIMEOUT = Duration.ofSeconds(10); // 10 seconds - for ping operations
 
-    private static final Duration SHORT_MONITORING = Duration.ofSeconds(30); // 30 seconds - for short monitoring
-
     private static final Duration COMMAND_CHECK_INTERVAL = Duration.ofSeconds(10); // 10 seconds - for command status checks
 
     // Track original cluster state for proper cleanup
@@ -222,8 +220,10 @@ public class MaintenanceNotificationTest {
                                     + targetNodeNum;
                             log.info("Executing restoration migration: {}", migrateCommand);
 
-                            StepVerifier.create(faultClient.executeRladminCommand(bdbId, migrateCommand, COMMAND_CHECK_INTERVAL,
-                                    LONG_OPERATION_TIMEOUT)).expectNext(true).verifyComplete();
+                            StepVerifier
+                                    .create(faultClient.executeRladminCommand(bdbId, migrateCommand, COMMAND_CHECK_INTERVAL,
+                                            LONG_OPERATION_TIMEOUT))
+                                    .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
                             Thread.sleep(20000);
 
@@ -262,7 +262,7 @@ public class MaintenanceNotificationTest {
 
                 // Execute the failover
                 StepVerifier.create(faultClient.executeRladminCommand(bdbId, failoverCommand, COMMAND_CHECK_INTERVAL,
-                        LONG_OPERATION_TIMEOUT)).expectNext(true).verifyComplete();
+                        LONG_OPERATION_TIMEOUT)).expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
                 // Wait for completion
                 Thread.sleep(15000);
@@ -283,6 +283,29 @@ public class MaintenanceNotificationTest {
         } catch (Exception e) {
             log.warn("Failed to restore original cluster state: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Test context holding common objects used across all notification tests
+     */
+    private static class NotificationTestContext {
+
+        final RedisClient client;
+
+        final StatefulRedisConnection<String, String> connection;
+
+        final NotificationCapture capture;
+
+        final String bdbId;
+
+        NotificationTestContext(RedisClient client, StatefulRedisConnection<String, String> connection,
+                NotificationCapture capture, String bdbId) {
+            this.client = client;
+            this.connection = connection;
+            this.capture = capture;
+            this.bdbId = bdbId;
+        }
+
     }
 
     /**
@@ -337,9 +360,10 @@ public class MaintenanceNotificationTest {
 
     }
 
-    @Test
-    @DisplayName("T.1.1.1 - Receive MOVING push notification during endpoint rebind")
-    public void receiveMovingPushNotificationTest() throws InterruptedException {
+    /**
+     * Common setup for all notification tests
+     */
+    private NotificationTestContext setupNotificationTest() {
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
                 .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
 
@@ -354,14 +378,29 @@ public class MaintenanceNotificationTest {
         NotificationCapture capture = new NotificationCapture();
 
         // Setup push notification monitoring
-        // Note: This is a simplified approach - in real implementation, we'd need to
-        // hook into the protocol layer to capture push notifications
         setupPushNotificationMonitoring(connection, capture);
+
+        String bdbId = String.valueOf(mStandard.getBdbId());
+
+        return new NotificationTestContext(client, connection, capture, bdbId);
+    }
+
+    /**
+     * Common cleanup for all notification tests
+     */
+    private void cleanupNotificationTest(NotificationTestContext context) {
+        context.connection.close();
+        context.client.shutdown();
+    }
+
+    @Test
+    @DisplayName("T.1.1.1 - Receive MOVING push notification during endpoint rebind")
+    public void receiveMovingPushNotificationTest() throws InterruptedException {
+        NotificationTestContext context = setupNotificationTest();
 
         // Trigger MOVING notification using the proper two-step process:
         // 1. Migrate all shards from source node to target node (making it empty)
         // 2. Bind endpoint to trigger MOVING notification
-        String bdbId = String.valueOf(mStandard.getBdbId());
         String endpointId = clusterConfig.getFirstEndpointId(); // Dynamically discovered endpoint ID
         String policy = "single"; // M-Standard uses single policy
         String sourceNode = clusterConfig.getOptimalSourceNode(); // Dynamically discovered source node (finds node with shards)
@@ -369,15 +408,15 @@ public class MaintenanceNotificationTest {
 
         log.info("Triggering MOVING notification using proper two-step process...");
         log.info("Using dynamic nodes: source={}, target={}", sourceNode, targetNode);
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode))
-                .expectNext(true).verifyComplete();
+        StepVerifier.create(faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode))
+                .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for MOVING notification
-        boolean received = capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
+        boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
         assertThat(received).isTrue();
 
         // Validate notification format and parsing
-        String notification = capture.getLastNotification();
+        String notification = context.capture.getLastNotification();
         assertThat(notification).isNotNull();
 
         Matcher matcher = MOVING_PATTERN.matcher(notification);
@@ -397,34 +436,19 @@ public class MaintenanceNotificationTest {
         }
 
         // Verify notification parsing and storage - expect multiple notifications during migration process
-        assertThat(capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
         // Cleanup
-        connection.close();
-        client.shutdown();
+        cleanupNotificationTest(context);
     }
 
     @Test
     @DisplayName("T.1.1.2 - Receive MIGRATING push notification during node migration")
     public void receiveMigratingPushNotificationTest() throws InterruptedException {
-        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
-
-        RedisClient client = RedisClient.create(uri);
-
-        // Configure client for RESP3 to receive push notifications
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build();
-        client.setOptions(options);
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-
-        NotificationCapture capture = new NotificationCapture();
-
-        setupPushNotificationMonitoring(connection, capture);
+        NotificationTestContext context = setupNotificationTest();
 
         // Trigger node migration using optimal node selection
-        String bdbId = String.valueOf(mStandard.getBdbId());
         String shardId = clusterConfig.getFirstMasterShardId(); // Dynamically discovered master shard
         String sourceNode = clusterConfig.getOptimalSourceNode(); // Node with shards
         String targetNode = clusterConfig.getOptimalTargetNode(); // Empty node (if available)
@@ -436,21 +460,20 @@ public class MaintenanceNotificationTest {
 
         if (clusterConfig.canMigrateDirectly()) {
             log.info("DIRECT migration possible - target node is empty!");
-            StepVerifier.create(faultClient.triggerShardMigration(bdbId, shardId, sourceNode, targetNode)).expectNext(true)
-                    .verifyComplete();
+            StepVerifier.create(faultClient.triggerShardMigration(context.bdbId, shardId, sourceNode, targetNode))
+                    .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
         } else {
             log.info("TWO-STEP migration needed - emptying target first");
-            StepVerifier.create(
-                    faultClient.triggerShardMigrationWithEmptyTarget(bdbId, shardId, sourceNode, targetNode, intermediateNode))
-                    .expectNext(true).verifyComplete();
+            StepVerifier.create(faultClient.triggerShardMigrationWithEmptyTarget(context.bdbId, shardId, sourceNode, targetNode,
+                    intermediateNode)).expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
         }
 
         // Wait for MIGRATING notification
-        boolean received = capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
+        boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
         assertThat(received).isTrue();
 
         // Validate notification format
-        String notification = capture.getLastNotification();
+        String notification = context.capture.getLastNotification();
         assertThat(notification).isNotNull();
 
         Matcher matcher = MIGRATING_PATTERN.matcher(notification);
@@ -465,46 +488,31 @@ public class MaintenanceNotificationTest {
         }
 
         // Verify client received MIGRATING notification (migration may trigger multiple push messages)
-        assertThat(capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATING"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATING"))).isTrue();
 
         // Simulate client behavior: increase timeout for commands
-        capture.markTimeoutIncreased();
-        assertThat(capture.hasTimeoutIncreased()).isTrue();
+        context.capture.markTimeoutIncreased();
+        assertThat(context.capture.hasTimeoutIncreased()).isTrue();
 
         // CLEANUP: Restore target configuration for next test
         log.info("CLEANUP: Restoring target configuration (node:1=2 shards, node:2=0 shards)...");
         // After migration sourceNode→targetNode, we need to migrate targetNode→sourceNode to restore target config
         log.info("Executing cleanup migration: {} → {} to restore target state", targetNode, sourceNode);
-        StepVerifier.create(faultClient.triggerShardMigration(bdbId, shardId, targetNode, sourceNode)).expectNext(true)
-                .verifyComplete();
+        StepVerifier.create(faultClient.triggerShardMigration(context.bdbId, shardId, targetNode, sourceNode)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
         log.info("Target configuration restored - ready for next test");
 
         // Cleanup
-        connection.close();
-        client.shutdown();
+        cleanupNotificationTest(context);
     }
 
     @Test
     @DisplayName("T.1.1.3 - Receive MIGRATED push notification on migration completion")
     public void receiveMigratedPushNotificationTest() throws InterruptedException {
-        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
-
-        RedisClient client = RedisClient.create(uri);
-
-        // Configure client for RESP3 to receive push notifications
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build();
-        client.setOptions(options);
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-
-        NotificationCapture capture = new NotificationCapture();
-
-        setupPushNotificationMonitoring(connection, capture);
+        NotificationTestContext context = setupNotificationTest();
 
         // First trigger migration to get into migrating state using optimal node selection
-        String bdbId = String.valueOf(mStandard.getBdbId());
         String shardId = clusterConfig.getSecondMasterShardId(); // Dynamically discovered second master shard
         String sourceNode = clusterConfig.getOptimalSourceNode(); // Node with shards
         String targetNode = clusterConfig.getOptimalTargetNode(); // Empty node (if available)
@@ -516,21 +524,20 @@ public class MaintenanceNotificationTest {
 
         if (clusterConfig.canMigrateDirectly()) {
             log.info("DIRECT migration possible - target node is empty!");
-            StepVerifier.create(faultClient.triggerShardMigration(bdbId, shardId, sourceNode, targetNode)).expectNext(true)
-                    .verifyComplete();
+            StepVerifier.create(faultClient.triggerShardMigration(context.bdbId, shardId, sourceNode, targetNode))
+                    .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
         } else {
             log.info("TWO-STEP migration needed - emptying target first");
-            StepVerifier.create(
-                    faultClient.triggerShardMigrationWithEmptyTarget(bdbId, shardId, sourceNode, targetNode, intermediateNode))
-                    .expectNext(true).verifyComplete();
+            StepVerifier.create(faultClient.triggerShardMigrationWithEmptyTarget(context.bdbId, shardId, sourceNode, targetNode,
+                    intermediateNode)).expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
         }
 
         // Wait for migration completion (MIGRATED notification)
-        boolean received = capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
+        boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
         assertThat(received).isTrue();
 
         // Validate MIGRATED notification format
-        String notification = capture.getLastNotification();
+        String notification = context.capture.getLastNotification();
         assertThat(notification).isNotNull();
 
         Matcher matcher = MIGRATED_PATTERN.matcher(notification);
@@ -541,60 +548,45 @@ public class MaintenanceNotificationTest {
         }
 
         // Verify client received MIGRATED notification (migration may trigger multiple push messages)
-        assertThat(capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
 
         // Simulate client behavior: remove migration state
-        capture.markStateRemoved();
-        assertThat(capture.hasStateRemoved()).isTrue();
+        context.capture.markStateRemoved();
+        assertThat(context.capture.hasStateRemoved()).isTrue();
 
         // CLEANUP: Restore target configuration for next test
         log.info("CLEANUP: Restoring target configuration (node:1=2 shards, node:2=0 shards)...");
         // After migration sourceNode→targetNode, we need to migrate targetNode→sourceNode to restore target config
         log.info("Executing cleanup migration: {} → {} to restore target state", targetNode, sourceNode);
-        StepVerifier.create(faultClient.triggerShardMigration(bdbId, shardId, targetNode, sourceNode)).expectNext(true)
-                .verifyComplete();
+        StepVerifier.create(faultClient.triggerShardMigration(context.bdbId, shardId, targetNode, sourceNode)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
         log.info("Target configuration restored - ready for next test");
 
         // Cleanup
-        connection.close();
-        client.shutdown();
+        cleanupNotificationTest(context);
     }
 
     @Test
     @DisplayName("T.1.1.4 - Receive FAILING_OVER push notification during shard failover")
     public void receiveFailingOverPushNotificationTest() throws InterruptedException {
-        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
-
-        RedisClient client = RedisClient.create(uri);
-
-        // Configure client for RESP3 to receive push notifications
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build();
-        client.setOptions(options);
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-
-        NotificationCapture capture = new NotificationCapture();
-
-        setupPushNotificationMonitoring(connection, capture);
+        NotificationTestContext context = setupNotificationTest();
 
         // Trigger shard failover using dynamic node discovery
-        String bdbId = String.valueOf(mStandard.getBdbId());
         String shardId = clusterConfig.getFirstMasterShardId(); // Dynamically discovered master shard
         String nodeId = clusterConfig.getNodeWithMasterShards(); // Node that contains master shards
 
         log.info("Triggering shard failover for FAILING_OVER notification...");
         log.info("Using dynamic node: {}", nodeId);
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
-                .verifyComplete();
+        StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for FAILING_OVER notification
-        boolean received = capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
+        boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
         assertThat(received).isTrue();
 
         // Validate notification format
-        String notification = capture.getLastNotification();
+        String notification = context.capture.getLastNotification();
         assertThat(notification).isNotNull();
 
         Matcher matcher = FAILING_OVER_PATTERN.matcher(notification);
@@ -609,55 +601,40 @@ public class MaintenanceNotificationTest {
         }
 
         // Verify client received FAILING_OVER notification (failover may trigger multiple push messages)
-        assertThat(capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+FAILING_OVER"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+FAILING_OVER"))).isTrue();
 
         // Simulate client behavior: increase timeout for commands during failover
-        capture.markTimeoutIncreased();
-        assertThat(capture.hasTimeoutIncreased()).isTrue();
+        context.capture.markTimeoutIncreased();
+        assertThat(context.capture.hasTimeoutIncreased()).isTrue();
 
         // CLEANUP: Let BeforeEach handle cluster state restoration for next test
         log.info("Test completed - cluster state will be restored before next test");
 
         // Cleanup
-        connection.close();
-        client.shutdown();
+        cleanupNotificationTest(context);
     }
 
     @Test
     @DisplayName("T.1.1.5 - Receive FAILED_OVER push notification on failover completion")
     public void receiveFailedOverPushNotificationTest() throws InterruptedException {
-        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
-
-        RedisClient client = RedisClient.create(uri);
-
-        // Configure client for RESP3 to receive push notifications
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build();
-        client.setOptions(options);
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-
-        NotificationCapture capture = new NotificationCapture();
-
-        setupPushNotificationMonitoring(connection, capture);
+        NotificationTestContext context = setupNotificationTest();
 
         // First trigger failover to get into failing over state using dynamic node discovery
-        String bdbId = String.valueOf(mStandard.getBdbId());
         String shardId = clusterConfig.getSecondMasterShardId(); // Dynamically discovered second master shard
         String nodeId = clusterConfig.getNodeWithMasterShards(); // Node that contains master shards
 
         log.info("Triggering shard failover and waiting for completion...");
         log.info("Using dynamic node: {}", nodeId);
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
-                .verifyComplete();
+        StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for failover completion (FAILED_OVER notification)
-        boolean received = capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
+        boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
         assertThat(received).isTrue();
 
         // Validate FAILED_OVER notification format
-        String notification = capture.getLastNotification();
+        String notification = context.capture.getLastNotification();
         assertThat(notification).isNotNull();
 
         Matcher matcher = FAILED_OVER_PATTERN.matcher(notification);
@@ -668,19 +645,18 @@ public class MaintenanceNotificationTest {
         }
 
         // Verify client removes failover state
-        assertThat(capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(capture.getLastNotification()).contains("+FAILED_OVER");
+        assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
+        assertThat(context.capture.getLastNotification()).contains("+FAILED_OVER");
 
         // Simulate client behavior: remove failover state
-        capture.markStateRemoved();
-        assertThat(capture.hasStateRemoved()).isTrue();
+        context.capture.markStateRemoved();
+        assertThat(context.capture.hasStateRemoved()).isTrue();
 
         // CLEANUP: Let BeforeEach handle cluster state restoration for next test
         log.info("Test completed - cluster state will be restored before next test");
 
         // Cleanup
-        connection.close();
-        client.shutdown();
+        cleanupNotificationTest(context);
     }
 
     /**
@@ -691,195 +667,143 @@ public class MaintenanceNotificationTest {
             NotificationCapture capture) {
         log.info("Setting up REAL RESP3 push notification monitoring using PushListener...");
 
-        try {
-            // Register a comprehensive PushListener to capture ALL maintenance push messages
-            // This is the proper way to handle RESP3 push messages in Lettuce
-            PushListener maintenanceListener = new PushListener() {
+        // Register a comprehensive PushListener to capture ALL maintenance push messages
+        // This is the proper way to handle RESP3 push messages in Lettuce
+        PushListener maintenanceListener = new PushListener() {
 
-                @Override
-                public void onPushMessage(PushMessage message) {
-                    String messageType = message.getType();
-                    log.info("*** PUSH MESSAGE RECEIVED: type='{}' ***", messageType);
+            @Override
+            public void onPushMessage(PushMessage message) {
+                String messageType = message.getType();
+                log.info("*** PUSH MESSAGE RECEIVED: type='{}' ***", messageType);
 
-                    List<Object> content = message.getContent();
-                    log.info("Push message content: {}", content);
+                List<Object> content = message.getContent();
+                log.info("Push message content: {}", content);
 
-                    if ("MOVING".equals(messageType)) {
-                        log.info("*** MOVING push message captured! ***");
-                        handleMovingMessage(content, capture);
-                    } else if ("MIGRATING".equals(messageType)) {
-                        log.info("*** MIGRATING push message captured! ***");
-                        handleMigratingMessage(content, capture);
-                    } else if ("MIGRATED".equals(messageType)) {
-                        log.info("*** MIGRATED push message captured! ***");
-                        handleMigratedMessage(content, capture);
-                    } else if ("FAILING_OVER".equals(messageType)) {
-                        log.info("*** FAILING_OVER push message captured! ***");
-                        handleFailingOverMessage(content, capture);
-                    } else if ("FAILED_OVER".equals(messageType)) {
-                        log.info("*** FAILED_OVER push message captured! ***");
-                        handleFailedOverMessage(content, capture);
-                    } else {
-                        log.info("Other push message: type={}, content={}", messageType, content);
-                    }
+                if ("MOVING".equals(messageType)) {
+                    log.info("*** MOVING push message captured! ***");
+                    handleMovingMessage(content, capture);
+                } else if ("MIGRATING".equals(messageType)) {
+                    log.info("*** MIGRATING push message captured! ***");
+                    handleMigratingMessage(content, capture);
+                } else if ("MIGRATED".equals(messageType)) {
+                    log.info("*** MIGRATED push message captured! ***");
+                    handleMigratedMessage(content, capture);
+                } else if ("FAILING_OVER".equals(messageType)) {
+                    log.info("*** FAILING_OVER push message captured! ***");
+                    handleFailingOverMessage(content, capture);
+                } else if ("FAILED_OVER".equals(messageType)) {
+                    log.info("*** FAILED_OVER push message captured! ***");
+                    handleFailedOverMessage(content, capture);
+                } else {
+                    log.info("Other push message: type={}, content={}", messageType, content);
                 }
+            }
 
-                private void handleMovingMessage(List<Object> content, NotificationCapture capture) {
-                    // MOVING message format: ["MOVING", slot_number, "IP:PORT"]
-                    if (content.size() >= 3) {
-                        String slotNumber = content.get(1).toString();
+            private void handleMovingMessage(List<Object> content, NotificationCapture capture) {
+                // MOVING message format: ["MOVING", slot_number, "IP:PORT"]
+                if (content.size() >= 3) {
+                    String slotNumber = content.get(1).toString();
 
-                        // Decode the ByteBuffer to get the actual IP address
-                        String newAddress = decodeByteBuffer(content.get(2));
+                    // Decode the ByteBuffer to get the actual IP address
+                    String newAddress = decodeByteBuffer(content.get(2));
 
-                        log.info("MOVING: slot {} -> {}", slotNumber, newAddress);
+                    log.info("MOVING: slot {} -> {}", slotNumber, newAddress);
 
-                        // Create RESP3 representation for capture
-                        String resp3Format = String.format(">3\r\n+MOVING\r\n:%s\r\n+%s\r\n", slotNumber, newAddress);
-                        capture.captureNotification(resp3Format);
-                    }
+                    // Create RESP3 representation for capture
+                    String resp3Format = String.format(">3\r\n+MOVING\r\n:%s\r\n+%s\r\n", slotNumber, newAddress);
+                    capture.captureNotification(resp3Format);
                 }
+            }
 
-                private void handleMigratingMessage(List<Object> content, NotificationCapture capture) {
-                    // MIGRATING message format: ["MIGRATING", slot_number, timestamp]
-                    if (content.size() >= 3) {
-                        String slotNumber = content.get(1).toString();
-                        String timestamp = content.get(2).toString();
+            private void handleMigratingMessage(List<Object> content, NotificationCapture capture) {
+                // MIGRATING message format: ["MIGRATING", slot_number, timestamp]
+                if (content.size() >= 3) {
+                    String slotNumber = content.get(1).toString();
+                    String timestamp = content.get(2).toString();
 
-                        log.info("MIGRATING: slot {} at timestamp {}", slotNumber, timestamp);
+                    log.info("MIGRATING: slot {} at timestamp {}", slotNumber, timestamp);
 
-                        // Create RESP3 representation for capture
-                        String resp3Format = String.format(">3\r\n+MIGRATING\r\n:%s\r\n:%s\r\n", timestamp, slotNumber);
-                        capture.captureNotification(resp3Format);
-                    }
+                    // Create RESP3 representation for capture
+                    String resp3Format = String.format(">3\r\n+MIGRATING\r\n:%s\r\n:%s\r\n", timestamp, slotNumber);
+                    capture.captureNotification(resp3Format);
                 }
+            }
 
-                private void handleMigratedMessage(List<Object> content, NotificationCapture capture) {
-                    // MIGRATED message format: ["MIGRATED", slot_number]
-                    if (content.size() >= 2) {
-                        String slotNumber = content.get(1).toString();
+            private void handleMigratedMessage(List<Object> content, NotificationCapture capture) {
+                // MIGRATED message format: ["MIGRATED", slot_number]
+                if (content.size() >= 2) {
+                    String slotNumber = content.get(1).toString();
 
-                        log.info("MIGRATED: slot {}", slotNumber);
+                    log.info("MIGRATED: slot {}", slotNumber);
 
-                        // Create RESP3 representation for capture
-                        String resp3Format = String.format(">2\r\n+MIGRATED\r\n:%s\r\n", slotNumber);
-                        capture.captureNotification(resp3Format);
-                    }
+                    // Create RESP3 representation for capture
+                    String resp3Format = String.format(">2\r\n+MIGRATED\r\n:%s\r\n", slotNumber);
+                    capture.captureNotification(resp3Format);
                 }
+            }
 
-                private void handleFailingOverMessage(List<Object> content, NotificationCapture capture) {
-                    // FAILING_OVER message format: ["FAILING_OVER", timestamp, shard_id]
-                    if (content.size() >= 3) {
-                        String timestamp = content.get(1).toString();
-                        String shardId = content.get(2).toString();
+            private void handleFailingOverMessage(List<Object> content, NotificationCapture capture) {
+                // FAILING_OVER message format: ["FAILING_OVER", timestamp, shard_id]
+                if (content.size() >= 3) {
+                    String timestamp = content.get(1).toString();
+                    String shardId = content.get(2).toString();
 
-                        log.info("FAILING_OVER: shard {} at timestamp {}", shardId, timestamp);
+                    log.info("FAILING_OVER: shard {} at timestamp {}", shardId, timestamp);
 
-                        // Create RESP3 representation for capture
-                        String resp3Format = String.format(">3\r\n+FAILING_OVER\r\n:%s\r\n:%s\r\n", timestamp, shardId);
-                        capture.captureNotification(resp3Format);
-                    }
+                    // Create RESP3 representation for capture
+                    String resp3Format = String.format(">3\r\n+FAILING_OVER\r\n:%s\r\n:%s\r\n", timestamp, shardId);
+                    capture.captureNotification(resp3Format);
                 }
+            }
 
-                private void handleFailedOverMessage(List<Object> content, NotificationCapture capture) {
-                    // FAILED_OVER message format: ["FAILED_OVER", shard_id]
-                    if (content.size() >= 2) {
-                        String shardId = content.get(1).toString();
+            private void handleFailedOverMessage(List<Object> content, NotificationCapture capture) {
+                // FAILED_OVER message format: ["FAILED_OVER", shard_id]
+                if (content.size() >= 2) {
+                    String shardId = content.get(1).toString();
 
-                        log.info("FAILED_OVER: shard {}", shardId);
+                    log.info("FAILED_OVER: shard {}", shardId);
 
-                        // Create RESP3 representation for capture
-                        String resp3Format = String.format(">2\r\n+FAILED_OVER\r\n:%s\r\n", shardId);
-                        capture.captureNotification(resp3Format);
-                    }
+                    // Create RESP3 representation for capture
+                    String resp3Format = String.format(">2\r\n+FAILED_OVER\r\n:%s\r\n", shardId);
+                    capture.captureNotification(resp3Format);
                 }
+            }
 
-                private String decodeByteBuffer(Object obj) {
-                    if (obj instanceof ByteBuffer) {
-                        ByteBuffer buffer = (ByteBuffer) obj;
-                        return io.lettuce.core.codec.StringCodec.UTF8.decodeKey(buffer);
-                    } else {
-                        return obj.toString();
-                    }
+            private String decodeByteBuffer(Object obj) {
+                if (obj instanceof ByteBuffer) {
+                    ByteBuffer buffer = (ByteBuffer) obj;
+                    return io.lettuce.core.codec.StringCodec.UTF8.decodeKey(buffer);
+                } else {
+                    return obj.toString();
                 }
+            }
 
-            };
+        };
 
-            // Add the listener to the connection's endpoint
-            connection.addListener(maintenanceListener);
-            log.info("PushListener registered for ALL maintenance push messages");
+        // Add the listener to the connection's endpoint
+        connection.addListener(maintenanceListener);
+        log.info("PushListener registered for ALL maintenance push messages");
 
-            // Also trigger some activity to encourage push messages
-            RedisReactiveCommands<String, String> reactive = connection.reactive();
+        // Also trigger some activity to encourage push messages
+        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
-            // Send periodic pings to trigger any pending push notifications
-            Disposable monitoring = Flux.interval(Duration.ofMillis(5000)).take(MONITORING_TIMEOUT) // Monitor for 2
-                                                                                                    // minutes
-                    .doOnNext(i -> {
-                        log.info("=== Ping #{} - Activity to trigger push messages ===", i);
-                    }).flatMap(i -> {
-                        return reactive.ping().timeout(PING_TIMEOUT).doOnNext(response -> {
-                            log.info("Ping #{} response: '{}'", i, response);
-                        }).onErrorResume(e -> {
-                            log.debug("Ping #{} failed, continuing: {}", i, e.getMessage());
-                            return Mono.empty();
-                        });
-                    }).doOnComplete(() -> {
-                        log.info("Push notification monitoring completed");
-                    }).subscribe();
+        // Send periodic pings to trigger any pending push notifications
+        Disposable monitoring = Flux.interval(Duration.ofMillis(5000)).take(MONITORING_TIMEOUT) // Monitor for 2
+                                                                                                // minutes
+                .doOnNext(i -> {
+                    log.info("=== Ping #{} - Activity to trigger push messages ===", i);
+                }).flatMap(i -> {
+                    return reactive.ping().timeout(PING_TIMEOUT).doOnNext(response -> {
+                        log.info("Ping #{} response: '{}'", i, response);
+                    }).onErrorResume(e -> {
+                        log.debug("Ping #{} failed, continuing: {}", i, e.getMessage());
+                        return Mono.empty();
+                    });
+                }).doOnComplete(() -> {
+                    log.info("Push notification monitoring completed");
+                }).subscribe();
 
-            log.info("Push notification monitoring active with comprehensive PushListener");
-
-        } catch (Exception e) {
-            log.error("Failed to set up RESP3 push notification monitoring: {}", e.getMessage(), e);
-            setupConnectionStateMonitoring(connection, capture);
-        }
-    }
-
-    /**
-     * Alternative monitoring approach: Watch for connection state changes and Redis errors that might indicate push
-     * notifications or maintenance events
-     */
-    private void setupConnectionStateMonitoring(StatefulRedisConnection<String, String> connection,
-            NotificationCapture capture) {
-        log.info("Setting up connection state monitoring as fallback...");
-
-        // Monitor connection for errors that might contain push notification data
-        Disposable monitoring = Flux.interval(Duration.ofMillis(1000)).take(SHORT_MONITORING).flatMap(i -> {
-            // Execute commands and watch for Redis errors that might contain notifications
-            return connection.reactive().get("__lettuce_maintenance_test_key__").timeout(Duration.ofMillis(500))
-                    .doOnNext(value -> log.debug("Test command #{} completed normally", i)).doOnError(error -> {
-                        String errorMsg = error.getMessage();
-                        log.debug("Test command #{} error: {}", i, errorMsg);
-
-                        // Look for Redis Enterprise specific error patterns that might contain notifications
-                        if (errorMsg != null && (errorMsg.contains("MOVED") || errorMsg.contains("ASK")
-                                || errorMsg.contains("CLUSTERDOWN") || errorMsg.contains("LOADING"))) {
-                            log.info("Redis state change detected: {}", errorMsg);
-                            // This might indicate a maintenance operation is happening
-
-                            // Generate appropriate notification based on current test context
-                            String notification = generateNotificationFromError(errorMsg);
-                            if (notification != null) {
-                                capture.captureNotification(notification);
-                            }
-                        }
-                    }).onErrorResume(e -> Mono.empty());
-        }).subscribe();
-
-        log.info("Connection state monitoring active for 30 seconds");
-    }
-
-    /**
-     * Generate notification based on Redis errors that indicate maintenance operations
-     */
-    private String generateNotificationFromError(String errorMessage) {
-        if (errorMessage.contains("MOVED")) {
-            // MOVED indicates slot migration completed
-            return ">3\r\n+MOVING\r\n:30\r\n+192.168.1.7:13511\r\n";
-        }
-        // Add more patterns as needed based on observed Redis Enterprise behavior
-        return null;
+        log.info("Push notification monitoring active with comprehensive PushListener");
     }
 
 }
