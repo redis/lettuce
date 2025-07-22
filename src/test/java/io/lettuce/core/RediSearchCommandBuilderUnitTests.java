@@ -332,7 +332,7 @@ class RediSearchCommandBuilderUnitTests {
     // FT.EXPLAIN index query DIALECT 1
     @Test
     void shouldCorrectlyConstructFtExplainCommandWithArgs() {
-        ExplainArgs<String, String> args = ExplainArgs.Builder.dialect(1);
+        ExplainArgs<String, String> args = ExplainArgs.Builder.dialect(QueryDialects.DIALECT1);
         Command<String, String, String> command = builder.ftExplain(MY_KEY, "hello world", args);
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);

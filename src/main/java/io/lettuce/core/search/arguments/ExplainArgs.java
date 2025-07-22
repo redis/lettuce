@@ -3,19 +3,6 @@
  * All rights reserved.
  *
  * Licensed under the MIT License.
- *
- * This file contains contributions from third-party contributors
- * licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package io.lettuce.core.search.arguments;
 
@@ -34,7 +21,7 @@ import io.lettuce.core.protocol.CommandArgs;
  */
 public class ExplainArgs<K, V> {
 
-    private Long dialect;
+    private QueryDialects dialect = QueryDialects.DIALECT2;
 
     /**
      * Builder entry points for {@link ExplainArgs}.
@@ -51,9 +38,9 @@ public class ExplainArgs<K, V> {
          * Creates new {@link ExplainArgs} setting {@literal DIALECT}.
          *
          * @return new {@link ExplainArgs} with {@literal DIALECT} set.
-         * @see ExplainArgs#dialect(long)
+         * @see ExplainArgs#dialect(QueryDialects)
          */
-        public static <K, V> ExplainArgs<K, V> dialect(long dialect) {
+        public static <K, V> ExplainArgs<K, V> dialect(QueryDialects dialect) {
             return new ExplainArgs<K, V>().dialect(dialect);
         }
 
@@ -66,7 +53,7 @@ public class ExplainArgs<K, V> {
      * @param dialect the dialect version.
      * @return {@code this} {@link ExplainArgs}.
      */
-    public ExplainArgs<K, V> dialect(long dialect) {
+    public ExplainArgs<K, V> dialect(QueryDialects dialect) {
         this.dialect = dialect;
         return this;
     }
@@ -78,7 +65,7 @@ public class ExplainArgs<K, V> {
      */
     public void build(CommandArgs<K, V> args) {
         if (dialect != null) {
-            args.add("DIALECT").add(dialect);
+            args.add("DIALECT").add(dialect.toString());
         }
     }
 

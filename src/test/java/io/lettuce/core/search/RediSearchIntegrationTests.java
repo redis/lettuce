@@ -987,7 +987,7 @@ public class RediSearchIntegrationTests {
         assertThat(basicExplain).contains("INTERSECT", "UNION", "hello", "world");
 
         // Test explain with dialect
-        ExplainArgs<String, String> dialectArgs = ExplainArgs.Builder.dialect(1);
+        ExplainArgs<String, String> dialectArgs = ExplainArgs.Builder.dialect(QueryDialects.DIALECT1);
         String dialectExplain = redis.ftExplain(testIndex, "hello world", dialectArgs);
         assertThat(dialectExplain).isNotNull();
         assertThat(dialectExplain).isNotEmpty();
