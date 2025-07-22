@@ -35,6 +35,7 @@ import io.lettuce.core.search.arguments.AggregateArgs.SortDirection;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
+import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 
 /**
@@ -72,7 +73,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
                 TextFieldArgs.<String> builder().name("category").build());
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("doc:")
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("doc:")
                 .on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate("basic-test-idx", createArgs, fields)).isEqualTo("OK");
@@ -505,7 +506,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 NumericFieldArgs.<String> builder().name("sales").sortable().build(),
                 NumericFieldArgs.<String> builder().name("profit").sortable().build());
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("sales:")
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("sales:")
                 .on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate("sales-idx", createArgs, fields)).isEqualTo("OK");
@@ -582,7 +583,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 NumericFieldArgs.<String> builder().name("score").sortable().build(),
                 NumericFieldArgs.<String> builder().name("age").sortable().build());
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("task:")
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("task:")
                 .on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate("tasks-idx", createArgs, fields)).isEqualTo("OK");
@@ -652,7 +653,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 NumericFieldArgs.<String> builder().name("humidity").sortable().build(),
                 NumericFieldArgs.<String> builder().name("pressure").sortable().build());
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("weather:")
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("weather:")
                 .on(CreateArgs.TargetType.HASH).build();
 
         assertThat(redis.ftCreate("weather-idx", createArgs, fields)).isEqualTo("OK");
@@ -1747,6 +1748,562 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         assertThat(redis.ftDropindex("sortby-multi-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldRespectUserSpecifiedPipelineOperationOrder() {
+        // Create an index for testing pipeline operation order
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("title").build(),
+                NumericFieldArgs.<String> builder().name("price").sortable().build(),
+                NumericFieldArgs.<String> builder().name("quantity").sortable().build(),
+                TagFieldArgs.<String> builder().name("category").sortable().build());
+
+        assertThat(redis.ftCreate("pipeline-order-test-idx", fields)).isEqualTo("OK");
+
+        // Add test documents
+        Map<String, String> product1 = new HashMap<>();
+        product1.put("title", "Product A");
+        product1.put("price", "100");
+        product1.put("quantity", "5");
+        product1.put("category", "electronics");
+        assertThat(redis.hmset("product:1", product1)).isEqualTo("OK");
+
+        Map<String, String> product2 = new HashMap<>();
+        product2.put("title", "Product B");
+        product2.put("price", "200");
+        product2.put("quantity", "3");
+        product2.put("category", "electronics");
+        assertThat(redis.hmset("product:2", product2)).isEqualTo("OK");
+
+        Map<String, String> product3 = new HashMap<>();
+        product3.put("title", "Product C");
+        product3.put("price", "50");
+        product3.put("quantity", "10");
+        product3.put("category", "books");
+        assertThat(redis.hmset("product:3", product3)).isEqualTo("OK");
+
+        // Test that operations are applied in user-specified order
+        // This specific order: APPLY -> FILTER -> GROUPBY -> LIMIT -> SORTBY
+        // should work correctly and produce meaningful results
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title").load("price")
+                .load("quantity").load("category").apply("@price * @quantity", "total_value") // Calculate total
+                // value first
+                .filter("@total_value > 550") // Filter by total value (should keep only products 1 and 2, both electronics)
+                .groupBy(GroupBy.<String, String> of("category").reduce(Reducer.<String, String> count().as("product_count"))
+                        .reduce(Reducer.<String, String> sum("@total_value").as("category_total")))
+                .limit(0, 10) // Limit results
+                .sortBy("category_total", SortDirection.DESC) // Sort by category total
+                .build();
+
+        AggregationReply<String, String> result = redis.ftAggregate("pipeline-order-test-idx", "*", args);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getReplies()).hasSize(1);
+        SearchReply<String, String> searchReply = result.getReplies().get(0);
+
+        // Should have only electronics category since books total_value (50*10=500) < 550
+        // but electronics products (100*5=500, 200*3=600) both > 550
+        assertThat(searchReply.getResults()).hasSize(1);
+
+        SearchReply.SearchResult<String, String> electronicsGroup = searchReply.getResults().get(0);
+        assertThat(electronicsGroup.getFields().get("category")).isEqualTo("electronics");
+        assertThat(electronicsGroup.getFields().get("product_count")).isEqualTo("1");
+        assertThat(electronicsGroup.getFields().get("category_total")).isEqualTo("600");
+    }
+
+    @Test
+    void shouldSupportDynamicReentrantPipeline() {
+        // Test the dynamic and re-entrant nature of aggregation pipelines
+        // Example from Redis docs: group by property X, sort top 100 by group size,
+        // then group by property Y and sort by some other property
+
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("product_name").build(),
+                TagFieldArgs.<String> builder().name("category").sortable().build(),
+                TagFieldArgs.<String> builder().name("brand").sortable().build(),
+                NumericFieldArgs.<String> builder().name("price").sortable().build(),
+                NumericFieldArgs.<String> builder().name("rating").sortable().build(),
+                NumericFieldArgs.<String> builder().name("sales_count").sortable().build());
+
+        assertThat(redis.ftCreate("reentrant-pipeline-idx", fields)).isEqualTo("OK");
+
+        // Add diverse test data
+        String[][] products = { { "laptop:1", "Gaming Laptop", "electronics", "BrandA", "1200", "4.5", "150" },
+                { "laptop:2", "Business Laptop", "electronics", "BrandB", "800", "4.2", "200" },
+                { "laptop:3", "Budget Laptop", "electronics", "BrandA", "400", "3.8", "300" },
+                { "phone:1", "Flagship Phone", "electronics", "BrandC", "900", "4.7", "500" },
+                { "phone:2", "Mid-range Phone", "electronics", "BrandC", "500", "4.1", "400" },
+                { "book:1", "Programming Book", "books", "PublisherA", "50", "4.6", "100" },
+                { "book:2", "Design Book", "books", "PublisherB", "40", "4.3", "80" },
+                { "book:3", "Business Book", "books", "PublisherA", "35", "4.0", "120" } };
+
+        for (String[] product : products) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("product_name", product[1]);
+            doc.put("category", product[2]);
+            doc.put("brand", product[3]);
+            doc.put("price", product[4]);
+            doc.put("rating", product[5]);
+            doc.put("sales_count", product[6]);
+            assertThat(redis.hmset(product[0], doc)).isEqualTo("OK");
+        }
+
+        // Complex re-entrant pipeline:
+        // 1. First grouping by category with multiple reducers
+        // 2. Apply transformation on group results
+        // 3. Filter based on computed values
+        // 4. Second grouping by a computed field
+        // 5. Sort by different criteria
+        // 6. Apply another transformation
+        // 7. Final filtering and limiting
+        AggregateArgs<String, String> complexArgs = AggregateArgs.<String, String> builder().load("category").load("brand")
+                .load("price").load("rating").load("sales_count")
+                // First aggregation: group by category
+                .groupBy(GroupBy.<String, String> of("category").reduce(Reducer.<String, String> count().as("product_count"))
+                        .reduce(Reducer.<String, String> avg("@price").as("avg_price"))
+                        .reduce(Reducer.<String, String> sum("@sales_count").as("total_sales"))
+                        .reduce(Reducer.<String, String> avg("@rating").as("avg_rating")))
+                // Apply transformation to create performance score
+                .apply("@avg_rating * @total_sales / 100", "performance_score")
+                // Filter categories with good performance
+                .filter("@performance_score > 15")
+                // Sort by performance score to get top categories
+                .sortBy("performance_score", SortDirection.DESC)
+                // Limit to top performing categories
+                .limit(0, 2)
+                // Apply another transformation for price tier calculation
+                .apply("@avg_price / 100", "price_tier").build();
+
+        AggregationReply<String, String> result = redis.ftAggregate("reentrant-pipeline-idx", "*", complexArgs);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getReplies()).hasSize(1);
+        SearchReply<String, String> searchReply = result.getReplies().get(0);
+
+        // Should have results (electronics should be top performer)
+        assertThat(searchReply.getResults()).isNotEmpty();
+
+        // Verify the pipeline operations were applied in correct order
+        SearchReply.SearchResult<String, String> topCategory = searchReply.getResults().get(0);
+        assertThat(topCategory.getFields()).containsKey("category");
+        assertThat(topCategory.getFields()).containsKey("performance_score");
+        assertThat(topCategory.getFields()).containsKey("price_tier");
+
+        // Electronics should be the top performer
+        assertThat(topCategory.getFields().get("category")).isEqualTo("electronics");
+    }
+
+    @Test
+    void shouldSupportMultipleRepeatedOperations() {
+        // Test that operations can be repeated multiple times in the pipeline
+        // This demonstrates the re-entrant nature where each operation can appear multiple times
+
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("employee_name").build(),
+                TagFieldArgs.<String> builder().name("department").sortable().build(),
+                TagFieldArgs.<String> builder().name("level").sortable().build(),
+                NumericFieldArgs.<String> builder().name("salary").sortable().build(),
+                NumericFieldArgs.<String> builder().name("experience").sortable().build(),
+                NumericFieldArgs.<String> builder().name("performance_score").sortable().build());
+
+        assertThat(redis.ftCreate("repeated-ops-idx", fields)).isEqualTo("OK");
+
+        // Add employee data
+        String[][] employees = { { "emp:1", "Alice Johnson", "engineering", "senior", "120000", "8", "92" },
+                { "emp:2", "Bob Smith", "engineering", "junior", "80000", "3", "85" },
+                { "emp:3", "Carol Davis", "engineering", "mid", "100000", "5", "88" },
+                { "emp:4", "David Wilson", "sales", "senior", "110000", "7", "90" },
+                { "emp:5", "Eve Brown", "sales", "junior", "70000", "2", "82" },
+                { "emp:6", "Frank Miller", "marketing", "mid", "90000", "4", "87" },
+                { "emp:7", "Grace Lee", "marketing", "senior", "105000", "6", "91" } };
+
+        for (String[] emp : employees) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("employee_name", emp[1]);
+            doc.put("department", emp[2]);
+            doc.put("level", emp[3]);
+            doc.put("salary", emp[4]);
+            doc.put("experience", emp[5]);
+            doc.put("performance_score", emp[6]);
+            assertThat(redis.hmset(emp[0], doc)).isEqualTo("OK");
+        }
+
+        // Pipeline with repeated operations demonstrating re-entrant nature:
+        // Multiple APPLY operations, multiple FILTER operations, multiple GROUPBY operations
+        AggregateArgs<String, String> repeatedOpsArgs = AggregateArgs.<String, String> builder().load("department")
+                .load("level").load("salary").load("experience").load("performance_score")
+                // First APPLY: Calculate salary per experience year
+                .apply("@salary / @experience", "salary_per_year")
+                // First FILTER: Filter experienced employees
+                .filter("@experience >= 3")
+                // Second APPLY: Calculate performance bonus
+                .apply("@performance_score * 1000", "performance_bonus")
+                // First GROUPBY: Group by department
+                .groupBy(GroupBy.<String, String> of("department").reduce(Reducer.<String, String> count().as("employee_count"))
+                        .reduce(Reducer.<String, String> avg("@salary").as("avg_salary"))
+                        .reduce(Reducer.<String, String> avg("@performance_score").as("avg_performance")))
+                // Third APPLY: Calculate department efficiency
+                .apply("@avg_performance / (@avg_salary / 1000)", "efficiency_ratio")
+                // Second FILTER: Filter efficient departments
+                .filter("@efficiency_ratio > 0.8")
+                // First SORTBY: Sort by efficiency
+                .sortBy("efficiency_ratio", SortDirection.DESC)
+                // Fourth APPLY: Calculate performance score
+                .apply("@efficiency_ratio * 100", "performance_score")
+                // Second GROUPBY: Re-group by efficiency level (using rounded efficiency ratio)
+                .groupBy(GroupBy.<String, String> of("efficiency_ratio")
+                        .reduce(Reducer.<String, String> count().as("dept_count"))
+                        .reduce(Reducer.<String, String> avg("@avg_salary").as("class_avg_salary")))
+                // Second SORTBY: Sort by class average salary
+                .sortBy("class_avg_salary", SortDirection.DESC)
+                // Third FILTER: Final filter
+                .filter("@dept_count > 0").build();
+
+        AggregationReply<String, String> result = redis.ftAggregate("repeated-ops-idx", "*", repeatedOpsArgs);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getReplies()).hasSize(1);
+        SearchReply<String, String> searchReply = result.getReplies().get(0);
+
+        // Should have results showing performance classes
+        assertThat(searchReply.getResults()).isNotEmpty();
+
+        // Verify the repeated operations worked correctly
+        for (SearchReply.SearchResult<String, String> efficiencyGroup : searchReply.getResults()) {
+            assertThat(efficiencyGroup.getFields()).containsKey("efficiency_ratio");
+            assertThat(efficiencyGroup.getFields()).containsKey("dept_count");
+            assertThat(efficiencyGroup.getFields()).containsKey("class_avg_salary");
+
+            // Verify efficiency ratio is a positive number
+            double efficiencyRatio = Double.parseDouble(efficiencyGroup.getFields().get("efficiency_ratio"));
+            assertThat(efficiencyRatio).isGreaterThan(0.0);
+        }
+    }
+
+    @Test
+    void shouldSupportComplexPipelineWithInterleavedOperations() {
+        // Test complex interleaving of operations as mentioned in Redis docs:
+        // "group by property X, sort the top 100 results by group size,
+        // then group by property Y and sort the results by some other property"
+
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("transaction_id").build(),
+                TagFieldArgs.<String> builder().name("customer_segment").sortable().build(),
+                TagFieldArgs.<String> builder().name("product_category").sortable().build(),
+                TagFieldArgs.<String> builder().name("region").sortable().build(),
+                NumericFieldArgs.<String> builder().name("amount").sortable().build(),
+                NumericFieldArgs.<String> builder().name("quantity").sortable().build(),
+                NumericFieldArgs.<String> builder().name("discount").sortable().build());
+
+        assertThat(redis.ftCreate("interleaved-ops-idx", fields)).isEqualTo("OK");
+
+        // Add transaction data representing different customer segments, regions, and categories
+        String[][] transactions = { { "txn:1", "T001", "premium", "electronics", "north", "1500", "2", "5" },
+                { "txn:2", "T002", "premium", "electronics", "south", "1200", "1", "10" },
+                { "txn:3", "T003", "standard", "electronics", "north", "800", "3", "0" },
+                { "txn:4", "T004", "standard", "books", "east", "150", "5", "15" },
+                { "txn:5", "T005", "budget", "books", "west", "80", "8", "20" },
+                { "txn:6", "T006", "premium", "clothing", "north", "600", "4", "8" },
+                { "txn:7", "T007", "standard", "clothing", "south", "300", "6", "12" },
+                { "txn:8", "T008", "budget", "electronics", "east", "400", "2", "25" },
+                { "txn:9", "T009", "premium", "books", "west", "200", "10", "5" },
+                { "txn:10", "T010", "standard", "electronics", "north", "900", "1", "7" } };
+
+        for (String[] txn : transactions) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("transaction_id", txn[1]);
+            doc.put("customer_segment", txn[2]);
+            doc.put("product_category", txn[3]);
+            doc.put("region", txn[4]);
+            doc.put("amount", txn[5]);
+            doc.put("quantity", txn[6]);
+            doc.put("discount", txn[7]);
+            assertThat(redis.hmset(txn[0], doc)).isEqualTo("OK");
+        }
+
+        // Complex interleaved pipeline demonstrating the Redis docs example:
+        AggregateArgs<String, String> interleavedArgs = AggregateArgs.<String, String> builder().load("customer_segment")
+                .load("product_category").load("region").load("amount").load("quantity").load("discount")
+                // Calculate net amount after discount
+                .apply("@amount * (100 - @discount) / 100", "net_amount")
+                // First grouping: Group by customer_segment (property X)
+                .groupBy(GroupBy.<String, String> of("customer_segment")
+                        .reduce(Reducer.<String, String> count().as("segment_transactions"))
+                        .reduce(Reducer.<String, String> sum("@net_amount").as("segment_revenue"))
+                        .reduce(Reducer.<String, String> avg("@quantity").as("avg_quantity")))
+                // Apply transformation to calculate revenue per transaction
+                .apply("@segment_revenue / @segment_transactions", "revenue_per_transaction")
+                // Sort by group size (segment_transactions) and limit to top results
+                .sortBy("segment_transactions", SortDirection.DESC).limit(0, 10) // Top 10 segments by transaction count
+                // Filter segments with significant revenue
+                .filter("@segment_revenue > 500")
+                // Apply value score calculation
+                .apply("@revenue_per_transaction / 100", "value_score")
+                // Second grouping: Group by value_score (property Y)
+                .groupBy(GroupBy.<String, String> of("value_score").reduce(Reducer.<String, String> count().as("tier_count"))
+                        .reduce(Reducer.<String, String> sum("@segment_revenue").as("tier_total_revenue"))
+                        .reduce(Reducer.<String, String> avg("@revenue_per_transaction").as("tier_avg_revenue")))
+                // Sort by different property (tier_total_revenue)
+                .sortBy("tier_total_revenue", SortDirection.DESC)
+                // Final transformation and filtering
+                .apply("@tier_total_revenue / @tier_count", "revenue_efficiency").filter("@tier_count > 0").build();
+
+        AggregationReply<String, String> result = redis.ftAggregate("interleaved-ops-idx", "*", interleavedArgs);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getReplies()).hasSize(1);
+        SearchReply<String, String> searchReply = result.getReplies().get(0);
+
+        // Should have results showing value tiers
+        assertThat(searchReply.getResults()).isNotEmpty();
+
+        // Verify the complex interleaved operations worked correctly
+        for (SearchReply.SearchResult<String, String> valueGroup : searchReply.getResults()) {
+            assertThat(valueGroup.getFields()).containsKey("value_score");
+            assertThat(valueGroup.getFields()).containsKey("tier_count");
+            assertThat(valueGroup.getFields()).containsKey("tier_total_revenue");
+            assertThat(valueGroup.getFields()).containsKey("revenue_efficiency");
+
+            // Verify value score is a positive number
+            double valueScore = Double.parseDouble(valueGroup.getFields().get("value_score"));
+            assertThat(valueScore).isGreaterThan(0.0);
+        }
+    }
+
+    @Test
+    void shouldSupportPipelineWithMultipleFiltersAndSorts() {
+        // Test pipeline with multiple FILTER and SORTBY operations at different stages
+        // This demonstrates that operations can be repeated and applied at various pipeline stages
+
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("product_id").build(),
+                TagFieldArgs.<String> builder().name("category").sortable().build(),
+                TagFieldArgs.<String> builder().name("brand").sortable().build(),
+                NumericFieldArgs.<String> builder().name("price").sortable().build(),
+                NumericFieldArgs.<String> builder().name("stock").sortable().build(),
+                NumericFieldArgs.<String> builder().name("rating").sortable().build(),
+                NumericFieldArgs.<String> builder().name("reviews_count").sortable().build());
+
+        assertThat(redis.ftCreate("multi-filter-sort-idx", fields)).isEqualTo("OK");
+
+        // Add product inventory data
+        String[][] products = { { "prod:1", "P001", "electronics", "BrandA", "299", "50", "4.2", "120" },
+                { "prod:2", "P002", "electronics", "BrandB", "199", "30", "3.8", "85" },
+                { "prod:3", "P003", "electronics", "BrandA", "399", "20", "4.5", "200" },
+                { "prod:4", "P004", "books", "PublisherX", "25", "100", "4.1", "45" },
+                { "prod:5", "P005", "books", "PublisherY", "35", "75", "4.3", "60" },
+                { "prod:6", "P006", "clothing", "BrandC", "89", "40", "3.9", "30" },
+                { "prod:7", "P007", "clothing", "BrandD", "129", "25", "4.0", "55" },
+                { "prod:8", "P008", "electronics", "BrandB", "599", "15", "4.7", "300" },
+                { "prod:9", "P009", "books", "PublisherX", "45", "60", "4.4", "80" },
+                { "prod:10", "P010", "clothing", "BrandC", "159", "35", "4.2", "70" } };
+
+        for (String[] prod : products) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("product_id", prod[1]);
+            doc.put("category", prod[2]);
+            doc.put("brand", prod[3]);
+            doc.put("price", prod[4]);
+            doc.put("stock", prod[5]);
+            doc.put("rating", prod[6]);
+            doc.put("reviews_count", prod[7]);
+            assertThat(redis.hmset(prod[0], doc)).isEqualTo("OK");
+        }
+
+        // Pipeline with multiple filters and sorts at different stages:
+        AggregateArgs<String, String> multiFilterSortArgs = AggregateArgs.<String, String> builder().load("category")
+                .load("brand").load("price").load("stock").load("rating").load("reviews_count")
+                // First filter: Only products with decent ratings
+                .filter("@rating >= 4.0")
+                // Calculate popularity score
+                .apply("@rating * @reviews_count", "popularity_score")
+                // Second filter: Only popular products
+                .filter("@popularity_score > 200")
+                // First sort: Sort by popularity
+                .sortBy("popularity_score", SortDirection.DESC)
+                // Calculate inventory value
+                .apply("@price * @stock", "inventory_value")
+                // Group by category to analyze category performance
+                .groupBy(GroupBy.<String, String> of("category").reduce(Reducer.<String, String> count().as("product_count"))
+                        .reduce(Reducer.<String, String> sum("@inventory_value").as("total_inventory_value"))
+                        .reduce(Reducer.<String, String> avg("@popularity_score").as("avg_popularity"))
+                        .reduce(Reducer.<String, String> max("@price").as("max_price")))
+                // Third filter: Categories with significant inventory
+                .filter("@total_inventory_value > 5000")
+                // Calculate value density
+                .apply("@total_inventory_value / @product_count", "value_density")
+                // Second sort: Sort by value density
+                .sortBy("value_density", SortDirection.DESC)
+                // Fourth filter: High-value categories only
+                .filter("@value_density > 1000")
+                // Apply final score calculation
+                .apply("@avg_popularity / 100", "category_score")
+                // Group by score for final analysis
+                .groupBy(GroupBy.<String, String> of("category_score")
+                        .reduce(Reducer.<String, String> count().as("tier_category_count"))
+                        .reduce(Reducer.<String, String> sum("@total_inventory_value").as("tier_inventory_value"))
+                        .reduce(Reducer.<String, String> avg("@max_price").as("tier_avg_max_price")))
+                // Third sort: Final sort by tier inventory value
+                .sortBy("tier_inventory_value", SortDirection.DESC)
+                // Fifth filter: Final filter for meaningful tiers
+                .filter("@tier_category_count > 0").limit(0, 5).build();
+
+        AggregationReply<String, String> result = redis.ftAggregate("multi-filter-sort-idx", "*", multiFilterSortArgs);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getReplies()).hasSize(1);
+        SearchReply<String, String> searchReply = result.getReplies().get(0);
+
+        // Should have results showing category tiers
+        assertThat(searchReply.getResults()).isNotEmpty();
+
+        // Verify the multiple filters and sorts worked correctly
+        for (SearchReply.SearchResult<String, String> categoryGroup : searchReply.getResults()) {
+            assertThat(categoryGroup.getFields()).containsKey("category_score");
+            assertThat(categoryGroup.getFields()).containsKey("tier_category_count");
+            assertThat(categoryGroup.getFields()).containsKey("tier_inventory_value");
+            assertThat(categoryGroup.getFields()).containsKey("tier_avg_max_price");
+
+            // Verify category score is a positive number
+            double categoryScore = Double.parseDouble(categoryGroup.getFields().get("category_score"));
+            assertThat(categoryScore).isGreaterThan(0.0);
+
+            // Verify that filters were applied correctly (positive values)
+            int categoryCount = Integer.parseInt(categoryGroup.getFields().get("tier_category_count"));
+            assertThat(categoryCount).isGreaterThan(0);
+        }
+    }
+
+    @Test
+    void shouldSupportAdvancedDynamicPipelineWithConditionalLogic() {
+        // Test the most advanced scenario: dynamic pipeline with conditional logic,
+        // multiple re-entrant operations, and complex transformations that build upon each other
+        // This represents a real-world business intelligence scenario
+
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("order_id").build(),
+                TagFieldArgs.<String> builder().name("customer_type").sortable().build(),
+                TagFieldArgs.<String> builder().name("product_line").sortable().build(),
+                TagFieldArgs.<String> builder().name("sales_channel").sortable().build(),
+                TagFieldArgs.<String> builder().name("season").sortable().build(),
+                NumericFieldArgs.<String> builder().name("order_value").sortable().build(),
+                NumericFieldArgs.<String> builder().name("cost").sortable().build(),
+                NumericFieldArgs.<String> builder().name("shipping_cost").sortable().build(),
+                NumericFieldArgs.<String> builder().name("customer_satisfaction").sortable().build());
+
+        assertThat(redis.ftCreate("advanced-pipeline-idx", fields)).isEqualTo("OK");
+
+        // Add comprehensive business data
+        String[][] orders = { { "order:1", "O001", "enterprise", "software", "online", "spring", "15000", "8000", "200", "9" },
+                { "order:2", "O002", "smb", "software", "direct", "spring", "5000", "2500", "100", "8" },
+                { "order:3", "O003", "individual", "hardware", "online", "summer", "800", "500", "50", "7" },
+                { "order:4", "O004", "enterprise", "hardware", "partner", "summer", "25000", "15000", "500", "9" },
+                { "order:5", "O005", "smb", "services", "direct", "fall", "3000", "1800", "0", "8" },
+                { "order:6", "O006", "individual", "software", "online", "fall", "200", "100", "25", "6" },
+                { "order:7", "O007", "enterprise", "services", "partner", "winter", "12000", "7000", "300", "9" },
+                { "order:8", "O008", "smb", "hardware", "online", "winter", "2000", "1200", "75", "7" },
+                { "order:9", "O009", "individual", "services", "direct", "spring", "500", "300", "30", "8" },
+                { "order:10", "O010", "enterprise", "software", "online", "summer", "18000", "10000", "250", "9" } };
+
+        for (String[] order : orders) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("order_id", order[1]);
+            doc.put("customer_type", order[2]);
+            doc.put("product_line", order[3]);
+            doc.put("sales_channel", order[4]);
+            doc.put("season", order[5]);
+            doc.put("order_value", order[6]);
+            doc.put("cost", order[7]);
+            doc.put("shipping_cost", order[8]);
+            doc.put("customer_satisfaction", order[9]);
+            assertThat(redis.hmset(order[0], doc)).isEqualTo("OK");
+        }
+
+        // Advanced dynamic pipeline with conditional logic and multiple re-entrant operations:
+        AggregateArgs<String, String> advancedArgs = AggregateArgs.<String, String> builder().load("customer_type")
+                .load("product_line").load("sales_channel").load("season").load("order_value").load("cost")
+                .load("shipping_cost").load("customer_satisfaction")
+
+                // Stage 1: Calculate basic business metrics
+                .apply("@order_value - @cost - @shipping_cost", "profit").apply("@profit / @order_value * 100", "profit_margin")
+
+                // Stage 2: Filter profitable orders only
+                .filter("@profit > 0")
+
+                // Stage 3: Calculate customer value score
+                .apply("@order_value / 1000", "customer_value_score")
+
+                // Stage 4: First aggregation - group by customer type
+                .groupBy(GroupBy.<String, String> of("customer_type")
+                        .reduce(Reducer.<String, String> count().as("segment_orders"))
+                        .reduce(Reducer.<String, String> sum("@profit").as("segment_profit"))
+                        .reduce(Reducer.<String, String> avg("@profit_margin").as("avg_margin"))
+                        .reduce(Reducer.<String, String> avg("@customer_satisfaction").as("avg_satisfaction")))
+
+                // Stage 5: Calculate segment performance score
+                .apply("(@avg_satisfaction * @avg_margin * @segment_orders) / 100", "performance_score")
+
+                // Stage 6: Filter segments with any performance
+                .filter("@performance_score > 0")
+
+                // Stage 7: Sort by performance and limit to top segments
+                .sortBy("performance_score", SortDirection.DESC).limit(0, 5)
+
+                // Stage 8: Calculate normalized performance
+                .apply("@performance_score / 10", "normalized_performance")
+
+                // Stage 9: Calculate business impact metrics
+                .apply("@segment_profit / @segment_orders", "profit_per_order")
+                .apply("@profit_per_order / 1000", "business_impact_score")
+
+                // Stage 10: Second aggregation - re-group by business impact score
+                .groupBy(GroupBy.<String, String> of("business_impact_score")
+                        .reduce(Reducer.<String, String> count().as("impact_segment_count"))
+                        .reduce(Reducer.<String, String> sum("@segment_profit").as("total_impact_profit"))
+                        .reduce(Reducer.<String, String> avg("@performance_score").as("avg_impact_performance"))
+                        .reduce(Reducer.<String, String> max("@avg_satisfaction").as("max_satisfaction")))
+
+                // Stage 11: Calculate final business metrics
+                .apply("@total_impact_profit / @impact_segment_count", "profit_efficiency")
+                .apply("(@avg_impact_performance + @max_satisfaction * 10) / 2", "composite_score")
+
+                // Stage 12: Final filtering and sorting
+                .filter("@composite_score > 0").sortBy("composite_score", SortDirection.DESC)
+
+                // Stage 13: Final strategic score calculation
+                .apply("@composite_score / 50", "strategic_score")
+
+                .build();
+
+        AggregationReply<String, String> result = redis.ftAggregate("advanced-pipeline-idx", "*", advancedArgs);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getReplies()).hasSize(1);
+        SearchReply<String, String> searchReply = result.getReplies().get(0);
+
+        // Should have results showing business impact analysis
+        assertThat(searchReply.getResults()).isNotEmpty();
+
+        // Verify the advanced dynamic pipeline worked correctly
+        for (SearchReply.SearchResult<String, String> impactGroup : searchReply.getResults()) {
+            // Verify all computed fields are present
+            assertThat(impactGroup.getFields()).containsKey("business_impact_score");
+            assertThat(impactGroup.getFields()).containsKey("impact_segment_count");
+            assertThat(impactGroup.getFields()).containsKey("total_impact_profit");
+            assertThat(impactGroup.getFields()).containsKey("profit_efficiency");
+            assertThat(impactGroup.getFields()).containsKey("composite_score");
+            assertThat(impactGroup.getFields()).containsKey("strategic_score");
+
+            // Verify business impact score is a positive number
+            double impactScore = Double.parseDouble(impactGroup.getFields().get("business_impact_score"));
+            assertThat(impactScore).isGreaterThan(0.0);
+
+            // Verify strategic score is a positive number
+            double strategicScore = Double.parseDouble(impactGroup.getFields().get("strategic_score"));
+            assertThat(strategicScore).isGreaterThan(0.0);
+
+            // Verify that all metrics are positive (filters worked correctly)
+            double compositeScore = Double.parseDouble(impactGroup.getFields().get("composite_score"));
+            assertThat(compositeScore).isGreaterThan(0.0);
+
+            int segmentCount = Integer.parseInt(impactGroup.getFields().get("impact_segment_count"));
+            assertThat(segmentCount).isGreaterThan(0);
+        }
     }
 
 }

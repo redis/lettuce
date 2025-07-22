@@ -115,4 +115,40 @@ public abstract class ComplexData {
         throw new UnsupportedOperationException("The type of data stored in this dynamic object is not a map");
     }
 
+    /**
+     * Returns true if the underlying data structure is a {@link Map}
+     * <p>
+     * Does not mean that calling {@link #getDynamicMap()} would not throw an exception. Implementations might decide to return
+     * a representation of the data as a map, even if the underlying data structure is not a map.
+     *
+     * @return true if the underlying data structure is a {@link Map}
+     */
+    public boolean isMap() {
+        return false;
+    }
+
+    /**
+     * Returns true if the underlying data structure is a {@link Set}
+     * <p>
+     * Does not mean that calling {@link #getDynamicSet()} would not throw an exception. Implementations might decide to return
+     * a representation of the data as a set, even if the underlying data structure is not a set.
+     *
+     * @return true if the underlying data structure is a {@link Set}
+     */
+    public boolean isSet() {
+        return false;
+    }
+
+    /**
+     * Returns true if the underlying data structure is a {@link List}
+     * <p>
+     * Does not mean that calling {@link #getDynamicList()} would not throw an exception. Implementations might decide to return
+     * a representation of the data as a list, even if the underlying data structure is not a list.
+     *
+     * @return true if the underlying data structure is a {@link List}
+     */
+    public boolean isList() {
+        return false;
+    }
+
 }

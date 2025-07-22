@@ -29,18 +29,16 @@ class SearchArgsTest {
 
         assertThat(args.isNoContent()).isFalse();
         assertThat(args.isWithScores()).isFalse();
-        assertThat(args.isWithPayloads()).isFalse();
         assertThat(args.isWithSortKeys()).isFalse();
     }
 
     @Test
     void testSearchArgsWithOptions() {
-        SearchArgs<String, String> args = SearchArgs.<String, String> builder().noContent().withScores().withPayloads()
-                .withSortKeys().verbatim().noStopWords().build();
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().noContent().withScores().withSortKeys()
+                .verbatim().build();
 
         assertThat(args.isNoContent()).isTrue();
         assertThat(args.isWithScores()).isTrue();
-        assertThat(args.isWithPayloads()).isTrue();
         assertThat(args.isWithSortKeys()).isTrue();
     }
 
@@ -78,7 +76,7 @@ class SearchArgsTest {
     @Test
     void testSearchArgsWithLanguageAndScoring() {
         SearchArgs<String, String> args = SearchArgs.<String, String> builder().language(DocumentLanguage.ENGLISH)
-                .scorer(ScoringFunction.TF_IDF).payload("test-payload").build();
+                .scorer(ScoringFunction.TF_IDF).build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         args.build(commandArgs);
@@ -86,7 +84,6 @@ class SearchArgsTest {
         String argsString = commandArgs.toString();
         assertThat(argsString).contains("LANGUAGE");
         assertThat(argsString).contains("SCORER");
-        assertThat(argsString).contains("PAYLOAD");
     }
 
     @Test
@@ -121,11 +118,8 @@ class SearchArgsTest {
         HighlightArgs<String, String> highlight = HighlightArgs.<String, String> builder().field("title").tags("<b>", "</b>")
                 .build();
 
-        SummarizeArgs<String, String> summarize = SummarizeArgs.<String, String> builder().field("content").fragments(3)
-                .len(100).separator("...").build();
-
-        SearchArgs<String, String> args = SearchArgs.<String, String> builder().highlight(highlight).summarize(summarize)
-                .build();
+        SearchArgs<String, String> args = SearchArgs.<String, String> builder().highlightArgs(highlight)
+                .summarizeField("content").summarizeFragments(3).summarizeLen(100).summarizeSeparator("...").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         args.build(commandArgs);

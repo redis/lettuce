@@ -51,6 +51,14 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
      */
     public enum VectorType {
         /**
+         * 16-bit brain floating point. Requires RediSearch v2.10 or later.
+         */
+        BFLOAT16,
+        /**
+         * 16-bit floating point. Requires RediSearch v2.10 or later.
+         */
+        FLOAT16,
+        /**
          * 32-bit floating point.
          */
         FLOAT32,

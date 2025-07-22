@@ -78,7 +78,7 @@ class RediSearchCommandBuilderUnitTests {
         FieldArgs<String> fieldArgs2 = NumericFieldArgs.<String> builder().name(FIELD2_NAME).sortable().build();
         FieldArgs<String> fieldArgs3 = TagFieldArgs.<String> builder().name(FIELD3_NAME).sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix(PREFIX)
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PREFIX)
                 .on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs,
                 Arrays.asList(fieldArgs1, fieldArgs2, fieldArgs3));
@@ -113,7 +113,7 @@ class RediSearchCommandBuilderUnitTests {
         FieldArgs<String> fieldArgs1 = TextFieldArgs.<String> builder().name(FIELD4_NAME).as(FIELD4_ALIAS1).build();
         FieldArgs<String> fieldArgs2 = TagFieldArgs.<String> builder().name(FIELD4_NAME).as(FIELD4_ALIAS2).sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix(PREFIX)
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PREFIX)
                 .on(CreateArgs.TargetType.HASH).build();
         Command<String, String, String> command = builder.ftCreate(MY_KEY, createArgs, Arrays.asList(fieldArgs1, fieldArgs2));
         ByteBuf buf = Unpooled.directBuffer();
@@ -631,6 +631,39 @@ class RediSearchCommandBuilderUnitTests {
                 + "$12\r\n" + "FT.AGGREGATE\r\n" //
                 + "$3\r\n" + MY_KEY + "\r\n" //
                 + "$1\r\n" + MY_QUERY + "\r\n";
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void shouldMaintainPipelineOperationOrder() {
+        // Test that pipeline operations (GROUPBY, SORTBY, APPLY, FILTER, LIMIT)
+        // are output in the order specified by the user, not in a fixed order
+        AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
+                .apply("@price * @quantity", "total_value")// First operation
+                .filter("@total_value > 100")// Second operation
+                .groupBy(GroupBy.<String, String> of("category").reduce(Reducer.<String, String> count().as("count")))// Third
+                                                                                                                      // operation
+                .limit(0, 5)// Fourth operation
+                .sortBy(SortBy.of("count", SortDirection.DESC))// Fifth operation
+                .build();
+
+        Command<String, String, AggregationReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY,
+                aggregateArgs);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        // Expected order should match the user's call order: APPLY -> FILTER -> GROUPBY -> LIMIT -> SORTBY
+        String result = "*26\r\n" + "$12\r\n" + "FT.AGGREGATE\r\n" + "$3\r\n" + "idx\r\n" + "$1\r\n" + "*\r\n"//
+                + "$5\r\n" + "APPLY\r\n" + "$18\r\n" + "@price * @quantity\r\n" + "$2\r\n" + "AS\r\n" + "$11\r\n"
+                + "total_value\r\n"//
+                + "$6\r\n" + "FILTER\r\n" + "$18\r\n" + "@total_value > 100\r\n"//
+                + "$7\r\n" + "GROUPBY\r\n" + "$1\r\n" + "1\r\n" + "$9\r\n" + "@category\r\n"//
+                + "$6\r\n" + "REDUCE\r\n" + "$5\r\n" + "COUNT\r\n" + "$1\r\n" + "0\r\n" + "$2\r\n" + "AS\r\n" + "$5\r\n"
+                + "count\r\n"//
+                + "$5\r\n" + "LIMIT\r\n" + "$1\r\n" + "0\r\n" + "$1\r\n" + "5\r\n"//
+                + "$6\r\n" + "SORTBY\r\n" + "$1\r\n" + "2\r\n" + "$6\r\n" + "@count\r\n" + "$4\r\n" + "DESC\r\n"//
+                + "$7\r\n" + "DIALECT\r\n" + "$1\r\n2\r\n";//
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }

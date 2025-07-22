@@ -52,19 +52,19 @@ public class CreateArgs<K, V> {
 
     private Optional<K> payloadField = Optional.empty();
 
-    private boolean maxTextFields;
+    private boolean maxTextFields = false;
 
     private OptionalLong temporary = OptionalLong.empty();
 
-    private boolean noOffsets;
+    private boolean noOffsets = false;
 
-    private boolean noHighlight;
+    private boolean noHighlight = false;
 
-    private boolean noFields;
+    private boolean noFields = false;
 
-    private boolean noFrequency;
+    private boolean noFrequency = false;
 
-    private boolean skipInitialScan;
+    private boolean skipInitialScan = false;
 
     private Optional<List<V>> stopWords = Optional.empty();
 
@@ -108,9 +108,8 @@ public class CreateArgs<K, V> {
          * 
          * @param prefix the prefix
          * @return the instance of the current {@link Builder} for the purpose of method chaining
-         * @see {@link Builder#addPrefixes(List)}
          */
-        public Builder<K, V> addPrefix(K prefix) {
+        public Builder<K, V> withPrefix(K prefix) {
             instance.prefixes.add(prefix);
             return this;
         }
@@ -121,7 +120,7 @@ public class CreateArgs<K, V> {
          * @param prefixes a {@link List} of prefixes
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> addPrefixes(List<K> prefixes) {
+        public Builder<K, V> withPrefixes(List<K> prefixes) {
             instance.prefixes.addAll(prefixes);
             return this;
         }
@@ -212,12 +211,11 @@ public class CreateArgs<K, V> {
          * Forces RediSearch to encode indexes as if there were more than 32 text attributes, which allows you to add additional
          * attributes (beyond 32) using FT.ALTER. For efficiency, RediSearch encodes indexes differently if they are created
          * with less than 32 text attributes.
-         * 
-         * @param maxTextFields the maximum number of text fields
+         *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> maxTextFields(boolean maxTextFields) {
-            instance.maxTextFields = maxTextFields;
+        public Builder<K, V> maxTextFields() {
+            instance.maxTextFields = true;
             return this;
         }
 
@@ -227,7 +225,7 @@ public class CreateArgs<K, V> {
          * Creates a lightweight temporary index that expires after a specified period of inactivity, in seconds. The internal
          * idle timer is reset whenever the index is searched or added to. Because such indexes are lightweight, you can create
          * thousands of such indexes without negative performance implications and, therefore, you should consider using
-         * {@link Builder#skipInitialScan(boolean)} to avoid costly scanning.
+         * {@link Builder#skipInitialScan()} to avoid costly scanning.
          * <p/>
          * Warning: When temporary indexes expire, they drop all the records associated with them. FT.DROPINDEX was introduced
          * with a default of not deleting docs and a DD flag that enforced deletion. However, for temporary indexes, documents
@@ -246,14 +244,13 @@ public class CreateArgs<K, V> {
         /**
          * Set the no offsets flag. The default setting is to have offsets.
          * <p/>
-         * It saves memory, but does not allow exact searches or highlighting. It implies
-         * {@link Builder#noHighlighting(boolean)} is set to true.
-         * 
-         * @param noOffsets the no offsets flag
+         * It saves memory, but does not allow exact searches or highlighting. It implies {@link Builder#noHighlighting()} is
+         * set to true.
+         *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> noOffsets(boolean noOffsets) {
-            instance.noOffsets = noOffsets;
+        public Builder<K, V> noOffsets() {
+            instance.noOffsets = true;
             return this;
         }
 
@@ -262,12 +259,11 @@ public class CreateArgs<K, V> {
          * <p/>
          * Conserves storage space and memory by disabling highlighting support. If set, the corresponding byte offsets for term
          * positions are not stored. NOHL is also implied by NOOFFSETS.
-         * 
-         * @param noHL the no highlighting flag
+         *
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> noHighlighting(boolean noHL) {
-            instance.noHighlight = noHL;
+        public Builder<K, V> noHighlighting() {
+            instance.noHighlight = true;
             return this;
         }
 
@@ -276,11 +272,10 @@ public class CreateArgs<K, V> {
          * <p/>
          * Does not store attribute bits for each term. It saves memory, but it does not allow filtering by specific attributes.
          *
-         * @param noFields the no fields flag
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> noFields(boolean noFields) {
-            instance.noFields = noFields;
+        public Builder<K, V> noFields() {
+            instance.noFields = true;
             return this;
         }
 
@@ -290,22 +285,20 @@ public class CreateArgs<K, V> {
          * Does not store the frequency of each term. It saves memory, but it does not allow sorting by frequency of a given
          * term.
          *
-         * @param noFreqs the no frequency flag
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> noFrequency(boolean noFreqs) {
-            instance.noFrequency = noFreqs;
+        public Builder<K, V> noFrequency() {
+            instance.noFrequency = true;
             return this;
         }
 
         /**
          * Set the skip initial scan flag. The default setting is to scan initially.
          *
-         * @param skipInitialScan the skip initial scan flag
          * @return the instance of the current {@link Builder} for the purpose of method chaining
          */
-        public Builder<K, V> skipInitialScan(boolean skipInitialScan) {
-            instance.skipInitialScan = skipInitialScan;
+        public Builder<K, V> skipInitialScan() {
+            instance.skipInitialScan = true;
             return this;
         }
 
@@ -345,8 +338,8 @@ public class CreateArgs<K, V> {
      * Get the prefixes for the index.
      *
      * @return the prefixes
-     * @see Builder#addPrefix(Object)
-     * @see Builder#addPrefixes(List)
+     * @see Builder#withPrefix(Object)
+     * @see Builder#withPrefixes(List)
      */
     public List<K> getPrefixes() {
         return prefixes;
@@ -416,7 +409,7 @@ public class CreateArgs<K, V> {
      * Get the maximum number of text fields in the index.
      *
      * @return the maximum number of text fields
-     * @see Builder#maxTextFields(boolean)
+     * @see Builder#maxTextFields()
      */
     public boolean isMaxTextFields() {
         return maxTextFields;
@@ -436,7 +429,7 @@ public class CreateArgs<K, V> {
      * Get the no offsets flag.
      *
      * @return the no offsets flag
-     * @see Builder#noOffsets(boolean)
+     * @see Builder#noOffsets()
      */
     public boolean isNoOffsets() {
         return noOffsets;
@@ -446,7 +439,7 @@ public class CreateArgs<K, V> {
      * Get the no highlighting flag.
      *
      * @return the no highlighting flag
-     * @see Builder#noHighlighting(boolean)
+     * @see Builder#noHighlighting()
      */
     public boolean isNoHighlight() {
         return noHighlight;
@@ -456,7 +449,7 @@ public class CreateArgs<K, V> {
      * Get the no fields flag.
      *
      * @return the no fields flag
-     * @see Builder#noFields(boolean)
+     * @see Builder#noFields()
      */
     public boolean isNoFields() {
         return noFields;
@@ -466,7 +459,7 @@ public class CreateArgs<K, V> {
      * Get the no frequency flag.
      *
      * @return the no frequency flag
-     * @see Builder#noFrequency(boolean)
+     * @see Builder#noFrequency()
      */
     public boolean isNoFrequency() {
         return noFrequency;
@@ -476,7 +469,7 @@ public class CreateArgs<K, V> {
      * Get the skip initial scan flag.
      *
      * @return the skip initial scan flag
-     * @see Builder#skipInitialScan(boolean)
+     * @see Builder#skipInitialScan()
      */
     public boolean isSkipInitialScan() {
         return skipInitialScan;

@@ -108,12 +108,11 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
     @Override
     public SearchReply<K, V> parse(ComplexData data) {
         try {
-            try {
+            if (data.isList()) {
                 return new Resp2SearchResultsParser().parse(data);
-            } catch (UnsupportedOperationException e) {
-                // automagically switch to RESP3 parsing if you encounter a ComplexData type different then an array
-                return new Resp3SearchResultsParser().parse(data);
             }
+
+            return new Resp3SearchResultsParser().parse(data);
         } catch (Exception e) {
             LOG.warn("Unable to parse the result from Redis", e);
             return new SearchReply<>();

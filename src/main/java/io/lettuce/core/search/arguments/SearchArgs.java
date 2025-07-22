@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 /**
  * Argument list builder for {@code FT.SEARCH}.
@@ -30,23 +29,13 @@ import java.util.OptionalLong;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class SearchArgs<K, V> {
 
-    private Optional<Boolean> noContent = Optional.empty();
+    private boolean noContent = false;
 
-    private Optional<Boolean> verbatim = Optional.empty();
+    private boolean verbatim = false;
 
-    private Optional<Boolean> noStopWords = Optional.empty();
+    private boolean withScores = false;
 
-    private Optional<Boolean> withScores = Optional.empty();
-
-    private Optional<Boolean> withPayloads = Optional.empty();
-
-    private Optional<Boolean> withSortKeys = Optional.empty();
-
-    // FIXME verify if we need to support this, deprecated since 2.10
-    // private List<NumericFilter<K, V>> filters = new ArrayList<>();
-
-    // FIXME verify if we need to support this, deprecated since 2.6
-    // private Optional<GeoFilter<K, V>> geoFilter = Optional.empty();
+    private boolean withSortKeys = false;
 
     private final List<K> inKeys = new ArrayList<>();
 
@@ -58,20 +47,15 @@ public class SearchArgs<K, V> {
 
     private Optional<HighlightArgs<K, V>> highlight = Optional.empty();
 
-    private OptionalLong slop = OptionalLong.empty();
+    private Long slop;
 
-    private Optional<Boolean> inOrder = Optional.empty();
+    private boolean inOrder = false;
 
     private Optional<DocumentLanguage> language = Optional.empty();
 
     private Optional<V> expander = Optional.empty();
 
     private Optional<ScoringFunction> scorer = Optional.empty();
-
-    // FIXME verify if we want to support this
-    // private Optional<Boolean> explainScore = Optional.empty();
-
-    private Optional<V> payload = Optional.empty();
 
     private Optional<SortByArgs<K>> sortBy = Optional.empty();
 
@@ -108,12 +92,24 @@ public class SearchArgs<K, V> {
 
         private final SearchArgs<K, V> instance = new SearchArgs<>();
 
+        private SummarizeArgs.Builder<K, V> summarizeArgs;
+
+        private HighlightArgs.Builder<K, V> highlightArgs;
+
         /**
          * Build a new instance of the {@link SearchArgs}.
          *
          * @return a new instance of the {@link SearchArgs}
          */
         public SearchArgs<K, V> build() {
+            if (!instance.summarize.isPresent() && summarizeArgs != null) {
+                instance.summarize = Optional.of(summarizeArgs.build());
+            }
+
+            if (!instance.highlight.isPresent() && highlightArgs != null) {
+                instance.highlight = Optional.of(highlightArgs.build());
+            }
+
             return instance;
         }
 
@@ -124,7 +120,7 @@ public class SearchArgs<K, V> {
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
         public SearchArgs.Builder<K, V> noContent() {
-            instance.noContent = Optional.of(true);
+            instance.noContent = true;
             return this;
         }
 
@@ -134,17 +130,7 @@ public class SearchArgs<K, V> {
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
         public SearchArgs.Builder<K, V> verbatim() {
-            instance.verbatim = Optional.of(true);
-            return this;
-        }
-
-        /**
-         * Ignore any defined stop words in full text searches. Disabled by default.
-         *
-         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
-         */
-        public SearchArgs.Builder<K, V> noStopWords() {
-            instance.noStopWords = Optional.of(true);
+            instance.verbatim = true;
             return this;
         }
 
@@ -155,19 +141,7 @@ public class SearchArgs<K, V> {
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
         public SearchArgs.Builder<K, V> withScores() {
-            instance.withScores = Optional.of(true);
-            return this;
-        }
-
-        /**
-         * Retrieve optional document payloads. The payloads follow the document id and, if
-         * {@link SearchArgs.Builder#withScores} is set, the scores. Disabled by default.
-         *
-         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
-         * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
-         */
-        public SearchArgs.Builder<K, V> withPayloads() {
-            instance.withPayloads = Optional.of(true);
+            instance.withScores = true;
             return this;
         }
 
@@ -179,7 +153,7 @@ public class SearchArgs<K, V> {
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
         public SearchArgs.Builder<K, V> withSortKeys() {
-            instance.withSortKeys = Optional.of(true);
+            instance.withSortKeys = true;
             return this;
         }
 
@@ -239,8 +213,92 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> summarize(SummarizeArgs<K, V> summarizeFilter) {
+        public SearchArgs.Builder<K, V> summarizeArgs(SummarizeArgs<K, V> summarizeFilter) {
             instance.summarize = Optional.ofNullable(summarizeFilter);
+            return this;
+        }
+
+        /**
+         * Convenience method to build {@link SummarizeArgs}
+         * <p>
+         * Add a field to summarize. Each field is summarized. If no FIELDS directive is passed, then all returned fields are
+         * summarized.
+         *
+         * @param field the field to add
+         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
+         * @see <a href=
+         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         */
+        public SearchArgs.Builder<K, V> summarizeField(K field) {
+            if (summarizeArgs == null) {
+                summarizeArgs = new SummarizeArgs.Builder<>();
+            }
+
+            summarizeArgs.field(field);
+
+            return this;
+        }
+
+        /**
+         * Convenience method to build {@link SummarizeArgs}
+         * <p>
+         * Set the number of context words each fragment should contain. Context words surround the found term. A higher value
+         * will return a larger block of text. If not specified, the default value is 20.
+         *
+         * @param len the field to add
+         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
+         * @see <a href=
+         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         */
+        public SearchArgs.Builder<K, V> summarizeLen(long len) {
+            if (summarizeArgs == null) {
+                summarizeArgs = new SummarizeArgs.Builder<>();
+            }
+
+            summarizeArgs.len(len);
+
+            return this;
+        }
+
+        /**
+         * Convenience method to build {@link SummarizeArgs}
+         * <p>
+         * The string used to divide individual summary snippets. The default is <code>...</code> which is common among search
+         * engines, but you may override this with any other string if you desire to programmatically divide the snippets later
+         * on. You may also use a newline sequence, as newlines are stripped from the result body during processing.
+         *
+         * @param separator the separator between fragments
+         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
+         * @see <a href=
+         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         */
+        public SearchArgs.Builder<K, V> summarizeSeparator(V separator) {
+            if (summarizeArgs == null) {
+                summarizeArgs = new SummarizeArgs.Builder<>();
+            }
+
+            summarizeArgs.separator(separator);
+
+            return this;
+        }
+
+        /**
+         * Convenience method to build {@link SummarizeArgs}
+         * <p>
+         * Set the number of fragments to be returned. If not specified, the default is 3.
+         *
+         * @param fragments the number of fragments to return
+         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
+         * @see <a href=
+         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         */
+        public SearchArgs.Builder<K, V> summarizeFragments(long fragments) {
+            if (summarizeArgs == null) {
+                summarizeArgs = new SummarizeArgs.Builder<>();
+            }
+
+            summarizeArgs.fragments(fragments);
+
             return this;
         }
 
@@ -252,8 +310,50 @@ public class SearchArgs<K, V> {
          * @see <a href=
          *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
          */
-        public SearchArgs.Builder<K, V> highlight(HighlightArgs<K, V> highlightFilter) {
+        public SearchArgs.Builder<K, V> highlightArgs(HighlightArgs<K, V> highlightFilter) {
             instance.highlight = Optional.ofNullable(highlightFilter);
+            return this;
+        }
+
+        /**
+         * Convenience method to build {@link HighlightArgs}
+         * <p>
+         * Add a field to highlight. If no FIELDS directive is passed, then all returned fields are highlighted.
+         *
+         * @param field the field to summarize
+         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
+         * @see <a href=
+         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         */
+        public SearchArgs.Builder<K, V> highlightField(K field) {
+            if (highlightArgs == null) {
+                highlightArgs = new HighlightArgs.Builder<>();
+            }
+
+            highlightArgs.field(field);
+
+            return this;
+        }
+
+        /**
+         * Convenience method to build {@link HighlightArgs}
+         * <p>
+         * Tags to surround the matched terms with. If no TAGS are specified, a built-in tag pair is prepended and appended to
+         * each matched term.
+         *
+         * @param startTag the string is prepended to each matched term
+         * @param endTag the string is appended to each matched term
+         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
+         * @see <a href=
+         *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/highlight/">Highlighting</a>
+         */
+        public SearchArgs.Builder<K, V> highlightTags(V startTag, V endTag) {
+            if (highlightArgs == null) {
+                highlightArgs = new HighlightArgs.Builder<>();
+            }
+
+            highlightArgs.tags(startTag, endTag);
+
             return this;
         }
 
@@ -267,7 +367,7 @@ public class SearchArgs<K, V> {
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
         public SearchArgs.Builder<K, V> slop(long slop) {
-            instance.slop = OptionalLong.of(slop);
+            instance.slop = slop;
             return this;
         }
 
@@ -278,7 +378,7 @@ public class SearchArgs<K, V> {
          * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
          */
         public SearchArgs.Builder<K, V> inOrder() {
-            instance.inOrder = Optional.of(true);
+            instance.inOrder = true;
             return this;
         }
 
@@ -320,30 +420,6 @@ public class SearchArgs<K, V> {
          */
         public SearchArgs.Builder<K, V> scorer(ScoringFunction scorer) {
             instance.scorer = Optional.ofNullable(scorer);
-            return this;
-        }
-
-        // /**
-        // * Return a textual description of how the scores were calculated. Using this option requires
-        // * {@link Builder#withScores()}.
-        // *
-        // * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
-        // */
-        // public SearchArgs.Builder<K, V> explainScore() {
-        // instance.explainScore = Optional.of(true);
-        // return this;
-        // }
-
-        /**
-         * Add an arbitrary, binary safe payload exposed to custom scoring functions.
-         *
-         * @param payload the payload to return
-         * @return the instance of the current {@link SearchArgs.Builder} for the purpose of method chaining
-         * @see <a href=
-         *      "https://redis.io/docs/latest/develop/interact/search-and-query/administration/extensions/">Extensions</a>
-         */
-        public SearchArgs.Builder<K, V> payload(V payload) {
-            instance.payload = Optional.ofNullable(payload);
             return this;
         }
 
@@ -424,7 +500,7 @@ public class SearchArgs<K, V> {
      * @return true if NOCONTENT is enabled, false otherwise
      */
     public boolean isNoContent() {
-        return noContent.orElse(false);
+        return noContent;
     }
 
     /**
@@ -433,16 +509,7 @@ public class SearchArgs<K, V> {
      * @return true if WITHSCORES is enabled, false otherwise
      */
     public boolean isWithScores() {
-        return withScores.orElse(false);
-    }
-
-    /**
-     * Gets whether the WITHPAYLOADS option is enabled.
-     *
-     * @return true if WITHPAYLOADS is enabled, false otherwise
-     */
-    public boolean isWithPayloads() {
-        return withPayloads.orElse(false);
+        return withScores;
     }
 
     /**
@@ -451,7 +518,7 @@ public class SearchArgs<K, V> {
      * @return true if WITHSORTKEYS is enabled, false otherwise
      */
     public boolean isWithSortKeys() {
-        return withSortKeys.orElse(false);
+        return withSortKeys;
     }
 
     /**
@@ -461,12 +528,21 @@ public class SearchArgs<K, V> {
      */
     public void build(CommandArgs<K, V> args) {
 
-        noContent.ifPresent(v -> args.add(CommandKeyword.NOCONTENT));
-        verbatim.ifPresent(v -> args.add(CommandKeyword.VERBATIM));
-        noStopWords.ifPresent(v -> args.add(CommandKeyword.NOSTOPWORDS));
-        withScores.ifPresent(v -> args.add(CommandKeyword.WITHSCORES));
-        withPayloads.ifPresent(v -> args.add(CommandKeyword.WITHPAYLOADS));
-        withSortKeys.ifPresent(v -> args.add(CommandKeyword.WITHSORTKEYS));
+        if (noContent) {
+            args.add(CommandKeyword.NOCONTENT);
+        }
+
+        if (verbatim) {
+            args.add(CommandKeyword.VERBATIM);
+        }
+
+        if (withScores) {
+            args.add(CommandKeyword.WITHSCORES);
+        }
+
+        if (withSortKeys) {
+            args.add(CommandKeyword.WITHSORTKEYS);
+        }
 
         if (!inKeys.isEmpty()) {
             args.add(CommandKeyword.INKEYS);
@@ -489,25 +565,22 @@ public class SearchArgs<K, V> {
             });
         }
 
-        summarize.ifPresent(summarizeArgs -> {
-            summarizeArgs.build(args);
-        });
+        summarize.ifPresent(summarizeArgs -> summarizeArgs.build(args));
+        highlight.ifPresent(highlightArgs -> highlightArgs.build(args));
 
-        highlight.ifPresent(highlightArgs -> {
-            highlightArgs.build(args);
-        });
-
-        slop.ifPresent(v -> {
+        if (slop != null) {
             args.add(CommandKeyword.SLOP);
-            args.add(v);
-        });
+            args.add(slop);
+        }
 
         timeout.ifPresent(timeoutDuration -> {
             args.add(CommandKeyword.TIMEOUT);
             args.add(timeoutDuration.toMillis());
         });
 
-        inOrder.ifPresent(v -> args.add(CommandKeyword.INORDER));
+        if (inOrder) {
+            args.add(CommandKeyword.INORDER);
+        }
 
         language.ifPresent(documentLanguage -> {
             args.add(CommandKeyword.LANGUAGE);
@@ -524,16 +597,7 @@ public class SearchArgs<K, V> {
             args.add(scoringFunction.toString());
         });
 
-        // explainScore.ifPresent(v -> args.add(CommandKeyword.EXPLAINSCORE));
-
-        payload.ifPresent(v -> {
-            args.add(CommandKeyword.PAYLOAD);
-            args.addValue(v);
-        });
-
-        sortBy.ifPresent(sortByArgs -> {
-            sortByArgs.build(args);
-        });
+        sortBy.ifPresent(sortByArgs -> sortByArgs.build(args));
 
         limit.ifPresent(limitArgs -> {
             args.add(CommandKeyword.LIMIT);

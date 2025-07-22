@@ -8,7 +8,6 @@ package io.lettuce.core.output;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lettuce.core.codec.StringCodec;
 import org.junit.jupiter.api.Tag;
@@ -216,8 +215,7 @@ class SpellCheckResultParserUnitTests {
         termArray.storeObject(suggestionsArray);
         data.storeObject(termArray);
 
-        assertThatThrownBy(() -> parser.parse(data)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Failed while parsing FT.SPELLCHECK: each suggestion must have 2 parts [score, suggestion]");
+        assertThat(parser.parse(data).getMisspelledTerms().get(0).getSuggestions()).isEmpty();
     }
 
 }
