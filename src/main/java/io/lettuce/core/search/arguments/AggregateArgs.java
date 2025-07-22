@@ -86,15 +86,11 @@ public class AggregateArgs<K, V> {
 
     private Optional<Duration> timeout = Optional.empty();
 
-    private final List<GroupBy<K, V>> groupByList = new ArrayList<>();
-
-    private final List<SortBy<K>> sortByList = new ArrayList<>();
-
-    private final List<Apply<K, V>> applyList = new ArrayList<>();
-
-    private Optional<Limit> limit = Optional.empty();
-
-    private final List<V> filters = new ArrayList<>();
+    /**
+     * Ordered list of pipeline operations (GROUPBY, SORTBY, APPLY, FILTER). These operations must be applied in the order
+     * specified by the user.
+     */
+    private final List<PipelineOperation<K, ?>> pipelineOperations = new ArrayList<>();
 
     private Optional<WithCursor> withCursor = Optional.empty();
 
@@ -214,7 +210,7 @@ public class AggregateArgs<K, V> {
          * @return the builder.
          */
         public Builder<K, V> groupBy(GroupBy<K, V> groupBy) {
-            args.groupByList.add(groupBy);
+            args.pipelineOperations.add(groupBy);
             return this;
         }
 
@@ -225,7 +221,7 @@ public class AggregateArgs<K, V> {
          * @return the builder.
          */
         public Builder<K, V> sortBy(SortBy<K> sortBy) {
-            args.sortByList.add(sortBy);
+            args.pipelineOperations.add(sortBy);
             return this;
         }
 
@@ -236,7 +232,7 @@ public class AggregateArgs<K, V> {
          * @return the builder.
          */
         public Builder<K, V> apply(Apply<K, V> apply) {
-            args.applyList.add(apply);
+            args.pipelineOperations.add(apply);
             return this;
         }
 
@@ -268,7 +264,7 @@ public class AggregateArgs<K, V> {
          * @return the builder.
          */
         public Builder<K, V> limit(long offset, long num) {
-            args.limit = Optional.of(new Limit(offset, num));
+            args.pipelineOperations.add(new Limit<>(offset, num));
             return this;
         }
 
@@ -302,7 +298,7 @@ public class AggregateArgs<K, V> {
          * @return the builder.
          */
         public Builder<K, V> filter(V filter) {
-            args.filters.add(filter);
+            args.pipelineOperations.add(new Filter<>(filter));
             return this;
         }
 
@@ -513,32 +509,12 @@ public class AggregateArgs<K, V> {
             args.add(t.toMillis());
         });
 
-        // Add GROUPBY clauses
-        for (GroupBy<K, V> groupBy : groupByList) {
-            groupBy.build(args);
-        }
-
-        // Add SORTBY clauses
-        for (SortBy<K> sortBy : sortByList) {
-            sortBy.build(args);
-        }
-
-        // Add APPLY clauses
-        for (Apply<K, V> apply : applyList) {
-            apply.build(args);
-        }
-
-        // Add LIMIT clause
-        limit.ifPresent(l -> {
-            args.add(CommandKeyword.LIMIT);
-            args.add(l.offset);
-            args.add(l.num);
-        });
-
-        // Add FILTER clauses
-        for (V filter : filters) {
-            args.add(CommandKeyword.FILTER);
-            args.addValue(filter);
+        // Add pipeline operations in user-specified order
+        for (PipelineOperation<K, ?> operation : pipelineOperations) {
+            // Cast is safe because all operations can build with CommandArgs<K, V>
+            @SuppressWarnings("unchecked")
+            PipelineOperation<K, V> typedOperation = (PipelineOperation<K, V>) operation;
+            typedOperation.build(args);
         }
 
         // Add WITHCURSOR clause
@@ -578,6 +554,21 @@ public class AggregateArgs<K, V> {
         return withCursor;
     }
 
+    /**
+     * Interface for pipeline operations that need to be applied in user-specified order. This includes GROUPBY, SORTBY, APPLY,
+     * and FILTER operations.
+     */
+    public interface PipelineOperation<K, V> {
+
+        /**
+         * Build the operation arguments into the command args.
+         * 
+         * @param args the command args to build into
+         */
+        void build(CommandArgs<K, V> args);
+
+    }
+
     // Helper classes
     public static class LoadField<K> {
 
@@ -592,7 +583,7 @@ public class AggregateArgs<K, V> {
 
     }
 
-    public static class Limit {
+    public static class Limit<K, V> implements PipelineOperation<K, V> {
 
         final long offset;
 
@@ -601,6 +592,13 @@ public class AggregateArgs<K, V> {
         Limit(long offset, long num) {
             this.offset = offset;
             this.num = num;
+        }
+
+        @Override
+        public void build(CommandArgs<K, V> args) {
+            args.add(CommandKeyword.LIMIT);
+            args.add(offset);
+            args.add(num);
         }
 
     }
@@ -676,7 +674,7 @@ public class AggregateArgs<K, V> {
      * performance.
      * </p>
      */
-    public static class GroupBy<K, V> {
+    public static class GroupBy<K, V> implements PipelineOperation<K, V> {
 
         private final List<K> properties;
 
@@ -705,6 +703,7 @@ public class AggregateArgs<K, V> {
             return new GroupBy<>(Arrays.asList(properties));
         }
 
+        @Override
         public void build(CommandArgs<K, V> args) {
             args.add(CommandKeyword.GROUPBY);
             args.add(properties.size());
@@ -764,7 +763,7 @@ public class AggregateArgs<K, V> {
      * using LIMIT.
      * </p>
      */
-    public static class SortBy<K> {
+    public static class SortBy<K> implements PipelineOperation<K, Object> {
 
         private final List<SortProperty<K>> properties;
 
@@ -810,7 +809,8 @@ public class AggregateArgs<K, V> {
             return new SortBy<>(Arrays.asList(properties));
         }
 
-        public <V> void build(CommandArgs<K, V> args) {
+        @Override
+        public void build(CommandArgs<K, Object> args) {
             args.add(CommandKeyword.SORTBY);
             // Count includes property + direction pairs
             args.add(properties.size() * 2L);
@@ -880,7 +880,7 @@ public class AggregateArgs<K, V> {
      * can be referenced by further operations.
      * </p>
      */
-    public static class Apply<K, V> {
+    public static class Apply<K, V> implements PipelineOperation<K, V> {
 
         private final V expression;
 
@@ -891,6 +891,7 @@ public class AggregateArgs<K, V> {
             this.name = name;
         }
 
+        @Override
         public void build(CommandArgs<K, V> args) {
             args.add(CommandKeyword.APPLY);
             args.addValue(expression);
@@ -1061,6 +1062,31 @@ public class AggregateArgs<K, V> {
                 args.add(CommandKeyword.AS);
                 args.addKey(a);
             });
+        }
+
+    }
+
+    /**
+     * Represents a FILTER clause in an aggregation pipeline.
+     *
+     * <p>
+     * Filters the results using predicate expressions relating to values in each result. Filters are applied after the query
+     * and relate to the current state of the pipeline. This allows filtering on computed fields created by APPLY operations or
+     * reducer results.
+     * </p>
+     */
+    public static class Filter<K, V> implements PipelineOperation<K, V> {
+
+        private final V expression;
+
+        public Filter(V expression) {
+            this.expression = expression;
+        }
+
+        @Override
+        public void build(CommandArgs<K, V> args) {
+            args.add(CommandKeyword.FILTER);
+            args.addValue(expression);
         }
 
     }

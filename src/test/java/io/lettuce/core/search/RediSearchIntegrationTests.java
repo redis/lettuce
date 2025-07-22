@@ -26,24 +26,17 @@ import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
-import io.lettuce.core.search.arguments.VectorFieldArgs;
-import io.lettuce.core.search.arguments.GeoFieldArgs;
-import io.lettuce.core.search.arguments.GeoshapeFieldArgs;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1108,35 +1101,6 @@ public class RediSearchIntegrationTests {
 
         // Cleanup
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
-    }
-
-    /**
-     * Helper method to encode a float vector as a byte array for Redis vector search. Redis expects vector data as binary
-     * representation of float values.
-     */
-    private String encodeFloatVector(float[] vector) {
-        ByteBuffer buffer = ByteBuffer.allocate(vector.length * 4).order(ByteOrder.LITTLE_ENDIAN);
-        for (float value : vector) {
-            buffer.putFloat(value);
-        }
-        return new String(buffer.array(), StandardCharsets.ISO_8859_1);
-    }
-
-    /**
-     * Helper method to create a bicycle document with all required fields.
-     */
-    private void createBicycleDocument(String key, String pickupZone, String storeLocation, String brand, String model,
-            int price, String description, String condition) {
-        Map<String, String> document = new HashMap<>();
-        document.put("pickup_zone", pickupZone);
-        document.put("store_location", storeLocation);
-        document.put("brand", brand);
-        document.put("model", model);
-        document.put("price", String.valueOf(price));
-        document.put("description", description);
-        document.put("condition", condition);
-
-        assertThat(redis.hmset(key, document)).isEqualTo("OK");
     }
 
 }
