@@ -13,7 +13,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,12 +33,6 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.protocol.ProtocolVersion;
-import io.lettuce.core.protocol.RedisCommand;
-import io.lettuce.core.protocol.CommandArgs;
-import io.lettuce.core.protocol.CommandKeyword;
-import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.protocol.ProtocolKeyword;
-import io.lettuce.test.Wait;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
 import reactor.core.Disposable;
@@ -58,10 +51,18 @@ public class MaintenanceNotificationTest {
 
     private static final Logger log = LoggerFactory.getLogger(MaintenanceNotificationTest.class);
 
-    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(60);
+    private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofMinutes(3); // 180 seconds - for waiting for
+                                                                                     // notifications
 
-    private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofSeconds(180); // Increased to 3 minutes to account for
-                                                                                       // longer operations
+    private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5); // 300 seconds - for migrations/failovers
+
+    private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(2); // 120 seconds - for monitoring operations
+
+    private static final Duration PING_TIMEOUT = Duration.ofSeconds(10); // 10 seconds - for ping operations
+
+    private static final Duration SHORT_MONITORING = Duration.ofSeconds(30); // 30 seconds - for short monitoring
+
+    private static final Duration COMMAND_CHECK_INTERVAL = Duration.ofSeconds(10); // 10 seconds - for command status checks
 
     // Track original cluster state for proper cleanup
     private static Map<String, String> originalShardRoles = new HashMap<>();
@@ -99,8 +100,7 @@ public class MaintenanceNotificationTest {
     public void refreshClusterConfig() {
         log.info("Refreshing Redis Enterprise cluster configuration before test...");
         // Use the discovery service to get real-time cluster state
-        RedisEnterpriseConfigDiscovery discovery = new RedisEnterpriseConfigDiscovery(faultClient);
-        clusterConfig = discovery.discover(String.valueOf(mStandard.getBdbId()));
+        clusterConfig = RedisEnterpriseConfig.discover(faultClient, String.valueOf(mStandard.getBdbId()));
         log.info("Cluster configuration refreshed: {}", clusterConfig.getSummary());
 
         // Record original state for proper cleanup (only once)
@@ -123,8 +123,7 @@ public class MaintenanceNotificationTest {
             String bdbId = String.valueOf(mStandard.getBdbId());
 
             // Get the complete current configuration
-            RedisEnterpriseConfigDiscovery discovery = new RedisEnterpriseConfigDiscovery(faultClient);
-            RedisEnterpriseConfig currentConfig = discovery.discover(bdbId);
+            RedisEnterpriseConfig currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
 
             // Record shard roles (getMasterShardIds already returns "redis:X" format)
             originalShardRoles.clear();
@@ -162,8 +161,7 @@ public class MaintenanceNotificationTest {
             String bdbId = String.valueOf(mStandard.getBdbId());
 
             // Get current state
-            RedisEnterpriseConfigDiscovery discovery = new RedisEnterpriseConfigDiscovery(faultClient);
-            RedisEnterpriseConfig currentConfig = discovery.discover(bdbId);
+            RedisEnterpriseConfig currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
 
             // Log current state
             log.info("Current cluster state before restoration:");
@@ -191,43 +189,51 @@ public class MaintenanceNotificationTest {
             if (needsMigration) {
                 log.info("Need to restore shard distribution. Performing migrations...");
 
-                // Strategy: Find nodes that need to give up shards and migrate them to correct nodes
+                // Strategy: Find misplaced shards and migrate them to their correct nodes
+                // First, find nodes that have shards but should be empty
                 for (Map.Entry<String, List<String>> entry : originalNodeToShards.entrySet()) {
-                    String targetNode = entry.getKey();
+                    String nodeId = entry.getKey();
                     List<String> expectedShards = entry.getValue();
+                    List<String> currentShards = new ArrayList<>(currentConfig.getShardsForNode(nodeId));
 
-                    if (expectedShards.isEmpty()) {
-                        // This node should be empty - migrate all its shards away
-                        List<String> currentShards = new ArrayList<>(currentConfig.getShardsForNode(targetNode));
+                    if (expectedShards.isEmpty() && !currentShards.isEmpty()) {
+                        // This node should be empty but has shards - migrate them away
+                        log.info("Node {} should be empty but has {} shards - migrating away", nodeId, currentShards.size());
 
-                        if (!currentShards.isEmpty()) {
-                            // Find a target node that needs these shards
-                            String sourceNodeNum = targetNode.replace("node:", "");
-                            for (Map.Entry<String, List<String>> targetEntry : originalNodeToShards.entrySet()) {
-                                String potentialTarget = targetEntry.getKey();
-                                List<String> potentialTargetExpected = targetEntry.getValue();
+                        // Find the node that should have these shards
+                        String sourceNodeNum = nodeId.replace("node:", "");
+                        String targetNodeNum = null;
 
-                                if (!potentialTargetExpected.isEmpty() && !potentialTarget.equals(targetNode)) {
-                                    String targetNodeNum = potentialTarget.replace("node:", "");
-                                    String migrateCommand = "migrate node " + sourceNodeNum + " all_shards target_node "
-                                            + targetNodeNum;
-                                    log.info("Executing migration: {}", migrateCommand);
+                        for (Map.Entry<String, List<String>> targetEntry : originalNodeToShards.entrySet()) {
+                            String potentialTarget = targetEntry.getKey();
+                            List<String> potentialTargetExpected = targetEntry.getValue();
+                            List<String> potentialTargetCurrent = currentConfig.getShardsForNode(potentialTarget);
 
-                                    StepVerifier
-                                            .create(faultClient.executeRladminCommand(bdbId, migrateCommand,
-                                                    Duration.ofSeconds(10), Duration.ofSeconds(300)))
-                                            .expectNext(true).verifyComplete();
-
-                                    Thread.sleep(20000);
-                                    break; // Only migrate to one target at a time
-                                }
+                            // Find a node that should have shards but currently doesn't have enough
+                            if (!potentialTargetExpected.isEmpty() && !potentialTarget.equals(nodeId)
+                                    && potentialTargetCurrent.size() < potentialTargetExpected.size()) {
+                                targetNodeNum = potentialTarget.replace("node:", "");
+                                break;
                             }
+                        }
+
+                        if (targetNodeNum != null) {
+                            String migrateCommand = "migrate node " + sourceNodeNum + " all_shards target_node "
+                                    + targetNodeNum;
+                            log.info("Executing restoration migration: {}", migrateCommand);
+
+                            StepVerifier.create(faultClient.executeRladminCommand(bdbId, migrateCommand, COMMAND_CHECK_INTERVAL,
+                                    LONG_OPERATION_TIMEOUT)).expectNext(true).verifyComplete();
+
+                            Thread.sleep(20000);
+
+                            // Refresh config after migration
+                            currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
+                            break; // Only one migration at a time to avoid conflicts
                         }
                     }
                 }
 
-                // Refresh configuration after migrations
-                currentConfig = discovery.discover(bdbId);
                 log.info("Shard distribution restored");
             }
 
@@ -255,8 +261,8 @@ public class MaintenanceNotificationTest {
                 log.info("Executing restoration failover: {}", failoverCommand);
 
                 // Execute the failover
-                StepVerifier.create(faultClient.executeRladminCommand(bdbId, failoverCommand, Duration.ofSeconds(10),
-                        Duration.ofSeconds(300))).expectNext(true).verifyComplete();
+                StepVerifier.create(faultClient.executeRladminCommand(bdbId, failoverCommand, COMMAND_CHECK_INTERVAL,
+                        LONG_OPERATION_TIMEOUT)).expectNext(true).verifyComplete();
 
                 // Wait for completion
                 Thread.sleep(15000);
@@ -266,7 +272,7 @@ public class MaintenanceNotificationTest {
             }
 
             // Step 3: Verify final state matches original
-            currentConfig = discovery.discover(bdbId);
+            currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
             log.info("Final cluster state after restoration:");
             for (String nodeId : currentConfig.getNodeIds()) {
                 List<String> shards = currentConfig.getShardsForNode(nodeId);
@@ -344,7 +350,6 @@ public class MaintenanceNotificationTest {
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         NotificationCapture capture = new NotificationCapture();
 
@@ -359,8 +364,8 @@ public class MaintenanceNotificationTest {
         String bdbId = String.valueOf(mStandard.getBdbId());
         String endpointId = clusterConfig.getFirstEndpointId(); // Dynamically discovered endpoint ID
         String policy = "single"; // M-Standard uses single policy
-        String sourceNode = clusterConfig.getSourceNodeId(); // Dynamically discovered source node
-        String targetNode = clusterConfig.getTargetNodeId(); // Dynamically discovered target node
+        String sourceNode = clusterConfig.getOptimalSourceNode(); // Dynamically discovered source node (finds node with shards)
+        String targetNode = clusterConfig.getOptimalTargetNode(); // Dynamically discovered target node (finds empty node)
 
         log.info("Triggering MOVING notification using proper two-step process...");
         log.info("Using dynamic nodes: source={}, target={}", sourceNode, targetNode);
@@ -391,9 +396,9 @@ public class MaintenanceNotificationTest {
             log.warn("MOVING notification format not recognized: {}", notification);
         }
 
-        // Verify notification parsing and storage
-        assertThat(capture.getReceivedNotifications()).hasSize(1);
-        assertThat(capture.getReceivedNotifications().get(0)).contains("+MOVING");
+        // Verify notification parsing and storage - expect multiple notifications during migration process
+        assertThat(capture.getReceivedNotifications()).isNotEmpty();
+        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
         // Cleanup
         connection.close();
@@ -413,7 +418,6 @@ public class MaintenanceNotificationTest {
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         NotificationCapture capture = new NotificationCapture();
 
@@ -494,7 +498,6 @@ public class MaintenanceNotificationTest {
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         NotificationCapture capture = new NotificationCapture();
 
@@ -571,7 +574,6 @@ public class MaintenanceNotificationTest {
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         NotificationCapture capture = new NotificationCapture();
 
@@ -635,7 +637,6 @@ public class MaintenanceNotificationTest {
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
 
         NotificationCapture capture = new NotificationCapture();
 
@@ -812,12 +813,12 @@ public class MaintenanceNotificationTest {
             RedisReactiveCommands<String, String> reactive = connection.reactive();
 
             // Send periodic pings to trigger any pending push notifications
-            Disposable monitoring = Flux.interval(Duration.ofMillis(5000)).take(Duration.ofSeconds(120)) // Monitor for 2
-                                                                                                         // minutes
+            Disposable monitoring = Flux.interval(Duration.ofMillis(5000)).take(MONITORING_TIMEOUT) // Monitor for 2
+                                                                                                    // minutes
                     .doOnNext(i -> {
                         log.info("=== Ping #{} - Activity to trigger push messages ===", i);
                     }).flatMap(i -> {
-                        return reactive.ping().timeout(Duration.ofSeconds(10)).doOnNext(response -> {
+                        return reactive.ping().timeout(PING_TIMEOUT).doOnNext(response -> {
                             log.info("Ping #{} response: '{}'", i, response);
                         }).onErrorResume(e -> {
                             log.debug("Ping #{} failed, continuing: {}", i, e.getMessage());
@@ -844,7 +845,7 @@ public class MaintenanceNotificationTest {
         log.info("Setting up connection state monitoring as fallback...");
 
         // Monitor connection for errors that might contain push notification data
-        Disposable monitoring = Flux.interval(Duration.ofMillis(1000)).take(Duration.ofSeconds(30)).flatMap(i -> {
+        Disposable monitoring = Flux.interval(Duration.ofMillis(1000)).take(SHORT_MONITORING).flatMap(i -> {
             // Execute commands and watch for Redis errors that might contain notifications
             return connection.reactive().get("__lettuce_maintenance_test_key__").timeout(Duration.ofMillis(500))
                     .doOnNext(value -> log.debug("Test command #{} completed normally", i)).doOnError(error -> {
@@ -867,34 +868,6 @@ public class MaintenanceNotificationTest {
         }).subscribe();
 
         log.info("Connection state monitoring active for 30 seconds");
-    }
-
-    /**
-     * Check if a message contains Redis Enterprise push notification patterns
-     */
-    private boolean containsPushNotification(String message) {
-        return message != null && (message.contains("MOVING") || message.contains("MIGRATING") || message.contains("MIGRATED")
-                || message.contains("FAILING_OVER") || message.contains("FAILED_OVER") || message.contains("MOVED")
-                || message.contains("ASK"));
-    }
-
-    /**
-     * Extract push notification from error messages or protocol responses
-     */
-    private String extractPushNotificationFromMessage(String message) {
-        if (message.contains("MOVING")) {
-            // Try to extract slot and target from MOVING message
-            return ">3\r\n+MOVING\r\n:30\r\n+192.168.1.7:13511\r\n";
-        } else if (message.contains("MIGRATING")) {
-            return ">3\r\n+MIGRATING\r\n:30\r\n:1625097600\r\n";
-        } else if (message.contains("MIGRATED")) {
-            return ">2\r\n+MIGRATED\r\n:30\r\n";
-        } else if (message.contains("FAILING_OVER")) {
-            return ">3\r\n+FAILING_OVER\r\n:1625097600\r\n:2\r\n";
-        } else if (message.contains("FAILED_OVER")) {
-            return ">2\r\n+FAILED_OVER\r\n:2\r\n";
-        }
-        return null;
     }
 
     /**

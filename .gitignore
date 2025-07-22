@@ -17,6 +17,4 @@ dependency-reduced-pom.xml
 .flattened-pom.xml
 *.java-version
 *.DS_Store
-
-# Context documentation files
-src/test/java/io/lettuce/scenario/CONTEXT_MOVING_PUSH_NOTIFICATIONS.md
+.vscode*

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
@@ -32,13 +33,36 @@ public class FaultInjectionClient {
 
     private static final Logger log = LoggerFactory.getLogger(FaultInjectionClient.class);
 
+    // Timeout constants
+    private static final Duration HTTP_CLIENT_TIMEOUT = Duration.ofMinutes(5); // 300 seconds
+
+    private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5); // 300 seconds - for migrations/failovers
+
+    private static final Duration MEDIUM_OPERATION_TIMEOUT = Duration.ofMinutes(3); // 180 seconds - for emptying nodes
+
+    private static final Duration ENDPOINT_OPERATION_TIMEOUT = Duration.ofMinutes(2); // 120 seconds - for endpoint operations
+
+    private static final Duration SHORT_OPERATION_TIMEOUT = Duration.ofMinutes(1); // 60 seconds - for simple commands
+
+    private static final Duration STABILIZATION_DELAY = Duration.ofSeconds(10); // Wait for cluster to stabilize
+
+    private static final Duration CHECK_INTERVAL_LONG = Duration.ofSeconds(5); // Check interval for long operations
+
+    private static final Duration CHECK_INTERVAL_MEDIUM = Duration.ofSeconds(3); // Check interval for medium operations
+
+    private static final Duration CHECK_INTERVAL_SHORT = Duration.ofSeconds(2); // Check interval for short operations
+
+    private static final Duration OPERATION_DELAY = Duration.ofSeconds(2); // Brief delay between operations
+
+    private static final Duration RETRY_MAX_BACKOFF = Duration.ofSeconds(5); // Maximum backoff for retries
+
     private final HttpClient httpClient;
 
     private final ObjectMapper objectMapper;
 
     public FaultInjectionClient() {
         // Increase HTTP client timeout to accommodate long-running operations like failover (up to 5 minutes)
-        this.httpClient = HttpClient.create().responseTimeout(Duration.ofSeconds(300));
+        this.httpClient = HttpClient.create().responseTimeout(HTTP_CLIENT_TIMEOUT);
 
         this.objectMapper = new ObjectMapper().setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     }
@@ -118,7 +142,7 @@ public class FaultInjectionClient {
                     // Return empty to trigger retry
                     return Mono.empty();
                 })
-                .retryWhen(reactor.util.retry.Retry.backoff(3, Duration.ofMillis(300)).maxBackoff(Duration.ofSeconds(2))
+                .retryWhen(reactor.util.retry.Retry.backoff(3, Duration.ofMillis(300)).maxBackoff(RETRY_MAX_BACKOFF)
                         .filter(throwable -> !(throwable instanceof RuntimeException && throwable.getMessage() != null
                                 && throwable.getMessage().contains("Fault injection proxy error")))
                         .doBeforeRetry(retrySignal -> log.warn("Retrying action status check after error, attempt: {}",
@@ -205,7 +229,7 @@ public class FaultInjectionClient {
      * Executes an rladmin command with default timing parameters.
      */
     public Mono<Boolean> executeRladminCommand(String bdbId, String rladminCommand) {
-        return executeRladminCommand(bdbId, rladminCommand, Duration.ofSeconds(2), Duration.ofSeconds(60));
+        return executeRladminCommand(bdbId, rladminCommand, CHECK_INTERVAL_SHORT, SHORT_OPERATION_TIMEOUT);
     }
 
     /**
@@ -240,7 +264,7 @@ public class FaultInjectionClient {
                     try {
                         // Properly parse JSON response using ObjectMapper
                         log.debug("Parsing JSON for '{}' - Raw response: '{}'", rladminCommand, result);
-                        com.fasterxml.jackson.databind.JsonNode statusResponse = objectMapper.readTree(result);
+                        JsonNode statusResponse = objectMapper.readTree(result);
                         String status = statusResponse.has("status") ? statusResponse.get("status").asText() : null;
                         String error = statusResponse.has("error") && !statusResponse.get("error").isNull()
                                 ? statusResponse.get("error").asText()
@@ -249,8 +273,8 @@ public class FaultInjectionClient {
                         log.debug("Parsed JSON for '{}' - status='{}', error='{}'", rladminCommand, status, error);
 
                         if ("success".equals(status) || "completed".equals(status)) {
-                            log.debug("Status indicates SUCCESS for '{}', calling validation", rladminCommand);
-                            return validateRladminCommandCompletion(rladminCommand, result);
+                            log.debug("Status indicates SUCCESS for '{}'", rladminCommand);
+                            return Mono.just(true);
                         }
 
                         if ("failed".equals(status) || error != null) {
@@ -274,23 +298,11 @@ public class FaultInjectionClient {
                         return Mono.error(new RuntimeException("Failed to parse action status: " + e.getMessage()));
                     }
                 })
-                .retryWhen(reactor.util.retry.Retry.backoff(5, Duration.ofMillis(500)).maxBackoff(Duration.ofSeconds(5))
+                .retryWhen(reactor.util.retry.Retry.backoff(5, Duration.ofMillis(500)).maxBackoff(RETRY_MAX_BACKOFF)
                         .filter(throwable -> !(throwable instanceof RuntimeException && throwable.getMessage() != null
                                 && throwable.getMessage().contains("failed")))
                         .doBeforeRetry(retrySignal -> log.debug("Retrying rladmin status check for '{}', attempt: {}",
                                 rladminCommand, retrySignal.totalRetries() + 1)));
-    }
-
-    /**
-     * Validates command-specific completion criteria.
-     */
-    private Mono<Boolean> validateRladminCommandCompletion(String rladminCommand, String statusResult) {
-        log.debug("Entering validation for '{}' with result: '{}'", rladminCommand, statusResult);
-
-        // Since we only call this method when JSON status is already "success" or "completed",
-        // we can immediately return true - the JSON status check has already validated completion
-        log.debug("Called after JSON status validation passed for '{}', returning TRUE", rladminCommand);
-        return Mono.just(true);
     }
 
     /**
@@ -320,7 +332,7 @@ public class FaultInjectionClient {
         log.info("Triggering endpoint rebind: endpoint {} with policy {} on BDB {}", endpointId, policy, bdbId);
 
         // Endpoint operations typically need more time (up to 2 minutes)
-        return executeRladminCommand(bdbId, rebindCommand, Duration.ofSeconds(3), Duration.ofSeconds(120))
+        return executeRladminCommand(bdbId, rebindCommand, CHECK_INTERVAL_MEDIUM, ENDPOINT_OPERATION_TIMEOUT)
                 .doOnSuccess(success -> log.info("Endpoint rebind completed for endpoint {} on BDB {}", endpointId, bdbId))
                 .doOnError(error -> log.error("Endpoint rebind failed for endpoint {} on BDB {}: {}", endpointId, bdbId,
                         error.getMessage()));
@@ -355,58 +367,16 @@ public class FaultInjectionClient {
 
         // Use proper migrate command format: migrate node <source> all_shards target_node <target>
         String migrateCommand = String.format("migrate node %s all_shards target_node %s", sourceNode, targetNode);
-        Duration operationTimeout = Duration.ofSeconds(300); // Node migration (up to 5 minutes for complex operations)
+        Duration operationTimeout = LONG_OPERATION_TIMEOUT; // Node migration (up to 5 minutes for complex operations)
 
         log.info("Triggering migration from node {} to node {} on BDB {} (triggered by shard {})", sourceNode, targetNode,
                 bdbId, shardId != null ? shardId : "all");
 
-        return executeRladminCommand(bdbId, migrateCommand, Duration.ofSeconds(5), operationTimeout)
+        return executeRladminCommand(bdbId, migrateCommand, CHECK_INTERVAL_LONG, operationTimeout)
                 .doOnSuccess(success -> log.info("Shard migration completed from node {} to node {} on BDB {}", sourceNode,
                         targetNode, bdbId))
                 .doOnError(error -> log.error("Shard migration failed from node {} to node {} on BDB {}: {}", sourceNode,
                         targetNode, bdbId, error.getMessage()));
-    }
-
-    /**
-     * Triggers shard migration to generate MIGRATING/MIGRATED notifications with enhanced tracking. This is the legacy method
-     * that uses hardcoded nodes - prefer the overloaded method with dynamic nodes.
-     * 
-     * @param bdbId the BDB ID
-     * @param shardId the shard ID to migrate (used to determine which node to migrate from)
-     * @return a Mono that emits true when the migration is initiated
-     */
-    public Mono<Boolean> triggerShardMigration(String bdbId, String shardId) {
-        // Use default nodes if not specified (typical Redis Enterprise cluster nodes)
-        String sourceNode = "1";
-        String targetNode = "2";
-
-        log.warn("Using hardcoded default nodes for migration: source={}, target={}", sourceNode, targetNode);
-        log.warn("Consider using the overloaded method with dynamic node discovery instead");
-        return triggerShardMigration(bdbId, shardId, sourceNode, targetNode);
-    }
-
-    /**
-     * Triggers shard failover to generate FAILING_OVER/FAILED_OVER notifications with enhanced monitoring.
-     * 
-     * @param bdbId the BDB ID
-     * @param shardId the shard ID to failover (used to determine which node to failover)
-     * @param nodeId the specific node ID to failover
-     * @return a Mono that emits true when the failover is initiated
-     */
-    public Mono<Boolean> triggerShardFailover(String bdbId, String shardId, String nodeId) {
-        // Legacy method - hardcoded shard IDs for backward compatibility
-        log.warn(
-                "Using legacy triggerShardFailover method with hardcoded shard IDs. Consider using the overloaded method with RedisEnterpriseConfig.");
-        String failoverCommand = "failover shard 1 3"; // Hardcoded fallback
-        Duration operationTimeout = Duration.ofSeconds(300); // Node failover (up to 5 minutes for complex operations)
-
-        log.info("Triggering failover for node {} on BDB {} (triggered by shard {})", nodeId, bdbId,
-                shardId != null ? shardId : "all");
-
-        return executeRladminCommand(bdbId, failoverCommand, Duration.ofSeconds(3), operationTimeout)
-                .doOnSuccess(success -> log.info("Shard failover completed for node {} on BDB {}", nodeId, bdbId))
-                .doOnError(error -> log.error("Shard failover failed for node {} on BDB {}: {}", nodeId, bdbId,
-                        error.getMessage()));
     }
 
     /**
@@ -447,32 +417,15 @@ public class FaultInjectionClient {
         // Build command with all shard IDs for the node
         String shardIdList = String.join(" ", shardIds);
         String failoverCommand = "failover shard " + shardIdList;
-        Duration operationTimeout = Duration.ofSeconds(300); // Node failover (up to 5 minutes for complex operations)
+        Duration operationTimeout = LONG_OPERATION_TIMEOUT; // Node failover (up to 5 minutes for complex operations)
 
         log.info("*** FAILOVER COMMAND DEBUG: Final command = '{}'", failoverCommand);
         log.info("Triggering failover for node {} on BDB {} with {} shards: {}", nodeId, bdbId, shardIds.size(), shardIdList);
 
-        return executeRladminCommand(bdbId, failoverCommand, Duration.ofSeconds(3), operationTimeout)
+        return executeRladminCommand(bdbId, failoverCommand, CHECK_INTERVAL_MEDIUM, operationTimeout)
                 .doOnSuccess(success -> log.info("Shard failover completed for node {} on BDB {}", nodeId, bdbId))
                 .doOnError(error -> log.error("Shard failover failed for node {} on BDB {}: {}", nodeId, bdbId,
                         error.getMessage()));
-    }
-
-    /**
-     * Triggers shard failover to generate FAILING_OVER/FAILED_OVER notifications with enhanced monitoring. This is the legacy
-     * method that uses hardcoded node - prefer the overloaded method with dynamic node.
-     * 
-     * @param bdbId the BDB ID
-     * @param shardId the shard ID to failover (used to determine which node to failover)
-     * @return a Mono that emits true when the failover is initiated
-     */
-    public Mono<Boolean> triggerShardFailover(String bdbId, String shardId) {
-        // Use default node if not specified (typical Redis Enterprise cluster node)
-        String nodeId = "1";
-
-        log.warn("Using hardcoded default node for failover: {}", nodeId);
-        log.warn("Consider using the overloaded method with dynamic node discovery instead");
-        return triggerShardFailover(bdbId, shardId, nodeId);
     }
 
     /**
@@ -491,8 +444,8 @@ public class FaultInjectionClient {
 
         return Flux.fromIterable(operations).concatMap(operation -> {
             log.info("Executing maintenance operation: {}", operation);
-            return executeMaintenanceOperation(bdbId, operation).delayElement(Duration.ofSeconds(2)); // Brief delay between
-                                                                                                      // operations
+            return executeMaintenanceOperation(bdbId, operation).delayElement(OPERATION_DELAY); // Brief delay between
+                                                                                                // operations
         }).then(Mono.just(true)).doOnSuccess(success -> log.info("Maintenance sequence completed on BDB {}", bdbId))
                 .doOnError(error -> log.error("Maintenance sequence failed on BDB {}: {}", bdbId, error.getMessage()));
     }
@@ -505,9 +458,11 @@ public class FaultInjectionClient {
             case ENDPOINT_REBIND:
                 return triggerEndpointRebind(bdbId, operation.getEndpointId(), operation.getPolicy());
             case SHARD_MIGRATION:
-                return triggerShardMigration(bdbId, operation.getShardId());
+                return Mono.error(new IllegalArgumentException(
+                        "SHARD_MIGRATION operations require source and target nodes. Use the 4-parameter triggerShardMigration method directly."));
             case SHARD_FAILOVER:
-                return triggerShardFailover(bdbId, operation.getShardId());
+                return Mono.error(new IllegalArgumentException(
+                        "SHARD_FAILOVER operations require nodeId and RedisEnterpriseConfig. Use the 4-parameter triggerShardFailover method directly."));
             default:
                 return Mono.error(new IllegalArgumentException("Unknown operation type: " + operation.getType()));
         }
@@ -613,7 +568,7 @@ public class FaultInjectionClient {
         // Step 1: Migrate all shards from source node to target node
         String migrateCommand = String.format("migrate node %s all_shards target_node %s", sourceNode, targetNode);
 
-        return executeRladminCommand(bdbId, migrateCommand, Duration.ofSeconds(5), Duration.ofSeconds(180))
+        return executeRladminCommand(bdbId, migrateCommand, CHECK_INTERVAL_LONG, MEDIUM_OPERATION_TIMEOUT)
                 .doOnSuccess(success -> log.info("Successfully migrated all shards from node {} to node {} on BDB {}",
                         sourceNode, targetNode, bdbId))
                 .doOnError(error -> log.error("Failed to migrate shards from node {} to node {} on BDB {}: {}", sourceNode,
@@ -624,7 +579,7 @@ public class FaultInjectionClient {
                         String bindCommand = String.format("bind endpoint %s policy %s", endpointId, policy);
                         log.info("Executing bind command after migration: {}", bindCommand);
 
-                        return executeRladminCommand(bdbId, bindCommand, Duration.ofSeconds(3), Duration.ofSeconds(120))
+                        return executeRladminCommand(bdbId, bindCommand, CHECK_INTERVAL_MEDIUM, ENDPOINT_OPERATION_TIMEOUT)
                                 .doOnSuccess(bindSuccess -> log.info("Successfully bound endpoint {} after migration on BDB {}",
                                         endpointId, bdbId))
                                 .doOnError(bindError -> log.error("Failed to bind endpoint {} after migration on BDB {}: {}",
@@ -633,20 +588,6 @@ public class FaultInjectionClient {
                         return Mono.error(new RuntimeException("Migration failed, cannot proceed with endpoint bind"));
                     }
                 });
-    }
-
-    /**
-     * Triggers a MOVING notification with default node selection (fallback method). WARNING: This method uses hardcoded node
-     * IDs and should be avoided in favor of dynamic discovery.
-     */
-    public Mono<Boolean> triggerMovingNotification(String bdbId, String endpointId, String policy) {
-        // Use default nodes if not specified (typical Redis Enterprise cluster nodes)
-        String sourceNode = "1";
-        String targetNode = "2";
-
-        log.warn("Using hardcoded default nodes for MOVING notification: source={}, target={}", sourceNode, targetNode);
-        log.warn("Consider using the overloaded method with dynamic node discovery instead");
-        return triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode);
     }
 
     /**
@@ -663,7 +604,7 @@ public class FaultInjectionClient {
 
         String emptyNodeCommand = String.format("migrate node %s all_shards target_node %s", nodeToEmpty, destinationNode);
 
-        return executeRladminCommand(bdbId, emptyNodeCommand, Duration.ofSeconds(5), Duration.ofSeconds(180))
+        return executeRladminCommand(bdbId, emptyNodeCommand, CHECK_INTERVAL_LONG, MEDIUM_OPERATION_TIMEOUT)
                 .doOnSuccess(success -> log.info("Successfully emptied node {} on BDB {}", nodeToEmpty, bdbId))
                 .doOnError(error -> log.error("Failed to empty node {} on BDB {}: {}", nodeToEmpty, bdbId, error.getMessage()));
     }
@@ -690,10 +631,10 @@ public class FaultInjectionClient {
                 log.info("Target node {} is now empty. Waiting before proceeding with migration...", targetNode);
 
                 // Step 2: Add delay to let the cluster stabilize, then perform actual migration with longer timeout
-                return Mono.delay(Duration.ofSeconds(10))
+                return Mono.delay(STABILIZATION_DELAY)
                         .then(executeRladminCommand(bdbId,
                                 String.format("migrate node %s all_shards target_node %s", sourceNode, targetNode),
-                                Duration.ofSeconds(5), Duration.ofSeconds(300))) // Increased timeout to 5 minutes
+                                CHECK_INTERVAL_LONG, LONG_OPERATION_TIMEOUT)) // Increased timeout to 5 minutes
                         .doOnSuccess(success -> log.info("Migration from node {} to empty node {} completed on BDB {}",
                                 sourceNode, targetNode, bdbId))
                         .doOnError(error -> log.error("Migration from node {} to empty node {} failed on BDB {}: {}",
@@ -742,7 +683,7 @@ public class FaultInjectionClient {
      * Executes an rladmin command and captures output with default timing parameters.
      */
     public Mono<String> executeRladminCommandAndCaptureOutput(String bdbId, String rladminCommand) {
-        return executeRladminCommandAndCaptureOutput(bdbId, rladminCommand, Duration.ofSeconds(2), Duration.ofSeconds(60));
+        return executeRladminCommandAndCaptureOutput(bdbId, rladminCommand, CHECK_INTERVAL_SHORT, SHORT_OPERATION_TIMEOUT);
     }
 
     /**
@@ -770,7 +711,7 @@ public class FaultInjectionClient {
 
                     try {
                         // Properly parse JSON response using ObjectMapper
-                        com.fasterxml.jackson.databind.JsonNode statusResponse = objectMapper.readTree(result);
+                        JsonNode statusResponse = objectMapper.readTree(result);
                         String status = statusResponse.has("status") ? statusResponse.get("status").asText() : null;
                         String error = statusResponse.has("error") && !statusResponse.get("error").isNull()
                                 ? statusResponse.get("error").asText()
@@ -817,7 +758,7 @@ public class FaultInjectionClient {
                         return Mono.error(new RuntimeException("Failed to parse action status: " + e.getMessage()));
                     }
                 })
-                .retryWhen(reactor.util.retry.Retry.backoff(5, Duration.ofMillis(500)).maxBackoff(Duration.ofSeconds(5))
+                .retryWhen(reactor.util.retry.Retry.backoff(5, Duration.ofMillis(500)).maxBackoff(RETRY_MAX_BACKOFF)
                         .filter(throwable -> !(throwable instanceof RuntimeException && throwable.getMessage() != null
                                 && throwable.getMessage().contains("failed")))
                         .doBeforeRetry(retrySignal -> log.debug("Retrying rladmin output capture for '{}', attempt: {}",

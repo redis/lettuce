@@ -1,11 +1,8 @@
 package io.lettuce.scenario;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.time.Duration;
 import java.util.Arrays;
-import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -13,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.scenario.FaultInjectionClient.MaintenanceOperation;
 import io.lettuce.scenario.FaultInjectionClient.MaintenanceOperationType;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static io.lettuce.TestTags.UNIT_TEST;
@@ -70,18 +66,23 @@ public class FaultInjectionClientUnitTest {
     public void triggerShardMigrationValidatesShardId() {
         FaultInjectionClient client = new FaultInjectionClient();
 
-        // Test invalid shard ID format
-        StepVerifier.create(client.triggerShardMigration("123", "invalid")).expectError(IllegalArgumentException.class)
-                .verify();
+        // Test invalid shard ID format using 4-parameter version
+        StepVerifier.create(client.triggerShardMigration("123", "invalid", "1", "2"))
+                .expectError(IllegalArgumentException.class).verify();
     }
 
     @Test
-    @DisplayName("triggerShardFailover validates shard ID format")
-    public void triggerShardFailoverValidatesShardId() {
+    @DisplayName("triggerShardFailover validates parameters")
+    public void triggerShardFailoverValidatesParameters() {
         FaultInjectionClient client = new FaultInjectionClient();
 
-        // Test invalid shard ID format
-        StepVerifier.create(client.triggerShardFailover("123", "invalid")).expectError(IllegalArgumentException.class).verify();
+        // Test null RedisEnterpriseConfig
+        StepVerifier.create(client.triggerShardFailover("123", "1", "1", null)).expectError(IllegalArgumentException.class)
+                .verify();
+
+        // Test null nodeId
+        StepVerifier.create(client.triggerShardFailover("123", "1", null, new RedisEnterpriseConfig("123")))
+                .expectError(IllegalArgumentException.class).verify();
     }
 
     @Test

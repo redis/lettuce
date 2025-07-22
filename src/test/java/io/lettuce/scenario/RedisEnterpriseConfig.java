@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.stream.Collectors;
+import java.time.Duration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,11 @@ import org.slf4j.LoggerFactory;
 public class RedisEnterpriseConfig {
 
     private static final Logger log = LoggerFactory.getLogger(RedisEnterpriseConfig.class);
+
+    // Timeout constants for Redis Enterprise discovery operations
+    private static final Duration DISCOVERY_CHECK_INTERVAL = Duration.ofSeconds(2); // Check interval for discovery commands
+
+    private static final Duration DISCOVERY_TIMEOUT = Duration.ofSeconds(15); // Timeout for discovery commands
 
     private final List<String> masterShardIds = new ArrayList<>();
 
@@ -53,6 +59,79 @@ public class RedisEnterpriseConfig {
 
     public RedisEnterpriseConfig(String bdbId) {
         this.bdbId = bdbId;
+    }
+
+    /**
+     * Discover the Redis Enterprise configuration for the given BDB using a FaultInjectionClient.
+     */
+    public static RedisEnterpriseConfig discover(FaultInjectionClient faultClient, String bdbId) {
+        log.info("Starting Redis Enterprise configuration discovery for BDB {}", bdbId);
+
+        RedisEnterpriseConfig config = new RedisEnterpriseConfig(bdbId);
+
+        try {
+            // Execute discovery commands to get actual cluster information
+            String shardsOutput = executeCommandAndCaptureOutput(faultClient, bdbId, "status shards", "shards discovery");
+            String endpointsOutput = executeCommandAndCaptureOutput(faultClient, bdbId, "status endpoints",
+                    "endpoints discovery");
+            String nodesOutput = executeCommandAndCaptureOutput(faultClient, bdbId, "status nodes", "nodes discovery");
+
+            // Parse the actual output to populate configuration using existing methods
+            if (shardsOutput != null && !shardsOutput.trim().isEmpty()) {
+                config.parseShards(shardsOutput);
+            }
+
+            if (endpointsOutput != null && !endpointsOutput.trim().isEmpty()) {
+                config.parseEndpoints(endpointsOutput);
+            }
+
+            if (nodesOutput != null && !nodesOutput.trim().isEmpty()) {
+                config.parseNodes(nodesOutput);
+            }
+
+            log.info("Configuration discovery completed: {}", config.getSummary());
+
+            // Validate the discovered configuration
+            config.validateClusterConfiguration();
+
+        } catch (Exception e) {
+            log.error("Failed to discover configuration for BDB {}: {}", bdbId, e.getMessage());
+            log.error("Discovery failure details: shardsOutput present={}, endpointsOutput present={}, nodesOutput present={}",
+                    e.getMessage().contains("shards"), e.getMessage().contains("endpoints"), e.getMessage().contains("nodes"));
+            throw new IllegalStateException("Redis Enterprise cluster discovery failed for BDB " + bdbId
+                    + ". Cluster may be unreachable, malformed, or BDB may not exist. Original error: " + e.getMessage(), e);
+        }
+
+        return config;
+    }
+
+    /**
+     * Execute a command using the fault injection client and capture the real output.
+     */
+    private static String executeCommandAndCaptureOutput(FaultInjectionClient faultClient, String bdbId, String command,
+            String description) {
+        log.info("Executing command for {}: rladmin {}", description, command);
+
+        try {
+            // Use the output capture method
+            String output = faultClient
+                    .executeRladminCommandAndCaptureOutput(bdbId, command, DISCOVERY_CHECK_INTERVAL, DISCOVERY_TIMEOUT)
+                    .doOnNext(result -> log.info("{} command completed with output length: {}", description, result.length()))
+                    .doOnError(e -> log.warn("{} command failed: {}", description, e.getMessage())).onErrorReturn("").block();
+
+            if (output != null && !output.trim().isEmpty()) {
+                log.info("{} command executed successfully, captured {} characters of output", description, output.length());
+                log.debug("Raw output for {}: {}", description, output);
+                return output;
+            } else {
+                log.warn("{} command completed but no output captured", description);
+                return "";
+            }
+
+        } catch (Exception e) {
+            log.warn("Error during {}: {}", description, e.getMessage());
+            return "";
+        }
     }
 
     /**
@@ -167,7 +246,7 @@ public class RedisEnterpriseConfig {
                     endpointIds.add(endpointId);
                     log.info("Found endpoint: {} on {}", endpointId, nodeId);
 
-                    // Track node IDs
+                    // Track node IDs in case they have appeared during endpoint discovery
                     if (!nodeIds.contains(nodeId)) {
                         nodeIds.add(nodeId);
                         log.info("Found node: {}", nodeId);
@@ -182,7 +261,7 @@ public class RedisEnterpriseConfig {
      */
     public String getFirstMasterShardId() {
         if (masterShardIds.isEmpty()) {
-            throw new IllegalStateException("No master shards found for BDB " + bdbId);
+            throw new IllegalStateException("No master shards found for BDB " + bdbId + ". Cluster appears to be malformed.");
         }
         return extractNumericShardId(masterShardIds.get(0));
     }
@@ -191,9 +270,16 @@ public class RedisEnterpriseConfig {
      * Get the second master shard ID for operations (if available).
      */
     public String getSecondMasterShardId() {
+        if (masterShardIds.isEmpty()) {
+            throw new IllegalStateException("No master shards found for BDB " + bdbId + ". Cluster appears to be malformed.");
+        }
         if (masterShardIds.size() < 2) {
-            // Fall back to first master if only one exists
-            return getFirstMasterShardId();
+            log.warn(
+                    "Only {} master shard(s) found for BDB {}, expected at least 2. This may indicate a malformed cluster or incomplete sharding setup.",
+                    masterShardIds.size(), bdbId);
+            log.warn("Available master shards: {}", masterShardIds);
+            throw new IllegalStateException(
+                    "Insufficient master shards found. Expected at least 2, but found " + masterShardIds.size());
         }
         return extractNumericShardId(masterShardIds.get(1));
     }
@@ -229,7 +315,7 @@ public class RedisEnterpriseConfig {
      */
     public String getFirstEndpointId() {
         if (endpointIds.isEmpty()) {
-            throw new IllegalStateException("No endpoints found for BDB " + bdbId);
+            throw new IllegalStateException("No endpoints found for BDB " + bdbId + ". Cluster appears to be malformed.");
         }
         return extractEndpointId(endpointIds.get(0));
     }
@@ -303,7 +389,7 @@ public class RedisEnterpriseConfig {
             int shardCount = entry.getValue().size();
             this.nodeShardCounts.put(nodeId, shardCount);
 
-            // Ensure node IDs are tracked
+            // Ensure node IDs are tracked in case they have appeared during shards discovery
             if (!nodeIds.contains(nodeId)) {
                 nodeIds.add(nodeId);
             }
@@ -314,40 +400,55 @@ public class RedisEnterpriseConfig {
     }
 
     /**
-     * Get an empty node (0 shards) - perfect for migration target.
+     * Currently it only works for 3 nodes environment, and even has hardcoded node:1, node:2, node:3 This is a temporary
+     * solution to get the tests running, and should be replaced with a dynamic class that can work in more than 3 nodes
+     * environment.
+     * 
+     * Get an empty node (0 shards) - perfect for migration target. Returns null if no empty node is found (which is a valid
+     * state).
      */
     public String getEmptyNode() {
-        return nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() == 0).map(Map.Entry::getKey).findFirst()
-                .map(this::extractNumericNodeId).orElse(null);
+        String emptyNode = nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() == 0).map(Map.Entry::getKey)
+                .findFirst().map(this::extractNumericNodeId).orElse(null);
+
+        if (emptyNode == null) {
+            log.debug("No empty nodes found. Node shard distribution: {}", nodeShardCounts);
+        }
+
+        return emptyNode;
     }
 
     /**
-     * Get a node with shards - good for migration source.
+     * Get a node with shards - good for migration source. Returns null if no node with shards is found (which indicates a
+     * malformed cluster).
      */
     public String getNodeWithShards() {
-        return nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() > 0).map(Map.Entry::getKey).findFirst()
-                .map(this::extractNumericNodeId).orElse(null);
+        String nodeWithShards = nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() > 0).map(Map.Entry::getKey)
+                .findFirst().map(this::extractNumericNodeId).orElse(null);
+
+        if (nodeWithShards == null) {
+            log.warn("No nodes with shards found. This indicates an empty or malformed cluster. Node shard distribution: {}",
+                    nodeShardCounts);
+        }
+
+        return nodeWithShards;
     }
 
     /**
-     * Get a second node with shards - good for intermediate storage.
+     * Get a second node with shards - good for intermediate storage. Returns null if fewer than 2 nodes with shards exist.
      */
     public String getSecondNodeWithShards() {
-        return nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() > 0).map(Map.Entry::getKey).skip(1) // Skip
-                                                                                                                        // the
-                                                                                                                        // first
-                                                                                                                        // one
+        String secondNodeWithShards = nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() > 0)
+                .map(Map.Entry::getKey).skip(1) // Skip the first one
                 .findFirst().map(this::extractNumericNodeId).orElse(null);
-    }
 
-    /**
-     * Get a source node ID for migration (first available node).
-     */
-    public String getSourceNodeId() {
-        if (nodeIds.isEmpty()) {
-            return "1"; // Default fallback to node 1
+        if (secondNodeWithShards == null) {
+            long nodesWithShards = nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() > 0).count();
+            log.debug("Only {} node(s) with shards found, cannot get second node. Node shard distribution: {}", nodesWithShards,
+                    nodeShardCounts);
         }
-        return extractNumericNodeId(nodeIds.get(0));
+
+        return secondNodeWithShards;
     }
 
     /**
@@ -355,7 +456,8 @@ public class RedisEnterpriseConfig {
      */
     public String getNodeWithMasterShards() {
         if (masterShardIds.isEmpty()) {
-            return "3"; // Fallback to node 3
+            log.error("No master shards found for BDB {}. Cannot determine node with master shards.", bdbId);
+            throw new IllegalStateException("No master shards found for BDB " + bdbId + ". Cluster appears to be malformed.");
         }
 
         // Find which node contains the first master shard
@@ -369,17 +471,10 @@ public class RedisEnterpriseConfig {
             }
         }
 
-        return "3"; // Fallback to node 3
-    }
-
-    /**
-     * Get a target node ID for migration (different from source).
-     */
-    public String getTargetNodeId() {
-        if (nodeIds.size() < 2) {
-            return "2"; // Default fallback to node 2
-        }
-        return extractNumericNodeId(nodeIds.get(1));
+        log.error("Master shard {} not found on any discovered node. Node-to-shard mapping: {}", firstMasterShard,
+                nodeToShards);
+        throw new IllegalStateException(
+                "Master shard " + firstMasterShard + " not found on any node. Cluster mapping is inconsistent.");
     }
 
     /**
@@ -387,7 +482,12 @@ public class RedisEnterpriseConfig {
      */
     public String getIntermediateNodeId() {
         if (nodeIds.size() < 3) {
-            return "3"; // Default fallback to node 3
+            log.error(
+                    "Insufficient nodes discovered for BDB {}. Found {} nodes, need at least 3 for intermediate migration operations.",
+                    bdbId, nodeIds.size());
+            log.error("Available nodes: {}", nodeIds);
+            throw new IllegalStateException(
+                    "Insufficient nodes for intermediate migration. Found " + nodeIds.size() + " nodes, need at least 3.");
         }
         return extractNumericNodeId(nodeIds.get(2));
     }
@@ -439,6 +539,7 @@ public class RedisEnterpriseConfig {
         // Find which nodes need to be adjusted
         String emptyNode = null;
         String nodeWithShards = null;
+        String emptyNodeThatShouldHaveShards = null;
 
         for (Map.Entry<String, Integer> entry : nodeShardCounts.entrySet()) {
             String nodeId = entry.getKey();
@@ -451,6 +552,7 @@ public class RedisEnterpriseConfig {
                     emptyNode = nodeId;
                 } else if (expectedShards > 0 && actualShards == 0) {
                     // This node should have shards but is empty
+                    emptyNodeThatShouldHaveShards = nodeId;
                     nodeWithShards = findNodeWithShards();
                     break;
                 }
@@ -464,25 +566,44 @@ public class RedisEnterpriseConfig {
                     String.format("Empty %s by moving shards to %s", emptyNode, targetNode));
         }
 
+        if (emptyNodeThatShouldHaveShards != null && nodeWithShards != null) {
+            // Need to populate a node that should have shards but is empty
+            return new MigrationPlan(true, nodeWithShards, emptyNodeThatShouldHaveShards,
+                    String.format("Populate %s by moving shards from %s", emptyNodeThatShouldHaveShards, nodeWithShards));
+        }
+
         return new MigrationPlan(false, null, null, "No migration plan determined");
     }
 
     /**
-     * Find a node that currently has shards.
+     * Find a node that currently has shards. This is used internally for migration planning and can return null safely.
      */
     private String findNodeWithShards() {
-        return nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() > 0).map(Map.Entry::getKey).findFirst()
-                .orElse(null);
+        String nodeWithShards = nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() > 0).map(Map.Entry::getKey)
+                .findFirst().orElse(null);
+
+        if (nodeWithShards == null) {
+            log.debug("No nodes with shards found during migration planning");
+        }
+
+        return nodeWithShards;
     }
 
     /**
-     * Find a suitable target node for emptying operations.
+     * Find a suitable target node for emptying operations. This is used internally for migration planning and can return null
+     * safely.
      */
     private String findTargetForEmptying(String nodeToEmpty) {
         // Find a node that should have shards in target config and can accept more
-        return TARGET_CONFIGURATION.entrySet().stream().filter(entry -> entry.getValue() > 0) // Should have shards
+        String targetNode = TARGET_CONFIGURATION.entrySet().stream().filter(entry -> entry.getValue() > 0) // Should have shards
                 .map(Map.Entry::getKey).filter(nodeId -> !nodeId.equals(nodeToEmpty)) // Not the node we're emptying
                 .findFirst().orElse(null);
+
+        if (targetNode == null) {
+            log.debug("No suitable target node found for emptying {} based on target configuration", nodeToEmpty);
+        }
+
+        return targetNode;
     }
 
     /**
@@ -491,11 +612,30 @@ public class RedisEnterpriseConfig {
     public String getOptimalSourceNode() {
         // In target config, node:1 should have shards
         if (TARGET_CONFIGURATION.containsKey("node:1") && TARGET_CONFIGURATION.get("node:1") > 0) {
-            return "1";
+            // Verify this node actually exists and has shards
+            String expectedSourceNode = "1";
+            if (!nodeIds.contains("node:1")) {
+                log.warn("Target configuration expects node:1 to exist, but it was not discovered. Available nodes: {}",
+                        nodeIds);
+            }
+            Integer actualShards = nodeShardCounts.get("node:1");
+            if (actualShards == null || actualShards == 0) {
+                log.warn("Target configuration expects node:1 to have shards, but it has {} shards. Shard distribution: {}",
+                        actualShards, nodeShardCounts);
+            }
+            return expectedSourceNode;
         }
-        // Fallback to any node with shards
+
+        // Find any node with shards
         String nodeWithShards = getNodeWithShards();
-        return nodeWithShards != null ? nodeWithShards : "1";
+        if (nodeWithShards == null) {
+            log.error("No nodes with shards found for BDB {}. Cannot determine optimal source node.", bdbId);
+            log.error("Node shard distribution: {}", nodeShardCounts);
+            throw new IllegalStateException("No nodes with shards found. Cluster appears to be empty or malformed.");
+        }
+
+        log.warn("Using fallback source node {} instead of optimal node:1", nodeWithShards);
+        return nodeWithShards;
     }
 
     /**
@@ -504,11 +644,24 @@ public class RedisEnterpriseConfig {
     public String getOptimalTargetNode() {
         // In target config, node:2 should be empty
         if (TARGET_CONFIGURATION.containsKey("node:2") && TARGET_CONFIGURATION.get("node:2") == 0) {
+            // Verify this node actually exists
+            if (!nodeIds.contains("node:2")) {
+                log.warn("Target configuration expects node:2 to exist, but it was not discovered. Available nodes: {}",
+                        nodeIds);
+            }
             return "2";
         }
-        // Fallback to any empty node
+
+        // Find any empty node
         String emptyNode = getEmptyNode();
-        return emptyNode != null ? emptyNode : "2";
+        if (emptyNode == null) {
+            log.error("No empty nodes found for BDB {}. Cannot determine optimal target node.", bdbId);
+            log.error("Node shard distribution: {}", nodeShardCounts);
+            throw new IllegalStateException("No empty nodes found. All nodes have shards, cannot perform migration.");
+        }
+
+        log.warn("Using fallback target node {} instead of optimal node:2", emptyNode);
+        return emptyNode;
     }
 
     /**
@@ -517,11 +670,30 @@ public class RedisEnterpriseConfig {
     public String getOptimalIntermediateNode() {
         // In target config, node:3 should have shards
         if (TARGET_CONFIGURATION.containsKey("node:3") && TARGET_CONFIGURATION.get("node:3") > 0) {
+            // Verify this node actually exists and has shards
+            if (!nodeIds.contains("node:3")) {
+                log.warn("Target configuration expects node:3 to exist, but it was not discovered. Available nodes: {}",
+                        nodeIds);
+            }
+            Integer actualShards = nodeShardCounts.get("node:3");
+            if (actualShards == null || actualShards == 0) {
+                log.warn("Target configuration expects node:3 to have shards, but it has {} shards. Shard distribution: {}",
+                        actualShards, nodeShardCounts);
+            }
             return "3";
         }
-        // Fallback to any node with shards (not source)
+
+        // Find any node with shards (not source)
         String secondNodeWithShards = getSecondNodeWithShards();
-        return secondNodeWithShards != null ? secondNodeWithShards : "3";
+        if (secondNodeWithShards == null) {
+            log.error("No second node with shards found for BDB {}. Cannot determine optimal intermediate node.", bdbId);
+            log.error("Node shard distribution: {}", nodeShardCounts);
+            throw new IllegalStateException(
+                    "Insufficient nodes with shards for intermediate migration. Need at least 2 nodes with shards.");
+        }
+
+        log.warn("Using fallback intermediate node {} instead of optimal node:3", secondNodeWithShards);
+        return secondNodeWithShards;
     }
 
     /**
@@ -554,6 +726,74 @@ public class RedisEnterpriseConfig {
         nodeShardCounts.clear();
         nodeShardCounts.putAll(TARGET_CONFIGURATION);
         log.info("Set to target configuration: {}", TARGET_CONFIGURATION);
+    }
+
+    /**
+     * Validate that the cluster configuration is suitable for testing. This should be called after discovery to ensure we have
+     * a valid cluster.
+     */
+    public void validateClusterConfiguration() {
+        List<String> errors = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
+
+        // Check basic requirements
+        if (nodeIds.isEmpty()) {
+            errors.add("No nodes discovered");
+        } else if (nodeIds.size() < 3) {
+            warnings.add(String.format("Only %d nodes discovered, expected at least 3 for full testing", nodeIds.size()));
+        }
+
+        if (masterShardIds.isEmpty()) {
+            errors.add("No master shards found");
+        } else if (masterShardIds.size() < 2) {
+            warnings.add(String.format("Only %d master shard(s) found, some tests may require 2+", masterShardIds.size()));
+        }
+
+        if (endpointIds.isEmpty()) {
+            errors.add("No endpoints found");
+        }
+
+        // Check node-to-shard mapping consistency
+        if (!nodeToShards.isEmpty()) {
+            for (String masterId : masterShardIds) {
+                boolean foundOnNode = false;
+                for (List<String> nodeShards : nodeToShards.values()) {
+                    if (nodeShards.contains(masterId)) {
+                        foundOnNode = true;
+                        break;
+                    }
+                }
+                if (!foundOnNode) {
+                    errors.add(String.format("Master shard %s not found on any node", masterId));
+                }
+            }
+        }
+
+        // Check if we have the expected target configuration nodes
+        for (String expectedNode : TARGET_CONFIGURATION.keySet()) {
+            if (!nodeIds.contains(expectedNode)) {
+                warnings.add(String.format("Expected node %s not found in cluster", expectedNode));
+            }
+        }
+
+        // Log results
+        if (!errors.isEmpty()) {
+            log.error("Cluster validation FAILED for BDB {}:", bdbId);
+            for (String error : errors) {
+                log.error("  ERROR: {}", error);
+            }
+            log.error("Current state: nodes={}, masters={}, endpoints={}", nodeIds, masterShardIds, endpointIds);
+            throw new IllegalStateException("Cluster validation failed: " + String.join(", ", errors));
+        }
+
+        if (!warnings.isEmpty()) {
+            log.warn("Cluster validation found issues for BDB {}:", bdbId);
+            for (String warning : warnings) {
+                log.warn("  WARNING: {}", warning);
+            }
+        } else {
+            log.info("Cluster validation passed for BDB {}", bdbId);
+        }
     }
 
     /**
@@ -592,95 +832,6 @@ public class RedisEnterpriseConfig {
             return description;
         }
 
-    }
-
-    /**
-     * Populate configuration with target defaults for consistent testing.
-     */
-    public void populateWithTargetDefaults() {
-        log.info("Populating Redis Enterprise config with target defaults for BDB {}", bdbId);
-
-        // Add common node IDs
-        if (nodeIds.isEmpty()) {
-            nodeIds.add("node:1");
-            nodeIds.add("node:2");
-            nodeIds.add("node:3");
-            log.info("Added default node IDs: {}", nodeIds);
-        }
-
-        // Set target configuration
-        setToTargetConfiguration();
-
-        // Add typical shard configuration
-        if (masterShardIds.isEmpty()) {
-            masterShardIds.add("redis:1");
-            masterShardIds.add("redis:2");
-            log.info("Added default master shard IDs: {}", masterShardIds);
-        }
-
-        // Add typical endpoint configuration
-        if (endpointIds.isEmpty()) {
-            endpointIds.add("endpoint:" + bdbId + ":1");
-            log.info("Added default endpoint ID: {}", endpointIds.get(0));
-        }
-    }
-
-    /**
-     * Populate configuration with reasonable defaults based on typical Redis Enterprise setups. This method uses common node
-     * IDs and configurations that are likely to exist in real clusters.
-     */
-    public void populateWithReasonableDefaults() {
-        log.info("Populating Redis Enterprise config with reasonable defaults for BDB {}", bdbId);
-
-        // Add common node IDs that are typically found in Redis Enterprise clusters
-        if (nodeIds.isEmpty()) {
-            nodeIds.add("node:1");
-            nodeIds.add("node:2");
-            nodeIds.add("node:3");
-            log.info("Added default node IDs: {}", nodeIds);
-        }
-
-        // Use target configuration for consistency
-        setToTargetConfiguration();
-
-        // Add typical shard configuration
-        if (masterShardIds.isEmpty()) {
-            masterShardIds.add("redis:1");
-            masterShardIds.add("redis:2");
-            log.info("Added default master shard IDs: {}", masterShardIds);
-        }
-
-        // Note: shard-to-node mapping should be populated by dynamic discovery
-        // No longer using hardcoded mappings - let the actual parsing populate this data
-
-        // Add typical endpoint configuration
-        if (endpointIds.isEmpty()) {
-            endpointIds.add("endpoint:" + bdbId + ":1");
-            log.info("Added default endpoint ID: {}", endpointIds.get(0));
-        }
-    }
-
-    /**
-     * Populate configuration with fallback defaults when discovery fails completely.
-     */
-    public void populateWithFallbackDefaults() {
-        log.warn("Populating Redis Enterprise config with fallback defaults for BDB {}", bdbId);
-
-        // Ensure we have at least minimal configuration
-        if (nodeIds.isEmpty()) {
-            nodeIds.add("node:1");
-            nodeIds.add("node:2");
-        }
-
-        if (masterShardIds.isEmpty()) {
-            masterShardIds.add("redis:1");
-        }
-
-        if (endpointIds.isEmpty()) {
-            endpointIds.add("endpoint:" + bdbId + ":1");
-        }
-
-        log.warn("Fallback configuration: nodes={}, masters={}, endpoints={}", nodeIds, masterShardIds, endpointIds);
     }
 
 }
