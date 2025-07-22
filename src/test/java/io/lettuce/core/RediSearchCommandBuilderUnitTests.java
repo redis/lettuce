@@ -21,7 +21,6 @@ import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
 import io.lettuce.core.search.arguments.ExplainArgs;
-import io.lettuce.core.search.arguments.ProfileArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
@@ -357,67 +356,6 @@ class RediSearchCommandBuilderUnitTests {
 
         String result = "*1\r\n" //
                 + "$8\r\n" + "FT._LIST\r\n";
-
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
-    }
-
-    // FT.PROFILE index SEARCH QUERY "hello world"
-    @Test
-    void shouldCorrectlyConstructFtProfileSearchCommand() {
-        ProfileArgs<String, String> args = ProfileArgs.Builder.search();
-        Command<String, String, ?> command = builder.ftProfile(MY_KEY, args, "hello world");
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-
-        String result = "*5\r\n" //
-                + "$10\r\n" + "FT.PROFILE\r\n" //
-                + "$3\r\n" + MY_KEY + "\r\n" //
-                + "$6\r\n" + "SEARCH\r\n" //
-                + "$5\r\n" + "QUERY\r\n" //
-                + "$11\r\n" + "hello world\r\n";
-
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
-    }
-
-    // FT.PROFILE index AGGREGATE LIMITED QUERY "hello world"
-    @Test
-    void shouldCorrectlyConstructFtProfileAggregateCommand() {
-        ProfileArgs<String, String> args = ProfileArgs.Builder.aggregateLimited();
-        Command<String, String, ?> command = builder.ftProfile(MY_KEY, args, "hello world");
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-
-        String result = "*6\r\n" //
-                + "$10\r\n" + "FT.PROFILE\r\n" //
-                + "$3\r\n" + MY_KEY + "\r\n" //
-                + "$9\r\n" + "AGGREGATE\r\n" //
-                + "$7\r\n" + "LIMITED\r\n" //
-                + "$5\r\n" + "QUERY\r\n" //
-                + "$11\r\n" + "hello world\r\n";
-
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
-    }
-
-    // FT.PROFILE index SEARCH QUERY "hello world" LIMIT 0 10
-    @Test
-    void shouldCorrectlyConstructFtProfileSearchWithArgsCommand() {
-        ProfileArgs<String, String> profileArgs = ProfileArgs.Builder.search();
-        SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder().limit(0, 10).build();
-        Command<String, String, ?> command = builder.ftProfile(MY_KEY, profileArgs, "hello world", searchArgs);
-        ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-
-        String result = "*10\r\n" //
-                + "$10\r\n" + "FT.PROFILE\r\n" //
-                + "$3\r\n" + MY_KEY + "\r\n" //
-                + "$6\r\n" + "SEARCH\r\n" //
-                + "$5\r\n" + "QUERY\r\n" //
-                + "$11\r\n" + "hello world\r\n" //
-                + "$5\r\n" + "LIMIT\r\n" //
-                + "$1\r\n" + "0\r\n" //
-                + "$2\r\n" + "10\r\n" //
-                + "$7\r\n" + "DIALECT\r\n" //
-                + "$1\r\n" + "2\r\n";
 
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
     }

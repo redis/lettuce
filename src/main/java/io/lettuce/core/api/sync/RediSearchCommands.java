@@ -11,7 +11,6 @@ import java.util.List;
 
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.search.AggregationReply;
-import io.lettuce.core.search.ProfileResult;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -19,7 +18,6 @@ import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
-import io.lettuce.core.search.arguments.ProfileArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
@@ -628,106 +626,6 @@ public interface RediSearchCommands<K, V> {
     List<V> ftList();
 
     /**
-     * Profile the execution of a search or aggregate query to collect performance details.
-     *
-     * <p>
-     * This command applies FT.SEARCH or FT.AGGREGATE command to collect performance details. It returns both the search results
-     * and detailed profiling information including iterator profiles, result processor profiles, and timing data.
-     * </p>
-     *
-     * <p>
-     * Key features and use cases:
-     * </p>
-     * <ul>
-     * <li><strong>Performance analysis:</strong> Identify bottlenecks in query execution</li>
-     * <li><strong>Query optimization:</strong> Understand how queries are processed</li>
-     * <li><strong>Iterator analysis:</strong> Examine index iterator performance</li>
-     * <li><strong>Result processing:</strong> Analyze result processor efficiency</li>
-     * <li><strong>Debugging:</strong> Troubleshoot slow or complex queries</li>
-     * </ul>
-     *
-     * <p>
-     * Profile types:
-     * </p>
-     * <ul>
-     * <li><strong>SEARCH:</strong> Profile FT.SEARCH command execution</li>
-     * <li><strong>AGGREGATE:</strong> Profile FT.AGGREGATE command execution</li>
-     * <li><strong>LIMITED:</strong> Remove details of reader iterators to reduce output size</li>
-     * </ul>
-     *
-     * <p>
-     * <strong>Time complexity:</strong> O(N) where N is the complexity of the underlying query
-     * </p>
-     *
-     * @param index the index name
-     * @param profileArgs the profile arguments (SEARCH or AGGREGATE, with optional LIMITED)
-     * @param query the query string to profile
-     * @return the profile result containing search results and profiling information
-     * @since 6.8
-     * @see <a href="https://redis.io/docs/latest/commands/ft.profile/">FT.PROFILE</a>
-     * @see #ftProfile(Object, ProfileArgs, Object, SearchArgs)
-     * @see #ftProfile(Object, ProfileArgs, Object, AggregateArgs)
-     * @see #ftSearch(Object, Object)
-     * @see #ftAggregate(Object, Object)
-     */
-    @Experimental
-    ProfileResult ftProfile(K index, ProfileArgs<K, V> profileArgs, V query);
-
-    /**
-     * Profile the execution of a search query with additional search arguments.
-     *
-     * <p>
-     * This command applies FT.SEARCH command with additional search arguments to collect performance details. It returns both
-     * the search results and detailed profiling information including iterator profiles, result processor profiles, and timing
-     * data.
-     * </p>
-     *
-     * <p>
-     * <strong>Time complexity:</strong> O(N) where N is the complexity of the underlying query
-     * </p>
-     *
-     * @param index the index name
-     * @param profileArgs the profile arguments (SEARCH with optional LIMITED)
-     * @param query the query string to profile
-     * @param searchArgs additional search arguments (LIMIT, SORTBY, etc.)
-     * @return the profile result containing search results and profiling information
-     * @since 6.8
-     * @see <a href="https://redis.io/docs/latest/commands/ft.profile/">FT.PROFILE</a>
-     * @see #ftProfile(Object, ProfileArgs, Object)
-     * @see #ftProfile(Object, ProfileArgs, Object, AggregateArgs)
-     * @see #ftSearch(Object, Object, SearchArgs)
-     */
-    @Experimental
-    ProfileResult ftProfile(K index, ProfileArgs<K, V> profileArgs, V query, SearchArgs<K, V> searchArgs);
-
-    /**
-     * Profile the execution of an aggregate query with additional aggregate arguments.
-     *
-     * <p>
-     * This command applies FT.AGGREGATE command with additional aggregate arguments to collect performance details. It returns
-     * both the aggregation results and detailed profiling information including iterator profiles, result processor profiles,
-     * and timing data.
-     * </p>
-     *
-     * <p>
-     * <strong>Time complexity:</strong> O(N) where N is the complexity of the underlying query
-     * </p>
-     *
-     * @param index the index name
-     * @param profileArgs the profile arguments (AGGREGATE with optional LIMITED)
-     * @param query the query string to profile
-     * @param aggregateArgs additional aggregate arguments (GROUPBY, APPLY, etc.)
-     * @return the profile result containing aggregation results and profiling information
-     * @since 6.8
-     * @see <a href="https://redis.io/docs/latest/commands/ft.profile/">FT.PROFILE</a>
-     * @see #ftProfile(Object, ProfileArgs, Object)
-     * @see #ftProfile(Object, ProfileArgs, Object, SearchArgs)
-     * @see #ftAggregate(Object, Object, AggregateArgs)
-     */
-    @Experimental
-    ProfileResult ftProfile(K index, ProfileArgs<K, V> profileArgs, V query, AggregateArgs<K, V> aggregateArgs);
-
-    /**
      * Dump synonym group contents.
      *
      * <p>
@@ -750,7 +648,7 @@ public interface RediSearchCommands<K, V> {
      * </p>
      *
      * @param index the index name
-     * @return a map where keys are terms and values are lists of synonyms for each term
+     * @return a map where keys are synonym terms and values are lists of group IDs containing that synonym
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.syndump/">FT.SYNDUMP</a>
      * @see #ftSynupdate(Object, Object, Object[])

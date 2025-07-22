@@ -10,7 +10,6 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands
 import io.lettuce.core.search.AggregationReply
-import io.lettuce.core.search.ProfileResult
 import io.lettuce.core.search.SearchReply
 import io.lettuce.core.search.SpellCheckResult
 import io.lettuce.core.search.Suggestion
@@ -18,7 +17,6 @@ import io.lettuce.core.search.arguments.AggregateArgs
 import io.lettuce.core.search.arguments.CreateArgs
 import io.lettuce.core.search.arguments.ExplainArgs
 import io.lettuce.core.search.arguments.FieldArgs
-import io.lettuce.core.search.arguments.ProfileArgs
 import io.lettuce.core.search.arguments.SearchArgs
 import io.lettuce.core.search.arguments.SpellCheckArgs
 import io.lettuce.core.search.arguments.SugAddArgs
@@ -143,13 +141,6 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftList(): List<V> =
         ops.ftList().asFlow().toList()
 
-    override suspend fun ftProfile(index: K, profileArgs: ProfileArgs<K, V>, query: V): ProfileResult? =
-        ops.ftProfile(index, profileArgs, query).awaitFirstOrNull()
 
-    override suspend fun ftProfile(index: K, profileArgs: ProfileArgs<K, V>, query: V, searchArgs: SearchArgs<K, V>): ProfileResult? =
-        ops.ftProfile(index, profileArgs, query, searchArgs).awaitFirstOrNull()
-
-    override suspend fun ftProfile(index: K, profileArgs: ProfileArgs<K, V>, query: V, aggregateArgs: AggregateArgs<K, V>): ProfileResult? =
-        ops.ftProfile(index, profileArgs, query, aggregateArgs).awaitFirstOrNull()
 
 }
