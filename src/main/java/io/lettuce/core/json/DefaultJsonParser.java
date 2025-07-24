@@ -25,6 +25,8 @@ import java.nio.ByteBuffer;
  */
 public class DefaultJsonParser implements JsonParser {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     @Override
     public JsonValue loadJsonValue(ByteBuffer bytes) {
         return new UnproccessedJsonValue(bytes, this);
@@ -52,9 +54,8 @@ public class DefaultJsonParser implements JsonParser {
 
     @Override
     public JsonValue fromObject(Object object) {
-        ObjectMapper objectMapper = new ObjectMapper();
         try {
-            JsonNode root = objectMapper.valueToTree(object);
+            JsonNode root = OBJECT_MAPPER.valueToTree(object);
             return DelegateJsonValue.wrap(root);
         } catch (IllegalArgumentException e) {
             throw new RedisJsonException("Failed to process the provided object as JSON", e);
@@ -66,9 +67,8 @@ public class DefaultJsonParser implements JsonParser {
             return DelegateJsonValue.wrap(NullNode.getInstance());
         }
 
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            JsonNode root = mapper.readTree(value);
+            JsonNode root = OBJECT_MAPPER.readTree(value);
             return DelegateJsonValue.wrap(root);
         } catch (JsonProcessingException e) {
             throw new RedisJsonException(
@@ -81,11 +81,10 @@ public class DefaultJsonParser implements JsonParser {
             return DelegateJsonValue.wrap(NullNode.getInstance());
         }
 
-        ObjectMapper mapper = new ObjectMapper();
         try {
             byte[] bytes = new byte[byteBuffer.remaining()];
             byteBuffer.get(bytes);
-            JsonNode root = mapper.readTree(bytes);
+            JsonNode root = OBJECT_MAPPER.readTree(bytes);
             return DelegateJsonValue.wrap(root);
         } catch (IOException e) {
             throw new RedisJsonException("Failed to process the provided value as JSON", e);
