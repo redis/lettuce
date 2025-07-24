@@ -287,6 +287,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> bitopDiff(K destination, K sourceKey, K... keys) {
+        return dispatch(commandBuilder.bitopDiff(destination, sourceKey, keys));
+    }
+
+    @Override
+    public RedisFuture<Long> bitopDiff1(K destination, K sourceKey, K... keys) {
+        return dispatch(commandBuilder.bitopDiff1(destination, sourceKey, keys));
+    }
+
+    @Override
+    public RedisFuture<Long> bitopAndor(K destination, K sourceKey, K... keys) {
+        return dispatch(commandBuilder.bitopAndor(destination, sourceKey, keys));
+    }
+
+    @Override
+    public RedisFuture<Long> bitopOne(K destination, K... keys) {
+        return dispatch(commandBuilder.bitopOne(destination, keys));
+    }
+
+    @Override
     public RedisFuture<Long> bitpos(K key, boolean state) {
         return dispatch(commandBuilder.bitpos(key, state));
     }
