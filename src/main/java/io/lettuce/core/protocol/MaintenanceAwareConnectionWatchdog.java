@@ -80,12 +80,17 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         super.channelActive(ctx);
 
         this.channel = ctx.channel();
+        logger.info("*** WATCHDOG: channelActive() called - registering as PushListener ***");
 
         ChannelPipeline pipeline = ctx.channel().pipeline();
         CommandHandler commandHandler = pipeline.get(CommandHandler.class);
 
-        if (!commandHandler.getEndpoint().getPushListeners().contains(this)) {
+        boolean alreadyRegistered = commandHandler.getEndpoint().getPushListeners().contains(this);
+        logger.info("*** WATCHDOG: Already registered as PushListener: {} ***", alreadyRegistered);
+
+        if (!alreadyRegistered) {
             commandHandler.getEndpoint().addListener(this);
+            logger.info("*** WATCHDOG: Successfully registered as PushListener ***");
         }
     }
 
@@ -115,10 +120,17 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
                 ChannelPipeline pipeline = channel.pipeline();
                 CommandHandler commandHandler = pipeline.get(CommandHandler.class);
-                if (commandHandler.getStack().isEmpty()) {
+                boolean stackEmpty = commandHandler.getStack().isEmpty();
+                int stackSize = commandHandler.getStack().size();
+                logger.info("*** WATCHDOG: MOVING notification - stack.isEmpty()={}, stack.size()={} ***", stackEmpty,
+                        stackSize);
+
+                if (stackEmpty) {
+                    logger.info("*** WATCHDOG: Stack is empty - closing channel and setting COMPLETED ***");
                     channel.close().awaitUninterruptibly();
                     channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
                 } else {
+                    logger.info("*** WATCHDOG: Stack is NOT empty - calling notifyRebindStarted() ***");
                     notifyRebindStarted();
                 }
             }
@@ -223,23 +235,38 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     }
 
     private void notifyRebindStarted() {
+        logger.info("*** WATCHDOG: notifyRebindStarted() called - notifying {} component listeners ***",
+                this.componentListeners.size());
         this.componentListeners.forEach(MaintenanceAwareComponent::onRebindStarted);
+        logger.info("*** WATCHDOG: notifyRebindStarted() completed ***");
     }
 
     private void notifyMigrateStarted() {
+        logger.info("*** WATCHDOG: notifyMigrateStarted() called - notifying {} component listeners ***",
+                this.componentListeners.size());
         this.componentListeners.forEach(MaintenanceAwareComponent::onMigrateStarted);
+        logger.info("*** WATCHDOG: notifyMigrateStarted() completed ***");
     }
 
     private void notifyMigrateCompleted() {
+        logger.info("*** WATCHDOG: notifyMigrateCompleted() called - notifying {} component listeners ***",
+                this.componentListeners.size());
         this.componentListeners.forEach(MaintenanceAwareComponent::onMigrateCompleted);
+        logger.info("*** WATCHDOG: notifyMigrateCompleted() completed ***");
     }
 
     private void notifyFailoverStarted(String shards) {
+        logger.info("*** WATCHDOG: notifyFailoverStarted() called for shards {} - notifying {} component listeners ***", shards,
+                this.componentListeners.size());
         this.componentListeners.forEach(component -> component.onFailoverStarted(shards));
+        logger.info("*** WATCHDOG: notifyFailoverStarted() completed ***");
     }
 
     private void notifyFailoverCompleted(String shards) {
+        logger.info("*** WATCHDOG: notifyFailoverCompleted() called for shards {} - notifying {} component listeners ***",
+                shards, this.componentListeners.size());
         this.componentListeners.forEach(component -> component.onFailoverCompleted(shards));
+        logger.info("*** WATCHDOG: notifyFailoverCompleted() completed ***");
     }
 
 }
