@@ -309,6 +309,26 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Mono<Long> bitopDiff(K destination, K sourceKey, K... keys) {
+        return createMono(() -> commandBuilder.bitopDiff(destination, sourceKey, keys));
+    }
+
+    @Override
+    public Mono<Long> bitopDiff1(K destination, K sourceKey, K... keys) {
+        return createMono(() -> commandBuilder.bitopDiff1(destination, sourceKey, keys));
+    }
+
+    @Override
+    public Mono<Long> bitopAndor(K destination, K sourceKey, K... keys) {
+        return createMono(() -> commandBuilder.bitopAndor(destination, sourceKey, keys));
+    }
+
+    @Override
+    public Mono<Long> bitopOne(K destination, K... keys) {
+        return createMono(() -> commandBuilder.bitopOne(destination, keys));
+    }
+
+    @Override
     public Mono<Long> bitpos(K key, boolean state) {
         return createMono(() -> commandBuilder.bitpos(key, state));
     }
