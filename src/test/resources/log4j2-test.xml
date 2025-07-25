@@ -11,7 +11,7 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="io.lettuce.core.protocol" level="INFO"/>
+        <Logger name="io.lettuce.core.protocol" level="DEBUG"/>
         <!-- Uncomment the line below to enable test-containers debug logging -->
         <!--
         <Logger name="org.testcontainers" level="DEBUG"/>
