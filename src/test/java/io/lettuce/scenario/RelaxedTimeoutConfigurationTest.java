@@ -5,12 +5,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -18,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -30,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.KeyValue;
@@ -40,13 +36,12 @@ import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ProtocolVersion;
-import io.lettuce.core.ScriptOutputType;
+import io.lettuce.core.RedisFuture;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import static io.lettuce.TestTags.SCENARIO_TEST;
 
@@ -60,10 +55,10 @@ public class RelaxedTimeoutConfigurationTest {
     private static final Logger log = LoggerFactory.getLogger(RelaxedTimeoutConfigurationTest.class);
 
     // Timeout constants for testing
-    private static final Duration NORMAL_COMMAND_TIMEOUT = Duration.ofSeconds(1); // Small timeout to simulate latency vs
+    private static final Duration NORMAL_COMMAND_TIMEOUT = Duration.ofMillis(30); // Small timeout to simulate latency vs
                                                                                   // timeout issues
 
-    private static final Duration RELAXED_TIMEOUT_ADDITION = Duration.ofSeconds(5); // Additional timeout during maintenance
+    private static final Duration RELAXED_TIMEOUT_ADDITION = Duration.ofMillis(100); // Additional timeout during maintenance
 
     private static final Duration EFFECTIVE_TIMEOUT_DURING_MAINTENANCE = NORMAL_COMMAND_TIMEOUT.plus(RELAXED_TIMEOUT_ADDITION); // Total
                                                                                                                                 // timeout
@@ -77,13 +72,6 @@ public class RelaxedTimeoutConfigurationTest {
     private static final Duration PING_TIMEOUT = Duration.ofSeconds(10); // For ping operations
 
     private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(2); // For monitoring operations
-
-    // Track original cluster state for proper cleanup
-    private static Map<String, String> originalShardRoles = new HashMap<>();
-
-    private static Map<String, List<String>> originalNodeToShards = new HashMap<>();
-
-    private static boolean originalStateRecorded = false;
 
     private static Endpoint mStandard;
 
@@ -99,192 +87,7 @@ public class RelaxedTimeoutConfigurationTest {
 
     @BeforeEach
     public void refreshClusterConfig() {
-        log.info("Refreshing Redis Enterprise cluster configuration before test...");
-        clusterConfig = RedisEnterpriseConfig.discover(faultClient, String.valueOf(mStandard.getBdbId()));
-        log.info("Cluster configuration refreshed: {}", clusterConfig.getSummary());
-
-        // Record original state for proper cleanup (only once)
-        if (!originalStateRecorded) {
-            recordOriginalClusterState();
-            originalStateRecorded = true;
-        } else {
-            // For subsequent tests, restore original state first
-            restoreOriginalClusterState();
-        }
-    }
-
-    /**
-     * Record the original cluster state for later restoration.
-     */
-    private void recordOriginalClusterState() {
-        log.info("Recording original cluster state for cleanup...");
-
-        try {
-            String bdbId = String.valueOf(mStandard.getBdbId());
-
-            // Get the complete current configuration
-            RedisEnterpriseConfig currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
-
-            // Record shard roles (getMasterShardIds already returns "redis:X" format)
-            originalShardRoles.clear();
-            for (String masterShard : currentConfig.getMasterShardIds()) {
-                originalShardRoles.put(masterShard, "master");
-            }
-            for (String slaveShard : currentConfig.getSlaveShardIds()) {
-                originalShardRoles.put(slaveShard, "slave");
-            }
-
-            // Record shard distribution across nodes (getShardsForNode already returns "redis:X" format)
-            originalNodeToShards.clear();
-            for (String nodeId : currentConfig.getNodeIds()) {
-                List<String> shards = currentConfig.getShardsForNode(nodeId);
-                originalNodeToShards.put(nodeId, new ArrayList<>(shards));
-            }
-
-            log.info("Original cluster state recorded:");
-            log.info("  Shard roles: {}", originalShardRoles);
-            log.info("  Node distribution: {}", originalNodeToShards);
-
-        } catch (Exception e) {
-            log.warn("Failed to record original cluster state: {}", e.getMessage());
-        }
-    }
-
-    /**
-     * Restore the original cluster state (both shard distribution and roles) recorded at startup. This ensures all tests start
-     * with the exact same cluster state.
-     */
-    private void restoreOriginalClusterState() {
-        log.info("Restoring original cluster state...");
-
-        try {
-            String bdbId = String.valueOf(mStandard.getBdbId());
-
-            // Get current state
-            RedisEnterpriseConfig currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
-
-            // Log current state
-            log.info("Current cluster state before restoration:");
-            for (String nodeId : currentConfig.getNodeIds()) {
-                List<String> shards = currentConfig.getShardsForNode(nodeId);
-                log.info("  {}: {} shards {}", nodeId, shards.size(), shards);
-            }
-
-            // Step 1: Restore shard distribution across nodes
-            boolean needsMigration = false;
-            for (Map.Entry<String, List<String>> entry : originalNodeToShards.entrySet()) {
-                String nodeId = entry.getKey();
-                List<String> expectedShards = entry.getValue();
-                List<String> currentShards = new ArrayList<>();
-
-                // Get current shards (already in "redis:X" format)
-                currentShards.addAll(currentConfig.getShardsForNode(nodeId));
-
-                if (!expectedShards.equals(currentShards)) {
-                    needsMigration = true;
-                    log.info("Node {} has wrong shards. Expected: {}, Current: {}", nodeId, expectedShards, currentShards);
-                }
-            }
-
-            if (needsMigration) {
-                log.info("Need to restore shard distribution. Performing migrations...");
-
-                // Strategy: Find misplaced shards and migrate them to their correct nodes
-                // First, find nodes that have shards but should be empty
-                for (Map.Entry<String, List<String>> entry : originalNodeToShards.entrySet()) {
-                    String nodeId = entry.getKey();
-                    List<String> expectedShards = entry.getValue();
-                    List<String> currentShards = new ArrayList<>(currentConfig.getShardsForNode(nodeId));
-
-                    if (expectedShards.isEmpty() && !currentShards.isEmpty()) {
-                        // This node should be empty but has shards - migrate them away
-                        log.info("Node {} should be empty but has {} shards - migrating away", nodeId, currentShards.size());
-
-                        // Find the node that should have these shards
-                        String sourceNodeNum = nodeId.replace("node:", "");
-                        String targetNodeNum = null;
-
-                        for (Map.Entry<String, List<String>> targetEntry : originalNodeToShards.entrySet()) {
-                            String potentialTarget = targetEntry.getKey();
-                            List<String> potentialTargetExpected = targetEntry.getValue();
-                            List<String> potentialTargetCurrent = currentConfig.getShardsForNode(potentialTarget);
-
-                            // Find a node that should have shards but currently doesn't have enough
-                            if (!potentialTargetExpected.isEmpty() && !potentialTarget.equals(nodeId)
-                                    && potentialTargetCurrent.size() < potentialTargetExpected.size()) {
-                                targetNodeNum = potentialTarget.replace("node:", "");
-                                break;
-                            }
-                        }
-
-                        if (targetNodeNum != null) {
-                            String migrateCommand = "migrate node " + sourceNodeNum + " all_shards target_node "
-                                    + targetNodeNum;
-                            log.info("Executing restoration migration: {}", migrateCommand);
-
-                            StepVerifier
-                                    .create(faultClient.executeRladminCommand(bdbId, migrateCommand, Duration.ofSeconds(10),
-                                            LONG_OPERATION_TIMEOUT))
-                                    .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
-
-                            Thread.sleep(20000);
-
-                            // Refresh config after migration
-                            currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
-                            break; // Only one migration at a time to avoid conflicts
-                        }
-                    }
-                }
-
-                log.info("Shard distribution restored");
-            }
-
-            // Step 2: Restore master/slave roles
-            // Only failover shards that are currently MASTERS but should be SLAVES
-            List<String> mastersToFailover = new ArrayList<>();
-            for (Map.Entry<String, String> entry : originalShardRoles.entrySet()) {
-                String shardId = entry.getKey();
-                String originalRole = entry.getValue();
-
-                // Only failover shards that are currently masters but should be slaves
-                if ("slave".equals(originalRole) && currentConfig.getMasterShardIds().contains(shardId)) {
-                    // Should be slave but is currently master - failover this master
-                    mastersToFailover.add(shardId.replace("redis:", ""));
-                    log.info("Shard {} should be slave but is currently master - will failover", shardId);
-                }
-            }
-
-            if (!mastersToFailover.isEmpty()) {
-                log.info("Found {} master shards that should be slaves, failing them over: {}", mastersToFailover.size(),
-                        mastersToFailover);
-
-                // Build failover command (only failover current masters)
-                String failoverCommand = "failover shard " + String.join(" ", mastersToFailover);
-                log.info("Executing restoration failover: {}", failoverCommand);
-
-                // Execute the failover
-                StepVerifier.create(faultClient.executeRladminCommand(bdbId, failoverCommand, Duration.ofSeconds(10),
-                        LONG_OPERATION_TIMEOUT)).expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
-
-                // Wait for completion
-                Thread.sleep(15000);
-                log.info("Role restoration failover completed");
-            } else {
-                log.info("No role restoration needed - all shards are in correct roles");
-            }
-
-            // Step 3: Verify final state matches original
-            currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
-            log.info("Final cluster state after restoration:");
-            for (String nodeId : currentConfig.getNodeIds()) {
-                List<String> shards = currentConfig.getShardsForNode(nodeId);
-                log.info("  {}: {} shards {}", nodeId, shards.size(), shards);
-            }
-            log.info("Original cluster state restored successfully");
-
-        } catch (Exception e) {
-            log.warn("Failed to restore original cluster state: {}", e.getMessage());
-        }
+        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
     }
 
     /**
@@ -343,6 +146,11 @@ public class RelaxedTimeoutConfigurationTest {
 
         private final AtomicBoolean trafficStarted = new AtomicBoolean(false);
 
+        // Timing for MOVING operation
+        private final AtomicLong movingStartTime = new AtomicLong(0);
+
+        private final AtomicLong movingEndTime = new AtomicLong(0);
+
         public TimeoutCapture(boolean isMovingTest) {
             this.isMovingTest = isMovingTest;
         }
@@ -364,14 +172,17 @@ public class RelaxedTimeoutConfigurationTest {
             String testType = isMovingTest ? "MOVING test" : "OTHER test";
             log.info("Test type: {} - Processing notification: {}", testType, notification);
 
-            // For MOVING tests: Start traffic on MIGRATED, test on MOVING
+            // For MOVING tests: Start traffic on MOVING, test during MOVING
             if (notification.contains("+MIGRATED") && isMovingTest) {
-                log.info("*** MIGRATION COMPLETED - Starting continuous traffic for rebind phase! ***");
+                log.info("*** MIGRATION COMPLETED - Waiting for MOVING notification to start traffic! ***");
+
+                // Start traffic now that MOVING has been received
                 startContinuousTraffic();
 
             } else if (notification.contains("+MOVING")) {
                 maintenanceActive.set(true);
-                log.info("*** MOVING MAINTENANCE STARTED - Testing with active traffic! ***");
+                recordMovingStart(); // Record when MOVING operation starts
+                log.info("*** MOVING MAINTENANCE STARTED - Starting continuous traffic for testing! ***");
 
                 // Brief delay to ensure MaintenanceAwareConnectionWatchdog processes MOVING
                 try {
@@ -379,15 +190,9 @@ public class RelaxedTimeoutConfigurationTest {
                     log.info(
                             "Processing delay completed - MaintenanceAwareConnectionWatchdog should have seen active commands");
 
-                    // DEBUG: Check command stack state after watchdog processing
-                    debugCommandStackState();
-
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
-
-                // Test relaxed timeout behavior RIGHT NOW while maintenance is active
-                testRelaxedTimeoutImmediately(notification);
 
                 // Stop traffic after testing
                 stopContinuousTraffic();
@@ -399,19 +204,47 @@ public class RelaxedTimeoutConfigurationTest {
                     log.info("MOVING test received MIGRATING notification - waiting for MIGRATED then MOVING notification...");
                 } else {
                     maintenanceActive.set(true);
-                    log.info("*** MIGRATING MAINTENANCE STARTED - Testing relaxed timeout IMMEDIATELY! ***");
+                    log.info("*** MIGRATING MAINTENANCE STARTED - Starting continuous traffic for testing! ***");
 
-                    // Test relaxed timeout behavior RIGHT NOW while maintenance is active
-                    testRelaxedTimeoutImmediately(notification);
+                    // Start traffic now that MIGRATING has been received
+                    startContinuousTraffic();
+
+                    // Brief delay to ensure MaintenanceAwareConnectionWatchdog processes MIGRATING
+                    try {
+                        Thread.sleep(100); // Short delay for watchdog to process MIGRATING event
+                        log.info(
+                                "Processing delay completed - MaintenanceAwareConnectionWatchdog should have seen active commands");
+
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    // Stop traffic after testing
+                    stopContinuousTraffic();
+
                     notificationLatch.countDown(); // Count down for MIGRATING in MIGRATING tests
                 }
 
             } else if (notification.contains("+FAILING_OVER") && !isMovingTest) {
                 maintenanceActive.set(true);
-                log.info("*** FAILING_OVER MAINTENANCE STARTED - Testing relaxed timeout IMMEDIATELY! ***");
+                log.info("*** FAILING_OVER MAINTENANCE STARTED - Starting continuous traffic for testing! ***");
 
-                // Test relaxed timeout behavior RIGHT NOW while maintenance is active
-                testRelaxedTimeoutImmediately(notification);
+                // Start traffic now that FAILING_OVER has been received
+                startContinuousTraffic();
+
+                // Brief delay to ensure MaintenanceAwareConnectionWatchdog processes FAILING_OVER
+                try {
+                    Thread.sleep(100); // Short delay for watchdog to process FAILING_OVER event
+                    log.info(
+                            "Processing delay completed - MaintenanceAwareConnectionWatchdog should have seen active commands");
+
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
+                // Stop traffic after testing
+                stopContinuousTraffic();
+
                 notificationLatch.countDown(); // Count down for FAILING_OVER in FAILING_OVER tests
 
             } else if (notification.contains("+FAILED_OVER")) {
@@ -424,7 +257,7 @@ public class RelaxedTimeoutConfigurationTest {
         }
 
         /**
-         * Start continuous traffic that will fill the command stack during rebind phase
+         * Start continuous traffic with BLPOP commands during maintenance events
          */
         private void startContinuousTraffic() {
             if (!trafficStarted.compareAndSet(false, true)) {
@@ -432,40 +265,66 @@ public class RelaxedTimeoutConfigurationTest {
                 return;
             }
 
-            log.info("Starting continuous traffic threads...");
+            log.info("Starting continuous traffic...");
             stopTraffic.set(false);
 
-            // Start 3 background threads sending continuous BLPOP commands
-            for (int i = 0; i < 3; i++) {
-                final int threadId = i;
-                CompletableFuture<Void> trafficFuture = CompletableFuture.runAsync(() -> {
-                    int commandCount = 0;
-                    log.info("Traffic thread {} started", threadId);
+            CompletableFuture<Void> trafficFuture = CompletableFuture.runAsync(() -> {
+                int commandCount = 0;
+                boolean exceptionOccurred = false;
+                log.info("Traffic thread started");
 
-                    while (!stopTraffic.get()) {
-                        try {
-                            commandCount++;
-                            log.debug("Thread {} sending BLPOP command #{}", threadId, commandCount);
-                            // Short client timeout but long server timeout - important for the test
-                            mainSyncCommands.blpop(60, "traffic-key-" + threadId + "-" + commandCount);
-                        } catch (Exception e) {
-                            log.debug("Thread {} command #{} completed: {}", threadId, commandCount, e.getMessage());
-                        }
+                do {
+                    commandCount++;
+                    exceptionOccurred = sendBlpopCommand(commandCount);
+                } while (!stopTraffic.get() && exceptionOccurred);
 
-                        // Small delay between commands to avoid overwhelming
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
+                log.info("Traffic thread stopped after {} commands", commandCount);
+            });
+
+            trafficThreads.add(trafficFuture);
+            log.info("Continuous traffic started");
+        }
+
+        private boolean sendBlpopCommand(int commandCount) {
+            long startTime = System.currentTimeMillis();
+            try {
+                RedisFuture<KeyValue<String, String>> future = mainConnection.async().blpop(10, "traffic-key-" + commandCount);
+                KeyValue<String, String> result = future.get();
+
+                long duration = System.currentTimeMillis() - startTime;
+                log.info("BLPOP command #{} completed successfully in {}ms", commandCount, duration);
+                recordSuccess();
+                return false; // No exception occurred
+
+            } catch (Exception e) {
+                long wallClockDuration = System.currentTimeMillis() - startTime;
+                String timeoutDurationStr = extractTimeoutDuration(e);
+                log.info("BLPOP command #{} timed out - Wall clock: {}ms, Actual timeout: {}ms, Exception: {}", commandCount,
+                        wallClockDuration, timeoutDurationStr, e.getMessage());
+
+                // Check if this is a relaxed timeout
+                if (isMaintenanceActive() && timeoutDurationStr != "unknown") {
+                    int timeoutDuration = Integer.parseInt(timeoutDurationStr);
+                    if (timeoutDuration > NORMAL_COMMAND_TIMEOUT.toMillis()
+                            && timeoutDuration <= EFFECTIVE_TIMEOUT_DURING_MAINTENANCE.toMillis()) {
+                        log.info("*** RELAXED TIMEOUT DETECTED: {}ms (normal: {}ms, relaxed: {}ms) ***", timeoutDuration,
+                                NORMAL_COMMAND_TIMEOUT.toMillis(), EFFECTIVE_TIMEOUT_DURING_MAINTENANCE.toMillis());
+                        recordRelaxedTimeout(); // Count this as a relaxed timeout
                     }
-                    log.info("Traffic thread {} stopped after {} commands", threadId, commandCount);
-                });
-                trafficThreads.add(trafficFuture);
-            }
+                }
 
-            log.info("Continuous traffic started with {} threads", trafficThreads.size());
+                return true; // Exception occurred
+            }
+        }
+
+        private String extractTimeoutDuration(Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("Command timed out after")) {
+                String[] parts = e.getMessage().split("Command timed out after ");
+                if (parts.length > 1) {
+                    return parts[1].split(" ")[0];
+                }
+            }
+            return "unknown";
         }
 
         /**
@@ -486,402 +345,11 @@ public class RelaxedTimeoutConfigurationTest {
             }
         }
 
-        /**
-         * Test relaxed timeout behavior immediately when maintenance notification is received
-         */
-        private void testRelaxedTimeoutImmediately(String notification) {
-            String phase = notification.contains("MOVING") ? "During MOVING"
-                    : notification.contains("MIGRATING") ? "During MIGRATING"
-                            : notification.contains("FAILING_OVER") ? "During FAILING_OVER" : "During Maintenance";
-
-            log.info("*** AGGREGATE TIMEOUT TEST: {} ***", phase);
-
-            // DEBUG: Check if relaxTimeouts is enabled in MaintenanceAwareExpiryWriter
-            try {
-                log.info("*** DEBUG: Checking MaintenanceAwareExpiryWriter.relaxTimeouts state during {} ***", phase);
-
-                // Use the actual connection object, not the sync commands proxy
-                java.lang.reflect.Field writerField = mainConnection.getClass().getSuperclass()
-                        .getDeclaredField("channelWriter");
-                writerField.setAccessible(true);
-                Object writer = writerField.get(mainConnection);
-
-                if (writer.getClass().getSimpleName().contains("MaintenanceAware")) {
-                    // Access the relaxTimeouts field
-                    java.lang.reflect.Field relaxField = writer.getClass().getDeclaredField("relaxTimeouts");
-                    relaxField.setAccessible(true);
-                    boolean relaxTimeouts = relaxField.getBoolean(writer);
-
-                    log.info("*** CRITICAL DEBUG: MaintenanceAwareExpiryWriter.relaxTimeouts = {} during {} ***", relaxTimeouts,
-                            phase);
-
-                    if (relaxTimeouts) {
-                        log.info("✅ SUCCESS: relaxTimeouts is TRUE - MaintenanceAwareConnectionWatchdog is working correctly!");
-                    } else {
-                        log.error(
-                                "❌ PROBLEM: relaxTimeouts is FALSE - MaintenanceAwareConnectionWatchdog did not call notifyRebindStarted()!");
-                    }
-                } else {
-                    log.warn("Writer is not MaintenanceAwareExpiryWriter: {}", writer.getClass().getSimpleName());
-                }
-            } catch (Exception e) {
-                log.warn("Could not check relaxTimeouts state via reflection: {}", e.getMessage());
-            }
-
-            // Test timeout relaxation with multiple commands sent AFTER the maintenance event
-            log.info("Testing timeout relaxation: normal={}ms, expected relaxed={}ms", NORMAL_COMMAND_TIMEOUT.toMillis(),
-                    EFFECTIVE_TIMEOUT_DURING_MAINTENANCE.toMillis());
-
-            // CRITICAL: Wait and verify that the maintenance event has been fully processed
-            log.info("*** WAITING FOR MAINTENANCE EVENT PROCESSING ***");
-
-            // Wait for the watchdog to process the MOVING notification
-            try {
-                Thread.sleep(1000); // Wait 1 second for processing
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            // VERIFY that relaxTimeouts is actually TRUE before proceeding
-            boolean relaxTimeoutsActive = false;
-            try {
-                // Use reflection to check the actual relaxTimeouts state
-                java.lang.reflect.Field writerField = mainConnection.getClass().getSuperclass()
-                        .getDeclaredField("channelWriter");
-                writerField.setAccessible(true);
-                Object writer = writerField.get(mainConnection);
-
-                if (writer.getClass().getSimpleName().contains("ExpiryWriter")) {
-                    java.lang.reflect.Field relaxField = writer.getClass().getDeclaredField("relaxTimeouts");
-                    relaxField.setAccessible(true);
-                    relaxTimeoutsActive = (Boolean) relaxField.get(writer);
-                    log.info("*** VERIFICATION: relaxTimeouts = {} ***", relaxTimeoutsActive);
-                }
-            } catch (Exception e) {
-                log.warn("Could not verify relaxTimeouts state: {}", e.getMessage());
-            }
-
-            if (!relaxTimeoutsActive) {
-                log.error("*** CRITICAL ERROR: relaxTimeouts is FALSE - maintenance event not processed! ***");
-                log.error("*** ABORTING TIMEOUT TESTS - maintenance event processing failed! ***");
-                return;
-            }
-
-            log.info("*** MAINTENANCE EVENT PROCESSING CONFIRMED - PROCEEDING WITH AGGREGATE TIMEOUT TESTS ***");
-
-            // Initialize counters for aggregate testing
-            AtomicInteger totalTimeouts = new AtomicInteger(0);
-            AtomicInteger totalSuccesses = new AtomicInteger(0);
-            AtomicInteger redisCommandTimeouts = new AtomicInteger(0);
-            AtomicInteger otherExceptions = new AtomicInteger(0);
-            Map<String, Integer> errorTypes = new ConcurrentHashMap<>();
-
-            // PHASE 1: Fill command stack with continuous traffic (like the original pattern)
-            log.info("*** PHASE 1: Starting continuous traffic to fill command stack ***");
-            AtomicBoolean stopPhase1Traffic = new AtomicBoolean(false);
-            List<CompletableFuture<Void>> phase1TrafficThreads = new CopyOnWriteArrayList<>();
-
-            // Start 3 background threads sending continuous BLPOP commands with 15-second timeout
-            for (int i = 0; i < 3; i++) {
-                final int threadId = i;
-                CompletableFuture<Void> trafficFuture = CompletableFuture.runAsync(() -> {
-                    int commandCount = 0;
-                    log.info("Phase 1 traffic thread {} started", threadId);
-
-                    while (!stopPhase1Traffic.get()) {
-                        try {
-                            commandCount++;
-                            log.debug("Phase 1 thread {} sending BLPOP command #{}", threadId, commandCount);
-                            // 15-second server timeout as requested
-                            mainSyncCommands.blpop(15, "phase1-traffic-key-" + threadId + "-" + commandCount);
-                            totalSuccesses.incrementAndGet();
-                        } catch (RedisCommandTimeoutException e) {
-                            totalTimeouts.incrementAndGet();
-                            redisCommandTimeouts.incrementAndGet();
-                            errorTypes.merge("RedisCommandTimeoutException", 1, Integer::sum);
-                            log.debug("Phase 1 thread {} command #{} timed out: {}", threadId, commandCount, e.getMessage());
-                        } catch (Exception e) {
-                            otherExceptions.incrementAndGet();
-                            errorTypes.merge(e.getClass().getSimpleName(), 1, Integer::sum);
-                            log.debug("Phase 1 thread {} command #{} error: {}", threadId, commandCount, e.getMessage());
-                        }
-
-                        // Small delay between commands to avoid overwhelming
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
-                    }
-                    log.info("Phase 1 traffic thread {} stopped after {} commands", threadId, commandCount);
-                });
-                phase1TrafficThreads.add(trafficFuture);
-            }
-
-            // Run Phase 1 for 5 seconds to fill the command stack
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            // Stop Phase 1 traffic
-            stopPhase1Traffic.set(true);
-            for (CompletableFuture<Void> future : phase1TrafficThreads) {
-                try {
-                    future.get(2, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                    log.warn("Phase 1 traffic thread cleanup: {}", e.getMessage());
-                }
-            }
-
-            log.info("*** PHASE 1 COMPLETED - Phase 1 Results: Timeouts={}, Successes={}, OtherErrors={} ***",
-                    redisCommandTimeouts.get(), totalSuccesses.get(), otherExceptions.get());
-
-            // PHASE 2: Run the 5 specific test cases with 15-second BLPOP timeouts
-            log.info("*** PHASE 2: Running 5 specific test cases ***");
-
-            // Test 1: Original BLPOP command (may have been sent before maintenance event)
-            long startTime = System.currentTimeMillis();
-            try {
-                KeyValue<String, String> result = mainSyncCommands.blpop(15,
-                        "timeout-test-key-" + phase + "-" + System.currentTimeMillis());
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.info("*** TEST 1 - ORIGINAL BLPOP: completed in {}ms during {} (result: {}) ***", elapsed, phase, result);
-                if (elapsed > NORMAL_COMMAND_TIMEOUT.toMillis()) {
-                    log.info("✅ TEST 1 SUCCESS: Command took {}ms > normal timeout {}ms - relaxed timeouts working!", elapsed,
-                            NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                } else {
-                    log.warn("⚠️ TEST 1: Command took {}ms (normal timeout {}ms) - may have been sent before maintenance event",
-                            elapsed, NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                }
-            } catch (RedisCommandTimeoutException e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.warn(
-                        "⚠️ TEST 1 - ORIGINAL BLPOP: timed out in {}ms during {} - may have been sent before maintenance event",
-                        elapsed, phase);
-                totalTimeouts.incrementAndGet();
-                redisCommandTimeouts.incrementAndGet();
-                errorTypes.merge("RedisCommandTimeoutException", 1, Integer::sum);
-            } catch (Exception e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.warn("⚠️ TEST 1 - ORIGINAL BLPOP: error in {}ms during {} - {}", elapsed, phase, e.getMessage());
-                otherExceptions.incrementAndGet();
-                errorTypes.merge(e.getClass().getSimpleName(), 1, Integer::sum);
-            }
-
-            // Test 2: NEW BLPOP command sent AFTER maintenance event (should use relaxed timeouts)
-            log.info("*** TEST 2: Sending NEW BLPOP command AFTER maintenance event ***");
-            startTime = System.currentTimeMillis();
-            try {
-                KeyValue<String, String> result = mainSyncCommands.blpop(15,
-                        "timeout-test-key-new-" + phase + "-" + System.currentTimeMillis());
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.info("*** TEST 2 - NEW BLPOP: completed in {}ms during {} (result: {}) ***", elapsed, phase, result);
-                if (elapsed > NORMAL_COMMAND_TIMEOUT.toMillis()) {
-                    log.info("✅ TEST 2 SUCCESS: NEW command took {}ms > normal timeout {}ms - relaxed timeouts working!",
-                            elapsed, NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                } else {
-                    log.warn("⚠️ TEST 2: NEW command took {}ms (normal timeout {}ms) - relaxation may not be working", elapsed,
-                            NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                }
-            } catch (RedisCommandTimeoutException e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.warn("⚠️ TEST 2 - NEW BLPOP: timed out in {}ms during {} - relaxation may not be working", elapsed, phase);
-                totalTimeouts.incrementAndGet();
-                redisCommandTimeouts.incrementAndGet();
-                errorTypes.merge("RedisCommandTimeoutException", 1, Integer::sum);
-            } catch (Exception e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.warn("⚠️ TEST 2 - NEW BLPOP: error in {}ms during {} - {}", elapsed, phase, e.getMessage());
-                otherExceptions.incrementAndGet();
-                errorTypes.merge(e.getClass().getSimpleName(), 1, Integer::sum);
-            }
-
-            // Test 3: EVAL command with sleep to simulate slow operation
-            log.info("*** TEST 3: Sending EVAL command with sleep to simulate slow operation ***");
-            startTime = System.currentTimeMillis();
-            try {
-                String slowScript = "redis.call('DEBUG', 'SLEEP', 2) return 'OK'";
-                String result = mainSyncCommands.eval(slowScript, ScriptOutputType.STATUS);
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.info("*** TEST 3 - EVAL: completed in {}ms during {} (result: {}) ***", elapsed, phase, result);
-                if (elapsed > NORMAL_COMMAND_TIMEOUT.toMillis()) {
-                    log.info("✅ TEST 3 SUCCESS: EVAL command took {}ms > normal timeout {}ms - relaxed timeouts working!",
-                            elapsed, NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                } else {
-                    log.warn("⚠️ TEST 3: EVAL command took {}ms (normal timeout {}ms) - relaxation may not be working", elapsed,
-                            NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                }
-            } catch (RedisCommandTimeoutException e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.warn("⚠️ TEST 3 - EVAL: timed out in {}ms during {} - {}", elapsed, phase, e.getMessage());
-                totalTimeouts.incrementAndGet();
-                redisCommandTimeouts.incrementAndGet();
-                errorTypes.merge("RedisCommandTimeoutException", 1, Integer::sum);
-            } catch (Exception e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.warn("⚠️ TEST 3 - EVAL: error in {}ms during {} - {}", elapsed, phase, e.getMessage());
-                otherExceptions.incrementAndGet();
-                errorTypes.merge(e.getClass().getSimpleName(), 1, Integer::sum);
-            }
-
-            // Test 4: Another BLPOP with longer server timeout to ensure it blocks
-            log.info("*** TEST 4: Sending BLPOP with longer server timeout ***");
-            startTime = System.currentTimeMillis();
-            try {
-                KeyValue<String, String> result = mainSyncCommands.blpop(15,
-                        "timeout-test-key-long-" + phase + "-" + System.currentTimeMillis());
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.info("*** TEST 4 - BLPOP LONG: completed in {}ms during {} (result: {}) ***", elapsed, phase, result);
-                if (elapsed > NORMAL_COMMAND_TIMEOUT.toMillis()) {
-                    log.info("✅ TEST 4 SUCCESS: BLPOP LONG took {}ms > normal timeout {}ms - relaxed timeouts working!",
-                            elapsed, NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                } else {
-                    log.warn("⚠️ TEST 4: BLPOP LONG took {}ms (normal timeout {}ms) - relaxation may not be working", elapsed,
-                            NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                }
-            } catch (RedisCommandTimeoutException e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.warn("⚠️ TEST 4 - BLPOP LONG: timed out in {}ms during {} - {}", elapsed, phase, e.getMessage());
-                totalTimeouts.incrementAndGet();
-                redisCommandTimeouts.incrementAndGet();
-                errorTypes.merge("RedisCommandTimeoutException", 1, Integer::sum);
-            } catch (Exception e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.warn("⚠️ TEST 4 - BLPOP LONG: error in {}ms during {} - {}", elapsed, phase, e.getMessage());
-                otherExceptions.incrementAndGet();
-                errorTypes.merge(e.getClass().getSimpleName(), 1, Integer::sum);
-            }
-
-            // Test 5: CRITICAL TEST - Send a command that should definitely timeout to test relaxed timeout mechanism
-            log.info("*** TEST 5: CRITICAL TEST - Sending command that should timeout to test relaxed timeout mechanism ***");
-            startTime = System.currentTimeMillis();
-            try {
-                // Send a command that will definitely timeout in normal circumstances
-                // This should timeout in 1 second normally, but with relaxed timeouts (6 seconds total), it should complete
-                KeyValue<String, String> result = mainSyncCommands.blpop(15,
-                        "timeout-test-critical-" + phase + "-" + System.currentTimeMillis());
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.info("*** TEST 5 - CRITICAL: completed in {}ms during {} (result: {}) ***", elapsed, phase, result);
-
-                // This is the key test - if it completes, relaxed timeouts are working
-                if (elapsed > NORMAL_COMMAND_TIMEOUT.toMillis()) {
-                    log.info(
-                            "🎉 TEST 5 CRITICAL SUCCESS: Command took {}ms > normal timeout {}ms - RELAXED TIMEOUTS ARE WORKING!",
-                            elapsed, NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                } else {
-                    log.warn("⚠️ TEST 5 CRITICAL: Command took {}ms (normal timeout {}ms) - relaxation may not be working",
-                            elapsed, NORMAL_COMMAND_TIMEOUT.toMillis());
-                    totalSuccesses.incrementAndGet();
-                }
-            } catch (RedisCommandTimeoutException e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.error("❌ TEST 5 CRITICAL FAILURE: Command timed out in {}ms during {} - RELAXED TIMEOUTS NOT WORKING!",
-                        elapsed, phase);
-                log.error("Expected timeout: {}ms, Actual timeout: {}ms", EFFECTIVE_TIMEOUT_DURING_MAINTENANCE.toMillis(),
-                        elapsed);
-                totalTimeouts.incrementAndGet();
-                redisCommandTimeouts.incrementAndGet();
-                errorTypes.merge("RedisCommandTimeoutException", 1, Integer::sum);
-            } catch (Exception e) {
-                long elapsed = System.currentTimeMillis() - startTime;
-                log.error("❌ TEST 5 CRITICAL ERROR: Unexpected error in {}ms during {} - {}", elapsed, phase, e.getMessage());
-                otherExceptions.incrementAndGet();
-                errorTypes.merge(e.getClass().getSimpleName(), 1, Integer::sum);
-            }
-
-            // PHASE 3: Run additional continuous traffic for 10 seconds to test aggregate behavior
-            log.info("*** PHASE 3: Running additional continuous traffic for 10 seconds ***");
-            AtomicBoolean stopPhase3Traffic = new AtomicBoolean(false);
-            List<CompletableFuture<Void>> phase3TrafficThreads = new CopyOnWriteArrayList<>();
-
-            // Start 3 background threads sending continuous BLPOP commands with 15-second timeout
-            for (int i = 0; i < 3; i++) {
-                final int threadId = i;
-                CompletableFuture<Void> trafficFuture = CompletableFuture.runAsync(() -> {
-                    int commandCount = 0;
-                    log.info("Phase 3 traffic thread {} started", threadId);
-
-                    while (!stopPhase3Traffic.get()) {
-                        try {
-                            commandCount++;
-                            log.debug("Phase 3 thread {} sending BLPOP command #{}", threadId, commandCount);
-                            // 15-second server timeout as requested
-                            mainSyncCommands.blpop(15, "phase3-traffic-key-" + threadId + "-" + commandCount);
-                            totalSuccesses.incrementAndGet();
-                        } catch (RedisCommandTimeoutException e) {
-                            totalTimeouts.incrementAndGet();
-                            redisCommandTimeouts.incrementAndGet();
-                            errorTypes.merge("RedisCommandTimeoutException", 1, Integer::sum);
-                            log.debug("Phase 3 thread {} command #{} timed out: {}", threadId, commandCount, e.getMessage());
-                        } catch (Exception e) {
-                            otherExceptions.incrementAndGet();
-                            errorTypes.merge(e.getClass().getSimpleName(), 1, Integer::sum);
-                            log.debug("Phase 3 thread {} command #{} error: {}", threadId, commandCount, e.getMessage());
-                        }
-
-                        // Small delay between commands to avoid overwhelming
-                        try {
-                            Thread.sleep(50);
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            break;
-                        }
-                    }
-                    log.info("Phase 3 traffic thread {} stopped after {} commands", threadId, commandCount);
-                });
-                phase3TrafficThreads.add(trafficFuture);
-            }
-
-            // Run Phase 3 for 10 seconds
-            try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
-            // Stop Phase 3 traffic
-            stopPhase3Traffic.set(true);
-            for (CompletableFuture<Void> future : phase3TrafficThreads) {
-                try {
-                    future.get(2, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                    log.warn("Phase 3 traffic thread cleanup: {}", e.getMessage());
-                }
-            }
-
-            // AGGREGATE RESULTS
-            log.info("*** AGGREGATE TEST RESULTS FOR {} ***", phase);
-            log.info("Total Commands Executed: {}", totalSuccesses.get() + totalTimeouts.get() + otherExceptions.get());
-            log.info("Total Successes: {}", totalSuccesses.get());
-            log.info("Total Timeouts: {}", totalTimeouts.get());
-            log.info("Total Other Errors: {}", otherExceptions.get());
-            log.info("RedisCommandTimeoutException count: {}", redisCommandTimeouts.get());
-            log.info("Error Types Breakdown: {}", errorTypes);
-
-            // Update the main counters
-            timeoutCount.addAndGet(totalTimeouts.get());
-            successCount.addAndGet(totalSuccesses.get());
-
-            log.info("*** AGGREGATE TEST COMPLETED FOR {} ***", phase);
-        }
-
         public boolean waitForNotification(Duration timeout) throws InterruptedException {
             return notificationLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
         }
 
-        public void recordTimeout() {
+        public void recordRelaxedTimeout() {
             timeoutCount.incrementAndGet();
         }
 
@@ -909,240 +377,22 @@ public class RelaxedTimeoutConfigurationTest {
             return lastNotification.get();
         }
 
-        /**
-         * Debug method to examine command stack state and MaintenanceAwareConnectionWatchdog behavior
-         */
-        private void debugCommandStackState() {
-            try {
-                log.info("*** DEBUGGING COMMAND STACK STATE ***");
+        public void recordMovingStart() {
+            movingStartTime.set(System.currentTimeMillis());
+            log.info("*** MOVING operation STARTED at {} ***", movingStartTime.get());
+        }
 
-                // Get the MaintenanceAwareConnectionWatchdog from the pipeline
-                java.lang.reflect.Field writerField = mainConnection.getClass().getSuperclass()
-                        .getDeclaredField("channelWriter");
-                writerField.setAccessible(true);
-                Object writer = writerField.get(mainConnection);
+        public void recordMovingEnd() {
+            movingEndTime.set(System.currentTimeMillis());
+            long duration = movingEndTime.get() - movingStartTime.get();
+            log.info("*** MOVING operation COMPLETED at {} - Total duration: {}ms ***", movingEndTime.get(), duration);
+        }
 
-                if (writer.getClass().getSimpleName().contains("ExpiryWriter")) {
-                    // Get the delegate (actual endpoint)
-                    java.lang.reflect.Field delegateField = writer.getClass().getSuperclass().getDeclaredField("delegate");
-                    delegateField.setAccessible(true);
-                    Object endpoint = delegateField.get(writer);
-
-                    if (endpoint != null && endpoint.getClass().getSimpleName().contains("Endpoint")) {
-                        // Get the channel from endpoint
-                        java.lang.reflect.Field channelField = endpoint.getClass().getDeclaredField("channel");
-                        channelField.setAccessible(true);
-                        Object channel = channelField.get(endpoint);
-
-                        if (channel != null) {
-                            io.netty.channel.Channel nettyChannel = (io.netty.channel.Channel) channel;
-                            io.netty.channel.ChannelPipeline pipeline = nettyChannel.pipeline();
-
-                            // Get the MaintenanceAwareConnectionWatchdog
-                            Object watchdog = pipeline.get(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.class);
-                            if (watchdog != null) {
-                                log.info("✅ MaintenanceAwareConnectionWatchdog found for debugging");
-
-                                // Try to access the commandHandler and its stack
-                                // First, let's see what fields are actually available
-                                try {
-                                    log.info("*** DEBUG: Available fields in MaintenanceAwareConnectionWatchdog: ***");
-                                    java.lang.reflect.Field[] allFields = watchdog.getClass().getDeclaredFields();
-                                    for (java.lang.reflect.Field field : allFields) {
-                                        log.info("  - Field: {} (type: {})", field.getName(), field.getType().getSimpleName());
-                                    }
-
-                                    // Also check superclass fields
-                                    java.lang.reflect.Field[] superFields = watchdog.getClass().getSuperclass()
-                                            .getDeclaredFields();
-                                    log.info("*** DEBUG: Available fields in superclass ({}): ***",
-                                            watchdog.getClass().getSuperclass().getSimpleName());
-                                    for (java.lang.reflect.Field field : superFields) {
-                                        log.info("  - Super Field: {} (type: {})", field.getName(),
-                                                field.getType().getSimpleName());
-                                    }
-
-                                } catch (Exception e) {
-                                    log.warn("Could not list fields: {}", e.getMessage());
-                                }
-
-                                // Try multiple possible field names for the command handler
-                                String[] possibleFieldNames = { "commandHandler", "handler", "channelHandler",
-                                        "redisCommandHandler" };
-                                Object commandHandler = null;
-
-                                for (String fieldName : possibleFieldNames) {
-                                    try {
-                                        java.lang.reflect.Field handlerField = null;
-                                        try {
-                                            handlerField = watchdog.getClass().getDeclaredField(fieldName);
-                                        } catch (NoSuchFieldException e) {
-                                            // Try superclass
-                                            handlerField = watchdog.getClass().getSuperclass().getDeclaredField(fieldName);
-                                        }
-
-                                        handlerField.setAccessible(true);
-                                        commandHandler = handlerField.get(watchdog);
-                                        if (commandHandler != null) {
-                                            log.info("*** SUCCESS: Found commandHandler via field '{}' ***", fieldName);
-                                            break;
-                                        }
-                                    } catch (Exception e) {
-                                        log.debug("Field '{}' not found or accessible: {}", fieldName, e.getMessage());
-                                    }
-                                }
-
-                                if (commandHandler != null) {
-                                    log.info("CommandHandler type: {}", commandHandler.getClass().getSimpleName());
-
-                                    // Try to get the stack from commandHandler
-                                    try {
-                                        java.lang.reflect.Method getStackMethod = commandHandler.getClass()
-                                                .getMethod("getStack");
-                                        Object stack = getStackMethod.invoke(commandHandler);
-
-                                        if (stack != null) {
-                                            // Check if stack is empty
-                                            java.lang.reflect.Method isEmptyMethod = stack.getClass().getMethod("isEmpty");
-                                            boolean isEmpty = (Boolean) isEmptyMethod.invoke(stack);
-
-                                            // Get stack size if possible
-                                            String stackInfo = "isEmpty=" + isEmpty;
-                                            try {
-                                                java.lang.reflect.Method sizeMethod = stack.getClass().getMethod("size");
-                                                int size = (Integer) sizeMethod.invoke(stack);
-                                                stackInfo += ", size=" + size;
-                                            } catch (Exception e) {
-                                                stackInfo += ", size=unknown";
-                                            }
-
-                                            log.info("*** COMMAND STACK STATE: {} ***", stackInfo);
-                                            log.info("*** STACK TYPE: {} ***", stack.getClass().getSimpleName());
-
-                                            if (isEmpty) {
-                                                log.error(
-                                                        "❌ PROBLEM: Command stack is EMPTY - no wonder notifyRebindStarted() wasn't called!");
-                                                log.error(
-                                                        "❌ ROOT CAUSE: 10 slow EVAL commands not in stack = EVAL strategy failed!");
-                                            } else {
-                                                log.info(
-                                                        "✅ SUCCESS: Command stack is NOT EMPTY - notifyRebindStarted() should have been called!");
-                                                log.error(
-                                                        "❌ DIFFERENT PROBLEM: Stack not empty but relaxTimeouts still false - watchdog logic issue!");
-                                            }
-                                        } else {
-                                            log.warn("Could not access command stack - getStack() returned null");
-                                        }
-                                    } catch (Exception e) {
-                                        log.warn("Could not access stack from commandHandler: {}", e.getMessage());
-
-                                        // Try to list available methods
-                                        log.info("Available methods in commandHandler:");
-                                        java.lang.reflect.Method[] methods = commandHandler.getClass().getMethods();
-                                        for (java.lang.reflect.Method method : methods) {
-                                            if (method.getName().toLowerCase().contains("stack")
-                                                    || method.getName().toLowerCase().contains("queue")) {
-                                                log.info("  - Method: {} (returns: {})", method.getName(),
-                                                        method.getReturnType().getSimpleName());
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    log.warn("Could not find commandHandler field in MaintenanceAwareConnectionWatchdog");
-
-                                    // Try alternative approach: Access command handler through channel pipeline like the
-                                    // watchdog does
-                                    try {
-                                        io.netty.channel.Channel debugChannel = (io.netty.channel.Channel) channel;
-                                        io.netty.channel.ChannelPipeline debugPipeline = debugChannel.pipeline();
-
-                                        // Look for CommandHandler in the pipeline
-                                        log.info("*** PIPELINE DEBUG: Searching for CommandHandler in channel pipeline ***");
-
-                                        // Get all handlers in pipeline
-                                        java.util.Iterator<java.util.Map.Entry<String, io.netty.channel.ChannelHandler>> iterator = debugPipeline
-                                                .iterator();
-                                        while (iterator.hasNext()) {
-                                            java.util.Map.Entry<String, io.netty.channel.ChannelHandler> entry = iterator
-                                                    .next();
-                                            String handlerName = entry.getKey();
-                                            io.netty.channel.ChannelHandler handler = entry.getValue();
-                                            log.info("  - Pipeline Handler: {} (type: {})", handlerName,
-                                                    handler.getClass().getSimpleName());
-
-                                            // Check if this is a CommandHandler
-                                            if (handler.getClass().getSimpleName().contains("CommandHandler")) {
-                                                log.info("*** FOUND CommandHandler in pipeline: {} ***",
-                                                        handler.getClass().getSimpleName());
-
-                                                // Try to access the stack from this handler
-                                                try {
-                                                    java.lang.reflect.Method getStackMethod = handler.getClass()
-                                                            .getMethod("getStack");
-                                                    Object stack = getStackMethod.invoke(handler);
-
-                                                    if (stack != null) {
-                                                        // Check if stack is empty
-                                                        java.lang.reflect.Method isEmptyMethod = stack.getClass()
-                                                                .getMethod("isEmpty");
-                                                        boolean isEmpty = (Boolean) isEmptyMethod.invoke(stack);
-
-                                                        // Get stack size if possible
-                                                        String stackInfo = "isEmpty=" + isEmpty;
-                                                        try {
-                                                            java.lang.reflect.Method sizeMethod = stack.getClass()
-                                                                    .getMethod("size");
-                                                            int size = (Integer) sizeMethod.invoke(stack);
-                                                            stackInfo += ", size=" + size;
-                                                        } catch (Exception e) {
-                                                            stackInfo += ", size=unknown";
-                                                        }
-
-                                                        log.info("*** PIPELINE COMMAND STACK STATE: {} ***", stackInfo);
-                                                        log.info("*** STACK TYPE: {} ***", stack.getClass().getSimpleName());
-
-                                                        if (isEmpty) {
-                                                            log.error(
-                                                                    "❌ PIPELINE PROBLEM: Command stack is EMPTY despite slow EVAL commands!");
-                                                            log.error(
-                                                                    "❌ ROOT CAUSE: EVAL commands completed too quickly or didn't reach stack!");
-                                                        } else {
-                                                            log.info(
-                                                                    "✅ PIPELINE SUCCESS: Command stack is NOT EMPTY with {} commands!",
-                                                                    stackInfo);
-                                                            log.info(
-                                                                    "✅ WATCHDOG SUCCESS: Stack not empty - this is expected behavior for MOVING test!");
-                                                        }
-                                                        break;
-                                                    } else {
-                                                        log.warn("CommandHandler.getStack() returned null");
-                                                    }
-                                                } catch (Exception e) {
-                                                    log.warn("Could not access stack from pipeline CommandHandler: {}",
-                                                            e.getMessage());
-                                                }
-                                            }
-                                        }
-                                    } catch (Exception e) {
-                                        log.warn("Could not access command handler through pipeline: {}", e.getMessage());
-                                    }
-                                }
-                            } else {
-                                log.warn("❌ MaintenanceAwareConnectionWatchdog not found in pipeline!");
-                            }
-                        } else {
-                            log.warn("Channel is null, cannot access pipeline");
-                        }
-                    } else {
-                        log.warn("Could not find endpoint, writer type: {}", writer.getClass().getSimpleName());
-                    }
-                } else {
-                    log.warn("Writer is not ExpiryWriter: {}", writer.getClass().getSimpleName());
-                }
-
-            } catch (Exception e) {
-                log.warn("Failed to debug command stack state: {}", e.getMessage());
+        public long getMovingDuration() {
+            if (movingStartTime.get() > 0 && movingEndTime.get() > 0) {
+                return movingEndTime.get() - movingStartTime.get();
             }
+            return -1; // Not completed
         }
 
     }
@@ -1362,21 +612,19 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
             assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
+            // Record MOVING operation completion
+            context.capture.recordMovingEnd();
+
             log.info("=== MOVING Timeout Test Results ===");
+            log.info("MOVING operation duration: {}ms", context.capture.getMovingDuration());
             log.info("Successful operations: {}", context.capture.getSuccessCount());
             log.info("Timeout operations: {}", context.capture.getTimeoutCount());
             log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
 
-            // CRITICAL: Test should fail if relaxed timeouts are not working
-            // With relaxed timeouts, we should have SOME successful operations during maintenance
-            // If all operations timeout, it means relaxed timeouts are not working
-            assertThat(context.capture.getSuccessCount())
-                    .as("Relaxed timeouts should allow some commands to succeed during maintenance. "
-                            + "All commands timing out indicates relaxed timeout mechanism is not working.")
-                    .isGreaterThan(0);
-
-            // Also verify that we had some timeouts (to ensure we're actually testing the mechanism)
-            assertThat(context.capture.getTimeoutCount()).as("Should have some timeouts to test the relaxed timeout mechanism")
+            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
+            assertThat(context.capture.getTimeoutCount())
+                    .as("Should have detected at least one relaxed timeout during MOVING maintenance. "
+                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
 
         } finally {
@@ -1425,13 +673,10 @@ public class RelaxedTimeoutConfigurationTest {
             log.info("Timeout operations: {}", context.capture.getTimeoutCount());
             log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
 
-            // CRITICAL: Test should fail if relaxed timeouts are not working
-            assertThat(context.capture.getSuccessCount())
-                    .as("Relaxed timeouts should allow some commands to succeed during maintenance. "
-                            + "All commands timing out indicates relaxed timeout mechanism is not working.")
-                    .isGreaterThan(0);
-
-            assertThat(context.capture.getTimeoutCount()).as("Should have some timeouts to test the relaxed timeout mechanism")
+            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
+            assertThat(context.capture.getTimeoutCount())
+                    .as("Should have detected at least one relaxed timeout during MIGRATING maintenance. "
+                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
 
         } finally {
@@ -1471,13 +716,10 @@ public class RelaxedTimeoutConfigurationTest {
             log.info("Timeout operations: {}", context.capture.getTimeoutCount());
             log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
 
-            // CRITICAL: Test should fail if relaxed timeouts are not working
-            assertThat(context.capture.getSuccessCount())
-                    .as("Relaxed timeouts should allow some commands to succeed during maintenance. "
-                            + "All commands timing out indicates relaxed timeout mechanism is not working.")
-                    .isGreaterThan(0);
-
-            assertThat(context.capture.getTimeoutCount()).as("Should have some timeouts to test the relaxed timeout mechanism")
+            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
+            assertThat(context.capture.getTimeoutCount())
+                    .as("Should have detected at least one relaxed timeout during FAILING_OVER maintenance. "
+                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
 
         } finally {
