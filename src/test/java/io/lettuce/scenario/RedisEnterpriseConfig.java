@@ -22,7 +22,7 @@ public class RedisEnterpriseConfig {
     private static final Logger log = LoggerFactory.getLogger(RedisEnterpriseConfig.class);
 
     // Timeout constants for Redis Enterprise discovery operations
-    private static final Duration DISCOVERY_CHECK_INTERVAL = Duration.ofSeconds(2); // Check interval for discovery commands
+    private static final Duration DISCOVERY_CHECK_INTERVAL = Duration.ofSeconds(10); // Check interval for discovery commands
 
     private static final Duration DISCOVERY_TIMEOUT = Duration.ofSeconds(30); // Timeout for discovery commands
 
@@ -41,6 +41,9 @@ public class RedisEnterpriseConfig {
 
     // Track which shards are on which nodes
     private final Map<String, List<String>> nodeToShards = new HashMap<>();
+
+    // Track which endpoints are bound to which nodes
+    private final Map<String, String> endpointToNode = new HashMap<>();
 
     // Define target configuration for tests
     private static final Map<String, Integer> TARGET_CONFIGURATION;
@@ -231,6 +234,7 @@ public class RedisEnterpriseConfig {
      */
     public void parseEndpoints(String endpointsOutput) {
         log.info("Parsing endpoints from output...");
+        log.debug("Raw endpoints output: {}", endpointsOutput);
 
         if (endpointsOutput == null || endpointsOutput.trim().isEmpty()) {
             log.warn("Empty endpoints output received");
@@ -240,13 +244,16 @@ public class RedisEnterpriseConfig {
         String[] lines = endpointsOutput.split("\\n");
         for (String line : lines) {
             line = line.trim();
+            log.debug("Processing endpoint line: '{}'", line);
             if (line.contains("db:" + bdbId)) {
                 Matcher matcher = ENDPOINT_PATTERN.matcher(line);
                 if (matcher.matches()) {
                     String endpointId = matcher.group(2);
                     String nodeId = matcher.group(3);
 
+                    log.debug("Matched endpoint - raw endpointId: '{}', nodeId: '{}'", endpointId, nodeId);
                     endpointIds.add(endpointId);
+                    endpointToNode.put(endpointId, nodeId);
                     log.info("Found endpoint: {} on {}", endpointId, nodeId);
 
                     // Track node IDs in case they have appeared during endpoint discovery
@@ -254,6 +261,8 @@ public class RedisEnterpriseConfig {
                         nodeIds.add(nodeId);
                         log.info("Found node: {}", nodeId);
                     }
+                } else {
+                    log.debug("Line did not match endpoint pattern: '{}'", line);
                 }
             }
         }
@@ -303,13 +312,21 @@ public class RedisEnterpriseConfig {
     /**
      * Extract the endpoint ID part from full format "endpoint:X:Y" -> "X:Y"
      */
-    private String extractEndpointId(String fullEndpointId) {
+    private static String extractEndpointId(String fullEndpointId) {
         if (fullEndpointId == null) {
             return null;
         }
+        log.debug("Extracting endpoint ID from: '{}'", fullEndpointId);
+
+        // If it already starts with "endpoint:", remove that prefix
         if (fullEndpointId.startsWith("endpoint:")) {
-            return fullEndpointId.substring("endpoint:".length());
+            String extracted = fullEndpointId.substring("endpoint:".length());
+            log.debug("Extracted endpoint ID: '{}'", extracted);
+            return extracted;
         }
+
+        // If it doesn't start with "endpoint:", return as is (might be the raw format)
+        log.debug("Using endpoint ID as-is: '{}'", fullEndpointId);
         return fullEndpointId;
     }
 
@@ -321,6 +338,13 @@ public class RedisEnterpriseConfig {
             throw new IllegalStateException("No endpoints found for BDB " + bdbId + ". Cluster appears to be malformed.");
         }
         return extractEndpointId(endpointIds.get(0));
+    }
+
+    /**
+     * Get the node where an endpoint is bound.
+     */
+    public String getEndpointNode(String endpointId) {
+        return endpointToNode.get(endpointId);
     }
 
     /**
@@ -842,6 +866,8 @@ public class RedisEnterpriseConfig {
 
     private static Map<String, List<String>> originalNodeToShards = new HashMap<>();
 
+    private static Map<String, String> originalEndpointToNode = new HashMap<>();
+
     private static boolean originalStateRecorded = false;
 
     /**
@@ -891,9 +917,17 @@ public class RedisEnterpriseConfig {
                 originalNodeToShards.put(nodeId, new ArrayList<>(shards));
             }
 
+            // Record endpoint bindings
+            originalEndpointToNode.clear();
+            for (String endpointId : currentConfig.getEndpointIds()) {
+                String nodeId = currentConfig.getEndpointNode(endpointId);
+                originalEndpointToNode.put(endpointId, nodeId);
+            }
+
             log.info("Original cluster state recorded:");
             log.info("  Shard roles: {}", originalShardRoles);
             log.info("  Node distribution: {}", originalNodeToShards);
+            log.info("  Endpoint bindings: {}", originalEndpointToNode);
 
         } catch (Exception e) {
             log.warn("Failed to record original cluster state: {}", e.getMessage());
@@ -1021,7 +1055,32 @@ public class RedisEnterpriseConfig {
                 log.info("No role restoration needed - all shards are in correct roles");
             }
 
-            // Step 3: Verify final state matches original
+            // Step 3: Restore endpoint bindings
+            for (Map.Entry<String, String> entry : originalEndpointToNode.entrySet()) {
+                String endpointId = entry.getKey();
+                String originalNodeId = entry.getValue();
+                String currentNodeId = currentConfig.getEndpointNode(endpointId);
+
+                log.info("Checking endpoint binding: endpointId='{}', originalNodeId='{}', currentNodeId='{}'", endpointId,
+                        originalNodeId, currentNodeId);
+
+                if (!originalNodeId.equals(currentNodeId)) {
+                    log.info("Endpoint {} is bound to node {}, but should be bound to {}. Rebinding...", endpointId,
+                            currentNodeId, originalNodeId);
+                    // Extract the endpoint ID without the "endpoint:" prefix for the bind command
+                    String extractedEndpointId = extractEndpointId(endpointId);
+                    String rebindCommand = "bind endpoint " + extractedEndpointId + " policy single";
+                    log.info("Executing rebind command: '{}'", rebindCommand);
+                    StepVerifier.create(faultClient.executeRladminCommand(bdbId, rebindCommand, DISCOVERY_CHECK_INTERVAL,
+                            LONG_OPERATION_TIMEOUT)).expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
+                    Thread.sleep(10000); // Wait for rebind to complete
+                    log.info("Endpoint {} rebinded to {}", endpointId, originalNodeId);
+                } else {
+                    log.info("Endpoint {} is already correctly bound to {}", endpointId, originalNodeId);
+                }
+            }
+
+            // Step 4: Verify final state matches original
             currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
             log.info("Final cluster state after restoration:");
             for (String nodeId : currentConfig.getNodeIds()) {

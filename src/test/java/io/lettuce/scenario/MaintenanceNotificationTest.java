@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -90,6 +91,19 @@ public class MaintenanceNotificationTest {
         clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
     }
 
+    @AfterEach
+    public void cleanupAfterTest() {
+        log.info("=== CLEANUP: Restoring cluster state after test ===");
+        try {
+            // Refresh cluster config which will restore the original state
+            // This is the same method used in @BeforeEach but it will restore state for the next test
+            RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+            log.info("=== CLEANUP: Cluster state restored successfully ===");
+        } catch (Exception e) {
+            log.warn("=== CLEANUP: Failed to restore cluster state: {} ===", e.getMessage());
+        }
+    }
+
     /**
      * Test context holding common objects used across all notification tests
      */
@@ -124,15 +138,18 @@ public class MaintenanceNotificationTest {
 
         private final AtomicReference<String> lastNotification = new AtomicReference<>();
 
-        private final AtomicBoolean timeoutIncreased = new AtomicBoolean(false);
-
-        private final AtomicBoolean stateRemoved = new AtomicBoolean(false);
+        private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
 
         public void captureNotification(String notification) {
-            receivedNotifications.add(notification);
-            lastNotification.set(notification);
-            notificationLatch.countDown();
-            log.info("Captured push notification: {}", notification);
+            // Only capture notifications during the test phase, not during cleanup
+            if (testPhaseActive.get()) {
+                receivedNotifications.add(notification);
+                lastNotification.set(notification);
+                notificationLatch.countDown();
+                log.info("Captured push notification: {}", notification);
+            } else {
+                log.debug("Ignoring notification during cleanup phase: {}", notification);
+            }
         }
 
         public boolean waitForNotification(Duration timeout) throws InterruptedException {
@@ -147,20 +164,9 @@ public class MaintenanceNotificationTest {
             return lastNotification.get();
         }
 
-        public void markTimeoutIncreased() {
-            timeoutIncreased.set(true);
-        }
-
-        public void markStateRemoved() {
-            stateRemoved.set(true);
-        }
-
-        public boolean hasTimeoutIncreased() {
-            return timeoutIncreased.get();
-        }
-
-        public boolean hasStateRemoved() {
-            return stateRemoved.get();
+        public void endTestPhase() {
+            testPhaseActive.set(false);
+            log.info("Test phase ended - notifications will be ignored during cleanup");
         }
 
     }
@@ -201,6 +207,7 @@ public class MaintenanceNotificationTest {
     @Test
     @DisplayName("T.1.1.1 - Receive MOVING push notification during endpoint rebind")
     public void receiveMovingPushNotificationTest() throws InterruptedException {
+        log.info("=== STARTING TEST: T.1.1.1 - Receive MOVING push notification during endpoint rebind ===");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger MOVING notification using the proper two-step process:
@@ -244,13 +251,19 @@ public class MaintenanceNotificationTest {
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
         assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
-        // Cleanup
+        // End test phase to prevent capturing cleanup notifications
+        context.capture.endTestPhase();
+
+        log.info("=== COMPLETED TEST: T.1.1.1 - Receive MOVING push notification during endpoint rebind ===");
+
+        // Cleanup test resources
         cleanupNotificationTest(context);
     }
 
     @Test
     @DisplayName("T.1.1.2 - Receive MIGRATING push notification during node migration")
     public void receiveMigratingPushNotificationTest() throws InterruptedException {
+        log.info("=== STARTING TEST: T.1.1.2 - Receive MIGRATING push notification during node migration ===");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger node migration using optimal node selection
@@ -296,25 +309,19 @@ public class MaintenanceNotificationTest {
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
         assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATING"))).isTrue();
 
-        // Simulate client behavior: increase timeout for commands
-        context.capture.markTimeoutIncreased();
-        assertThat(context.capture.hasTimeoutIncreased()).isTrue();
+        // End test phase to prevent capturing cleanup notifications
+        context.capture.endTestPhase();
 
-        // CLEANUP: Restore target configuration for next test
-        log.info("CLEANUP: Restoring target configuration (node:1=2 shards, node:2=0 shards)...");
-        // After migration sourceNode→targetNode, we need to migrate targetNode→sourceNode to restore target config
-        log.info("Executing cleanup migration: {} → {} to restore target state", targetNode, sourceNode);
-        StepVerifier.create(faultClient.triggerShardMigration(context.bdbId, shardId, targetNode, sourceNode)).expectNext(true)
-                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
-        log.info("Target configuration restored - ready for next test");
+        log.info("=== COMPLETED TEST: T.1.1.2 - Receive MIGRATING push notification during node migration ===");
 
-        // Cleanup
+        // Cleanup test resources
         cleanupNotificationTest(context);
     }
 
     @Test
     @DisplayName("T.1.1.3 - Receive MIGRATED push notification on migration completion")
     public void receiveMigratedPushNotificationTest() throws InterruptedException {
+        log.info("=== STARTING TEST: T.1.1.3 - Receive MIGRATED push notification on migration completion ===");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger migration to get into migrating state using optimal node selection
@@ -356,25 +363,19 @@ public class MaintenanceNotificationTest {
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
         assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
 
-        // Simulate client behavior: remove migration state
-        context.capture.markStateRemoved();
-        assertThat(context.capture.hasStateRemoved()).isTrue();
+        // End test phase to prevent capturing cleanup notifications
+        context.capture.endTestPhase();
 
-        // CLEANUP: Restore target configuration for next test
-        log.info("CLEANUP: Restoring target configuration (node:1=2 shards, node:2=0 shards)...");
-        // After migration sourceNode→targetNode, we need to migrate targetNode→sourceNode to restore target config
-        log.info("Executing cleanup migration: {} → {} to restore target state", targetNode, sourceNode);
-        StepVerifier.create(faultClient.triggerShardMigration(context.bdbId, shardId, targetNode, sourceNode)).expectNext(true)
-                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
-        log.info("Target configuration restored - ready for next test");
+        log.info("=== COMPLETED TEST: T.1.1.3 - Receive MIGRATED push notification on migration completion ===");
 
-        // Cleanup
+        // Cleanup test resources
         cleanupNotificationTest(context);
     }
 
     @Test
     @DisplayName("T.1.1.4 - Receive FAILING_OVER push notification during shard failover")
     public void receiveFailingOverPushNotificationTest() throws InterruptedException {
+        log.info("=== STARTING TEST: T.1.1.4 - Receive FAILING_OVER push notification during shard failover ===");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger shard failover using dynamic node discovery
@@ -409,20 +410,18 @@ public class MaintenanceNotificationTest {
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
         assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+FAILING_OVER"))).isTrue();
 
-        // Simulate client behavior: increase timeout for commands during failover
-        context.capture.markTimeoutIncreased();
-        assertThat(context.capture.hasTimeoutIncreased()).isTrue();
+        // End test phase to prevent capturing cleanup notifications
+        context.capture.endTestPhase();
+        log.info("=== COMPLETED TEST: T.1.1.4 - Receive FAILING_OVER push notification during shard failover ===");
 
-        // CLEANUP: Let BeforeEach handle cluster state restoration for next test
-        log.info("Test completed - cluster state will be restored before next test");
-
-        // Cleanup
+        // Cleanup test resources
         cleanupNotificationTest(context);
     }
 
     @Test
     @DisplayName("T.1.1.5 - Receive FAILED_OVER push notification on failover completion")
     public void receiveFailedOverPushNotificationTest() throws InterruptedException {
+        log.info("=== STARTING TEST: T.1.1.5 - Receive FAILED_OVER push notification on failover completion ===");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger failover to get into failing over state using dynamic node discovery
@@ -453,14 +452,12 @@ public class MaintenanceNotificationTest {
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
         assertThat(context.capture.getLastNotification()).contains("+FAILED_OVER");
 
-        // Simulate client behavior: remove failover state
-        context.capture.markStateRemoved();
-        assertThat(context.capture.hasStateRemoved()).isTrue();
+        // End test phase to prevent capturing cleanup notifications
+        context.capture.endTestPhase();
 
-        // CLEANUP: Let BeforeEach handle cluster state restoration for next test
-        log.info("Test completed - cluster state will be restored before next test");
+        log.info("=== COMPLETED TEST: T.1.1.5 - Receive FAILED_OVER push notification on failover completion ===");
 
-        // Cleanup
+        // Cleanup test resources
         cleanupNotificationTest(context);
     }
 
