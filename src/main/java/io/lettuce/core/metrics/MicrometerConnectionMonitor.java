@@ -54,9 +54,9 @@ public class MicrometerConnectionMonitor implements ConnectionMonitor {
     static final String LABEL_EPID = "epid";
 
     // Track the time between a connection being disconnected and successfully reconnected or closed
-    public static final String METRIC_RECONNECTION_INACTIVE_TIME = "lettuce.reconnection.inactive.duration";
+    public static final String METRIC_RECONNECTION_INACTIVE_TIME = "redis.reconnection.duration";
 
-    public static final String METRIC_RECONNECTION_ATTEMPTS = "lettuce.reconnection.attempts";
+    public static final String METRIC_RECONNECTION_ATTEMPTS = "redis.reconnection.attempts";
 
     private final MeterRegistry meterRegistry;
 
