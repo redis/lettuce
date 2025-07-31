@@ -27,7 +27,9 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
+import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 import io.lettuce.core.output.*;
+import io.lettuce.core.output.StreamEntryDeletionResultListOutput;
 import io.lettuce.core.protocol.BaseRedisCommandBuilder;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
@@ -3159,6 +3161,39 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(XACK, new IntegerOutput<>(codec), args);
     }
 
+    public Command<K, V, List<StreamEntryDeletionResult>> xackdel(K key, K group, String[] messageIds) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add("IDS").add(messageIds.length);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        return createCommand(XACKDEL, new StreamEntryDeletionResultListOutput<>(codec), args);
+    }
+
+    public Command<K, V, List<StreamEntryDeletionResult>> xackdel(K key, K group, StreamDeletionPolicy policy,
+            String[] messageIds) {
+        notNullKey(key);
+        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(policy, "StreamDeletionPolicy " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add(policy).add("IDS")
+                .add(messageIds.length);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        return createCommand(XACKDEL, new StreamEntryDeletionResultListOutput<>(codec), args);
+    }
+
     public Command<K, V, ClaimedMessages<K, V>> xautoclaim(K key, XAutoClaimArgs<K> xAutoClaimArgs) {
         notNullKey(key);
         LettuceAssert.notNull(xAutoClaimArgs, "XAutoClaimArgs " + MUST_NOT_BE_NULL);
@@ -3241,6 +3276,35 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(XDEL, new IntegerOutput<>(codec), args);
+    }
+
+    public Command<K, V, List<StreamEntryDeletionResult>> xdelex(K key, String[] messageIds) {
+        notNullKey(key);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add("IDS").add(messageIds.length);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        return createCommand(XDELEX, new StreamEntryDeletionResultListOutput<>(codec), args);
+    }
+
+    public Command<K, V, List<StreamEntryDeletionResult>> xdelex(K key, StreamDeletionPolicy policy, String[] messageIds) {
+        notNullKey(key);
+        LettuceAssert.notNull(policy, "StreamDeletionPolicy " + MUST_NOT_BE_NULL);
+        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
+        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(policy).add("IDS").add(messageIds.length);
+
+        for (String messageId : messageIds) {
+            args.add(messageId);
+        }
+
+        return createCommand(XDELEX, new StreamEntryDeletionResultListOutput<>(codec), args);
     }
 
     public Command<K, V, String> xgroupCreate(StreamOffset<K> offset, K group, XGroupCreateArgs commandArgs) {

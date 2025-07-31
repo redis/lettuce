@@ -26,6 +26,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
+import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 import io.lettuce.core.output.NestedMultiOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.test.LettuceExtension;
@@ -758,6 +759,310 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
 
         assertThat(redis.xgroupSetid(StreamOffset.latest(key), "group")).isEqualTo("OK");
+    }
+
+    // Redis 8.2 Stream Commands Tests
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xdelex() {
+        // Add some entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        String nonExistentId = "999999-0";
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+
+        // Test XDELEX
+        List<StreamEntryDeletionResult> results = redis.xdelex(key, id1, id2, nonExistentId);
+
+        assertThat(results).hasSize(3);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(1)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(2)).isEqualTo(StreamEntryDeletionResult.NOT_FOUND);
+
+        // Verify entries were deleted
+        assertThat(redis.xlen(key)).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xdelexWithPolicy() {
+        // Add some entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+
+        // Test XDELEX with KEEP_REFERENCES policy
+        List<StreamEntryDeletionResult> results = redis.xdelex(key, StreamDeletionPolicy.KEEP_REFERENCES, id1, id2);
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(1)).isEqualTo(StreamEntryDeletionResult.DELETED);
+
+        // Verify entries were deleted
+        assertThat(redis.xlen(key)).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("XACKDEL") // Redis 8.2
+    void xackdel() {
+        // Set up stream with consumer group
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        // Add entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+
+        // Create consumer group
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        // Read messages to create pending entries
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from(groupName, consumerName),
+                StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(2);
+
+        // Test XACKDEL
+        List<StreamEntryDeletionResult> results = redis.xackdel(key, groupName, id1, id2);
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(1)).isEqualTo(StreamEntryDeletionResult.DELETED);
+
+        // Verify no pending messages remain
+        List<PendingMessage> pending = redis.xpending(key, groupName, Range.unbounded(), io.lettuce.core.Limit.from(10));
+        assertThat(pending).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("XACKDEL") // Redis 8.2
+    void xackdelWithPolicy() {
+        // Set up stream with consumer group
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        // Add entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(1L);
+
+        // Create consumer group
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        // Read message to create pending entry
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        // Test XACKDEL with DELETE_REFERENCES policy
+        List<StreamEntryDeletionResult> results = redis.xackdel(key, groupName, StreamDeletionPolicy.DELETE_REFERENCES, id1);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+    }
+
+    @Test
+    @EnabledOnCommand("XACKDEL") // Redis 8.2
+    void xackdelNotFound() {
+        String groupName = "test-group";
+        String nonExistentId = "999999-0";
+
+        // Create consumer group on empty stream
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        // Test XACKDEL with non-existent ID
+        List<StreamEntryDeletionResult> results = redis.xackdel(key, groupName, nonExistentId);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.NOT_FOUND);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xdelexEmptyStream() {
+        String nonExistentId = "999999-0";
+
+        // Test XDELEX on empty stream
+        List<StreamEntryDeletionResult> results = redis.xdelex(key, nonExistentId);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.NOT_FOUND);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xdelexWithDelrefPolicy() {
+        // Add entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+
+        // Test XDELEX with DELETE_REFERENCES policy
+        List<StreamEntryDeletionResult> results = redis.xdelex(key, StreamDeletionPolicy.DELETE_REFERENCES, id1, id2);
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(1)).isEqualTo(StreamEntryDeletionResult.DELETED);
+
+        // Verify entries were deleted
+        assertThat(redis.xlen(key)).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("XACKDEL") // Redis 8.2
+    void xackdelWithAckedPolicy() {
+        // Set up stream with consumer group
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        // Add entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(1L);
+
+        // Create consumer group
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        // Read message to create pending entry
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        // Test XACKDEL with ACKNOWLEDGED policy on pending entry
+        // The ACKNOWLEDGED policy behavior: it deletes the entry from the stream and acknowledges it
+        List<StreamEntryDeletionResult> results = redis.xackdel(key, groupName, StreamDeletionPolicy.ACKNOWLEDGED, id1);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xaddWithTrimmingMode() {
+        // Add initial entries to the stream
+        redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xadd(key, Collections.singletonMap("field3", "value3"));
+        redis.xadd(key, Collections.singletonMap("field4", "value4"));
+        redis.xadd(key, Collections.singletonMap("field5", "value5"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(5L);
+
+        // Create consumer group and read messages to create PEL entries
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), "test-group", XGroupCreateArgs.Builder.mkstream());
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("test-group", "test-consumer"),
+                XReadArgs.Builder.count(3), StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(3);
+
+        // Add new entry with maxLen=3 and KEEP_REFERENCES mode - should preserve PEL references
+        String newId = redis.xadd(key, XAddArgs.Builder.maxlen(3).trimmingMode(StreamDeletionPolicy.KEEP_REFERENCES),
+                Collections.singletonMap("field6", "value6"));
+        assertThat(newId).isNotNull();
+
+        // Stream should be trimmed to 3 entries
+        assertThat(redis.xlen(key)).isEqualTo(3L);
+
+        // PEL should still contain references to read messages
+        PendingMessages pending = redis.xpending(key, "test-group");
+        assertThat(pending.getCount()).isEqualTo(3L);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xaddWithTrimmingModeDelref() {
+        // Add initial entries to the stream
+        redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xadd(key, Collections.singletonMap("field3", "value3"));
+        redis.xadd(key, Collections.singletonMap("field4", "value4"));
+        redis.xadd(key, Collections.singletonMap("field5", "value5"));
+
+        // Create consumer group and read messages
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), "test-group", XGroupCreateArgs.Builder.mkstream());
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("test-group", "test-consumer"),
+                XReadArgs.Builder.count(3), StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(3);
+
+        // Add new entry with maxLen=3 and DELETE_REFERENCES mode - should remove PEL references
+        String newId = redis.xadd(key, XAddArgs.Builder.maxlen(3).trimmingMode(StreamDeletionPolicy.DELETE_REFERENCES),
+                Collections.singletonMap("field6", "value6"));
+        assertThat(newId).isNotNull();
+
+        // Stream should be trimmed to 3 entries
+        assertThat(redis.xlen(key)).isEqualTo(3L);
+
+        // PEL should have fewer references due to DELREF policy
+        PendingMessages pending = redis.xpending(key, "test-group");
+        assertThat(pending.getCount()).isLessThan(3L);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xtrimWithTrimmingMode() {
+        // Add initial entries to the stream
+        redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xadd(key, Collections.singletonMap("field3", "value3"));
+        redis.xadd(key, Collections.singletonMap("field4", "value4"));
+        redis.xadd(key, Collections.singletonMap("field5", "value5"));
+
+        // Create consumer group and read messages
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), "test-group", XGroupCreateArgs.Builder.mkstream());
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("test-group", "test-consumer"),
+                XReadArgs.Builder.count(3), StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(3);
+
+        // Trim with KEEP_REFERENCES mode
+        Long trimmed = redis.xtrim(key, XTrimArgs.Builder.maxlen(3).trimmingMode(StreamDeletionPolicy.KEEP_REFERENCES));
+        assertThat(trimmed).isEqualTo(2L);
+
+        // Stream should be trimmed to 3 entries
+        assertThat(redis.xlen(key)).isEqualTo(3L);
+
+        // PEL should still contain references
+        PendingMessages pending = redis.xpending(key, "test-group");
+        assertThat(pending.getCount()).isEqualTo(3L);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xtrimWithTrimmingModeDelref() {
+        // Add initial entries to the stream
+        redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xadd(key, Collections.singletonMap("field3", "value3"));
+        redis.xadd(key, Collections.singletonMap("field4", "value4"));
+        redis.xadd(key, Collections.singletonMap("field5", "value5"));
+
+        // Create consumer group and read messages
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), "test-group", XGroupCreateArgs.Builder.mkstream());
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("test-group", "test-consumer"),
+                XReadArgs.Builder.count(3), StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(3);
+
+        // Trim with DELETE_REFERENCES mode
+        Long trimmed = redis.xtrim(key, XTrimArgs.Builder.maxlen(3).trimmingMode(StreamDeletionPolicy.DELETE_REFERENCES));
+        assertThat(trimmed).isEqualTo(2L);
+
+        // Stream should be trimmed to 3 entries
+        assertThat(redis.xlen(key)).isEqualTo(3L);
+
+        // PEL should have fewer references due to DELREF policy
+        PendingMessages pending = redis.xpending(key, "test-group");
+        assertThat(pending.getCount()).isLessThan(3L);
     }
 
 }
