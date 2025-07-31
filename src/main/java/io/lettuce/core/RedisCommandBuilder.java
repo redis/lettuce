@@ -3162,30 +3162,23 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<StreamEntryDeletionResult>> xackdel(K key, K group, String[] messageIds) {
-        notNullKey(key);
-        LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
-        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
-        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add("IDS").add(messageIds.length);
-
-        for (String messageId : messageIds) {
-            args.add(messageId);
-        }
-
-        return createCommand(XACKDEL, new StreamEntryDeletionResultListOutput<>(codec), args);
+        return xackdel(key, group, null, messageIds);
     }
 
     public Command<K, V, List<StreamEntryDeletionResult>> xackdel(K key, K group, StreamDeletionPolicy policy,
             String[] messageIds) {
         notNullKey(key);
         LettuceAssert.notNull(group, "Group " + MUST_NOT_BE_NULL);
-        LettuceAssert.notNull(policy, "StreamDeletionPolicy " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group).add(policy).add("IDS")
-                .add(messageIds.length);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addKey(group);
+
+        if (policy != null) {
+            args.add(policy);
+        }
+
+        args.add(CommandKeyword.IDS).add(messageIds.length);
 
         for (String messageId : messageIds) {
             args.add(messageId);
@@ -3279,26 +3272,21 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     }
 
     public Command<K, V, List<StreamEntryDeletionResult>> xdelex(K key, String[] messageIds) {
-        notNullKey(key);
-        LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
-        LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add("IDS").add(messageIds.length);
-
-        for (String messageId : messageIds) {
-            args.add(messageId);
-        }
-
-        return createCommand(XDELEX, new StreamEntryDeletionResultListOutput<>(codec), args);
+        return xdelex(key, null, messageIds);
     }
 
     public Command<K, V, List<StreamEntryDeletionResult>> xdelex(K key, StreamDeletionPolicy policy, String[] messageIds) {
         notNullKey(key);
-        LettuceAssert.notNull(policy, "StreamDeletionPolicy " + MUST_NOT_BE_NULL);
         LettuceAssert.notEmpty(messageIds, "MessageIds " + MUST_NOT_BE_EMPTY);
         LettuceAssert.noNullElements(messageIds, "MessageIds " + MUST_NOT_CONTAIN_NULL_ELEMENTS);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(policy).add("IDS").add(messageIds.length);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (policy != null) {
+            args.add(policy);
+        }
+
+        args.add(CommandKeyword.IDS).add(messageIds.length);
 
         for (String messageId : messageIds) {
             args.add(messageId);
