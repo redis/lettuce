@@ -26,8 +26,7 @@ class StreamEntryDeletionResultUnitTests {
 
     @Test
     void testFromCodeInvalid() {
-        assertThatThrownBy(() -> StreamEntryDeletionResult.fromCode(99)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Unknown stream entry deletion result code: 99");
+        assertThat(StreamEntryDeletionResult.fromCode(99)).isEqualTo(StreamEntryDeletionResult.UNKNOWN);
     }
 
     @Test
