@@ -58,6 +58,7 @@ public interface RedisStreamAsyncCommands<K, V> {
      * @param group name of the consumer group.
      * @param messageIds message Id's to acknowledge and delete.
      * @return List of {@link StreamEntryDeletionResult} indicating the result for each message ID.
+     * @since 6.8
      */
     RedisFuture<List<StreamEntryDeletionResult>> xackdel(K key, K group, String... messageIds);
 
@@ -71,6 +72,7 @@ public interface RedisStreamAsyncCommands<K, V> {
      * @param policy the deletion policy to apply.
      * @param messageIds message Id's to acknowledge and delete.
      * @return List of {@link StreamEntryDeletionResult} indicating the result for each message ID.
+     * @since 6.8
      */
     RedisFuture<List<StreamEntryDeletionResult>> xackdel(K key, K group, StreamDeletionPolicy policy, String... messageIds);
 
@@ -164,7 +166,7 @@ public interface RedisStreamAsyncCommands<K, V> {
      * @param key the stream key.
      * @param messageIds stream message Id's.
      * @return List of {@link StreamEntryDeletionResult} indicating the result for each message ID.
-     * @since 6.5
+     * @since 6.8
      */
     RedisFuture<List<StreamEntryDeletionResult>> xdelex(K key, String... messageIds);
 
@@ -177,7 +179,7 @@ public interface RedisStreamAsyncCommands<K, V> {
      * @param policy the deletion policy to apply.
      * @param messageIds stream message Id's.
      * @return List of {@link StreamEntryDeletionResult} indicating the result for each message ID.
-     * @since 6.5
+     * @since 6.8
      */
     RedisFuture<List<StreamEntryDeletionResult>> xdelex(K key, StreamDeletionPolicy policy, String... messageIds);
 
