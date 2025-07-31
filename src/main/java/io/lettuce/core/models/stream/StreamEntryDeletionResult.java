@@ -20,6 +20,8 @@ package io.lettuce.core.models.stream;
  */
 public enum StreamEntryDeletionResult {
 
+    UNKNOWN(-2),
+
     /**
      * The stream entry ID was not found in the stream.
      */
@@ -70,7 +72,7 @@ public enum StreamEntryDeletionResult {
             case 2:
                 return NOT_DELETED_UNACKNOWLEDGED_OR_STILL_REFERENCED;
             default:
-                throw new IllegalArgumentException("Unknown stream entry deletion result code: " + code);
+                return UNKNOWN;
         }
     }
 
