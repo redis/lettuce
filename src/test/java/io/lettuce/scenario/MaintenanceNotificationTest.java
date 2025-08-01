@@ -3,12 +3,8 @@ package io.lettuce.scenario;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -30,15 +26,10 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.push.PushListener;
-import io.lettuce.core.api.push.PushMessage;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
-import reactor.core.Disposable;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+
 import reactor.test.StepVerifier;
 
 import static io.lettuce.TestTags.SCENARIO_TEST;
@@ -93,14 +84,14 @@ public class MaintenanceNotificationTest {
 
     @AfterEach
     public void cleanupAfterTest() {
-        log.info("=== CLEANUP: Restoring cluster state after test ===");
+        log.info("Restoring cluster state after test");
         try {
             // Refresh cluster config which will restore the original state
             // This is the same method used in @BeforeEach but it will restore state for the next test
             RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
-            log.info("=== CLEANUP: Cluster state restored successfully ===");
+            log.info("Cluster state restored successfully");
         } catch (Exception e) {
-            log.warn("=== CLEANUP: Failed to restore cluster state: {} ===", e.getMessage());
+            log.warn("Failed to restore cluster state: {}", e.getMessage());
         }
     }
 
@@ -130,7 +121,7 @@ public class MaintenanceNotificationTest {
     /**
      * Helper class to capture and validate push notifications
      */
-    public static class NotificationCapture {
+    public static class NotificationCapture implements MaintenanceNotificationCapture {
 
         private final List<String> receivedNotifications = new CopyOnWriteArrayList<>();
 
@@ -188,8 +179,9 @@ public class MaintenanceNotificationTest {
 
         NotificationCapture capture = new NotificationCapture();
 
-        // Setup push notification monitoring
-        setupPushNotificationMonitoring(connection, capture);
+        // Setup push notification monitoring using the utility
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
+                Duration.ofMillis(5000));
 
         String bdbId = String.valueOf(mStandard.getBdbId());
 
@@ -207,7 +199,7 @@ public class MaintenanceNotificationTest {
     @Test
     @DisplayName("T.1.1.1 - Receive MOVING push notification during endpoint rebind")
     public void receiveMovingPushNotificationTest() throws InterruptedException {
-        log.info("=== STARTING TEST: T.1.1.1 - Receive MOVING push notification during endpoint rebind ===");
+        log.info("Starting test: T.1.1.1 - Receive MOVING push notification during endpoint rebind");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger MOVING notification using the proper two-step process:
@@ -254,7 +246,7 @@ public class MaintenanceNotificationTest {
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
 
-        log.info("=== COMPLETED TEST: T.1.1.1 - Receive MOVING push notification during endpoint rebind ===");
+        log.info("Completed test: T.1.1.1 - Receive MOVING push notification during endpoint rebind");
 
         // Cleanup test resources
         cleanupNotificationTest(context);
@@ -263,7 +255,7 @@ public class MaintenanceNotificationTest {
     @Test
     @DisplayName("T.1.1.2 - Receive MIGRATING push notification during node migration")
     public void receiveMigratingPushNotificationTest() throws InterruptedException {
-        log.info("=== STARTING TEST: T.1.1.2 - Receive MIGRATING push notification during node migration ===");
+        log.info("Starting test: T.1.1.2 - Receive MIGRATING push notification during node migration");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger node migration using optimal node selection
@@ -312,7 +304,7 @@ public class MaintenanceNotificationTest {
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
 
-        log.info("=== COMPLETED TEST: T.1.1.2 - Receive MIGRATING push notification during node migration ===");
+        log.info("Completed test: T.1.1.2 - Receive MIGRATING push notification during node migration");
 
         // Cleanup test resources
         cleanupNotificationTest(context);
@@ -321,7 +313,7 @@ public class MaintenanceNotificationTest {
     @Test
     @DisplayName("T.1.1.3 - Receive MIGRATED push notification on migration completion")
     public void receiveMigratedPushNotificationTest() throws InterruptedException {
-        log.info("=== STARTING TEST: T.1.1.3 - Receive MIGRATED push notification on migration completion ===");
+        log.info("Starting test: T.1.1.3 - Receive MIGRATED push notification on migration completion");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger migration to get into migrating state using optimal node selection
@@ -366,7 +358,7 @@ public class MaintenanceNotificationTest {
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
 
-        log.info("=== COMPLETED TEST: T.1.1.3 - Receive MIGRATED push notification on migration completion ===");
+        log.info("Completed test: T.1.1.3 - Receive MIGRATED push notification on migration completion");
 
         // Cleanup test resources
         cleanupNotificationTest(context);
@@ -375,7 +367,7 @@ public class MaintenanceNotificationTest {
     @Test
     @DisplayName("T.1.1.4 - Receive FAILING_OVER push notification during shard failover")
     public void receiveFailingOverPushNotificationTest() throws InterruptedException {
-        log.info("=== STARTING TEST: T.1.1.4 - Receive FAILING_OVER push notification during shard failover ===");
+        log.info("Starting test: T.1.1.4 - Receive FAILING_OVER push notification during shard failover");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger shard failover using dynamic node discovery
@@ -412,7 +404,7 @@ public class MaintenanceNotificationTest {
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
-        log.info("=== COMPLETED TEST: T.1.1.4 - Receive FAILING_OVER push notification during shard failover ===");
+        log.info("Completed test: T.1.1.4 - Receive FAILING_OVER push notification during shard failover");
 
         // Cleanup test resources
         cleanupNotificationTest(context);
@@ -421,7 +413,7 @@ public class MaintenanceNotificationTest {
     @Test
     @DisplayName("T.1.1.5 - Receive FAILED_OVER push notification on failover completion")
     public void receiveFailedOverPushNotificationTest() throws InterruptedException {
-        log.info("=== STARTING TEST: T.1.1.5 - Receive FAILED_OVER push notification on failover completion ===");
+        log.info("Starting test: T.1.1.5 - Receive FAILED_OVER push notification on failover completion");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger failover to get into failing over state using dynamic node discovery
@@ -455,157 +447,10 @@ public class MaintenanceNotificationTest {
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
 
-        log.info("=== COMPLETED TEST: T.1.1.5 - Receive FAILED_OVER push notification on failover completion ===");
+        log.info("Completed test: T.1.1.5 - Receive FAILED_OVER push notification on failover completion");
 
         // Cleanup test resources
         cleanupNotificationTest(context);
-    }
-
-    /**
-     * Setup push notification monitoring to capture REAL RESP3 push messages. This method handles ALL push message types:
-     * MOVING, MIGRATING, MIGRATED, FAILING_OVER, FAILED_OVER
-     */
-    private void setupPushNotificationMonitoring(StatefulRedisConnection<String, String> connection,
-            NotificationCapture capture) {
-        log.info("Setting up REAL RESP3 push notification monitoring using PushListener...");
-
-        // Register a comprehensive PushListener to capture ALL maintenance push messages
-        // This is the proper way to handle RESP3 push messages in Lettuce
-        PushListener maintenanceListener = new PushListener() {
-
-            @Override
-            public void onPushMessage(PushMessage message) {
-                String messageType = message.getType();
-                log.info("*** PUSH MESSAGE RECEIVED: type='{}' ***", messageType);
-
-                List<Object> content = message.getContent();
-                log.info("Push message content: {}", content);
-
-                if ("MOVING".equals(messageType)) {
-                    log.info("*** MOVING push message captured! ***");
-                    handleMovingMessage(content, capture);
-                } else if ("MIGRATING".equals(messageType)) {
-                    log.info("*** MIGRATING push message captured! ***");
-                    handleMigratingMessage(content, capture);
-                } else if ("MIGRATED".equals(messageType)) {
-                    log.info("*** MIGRATED push message captured! ***");
-                    handleMigratedMessage(content, capture);
-                } else if ("FAILING_OVER".equals(messageType)) {
-                    log.info("*** FAILING_OVER push message captured! ***");
-                    handleFailingOverMessage(content, capture);
-                } else if ("FAILED_OVER".equals(messageType)) {
-                    log.info("*** FAILED_OVER push message captured! ***");
-                    handleFailedOverMessage(content, capture);
-                } else {
-                    log.info("Other push message: type={}, content={}", messageType, content);
-                }
-            }
-
-            private void handleMovingMessage(List<Object> content, NotificationCapture capture) {
-                // MOVING message format: ["MOVING", slot_number, "IP:PORT"]
-                if (content.size() >= 3) {
-                    String slotNumber = content.get(1).toString();
-
-                    // Decode the ByteBuffer to get the actual IP address
-                    String newAddress = decodeByteBuffer(content.get(2));
-
-                    log.info("MOVING: slot {} -> {}", slotNumber, newAddress);
-
-                    // Create RESP3 representation for capture
-                    String resp3Format = String.format(">3\r\n+MOVING\r\n:%s\r\n+%s\r\n", slotNumber, newAddress);
-                    capture.captureNotification(resp3Format);
-                }
-            }
-
-            private void handleMigratingMessage(List<Object> content, NotificationCapture capture) {
-                // MIGRATING message format: ["MIGRATING", slot_number, timestamp]
-                if (content.size() >= 3) {
-                    String slotNumber = content.get(1).toString();
-                    String timestamp = content.get(2).toString();
-
-                    log.info("MIGRATING: slot {} at timestamp {}", slotNumber, timestamp);
-
-                    // Create RESP3 representation for capture
-                    String resp3Format = String.format(">3\r\n+MIGRATING\r\n:%s\r\n:%s\r\n", timestamp, slotNumber);
-                    capture.captureNotification(resp3Format);
-                }
-            }
-
-            private void handleMigratedMessage(List<Object> content, NotificationCapture capture) {
-                // MIGRATED message format: ["MIGRATED", slot_number]
-                if (content.size() >= 2) {
-                    String slotNumber = content.get(1).toString();
-
-                    log.info("MIGRATED: slot {}", slotNumber);
-
-                    // Create RESP3 representation for capture
-                    String resp3Format = String.format(">2\r\n+MIGRATED\r\n:%s\r\n", slotNumber);
-                    capture.captureNotification(resp3Format);
-                }
-            }
-
-            private void handleFailingOverMessage(List<Object> content, NotificationCapture capture) {
-                // FAILING_OVER message format: ["FAILING_OVER", timestamp, shard_id]
-                if (content.size() >= 3) {
-                    String timestamp = content.get(1).toString();
-                    String shardId = content.get(2).toString();
-
-                    log.info("FAILING_OVER: shard {} at timestamp {}", shardId, timestamp);
-
-                    // Create RESP3 representation for capture
-                    String resp3Format = String.format(">3\r\n+FAILING_OVER\r\n:%s\r\n:%s\r\n", timestamp, shardId);
-                    capture.captureNotification(resp3Format);
-                }
-            }
-
-            private void handleFailedOverMessage(List<Object> content, NotificationCapture capture) {
-                // FAILED_OVER message format: ["FAILED_OVER", shard_id]
-                if (content.size() >= 2) {
-                    String shardId = content.get(1).toString();
-
-                    log.info("FAILED_OVER: shard {}", shardId);
-
-                    // Create RESP3 representation for capture
-                    String resp3Format = String.format(">2\r\n+FAILED_OVER\r\n:%s\r\n", shardId);
-                    capture.captureNotification(resp3Format);
-                }
-            }
-
-            private String decodeByteBuffer(Object obj) {
-                if (obj instanceof ByteBuffer) {
-                    ByteBuffer buffer = (ByteBuffer) obj;
-                    return io.lettuce.core.codec.StringCodec.UTF8.decodeKey(buffer);
-                } else {
-                    return obj.toString();
-                }
-            }
-
-        };
-
-        // Add the listener to the connection's endpoint
-        connection.addListener(maintenanceListener);
-        log.info("PushListener registered for ALL maintenance push messages");
-
-        // Also trigger some activity to encourage push messages
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
-
-        // Send periodic pings to trigger any pending push notifications
-        Disposable monitoring = Flux.interval(Duration.ofMillis(5000)).take(MONITORING_TIMEOUT) // Monitor for 2
-                                                                                                // minutes
-                .doOnNext(i -> {
-                    log.info("=== Ping #{} - Activity to trigger push messages ===", i);
-                }).flatMap(i -> {
-                    return reactive.ping().timeout(PING_TIMEOUT).doOnNext(response -> {
-                        log.info("Ping #{} response: '{}'", i, response);
-                    }).onErrorResume(e -> {
-                        log.debug("Ping #{} failed, continuing: {}", i, e.getMessage());
-                        return Mono.empty();
-                    });
-                }).doOnComplete(() -> {
-                    log.info("Push notification monitoring completed");
-                }).subscribe();
-
-        log.info("Push notification monitoring active with comprehensive PushListener");
     }
 
 }
