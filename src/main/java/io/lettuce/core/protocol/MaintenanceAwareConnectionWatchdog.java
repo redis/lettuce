@@ -96,6 +96,8 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        logger.info("*** WATCHDOG: we go IN channelReadComplete ***");
+
         if (ctx.channel() != null && ctx.channel().isActive() && ctx.channel().hasAttr(REBIND_ATTRIBUTE)
                 && ctx.channel().attr(REBIND_ATTRIBUTE).get() == RebindState.COMPLETED) {
             logger.debug("Disconnecting at {}", LocalTime.now());
@@ -231,7 +233,10 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     }
 
     private void notifyRebindCompleted() {
+        logger.info("*** WATCHDOG: notifyRebindCompleted() called - notifying {} component listeners ***",
+                this.componentListeners.size());
         this.componentListeners.forEach(MaintenanceAwareComponent::onRebindCompleted);
+        logger.info("*** WATCHDOG: notifyRebindCompleted() completed ***");
     }
 
     private void notifyRebindStarted() {
