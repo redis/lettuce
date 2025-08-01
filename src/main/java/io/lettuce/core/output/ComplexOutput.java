@@ -21,7 +21,7 @@ import java.util.Deque;
  * example a map containing other maps, arrays or sets as values for one or more of its keys.
  * <p>
  * The implementation of the {@link ComplexDataParser} is responsible for mapping the data from the result to meaningful
- * properties that the user of the LEttuce driver could then use in a statically typed manner.
+ * properties that the user of the Lettuce driver could then use in a statically typed manner.
  *
  * @see ComplexDataParser
  * @author Tihomir Mateev
@@ -33,7 +33,7 @@ public class ComplexOutput<K, V, T> extends CommandOutput<K, V, T> {
 
     private final ComplexDataParser<T> parser;
 
-    private ComplexData data;
+    protected ComplexData data;
 
     /**
      * Constructs a new instance of the {@link ComplexOutput}

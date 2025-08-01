@@ -49,6 +49,19 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.SpellCheckResult;
+import io.lettuce.core.search.Suggestion;
+import io.lettuce.core.search.arguments.AggregateArgs;
+import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
+import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SpellCheckArgs;
+import io.lettuce.core.search.arguments.SugAddArgs;
+import io.lettuce.core.search.arguments.SugGetArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VectorMetadata;
 
@@ -83,13 +96,15 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         RedisSortedSetAsyncCommands<K, V>, RedisScriptingAsyncCommands<K, V>, RedisServerAsyncCommands<K, V>,
         RedisHLLAsyncCommands<K, V>, BaseRedisAsyncCommands<K, V>, RedisTransactionalAsyncCommands<K, V>,
         RedisGeoAsyncCommands<K, V>, RedisClusterAsyncCommands<K, V>, RedisJsonAsyncCommands<K, V>,
-        RedisVectorSetAsyncCommands<K, V> {
+        RedisVectorSetAsyncCommands<K, V>, RediSearchAsyncCommands<K, V> {
 
     private final StatefulConnection<K, V> connection;
 
     private final RedisCommandBuilder<K, V> commandBuilder;
 
     private final RedisJsonCommandBuilder<K, V> jsonCommandBuilder;
+
+    private final RediSearchCommandBuilder<K, V> searchCommandBuilder;
 
     private final RedisVectorSetCommandBuilder<K, V> vectorSetCommandBuilder;
 
@@ -109,6 +124,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         this.commandBuilder = new RedisCommandBuilder<>(codec);
         this.jsonCommandBuilder = new RedisJsonCommandBuilder<>(codec, parser);
         this.vectorSetCommandBuilder = new RedisVectorSetCommandBuilder<>(codec, parser);
+        this.searchCommandBuilder = new RediSearchCommandBuilder<>(codec);
     }
 
     /**
@@ -1539,6 +1555,176 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public boolean isOpen() {
         return connection.isOpen();
+    }
+
+    @Override
+    public RedisFuture<String> ftCreate(K index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
+        return dispatch(searchCommandBuilder.ftCreate(index, options, fieldArgs));
+    }
+
+    @Override
+    public RedisFuture<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+        return dispatch(searchCommandBuilder.ftCreate(index, null, fieldArgs));
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasadd(K alias, K index) {
+        return dispatch(searchCommandBuilder.ftAliasadd(alias, index));
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasupdate(K alias, K index) {
+        return dispatch(searchCommandBuilder.ftAliasupdate(alias, index));
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasdel(K alias) {
+        return dispatch(searchCommandBuilder.ftAliasdel(alias));
+    }
+
+    @Override
+    public RedisFuture<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+        return dispatch(searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftTagvals(K index, K fieldName) {
+        return dispatch(searchCommandBuilder.ftTagvals(index, fieldName));
+    }
+
+    @Override
+    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+        return dispatch(searchCommandBuilder.ftSpellcheck(index, query));
+    }
+
+    @Override
+    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftSpellcheck(index, query, args));
+    }
+
+    @Override
+    public RedisFuture<Long> ftDictadd(K dict, V... terms) {
+        return dispatch(searchCommandBuilder.ftDictadd(dict, terms));
+    }
+
+    @Override
+    public RedisFuture<Long> ftDictdel(K dict, V... terms) {
+        return dispatch(searchCommandBuilder.ftDictdel(dict, terms));
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftDictdump(K dict) {
+        return dispatch(searchCommandBuilder.ftDictdump(dict));
+    }
+
+    @Override
+    public RedisFuture<String> ftExplain(K index, V query) {
+        return dispatch(searchCommandBuilder.ftExplain(index, query));
+    }
+
+    @Override
+    public RedisFuture<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftExplain(index, query, args));
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftList() {
+        return dispatch(searchCommandBuilder.ftList());
+    }
+
+    @Override
+    public RedisFuture<Map<V, List<V>>> ftSyndump(K index) {
+        return dispatch(searchCommandBuilder.ftSyndump(index));
+    }
+
+    @Override
+    public RedisFuture<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+        return dispatch(searchCommandBuilder.ftSynupdate(index, synonymGroupId, terms));
+    }
+
+    @Override
+    public RedisFuture<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+        return dispatch(searchCommandBuilder.ftSynupdate(index, synonymGroupId, args, terms));
+    }
+
+    @Override
+    public RedisFuture<Long> ftSugadd(K key, V string, double score) {
+        return dispatch(searchCommandBuilder.ftSugadd(key, string, score));
+    }
+
+    @Override
+    public RedisFuture<Long> ftSugadd(K key, V string, double score, SugAddArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftSugadd(key, string, score, args));
+    }
+
+    @Override
+    public RedisFuture<Boolean> ftSugdel(K key, V string) {
+        return dispatch(searchCommandBuilder.ftSugdel(key, string));
+    }
+
+    @Override
+    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix) {
+        return dispatch(searchCommandBuilder.ftSugget(key, prefix));
+    }
+
+    @Override
+    public RedisFuture<List<Suggestion<V>>> ftSugget(K key, V prefix, SugGetArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftSugget(key, prefix, args));
+    }
+
+    @Override
+    public RedisFuture<Long> ftSuglen(K key) {
+        return dispatch(searchCommandBuilder.ftSuglen(key));
+    }
+
+    @Override
+    public RedisFuture<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs) {
+        return dispatch(searchCommandBuilder.ftAlter(index, false, fieldArgs));
+    }
+
+    @Override
+    public RedisFuture<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+        return dispatch(searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
+    }
+
+    @Override
+    public RedisFuture<String> ftDropindex(K index) {
+        return dispatch(searchCommandBuilder.ftDropindex(index, false));
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftSearch(index, query, args));
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query) {
+        return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
+    }
+
+    @Override
+    public RedisFuture<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+        return dispatch(searchCommandBuilder.ftAggregate(index, query, args));
+    }
+
+    @Override
+    public RedisFuture<AggregationReply<K, V>> ftAggregate(K index, V query) {
+        return dispatch(searchCommandBuilder.ftAggregate(index, query, null));
+    }
+
+    @Override
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+        return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, count));
+    }
+
+    @Override
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, long cursorId) {
+        return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, -1));
+    }
+
+    @Override
+    public RedisFuture<String> ftCursordel(K index, long cursorId) {
+        return dispatch(searchCommandBuilder.ftCursordel(index, cursorId));
     }
 
     @Override
