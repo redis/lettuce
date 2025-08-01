@@ -11,13 +11,13 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="io.lettuce.core.protocol" level="DEBUG"/>
+        <Logger name="io.lettuce.core.protocol" level="FATAL"/>
         <!-- Uncomment the line below to enable test-containers debug logging -->
         <!--
         <Logger name="org.testcontainers" level="DEBUG"/>
         -->
         <Logger name="io.lettuce.scenario" level="INFO"/>
-        <Root level="INFO">
+        <Root level="FATAL">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Root>
