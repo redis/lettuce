@@ -37,6 +37,7 @@ import io.lettuce.core.json.arguments.JsonSetArgs;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
+import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 import io.lettuce.core.output.CommandOutput;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
@@ -2791,6 +2792,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     }
 
     @Override
+    public Flux<StreamEntryDeletionResult> xackdel(K key, K group, String... messageIds) {
+        return createDissolvingFlux(() -> commandBuilder.xackdel(key, group, messageIds));
+    }
+
+    @Override
+    public Flux<StreamEntryDeletionResult> xackdel(K key, K group, StreamDeletionPolicy policy, String... messageIds) {
+        return createDissolvingFlux(() -> commandBuilder.xackdel(key, group, policy, messageIds));
+    }
+
+    @Override
     public Mono<String> xadd(K key, Map<K, V> body) {
         return createMono(() -> commandBuilder.xadd(key, null, body));
     }
@@ -2829,6 +2840,16 @@ public abstract class AbstractRedisReactiveCommands<K, V> implements RedisAclRea
     @Override
     public Mono<Long> xdel(K key, String... messageIds) {
         return createMono(() -> commandBuilder.xdel(key, messageIds));
+    }
+
+    @Override
+    public Flux<StreamEntryDeletionResult> xdelex(K key, String... messageIds) {
+        return createDissolvingFlux(() -> commandBuilder.xdelex(key, messageIds));
+    }
+
+    @Override
+    public Flux<StreamEntryDeletionResult> xdelex(K key, StreamDeletionPolicy policy, String... messageIds) {
+        return createDissolvingFlux(() -> commandBuilder.xdelex(key, policy, messageIds));
     }
 
     @Override

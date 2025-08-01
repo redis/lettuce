@@ -1,6 +1,7 @@
 package io.lettuce.core;
 
 import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 import io.lettuce.core.protocol.Command;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RedisCommandBuilder}.
@@ -31,6 +33,16 @@ class RedisCommandBuilderUnitTests {
     public static final String MY_FIELD2 = "hField2";
 
     public static final String MY_FIELD3 = "hField3";
+
+    public static final String STREAM_KEY = "test-stream";
+
+    public static final String GROUP_NAME = "test-group";
+
+    public static final String MESSAGE_ID1 = "1234567890-0";
+
+    public static final String MESSAGE_ID2 = "1234567891-0";
+
+    public static final String MESSAGE_ID3 = "1234567892-0";
 
     RedisCommandBuilder<String, String> sut = new RedisCommandBuilder<>(StringCodec.UTF8);
 
@@ -295,6 +307,179 @@ class RedisCommandBuilderUnitTests {
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
                 .isEqualTo("*6\r\n$5\r\nBITOP\r\n$3\r\nONE\r\n$4\r\ndest\r\n$4\r\nkey1\r\n$4\r\nkey2\r\n$4\r\nkey3\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXackdel() {
+        Command<String, String, List<StreamEntryDeletionResult>> command = sut.xackdel(STREAM_KEY, GROUP_NAME,
+                new String[] { MESSAGE_ID1, MESSAGE_ID2 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*7\r\n" + "$7\r\n" + "XACKDEL\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n" + "$3\r\n"
+                        + "IDS\r\n" + "$1\r\n" + "2\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$12\r\n" + "1234567891-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXackdelWithPolicy() {
+        Command<String, String, List<StreamEntryDeletionResult>> command = sut.xackdel(STREAM_KEY, GROUP_NAME,
+                StreamDeletionPolicy.KEEP_REFERENCES, new String[] { MESSAGE_ID1, MESSAGE_ID2, MESSAGE_ID3 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$7\r\n" + "XACKDEL\r\n" + "$11\r\n"
+                + "test-stream\r\n" + "$10\r\n" + "test-group\r\n" + "$7\r\n" + "KEEPREF\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n"
+                + "3\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$12\r\n" + "1234567891-0\r\n" + "$12\r\n" + "1234567892-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXackdelWithDeleteReferencesPolicy() {
+        Command<String, String, List<StreamEntryDeletionResult>> command = sut.xackdel(STREAM_KEY, GROUP_NAME,
+                StreamDeletionPolicy.DELETE_REFERENCES, new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$7\r\n" + "XACKDEL\r\n" + "$11\r\n" + "test-stream\r\n" + "$10\r\n" + "test-group\r\n"
+                        + "$6\r\n" + "DELREF\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXackdelWithAcknowledgedPolicy() {
+        Command<String, String, List<StreamEntryDeletionResult>> command = sut.xackdel(STREAM_KEY, GROUP_NAME,
+                StreamDeletionPolicy.ACKNOWLEDGED, new String[] { MESSAGE_ID1, MESSAGE_ID2 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" + "$7\r\n" + "XACKDEL\r\n" + "$11\r\n"
+                + "test-stream\r\n" + "$10\r\n" + "test-group\r\n" + "$5\r\n" + "ACKED\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n"
+                + "2\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$12\r\n" + "1234567891-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXdelex() {
+        Command<String, String, List<StreamEntryDeletionResult>> command = sut.xdelex(STREAM_KEY,
+                new String[] { MESSAGE_ID1, MESSAGE_ID2 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n" + "$6\r\n" + "XDELEX\r\n" + "$11\r\n" + "test-stream\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n"
+                        + "2\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$12\r\n" + "1234567891-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXdelexWithSingleMessageId() {
+        Command<String, String, List<StreamEntryDeletionResult>> command = sut.xdelex(STREAM_KEY, new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*5\r\n" + "$6\r\n" + "XDELEX\r\n" + "$11\r\n"
+                + "test-stream\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXdelexWithPolicy() {
+        Command<String, String, List<StreamEntryDeletionResult>> command = sut.xdelex(STREAM_KEY,
+                StreamDeletionPolicy.KEEP_REFERENCES, new String[] { MESSAGE_ID1, MESSAGE_ID2, MESSAGE_ID3 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" + "$6\r\n" + "XDELEX\r\n" + "$11\r\n"
+                + "test-stream\r\n" + "$7\r\n" + "KEEPREF\r\n" + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "3\r\n" + "$12\r\n"
+                + "1234567890-0\r\n" + "$12\r\n" + "1234567891-0\r\n" + "$12\r\n" + "1234567892-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXdelexWithDeleteReferencesPolicy() {
+        Command<String, String, List<StreamEntryDeletionResult>> command = sut.xdelex(STREAM_KEY,
+                StreamDeletionPolicy.DELETE_REFERENCES, new String[] { MESSAGE_ID1 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*6\r\n" + "$6\r\n" + "XDELEX\r\n" + "$11\r\n" + "test-stream\r\n" + "$6\r\n" + "DELREF\r\n"
+                        + "$3\r\n" + "IDS\r\n" + "$1\r\n" + "1\r\n" + "$12\r\n" + "1234567890-0\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructXdelexWithAcknowledgedPolicy() {
+        Command<String, String, List<StreamEntryDeletionResult>> command = sut.xdelex(STREAM_KEY,
+                StreamDeletionPolicy.ACKNOWLEDGED, new String[] { MESSAGE_ID1, MESSAGE_ID2 });
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*7\r\n" + "$6\r\n" + "XDELEX\r\n" + "$11\r\n" + "test-stream\r\n" + "$5\r\n" + "ACKED\r\n" + "$3\r\n"
+                        + "IDS\r\n" + "$1\r\n" + "2\r\n" + "$12\r\n" + "1234567890-0\r\n" + "$12\r\n" + "1234567891-0\r\n");
+    }
+
+    @Test
+    void xackdelShouldRejectNullKey() {
+        assertThatThrownBy(() -> sut.xackdel(null, GROUP_NAME, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Key must not be null");
+    }
+
+    @Test
+    void xackdelShouldRejectNullGroup() {
+        assertThatThrownBy(() -> sut.xackdel(STREAM_KEY, null, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Group must not be null");
+    }
+
+    @Test
+    void xackdelShouldRejectEmptyMessageIds() {
+        assertThatThrownBy(() -> sut.xackdel(STREAM_KEY, GROUP_NAME, new String[] {}))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xackdelShouldRejectNullMessageIds() {
+        assertThatThrownBy(() -> sut.xackdel(STREAM_KEY, GROUP_NAME, (String[]) null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xackdelShouldRejectNullElementsInMessageIds() {
+        assertThatThrownBy(() -> sut.xackdel(STREAM_KEY, GROUP_NAME, new String[] { MESSAGE_ID1, null, MESSAGE_ID2 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not contain null elements");
+    }
+
+    @Test
+    void xackdelWithPolicyShouldRejectNullKey() {
+        assertThatThrownBy(
+                () -> sut.xackdel(null, GROUP_NAME, StreamDeletionPolicy.KEEP_REFERENCES, new String[] { MESSAGE_ID1 }))
+                        .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Key must not be null");
+    }
+
+    @Test
+    void xdelexShouldRejectNullKey() {
+        assertThatThrownBy(() -> sut.xdelex(null, new String[] { MESSAGE_ID1 })).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Key must not be null");
+    }
+
+    @Test
+    void xdelexShouldRejectEmptyMessageIds() {
+        assertThatThrownBy(() -> sut.xdelex(STREAM_KEY, new String[] {})).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xdelexShouldRejectNullMessageIds() {
+        assertThatThrownBy(() -> sut.xdelex(STREAM_KEY, (String[]) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("MessageIds must not be empty");
+    }
+
+    @Test
+    void xdelexShouldRejectNullElementsInMessageIds() {
+        assertThatThrownBy(() -> sut.xdelex(STREAM_KEY, new String[] { MESSAGE_ID1, null, MESSAGE_ID2 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("MessageIds must not contain null elements");
+    }
+
+    @Test
+    void xdelexWithPolicyShouldRejectNullKey() {
+        assertThatThrownBy(() -> sut.xdelex(null, StreamDeletionPolicy.KEEP_REFERENCES, new String[] { MESSAGE_ID1 }))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Key must not be null");
     }
 
 }

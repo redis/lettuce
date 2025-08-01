@@ -44,6 +44,8 @@ public class XTrimArgs implements CompositeArgument {
 
     private Long limit;
 
+    private StreamDeletionPolicy trimmingMode;
+
     /**
      * Builder entry points for {@link XTrimArgs}.
      */
@@ -164,6 +166,18 @@ public class XTrimArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Defines desired behaviour for handling consumer group references during trimming. See {@link StreamDeletionPolicy} for
+     * details.
+     *
+     * @param trimmingMode the deletion policy to apply during trimming.
+     * @return {@code this}
+     */
+    public XTrimArgs trimmingMode(StreamDeletionPolicy trimmingMode) {
+        this.trimmingMode = trimmingMode;
+        return this;
+    }
+
     @Override
     public <K, V> void build(CommandArgs<K, V> args) {
 
@@ -192,6 +206,10 @@ public class XTrimArgs implements CompositeArgument {
 
         if (limit != null && approximateTrimming) {
             args.add(CommandKeyword.LIMIT).add(limit);
+        }
+
+        if (trimmingMode != null) {
+            args.add(trimmingMode);
         }
     }
 
