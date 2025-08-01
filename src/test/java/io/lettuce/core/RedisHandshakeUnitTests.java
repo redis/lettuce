@@ -37,7 +37,7 @@ class RedisHandshakeUnitTests {
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider("foo", "bar".toCharArray()));
-        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, null);
         handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -54,7 +54,7 @@ class RedisHandshakeUnitTests {
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider("foo", "bar".toCharArray()));
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -71,7 +71,7 @@ class RedisHandshakeUnitTests {
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -94,7 +94,7 @@ class RedisHandshakeUnitTests {
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
         state.apply(connectionMetdata);
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         CompletionStage<Void> handshakeInit = handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -117,7 +117,7 @@ class RedisHandshakeUnitTests {
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         CompletionStage<Void> handshakeInit = handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -142,7 +142,7 @@ class RedisHandshakeUnitTests {
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(cp);
         state.apply(connectionMetdata);
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         CompletionStage<Void> handshakeInit = handshake.initialize(channel);
         cp.completeCredentials(RedisCredentials.just("foo", "bar"));
 

@@ -20,6 +20,8 @@
 package io.lettuce.core;
 
 import java.io.Closeable;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.lettuce.core.MaintenanceEventsOptions.AddressTypeSource;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
@@ -629,8 +632,13 @@ public abstract class AbstractRedisClient implements AutoCloseable {
     }
 
     protected RedisHandshake createHandshake(ConnectionState state) {
+        AddressTypeSource source = null;
+        if (clientOptions.getMaintenanceEventsOptions().supportsMaintenanceEvents()) {
+            source = clientOptions.getMaintenanceEventsOptions().getAddressTypeSource();
+        }
+
         return new RedisHandshake(clientOptions.getConfiguredProtocolVersion(), clientOptions.isPingBeforeActivateConnection(),
-                state);
+                state, source);
     }
 
 }

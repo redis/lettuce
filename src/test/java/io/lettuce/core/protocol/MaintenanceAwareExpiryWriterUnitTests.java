@@ -341,7 +341,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnMigrateStarted() {
         // When
-        writer.onMigrateStarted();
+        writer.onMigrateStarted("[\"1\",\"2\",\"3\"]");
 
         // Then - relaxTimeouts should be enabled
         assertThat(writer).isNotNull();
@@ -350,7 +350,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnMigrateCompleted() {
         // When
-        writer.onMigrateCompleted();
+        writer.onMigrateCompleted("[\"1\",\"2\",\"3\"]");
 
         // Then
         verify(timer).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));
@@ -359,7 +359,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnFailoverStarted() {
         // Given
-        String shards = "1,2,3";
+        String shards = "[\"1\",\"2\",\"3\"]";
 
         // When
         writer.onFailoverStarted(shards);
@@ -478,8 +478,8 @@ class MaintenanceAwareExpiryWriterUnitTests {
     void testMultipleMaintenanceEvents() {
         // When
         writer.onRebindStarted();
-        writer.onMigrateStarted();
-        writer.onFailoverStarted("1,2,3");
+        writer.onMigrateStarted("[\"1\",\"2\",\"3\"]");
+        writer.onFailoverStarted("[\"1\",\"2\",\"3\"]");
 
         // Then - each event should enable relaxed timeouts
         assertThat(writer).isNotNull();
@@ -489,8 +489,8 @@ class MaintenanceAwareExpiryWriterUnitTests {
     void testMultipleCompletionEvents() {
         // When
         writer.onRebindCompleted();
-        writer.onMigrateCompleted();
-        writer.onFailoverCompleted("1,2,3");
+        writer.onMigrateCompleted("[\"1\",\"2\",\"3\"]");
+        writer.onFailoverCompleted("[\"1\",\"2\",\"3\"]");
 
         // Then - each completion should schedule timeout disable
         verify(timer, times(3)).newTimeout(any(TimerTask.class), eq(500L), eq(TimeUnit.MILLISECONDS));

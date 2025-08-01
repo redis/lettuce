@@ -204,9 +204,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageMovingWithEmptyStack() {
         // Given
-        String addressAndPort = "127.0.0.1:6380";
-        ByteBuffer addressBuffer = StringCodec.UTF8.encodeKey(addressAndPort);
-        List<Object> content = Arrays.asList("MOVING", "slot", addressBuffer);
+        List<Object> content = movingPushContent(1, 15, "127.0.0.1:6380");
 
         when(pushMessage.getType()).thenReturn("MOVING");
         when(pushMessage.getContent()).thenReturn(content);
@@ -233,12 +231,75 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         verify(component1, never()).onRebindStarted(); // Not called when stack is empty
     }
 
+    /**
+     * MOVING <seq_number> <time> <endpoint>: A specific endpoint is going to move to another node within <time> seconds
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time estimated operation completion time
+     * @param addressAndPort address and port of the new endpoint
+     * @return
+     */
+    private static List<Object> movingPushContent(long seqNumber, long time, String addressAndPort) {
+        ByteBuffer addressBuffer = StringCodec.UTF8.encodeKey(addressAndPort);
+        return Arrays.asList("MOVING", seqNumber, time, addressBuffer);
+    }
+
+    /**
+     * MIGRATING <seq_number> <time> <shard_id-s>: A shard migration is going to start within <time> seconds.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time operation will start after <time> seconds
+     * @param shards comma-separated list of shard IDs
+     * @return
+     */
+    private static List<Object> migratingPushContent(long seqNumber, long time, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("MIGRATING", seqNumber, time, shardsBuffer);
+    }
+
+    /**
+     * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time estimated operation completion time
+     * @param addressAndPort address and port of the new endpoint
+     * @return
+     */
+    private static List<Object> migratedPushContent(long seqNumber, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("MIGRATED", seqNumber, shardsBuffer);
+    }
+
+    /**
+     * MIGRATING <seq_number> <time> <shard_id-s>: A shard migration is going to start within <time> seconds.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time operation will start after <time> seconds
+     * @param shards comma-separated list of shard IDs
+     * @return
+     */
+    private static List<Object> failingoverPushContent(long seqNumber, long time, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("FAILING_OVER", seqNumber, time, shardsBuffer);
+    }
+
+    /**
+     * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time estimated operation completion time
+     * @param addressAndPort address and port of the new endpoint
+     * @return
+     */
+    private static List<Object> failedoverPushContent(long seqNumber, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("FAILED_OVER", seqNumber, shardsBuffer);
+    }
+
     @Test
     void testOnPushMessageMovingWithNonEmptyStack() {
         // Given
-        String addressAndPort = "127.0.0.1:6380";
-        ByteBuffer addressBuffer = StringCodec.UTF8.encodeKey(addressAndPort);
-        List<Object> content = Arrays.asList("MOVING", "slot", addressBuffer);
+        List<Object> content = movingPushContent(1, 15, "127.0.0.1:6380");
 
         when(pushMessage.getType()).thenReturn("MOVING");
         when(pushMessage.getContent()).thenReturn(content);
@@ -289,6 +350,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     void testOnPushMessageMigrating() {
         // Given
         when(pushMessage.getType()).thenReturn("MIGRATING");
+        when(pushMessage.getContent()).thenReturn(migratingPushContent(1, 15, "[\"1\",\"2\",\"3\"]"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -297,14 +359,15 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onMigrateStarted();
-        verify(component2).onMigrateStarted();
+        verify(component1).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
     void testOnPushMessageMigrated() {
         // Given
         when(pushMessage.getType()).thenReturn("MIGRATED");
+        when(pushMessage.getContent()).thenReturn(migratedPushContent(1, "[\"1\",\"2\",\"3\"]"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -313,16 +376,15 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onMigrateCompleted();
-        verify(component2).onMigrateCompleted();
+        verify(component1).onMigrateCompleted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMigrateCompleted(eq("[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
     void testOnPushMessageFailingOver() {
         // Given
-        List<Object> content = Arrays.asList("FAILING_OVER", "reason", "1,2,3");
         when(pushMessage.getType()).thenReturn("FAILING_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(failingoverPushContent(1, 15, "[\"1\",\"2\",\"3\"]"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -331,8 +393,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverStarted("1,2,3");
-        verify(component2).onFailoverStarted("1,2,3");
+        verify(component1).onFailoverStarted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component2).onFailoverStarted(eq("[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
@@ -340,7 +402,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Given
         List<Object> content = Arrays.asList("FAILING_OVER", "reason"); // Missing shards
         when(pushMessage.getType()).thenReturn("FAILING_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(content);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -354,9 +416,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageFailingOverWithNonStringShards() {
         // Given
-        List<Object> content = Arrays.asList("FAILING_OVER", "reason", 123); // Non-string shards
+        List<Object> content = Arrays.asList("FAILING_OVER", 1, 15, 123); // Non-string shards
         when(pushMessage.getType()).thenReturn("FAILING_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(content);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -370,9 +432,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageFailedOver() {
         // Given
-        List<Object> content = Arrays.asList("FAILED_OVER", "4,5,6");
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(failedoverPushContent(1, "4,5,6"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -381,8 +442,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverCompleted("4,5,6");
-        verify(component2).onFailoverCompleted("4,5,6");
+        verify(component1).onFailoverCompleted(eq("4,5,6"));
+        verify(component2).onFailoverCompleted(eq("4,5,6"));
     }
 
     @Test
@@ -390,7 +451,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Given
         List<Object> content = Collections.singletonList("FAILED_OVER"); // Missing shards
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(content);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -404,9 +465,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageFailedOverWithNonStringShards() {
         // Given
-        List<Object> content = Arrays.asList("FAILED_OVER", 456); // Non-string shards
+        List<Object> content = Arrays.asList("FAILED_OVER", 1, 456); // Non-string shards
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(content);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -434,9 +495,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageMovingWithInvalidAddressFormat() {
         // Given
-        String invalidAddress = "invalid-address-format";
-        ByteBuffer addressBuffer = StringCodec.UTF8.encodeKey(invalidAddress);
-        List<Object> content = Arrays.asList("MOVING", "slot", addressBuffer);
+        List<Object> content = movingPushContent(1, 15, "invalid-address-format");
 
         when(pushMessage.getType()).thenReturn("MOVING");
         when(pushMessage.getContent()).thenReturn(content);
@@ -485,10 +544,11 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Then - verify components are stored (tested indirectly through notification methods)
         when(pushMessage.getType()).thenReturn("MIGRATING");
+        when(pushMessage.getContent()).thenReturn(migratingPushContent(1, 15, "[\"1\",\"2\",\"3\"]"));
         watchdog.onPushMessage(pushMessage);
 
-        verify(component1).onMigrateStarted();
-        verify(component2).onMigrateStarted();
+        verify(component1).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
     }
 
     @Test

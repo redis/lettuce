@@ -1,6 +1,7 @@
 package biz.paluch.redis.extensibility;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.MaintenanceEventsOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TimeoutOptions;
@@ -32,7 +33,7 @@ public class LettuceMaintenanceEventsDemo {
                 // (optional) relax timeouts during re-bind to decrease risk of timeouts
                 .timeoutsRelaxingDuringMaintenance(Duration.ofMillis(750)).build();
         // (required) enable proactive re-bind by enabling it in the ClientOptions
-        ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts).supportMaintenanceEvents(true).build();
+        ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts).supportMaintenanceEvents(null).build();
 
         RedisClient redisClient = RedisClient.create(RedisURI.create(ADDRESS == null ? "redis://localhost:6379" : ADDRESS));
         redisClient.setOptions(options);

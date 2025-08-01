@@ -37,7 +37,7 @@ import java.util.Set;
  *
  * @author Tihomir Mateev
  * @since 7.0
- * @see ClientOptions#supportsMaintenanceEvents()
+ * @see ClientOptions#getMaintenanceEventsOptions()
  */
 @ChannelHandler.Sharable
 public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog implements PushListener {
@@ -54,13 +54,17 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private static final String FAILED_OVER_MESSAGE_TYPE = "FAILED_OVER";
 
-    private static final int REBIND_ADDRESS_INDEX = 2;
+    private static final int REBIND_ADDRESS_INDEX = 3;
 
     public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
 
-    private static final int FAILING_OVER_SHARDS_INDEX = 2;
+    private static final int MIGRATING_SHARDS_INDEX = 3;
 
-    private static final int FAILED_OVER_SHARDS_INDEX = 1;
+    private static final int MIGRATED_SHARDS_INDEX = 2;
+
+    private static final int FAILING_OVER_SHARDS_INDEX = 3;
+
+    private static final int FAILED_OVER_SHARDS_INDEX = 2;
 
     private Channel channel;
 
@@ -124,10 +128,10 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
             }
         } else if (MIGRATING_MESSAGE_TYPE.equals(mType)) {
             logger.debug("Shard migration started");
-            notifyMigrateStarted();
+            notifyMigrateStarted(getMigratingShards(message));
         } else if (MIGRATED_MESSAGE_TYPE.equals(mType)) {
             logger.debug("Shard migration completed");
-            notifyMigrateCompleted();
+            notifyMigrateCompleted(getMigratedShards(message));
         } else if (FAILING_OVER_MESSAGE_TYPE.equals(mType)) {
             logger.debug("Failover started");
             notifyFailoverStarted(getFailingOverShards(message));
@@ -137,55 +141,71 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         }
     }
 
+    private String getMigratingShards(PushMessage message) {
+        List<Object> content = message.getContent();
+
+        if (isInvalidMaintenanceEvent(content, 4))
+            return null;
+
+        return getShards(content, MIGRATING_SHARDS_INDEX, MIGRATING_MESSAGE_TYPE);
+    }
+
+    private String getMigratedShards(PushMessage message) {
+        List<Object> content = message.getContent();
+
+        if (isInvalidMaintenanceEvent(content, 3))
+            return null;
+
+        return getShards(content, MIGRATED_SHARDS_INDEX, MIGRATED_MESSAGE_TYPE);
+    }
+
+    private static boolean isInvalidMaintenanceEvent(List<Object> content, int expectedSize) {
+        if (content.size() < expectedSize) {
+            logger.warn("Invalid maintenance message format, expected at least {} elements, got {}", expectedSize,
+                    content.size());
+            return true;
+        }
+
+        return false;
+    }
+
     private String getFailingOverShards(PushMessage message) {
-        List<Object> content = message.getContent(StringCodec.UTF8::decodeValue);
+        List<Object> content = message.getContent();
 
-        if (content.size() < 3) {
-            logger.warn("Invalid failing over message format, expected at least 3 elements, got {}", content.size());
+        if (isInvalidMaintenanceEvent(content, 3))
+            return null;
+
+        return getShards(content, FAILING_OVER_SHARDS_INDEX, FAILING_OVER_MESSAGE_TYPE);
+    }
+
+    private static String getShards(List<Object> content, int shardsIndex, String maintenanceEvent) {
+        Object shardsObject = content.get(shardsIndex);
+
+        if (!(shardsObject instanceof ByteBuffer)) {
+            logger.warn("Invalid shards format, expected ByteBuffer, got {} for {} maintenance event",
+                    shardsObject != null ? shardsObject.getClass() : "null", maintenanceEvent);
             return null;
         }
 
-        Object shardsObject = content.get(FAILING_OVER_SHARDS_INDEX);
-
-        if (!(shardsObject instanceof String)) {
-            logger.warn("Invalid failing over message format, expected 3rd element to be a List, got {}",
-                    shardsObject != null ? shardsObject.getClass() : "null");
-            return null;
-        }
-
-        @SuppressWarnings("unchecked")
-        String shards = (String) shardsObject;
-        return shards;
+        return StringCodec.UTF8.decodeKey((ByteBuffer) shardsObject);
     }
 
     private String getFailedOverShards(PushMessage message) {
-        List<Object> content = message.getContent(StringCodec.UTF8::decodeValue);
+        List<Object> content = message.getContent();
 
-        if (content.size() < 2) {
+        if (content.size() < 3) {
             logger.warn("Invalid failed over message format, expected at least 2 elements, got {}", content.size());
             return null;
         }
 
-        Object shardsObject = content.get(FAILED_OVER_SHARDS_INDEX);
-
-        if (!(shardsObject instanceof String)) {
-            logger.warn("Invalid failed over message format, expected 2rd element to be a String, got {}",
-                    shardsObject != null ? shardsObject.getClass() : "null");
-            return null;
-        }
-
-        // expected to be a list of strings ["1","2"]
-
-        @SuppressWarnings("unchecked")
-        String shards = (String) shardsObject;
-        return shards;
+        return getShards(content, FAILED_OVER_SHARDS_INDEX, FAILED_OVER_MESSAGE_TYPE);
     }
 
     private SocketAddress getRemoteAddress(PushMessage message) {
 
         List<Object> content = message.getContent();
-        if (content.size() != 3) {
-            logger.warn("Invalid re-bind message format, expected 3 elements, got {}", content.size());
+        if (content.size() != 4) {
+            logger.warn("Invalid re-bind message format, expected 4 elements, got {}", content.size());
             return null;
         }
 
@@ -226,12 +246,12 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         this.componentListeners.forEach(MaintenanceAwareComponent::onRebindStarted);
     }
 
-    private void notifyMigrateStarted() {
-        this.componentListeners.forEach(MaintenanceAwareComponent::onMigrateStarted);
+    private void notifyMigrateStarted(String shards) {
+        this.componentListeners.forEach(component -> component.onMigrateStarted(shards));
     }
 
-    private void notifyMigrateCompleted() {
-        this.componentListeners.forEach(MaintenanceAwareComponent::onMigrateCompleted);
+    private void notifyMigrateCompleted(String shards) {
+        this.componentListeners.forEach(component -> component.onMigrateCompleted(shards));
     }
 
     private void notifyFailoverStarted(String shards) {
