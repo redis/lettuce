@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog;
 import jdk.net.ExtendedSocketOptions;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
@@ -153,9 +154,16 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(bootstrap != null, "Bootstrap must be set for autoReconnect=true");
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
 
-        ConnectionWatchdog watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
-                clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
-                connection, clientResources.eventBus(), endpoint);
+        ConnectionWatchdog watchdog;
+        if (clientOptions.supportsMaintenanceEvents()) {
+            watchdog = new MaintenanceAwareConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
+                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
+                    connection, clientResources.eventBus(), endpoint, clientResources.connectionMonitor());
+        } else {
+            watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
+                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
+                    connection, clientResources.eventBus(), endpoint, clientResources.connectionMonitor());
+        }
 
         endpoint.registerConnectionWatchdog(watchdog);
 
