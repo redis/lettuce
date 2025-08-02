@@ -94,6 +94,10 @@ public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_USE_HASH_INDEX_QUEUE = true;
 
+    public static final int DEFAULT_READ_BUFFER_SIZE = 64 * 1024;
+
+    private static final boolean DEFAULT_CREATE_BYTEBUF_WHEN_RECV_LARGE_KEY = false;
+
     private final boolean autoReconnect;
 
     private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
@@ -130,6 +134,10 @@ public class ClientOptions implements Serializable {
 
     private final boolean useHashIndexedQueue;
 
+    private final boolean createByteBufWhenRecvLargeKey;
+
+    private final int readBufferSize;
+
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
         this.replayFilter = builder.replayFilter;
@@ -149,6 +157,8 @@ public class ClientOptions implements Serializable {
         this.suspendReconnectOnProtocolFailure = builder.suspendReconnectOnProtocolFailure;
         this.timeoutOptions = builder.timeoutOptions;
         this.useHashIndexedQueue = builder.useHashIndexedQueue;
+        this.createByteBufWhenRecvLargeKey = builder.createByteBufWhenRecvLargeKey;
+        this.readBufferSize = builder.readBufferSize;
     }
 
     protected ClientOptions(ClientOptions original) {
@@ -170,6 +180,8 @@ public class ClientOptions implements Serializable {
         this.suspendReconnectOnProtocolFailure = original.isSuspendReconnectOnProtocolFailure();
         this.timeoutOptions = original.getTimeoutOptions();
         this.useHashIndexedQueue = original.isUseHashIndexedQueue();
+        this.createByteBufWhenRecvLargeKey = original.isCreateByteBufWhenRecvLargeKey();
+        this.readBufferSize = original.getReadBufferSize();
     }
 
     /**
@@ -240,6 +252,10 @@ public class ClientOptions implements Serializable {
         private ReauthenticateBehavior reauthenticateBehavior = DEFAULT_REAUTHENTICATE_BEHAVIOUR;
 
         private boolean useHashIndexedQueue = DEFAULT_USE_HASH_INDEX_QUEUE;
+
+        private boolean createByteBufWhenRecvLargeKey = DEFAULT_CREATE_BYTEBUF_WHEN_RECV_LARGE_KEY;
+
+        private int readBufferSize = DEFAULT_READ_BUFFER_SIZE;
 
         protected Builder() {
         }
@@ -530,6 +546,31 @@ public class ClientOptions implements Serializable {
         }
 
         /**
+         * In the case of large keys, the command handler will create a {@link io.netty.buffer.ByteBuf} to hold the large key.
+         * to avoid occassional large keys from occupying excessive memory
+         *
+         * @param createByteBufWhenRecvLargeKey true/false
+         * @return {@code this}
+         * @see io.lettuce.core.protocol.CommandHandler
+         */
+        public Builder createByteBufWhenRecvLargeKey(boolean createByteBufWhenRecvLargeKey) {
+            this.createByteBufWhenRecvLargeKey = createByteBufWhenRecvLargeKey;
+            return this;
+        }
+
+        /**
+         * Set the read buffer size for receiving data from Redis server in bytes. See {@link #DEFAULT_READ_BUFFER_SIZE}.
+         *
+         * @param readBufferSize Read ByteBuf Size
+         * @return {@code this}
+         * @see io.lettuce.core.protocol.CommandHandler
+         */
+        public Builder readBufferSize(int readBufferSize) {
+            this.readBufferSize = readBufferSize;
+            return this;
+        }
+
+        /**
          * Create a new instance of {@link ClientOptions}.
          *
          * @return new instance of {@link ClientOptions}
@@ -558,7 +599,8 @@ public class ClientOptions implements Serializable {
                 .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
                 .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).jsonParser(getJsonParser())
                 .socketOptions(getSocketOptions()).sslOptions(getSslOptions())
-                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions());
+                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
+                .createByteBufWhenRecvLargeKey(isCreateByteBufWhenRecvLargeKey()).readBufferSize(getReadBufferSize());
 
         return builder;
     }
@@ -771,6 +813,24 @@ public class ClientOptions implements Serializable {
      */
     public TimeoutOptions getTimeoutOptions() {
         return timeoutOptions;
+    }
+
+    /**
+     * get original readBuffer size in {@link io.lettuce.core.protocol.CommandHandler}
+     *
+     * @return the original readBuffer size in {@link io.lettuce.core.protocol.CommandHandler}
+     */
+    public int getReadBufferSize() {
+        return readBufferSize;
+    }
+
+    /**
+     * if true , the client will create a bytebuf when recv large key ( size > {@link #readBufferSize})
+     *
+     * @return true/false
+     */
+    public boolean isCreateByteBufWhenRecvLargeKey() {
+        return createByteBufWhenRecvLargeKey;
     }
 
     /**
