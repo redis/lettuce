@@ -60,11 +60,11 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private static final int MIGRATING_SHARDS_INDEX = 3;
 
-    private static final int MIGRATED_SHARDS_INDEX = 2;
+    private static final int MIGRATED_SHARDS_INDEX = 3;
 
     private static final int FAILING_OVER_SHARDS_INDEX = 3;
 
-    private static final int FAILED_OVER_SHARDS_INDEX = 2;
+    private static final int FAILED_OVER_SHARDS_INDEX = 3;
 
     private Channel channel;
 

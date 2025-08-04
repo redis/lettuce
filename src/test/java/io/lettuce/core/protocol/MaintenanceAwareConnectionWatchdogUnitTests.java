@@ -261,13 +261,13 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
      * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
      *
      * @param seqNumber unique sequence number, can be use to match requests handled by different connections
-     * @param time estimated operation completion time
-     * @param addressAndPort address and port of the new endpoint
+     * @param time
+     * @param shards address and port of the new endpoint
      * @return
      */
-    private static List<Object> migratedPushContent(long seqNumber, String shards) {
+    private static List<Object> migratedPushContent(long seqNumber, long time, String shards) {
         ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
-        return Arrays.asList("MIGRATED", seqNumber, shardsBuffer);
+        return Arrays.asList("MIGRATED", seqNumber, time, shardsBuffer);
     }
 
     /**
@@ -287,13 +287,13 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
      * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
      *
      * @param seqNumber unique sequence number, can be use to match requests handled by different connections
-     * @param time estimated operation completion time
+     * @param time
      * @param addressAndPort address and port of the new endpoint
      * @return
      */
-    private static List<Object> failedoverPushContent(long seqNumber, String shards) {
+    private static List<Object> failedoverPushContent(long seqNumber, long time, String shards) {
         ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
-        return Arrays.asList("FAILED_OVER", seqNumber, shardsBuffer);
+        return Arrays.asList("FAILED_OVER", seqNumber, time, shardsBuffer);
     }
 
     @Test
@@ -367,7 +367,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     void testOnPushMessageMigrated() {
         // Given
         when(pushMessage.getType()).thenReturn("MIGRATED");
-        when(pushMessage.getContent()).thenReturn(migratedPushContent(1, "[\"1\",\"2\",\"3\"]"));
+        when(pushMessage.getContent()).thenReturn(migratedPushContent(1, 0, "[\"1\",\"2\",\"3\"]"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -433,7 +433,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     void testOnPushMessageFailedOver() {
         // Given
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
-        when(pushMessage.getContent()).thenReturn(failedoverPushContent(1, "4,5,6"));
+        when(pushMessage.getContent()).thenReturn(failedoverPushContent(1, 0, "4,5,6"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -465,7 +465,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageFailedOverWithNonStringShards() {
         // Given
-        List<Object> content = Arrays.asList("FAILED_OVER", 1, 456); // Non-string shards
+        List<Object> content = Arrays.asList("FAILED_OVER", 1, 0, 456); // Non-string shards
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
         when(pushMessage.getContent()).thenReturn(content);
 
