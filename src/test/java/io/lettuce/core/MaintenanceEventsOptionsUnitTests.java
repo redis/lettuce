@@ -59,7 +59,7 @@ class MaintenanceEventsOptionsUnitTests {
         // Then
         assertThat(options.supportsMaintenanceEvents()).isTrue();
         assertThat(options.getAddressTypeSource()).isNotNull();
-        assertThat(options.getAddressTypeSource().getAddressType(null,true)).isEqualTo(AddressType.EXTERNAL_IP);
+        assertThat(options.getAddressTypeSource().getAddressType(null, true)).isEqualTo(AddressType.EXTERNAL_IP);
     }
 
     @Test
@@ -92,7 +92,7 @@ class MaintenanceEventsOptionsUnitTests {
         // Then
         assertThat(options.supportsMaintenanceEvents()).isTrue();
         assertThat(options.getAddressTypeSource()).isNotNull();
-        assertThat(options.getAddressTypeSource().getAddressType(null,true)).isEqualTo(AddressType.INTERNAL_FQDN);
+        assertThat(options.getAddressTypeSource().getAddressType(null, true)).isEqualTo(AddressType.INTERNAL_FQDN);
     }
 
     @Test

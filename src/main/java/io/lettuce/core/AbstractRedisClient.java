@@ -634,6 +634,9 @@ public abstract class AbstractRedisClient implements AutoCloseable {
     protected RedisHandshake createHandshake(ConnectionState state) {
         AddressTypeSource source = null;
         if (clientOptions.getMaintenanceEventsOptions().supportsMaintenanceEvents()) {
+            LettuceAssert.notNull(clientOptions.getMaintenanceEventsOptions().getAddressTypeSource(),
+                    "Address type source must not be null");
+
             source = clientOptions.getMaintenanceEventsOptions().getAddressTypeSource();
         }
 
