@@ -304,9 +304,9 @@ class RedisHandshake implements ConnectionInitializer {
                 return "internal-ip";
             case INTERNAL_FQDN:
                 return "internal-fqdn";
-            case PUBLIC_IP:
+            case EXTERNAL_IP:
                 return "external-ip";
-            case PUBLIC_FQDN:
+            case EXTERNAL_FQDN:
                 return "external-fqdn";
             default:
                 throw new IllegalArgumentException("Unknown moving endpoint address type:" + addressType);

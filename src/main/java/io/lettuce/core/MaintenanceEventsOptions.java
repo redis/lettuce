@@ -19,8 +19,8 @@
  */
 package io.lettuce.core;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import io.lettuce.core.internal.NetUtils;
+
 import java.net.SocketAddress;
 
 public class MaintenanceEventsOptions {
@@ -100,7 +100,7 @@ public class MaintenanceEventsOptions {
     }
 
     public enum AddressType {
-        INTERNAL_IP, INTERNAL_FQDN, PUBLIC_IP, PUBLIC_FQDN
+        INTERNAL_IP, INTERNAL_FQDN, EXTERNAL_IP, EXTERNAL_FQDN
     }
 
     private static class FixedAddressTypeSource extends MaintenanceEventsOptions.AddressTypeSource {
@@ -126,7 +126,7 @@ public class MaintenanceEventsOptions {
 
         @Override
         public MaintenanceEventsOptions.AddressType getAddressType(SocketAddress socketAddress, boolean sslEnabled) {
-            if (isReservedIp(socketAddress)) {
+            if (NetUtils.isPrivateIp(socketAddress)) {
                 // use private
                 if (sslEnabled) {
                     return MaintenanceEventsOptions.AddressType.INTERNAL_FQDN;
@@ -136,48 +136,11 @@ public class MaintenanceEventsOptions {
             } else {
                 // use public
                 if (sslEnabled) {
-                    return MaintenanceEventsOptions.AddressType.PUBLIC_FQDN;
+                    return MaintenanceEventsOptions.AddressType.EXTERNAL_FQDN;
                 } else {
-                    return MaintenanceEventsOptions.AddressType.PUBLIC_IP;
+                    return MaintenanceEventsOptions.AddressType.EXTERNAL_IP;
                 }
             }
-        }
-
-        public static boolean isReservedIp(SocketAddress socketAddress) {
-            if (!(socketAddress instanceof InetSocketAddress)) {
-                return false;
-            }
-
-            InetSocketAddress inetSocketAddress = (InetSocketAddress) socketAddress;
-            InetAddress address = inetSocketAddress.getAddress();
-
-            if (address == null || address.isAnyLocalAddress() || address.isLoopbackAddress()) {
-                return false;
-            }
-
-            byte[] bytes = address.getAddress();
-
-            // IPv4 only
-            if (bytes.length != 4) {
-                return false;
-            }
-
-            int firstByte = bytes[0] & 0xFF;
-            int secondByte = bytes[1] & 0xFF;
-
-            // 10.0.0.0/8
-            if (firstByte == 10)
-                return true;
-
-            // 172.16.0.0/12
-            if (firstByte == 172 && (secondByte >= 16 && secondByte <= 31))
-                return true;
-
-            // 192.168.0.0/16
-            if (firstByte == 192 && secondByte == 168)
-                return true;
-
-            return false;
         }
 
     }
