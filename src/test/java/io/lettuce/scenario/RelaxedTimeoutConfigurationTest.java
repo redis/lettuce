@@ -51,23 +51,26 @@ public class RelaxedTimeoutConfigurationTest {
     private static final Logger log = LoggerFactory.getLogger(RelaxedTimeoutConfigurationTest.class);
 
     // Timeout constants for testing
-    private static final Duration NORMAL_COMMAND_TIMEOUT = Duration.ofMillis(30); // Small timeout to simulate latency vs
-                                                                                  // timeout issues
+    // Small timeout to simulate latency vs timeout issues
+    private static final Duration NORMAL_COMMAND_TIMEOUT = Duration.ofMillis(30);
 
-    private static final Duration RELAXED_TIMEOUT_ADDITION = Duration.ofMillis(100); // Additional timeout during maintenance
+    // Additional timeout during maintenance
+    private static final Duration RELAXED_TIMEOUT_ADDITION = Duration.ofMillis(100);
 
-    private static final Duration EFFECTIVE_TIMEOUT_DURING_MAINTENANCE = NORMAL_COMMAND_TIMEOUT.plus(RELAXED_TIMEOUT_ADDITION); // Total
-                                                                                                                                // timeout
-                                                                                                                                // during
-                                                                                                                                // maintenance
+    // Total timeout during maintenance
+    private static final Duration EFFECTIVE_TIMEOUT_DURING_MAINTENANCE = NORMAL_COMMAND_TIMEOUT.plus(RELAXED_TIMEOUT_ADDITION);
 
-    private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofMinutes(3); // Wait for notifications
+    // Wait for notifications
+    private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofMinutes(3);
 
-    private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5); // For migrations/failovers
+    // For migrations/failovers
+    private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5);
 
-    private static final Duration PING_TIMEOUT = Duration.ofSeconds(10); // For ping operations
+    // For ping operations
+    private static final Duration PING_TIMEOUT = Duration.ofSeconds(10);
 
-    private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(2); // For monitoring operations
+    // For monitoring operations
+    private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(2);
 
     private static Endpoint mStandard;
 
@@ -135,9 +138,11 @@ public class RelaxedTimeoutConfigurationTest {
 
         private final boolean isMovingUnrelaxedTest;
 
-        private RedisCommands<String, String> mainSyncCommands; // Reference to main client sync commands
+        // Reference to main client sync commands
+        private RedisCommands<String, String> mainSyncCommands;
 
-        private StatefulRedisConnection<String, String> mainConnection; // Reference to main connection for reflection
+        // Reference to main connection for reflection
+        private StatefulRedisConnection<String, String> mainConnection;
 
         // Traffic management for MOVING tests
         private final AtomicBoolean stopTraffic = new AtomicBoolean(false);
@@ -194,15 +199,6 @@ public class RelaxedTimeoutConfigurationTest {
                 } else {
                     log.info("MOVING maintenance started - Starting continuous traffic for testing");
 
-                    // Brief delay to ensure watchdog processes MOVING
-                    try {
-                        Thread.sleep(100); // Short delay for watchdog to process MOVING event
-                        log.info("Processing delay completed");
-
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-
                     // Stop traffic after testing
                     stopContinuousTraffic();
                 }
@@ -219,15 +215,6 @@ public class RelaxedTimeoutConfigurationTest {
 
                     // Start traffic now that MIGRATING has been received
                     startContinuousTraffic();
-
-                    // Brief delay to ensure watchdog processes MIGRATING
-                    try {
-                        Thread.sleep(100); // Short delay for watchdog to process MIGRATING event
-                        log.info("Processing delay completed");
-
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
 
                     // For un-relaxed tests, keep traffic running until MIGRATED notification
                     if (!isUnrelaxedTest) {
@@ -248,15 +235,6 @@ public class RelaxedTimeoutConfigurationTest {
 
                 // Start traffic now that FAILING_OVER has been received
                 startContinuousTraffic();
-
-                // Brief delay to ensure watchdog processes FAILING_OVER
-                try {
-                    Thread.sleep(100); // Short delay for watchdog to process FAILING_OVER event
-                    log.info("Processing delay completed");
-
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
 
                 // For un-relaxed tests, keep traffic running until FAILED_OVER notification
                 if (!isUnrelaxedTest) {
@@ -371,7 +349,7 @@ public class RelaxedTimeoutConfigurationTest {
                         wallClockDuration, timeoutDurationStr, e.getMessage());
 
                 // Check if this is a relaxed timeout
-                if (isMaintenanceActive() && timeoutDurationStr != "unknown") {
+                if (isMaintenanceActive() && !"unknown".equals(timeoutDurationStr)) {
                     int timeoutDuration = Integer.parseInt(timeoutDurationStr);
                     if (timeoutDuration > NORMAL_COMMAND_TIMEOUT.toMillis()
                             && timeoutDuration <= EFFECTIVE_TIMEOUT_DURING_MAINTENANCE.toMillis()) {
@@ -547,36 +525,37 @@ public class RelaxedTimeoutConfigurationTest {
      * Common setup for all timeout tests with maintenance events support enabled
      */
     private TimeoutTestContext setupTimeoutTestWithType(boolean isMovingTest, boolean isUnrelaxedTest) {
+        // Keep reasonable connection timeout
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).withTimeout(Duration.ofSeconds(5)) // Keep
-                                                                                                                         // reasonable
-                                                                                                                         // connection
-                                                                                                                         // timeout
+                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).withTimeout(Duration.ofSeconds(5))
                 .build();
 
         RedisClient client = RedisClient.create(uri);
 
         // Configure timeout options first (matching LettuceMaintenanceEventsDemo pattern)
-        TimeoutOptions timeoutOptions = TimeoutOptions.builder().timeoutCommands() // Enable command timeouts
-                .fixedTimeout(NORMAL_COMMAND_TIMEOUT) // Set normal timeout
-                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION) // Set relaxed timeout addition
-                .build();
+        // Enable command timeouts
+        // Set normal timeout
+        // Set relaxed timeout addition
+        TimeoutOptions timeoutOptions = TimeoutOptions.builder().timeoutCommands().fixedTimeout(NORMAL_COMMAND_TIMEOUT)
+                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
 
         // Configure client with maintenance events support and relaxed timeouts
-        ClientOptions options = ClientOptions.builder().autoReconnect(true) // CRITICAL: Required for
-                                                                            // MaintenanceAwareConnectionWatchdog
-                .protocolVersion(ProtocolVersion.RESP3) // Required for push notifications
-                .supportMaintenanceEvents(true) // Enable maintenance events support
-                .timeoutOptions(timeoutOptions) // Apply timeout configuration
-                .build();
+        // CRITICAL: Required for MaintenanceAwareConnectionWatchdog
+        // Required for push notifications
+        // Enable maintenance events support
+        // Apply timeout configuration
+        ClientOptions options = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP3)
+                .supportMaintenanceEvents(true).timeoutOptions(timeoutOptions).build();
 
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
         TimeoutCapture capture = new TimeoutCapture(isMovingTest, isUnrelaxedTest);
-        capture.setMainSyncCommands(connection.sync()); // Set the main client sync commands
-        capture.setMainConnection(connection); // Set the main connection for reflection access
+        // Set the main client sync commands
+        capture.setMainSyncCommands(connection.sync());
+        // Set the main connection for reflection access
+        capture.setMainConnection(connection);
 
         log.info("*** TIMEOUT TEST SETUP: Test method detected as isMovingTest={} ***", isMovingTest);
 
@@ -617,8 +596,6 @@ public class RelaxedTimeoutConfigurationTest {
             String policy = "single";
             String sourceNode = clusterConfig.getOptimalSourceNode();
             String targetNode = clusterConfig.getOptimalTargetNode();
-
-            log.info("*** CLUSTER STATE DEBUG: Source={}, Target={}, EndpointId={} ***", sourceNode, targetNode, endpointId);
 
             // Start maintenance operation - notification handler will manage traffic automatically
             log.info("Starting maintenance operation (migrate + rebind)...");
@@ -769,8 +746,6 @@ public class RelaxedTimeoutConfigurationTest {
             String sourceNode = clusterConfig.getOptimalSourceNode();
             String targetNode = clusterConfig.getOptimalTargetNode();
 
-            log.info("*** CLUSTER STATE DEBUG: Source={}, Target={}, EndpointId={} ***", sourceNode, targetNode, endpointId);
-
             // Start maintenance operation - notification handler will manage traffic automatically
             log.info("Starting maintenance operation (migrate + rebind)...");
 
@@ -784,8 +759,8 @@ public class RelaxedTimeoutConfigurationTest {
 
             // Verify we got the expected notifications during the operation
             log.info("Verifying we received the expected notifications...");
-            boolean received = context.capture.waitForNotification(Duration.ofSeconds(5)); // Short wait since operation already
-                                                                                           // completed
+            // Short wait since operation already completed
+            boolean received = context.capture.waitForNotification(Duration.ofSeconds(5));
             assertThat(received).isTrue();
 
             // Verify we got the expected notifications
@@ -968,7 +943,7 @@ public class RelaxedTimeoutConfigurationTest {
                         wallClockDuration, timeoutDurationStr, e.getMessage());
 
                 // Check if this is a normal timeout (not relaxed)
-                if (timeoutDurationStr != "unknown") {
+                if (!"unknown".equals(timeoutDurationStr)) {
                     int timeoutDuration = Integer.parseInt(timeoutDurationStr);
                     if (timeoutDuration <= NORMAL_COMMAND_TIMEOUT.toMillis()) {
                         log.info("Normal timeout detected: {}ms", timeoutDuration);
@@ -1046,7 +1021,7 @@ public class RelaxedTimeoutConfigurationTest {
                         i, wallClockDuration, timeoutDurationStr, e.getMessage());
 
                 // Check if this is a normal timeout (not relaxed)
-                if (timeoutDurationStr != "unknown") {
+                if (!"unknown".equals(timeoutDurationStr)) {
                     int timeoutDuration = Integer.parseInt(timeoutDurationStr);
                     log.info("Command #{} timeout: {}ms (normal: {}ms, relaxed: {}ms)", i, timeoutDuration,
                             NORMAL_COMMAND_TIMEOUT.toMillis(), EFFECTIVE_TIMEOUT_DURING_MAINTENANCE.toMillis());

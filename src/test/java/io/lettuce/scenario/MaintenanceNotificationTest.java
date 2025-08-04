@@ -43,14 +43,17 @@ public class MaintenanceNotificationTest {
 
     private static final Logger log = LoggerFactory.getLogger(MaintenanceNotificationTest.class);
 
-    private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofMinutes(3); // 180 seconds - for waiting for
-                                                                                     // notifications
+    // 180 seconds - for waiting for notifications
+    private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofMinutes(3);
 
-    private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5); // 300 seconds - for migrations/failovers
+    // 300 seconds - for migrations/failovers
+    private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5);
 
-    private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(2); // 120 seconds - for monitoring operations
+    // 120 seconds - for monitoring operations
+    private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(2);
 
-    private static final Duration PING_TIMEOUT = Duration.ofSeconds(10); // 10 seconds - for ping operations
+    // 10 seconds - for ping operations
+    private static final Duration PING_TIMEOUT = Duration.ofSeconds(10);
 
     private static Endpoint mStandard;
 
@@ -205,10 +208,14 @@ public class MaintenanceNotificationTest {
         // Trigger MOVING notification using the proper two-step process:
         // 1. Migrate all shards from source node to target node (making it empty)
         // 2. Bind endpoint to trigger MOVING notification
-        String endpointId = clusterConfig.getFirstEndpointId(); // Dynamically discovered endpoint ID
-        String policy = "single"; // M-Standard uses single policy
-        String sourceNode = clusterConfig.getOptimalSourceNode(); // Dynamically discovered source node (finds node with shards)
-        String targetNode = clusterConfig.getOptimalTargetNode(); // Dynamically discovered target node (finds empty node)
+        // Dynamically discovered endpoint ID
+        String endpointId = clusterConfig.getFirstEndpointId();
+        // M-Standard uses single policy
+        String policy = "single";
+        // Dynamically discovered source node (finds node with shards)
+        String sourceNode = clusterConfig.getOptimalSourceNode();
+        // Dynamically discovered target node (finds empty node)
+        String targetNode = clusterConfig.getOptimalTargetNode();
 
         log.info("Triggering MOVING notification using proper two-step process...");
         log.info("Using dynamic nodes: source={}, target={}", sourceNode, targetNode);
@@ -259,10 +266,14 @@ public class MaintenanceNotificationTest {
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger node migration using optimal node selection
-        String shardId = clusterConfig.getFirstMasterShardId(); // Dynamically discovered master shard
-        String sourceNode = clusterConfig.getOptimalSourceNode(); // Node with shards
-        String targetNode = clusterConfig.getOptimalTargetNode(); // Empty node (if available)
-        String intermediateNode = clusterConfig.getOptimalIntermediateNode(); // Second node with shards
+        // Dynamically discovered master shard
+        String shardId = clusterConfig.getFirstMasterShardId();
+        // Node with shards
+        String sourceNode = clusterConfig.getOptimalSourceNode();
+        // Empty node (if available)
+        String targetNode = clusterConfig.getOptimalTargetNode();
+        // Second node with shards
+        String intermediateNode = clusterConfig.getOptimalIntermediateNode();
 
         log.info("Triggering shard migration for MIGRATING notification...");
         log.info("Migration strategy: {}", clusterConfig.getMigrationStrategy());
@@ -317,10 +328,14 @@ public class MaintenanceNotificationTest {
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger migration to get into migrating state using optimal node selection
-        String shardId = clusterConfig.getSecondMasterShardId(); // Dynamically discovered second master shard
-        String sourceNode = clusterConfig.getOptimalSourceNode(); // Node with shards
-        String targetNode = clusterConfig.getOptimalTargetNode(); // Empty node (if available)
-        String intermediateNode = clusterConfig.getOptimalIntermediateNode(); // Second node with shards
+        // Dynamically discovered second master shard
+        String shardId = clusterConfig.getSecondMasterShardId();
+        // Node with shards
+        String sourceNode = clusterConfig.getOptimalSourceNode();
+        // Empty node (if available)
+        String targetNode = clusterConfig.getOptimalTargetNode();
+        // Second node with shards
+        String intermediateNode = clusterConfig.getOptimalIntermediateNode();
 
         log.info("Triggering shard migration and waiting for completion...");
         log.info("Migration strategy: {}", clusterConfig.getMigrationStrategy());
@@ -371,8 +386,10 @@ public class MaintenanceNotificationTest {
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger shard failover using dynamic node discovery
-        String shardId = clusterConfig.getFirstMasterShardId(); // Dynamically discovered master shard
-        String nodeId = clusterConfig.getNodeWithMasterShards(); // Node that contains master shards
+        // Dynamically discovered master shard
+        String shardId = clusterConfig.getFirstMasterShardId();
+        // Node that contains master shards
+        String nodeId = clusterConfig.getNodeWithMasterShards();
 
         log.info("Triggering shard failover for FAILING_OVER notification...");
         log.info("Using dynamic node: {}", nodeId);
@@ -417,8 +434,10 @@ public class MaintenanceNotificationTest {
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger failover to get into failing over state using dynamic node discovery
-        String shardId = clusterConfig.getSecondMasterShardId(); // Dynamically discovered second master shard
-        String nodeId = clusterConfig.getNodeWithMasterShards(); // Node that contains master shards
+        // Dynamically discovered second master shard
+        String shardId = clusterConfig.getSecondMasterShardId();
+        // Node that contains master shards
+        String nodeId = clusterConfig.getNodeWithMasterShards();
 
         log.info("Triggering shard failover and waiting for completion...");
         log.info("Using dynamic node: {}", nodeId);

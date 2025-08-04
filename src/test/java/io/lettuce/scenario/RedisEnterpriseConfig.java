@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.test.StepVerifier;
 
+import static org.assertj.core.api.Assertions.fail;
+
 /**
  * Configuration holder for dynamically discovered Redis Enterprise cluster information.
  */
@@ -22,11 +24,14 @@ public class RedisEnterpriseConfig {
     private static final Logger log = LoggerFactory.getLogger(RedisEnterpriseConfig.class);
 
     // Timeout constants for Redis Enterprise discovery operations
-    private static final Duration DISCOVERY_CHECK_INTERVAL = Duration.ofSeconds(10); // Check interval for discovery commands
+    // Check interval for discovery commands
+    private static final Duration DISCOVERY_CHECK_INTERVAL = Duration.ofSeconds(10);
 
-    private static final Duration DISCOVERY_TIMEOUT = Duration.ofSeconds(30); // Timeout for discovery commands
+    // Timeout for discovery commands
+    private static final Duration DISCOVERY_TIMEOUT = Duration.ofSeconds(30);
 
-    private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5); // 300 seconds - for migrations/failovers
+    // 300 seconds - for migrations/failovers
+    private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5);
 
     private final List<String> masterShardIds = new ArrayList<>();
 
@@ -49,9 +54,12 @@ public class RedisEnterpriseConfig {
     private static final Map<String, Integer> TARGET_CONFIGURATION;
     static {
         Map<String, Integer> config = new HashMap<>();
-        config.put("node:1", 2); // node:1 has 2 shards - good source
-        config.put("node:2", 0); // node:2 is empty - perfect target
-        config.put("node:3", 2); // node:3 has 2 shards - good intermediate
+        // node:1 has 2 shards - good source
+        config.put("node:1", 2);
+        // node:2 is empty - perfect target
+        config.put("node:2", 0);
+        // node:3 has 2 shards - good intermediate
+        config.put("node:3", 2);
         TARGET_CONFIGURATION = Collections.unmodifiableMap(config);
     }
 
@@ -880,12 +888,11 @@ public class RedisEnterpriseConfig {
         log.info("Cluster configuration refreshed: {}", clusterConfig.getSummary());
 
         // Record original state for proper cleanup (only once)
-        if (!originalStateRecorded) {
+        if (originalStateRecorded) {
+            restoreOriginalClusterState(faultClient, bdbId);
+        } else {
             recordOriginalClusterState(faultClient, bdbId);
             originalStateRecorded = true;
-        } else {
-            // For subsequent tests, restore original state first
-            restoreOriginalClusterState(faultClient, bdbId);
         }
 
         return clusterConfig;
@@ -1090,6 +1097,7 @@ public class RedisEnterpriseConfig {
             log.info("Original cluster state restored successfully");
 
         } catch (Exception e) {
+            fail("Failed to restore original cluster state - test should fail if we reach this line: " + e.getMessage());
             log.warn("Failed to restore original cluster state: {}", e.getMessage());
         }
     }
