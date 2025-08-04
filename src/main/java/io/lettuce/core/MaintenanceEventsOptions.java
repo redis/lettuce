@@ -23,6 +23,29 @@ import io.lettuce.core.internal.NetUtils;
 
 import java.net.SocketAddress;
 
+/**
+ * Configuration options for enabling and customizing support for maintenance events in Lettuce.
+ * <p>
+ * Maintenance events are notifications or signals that indicate changes in the underlying infrastructure,
+ * such as failovers, topology changes, or other events that may require special handling by the client.
+ * This class allows users to enable or disable maintenance event support, and to configure how
+ * address types are resolved for maintenance event handling.
+ * </p>
+ * <p>
+ * Usage patterns typically involve using the static factory methods such as {@link #enabled()},
+ * {@link #disabled()}, or {@link #builder()} to create and configure an instance.
+ * </p>
+ * <p>
+ * Example usage:
+ * <pre>
+ *     MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled();
+ * </pre>
+ * </p>
+ * <p>
+ * The options provided by this class are used by Lettuce to determine whether to listen for and
+ * process maintenance events, and how to resolve address types when such events occur.
+ * </p>
+ */
 public class MaintenanceEventsOptions {
 
     public static final boolean DEFAULT_SUPPORT_MAINTENANCE_EVENTS = false;
