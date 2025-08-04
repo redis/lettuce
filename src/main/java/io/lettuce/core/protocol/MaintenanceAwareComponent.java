@@ -20,12 +20,12 @@ public interface MaintenanceAwareComponent {
     /**
      * Called whenever a shard migration is initiated
      */
-    void onMigrateStarted();
+    void onMigrateStarted(String shards);
 
     /**
      * Called whenever a shard migration is completed
      */
-    void onMigrateCompleted();
+    void onMigrateCompleted(String shards);
 
     /**
      * Called whenever a failover is initiated

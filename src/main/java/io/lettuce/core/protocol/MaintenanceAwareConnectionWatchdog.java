@@ -144,24 +144,26 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     private String getMigratingShards(PushMessage message) {
         List<Object> content = message.getContent();
 
-        if (isInvalidMaintenanceEvent(content, 4))
+        if (verifyPushMessageContent(content, 4))
             return null;
 
-        return getShards(content, MIGRATING_SHARDS_INDEX, MIGRATING_MESSAGE_TYPE);
+        return getShards(content, MIGRATING_SHARDS_INDEX,
+                "Invalid failing over message format, expected 3rd element to be a List, got {}");
     }
 
     private String getMigratedShards(PushMessage message) {
         List<Object> content = message.getContent();
 
-        if (isInvalidMaintenanceEvent(content, 3))
+        if (verifyPushMessageContent(content, 3))
             return null;
 
-        return getShards(content, MIGRATED_SHARDS_INDEX, MIGRATED_MESSAGE_TYPE);
+        return getShards(content, MIGRATED_SHARDS_INDEX,
+                "Invalid failing over message format, expected 3rd element to be a List, got {}");
     }
 
-    private static boolean isInvalidMaintenanceEvent(List<Object> content, int expectedSize) {
+    private static boolean verifyPushMessageContent(List<Object> content, int expectedSize) {
         if (content.size() < expectedSize) {
-            logger.warn("Invalid maintenance message format, expected at least {} elements, got {}", expectedSize,
+            logger.warn("Invalid failing over message format, expected at least {} elements, got {}", expectedSize,
                     content.size());
             return true;
         }
@@ -172,18 +174,18 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     private String getFailingOverShards(PushMessage message) {
         List<Object> content = message.getContent();
 
-        if (isInvalidMaintenanceEvent(content, 3))
+        if (verifyPushMessageContent(content, 3))
             return null;
 
-        return getShards(content, FAILING_OVER_SHARDS_INDEX, FAILING_OVER_MESSAGE_TYPE);
+        return getShards(content, FAILING_OVER_SHARDS_INDEX,
+                "Invalid failing over message format, expected 3rd element to be a List, got {}");
     }
 
-    private static String getShards(List<Object> content, int shardsIndex, String maintenanceEvent) {
+    private static String getShards(List<Object> content, int shardsIndex, String format) {
         Object shardsObject = content.get(shardsIndex);
 
         if (!(shardsObject instanceof ByteBuffer)) {
-            logger.warn("Invalid shards format, expected ByteBuffer, got {} for {} maintenance event",
-                    shardsObject != null ? shardsObject.getClass() : "null", maintenanceEvent);
+            logger.warn(format, shardsObject != null ? shardsObject.getClass() : "null");
             return null;
         }
 
@@ -198,7 +200,8 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
             return null;
         }
 
-        return getShards(content, FAILED_OVER_SHARDS_INDEX, FAILED_OVER_MESSAGE_TYPE);
+        return getShards(content, FAILED_OVER_SHARDS_INDEX,
+                "Invalid failed over message format, expected 2rd element to be a String, got {}");
     }
 
     private SocketAddress getRemoteAddress(PushMessage message) {

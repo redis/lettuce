@@ -192,13 +192,13 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
     }
 
     @Override
-    public void onMigrateStarted() {
-        enableRelaxedTimeout("Migration started");
+    public void onMigrateStarted(String shards) {
+        enableRelaxedTimeout("Migration started for shards: " + shards);
     }
 
     @Override
-    public void onMigrateCompleted() {
-        disableRelaxedTimeoutDelayed("Migration completed", relaxedTimeout);
+    public void onMigrateCompleted(String shards) {
+        disableRelaxedTimeoutDelayed("Migration completed: " + shards, relaxedTimeout);
     }
 
     @Override
