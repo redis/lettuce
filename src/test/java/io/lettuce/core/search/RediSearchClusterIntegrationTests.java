@@ -18,6 +18,7 @@ import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
+import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -29,6 +30,7 @@ import java.util.Map;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for Redis Search functionality in a cluster environment.
@@ -65,6 +67,9 @@ public class RediSearchClusterIntegrationTests {
 
     @BeforeEach
     public void prepare() {
+        // 7.4 and 7.2 have a different behavior, but we do not want to test for old versions
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
+
         redis.flushall();
     }
 
