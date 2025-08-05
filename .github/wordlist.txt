@@ -322,3 +322,7 @@ slf
 testcontainers
 Readme
 DefaultAzureCredential
+geospatial
+Geospatial
+RediSearch
+embeddings
