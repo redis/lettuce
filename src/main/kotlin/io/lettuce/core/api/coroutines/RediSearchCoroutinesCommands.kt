@@ -626,10 +626,6 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
     @Experimental
     suspend fun ftList(): List<V>
 
-
-
-
-
     /**
      * Dump synonym group contents.
      *
