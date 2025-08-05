@@ -1,5 +1,19 @@
 # New & Noteworthy
 
+
+## What’s new in Lettuce 6.8
+- [RediSearch support](user-guide/redis-search.md) through `RediSearchCommands` and the respective reactive, async and Kotlin APIs
+
+## What’s new in Lettuce 6.7
+- [VectorSet support](user-guide/vector-sets.md) through `RedisVectorSetCommands` and the respective reactive, async and Kotlin APIs
+- `ConnectionPoolSupport` also allows the user to provide custom connection validations
+
+## What’s new in Lettuce 6.6
+- Support `HGETDEL`, `HGETEX` and `HSETEX`
+- Introduce command replay filter to avoid command replaying after reconnect
+- Deprecate the STRALGO command and implement the LCS in its place
+- Token based authentication integration with core extension
+
 ## What’s new in Lettuce 6.5
 
 - [RedisJSON support](user-guide/redis-json.md) through `RedisJSONCommands` and the respective reactive, async and Kotlin APIs

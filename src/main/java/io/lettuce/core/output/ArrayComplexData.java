@@ -82,4 +82,9 @@ class ArrayComplexData extends ComplexData {
         return Collections.unmodifiableMap(map);
     }
 
+    @Override
+    public boolean isList() {
+        return true;
+    }
+
 }

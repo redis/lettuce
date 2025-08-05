@@ -10,7 +10,7 @@ package io.lettuce.core.output;
 /**
  * Any usage of the {@link ComplexOutput} comes hand in hand with a respective {@link ComplexDataParser} that is able to parse
  * the data extracted from the server to a meaningful Java object.
- * 
+ *
  * @param <T> the type of the parsed object
  * @author Tihomir Mateev
  * @see ComplexData

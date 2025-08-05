@@ -13,6 +13,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
@@ -144,7 +145,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
         FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix(DOCS_PREFIX)
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(DOCS_PREFIX)
                 .on(CreateArgs.TargetType.HASH).build();
 
         String result = redis.ftCreate(DOCUMENTS_INDEX, createArgs, Arrays.asList(vectorField, titleField, categoryField));
@@ -225,7 +226,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs<String> yearField = NumericFieldArgs.<String> builder().name("year").sortable().build();
         FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix(MOVIE_PREFIX)
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(MOVIE_PREFIX)
                 .on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(MOVIES_INDEX, createArgs, Arrays.asList(vectorField, titleField, genreField, yearField, ratingField));
@@ -334,7 +335,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs<String> typeField = TagFieldArgs.<String> builder().name("type").build();
         FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix(PRODUCT_PREFIX)
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(PRODUCT_PREFIX)
                 .on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate(PRODUCTS_INDEX, createArgs, Arrays.asList(vectorField, nameField, typeField, priceField));
@@ -437,7 +438,7 @@ public class RediSearchVectorIntegrationTests {
 
             FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
 
-            CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("test:")
+            CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("test:")
                     .on(CreateArgs.TargetType.HASH).build();
 
             redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
@@ -491,7 +492,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("$.title").as("title").build();
         FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("$.category").as("category").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("json:")
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("json:")
                 .on(CreateArgs.TargetType.JSON).build();
 
         redis.ftCreate("json-vector-idx", createArgs, Arrays.asList(vectorField, titleField, categoryField));
@@ -558,7 +559,7 @@ public class RediSearchVectorIntegrationTests {
         FieldArgs<String> statusField = TagFieldArgs.<String> builder().name("status").build();
         FieldArgs<String> priorityField = NumericFieldArgs.<String> builder().name("priority").sortable().build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("task:")
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("task:")
                 .on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("tasks-idx", createArgs, Arrays.asList(vectorField, titleField, statusField, priorityField));
@@ -663,7 +664,7 @@ public class RediSearchVectorIntegrationTests {
 
         FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("precision:")
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("precision:")
                 .on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("precision-idx", createArgs, Arrays.asList(float64Field, nameField));
@@ -738,7 +739,7 @@ public class RediSearchVectorIntegrationTests {
                 .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
                 .build();
 
-        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().addPrefix("error:")
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("error:")
                 .on(CreateArgs.TargetType.HASH).build();
 
         redis.ftCreate("error-test-idx", createArgs, Collections.singletonList(vectorField));
@@ -776,6 +777,139 @@ public class RediSearchVectorIntegrationTests {
 
         // Cleanup
         redis.ftDropindex("error-test-idx");
+    }
+
+    /**
+     * Test vector search with mixed binary and text fields, following the Python example. This test demonstrates handling both
+     * binary vector data and text data in the same hash, with proper decoding of each field type.
+     */
+    @Test
+    void testVectorSearchBinaryAndTextFields() {
+        // Create a custom codec that can handle both strings and byte arrays
+        RedisCodec<String, Object> mixedCodec = new RedisCodec<String, Object>() {
+
+            @Override
+            public String decodeKey(ByteBuffer bytes) {
+                return StandardCharsets.UTF_8.decode(bytes).toString();
+            }
+
+            @Override
+            public Object decodeValue(ByteBuffer bytes) {
+                // Try to decode as UTF-8 string first
+                try {
+                    String str = StandardCharsets.UTF_8.decode(bytes.duplicate()).toString();
+                    // Check if it's a valid UTF-8 string (no replacement characters)
+                    if (!str.contains("\uFFFD")) {
+                        return str;
+                    }
+                } catch (Exception e) {
+                    // Fall through to return raw bytes
+                }
+                // Return raw bytes for binary data
+                byte[] result = new byte[bytes.remaining()];
+                bytes.get(result);
+                return result;
+            }
+
+            @Override
+            public ByteBuffer encodeKey(String key) {
+                return ByteBuffer.wrap(key.getBytes(StandardCharsets.UTF_8));
+            }
+
+            @Override
+            public ByteBuffer encodeValue(Object value) {
+                if (value instanceof String) {
+                    return ByteBuffer.wrap(((String) value).getBytes(StandardCharsets.UTF_8));
+                } else if (value instanceof byte[]) {
+                    return ByteBuffer.wrap((byte[]) value);
+                } else if (value instanceof float[]) {
+                    float[] floats = (float[]) value;
+                    ByteBuffer buffer = ByteBuffer.allocate(floats.length * 4).order(ByteOrder.LITTLE_ENDIAN);
+                    for (float f : floats) {
+                        buffer.putFloat(f);
+                    }
+                    return (ByteBuffer) buffer.flip();
+                } else {
+                    return ByteBuffer.wrap(value.toString().getBytes(StandardCharsets.UTF_8));
+                }
+            }
+
+        };
+
+        // Create connection with mixed codec
+        RedisCommands<String, Object> redisMixed = client.connect(mixedCodec).sync();
+
+        try {
+            // Create fake vector similar to Python example
+            float[] fakeVec = { 0.1f, 0.2f, 0.3f, 0.4f };
+            byte[] fakeVecBytes = floatArrayToByteBuffer(fakeVec).array();
+
+            String indexName = "mixed_index";
+            String keyName = indexName + ":1";
+
+            // Store mixed data: text field and binary vector field
+            redisMixed.hset(keyName, "first_name", "🥬 Lettuce");
+            redisMixed.hset(keyName, "vector_emb", fakeVecBytes);
+
+            // Create index with both text and vector fields
+            FieldArgs<String> textField = TagFieldArgs.<String> builder().name("first_name").build();
+
+            FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embeddings_bio").hnsw()
+                    .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4)
+                    .distanceMetric(VectorFieldArgs.DistanceMetric.COSINE).build();
+
+            CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(indexName + ":")
+                    .on(CreateArgs.TargetType.HASH).build();
+
+            redis.ftCreate(indexName, createArgs, Arrays.asList(textField, vectorField));
+
+            // Search with specific field returns - equivalent to Python's return_field with decode_field=False
+            SearchArgs<String, Object> searchArgs = SearchArgs.<String, Object> builder().returnField("vector_emb") // This
+                                                                                                                    // should
+                                                                                                                    // return
+                                                                                                                    // raw
+                                                                                                                    // binary
+                                                                                                                    // data
+                    .returnField("first_name") // This should return decoded text
+                    .build();
+
+            SearchReply<String, Object> results = redisMixed.ftSearch(indexName, "*", searchArgs);
+
+            assertThat(results.getCount()).isEqualTo(1);
+            assertThat(results.getResults()).hasSize(1);
+
+            SearchReply.SearchResult<String, Object> result = results.getResults().get(0);
+            Map<String, Object> fields = result.getFields();
+
+            // Verify text field is properly decoded
+            Object firstNameValue = fields.get("first_name");
+            assertThat(firstNameValue).isInstanceOf(String.class);
+            assertThat((String) firstNameValue).isEqualTo("🥬 Lettuce");
+
+            // Verify vector field returns binary data
+            Object vectorValue = fields.get("vector_emb");
+            assertThat(vectorValue).isInstanceOf(byte[].class);
+
+            // Convert retrieved binary data back to float array and compare
+            byte[] retrievedVecBytes = (byte[]) vectorValue;
+            ByteBuffer buffer = ByteBuffer.wrap(retrievedVecBytes).order(ByteOrder.LITTLE_ENDIAN);
+            float[] retrievedVec = new float[4];
+            for (int i = 0; i < 4; i++) {
+                retrievedVec[i] = buffer.getFloat();
+            }
+
+            // Assert that the vectors are equal (equivalent to Python's np.array_equal)
+            assertThat(retrievedVec).containsExactly(fakeVec);
+
+            // Cleanup
+            redis.ftDropindex(indexName);
+
+        } finally {
+            // Close the mixed codec connection
+            if (redisMixed != null) {
+                redisMixed.getStatefulConnection().close();
+            }
+        }
     }
 
 }

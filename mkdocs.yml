@@ -57,6 +57,8 @@ nav:
       - Publish/Subscribe: user-guide/pubsub.md
       - Transactions/Multi: user-guide/transactions-multi.md
       - Redis JSON: user-guide/redis-json.md
+      - RediSearch: user-guide/redis-search.md
+      - Redis Vector Sets: user-guide/vector-sets.md
       - Redis programmability:
           - LUA Scripting: user-guide/lua-scripting.md
           - Redis Functions: user-guide/redis-functions.md

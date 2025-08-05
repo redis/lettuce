@@ -7,7 +7,6 @@
 package io.lettuce.core.search;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,13 +54,11 @@ public class SynonymMapParser<K, V> implements ComplexDataParser<Map<V, List<V>>
             return new LinkedHashMap<>();
         }
 
-        try {
-            // Try RESP2 parsing first (array-based)
+        if (data.isList()) {
             return parseResp2(data);
-        } catch (UnsupportedOperationException e) {
-            // Automatically switch to RESP3 parsing if we encounter a ComplexData type different than an array
-            return parseResp3(data);
         }
+
+        return parseResp3(data);
     }
 
     /**

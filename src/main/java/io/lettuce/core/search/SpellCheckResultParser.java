@@ -51,11 +51,11 @@ public class SpellCheckResultParser<K, V> implements ComplexDataParser<SpellChec
             return new SpellCheckResult<>();
         }
 
-        try {
+        if (data.isList()) {
             return new SpellCheckResp2Parser().parse(data);
-        } catch (UnsupportedOperationException e) {
-            return new SpellCheckResp3Parser().parse(data);
         }
+
+        return new SpellCheckResp3Parser().parse(data);
     }
 
     /**
@@ -191,8 +191,8 @@ public class SpellCheckResultParser<K, V> implements ComplexDataParser<SpellChec
                 List<Object> suggestionData = ((ComplexData) suggestionObj).getDynamicList();
 
                 if (suggestionData.size() != 2) {
-                    throw new IllegalArgumentException(
-                            "Failed while parsing FT.SPELLCHECK: each suggestion must have 2 parts [score, suggestion]");
+                    LOG.warn("Failed while parsing FT.SPELLCHECK: each suggestion must have 2 parts");
+                    continue;
                 }
 
                 // First element is the score

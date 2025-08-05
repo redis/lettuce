@@ -60,8 +60,8 @@ class CreateArgsTest {
 
     @Test
     void testCreateArgsWithPrefixes() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().addPrefix("blog:").addPrefix("post:")
-                .addPrefix("article:").build();
+        CreateArgs<String, String> args = CreateArgs.<String, String> builder().withPrefix("blog:").withPrefix("post:")
+                .withPrefix("article:").build();
 
         assertThat(args.getPrefixes()).containsExactly("blog:", "post:", "article:");
     }
@@ -99,8 +99,8 @@ class CreateArgsTest {
 
     @Test
     void testCreateArgsWithFlags() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().maxTextFields(true).noOffsets(true)
-                .noHighlighting(true).noFields(true).noFrequency(true).skipInitialScan(true).build();
+        CreateArgs<String, String> args = CreateArgs.<String, String> builder().maxTextFields().noOffsets().noHighlighting()
+                .noFields().noFrequency().skipInitialScan().build();
 
         assertThat(args.isMaxTextFields()).isTrue();
         assertThat(args.isNoOffsets()).isTrue();
@@ -135,9 +135,9 @@ class CreateArgsTest {
     @Test
     void testCreateArgsBuild() {
         CreateArgs<String, String> args = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON)
-                .addPrefix("blog:").addPrefix("post:").filter("@status:published").defaultLanguage(DocumentLanguage.FRENCH)
-                .languageField("lang").defaultScore(0.8).scoreField("score").payloadField("payload").maxTextFields(true)
-                .temporary(7200).noOffsets(true).noHighlighting(true).noFields(true).noFrequency(true).skipInitialScan(true)
+                .withPrefix("blog:").withPrefix("post:").filter("@status:published").defaultLanguage(DocumentLanguage.FRENCH)
+                .languageField("lang").defaultScore(0.8).scoreField("score").payloadField("payload").maxTextFields()
+                .temporary(7200).noOffsets().noHighlighting().noFields().noFrequency().skipInitialScan()
                 .stopWords(Arrays.asList("le", "la", "et")).build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
@@ -173,7 +173,7 @@ class CreateArgsTest {
 
     @Test
     void testCreateArgsMinimalBuild() {
-        CreateArgs<String, String> args = CreateArgs.<String, String> builder().addPrefix("test:").build();
+        CreateArgs<String, String> args = CreateArgs.<String, String> builder().withPrefix("test:").build();
 
         CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
         args.build(commandArgs);

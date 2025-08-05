@@ -105,6 +105,9 @@ class CreateAsyncNodeSelectionClusterApi {
 
     private CompilationUnitFactory createFactory(String templateName) {
         String targetName = templateName.replace("Commands", "AsyncCommands").replace("Redis", "NodeSelection");
+        if (!targetName.contains("NodeSelection")) {
+            targetName = targetName.replace("Redi", "NodeSelection");
+        }
         File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
         String targetPackage = "io.lettuce.core.cluster.api.async";
 
