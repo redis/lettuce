@@ -159,6 +159,15 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         return getShards(content, MIGRATED_SHARDS_INDEX, MIGRATED_MESSAGE_TYPE);
     }
 
+    private String getFailingOverShards(PushMessage message) {
+        List<Object> content = message.getContent();
+
+        if (isInvalidMaintenanceEvent(content, 3))
+            return null;
+
+        return getShards(content, FAILING_OVER_SHARDS_INDEX, FAILING_OVER_MESSAGE_TYPE);
+    }
+
     private static boolean isInvalidMaintenanceEvent(List<Object> content, int expectedSize) {
         if (content.size() < expectedSize) {
             logger.warn("Invalid maintenance message format, expected at least {} elements, got {}", expectedSize,
@@ -169,13 +178,13 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         return false;
     }
 
-    private String getFailingOverShards(PushMessage message) {
+    private String getFailedOverShards(PushMessage message) {
         List<Object> content = message.getContent();
 
         if (isInvalidMaintenanceEvent(content, 3))
             return null;
 
-        return getShards(content, FAILING_OVER_SHARDS_INDEX, FAILING_OVER_MESSAGE_TYPE);
+        return getShards(content, FAILED_OVER_SHARDS_INDEX, FAILED_OVER_MESSAGE_TYPE);
     }
 
     private static String getShards(List<Object> content, int shardsIndex, String maintenanceEvent) {
@@ -188,17 +197,6 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         }
 
         return StringCodec.UTF8.decodeKey((ByteBuffer) shardsObject);
-    }
-
-    private String getFailedOverShards(PushMessage message) {
-        List<Object> content = message.getContent();
-
-        if (content.size() < 3) {
-            logger.warn("Invalid failed over message format, expected at least 2 elements, got {}", content.size());
-            return null;
-        }
-
-        return getShards(content, FAILED_OVER_SHARDS_INDEX, FAILED_OVER_MESSAGE_TYPE);
     }
 
     private SocketAddress getRemoteAddress(PushMessage message) {
