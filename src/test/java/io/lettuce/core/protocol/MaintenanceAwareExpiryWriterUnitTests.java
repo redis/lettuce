@@ -34,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
@@ -308,7 +309,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testOnRebindStarted() {
         // When
-        writer.onRebindStarted();
+        writer.onRebindStarted(Duration.ofSeconds(15), new InetSocketAddress("10.0.0.1", 6379));
 
         // Then - relaxTimeouts should be enabled (tested indirectly through timeout behavior)
         // Verify that the relaxed timeout is not negative
@@ -323,7 +324,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
         writer = new MaintenanceAwareExpiryWriter(delegate, clientOptions, clientResources);
 
         // When
-        writer.onRebindStarted();
+        writer.onRebindStarted(Duration.ofSeconds(15), new InetSocketAddress("10.0.0.1", 6379));
 
         // Then - relaxTimeouts should remain disabled for negative timeout
         assertThat(writer).isNotNull();
@@ -405,7 +406,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
         setField(writer, "relaxTimeout", previousTimeout);
 
         // When
-        writer.onRebindStarted();
+        writer.onRebindStarted(Duration.ofSeconds(15), new InetSocketAddress("10.0.0.1", 6379));
 
         // Then
         verify(previousTimeout).cancel();
@@ -477,7 +478,7 @@ class MaintenanceAwareExpiryWriterUnitTests {
     @Test
     void testMultipleMaintenanceEvents() {
         // When
-        writer.onRebindStarted();
+        writer.onRebindStarted(Duration.ofSeconds(15), new InetSocketAddress("10.0.0.1", 6379));
         writer.onMigrateStarted("[\"1\",\"2\",\"3\"]");
         writer.onFailoverStarted("[\"1\",\"2\",\"3\"]");
 

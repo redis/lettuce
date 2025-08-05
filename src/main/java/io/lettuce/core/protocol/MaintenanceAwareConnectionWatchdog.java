@@ -27,10 +27,14 @@ import reactor.core.publisher.Mono;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * An extension to {@link ConnectionWatchdog} that intercepts maintenance events.
@@ -54,8 +58,6 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private static final String FAILED_OVER_MESSAGE_TYPE = "FAILED_OVER";
 
-    private static final int REBIND_ADDRESS_INDEX = 3;
-
     public static final AttributeKey<RebindState> REBIND_ATTRIBUTE = AttributeKey.newInstance("rebindAddress");
 
     private static final int MIGRATING_SHARDS_INDEX = 3;
@@ -69,6 +71,8 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     private Channel channel;
 
     private final Set<MaintenanceAwareComponent> componentListeners = new HashSet<>();
+
+    private RebindAwareAddressSupplier rebindAwareAddressSupplier;
 
     public MaintenanceAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap,
             Timer timer, EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
@@ -106,16 +110,36 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     }
 
     @Override
+    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
+        Mono<SocketAddress> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
+        rebindAwareAddressSupplier = new RebindAwareAddressSupplier();
+        return rebindAwareAddressSupplier.wrappedSupplier(source);
+    }
+
+    /**
+     * Creates a wrapped socket address supplier with a custom clock for testing purposes.
+     *
+     * @param socketAddressSupplier the original socket address supplier
+     * @param clock the clock to use for time-based operations
+     * @return the wrapped supplier
+     */
+    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> socketAddressSupplier, Clock clock) {
+        Mono<SocketAddress> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
+        rebindAwareAddressSupplier = new RebindAwareAddressSupplier(clock);
+        return rebindAwareAddressSupplier.wrappedSupplier(source);
+    }
+
+    @Override
     public void onPushMessage(PushMessage message) {
         String mType = message.getType();
 
         if (REBIND_MESSAGE_TYPE.equals(mType)) {
-            final SocketAddress rebindAddress = getRemoteAddress(message);
-            if (rebindAddress != null) {
-                logger.debug("Attempting to rebind to new endpoint '{}'", rebindAddress);
+            final MovingEvent movingEvent = MovingEvent.from(message);
+            if (movingEvent != null) {
+                logger.debug("Attempting to rebind to new endpoint '{}'", movingEvent.getEndpoint());
 
                 channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
-                this.reconnectionHandler.setSocketAddressSupplier(rebindAddress);
+                rebindAwareAddressSupplier.rebind(movingEvent.getTime(), movingEvent.getEndpoint());
 
                 ChannelPipeline pipeline = channel.pipeline();
                 CommandHandler commandHandler = pipeline.get(CommandHandler.class);
@@ -123,7 +147,7 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
                     channel.close().awaitUninterruptibly();
                     channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
                 } else {
-                    notifyRebindStarted();
+                    notifyRebindStarted(movingEvent.getTime(), movingEvent.getEndpoint());
                 }
             }
         } else if (MIGRATING_MESSAGE_TYPE.equals(mType)) {
@@ -199,31 +223,68 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         return StringCodec.UTF8.decodeKey((ByteBuffer) shardsObject);
     }
 
-    private SocketAddress getRemoteAddress(PushMessage message) {
+    static class MovingEvent {
 
-        List<Object> content = message.getContent();
-        if (content.size() != 4) {
-            logger.warn("Invalid re-bind message format, expected 4 elements, got {}", content.size());
-            return null;
+        private static final int EVENT_ID_INDEX = 1;
+
+        private static final int TIME_INDEX = 2;
+
+        private static final int ADDRESS_INDEX = 3;
+
+        private final Long eventId;
+
+        private final InetSocketAddress endpoint;
+
+        private final Duration time;
+
+        private MovingEvent(Long eventId, Duration time, InetSocketAddress endpoint) {
+            this.eventId = eventId;
+            this.endpoint = endpoint;
+            this.time = time;
         }
 
-        Object addressObject = content.get(REBIND_ADDRESS_INDEX);
-        if (!(addressObject instanceof ByteBuffer)) {
-            logger.warn("Invalid re-bind message format, expected 3rd element to be a ByteBuffer, got {}",
-                    addressObject.getClass());
-            return null;
+        static MovingEvent from(PushMessage message) {
+            if (!REBIND_MESSAGE_TYPE.equals(message.getType())) {
+                return null;
+            }
+
+            List<Object> content = message.getContent();
+
+            if (content.size() != 4) {
+                logger.warn("Invalid re-bind message format, expected 4 elements, got {}", content.size());
+                return null;
+            }
+
+            try {
+                Long eventId = (Long) content.get(EVENT_ID_INDEX);
+                Long timeInSec = (Long) content.get(TIME_INDEX);
+                ByteBuffer addressBuffer = (ByteBuffer) content.get(ADDRESS_INDEX);
+
+                String addressAndPort = StringCodec.UTF8.decodeKey((ByteBuffer) addressBuffer);
+                String[] parts = addressAndPort.split(":");
+                String address = parts[0];
+                int port = Integer.parseInt(parts[1]);
+                InetSocketAddress addr = new InetSocketAddress(address, port);
+
+                return new MovingEvent(eventId, Duration.ofSeconds(timeInSec), addr);
+            } catch (Exception e) {
+                logger.error("Invalid re-bind message format", e);
+                return null;
+            }
         }
 
-        String addressAndPort = StringCodec.UTF8.decodeKey((ByteBuffer) addressObject);
-        try {
-            String[] parts = addressAndPort.split(":");
-            String address = parts[0];
-            int port = Integer.parseInt(parts[1]);
-            return new InetSocketAddress(address, port);
-        } catch (Exception e) {
-            logger.error("Failed to parse address and port from '{}'", addressAndPort, e);
-            return null;
+        public Long getEventId() {
+            return eventId;
         }
+
+        public InetSocketAddress getEndpoint() {
+            return endpoint;
+        }
+
+        public Duration getTime() {
+            return time;
+        }
+
     }
 
     /**
@@ -240,8 +301,17 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         this.componentListeners.forEach(MaintenanceAwareComponent::onRebindCompleted);
     }
 
-    private void notifyRebindStarted() {
-        this.componentListeners.forEach(MaintenanceAwareComponent::onRebindStarted);
+    /**
+     * Called whenever a re-bind has been initiated by the remote server
+     * <p>
+     * A specific endpoint is going to move to another node within <time> seconds
+     * </p>
+     * 
+     * @param endpoint address of the target endpoint
+     * @param time estimated time for the re-bind to complete
+     */
+    private void notifyRebindStarted(Duration time, SocketAddress endpoint) {
+        this.componentListeners.forEach(e -> e.onRebindStarted(time, endpoint));
     }
 
     private void notifyMigrateStarted(String shards) {
@@ -258,6 +328,52 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private void notifyFailoverCompleted(String shards) {
         this.componentListeners.forEach(component -> component.onFailoverCompleted(shards));
+    }
+
+    static class RebindAwareAddressSupplier {
+
+        private static final class State {
+
+            final Instant cutoff;
+
+            final SocketAddress rebindAddress;
+
+            State(Instant cutoff, SocketAddress rebindAddress) {
+                this.cutoff = cutoff;
+                this.rebindAddress = rebindAddress;
+            }
+
+        }
+
+        private final AtomicReference<State> state = new AtomicReference<>();
+
+        private final Clock clock;
+
+        public RebindAwareAddressSupplier() {
+            this(Clock.systemUTC());
+        }
+
+        public RebindAwareAddressSupplier(Clock clock) {
+            this.clock = clock;
+        }
+
+        public void rebind(Duration duration, SocketAddress rebindAddress) {
+            Instant newCutoff = clock.instant().plus(duration);
+            state.set(new State(newCutoff, rebindAddress));
+        }
+
+        public Mono<SocketAddress> wrappedSupplier(Mono<SocketAddress> original) {
+            return Mono.defer(() -> {
+                State current = state.get();
+                if (current != null && clock.instant().isBefore(current.cutoff)) {
+                    return Mono.just(current.rebindAddress);
+                } else {
+                    state.compareAndSet(current, null);
+                    return original;
+                }
+            });
+        }
+
     }
 
 }

@@ -114,18 +114,6 @@ class ReconnectionHandler {
         return Tuples.of(future, address);
     }
 
-    /**
-     * Replace the existing @link SocketAddressSupplier} with a new one.
-     * <p>
-     * This could be used in a scenario where a re-bind is happening, e.g., the old node is going down and a new node is
-     * supposed to handle the requests to the same endpoint.
-     *
-     * @param socketAddressSupplier the new address of the endpoint
-     */
-    public void setSocketAddressSupplier(SocketAddress socketAddressSupplier) {
-        this.socketAddressSupplier = Mono.just(socketAddressSupplier);
-    }
-
     private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {
 
         ChannelHandler handler = bootstrap.config().handler();

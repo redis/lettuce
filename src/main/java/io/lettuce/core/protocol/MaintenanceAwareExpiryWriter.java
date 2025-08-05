@@ -17,6 +17,7 @@ import io.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
@@ -182,7 +183,7 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
     }
 
     @Override
-    public void onRebindStarted() {
+    public void onRebindStarted(Duration time, SocketAddress endpoint) {
         enableRelaxedTimeout("Re-bind started");
     }
 

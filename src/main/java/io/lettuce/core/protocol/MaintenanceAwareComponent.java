@@ -8,6 +8,9 @@ package io.lettuce.core.protocol;
 
 import io.lettuce.core.ClientOptions;
 
+import java.net.SocketAddress;
+import java.time.Duration;
+
 /**
  * Interface for components that are aware of maintenance events.
  *
@@ -39,8 +42,14 @@ public interface MaintenanceAwareComponent {
 
     /**
      * Called whenever a re-bind has been initiated by the remote server
+     * <p>
+     * A specific endpoint is going to move to another node within <time> seconds
+     * </p>
+     * 
+     * @param endpoint address of the target endpoint
+     * @param time estimated time for the re-bind to complete
      */
-    void onRebindStarted();
+    void onRebindStarted(Duration time, SocketAddress endpoint);
 
     /**
      * Called whenever the re-bind has been completed
