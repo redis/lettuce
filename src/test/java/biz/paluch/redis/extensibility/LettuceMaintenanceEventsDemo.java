@@ -33,7 +33,8 @@ public class LettuceMaintenanceEventsDemo {
                 // (optional) relax timeouts during re-bind to decrease risk of timeouts
                 .timeoutsRelaxingDuringMaintenance(Duration.ofMillis(750)).build();
         // (required) enable proactive re-bind by enabling it in the ClientOptions
-        ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts).supportMaintenanceEvents(MaintenanceEventsOptions.enabled()).build();
+        ClientOptions options = ClientOptions.builder().timeoutOptions(timeoutOpts)
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled()).build();
 
         RedisClient redisClient = RedisClient.create(RedisURI.create(ADDRESS == null ? "redis://localhost:6379" : ADDRESS));
         redisClient.setOptions(options);
