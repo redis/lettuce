@@ -326,3 +326,6 @@ geospatial
 Geospatial
 RediSearch
 embeddings
+Dimensionality
+HNSW
+VectorSet
