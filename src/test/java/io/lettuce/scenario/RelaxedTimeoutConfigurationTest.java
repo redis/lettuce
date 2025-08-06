@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.lettuce.core.MaintenanceEventsOptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -545,7 +546,8 @@ public class RelaxedTimeoutConfigurationTest {
         // Enable maintenance events support
         // Apply timeout configuration
         ClientOptions options = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(true).timeoutOptions(timeoutOptions).build();
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled())
+                .timeoutOptions(timeoutOptions).build();
 
         client.setOptions(options);
 
