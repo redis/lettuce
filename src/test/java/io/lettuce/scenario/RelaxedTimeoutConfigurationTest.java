@@ -546,8 +546,7 @@ public class RelaxedTimeoutConfigurationTest {
         // Enable maintenance events support
         // Apply timeout configuration
         ClientOptions options = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled())
-                .timeoutOptions(timeoutOptions).build();
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled()).timeoutOptions(timeoutOptions).build();
 
         client.setOptions(options);
 
