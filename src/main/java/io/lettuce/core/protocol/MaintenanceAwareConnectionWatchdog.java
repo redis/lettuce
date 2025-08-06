@@ -62,11 +62,11 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
     private static final int MIGRATING_SHARDS_INDEX = 3;
 
-    private static final int MIGRATED_SHARDS_INDEX = 3;
+    private static final int MIGRATED_SHARDS_INDEX = 2;
 
     private static final int FAILING_OVER_SHARDS_INDEX = 3;
 
-    private static final int FAILED_OVER_SHARDS_INDEX = 3;
+    private static final int FAILED_OVER_SHARDS_INDEX = 2;
 
     private Channel channel;
 
@@ -186,10 +186,19 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     private String getFailingOverShards(PushMessage message) {
         List<Object> content = message.getContent();
 
-        if (isInvalidMaintenanceEvent(content, 3))
+        if (isInvalidMaintenanceEvent(content, 4))
             return null;
 
         return getShards(content, FAILING_OVER_SHARDS_INDEX, FAILING_OVER_MESSAGE_TYPE);
+    }
+
+    private String getFailedOverShards(PushMessage message) {
+        List<Object> content = message.getContent();
+
+        if (isInvalidMaintenanceEvent(content, 3))
+            return null;
+
+        return getShards(content, FAILED_OVER_SHARDS_INDEX, FAILED_OVER_MESSAGE_TYPE);
     }
 
     private static boolean isInvalidMaintenanceEvent(List<Object> content, int expectedSize) {
@@ -200,15 +209,6 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         }
 
         return false;
-    }
-
-    private String getFailedOverShards(PushMessage message) {
-        List<Object> content = message.getContent();
-
-        if (isInvalidMaintenanceEvent(content, 3))
-            return null;
-
-        return getShards(content, FAILED_OVER_SHARDS_INDEX, FAILED_OVER_MESSAGE_TYPE);
     }
 
     private static String getShards(List<Object> content, int shardsIndex, String maintenanceEvent) {

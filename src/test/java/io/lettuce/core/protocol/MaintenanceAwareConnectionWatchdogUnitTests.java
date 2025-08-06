@@ -281,9 +281,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
      * @param shards address and port of the new endpoint
      * @return
      */
-    private static List<Object> migratedPushContent(long seqNumber, long time, String shards) {
+    private static List<Object> migratedPushContent(long seqNumber, String shards) {
         ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
-        return Arrays.asList("MIGRATED", seqNumber, time, shardsBuffer);
+        return Arrays.asList("MIGRATED", seqNumber, shardsBuffer);
     }
 
     /**
@@ -307,9 +307,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
      * @param addressAndPort address and port of the new endpoint
      * @return
      */
-    private static List<Object> failedoverPushContent(long seqNumber, long time, String shards) {
+    private static List<Object> failedoverPushContent(long seqNumber, String shards) {
         ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
-        return Arrays.asList("FAILED_OVER", seqNumber, time, shardsBuffer);
+        return Arrays.asList("FAILED_OVER", seqNumber, shardsBuffer);
     }
 
     @Test
@@ -381,7 +381,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     void testOnPushMessageMigrated() {
         // Given
         when(pushMessage.getType()).thenReturn("MIGRATED");
-        when(pushMessage.getContent()).thenReturn(migratedPushContent(1, 0, "[\"1\",\"2\",\"3\"]"));
+        when(pushMessage.getContent()).thenReturn(migratedPushContent(1, "[\"1\",\"2\",\"3\"]"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -447,7 +447,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     void testOnPushMessageFailedOver() {
         // Given
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
-        when(pushMessage.getContent()).thenReturn(failedoverPushContent(1, 0, "4,5,6"));
+        when(pushMessage.getContent()).thenReturn(failedoverPushContent(1, "4,5,6"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
