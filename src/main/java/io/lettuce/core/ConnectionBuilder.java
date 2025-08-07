@@ -155,7 +155,7 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set for autoReconnect=true");
 
         ConnectionWatchdog watchdog;
-        if (clientOptions.supportsMaintenanceEvents()) {
+        if (clientOptions.getMaintenanceEventsOptions().supportsMaintenanceEvents()) {
             watchdog = new MaintenanceAwareConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
                     clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
                     connection, clientResources.eventBus(), endpoint);

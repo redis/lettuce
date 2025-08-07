@@ -51,7 +51,7 @@ public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
 
-    public static final boolean DEFAULT_SUPPORT_MAINTENANCE_EVENTS = false;
+    public static final MaintenanceEventsOptions DEFAULT_MAINTENANCE_EVENTS_OPTIONS = MaintenanceEventsOptions.disabled();
 
     public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
@@ -95,7 +95,7 @@ public class ClientOptions implements Serializable {
 
     private final boolean autoReconnect;
 
-    private final boolean supportMaintenanceEvents;
+    private final MaintenanceEventsOptions maintenanceEventsOptions;
 
     private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
 
@@ -131,7 +131,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
-        this.supportMaintenanceEvents = builder.supportMaintenanceEvents;
+        this.maintenanceEventsOptions = builder.maintenanceEventsOptions;
         this.replayFilter = builder.replayFilter;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.disconnectedBehavior = builder.disconnectedBehavior;
@@ -152,7 +152,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(ClientOptions original) {
         this.autoReconnect = original.isAutoReconnect();
-        this.supportMaintenanceEvents = original.supportsMaintenanceEvents();
+        this.maintenanceEventsOptions = original.getMaintenanceEventsOptions();
         this.replayFilter = original.getReplayFilter();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
@@ -206,7 +206,7 @@ public class ClientOptions implements Serializable {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
-        private boolean supportMaintenanceEvents = DEFAULT_SUPPORT_MAINTENANCE_EVENTS;
+        private MaintenanceEventsOptions maintenanceEventsOptions = DEFAULT_MAINTENANCE_EVENTS_OPTIONS;
 
         private Predicate<RedisCommand<?, ?, ?>> replayFilter = DEFAULT_REPLAY_FILTER;
 
@@ -259,14 +259,14 @@ public class ClientOptions implements Serializable {
          * Configure whether the driver should listen for server events that notify on current maintenance activities. When
          * enabled, this option will help with the connection handover and reduce the number of failed commands. This feature
          * requires the server to support maintenance events. Defaults to {@code false}. See
-         * {@link #DEFAULT_SUPPORT_MAINTENANCE_EVENTS}.
+         * {@link #DEFAULT_MAINTENANCE_EVENTS_OPTIONS}.
          *
-         * @param supportEvents true/false
+         * @param maintenanceEventsOptions true/false
          * @return {@code this}
          * @since 7.0
          */
-        public Builder supportMaintenanceEvents(boolean supportEvents) {
-            this.supportMaintenanceEvents = supportEvents;
+        public Builder supportMaintenanceEvents(MaintenanceEventsOptions maintenanceEventsOptions) {
+            this.maintenanceEventsOptions = maintenanceEventsOptions;
             return this;
         }
 
@@ -530,7 +530,7 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).supportMaintenanceEvents(supportsMaintenanceEvents())
+        builder.autoReconnect(isAutoReconnect()).supportMaintenanceEvents(getMaintenanceEventsOptions())
                 .replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
                 .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
                 .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
@@ -556,15 +556,15 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Returns whether the client supports maintenance events.
+     * Returns the {@link MaintenanceEventsOptions} to listen for server events that notify on current maintenance activities.
      *
-     * @return {@code true} if maintenance events are supported.
+     * @return {@link MaintenanceEventsOptions}
      * @since 7.0
-     * @see #DEFAULT_SUPPORT_MAINTENANCE_EVENTS
-     * @see #supportsMaintenanceEvents()
+     * @see #DEFAULT_MAINTENANCE_EVENTS_OPTIONS
+     * @see #getMaintenanceEventsOptions()
      */
-    public boolean supportsMaintenanceEvents() {
-        return supportMaintenanceEvents;
+    public MaintenanceEventsOptions getMaintenanceEventsOptions() {
+        return maintenanceEventsOptions;
     }
 
     /**

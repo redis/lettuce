@@ -7,6 +7,7 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.TestTags.UNIT_TEST;
+import static io.lettuce.test.ReflectionTestUtils.getField;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static io.lettuce.test.ReflectionTestUtils.setField;
@@ -18,7 +19,9 @@ import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.EventBus;
+import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.RebindAwareAddressSupplier;
 import io.lettuce.core.resource.Delay;
+import io.lettuce.test.MutableClock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.util.Attribute;
@@ -29,18 +32,25 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Unit tests for {@link MaintenanceAwareConnectionWatchdog}.
@@ -109,6 +119,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Mock
     private ReconnectionHandler reconnectionHandler;
 
+    private RebindAwareAddressSupplier rebindAwareAddressSupplier;
+
     private MaintenanceAwareConnectionWatchdog watchdog;
 
     @BeforeEach
@@ -124,6 +136,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Set up the reconnectionHandler field using ReflectionTestUtils
         setField(watchdog, "reconnectionHandler", reconnectionHandler);
+        // Spy the rebindAwareAddressSupplier field using ReflectionTestUtils
+        rebindAwareAddressSupplier = Mockito.spy((RebindAwareAddressSupplier) getField(watchdog, "rebindAwareAddressSupplier"));
+        setField(watchdog, "rebindAwareAddressSupplier", rebindAwareAddressSupplier);
     }
 
     @Test
@@ -199,14 +214,13 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Then
         verify(channel, never()).close();
         verify(component1, never()).onRebindCompleted();
+
     }
 
     @Test
     void testOnPushMessageMovingWithEmptyStack() {
         // Given
-        String addressAndPort = "127.0.0.1:6380";
-        ByteBuffer addressBuffer = StringCodec.UTF8.encodeKey(addressAndPort);
-        List<Object> content = Arrays.asList("MOVING", "slot", addressBuffer);
+        List<Object> content = movingPushContent(1, 15, "127.0.0.1:6380");
 
         when(pushMessage.getType()).thenReturn("MOVING");
         when(pushMessage.getContent()).thenReturn(content);
@@ -227,18 +241,81 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Then
         verify(rebindAttribute).set(RebindState.STARTED);
-        verify(reconnectionHandler).setSocketAddressSupplier(any(InetSocketAddress.class));
+        verify(rebindAwareAddressSupplier).rebind(eq(Duration.ofSeconds(15)), eq(new InetSocketAddress("127.0.0.1", 6380)));
         verify(channel).close();
         verify(rebindAttribute).set(RebindState.COMPLETED);
-        verify(component1, never()).onRebindStarted(); // Not called when stack is empty
+        verify(component1, never()).onRebindStarted(any(), any()); // Not called when stack is empty
+    }
+
+    /**
+     * MOVING <seq_number> <time> <endpoint>: A specific endpoint is going to move to another node within <time> seconds
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time estimated operation completion time
+     * @param addressAndPort address and port of the new endpoint
+     * @return
+     */
+    private static List<Object> movingPushContent(long seqNumber, long time, String addressAndPort) {
+        ByteBuffer addressBuffer = StringCodec.UTF8.encodeKey(addressAndPort);
+        return Arrays.asList("MOVING", seqNumber, time, addressBuffer);
+    }
+
+    /**
+     * MIGRATING <seq_number> <time> <shard_id-s>: A shard migration is going to start within <time> seconds.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time operation will start after <time> seconds
+     * @param shards comma-separated list of shard IDs
+     * @return
+     */
+    private static List<Object> migratingPushContent(long seqNumber, long time, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("MIGRATING", seqNumber, time, shardsBuffer);
+    }
+
+    /**
+     * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time
+     * @param shards address and port of the new endpoint
+     * @return
+     */
+    private static List<Object> migratedPushContent(long seqNumber, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("MIGRATED", seqNumber, shardsBuffer);
+    }
+
+    /**
+     * MIGRATING <seq_number> <time> <shard_id-s>: A shard migration is going to start within <time> seconds.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time operation will start after <time> seconds
+     * @param shards comma-separated list of shard IDs
+     * @return
+     */
+    private static List<Object> failingoverPushContent(long seqNumber, long time, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("FAILING_OVER", seqNumber, time, shardsBuffer);
+    }
+
+    /**
+     * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time
+     * @param addressAndPort address and port of the new endpoint
+     * @return
+     */
+    private static List<Object> failedoverPushContent(long seqNumber, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("FAILED_OVER", seqNumber, shardsBuffer);
     }
 
     @Test
     void testOnPushMessageMovingWithNonEmptyStack() {
         // Given
-        String addressAndPort = "127.0.0.1:6380";
-        ByteBuffer addressBuffer = StringCodec.UTF8.encodeKey(addressAndPort);
-        List<Object> content = Arrays.asList("MOVING", "slot", addressBuffer);
+        List<Object> content = movingPushContent(1, 15, "127.0.0.1:6380");
 
         when(pushMessage.getType()).thenReturn("MOVING");
         when(pushMessage.getContent()).thenReturn(content);
@@ -258,9 +335,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Then
         verify(rebindAttribute).set(RebindState.STARTED);
-        verify(reconnectionHandler).setSocketAddressSupplier(any(InetSocketAddress.class));
         verify(channel, never()).close();
-        verify(component1).onRebindStarted(); // Called when stack is not empty
+        verify(component1).onRebindStarted(any(), any()); // Called when stack is not empty
     }
 
     @Test
@@ -281,14 +357,14 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Then
         verify(rebindAttribute, never()).set(any());
-        verify(reconnectionHandler, never()).setSocketAddressSupplier(any());
-        verify(component1, never()).onRebindStarted();
+        verify(component1, never()).onRebindStarted(any(), any());
     }
 
     @Test
     void testOnPushMessageMigrating() {
         // Given
         when(pushMessage.getType()).thenReturn("MIGRATING");
+        when(pushMessage.getContent()).thenReturn(migratingPushContent(1, 15, "[\"1\",\"2\",\"3\"]"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -297,14 +373,15 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onMigrateStarted();
-        verify(component2).onMigrateStarted();
+        verify(component1).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
     void testOnPushMessageMigrated() {
         // Given
         when(pushMessage.getType()).thenReturn("MIGRATED");
+        when(pushMessage.getContent()).thenReturn(migratedPushContent(1, "[\"1\",\"2\",\"3\"]"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -313,16 +390,15 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onMigrateCompleted();
-        verify(component2).onMigrateCompleted();
+        verify(component1).onMigrateCompleted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMigrateCompleted(eq("[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
     void testOnPushMessageFailingOver() {
         // Given
-        List<Object> content = Arrays.asList("FAILING_OVER", "reason", "1,2,3");
         when(pushMessage.getType()).thenReturn("FAILING_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(failingoverPushContent(1, 15, "[\"1\",\"2\",\"3\"]"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -331,8 +407,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverStarted("1,2,3");
-        verify(component2).onFailoverStarted("1,2,3");
+        verify(component1).onFailoverStarted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component2).onFailoverStarted(eq("[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
@@ -340,7 +416,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Given
         List<Object> content = Arrays.asList("FAILING_OVER", "reason"); // Missing shards
         when(pushMessage.getType()).thenReturn("FAILING_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(content);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -354,9 +430,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageFailingOverWithNonStringShards() {
         // Given
-        List<Object> content = Arrays.asList("FAILING_OVER", "reason", 123); // Non-string shards
+        List<Object> content = Arrays.asList("FAILING_OVER", 1, 15, 123); // Non-string shards
         when(pushMessage.getType()).thenReturn("FAILING_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(content);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -370,9 +446,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageFailedOver() {
         // Given
-        List<Object> content = Arrays.asList("FAILED_OVER", "4,5,6");
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(failedoverPushContent(1, "4,5,6"));
 
         watchdog.setMaintenanceEventListener(component1);
         watchdog.setMaintenanceEventListener(component2);
@@ -381,8 +456,8 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         watchdog.onPushMessage(pushMessage);
 
         // Then
-        verify(component1).onFailoverCompleted("4,5,6");
-        verify(component2).onFailoverCompleted("4,5,6");
+        verify(component1).onFailoverCompleted(eq("4,5,6"));
+        verify(component2).onFailoverCompleted(eq("4,5,6"));
     }
 
     @Test
@@ -390,7 +465,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Given
         List<Object> content = Collections.singletonList("FAILED_OVER"); // Missing shards
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(content);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -404,9 +479,9 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageFailedOverWithNonStringShards() {
         // Given
-        List<Object> content = Arrays.asList("FAILED_OVER", 456); // Non-string shards
+        List<Object> content = Arrays.asList("FAILED_OVER", 1, 0, 456); // Non-string shards
         when(pushMessage.getType()).thenReturn("FAILED_OVER");
-        when(pushMessage.getContent(any())).thenReturn(content);
+        when(pushMessage.getContent()).thenReturn(content);
 
         watchdog.setMaintenanceEventListener(component1);
 
@@ -434,9 +509,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     @Test
     void testOnPushMessageMovingWithInvalidAddressFormat() {
         // Given
-        String invalidAddress = "invalid-address-format";
-        ByteBuffer addressBuffer = StringCodec.UTF8.encodeKey(invalidAddress);
-        List<Object> content = Arrays.asList("MOVING", "slot", addressBuffer);
+        List<Object> content = movingPushContent(1, 15, "invalid-address-format");
 
         when(pushMessage.getType()).thenReturn("MOVING");
         when(pushMessage.getContent()).thenReturn(content);
@@ -451,8 +524,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Then - should not proceed with rebind due to invalid address
         verify(rebindAttribute, never()).set(any());
-        verify(reconnectionHandler, never()).setSocketAddressSupplier(any());
-        verify(component1, never()).onRebindStarted();
+        verify(component1, never()).onRebindStarted(any(), any());
     }
 
     @Test
@@ -473,8 +545,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Then - should not proceed with rebind due to invalid address type
         verify(rebindAttribute, never()).set(any());
-        verify(reconnectionHandler, never()).setSocketAddressSupplier(any());
-        verify(component1, never()).onRebindStarted();
+        verify(component1, never()).onRebindStarted(any(), any());
     }
 
     @Test
@@ -485,10 +556,11 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Then - verify components are stored (tested indirectly through notification methods)
         when(pushMessage.getType()).thenReturn("MIGRATING");
+        when(pushMessage.getContent()).thenReturn(migratingPushContent(1, 15, "[\"1\",\"2\",\"3\"]"));
         watchdog.onPushMessage(pushMessage);
 
-        verify(component1).onMigrateStarted();
-        verify(component2).onMigrateStarted();
+        verify(component1).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
+        verify(component2).onMigrateStarted(eq("[\"1\",\"2\",\"3\"]"));
     }
 
     @Test
@@ -496,6 +568,71 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         // Test that the REBIND_ATTRIBUTE key is properly defined
         assertThat(MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE).isNotNull();
         assertThat(MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE.name()).isEqualTo("rebindAddress");
+    }
+
+    @Test
+    void testRebindAwareAddressSupplierWithFixedClock() {
+        // Given
+        Instant fixedTime = Instant.parse("2023-01-01T10:00:00Z");
+        Clock fixedClock = Clock.fixed(fixedTime, ZoneId.systemDefault());
+        RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(fixedClock);
+
+        SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
+        SocketAddress rebindAddress = new InetSocketAddress("127.0.0.1", 6380);
+        Mono<SocketAddress> originalSupplier = Mono.just(originalAddress);
+
+        // When - rebind with 30 seconds duration
+        supplier.rebind(Duration.ofSeconds(30), rebindAddress);
+
+        // Then - should return rebind address since we're within the cutoff time
+        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+
+        StepVerifier.create(wrappedSupplier).expectNext(rebindAddress).verifyComplete();
+    }
+
+    @Test
+    void testRebindAwareAddressSupplierExpirationWithFixedClock() {
+        // Given - Create supplier with a mutable clock that we can advance
+        MutableClock clock = new MutableClock(Instant.parse("2023-01-01T10:00:00Z"));
+
+        RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(clock);
+        SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
+        SocketAddress rebindAddress = new InetSocketAddress("127.0.0.1", 6380);
+        Mono<SocketAddress> originalSupplier = Mono.just(originalAddress);
+
+        // Step 1: Create wrapped supplier once (same instance used throughout)
+        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+
+        // Step 2: First subscription should return original address (no rebind set yet)
+        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+
+        // Step 3: Invoke rebind with 30 seconds duration
+        supplier.rebind(Duration.ofSeconds(30), rebindAddress);
+
+        // Step 4: New subscription to same wrappedSupplier should return rebind address
+        StepVerifier.create(wrappedSupplier).expectNext(rebindAddress).verifyComplete();
+
+        // Step 5: Advance clock past expiration (31 seconds)
+        clock.tick(Duration.ofSeconds(31));
+
+        // Step 6: New subscription to same wrappedSupplier should return original address again
+        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+    }
+
+    @Test
+    void testRebindAwareAddressSupplierWithNullState() {
+        // Given
+        Clock fixedClock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
+        RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(fixedClock);
+
+        SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
+        Mono<SocketAddress> originalSupplier = Mono.just(originalAddress);
+
+        // When - no rebind has been set
+        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+
+        // Then - should return original address
+        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
     }
 
 }

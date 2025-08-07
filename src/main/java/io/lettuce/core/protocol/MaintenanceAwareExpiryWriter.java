@@ -17,6 +17,7 @@ import io.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.ScheduledExecutorService;
@@ -32,14 +33,14 @@ import static io.lettuce.core.TimeoutOptions.TimeoutSource;
  * progress. The relaxation is done by starting a new timer with the relaxed timeout value. The relaxed timeout is configured
  * via {@link TimeoutOptions#getRelaxedTimeout()}.
  * <p/>
- * The logic is only applied when the {@link ClientOptions#supportsMaintenanceEvents()} is enabled.
+ * The logic is only applied when the {@link ClientOptions#getMaintenanceEventsOptions()} is enabled.
  *
  * @author Tihomir Mateev
  * @since 7.0
  * @see TimeoutOptions
  * @see MaintenanceAwareComponent
  * @see MaintenanceAwareConnectionWatchdog
- * @see ClientOptions#supportsMaintenanceEvents()
+ * @see ClientOptions#getMaintenanceEventsOptions()
  */
 public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements MaintenanceAwareComponent {
 
@@ -182,7 +183,7 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
     }
 
     @Override
-    public void onRebindStarted() {
+    public void onRebindStarted(Duration time, SocketAddress endpoint) {
         enableRelaxedTimeout("Re-bind started");
     }
 
@@ -192,13 +193,13 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
     }
 
     @Override
-    public void onMigrateStarted() {
-        enableRelaxedTimeout("Migration started");
+    public void onMigrateStarted(String shards) {
+        enableRelaxedTimeout("Migration started for shards: " + shards);
     }
 
     @Override
-    public void onMigrateCompleted() {
-        disableRelaxedTimeoutDelayed("Migration completed", relaxedTimeout);
+    public void onMigrateCompleted(String shards) {
+        disableRelaxedTimeoutDelayed("Migration completed: " + shards, relaxedTimeout);
     }
 
     @Override

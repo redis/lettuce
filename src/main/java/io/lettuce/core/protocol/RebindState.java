@@ -13,7 +13,7 @@ import io.lettuce.core.ClientOptions;
  *
  * @author Tihomir Mateev
  * @since 7.0
- * @see ClientOptions#supportsMaintenanceEvents()
+ * @see ClientOptions#getMaintenanceEventsOptions()
  */
 public enum RebindState {
     /**
