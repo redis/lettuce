@@ -11,28 +11,33 @@ import io.lettuce.core.internal.NetUtils;
 import java.net.SocketAddress;
 
 /**
- * Configuration options for enabling and customizing support for maintenance events in Lettuce.
+ * Configuration options for Redis maintenance events notifications.
  * <p>
- * Maintenance events are notifications or signals that indicate changes in the underlying infrastructure, such as failovers,
- * topology changes, or other events that may require special handling by the client. This class allows users to enable or
- * disable maintenance event support, and to configure how address types are resolved for maintenance event handling.
- * </p>
- * <p>
- * Usage patterns typically involve using the static factory methods such as {@link #enabled()}, {@link #disabled()}, or
- * {@link #builder()} to create and configure an instance.
- * </p>
- * <p>
- * Example usage:
- * 
- * <pre>
- * 
- * MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled();
- * </pre>
- * </p>
+ * Maintenance events allow clients to receive push notifications about server-side maintenance operations (moving, failing
+ * over, migrating) to enable graceful handling of connection disruptions.
  * <p>
  * The options provided by this class are used by Lettuce to determine whether to listen for and process maintenance events, and
  * how to resolve address types when such events occur.
  * </p>
+ * <h3>Usage Examples:</h3>
+ * 
+ * <pre>
+ * 
+ * {
+ *     &#64;code
+ *     // Auto-resolve based on connection
+ *     MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled();
+ *
+ *     // Force external IP addresses
+ *     MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP);
+ *
+ *     // Builder pattern
+ *     MaintenanceEventsOptions options = MaintenanceEventsOptions.builder().supportMaintenanceEvents().autoResolveAddressType()
+ *             .build();
+ * }
+ * </pre>
+ *
+ * @see <a href="https://redislabs.atlassian.net/wiki/spaces/CAE/pages/5071044609">Redis Maintenance Events Specification</a>
  */
 public class MaintenanceEventsOptions {
 
@@ -51,29 +56,62 @@ public class MaintenanceEventsOptions {
         return new MaintenanceEventsOptions.Builder();
     }
 
+    /**
+     * Create a new instance of {@link MaintenanceEventsOptions} with default settings.
+     *
+     * @return a new instance of {@link MaintenanceEventsOptions} with default settings.
+     */
     public static MaintenanceEventsOptions create() {
         return builder().build();
     }
 
+    /**
+     * Creates maintenance events options with maintenance events disabled.
+     *
+     * @return disabled maintenance events options
+     */
     public static MaintenanceEventsOptions disabled() {
         return builder().supportMaintenanceEvents(false).build();
     }
 
+    /**
+     * Creates maintenance events options with automatic address type resolution.
+     * <p>
+     * The address type is automatically determined based on connection characteristics.
+     *
+     * @return enabled options with auto-resolution
+     */
     public static MaintenanceEventsOptions enabled() {
         return builder().supportMaintenanceEvents().autoResolveAddressType().build();
     }
 
+    /**
+     * Creates maintenance events options with a fixed address type.
+     * <p>
+     * Always requests the specified address type for maintenance notifications.
+     *
+     * @param addressType the fixed address type to request
+     * @return enabled options with fixed address type
+     */
     public static MaintenanceEventsOptions enabled(AddressType addressType) {
         return builder().supportMaintenanceEvents().fixedAddressType(addressType).build();
     }
 
+    /**
+     * Check if maintenance events are supported.
+     *
+     * @return true if maintenance events are supported
+     */
     public boolean supportsMaintenanceEvents() {
         return supportMaintenanceEvents;
     }
 
     /**
-     * @return the address type source to determine the requested address type when maintenance events are enabled . Can be
-     *         {@code null} if {@link #supportsMaintenanceEvents()} is {@code false}.
+     * Returns the address type source used to determine the requested address type.
+     * <p>
+     * The address type source determines what address type to request for maintenance notifications.
+     *
+     * @return the address type source, or {@code null} if maintenance events are disabled
      */
     public AddressTypeSource getAddressTypeSource() {
         return addressTypeSource;
@@ -94,11 +132,40 @@ public class MaintenanceEventsOptions {
             return this;
         }
 
+        /**
+         * Configure a fixed address type for all maintenance notifications.
+         * <p>
+         * Overrides automatic resolution and always requests the specified type.
+         *
+         * @param addressType the address type to request from server
+         * @return this builder
+         * @see AddressType
+         */
         public Builder fixedAddressType(AddressType addressType) {
             this.addressTypeSource = new FixedAddressTypeSource(addressType);
             return this;
         }
 
+        /**
+         * Configure automatic address type resolution based on connection characteristics.
+         * <p>
+         * <strong>Resolution logic:</strong>
+         * <ol>
+         * <li><strong>Network detection:</strong> If remote IP is private (see {@link NetUtils#isPrivateIp(SocketAddress)}),
+         * use INTERNAL_*, otherwise EXTERNAL_*</li>
+         * <li><strong>Format selection:</strong> If TLS is enabled, use *_FQDN, otherwise use *_IP</li>
+         * </ol>
+         * <p>
+         * <strong>Examples:</strong>
+         * <ul>
+         * <li>Private IP + no TLS → {@code INTERNAL_IP}</li>
+         * <li>Private IP + TLS → {@code INTERNAL_FQDN}</li>
+         * <li>Public IP + no TLS → {@code EXTERNAL_IP}</li>
+         * <li>Public IP + TLS → {@code EXTERNAL_FQDN}</li>
+         * </ul>
+         *
+         * @return this builder
+         */
         public Builder autoResolveAddressType() {
             this.addressTypeSource = new AutoresolveAddressTypeSource();
             return this;
@@ -110,8 +177,22 @@ public class MaintenanceEventsOptions {
 
     }
 
+    /**
+     * Address types for maintenance event notifications.
+     * <p>
+     * Determines the format of endpoint addresses returned in MOVING notifications.
+     *
+     * @since 7.0
+     */
     public enum AddressType {
-        INTERNAL_IP, INTERNAL_FQDN, EXTERNAL_IP, EXTERNAL_FQDN
+        /** Internal IP address (for private network connections) */
+        INTERNAL_IP,
+        /** Internal fully qualified domain name (for private network connections with TLS) */
+        INTERNAL_FQDN,
+        /** External IP address (for public network connections) */
+        EXTERNAL_IP,
+        /** External fully qualified domain name (for public network connections with TLS) */
+        EXTERNAL_FQDN
     }
 
     private static class FixedAddressTypeSource extends MaintenanceEventsOptions.AddressTypeSource {
@@ -156,8 +237,20 @@ public class MaintenanceEventsOptions {
 
     }
 
+    /**
+     * Strategy interface for determining the address type to request in maintenance notifications.
+     * <p>
+     * Implementations determine what address type to request for maintenance notifications.
+     */
     public static abstract class AddressTypeSource {
 
+        /**
+         * Determines the address type based on connection characteristics.
+         *
+         * @param socketAddress the remote socket address of the connection
+         * @param sslEnabled whether TLS/SSL is enabled for the connection
+         * @return the address type to request, or null if no specific type is needed
+         */
         public abstract AddressType getAddressType(SocketAddress socketAddress, boolean sslEnabled);
 
     }
