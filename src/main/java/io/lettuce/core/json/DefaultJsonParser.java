@@ -27,10 +27,18 @@ public class DefaultJsonParser implements JsonParser {
 
     private final ObjectMapper objectMapper;
 
+    /**
+     * Create a new instance of the {@link DefaultJsonParser} initialing a {@link ObjectMapper} with defaults.
+     */
     public DefaultJsonParser() {
         objectMapper = new ObjectMapper();
     }
 
+    /**
+     * Create a new instance of the {@link DefaultJsonParser} using the provided {@link ObjectMapper}.
+     *
+     * @param objectMapper the {@link ObjectMapper} to use
+     */
     public DefaultJsonParser(ObjectMapper objectMapper) {
         if (objectMapper == null) {
             throw new IllegalArgumentException("ObjectMapper must not be null");
