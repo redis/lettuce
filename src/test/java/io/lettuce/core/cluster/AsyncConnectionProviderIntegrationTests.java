@@ -23,6 +23,7 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -151,12 +152,12 @@ class AsyncConnectionProviderIntegrationTests {
         StopWatch stopWatch = new StopWatch();
 
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(sut.getConnection(connectionKey)))
-                .hasCauseInstanceOf(ConnectTimeoutException.class);
+                .hasRootCauseInstanceOf(ConnectException.class);
 
         stopWatch.start();
 
         assertThatThrownBy(() -> TestFutures.awaitOrTimeout(sut.getConnection(connectionKey)))
-                .hasCauseInstanceOf(ConnectTimeoutException.class);
+                .hasRootCauseInstanceOf(ConnectException.class);
 
         stopWatch.stop();
 
