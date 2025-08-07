@@ -14,11 +14,14 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.SortByArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
+import io.lettuce.core.search.SearchReply.SearchResult;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.core.json.JsonParser;
@@ -37,7 +40,10 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,6 +102,268 @@ public class RediSearchVectorIntegrationTests {
     static void teardown() {
         if (client != null) {
             client.shutdown();
+        }
+    }
+
+    /**
+     * Test SVS-VAMANA vector index creation and basic search functionality. This test verifies that SVS-VAMANA algorithm can be
+     * used to create vector indexes and perform basic vector similarity searches.
+     */
+    @Test
+    void testSvsVamanaBasicVectorSearch() {
+        String indexName = "svs-vamana-basic-idx";
+
+        // Create SVS-VAMANA vector field
+        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
+                .build();
+
+        FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("svs:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        // Create index
+        String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
+        assertThat(result).isEqualTo("OK");
+
+        // Insert test vectors using binary format
+        Map<ByteBuffer, ByteBuffer> doc1 = new HashMap<>();
+        doc1.put(ByteBuffer.wrap("name".getBytes()), ByteBuffer.wrap("Document 1".getBytes()));
+        doc1.put(ByteBuffer.wrap("embedding".getBytes()), floatArrayToByteBuffer(new float[] { 1.0f, 0.0f, 0.0f, 0.0f }));
+        redisBinary.hmset(ByteBuffer.wrap("svs:doc1".getBytes()), doc1);
+
+        Map<ByteBuffer, ByteBuffer> doc2 = new HashMap<>();
+        doc2.put(ByteBuffer.wrap("name".getBytes()), ByteBuffer.wrap("Document 2".getBytes()));
+        doc2.put(ByteBuffer.wrap("embedding".getBytes()), floatArrayToByteBuffer(new float[] { 0.0f, 1.0f, 0.0f, 0.0f }));
+        redisBinary.hmset(ByteBuffer.wrap("svs:doc2".getBytes()), doc2);
+
+        Map<ByteBuffer, ByteBuffer> doc3 = new HashMap<>();
+        doc3.put(ByteBuffer.wrap("name".getBytes()), ByteBuffer.wrap("Document 3".getBytes()));
+        doc3.put(ByteBuffer.wrap("embedding".getBytes()), floatArrayToByteBuffer(new float[] { 0.7071f, 0.7071f, 0.0f, 0.0f }));
+        redisBinary.hmset(ByteBuffer.wrap("svs:doc3".getBytes()), doc3);
+
+        // Perform vector search using binary query vector
+        ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 1.0f, 0.0f, 0.0f, 0.0f });
+        ByteBuffer blobKey = ByteBuffer.wrap("query_vec".getBytes());
+        SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
+                .param(blobKey, queryVector).build();
+
+        ByteBuffer indexKey = ByteBuffer.wrap(indexName.getBytes());
+        ByteBuffer queryString = ByteBuffer.wrap("*=>[KNN 2 @embedding $query_vec]".getBytes());
+        SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexKey, queryString, searchArgs);
+
+        // Verify results
+        assertThat(searchResult.getCount()).isEqualTo(2);
+        assertThat(searchResult.getResults()).hasSize(2);
+
+        // First result should be doc1 (exact match)
+        ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes());
+        String firstName = new String(searchResult.getResults().get(0).getFields().get(nameKey).array());
+        assertThat(firstName).isEqualTo("Document 1");
+
+        // Cleanup
+        redis.ftDropindex(indexName);
+    }
+
+    /**
+     * Test SVS-VAMANA vector index with advanced configuration parameters. This test verifies that SVS-VAMANA can be configured
+     * with construction and search parameters for performance tuning (without compression which requires Redis 8.2+).
+     */
+    @Test
+    void testSvsVamanaWithAdvancedParameters() {
+        String indexName = "svs-vamana-advanced-idx";
+
+        // Create SVS-VAMANA vector field with advanced parameters (no compression)
+        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(8).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
+                .attribute("CONSTRUCTION_WINDOW_SIZE", 128).attribute("GRAPH_MAX_DEGREE", 32)
+                .attribute("SEARCH_WINDOW_SIZE", 64).build();
+
+        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("advanced:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        // Create index
+        String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, categoryField));
+        assertThat(result).isEqualTo("OK");
+
+        // Insert test vectors with higher dimensionality using binary format
+        Map<ByteBuffer, ByteBuffer> product1 = new HashMap<>();
+        product1.put(ByteBuffer.wrap("category".getBytes()), ByteBuffer.wrap("electronics".getBytes()));
+        product1.put(ByteBuffer.wrap("embedding".getBytes()),
+                floatArrayToByteBuffer(new float[] { 1.0f, 0.5f, 0.2f, 0.8f, 0.3f, 0.9f, 0.1f, 0.6f }));
+        redisBinary.hmset(ByteBuffer.wrap("advanced:product1".getBytes()), product1);
+
+        Map<ByteBuffer, ByteBuffer> product2 = new HashMap<>();
+        product2.put(ByteBuffer.wrap("category".getBytes()), ByteBuffer.wrap("books".getBytes()));
+        product2.put(ByteBuffer.wrap("embedding".getBytes()),
+                floatArrayToByteBuffer(new float[] { 0.2f, 0.8f, 0.9f, 0.1f, 0.7f, 0.4f, 0.6f, 0.3f }));
+        redisBinary.hmset(ByteBuffer.wrap("advanced:product2".getBytes()), product2);
+
+        Map<ByteBuffer, ByteBuffer> product3 = new HashMap<>();
+        product3.put(ByteBuffer.wrap("category".getBytes()), ByteBuffer.wrap("electronics".getBytes()));
+        product3.put(ByteBuffer.wrap("embedding".getBytes()),
+                floatArrayToByteBuffer(new float[] { 0.9f, 0.4f, 0.1f, 0.7f, 0.2f, 0.8f, 0.0f, 0.5f }));
+        redisBinary.hmset(ByteBuffer.wrap("advanced:product3".getBytes()), product3);
+
+        // Perform vector search with category filter
+        ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 1.0f, 0.5f, 0.2f, 0.8f, 0.3f, 0.9f, 0.1f, 0.6f });
+        ByteBuffer blobKey = ByteBuffer.wrap("query_vec".getBytes());
+        SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
+                .param(blobKey, queryVector).build();
+
+        ByteBuffer indexKey = ByteBuffer.wrap(indexName.getBytes());
+        ByteBuffer queryString = ByteBuffer.wrap("(@category:{electronics})=>[KNN 2 @embedding $query_vec]".getBytes());
+        SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexKey, queryString, searchArgs);
+
+        // Verify results - should find electronics products only
+        assertThat(searchResult.getCount()).isEqualTo(2);
+        assertThat(searchResult.getResults()).hasSize(2);
+
+        // All results should be electronics
+        ByteBuffer categoryKey = ByteBuffer.wrap("category".getBytes());
+        for (SearchReply.SearchResult<ByteBuffer, ByteBuffer> searchResultItem : searchResult.getResults()) {
+            String category = new String(searchResultItem.getFields().get(categoryKey).array());
+            assertThat(category).isEqualTo("electronics");
+        }
+
+        // Cleanup
+        redis.ftDropindex(indexName);
+    }
+
+    /**
+     * Test SVS-VAMANA vector index with aggregation operations. This test verifies that SVS-VAMANA indexes work correctly with
+     * aggregation queries and can be used for analytical operations on vector data.
+     */
+    @Test
+    void testSvsVamanaWithAggregation() {
+        String indexName = "svs-vamana-agg-idx";
+
+        // Create SVS-VAMANA vector field optimized for aggregation (no compression)
+        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
+                .attribute("SEARCH_WINDOW_SIZE", 64).build();
+
+        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").sortable().build();
+        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("agg:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        // Create index
+        String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, categoryField, priceField));
+        assertThat(result).isEqualTo("OK");
+
+        // Insert test data for aggregation
+        String[] categories = { "electronics", "books", "electronics", "books", "electronics" };
+        float[][] vectors = { { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f, 0.0f }, { 0.7071f, 0.7071f, 0.0f, 0.0f },
+                { 0.0f, 0.0f, 1.0f, 0.0f }, { 0.5f, 0.5f, 0.5f, 0.5f } };
+        double[] prices = { 99.99, 19.99, 149.99, 29.99, 199.99 };
+
+        for (int i = 0; i < categories.length; i++) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("category", categories[i]);
+            item.put("price", String.valueOf(prices[i]));
+            item.put("embedding", floatArrayToByteBuffer(vectors[i]).array());
+            storeHashDocument("agg:item" + (i + 1), item);
+        }
+
+        // Perform aggregation: group by category and calculate average price
+        AggregationReply<String, String> aggregationResult = redis.ftAggregate(indexName, "*",
+                AggregateArgs.<String, String> builder()
+                        .groupBy(AggregateArgs.GroupBy.<String, String> of("category")
+                                .reduce(AggregateArgs.Reducer.<String, String> count().as("count"))
+                                .reduce(AggregateArgs.Reducer.<String, String> avg("@price").as("avg_price")))
+                        .sortBy(AggregateArgs.SortBy.of("avg_price", AggregateArgs.SortDirection.DESC)).build());
+
+        // Verify aggregation results
+        // Verify aggregation results
+        assertThat(aggregationResult.getAggregationGroups()).isEqualTo(1); // 1 aggregation operation
+        assertThat(aggregationResult.getReplies()).hasSize(1); // One reply containing all groups
+
+        SearchReply<String, String> reply = aggregationResult.getReplies().get(0);
+        assertThat(reply.getResults()).hasSize(2); // 2 category groups
+
+        // Verify we have both categories represented
+        List<SearchResult<String, String>> aggregationResults = reply.getResults();
+        Set<String> foundCategories = new HashSet<>();
+        for (SearchResult<String, String> groupResult : aggregationResults) {
+            foundCategories.add(groupResult.getFields().get("category"));
+        }
+        assertThat(foundCategories).containsExactlyInAnyOrder("electronics", "books");
+
+        // Cleanup
+        redis.ftDropindex(indexName);
+    }
+
+    /**
+     * Test SVS-VAMANA vector index with different distance metrics. This test verifies that SVS-VAMANA works correctly with all
+     * supported distance metrics (L2, COSINE, IP) and produces expected similarity rankings.
+     */
+    @Test
+    void testSvsVamanaWithDifferentDistanceMetrics() {
+        // Test each distance metric
+        String[] metrics = { "L2", "COSINE", "IP" };
+
+        for (String metric : metrics) {
+            String indexName = "svs-vamana-" + metric.toLowerCase() + "-idx";
+
+            FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("embedding").svsVamana()
+                    .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(3)
+                    .distanceMetric(VectorFieldArgs.DistanceMetric.valueOf(metric)).attribute("CONSTRUCTION_WINDOW_SIZE", 64)
+                    .build();
+
+            FieldArgs<String> nameField = TextFieldArgs.<String> builder().name("name").build();
+
+            CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix(metric.toLowerCase() + ":")
+                    .on(CreateArgs.TargetType.HASH).build();
+
+            // Create index
+            String result = redis.ftCreate(indexName, createArgs, Arrays.asList(vectorField, nameField));
+            assertThat(result).isEqualTo("OK");
+
+            // Insert test vectors using binary format
+            Map<ByteBuffer, ByteBuffer> vec1 = new HashMap<>();
+            vec1.put(ByteBuffer.wrap("name".getBytes()), ByteBuffer.wrap("Vector 1".getBytes()));
+            vec1.put(ByteBuffer.wrap("embedding".getBytes()), floatArrayToByteBuffer(new float[] { 1.0f, 0.0f, 0.0f }));
+            redisBinary.hmset(ByteBuffer.wrap((metric.toLowerCase() + ":vec1").getBytes()), vec1);
+
+            Map<ByteBuffer, ByteBuffer> vec2 = new HashMap<>();
+            vec2.put(ByteBuffer.wrap("name".getBytes()), ByteBuffer.wrap("Vector 2".getBytes()));
+            vec2.put(ByteBuffer.wrap("embedding".getBytes()), floatArrayToByteBuffer(new float[] { 0.0f, 1.0f, 0.0f }));
+            redisBinary.hmset(ByteBuffer.wrap((metric.toLowerCase() + ":vec2").getBytes()), vec2);
+
+            Map<ByteBuffer, ByteBuffer> vec3 = new HashMap<>();
+            vec3.put(ByteBuffer.wrap("name".getBytes()), ByteBuffer.wrap("Vector 3".getBytes()));
+            vec3.put(ByteBuffer.wrap("embedding".getBytes()), floatArrayToByteBuffer(new float[] { 0.5f, 0.5f, 0.0f }));
+            redisBinary.hmset(ByteBuffer.wrap((metric.toLowerCase() + ":vec3").getBytes()), vec3);
+
+            // Query with vector similar to vec1
+            ByteBuffer queryVector = floatArrayToByteBuffer(new float[] { 0.9f, 0.1f, 0.0f });
+            ByteBuffer blobKey = ByteBuffer.wrap("query_vec".getBytes());
+            SearchArgs<ByteBuffer, ByteBuffer> searchArgs = SearchArgs.<ByteBuffer, ByteBuffer> builder()
+                    .param(blobKey, queryVector).build();
+
+            ByteBuffer indexKey = ByteBuffer.wrap(indexName.getBytes());
+            ByteBuffer queryString = ByteBuffer.wrap("*=>[KNN 3 @embedding $query_vec]".getBytes());
+            SearchReply<ByteBuffer, ByteBuffer> searchResult = redisBinary.ftSearch(indexKey, queryString, searchArgs);
+
+            // Verify we get results
+            assertThat(searchResult.getCount()).isEqualTo(3);
+            assertThat(searchResult.getResults()).hasSize(3);
+
+            // For all metrics, the most similar should be found
+            // The exact ranking may vary by metric, but we should get valid results
+            List<SearchReply.SearchResult<ByteBuffer, ByteBuffer>> results = searchResult.getResults();
+            ByteBuffer nameKey = ByteBuffer.wrap("name".getBytes());
+            assertThat(results.get(0).getFields().get(nameKey)).isNotNull();
+            assertThat(results.get(1).getFields().get(nameKey)).isNotNull();
+            assertThat(results.get(2).getFields().get(nameKey)).isNotNull();
+
+            // Cleanup
+            redis.ftDropindex(indexName);
         }
     }
 

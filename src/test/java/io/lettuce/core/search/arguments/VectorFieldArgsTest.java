@@ -152,6 +152,7 @@ class VectorFieldArgsTest {
     void testAlgorithmEnum() {
         assertThat(VectorFieldArgs.Algorithm.FLAT.name()).isEqualTo("FLAT");
         assertThat(VectorFieldArgs.Algorithm.HNSW.name()).isEqualTo("HNSW");
+        assertThat(VectorFieldArgs.Algorithm.SVS_VAMANA.toString()).isEqualTo("SVS-VAMANA");
     }
 
     @Test
@@ -248,6 +249,106 @@ class VectorFieldArgsTest {
         assertThat(field.getAttributes()).containsEntry("BLOCK_SIZE", 256);
         assertThat(field.isSortable()).isTrue();
         assertThat(field.isNoIndex()).isTrue();
+    }
+
+    @Test
+    void testVectorFieldArgsWithSvsVamana() {
+        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").svsVamana().build();
+
+        assertThat(field.getName()).isEqualTo("vector");
+        assertThat(field.getAlgorithm()).hasValue(VectorFieldArgs.Algorithm.SVS_VAMANA);
+    }
+
+    @Test
+    void testSvsVamanaWithCompression() {
+        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("compressed_vector").svsVamana()
+                .attribute("COMPRESSION", "LVQ").build();
+
+        assertThat(field.getAlgorithm()).hasValue(VectorFieldArgs.Algorithm.SVS_VAMANA);
+        assertThat(field.getAttributes()).containsEntry("COMPRESSION", "LVQ");
+    }
+
+    @Test
+    void testSvsVamanaWithLeanVecCompression() {
+        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("leanvec_vector").svsVamana()
+                .attribute("COMPRESSION", "LEANVEC").build();
+
+        assertThat(field.getAlgorithm()).hasValue(VectorFieldArgs.Algorithm.SVS_VAMANA);
+        assertThat(field.getAttributes()).containsEntry("COMPRESSION", "LEANVEC");
+    }
+
+    @Test
+    void testSvsVamanaWithConstructionWindowSize() {
+        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").svsVamana()
+                .attribute("CONSTRUCTION_WINDOW_SIZE", 128).build();
+
+        assertThat(field.getAttributes()).containsEntry("CONSTRUCTION_WINDOW_SIZE", 128);
+    }
+
+    @Test
+    void testSvsVamanaWithGraphMaxDegree() {
+        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").svsVamana()
+                .attribute("GRAPH_MAX_DEGREE", 64).build();
+
+        assertThat(field.getAttributes()).containsEntry("GRAPH_MAX_DEGREE", 64);
+    }
+
+    @Test
+    void testSvsVamanaWithSearchWindowSize() {
+        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("vector").svsVamana()
+                .attribute("SEARCH_WINDOW_SIZE", 100).build();
+
+        assertThat(field.getAttributes()).containsEntry("SEARCH_WINDOW_SIZE", 100);
+    }
+
+    @Test
+    void testSvsVamanaWithAllOptions() {
+        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("svs_vector").as("vector").svsVamana()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(384).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
+                .attribute("COMPRESSION", "LVQ").attribute("CONSTRUCTION_WINDOW_SIZE", 256).attribute("GRAPH_MAX_DEGREE", 64)
+                .attribute("SEARCH_WINDOW_SIZE", 128).sortable().build();
+
+        assertThat(field.getName()).isEqualTo("svs_vector");
+        assertThat(field.getAs()).hasValue("vector");
+        assertThat(field.getAlgorithm()).hasValue(VectorFieldArgs.Algorithm.SVS_VAMANA);
+        assertThat(field.getAttributes()).containsEntry("TYPE", "FLOAT32");
+        assertThat(field.getAttributes()).containsEntry("DIM", 384);
+        assertThat(field.getAttributes()).containsEntry("DISTANCE_METRIC", "COSINE");
+        assertThat(field.getAttributes()).containsEntry("COMPRESSION", "LVQ");
+        assertThat(field.getAttributes()).containsEntry("CONSTRUCTION_WINDOW_SIZE", 256);
+        assertThat(field.getAttributes()).containsEntry("GRAPH_MAX_DEGREE", 64);
+        assertThat(field.getAttributes()).containsEntry("SEARCH_WINDOW_SIZE", 128);
+        assertThat(field.isSortable()).isTrue();
+    }
+
+    @Test
+    void testVectorFieldArgsBuildSvsVamana() {
+        VectorFieldArgs<String> field = VectorFieldArgs.<String> builder().name("svs_test").svsVamana()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(128).distanceMetric(VectorFieldArgs.DistanceMetric.L2)
+                .attribute("COMPRESSION", "LVQ").attribute("CONSTRUCTION_WINDOW_SIZE", 256).attribute("GRAPH_MAX_DEGREE", 64)
+                .attribute("SEARCH_WINDOW_SIZE", 128).build();
+
+        CommandArgs<String, String> commandArgs = new CommandArgs<>(StringCodec.UTF8);
+        field.build(commandArgs);
+
+        String argsString = commandArgs.toString();
+        assertThat(argsString).contains("svs_test");
+        assertThat(argsString).contains("VECTOR");
+        assertThat(argsString).contains("SVS-VAMANA");
+        assertThat(argsString).contains("18"); // 9 attributes * 2
+        assertThat(argsString).contains("TYPE");
+        assertThat(argsString).contains("FLOAT32");
+        assertThat(argsString).contains("DIM");
+        assertThat(argsString).contains("128");
+        assertThat(argsString).contains("DISTANCE_METRIC");
+        assertThat(argsString).contains("L2");
+        assertThat(argsString).contains("COMPRESSION");
+        assertThat(argsString).contains("LVQ");
+        assertThat(argsString).contains("CONSTRUCTION_WINDOW_SIZE");
+        assertThat(argsString).contains("256");
+        assertThat(argsString).contains("GRAPH_MAX_DEGREE");
+        assertThat(argsString).contains("64");
+        assertThat(argsString).contains("SEARCH_WINDOW_SIZE");
     }
 
 }
