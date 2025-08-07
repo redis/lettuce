@@ -111,6 +111,9 @@ public class RediSearchVectorIntegrationTests {
      */
     @Test
     void testSvsVamanaBasicVectorSearch() {
+        // VAMANA is available since Redis 8.2
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.2"));
+
         String indexName = "svs-vamana-basic-idx";
 
         // Create SVS-VAMANA vector field
@@ -172,6 +175,10 @@ public class RediSearchVectorIntegrationTests {
      */
     @Test
     void testSvsVamanaWithAdvancedParameters() {
+
+        // VAMANA is available since Redis 8.2
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.2"));
+
         String indexName = "svs-vamana-advanced-idx";
 
         // Create SVS-VAMANA vector field with advanced parameters (no compression)
@@ -239,6 +246,10 @@ public class RediSearchVectorIntegrationTests {
      */
     @Test
     void testSvsVamanaWithAggregation() {
+
+        // VAMANA is available since Redis 8.2
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.2"));
+
         String indexName = "svs-vamana-agg-idx";
 
         // Create SVS-VAMANA vector field optimized for aggregation (no compression)
@@ -304,6 +315,10 @@ public class RediSearchVectorIntegrationTests {
      */
     @Test
     void testSvsVamanaWithDifferentDistanceMetrics() {
+
+        // VAMANA is available since Redis 8.2
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.2"));
+
         // Test each distance metric
         String[] metrics = { "L2", "COSINE", "IP" };
 
