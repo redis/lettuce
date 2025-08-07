@@ -36,6 +36,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
      * Vector similarity index algorithms.
      */
     public enum Algorithm {
+
         /**
          * Brute force algorithm.
          */
@@ -43,7 +44,43 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
         /**
          * Hierarchical, navigable, small world algorithm.
          */
-        HNSW
+        HNSW,
+        /**
+         * SVS-VAMANA algorithm provides high-performance approximate vector search optimized for specific use cases with
+         * advanced compression and optimization features.
+         *
+         * <p>
+         * Characteristics:
+         * <ul>
+         * <li>High-performance approximate search</li>
+         * <li>Support for vector compression (LVQ, LeanVec)</li>
+         * <li>Configurable graph construction and search parameters</li>
+         * <li>Optimized for Intel platforms with fallback support</li>
+         * </ul>
+         *
+         * <p>
+         * Note: This algorithm may have specific requirements and limitations. Consult the Redis documentation for detailed
+         * usage guidelines.
+         *
+         * @since Redis 8.2
+         */
+        SVS_VAMANA("SVS-VAMANA");
+
+        private final String redisName;
+
+        Algorithm() {
+            this.redisName = name();
+        }
+
+        Algorithm(String redisName) {
+            this.redisName = redisName;
+        }
+
+        @Override
+        public String toString() {
+            return redisName;
+        }
+
     }
 
     /**
@@ -169,11 +206,30 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
 
         /**
          * Use the HNSW (hierarchical, navigable, small world) algorithm.
-         * 
+         *
          * @return the instance of the {@link Builder} for the purpose of method chaining
          */
         public Builder<K> hnsw() {
             return algorithm(Algorithm.HNSW);
+        }
+
+        /**
+         * Use the SVS-VAMANA algorithm for high-performance approximate vector search.
+         *
+         * <p>
+         * SVS-VAMANA provides advanced features including:
+         * <ul>
+         * <li>Vector compression support (LVQ, LeanVec)</li>
+         * <li>Configurable graph construction parameters</li>
+         * <li>Runtime search optimization</li>
+         * <li>Intel platform optimizations</li>
+         * </ul>
+         *
+         * @return the instance of the {@link Builder} for the purpose of method chaining
+         * @since Redis 8.2
+         */
+        public Builder<K> svsVamana() {
+            return algorithm(Algorithm.SVS_VAMANA);
         }
 
         /**
@@ -211,7 +267,7 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
 
         /**
          * Add a custom attribute.
-         * 
+         *
          * @param name the attribute name
          * @param value the attribute value
          * @return the instance of the {@link Builder} for the purpose of method chaining
