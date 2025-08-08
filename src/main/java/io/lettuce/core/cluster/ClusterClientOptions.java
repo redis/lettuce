@@ -53,7 +53,8 @@ public class ClusterClientOptions extends ClientOptions {
 
     public static final Duration DEFAULT_REFRESH_PERIOD_DURATION = Duration.ofSeconds(DEFAULT_REFRESH_PERIOD);
 
-    public static final boolean DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP = true;
+    /** Since Lettuce 7.0 validation is by default disabled. */
+    public static final boolean DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP = false;
 
     public static final Predicate<RedisClusterNode> DEFAULT_NODE_FILTER = node -> true;
 
@@ -281,8 +282,12 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         /**
-         * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code true}. See
+         * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code false}. See
          * {@link ClusterClientOptions#DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP}.
+         * <p/>
+         * Since 7.0, validation is disabled by default, as it is causing problems in some upgrade scenarios. In scenarios where
+         * upgraded nodes are added to the cluster the ASK / MOVED replies usually come before the topology is refreshed and -
+         * respectively - this validation would fail.
          *
          * @param validateClusterNodeMembership {@code true} if validation is enabled.
          * @return {@code this}
@@ -396,7 +401,7 @@ public class ClusterClientOptions extends ClientOptions {
     }
 
     /**
-     * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code true}.
+     * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code false}.
      *
      * @return {@code true} if validation is enabled.
      */

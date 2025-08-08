@@ -132,9 +132,24 @@ class ClusterTopologyRefreshSchedulerUnitTests {
     }
 
     @Test
-    void shouldNotTriggerAdaptiveRefreshUsingDefaults() {
+    void shouldTriggerAdaptiveRefreshUsingDefaults() {
 
         ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.create();
+
+        ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder()
+                .topologyRefreshOptions(clusterTopologyRefreshOptions).build();
+
+        when(clusterClient.getClusterClientOptions()).thenReturn(clusterClientOptions);
+
+        sut.onAskRedirection();
+        verify(eventExecutors).submit(any(Runnable.class));
+    }
+
+    @Test
+    void shouldNotTriggerAdaptiveRefreshWhenDisabled() {
+
+        ClusterTopologyRefreshOptions clusterTopologyRefreshOptions = ClusterTopologyRefreshOptions.builder()
+                .disableAllAdaptiveRefreshTriggers().build();
 
         ClusterClientOptions clusterClientOptions = ClusterClientOptions.builder()
                 .topologyRefreshOptions(clusterTopologyRefreshOptions).build();
