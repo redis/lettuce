@@ -263,24 +263,6 @@ public class ClientOptions implements Serializable {
         }
 
         /**
-         * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are
-         * discarded during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}.
-         * E.g. setting {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75
-         * percent. See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
-         *
-         * @param bufferUsageRatio the buffer usage ratio. Must be between {@code 0} and {@code 2^31-1}, typically a value
-         *        between 1 and 10 representing 50% to 90%.
-         * @return {@code this}
-         * @since 5.2
-         * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
-         */
-        @Deprecated
-        public Builder bufferUsageRatio(int bufferUsageRatio) {
-            this.decodeBufferPolicy = DecodeBufferPolicies.ratio(bufferUsageRatio);
-            return this;
-        }
-
-        /**
          * Set the policy to discard read bytes from the decoding aggregation buffer to reclaim memory.
          *
          * @param policy the policy to use in {@link io.lettuce.core.protocol.CommandHandler}
@@ -567,20 +549,6 @@ public class ClientOptions implements Serializable {
      */
     public DecodeBufferPolicy getDecodeBufferPolicy() {
         return decodeBufferPolicy;
-    }
-
-    /**
-     * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are discarded
-     * during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}. E.g. setting
-     * {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75 percent.
-     *
-     * @return zero.
-     * @since 5.2
-     * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
-     */
-    @Deprecated
-    public int getBufferUsageRatio() {
-        return 0;
     }
 
     /**
