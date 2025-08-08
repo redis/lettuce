@@ -10,12 +10,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.TimeoutOptions;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.settings.TestSettings;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
@@ -41,25 +45,36 @@ import io.netty.util.Version;
 
 /**
  * @author Mark Paluch
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
 @SuppressWarnings("rawtypes")
-class AtMostOnceIntegrationTests extends AbstractRedisClientTest {
+class AtMostOnceIntegrationTests {
 
-    private String key = "key";
+    private static final String key = "key";
+
+    private final RedisClient client;
+
+    public AtMostOnceIntegrationTests() {
+        // needs to be increased on slow systems...perhaps...
+        final RedisURI uri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).withTimeout(Duration.ofSeconds(3))
+                .build();
+        this.client = RedisClient.create(uri);
+        this.client.setOptions(ClientOptions.builder().autoReconnect(false)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+    }
 
     @BeforeEach
     void before() {
-        client.setOptions(ClientOptions.builder().autoReconnect(false)
-                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
-
-        // needs to be increased on slow systems...perhaps...
-        client.setDefaultTimeout(3, TimeUnit.SECONDS);
-
         RedisCommands<String, String> connection = client.connect().sync();
         connection.flushall();
         connection.flushdb();
         connection.getStatefulConnection().close();
+    }
+
+    @AfterEach
+    void tearDown() {
+        FastShutdown.shutdown(client);
     }
 
     @Test
