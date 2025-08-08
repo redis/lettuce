@@ -11,6 +11,10 @@ import io.lettuce.core.models.role.RedisNodeDescription;
  */
 class ReplicaUtils {
 
+    private ReplicaUtils() {
+        // No Instances.
+    }
+
     /**
      * Check if properties changed.
      *
