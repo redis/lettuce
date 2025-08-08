@@ -56,8 +56,8 @@ nav:
       - Kotlin API: user-guide/kotlin-api.md
       - Publish/Subscribe: user-guide/pubsub.md
       - Transactions/Multi: user-guide/transactions-multi.md
+      - Redis Query Engine: user-guide/redis-search.md
       - Redis JSON: user-guide/redis-json.md
-      - RediSearch: user-guide/redis-search.md
       - Redis Vector Sets: user-guide/vector-sets.md
       - Redis programmability:
           - LUA Scripting: user-guide/lua-scripting.md
@@ -68,3 +68,4 @@ nav:
   - Integration and Extension: integration-extension.md
   - Frequently Asked Questions: faq.md
   - API Reference: https://www.javadoc.io/doc/io.lettuce/lettuce-core/latest/index.html
+  - JMH Micro-benchmarks: static/benchmarks/index.html
