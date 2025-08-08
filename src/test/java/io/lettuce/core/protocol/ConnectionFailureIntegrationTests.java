@@ -168,7 +168,6 @@ class ConnectionFailureIntegrationTests extends TestSupport {
         }
     }
 
-
     @Test
     void emitEventOnReconnectFailure() throws Exception {
 
