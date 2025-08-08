@@ -329,3 +329,8 @@ embeddings
 Dimensionality
 HNSW
 VectorSet
+BITOP
+atakavci
+NoClassDefFoundError
+hubertchylik
+VMANA
