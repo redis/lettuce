@@ -14,9 +14,7 @@ public class ConnectToElastiCacheMaster {
 
         // Syntax: redis://[password@]host[:port][/databaseNumber]
 
-        DefaultClientResources clientResources = DefaultClientResources.builder() //
-                .dnsResolver(new DirContextDnsResolver()) // Does not cache DNS lookups
-                .build();
+        DefaultClientResources clientResources = DefaultClientResources.builder().build();
 
         RedisClient redisClient = RedisClient.create(clientResources, "redis://password@localhost:6379/0");
         StatefulRedisConnection<String, String> connection = redisClient.connect();

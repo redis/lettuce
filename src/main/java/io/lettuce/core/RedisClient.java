@@ -687,7 +687,7 @@ public class RedisClient extends AbstractRedisClient {
      *
      * @param redisURI must not be {@code null}.
      * @return the resolved {@link SocketAddress}.
-     * @see ClientResources#dnsResolver()
+     * @see ClientResources#addressResolverGroup()
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
      */
