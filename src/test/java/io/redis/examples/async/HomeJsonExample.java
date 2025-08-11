@@ -201,14 +201,23 @@ public class HomeJsonExample {
             makeHashIndex.join();
 
             // STEP_START add_hash_data
-            Map<String, String> huser1 = Map.of("name", "Paul John", "email", "paul.john@example.com", "age", "42", "city",
-                    "London");
+            Map<String, String> huser1 = new HashMap<>();
+            huser1.put("name", "Paul John");
+            huser1.put("email", "paul.john@example.com");
+            huser1.put("age", "42");
+            huser1.put("city", "London");
 
-            Map<String, String> huser2 = Map.of("name", "Eden Zamir", "email", "eden.zamir@example.com", "age", "29", "city",
-                    "Tel Aviv");
+            Map<String, String> huser2 = new HashMap<>();
+            huser2.put("name", "Eden Zamir");
+            huser2.put("email", "eden.zamir@example.com");
+            huser2.put("age", "29");
+            huser2.put("city", "Tel Aviv");
 
-            Map<String, String> huser3 = Map.of("name", "Paul Zamir", "email", "paul.zamir@example.com", "age", "35", "city",
-                    "Tel Aviv");
+            Map<String, String> huser3 = new HashMap<>();
+            huser3.put("name", "Paul Zamir");
+            huser3.put("email", "paul.zamir@example.com");
+            huser3.put("age", "35");
+            huser3.put("city", "Tel Aviv");
 
             CompletableFuture<Long> addHashUser1 = asyncCommands.hset("huser:1", huser1).thenApply(r -> {
                 System.out.println(r); // >>> OK
