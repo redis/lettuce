@@ -6,15 +6,8 @@ import io.lettuce.core.*;
 
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands;
-import io.lettuce.core.search.arguments.CreateArgs;
-import io.lettuce.core.search.arguments.FieldArgs;
-import io.lettuce.core.search.arguments.TextFieldArgs;
-import io.lettuce.core.search.arguments.NumericFieldArgs;
-import io.lettuce.core.search.arguments.TagFieldArgs;
-import io.lettuce.core.search.arguments.SearchArgs;
-import io.lettuce.core.search.arguments.AggregateArgs;
-import io.lettuce.core.search.arguments.AggregateArgs.GroupBy;
-import io.lettuce.core.search.arguments.AggregateArgs.Reducer;
+import io.lettuce.core.search.arguments.*;
+import io.lettuce.core.search.arguments.AggregateArgs.*;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.AggregationReply;
 
