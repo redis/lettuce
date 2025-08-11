@@ -11,6 +11,10 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 public final class ReflectionTestUtils {
 
+    private ReflectionTestUtils() {
+        // No Instances.
+    }
+
     /**
      * Get the value of the {@linkplain Field field} with the given {@code name} from the provided {@code targetObject}.
      * <p>

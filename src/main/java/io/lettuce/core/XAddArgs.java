@@ -49,6 +49,8 @@ public class XAddArgs implements CompositeArgument {
 
     private Long limit;
 
+    private StreamDeletionPolicy trimmingMode;
+
     /**
      * Builder entry points for {@link XAddArgs}.
      */
@@ -156,6 +158,18 @@ public class XAddArgs implements CompositeArgument {
     }
 
     /**
+     * When trimming, defines desired behaviour for handling consumer group references. See {@link StreamDeletionPolicy} for
+     * details.
+     *
+     * @param trimmingMode the deletion policy to apply during trimming.
+     * @return {@code this}
+     */
+    public XAddArgs trimmingMode(StreamDeletionPolicy trimmingMode) {
+        this.trimmingMode = trimmingMode;
+        return this;
+    }
+
+    /**
      * Apply efficient trimming for capped streams using the {@code ~} flag.
      *
      * @return {@code this}
@@ -251,6 +265,10 @@ public class XAddArgs implements CompositeArgument {
 
         if (limit != null && approximateTrimming) {
             args.add(CommandKeyword.LIMIT).add(limit);
+        }
+
+        if (trimmingMode != null) {
+            args.add(trimmingMode);
         }
 
         if (nomkstream) {

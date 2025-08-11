@@ -28,6 +28,7 @@ import io.lettuce.core.*;
 import io.lettuce.core.XReadArgs.StreamOffset;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
+import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 
 /**
  * Reactive executed commands for Streams.
@@ -49,6 +50,32 @@ public interface RedisStreamReactiveCommands<K, V> {
      * @return simple-reply the lenght of acknowledged messages.
      */
     Mono<Long> xack(K key, K group, String... messageIds);
+
+    /**
+     * Acknowledge and delete one or more messages from the stream and consumer group. Returns detailed results for each message
+     * ID indicating whether it was deleted, not found, or not deleted due to pending references.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @param messageIds message Id's to acknowledge and delete.
+     * @return List of {@link StreamEntryDeletionResult} indicating the result for each message ID.
+     * @since 6.8
+     */
+    Flux<StreamEntryDeletionResult> xackdel(K key, K group, String... messageIds);
+
+    /**
+     * Acknowledge and delete one or more messages from the stream and consumer group with a specific deletion policy. Returns
+     * detailed results for each message ID indicating whether it was deleted, not found, or not deleted due to pending
+     * references.
+     *
+     * @param key the stream key.
+     * @param group name of the consumer group.
+     * @param policy the deletion policy to apply.
+     * @param messageIds message Id's to acknowledge and delete.
+     * @return List of {@link StreamEntryDeletionResult} indicating the result for each message ID.
+     * @since 6.8
+     */
+    Flux<StreamEntryDeletionResult> xackdel(K key, K group, StreamDeletionPolicy policy, String... messageIds);
 
     /**
      * Append a message to the stream {@code key}.
@@ -132,6 +159,30 @@ public interface RedisStreamReactiveCommands<K, V> {
      * @return simple-reply number of removed entries.
      */
     Mono<Long> xdel(K key, String... messageIds);
+
+    /**
+     * Extended delete operation that removes the specified entries from the stream and returns detailed results for each
+     * message ID indicating whether it was deleted, not found, or not deleted due to acknowledgment status.
+     *
+     * @param key the stream key.
+     * @param messageIds stream message Id's.
+     * @return List of {@link StreamEntryDeletionResult} indicating the result for each message ID.
+     * @since 6.8
+     */
+    Flux<StreamEntryDeletionResult> xdelex(K key, String... messageIds);
+
+    /**
+     * Extended delete operation that removes the specified entries from the stream with a specific deletion policy and returns
+     * detailed results for each message ID indicating whether it was deleted, not found, or not deleted due to acknowledgment
+     * status.
+     *
+     * @param key the stream key.
+     * @param policy the deletion policy to apply.
+     * @param messageIds stream message Id's.
+     * @return List of {@link StreamEntryDeletionResult} indicating the result for each message ID.
+     * @since 6.8
+     */
+    Flux<StreamEntryDeletionResult> xdelex(K key, StreamDeletionPolicy policy, String... messageIds);
 
     /**
      * Create a consumer group.

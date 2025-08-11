@@ -495,10 +495,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                     logger.debug("{} channelActive() ran into an exception", logPrefix());
                 }
 
-                if (clientOptions.isCancelCommandsOnReconnectFailure()) {
-                    reset();
-                }
-
                 throw e;
             }
         });

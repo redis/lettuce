@@ -112,6 +112,9 @@ public class CreateSyncNodeSelectionClusterApi {
 
     private CompilationUnitFactory createFactory(String templateName) {
         String targetName = templateName.replace("Redis", "NodeSelection");
+        if (targetName.equals(templateName)) {
+            targetName = templateName.replace("Redi", "NodeSelection");
+        }
         File templateFile = new File(Constants.TEMPLATES, "io/lettuce/core/api/" + templateName + ".java");
         String targetPackage = "io.lettuce.core.cluster.api.sync";
 

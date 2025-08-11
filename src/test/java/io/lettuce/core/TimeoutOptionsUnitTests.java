@@ -38,13 +38,15 @@ class TimeoutOptionsUnitTests {
 
     @Test
     void fixedConnectionTimeout() {
+        final long MINUTES = 1;
+        final long MINUTE_IN_NANOS = TimeUnit.MINUTES.toNanos(MINUTES);
 
-        TimeoutOptions timeoutOptions = TimeoutOptions.enabled(Duration.ofMinutes(1));
+        TimeoutOptions timeoutOptions = TimeoutOptions.enabled(Duration.ofMinutes(MINUTES));
 
         TimeoutSource source = timeoutOptions.getSource();
         assertThat(timeoutOptions.isTimeoutCommands()).isTrue();
         assertThat(timeoutOptions.isApplyConnectionTimeout()).isFalse();
-        assertThat(source.getTimeout(null)).isEqualTo(TimeUnit.MINUTES.toNanos(1));
+        assertThat(source.getTimeout(null)).isEqualTo(MINUTE_IN_NANOS);
     }
 
 }

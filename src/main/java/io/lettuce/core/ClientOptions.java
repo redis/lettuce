@@ -28,7 +28,6 @@ import java.util.ServiceLoader;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.RedisJsonException;
@@ -55,8 +54,6 @@ public class ClientOptions implements Serializable {
     public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
     public static final int DEFAULT_BUFFER_USAGE_RATIO = 3;
-
-    public static final boolean DEFAULT_CANCEL_CMD_RECONNECT_FAIL = false;
 
     public static final DisconnectedBehavior DEFAULT_DISCONNECTED_BEHAVIOR = DisconnectedBehavior.DEFAULT;
 
@@ -98,8 +95,6 @@ public class ClientOptions implements Serializable {
 
     private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
 
-    private final boolean cancelCommandsOnReconnectFailure;
-
     private final DecodeBufferPolicy decodeBufferPolicy;
 
     private final DisconnectedBehavior disconnectedBehavior;
@@ -133,7 +128,6 @@ public class ClientOptions implements Serializable {
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
         this.replayFilter = builder.replayFilter;
-        this.cancelCommandsOnReconnectFailure = builder.cancelCommandsOnReconnectFailure;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.disconnectedBehavior = builder.disconnectedBehavior;
         this.reauthenticateBehavior = builder.reauthenticateBehavior;
@@ -154,7 +148,6 @@ public class ClientOptions implements Serializable {
     protected ClientOptions(ClientOptions original) {
         this.autoReconnect = original.isAutoReconnect();
         this.replayFilter = original.getReplayFilter();
-        this.cancelCommandsOnReconnectFailure = original.isCancelCommandsOnReconnectFailure();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
         this.reauthenticateBehavior = original.getReauthenticateBehaviour();
@@ -208,8 +201,6 @@ public class ClientOptions implements Serializable {
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
         private Predicate<RedisCommand<?, ?, ?>> replayFilter = DEFAULT_REPLAY_FILTER;
-
-        private boolean cancelCommandsOnReconnectFailure = DEFAULT_CANCEL_CMD_RECONNECT_FAIL;
 
         private DecodeBufferPolicy decodeBufferPolicy = DecodeBufferPolicies.ratio(DEFAULT_BUFFER_USAGE_RATIO);
 
@@ -268,41 +259,6 @@ public class ClientOptions implements Serializable {
          */
         public Builder replayFilter(Predicate<RedisCommand<?, ?, ?>> replayFilter) {
             this.replayFilter = replayFilter;
-            return this;
-        }
-
-        /**
-         * Allows cancelling queued commands in case a reconnect fails.Defaults to {@code false}. See
-         * {@link #DEFAULT_CANCEL_CMD_RECONNECT_FAIL}. <b>This flag is deprecated and should not be used as it can lead to race
-         * conditions and protocol offsets. The reason is that it internally calls reset() which causes a protocol offset.</b>
-         * See {@link StatefulConnection#reset}
-         *
-         * @param cancelCommandsOnReconnectFailure true/false
-         * @return {@code this}
-         * @deprecated since 6.2, to be removed with 7.0. This feature is unsafe and may cause protocol offsets if true (i.e.
-         *             Redis commands are completed with previous command values).
-         */
-        @Deprecated
-        public Builder cancelCommandsOnReconnectFailure(boolean cancelCommandsOnReconnectFailure) {
-            this.cancelCommandsOnReconnectFailure = cancelCommandsOnReconnectFailure;
-            return this;
-        }
-
-        /**
-         * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are
-         * discarded during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}.
-         * E.g. setting {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75
-         * percent. See {@link #DEFAULT_BUFFER_USAGE_RATIO}.
-         *
-         * @param bufferUsageRatio the buffer usage ratio. Must be between {@code 0} and {@code 2^31-1}, typically a value
-         *        between 1 and 10 representing 50% to 90%.
-         * @return {@code this}
-         * @since 5.2
-         * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
-         */
-        @Deprecated
-        public Builder bufferUsageRatio(int bufferUsageRatio) {
-            this.decodeBufferPolicy = DecodeBufferPolicies.ratio(bufferUsageRatio);
             return this;
         }
 
@@ -551,8 +507,7 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
+        builder.autoReconnect(isAutoReconnect()).replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
                 .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
                 .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
                 .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
@@ -587,18 +542,6 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * If this flag is {@code true} any queued commands will be canceled when a reconnect fails within the activation sequence.
-     * Default is {@code false}.
-     *
-     * @return {@code true} if commands should be cancelled on reconnect failures.
-     * @deprecated since 6.2, to be removed with 7.0. See {@link Builder#cancelCommandsOnReconnectFailure(boolean)}.
-     */
-    @Deprecated
-    public boolean isCancelCommandsOnReconnectFailure() {
-        return cancelCommandsOnReconnectFailure;
-    }
-
-    /**
      * Returns the {@link DecodeBufferPolicy} used to reclaim memory.
      *
      * @return the {@link DecodeBufferPolicy}.
@@ -606,20 +549,6 @@ public class ClientOptions implements Serializable {
      */
     public DecodeBufferPolicy getDecodeBufferPolicy() {
         return decodeBufferPolicy;
-    }
-
-    /**
-     * Buffer usage ratio for {@link io.lettuce.core.protocol.CommandHandler}. This ratio controls how often bytes are discarded
-     * during decoding. In particular, when buffer usage reaches {@code bufferUsageRatio / bufferUsageRatio + 1}. E.g. setting
-     * {@code bufferUsageRatio} to {@literal 3}, will discard read bytes once the buffer usage reaches 75 percent.
-     *
-     * @return zero.
-     * @since 5.2
-     * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
-     */
-    @Deprecated
-    public int getBufferUsageRatio() {
-        return 0;
     }
 
     /**

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisURI;
+import reactor.test.StepVerifier;
 
 /**
  * @author Mark Paluch
@@ -71,9 +72,12 @@ class RedisClusterURIUtilUnitTests {
         RedisURI host1 = redisURIs.get(0);
         assertThat(host1.isSsl()).isTrue();
         assertThat(host1.isStartTls()).isTrue();
-        assertThat(new String(host1.getPassword())).isEqualTo("password");
         assertThat(host1.getHost()).isEqualTo("host1");
         assertThat(host1.getPort()).isEqualTo(6379);
+        StepVerifier.create(host1.getCredentialsProvider().resolveCredentials()).assertNext(credentials -> {
+            assertThat(credentials.getUsername()).isNull();
+            assertThat(credentials.getPassword()).isEqualTo("password".toCharArray());
+        }).verifyComplete();
     }
 
     @Test
@@ -86,16 +90,22 @@ class RedisClusterURIUtilUnitTests {
         RedisURI host1 = redisURIs.get(0);
         assertThat(host1.isSsl()).isTrue();
         assertThat(host1.isStartTls()).isTrue();
-        assertThat(new String(host1.getPassword())).isEqualTo("password");
         assertThat(host1.getHost()).isEqualTo("host1");
         assertThat(host1.getPort()).isEqualTo(6379);
+        StepVerifier.create(host1.getCredentialsProvider().resolveCredentials()).assertNext(credentials -> {
+            assertThat(credentials.getUsername()).isNull();
+            assertThat(credentials.getPassword()).isEqualTo("password".toCharArray());
+        }).verifyComplete();
 
         RedisURI host2 = redisURIs.get(1);
         assertThat(host2.isSsl()).isTrue();
         assertThat(host2.isStartTls()).isTrue();
-        assertThat(new String(host2.getPassword())).isEqualTo("password");
         assertThat(host2.getHost()).isEqualTo("host2");
         assertThat(host2.getPort()).isEqualTo(6380);
+        StepVerifier.create(host2.getCredentialsProvider().resolveCredentials()).assertNext(credentials -> {
+            assertThat(credentials.getUsername()).isNull();
+            assertThat(credentials.getPassword()).isEqualTo("password".toCharArray());
+        }).verifyComplete();
     }
 
 }
