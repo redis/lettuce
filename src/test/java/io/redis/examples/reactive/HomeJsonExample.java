@@ -117,7 +117,7 @@ public class HomeJsonExample {
             // STEP_END
 
             // STEP_START query2
-            SearchArgs<String, String> query2Args = SearchArgs.<String, String> builder().returnField("city", null).build();
+            SearchArgs<String, String> query2Args = SearchArgs.<String, String> builder().returnField("city").build();
 
             Mono<SearchReply<String, String>> query2 = searchCommands.ftSearch("idx:users", "Paul", query2Args)
                     .doOnNext(res -> {
