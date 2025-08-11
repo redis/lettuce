@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MaintenanceEventsOptions;
+import io.lettuce.core.MaintenanceEventsOptions.AddressType;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TimeoutOptions;
@@ -39,9 +40,8 @@ import io.lettuce.test.env.Endpoints.Endpoint;
 import static io.lettuce.TestTags.SCENARIO_TEST;
 
 /**
- * Connection testing during Redis Enterprise maintenance events. Validates that
- * connections are properly managed during handoff operations including graceful shutdown
- * of old connections and resumption of traffic with autoconnect.
+ * Connection testing during Redis Enterprise maintenance events. Validates that connections are properly managed during handoff
+ * operations including graceful shutdown of old connections and resumption of traffic with autoconnect.
  */
 @Tag(SCENARIO_TEST)
 public class ConnectionTesting {
@@ -50,12 +50,17 @@ public class ConnectionTesting {
 
     // Timeout constants for testing
     private static final Duration NORMAL_COMMAND_TIMEOUT = Duration.ofMillis(30);
+
     private static final Duration RELAXED_TIMEOUT_ADDITION = Duration.ofMillis(100);
+
     private static final Duration PING_TIMEOUT = Duration.ofSeconds(10);
+
     private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(2);
 
     private static Endpoint mStandard;
+
     private RedisEnterpriseConfig clusterConfig;
+
     private final FaultInjectionClient faultClient = new FaultInjectionClient();
 
     @BeforeAll
@@ -73,49 +78,70 @@ public class ConnectionTesting {
      * Test context holding common objects used across connection tests
      */
     private static class ConnectionTestContext {
+
         final RedisClient client;
+
         final StatefulRedisConnection<String, String> connection;
+
         final RedisCommands<String, String> sync;
+
         final ConnectionCapture capture;
+
         final String bdbId;
 
-        ConnectionTestContext(RedisClient client, StatefulRedisConnection<String, String> connection, 
-                             ConnectionCapture capture, String bdbId) {
+        ConnectionTestContext(RedisClient client, StatefulRedisConnection<String, String> connection, ConnectionCapture capture,
+                String bdbId) {
             this.client = client;
             this.connection = connection;
             this.sync = connection.sync();
             this.capture = capture;
             this.bdbId = bdbId;
         }
+
     }
 
     /**
      * Capture class for monitoring connection events and traffic behavior
      */
     public static class ConnectionCapture implements MaintenanceNotificationCapture {
+
         private final List<String> receivedNotifications = new CopyOnWriteArrayList<>();
+
         private final CountDownLatch notificationLatch = new CountDownLatch(1);
+
         private final AtomicReference<String> lastNotification = new AtomicReference<>();
+
         private final AtomicInteger successCount = new AtomicInteger(0);
+
         private final AtomicInteger failureCount = new AtomicInteger(0);
+
         private final AtomicBoolean maintenanceActive = new AtomicBoolean(false);
+
         private final AtomicBoolean oldConnectionClosed = new AtomicBoolean(false);
+
         private final AtomicBoolean trafficResumed = new AtomicBoolean(false);
+
         private final AtomicBoolean autoReconnected = new AtomicBoolean(false);
 
         // Reference to main connection for monitoring
         private StatefulRedisConnection<String, String> mainConnection;
+
         private RedisCommands<String, String> mainSyncCommands;
 
         // Traffic management
         private final AtomicBoolean stopTraffic = new AtomicBoolean(false);
+
         private final List<CompletableFuture<Void>> trafficThreads = new CopyOnWriteArrayList<>();
+
         private final AtomicBoolean trafficStarted = new AtomicBoolean(false);
 
         // Timing for operation tracking
         private final AtomicLong movingStartTime = new AtomicLong(0);
+
         private final AtomicLong movingEndTime = new AtomicLong(0);
+
         private final AtomicLong connectionDropTime = new AtomicLong(0);
+
         private final AtomicLong reconnectionTime = new AtomicLong(0);
 
         public void setMainConnection(StatefulRedisConnection<String, String> mainConnection) {
@@ -165,7 +191,7 @@ public class ConnectionTesting {
 
                 while (!stopTraffic.get()) {
                     commandCount++;
-                    
+
                     // Check if connection is open
                     boolean wasOpen = mainConnection.isOpen();
                     if (!wasOpen && !oldConnectionClosed.get()) {
@@ -173,17 +199,17 @@ public class ConnectionTesting {
                         oldConnectionClosed.set(true);
                         connectionDropTime.set(System.currentTimeMillis());
                     }
-                    
+
                     // Try to send a command to test traffic resumption
                     boolean commandSucceeded = sendTestCommand(commandCount);
-                    
+
                     if (commandSucceeded && oldConnectionClosed.get() && !trafficResumed.get()) {
                         log.info("Traffic resumed after connection handoff - autoconnect working");
                         trafficResumed.set(true);
                         autoReconnected.set(true);
                         reconnectionTime.set(System.currentTimeMillis());
                     }
-                    
+
                     // Small delay between commands
                     try {
                         Thread.sleep(100);
@@ -251,26 +277,52 @@ public class ConnectionTesting {
         }
 
         // Getters for test validation
-        public List<String> getReceivedNotifications() { return receivedNotifications; }
-        public int getSuccessCount() { return successCount.get(); }
-        public int getFailureCount() { return failureCount.get(); }
-        public boolean isOldConnectionClosed() { return oldConnectionClosed.get(); }
-        public boolean isTrafficResumed() { return trafficResumed.get(); }
-        public boolean isAutoReconnected() { return autoReconnected.get(); }
-        public long getConnectionDropTime() { return connectionDropTime.get(); }
-        public long getReconnectionTime() { return reconnectionTime.get(); }
+        public List<String> getReceivedNotifications() {
+            return receivedNotifications;
+        }
+
+        public int getSuccessCount() {
+            return successCount.get();
+        }
+
+        public int getFailureCount() {
+            return failureCount.get();
+        }
+
+        public boolean isOldConnectionClosed() {
+            return oldConnectionClosed.get();
+        }
+
+        public boolean isTrafficResumed() {
+            return trafficResumed.get();
+        }
+
+        public boolean isAutoReconnected() {
+            return autoReconnected.get();
+        }
+
+        public long getConnectionDropTime() {
+            return connectionDropTime.get();
+        }
+
+        public long getReconnectionTime() {
+            return reconnectionTime.get();
+        }
+
         public long getReconnectionDelay() {
             if (connectionDropTime.get() > 0 && reconnectionTime.get() > 0) {
                 return reconnectionTime.get() - connectionDropTime.get();
             }
             return -1;
         }
+
         public long getMovingDuration() {
             if (movingStartTime.get() > 0 && movingEndTime.get() > 0) {
                 return movingEndTime.get() - movingStartTime.get();
             }
             return -1;
         }
+
     }
 
     /**
@@ -278,24 +330,17 @@ public class ConnectionTesting {
      */
     private ConnectionTestContext setupConnectionTest() {
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword())
-                .withTimeout(Duration.ofSeconds(5))
+                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).withTimeout(Duration.ofSeconds(5))
                 .build();
 
         RedisClient client = RedisClient.create(uri);
 
-        TimeoutOptions timeoutOptions = TimeoutOptions.builder()
-                .timeoutCommands()
-                .fixedTimeout(NORMAL_COMMAND_TIMEOUT)
-                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION)
-                .build();
+        TimeoutOptions timeoutOptions = TimeoutOptions.builder().timeoutCommands().fixedTimeout(NORMAL_COMMAND_TIMEOUT)
+                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
 
-        ClientOptions options = ClientOptions.builder()
-                .autoReconnect(true)
-                .protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled())
-                .timeoutOptions(timeoutOptions)
-                .build();
+        ClientOptions options = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP3)
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP))
+                .timeoutOptions(timeoutOptions).build();
 
         client.setOptions(options);
         StatefulRedisConnection<String, String> connection = client.connect();
@@ -369,10 +414,8 @@ public class ConnectionTesting {
             assertThat(received).isTrue();
 
             // Verify we got the expected notifications
-            assertThat(context.capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
-            assertThat(context.capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MOVING"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
             // Record operation completion
             context.capture.recordMovingEnd();
@@ -396,8 +439,7 @@ public class ConnectionTesting {
 
             // VALIDATION: Old connection should close gracefully after draining
             assertThat(context.capture.isOldConnectionClosed())
-                    .as("Old connection should close gracefully after MOVING handoff and draining pending commands")
-                    .isTrue();
+                    .as("Old connection should close gracefully after MOVING handoff and draining pending commands").isTrue();
 
             // VALIDATION: No resource leaks (connection should be properly cleaned up)
             // Note: This is validated by the fact that we can successfully complete the test
@@ -414,25 +456,20 @@ public class ConnectionTesting {
     public void onlyEnabledWithRESP3Test() throws InterruptedException {
         // Setup connection with RESP2 (not RESP3) to test that notifications are NOT received
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword())
-                .withTimeout(Duration.ofSeconds(5))
+                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).withTimeout(Duration.ofSeconds(5))
                 .build();
 
         RedisClient client = RedisClient.create(uri);
 
-        TimeoutOptions timeoutOptions = TimeoutOptions.builder()
-                .timeoutCommands()
-                .fixedTimeout(NORMAL_COMMAND_TIMEOUT)
-                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION)
-                .build();
+        TimeoutOptions timeoutOptions = TimeoutOptions.builder().timeoutCommands().fixedTimeout(NORMAL_COMMAND_TIMEOUT)
+                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
 
         // CRITICAL: Use RESP2 instead of RESP3 - notifications should NOT be received
-        ClientOptions options = ClientOptions.builder()
-                .autoReconnect(true)
-                .protocolVersion(ProtocolVersion.RESP2)  // Changed from RESP3 to RESP2
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled())
-                .timeoutOptions(timeoutOptions)
-                .build();
+        ClientOptions options = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP2) // Changed
+                                                                                                                   // from RESP3
+                                                                                                                   // to RESP2
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP))
+                .timeoutOptions(timeoutOptions).build();
 
         client.setOptions(options);
         StatefulRedisConnection<String, String> connection = client.connect();
@@ -479,8 +516,7 @@ public class ConnectionTesting {
             });
 
             // Start the maintenance operation (same as in oldConnectionShutDownTest)
-            Boolean operationResult = faultClient
-                    .triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode)
+            Boolean operationResult = faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode)
                     .block(Duration.ofMinutes(3));
             assertThat(operationResult).isTrue();
             log.info("MOVING operation fully completed: {}", operationResult);
@@ -513,14 +549,11 @@ public class ConnectionTesting {
 
             // VALIDATION: Should have empty notifications list
             assertThat(capture.getReceivedNotifications())
-                    .as("Should have no notifications with RESP2 - maintenance events require RESP3")
-                    .isEmpty();
+                    .as("Should have no notifications with RESP2 - maintenance events require RESP3").isEmpty();
 
             // VALIDATION: No MOVING or MIGRATED notifications should be received
-            assertThat(capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MOVING"))).isFalse();
-            assertThat(capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MIGRATED"))).isFalse();
+            assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isFalse();
+            assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isFalse();
 
             log.info("RESP2 validation: No maintenance notifications received as expected");
 
@@ -558,10 +591,8 @@ public class ConnectionTesting {
             assertThat(received).isTrue();
 
             // Verify we got the expected notifications
-            assertThat(context.capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
-            assertThat(context.capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MOVING"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
             // Record operation completion
             context.capture.recordMovingEnd();
@@ -581,25 +612,20 @@ public class ConnectionTesting {
             log.info("Failed operations: {}", context.capture.getFailureCount());
 
             // VALIDATION: Traffic should resume after handoff
-            assertThat(context.capture.isTrafficResumed())
-                    .as("Traffic should resume after MOVING handoff operation")
-                    .isTrue();
+            assertThat(context.capture.isTrafficResumed()).as("Traffic should resume after MOVING handoff operation").isTrue();
 
             // VALIDATION: Autoconnect should work
-            assertThat(context.capture.isAutoReconnected())
-                    .as("Connection should auto-reconnect after MOVING handoff")
+            assertThat(context.capture.isAutoReconnected()).as("Connection should auto-reconnect after MOVING handoff")
                     .isTrue();
 
             // VALIDATION: Should have successful operations after reconnection
             assertThat(context.capture.getSuccessCount())
-                    .as("Should have successful operations after traffic resumption and autoconnect")
-                    .isGreaterThan(0);
+                    .as("Should have successful operations after traffic resumption and autoconnect").isGreaterThan(0);
 
             // VALIDATION: Reconnection should happen within reasonable time
             if (context.capture.getReconnectionDelay() > 0) {
                 assertThat(context.capture.getReconnectionDelay())
-                        .as("Reconnection should happen within reasonable time (< 10 seconds)")
-                        .isLessThan(10000);
+                        .as("Reconnection should happen within reasonable time (< 10 seconds)").isLessThan(10000);
             }
 
         } finally {
@@ -635,26 +661,19 @@ public class ConnectionTesting {
 
             // Now create a NEW connection during the migration process
             log.info("Creating new connection DURING migration process...");
-            
+
             RedisURI newUri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                    .withAuthentication(mStandard.getUsername(), mStandard.getPassword())
-                    .withTimeout(Duration.ofSeconds(5))
+                    .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).withTimeout(Duration.ofSeconds(5))
                     .build();
 
             RedisClient newClient = RedisClient.create(newUri);
 
-            TimeoutOptions newTimeoutOptions = TimeoutOptions.builder()
-                    .timeoutCommands()
-                    .fixedTimeout(NORMAL_COMMAND_TIMEOUT)
-                    .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION)
-                    .build();
+            TimeoutOptions newTimeoutOptions = TimeoutOptions.builder().timeoutCommands().fixedTimeout(NORMAL_COMMAND_TIMEOUT)
+                    .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
 
-            ClientOptions newOptions = ClientOptions.builder()
-                    .autoReconnect(true)
-                    .protocolVersion(ProtocolVersion.RESP3)
-                    .supportMaintenanceEvents(MaintenanceEventsOptions.enabled())
-                    .timeoutOptions(newTimeoutOptions)
-                    .build();
+            ClientOptions newOptions = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP3)
+                    .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP))
+                    .timeoutOptions(newTimeoutOptions).build();
 
             newClient.setOptions(newOptions);
             StatefulRedisConnection<String, String> newConnection = newClient.connect();
@@ -673,17 +692,15 @@ public class ConnectionTesting {
             }
 
             // Setup monitoring on the new connection
-            MaintenancePushNotificationMonitor.setupMonitoring(newConnection, newCapture, MONITORING_TIMEOUT, 
-                    PING_TIMEOUT, Duration.ofMillis(5000));
+            MaintenancePushNotificationMonitor.setupMonitoring(newConnection, newCapture, MONITORING_TIMEOUT, PING_TIMEOUT,
+                    Duration.ofMillis(5000));
 
             // Give some time for the new connection to receive notifications
             Thread.sleep(Duration.ofSeconds(20).toMillis());
 
             // Verify we got the expected notifications on both connections
-            assertThat(context.capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
-            assertThat(context.capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MOVING"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
             log.info("=== New Connection Established Test Results ===");
             log.info("Original connection notifications: {}", context.capture.getReceivedNotifications().size());
@@ -692,9 +709,7 @@ public class ConnectionTesting {
             log.info("New connection failed operations: {}", newCapture.getFailureCount());
 
             // VALIDATION: New connection should be able to operate during migration
-            assertThat(newConnection.isOpen())
-                    .as("New connection established during migration should remain open")
-                    .isTrue();
+            assertThat(newConnection.isOpen()).as("New connection established during migration should remain open").isTrue();
 
             // VALIDATION: New connection should receive maintenance notifications if established after MOVING started
             // The new connection might receive MIGRATED notification if it connects after MOVING but before completion
@@ -756,29 +771,22 @@ public class ConnectionTesting {
             Thread.sleep(2000);
 
             log.info("Creating new connection DURING BIND (MOVING) phase...");
-            
+
             RedisURI newUri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                    .withAuthentication(mStandard.getUsername(), mStandard.getPassword())
-                    .withTimeout(Duration.ofSeconds(10))
+                    .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).withTimeout(Duration.ofSeconds(10))
                     .build();
 
             RedisClient newClient = RedisClient.create(newUri);
 
-            TimeoutOptions newTimeoutOptions = TimeoutOptions.builder()
-                    .timeoutCommands()
-                    .fixedTimeout(NORMAL_COMMAND_TIMEOUT)
-                    .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION)
-                    .build();
+            TimeoutOptions newTimeoutOptions = TimeoutOptions.builder().timeoutCommands().fixedTimeout(NORMAL_COMMAND_TIMEOUT)
+                    .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
 
-            ClientOptions newOptions = ClientOptions.builder()
-                    .autoReconnect(true)
-                    .protocolVersion(ProtocolVersion.RESP3)
-                    .supportMaintenanceEvents(MaintenanceEventsOptions.enabled())
-                    .timeoutOptions(newTimeoutOptions)
-                    .build();
+            ClientOptions newOptions = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP3)
+                    .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP))
+                    .timeoutOptions(newTimeoutOptions).build();
 
             newClient.setOptions(newOptions);
-            
+
             StatefulRedisConnection<String, String> newConnection = null;
             ConnectionCapture newCapture = new ConnectionCapture();
 
@@ -798,8 +806,8 @@ public class ConnectionTesting {
                 }
 
                 // Setup monitoring on the new connection
-                MaintenancePushNotificationMonitor.setupMonitoring(newConnection, newCapture, MONITORING_TIMEOUT, 
-                        PING_TIMEOUT, Duration.ofMillis(3000));
+                MaintenancePushNotificationMonitor.setupMonitoring(newConnection, newCapture, MONITORING_TIMEOUT, PING_TIMEOUT,
+                        Duration.ofMillis(3000));
 
             } catch (Exception e) {
                 log.info("Connection establishment during bind phase failed (expected): {}", e.getMessage());
@@ -826,7 +834,7 @@ public class ConnectionTesting {
             // Test reconnection behavior
             if (newConnection != null) {
                 log.info("Testing reconnection behavior after bind phase completion...");
-                
+
                 boolean connectionIsOpen = newConnection.isOpen();
                 log.info("New connection open status: {}", connectionIsOpen);
 
@@ -836,15 +844,15 @@ public class ConnectionTesting {
                     if (!connectionIsOpen) {
                         log.info("Connection is closed, testing autoconnect behavior...");
                     }
-                    
+
                     // Try operations that should trigger reconnection if needed
                     newConnection.sync().ping();
                     newConnection.sync().set("reconnect-test-key", "test-value");
                     String retrievedValue = newConnection.sync().get("reconnect-test-key");
-                    
+
                     canReconnectAndOperate = "test-value".equals(retrievedValue);
                     log.info("Reconnection and operations successful: {}", canReconnectAndOperate);
-                    
+
                 } catch (Exception e) {
                     log.info("Reconnection test failed: {}", e.getMessage());
                 }
@@ -858,8 +866,7 @@ public class ConnectionTesting {
                 log.info("New connection failed operations: {}", newCapture.getFailureCount());
 
                 // VALIDATION: Original connection should receive notifications
-                assertThat(context.capture.getReceivedNotifications().stream()
-                        .anyMatch(n -> n.contains("+MOVING"))).isTrue();
+                assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
                 // VALIDATION: Connection established during bind phase should handle reconnection gracefully
                 if (canReconnectAndOperate) {
@@ -874,8 +881,7 @@ public class ConnectionTesting {
                 // The connection should either stay open or be able to reconnect automatically
                 boolean connectionWorking = newConnection.isOpen() || canReconnectAndOperate;
                 assertThat(connectionWorking)
-                        .as("Connection should either remain open or successfully reconnect via autoconnect")
-                        .isTrue();
+                        .as("Connection should either remain open or successfully reconnect via autoconnect").isTrue();
 
                 // Cleanup new connection
                 newCapture.stopMonitoring();
@@ -911,7 +917,8 @@ public class ConnectionTesting {
             String targetNode = clusterConfig.getOptimalTargetNode();
 
             // Start maintenance operation with all connections monitoring
-            log.info("Starting maintenance operation (migrate + bind) to test memory management with {} clients...", numClients);
+            log.info("Starting maintenance operation (migrate + bind) to test memory management with {} clients...",
+                    numClients);
 
             Boolean operationResult = faultClient
                     .triggerMovingNotification(contexts.get(0).bdbId, endpointId, policy, sourceNode, targetNode)
@@ -948,29 +955,25 @@ public class ConnectionTesting {
 
                 totalSuccessfulOps += successCount;
                 totalFailedOps += failureCount;
-                if (reconnected) reconnectedClients++;
+                if (reconnected)
+                    reconnectedClients++;
 
-                log.info("Client {}: Success={}, Failures={}, Reconnected={}", 
-                         i + 1, successCount, failureCount, reconnected);
+                log.info("Client {}: Success={}, Failures={}, Reconnected={}", i + 1, successCount, failureCount, reconnected);
 
                 // VALIDATION: Each connection should receive maintenance notifications
-                assertThat(context.capture.getReceivedNotifications().stream()
-                        .anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
-                assertThat(context.capture.getReceivedNotifications().stream()
-                        .anyMatch(n -> n.contains("+MOVING"))).isTrue();
+                assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+                assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
             }
 
-            log.info("Aggregate stats: Total successful ops={}, Total failed ops={}, Reconnected clients={}/{}", 
-                     totalSuccessfulOps, totalFailedOps, reconnectedClients, numClients);
+            log.info("Aggregate stats: Total successful ops={}, Total failed ops={}, Reconnected clients={}/{}",
+                    totalSuccessfulOps, totalFailedOps, reconnectedClients, numClients);
 
             // VALIDATION: All connections should disconnect and reconnect without memory leaks
-            assertThat(reconnectedClients)
-                    .as("All %d clients should successfully reconnect after handoff", numClients)
+            assertThat(reconnectedClients).as("All %d clients should successfully reconnect after handoff", numClients)
                     .isEqualTo(numClients);
 
             // VALIDATION: Should have successful operations after reconnection across all clients
-            assertThat(totalSuccessfulOps)
-                    .as("Should have successful operations across all clients after handoff")
+            assertThat(totalSuccessfulOps).as("Should have successful operations across all clients after handoff")
                     .isGreaterThan(0);
 
             // VALIDATION: Test that all connections are still functional (no resource leaks)
@@ -978,7 +981,7 @@ public class ConnectionTesting {
                 ConnectionTestContext context = contexts.get(i);
                 String testKey = "memory-leak-test-key-" + i;
                 String testValue = "test-value-" + i;
-                
+
                 context.sync.set(testKey, testValue);
                 String retrievedValue = context.sync.get(testKey);
                 assertThat(retrievedValue).isEqualTo(testValue);
@@ -1002,7 +1005,7 @@ public class ConnectionTesting {
         // First, verify we're testing against the m-medium-tls environment
         Endpoint mMediumTls = Endpoints.DEFAULT.getEndpoint("m-medium-tls");
         assumeTrue(mMediumTls != null, "Skipping test because no m-medium-tls Redis endpoint is configured!");
-        
+
         // Verify TLS is enabled on this endpoint
         assumeTrue(mMediumTls.isTls(), "Skipping test because m-medium-tls environment does not have TLS enabled!");
 
@@ -1010,26 +1013,19 @@ public class ConnectionTesting {
 
         // Setup connection with TLS enabled
         RedisURI uri = RedisURI.builder(RedisURI.create(mMediumTls.getEndpoints().get(0)))
-                .withAuthentication(mMediumTls.getUsername(), mMediumTls.getPassword())
-                .withSsl(true)
-                .withVerifyPeer(false) // For test environments
-                .withTimeout(Duration.ofSeconds(5))
-                .build();
+                .withAuthentication(mMediumTls.getUsername(), mMediumTls.getPassword()).withSsl(true).withVerifyPeer(false) // For
+                                                                                                                            // test
+                                                                                                                            // environments
+                .withTimeout(Duration.ofSeconds(5)).build();
 
         RedisClient client = RedisClient.create(uri);
 
-        TimeoutOptions timeoutOptions = TimeoutOptions.builder()
-                .timeoutCommands()
-                .fixedTimeout(NORMAL_COMMAND_TIMEOUT)
-                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION)
-                .build();
+        TimeoutOptions timeoutOptions = TimeoutOptions.builder().timeoutCommands().fixedTimeout(NORMAL_COMMAND_TIMEOUT)
+                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
 
-        ClientOptions options = ClientOptions.builder()
-                .autoReconnect(true)
-                .protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled())
-                .timeoutOptions(timeoutOptions)
-                .build();
+        ClientOptions options = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP3)
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP))
+                .timeoutOptions(timeoutOptions).build();
 
         client.setOptions(options);
         StatefulRedisConnection<String, String> connection = client.connect();
@@ -1076,8 +1072,7 @@ public class ConnectionTesting {
             });
 
             // Start the maintenance operation
-            Boolean operationResult = faultClient
-                    .triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode)
+            Boolean operationResult = faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode)
                     .block(Duration.ofMinutes(3));
             assertThat(operationResult).isTrue();
             log.info("MOVING operation with TLS completed: {}", operationResult);
@@ -1087,10 +1082,8 @@ public class ConnectionTesting {
             assertThat(received).isTrue();
 
             // Verify we got the expected notifications over TLS
-            assertThat(capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
-            assertThat(capture.getReceivedNotifications().stream()
-                    .anyMatch(n -> n.contains("+MOVING"))).isTrue();
+            assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+            assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
             // Wait for pending TLS traffic to complete
             log.info("Waiting for pending TLS commands to complete...");
@@ -1113,28 +1106,21 @@ public class ConnectionTesting {
             log.info("TLS failed operations: {}", capture.getFailureCount());
 
             // VALIDATION: Should receive maintenance notifications over TLS
-            assertThat(capture.getReceivedNotifications())
-                    .as("Should receive maintenance notifications over TLS connection")
+            assertThat(capture.getReceivedNotifications()).as("Should receive maintenance notifications over TLS connection")
                     .isNotEmpty();
 
             // VALIDATION: TLS connection should handle handoff gracefully
-            assertThat(capture.isOldConnectionClosed())
-                    .as("TLS connection should close gracefully after MOVING handoff")
+            assertThat(capture.isOldConnectionClosed()).as("TLS connection should close gracefully after MOVING handoff")
                     .isTrue();
 
             // VALIDATION: TLS traffic should resume after handoff
-            assertThat(capture.isTrafficResumed())
-                    .as("TLS traffic should resume after handoff operation")
-                    .isTrue();
+            assertThat(capture.isTrafficResumed()).as("TLS traffic should resume after handoff operation").isTrue();
 
             // VALIDATION: TLS autoconnect should work
-            assertThat(capture.isAutoReconnected())
-                    .as("TLS connection should auto-reconnect after handoff")
-                    .isTrue();
+            assertThat(capture.isAutoReconnected()).as("TLS connection should auto-reconnect after handoff").isTrue();
 
             // VALIDATION: Should have successful TLS operations after reconnection
-            assertThat(capture.getSuccessCount())
-                    .as("Should have successful TLS operations after traffic resumption")
+            assertThat(capture.getSuccessCount()).as("Should have successful TLS operations after traffic resumption")
                     .isGreaterThan(0);
 
             // VALIDATION: Test TLS connection functionality after handoff
@@ -1154,5 +1140,4 @@ public class ConnectionTesting {
         }
     }
 
-    
 }
