@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.MaintenanceEventsOptions;
+import io.lettuce.core.MaintenanceEventsOptions.AddressType;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -175,7 +177,8 @@ public class MaintenanceNotificationTest {
         RedisClient client = RedisClient.create(uri);
 
         // Configure client for RESP3 to receive push notifications
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build();
+        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
