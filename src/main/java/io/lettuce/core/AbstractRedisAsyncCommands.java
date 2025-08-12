@@ -89,6 +89,7 @@ import static io.lettuce.core.protocol.CommandType.GEORADIUS_RO;
  * @author dengliming
  * @author Andrey Shlykov
  * @author Ali Takavci
+ * @author KoKimSS
  */
 @SuppressWarnings("unchecked")
 public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncCommands<K, V>, RedisHashAsyncCommands<K, V>,
@@ -1738,6 +1739,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<Long>> jsonArrappend(K key, JsonPath jsonPath, String... jsonStrings) {
+        return dispatch(jsonCommandBuilder.jsonArrappend(key, jsonPath, jsonStrings));
+    }
+
+    @Override
     public RedisFuture<List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue value, JsonRangeArgs range) {
         return dispatch(jsonCommandBuilder.jsonArrindex(key, jsonPath, value, range));
     }
@@ -1748,8 +1754,18 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<List<Long>> jsonArrindex(K key, JsonPath jsonPath, String jsonString, JsonRangeArgs range) {
+        return dispatch(jsonCommandBuilder.jsonArrindex(key, jsonPath, jsonString, range));
+    }
+
+    @Override
     public RedisFuture<List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, JsonValue... values) {
         return dispatch(jsonCommandBuilder.jsonArrinsert(key, jsonPath, index, values));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, String... jsonStrings) {
+        return dispatch(jsonCommandBuilder.jsonArrinsert(key, jsonPath, index, jsonStrings));
     }
 
     @Override
@@ -1818,6 +1834,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> jsonMerge(K key, JsonPath jsonPath, String jsonString) {
+        return dispatch(jsonCommandBuilder.jsonMerge(key, jsonPath, jsonString));
+    }
+
+    @Override
     public RedisFuture<List<JsonValue>> jsonMGet(JsonPath jsonPath, K... keys) {
         return dispatch(jsonCommandBuilder.jsonMGet(jsonPath, keys));
     }
@@ -1863,6 +1884,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<String> jsonSet(K key, JsonPath jsonPath, String jsonString, JsonSetArgs options) {
+        return dispatch(jsonCommandBuilder.jsonSet(key, jsonPath, jsonString, options));
+    }
+
+    @Override
     public RedisFuture<List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue value) {
         return dispatch(jsonCommandBuilder.jsonStrappend(key, jsonPath, value));
     }
@@ -1870,6 +1896,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<Long>> jsonStrappend(K key, JsonValue value) {
         return dispatch(jsonCommandBuilder.jsonStrappend(key, JsonPath.ROOT_PATH, value));
+    }
+
+    @Override
+    public RedisFuture<List<Long>> jsonStrappend(K key, JsonPath jsonPath, String jsonString) {
+        return dispatch(jsonCommandBuilder.jsonStrappend(key, jsonPath, jsonString));
     }
 
     @Override
@@ -3815,5 +3846,4 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         LettuceAssert.notEmpty(script, "Lua script must not be empty");
         return script.getBytes(getConnection().getOptions().getScriptCharset());
     }
-
 }
