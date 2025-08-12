@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Unit tests for {@link RedisJsonCommandBuilder}.
  *
  * @author Tihomir Mateev
- * @author KoKimSS
+ * @author SeugnSu Kim
  */
 @Tag(UNIT_TEST)
 class RedisJsonCommandBuilderUnitTests {
@@ -576,14 +576,12 @@ class RedisJsonCommandBuilderUnitTests {
 
     @Test
     void shouldVerifyStringOverloadPerformanceOptimization() {
-        // Test that String overloads bypass JsonValue creation entirely
         String jsonString = "{\"test\":\"performance\"}";
 
         Command<String, String, String> command = builder.jsonSet(MY_KEY, JsonPath.ROOT_PATH, jsonString, JsonSetArgs.Builder.defaults());
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        // Verify the command is constructed correctly with direct string usage
         String expected = "*4\r\n$8\r\nJSON.SET\r\n$15\r\nbikes:inventory\r\n$1\r\n$\r\n$22\r\n{\"test\":\"performance\"}\r\n";
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(expected);
     }

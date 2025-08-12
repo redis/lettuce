@@ -30,7 +30,7 @@ import static io.lettuce.core.protocol.CommandType.*;
  * Implementation of the {@link BaseRedisCommandBuilder} handling JSON commands.
  *
  * @author Tihomir Mateev
- * @author KoKimSS
+ * @author SeugnSu Kim
  * @since 6.5
  */
 class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
@@ -59,15 +59,6 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_ARRAPPEND, (CommandOutput) new ArrayOutput<>(codec), args);
     }
 
-    /**
-     * JSON.ARRAPPEND command with raw string values to avoid unnecessary conversions.
-     *
-     * @param key        the key
-     * @param jsonPath   the JSON path
-     * @param jsonValues the raw JSON string values
-     * @return the command
-     * @since 6.5
-     */
     Command<K, V, List<Long>> jsonArrappend(K key, JsonPath jsonPath, String... jsonValues) {
         notNullKey(key);
 
@@ -101,16 +92,6 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_ARRINDEX, (CommandOutput) new ArrayOutput<>(codec), args);
     }
 
-    /**
-     * JSON.ARRINDEX command with raw string value to avoid unnecessary conversions.
-     *
-     * @param key      the key
-     * @param jsonPath the JSON path
-     * @param value    the raw JSON string value
-     * @param range    the range arguments
-     * @return the command
-     * @since 6.5
-     */
     Command<K, V, List<Long>> jsonArrindex(K key, JsonPath jsonPath, String value, JsonRangeArgs range) {
         notNullKey(key);
 
@@ -142,16 +123,6 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_ARRINSERT, (CommandOutput) new ArrayOutput<>(codec), args);
     }
 
-    /**
-     * JSON.ARRINSERT command with raw string values to avoid unnecessary conversions.
-     *
-     * @param key      the key
-     * @param jsonPath the JSON path
-     * @param index    the index
-     * @param values   the raw JSON string values
-     * @return the command
-     * @since 6.5
-     */
     Command<K, V, List<Long>> jsonArrinsert(K key, JsonPath jsonPath, int index, String... values) {
         notNullKey(key);
 
@@ -258,15 +229,6 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_MERGE, new StatusOutput<>(codec), args);
     }
 
-    /**
-     * JSON.MERGE command with raw string value to avoid unnecessary conversions.
-     *
-     * @param key      the key
-     * @param jsonPath the JSON path
-     * @param value    the raw JSON string value
-     * @return the command
-     * @since 6.5
-     */
     Command<K, V, String> jsonMerge(K key, JsonPath jsonPath, String value) {
         notNullKey(key);
 
@@ -353,16 +315,6 @@ class RedisJsonCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(JSON_SET, new StatusOutput<>(codec), args);
     }
 
-    /**
-     * JSON.SET command with raw string value to avoid unnecessary conversions.
-     *
-     * @param key      the key
-     * @param jsonPath the JSON path
-     * @param value    the raw JSON string value
-     * @param options  the optional {@link JsonSetArgs}
-     * @return the command
-     * @since 6.5
-     */
     Command<K, V, String> jsonSet(K key, JsonPath jsonPath, String value, JsonSetArgs options) {
         notNullKey(key);
 
