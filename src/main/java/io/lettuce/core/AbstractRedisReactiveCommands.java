@@ -2473,11 +2473,6 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public void reset() {
-        getConnection().reset();
-    }
-
-    @Override
     public Mono<String> restore(K key, long ttl, byte[] value) {
         return createMono(() -> commandBuilder.restore(key, value, RestoreArgs.Builder.ttl(ttl)));
     }

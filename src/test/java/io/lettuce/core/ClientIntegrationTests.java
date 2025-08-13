@@ -212,34 +212,6 @@ class ClientIntegrationTests extends TestSupport {
     }
 
     @Test
-    void reset() {
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-        RedisAsyncCommands<String, String> async = connection.async();
-
-        connection.sync().set(key, value);
-        async.reset();
-        connection.sync().set(key, value);
-        connection.sync().flushall();
-
-        RedisFuture<KeyValue<String, String>> eval = async.blpop(5, key);
-
-        Delay.delay(Duration.ofMillis(500));
-
-        assertThat(eval.isDone()).isFalse();
-        assertThat(eval.isCancelled()).isFalse();
-
-        async.reset();
-
-        Wait.untilTrue(eval::isCancelled).waitOrTimeout();
-
-        assertThat(eval.isCancelled()).isTrue();
-        assertThat(eval.isDone()).isTrue();
-
-        connection.close();
-    }
-
-    @Test
     void standaloneConnectionShouldSetClientName() {
 
         RedisURI redisURI = RedisURI.create(host, port);

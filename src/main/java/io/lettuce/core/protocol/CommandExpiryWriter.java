@@ -152,11 +152,6 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         return delegate.closeAsync();
     }
 
-    @Override
-    public void reset() {
-        delegate.reset();
-    }
-
     public void setTimeout(Duration timeout) {
         this.timeout = timeUnit.convert(timeout.toNanos(), TimeUnit.NANOSECONDS);
     }

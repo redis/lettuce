@@ -525,11 +525,6 @@ class PooledClusterConnectionProvider<K, V>
         return connectionProvider.close();
     }
 
-    @Override
-    public void reset() {
-        connectionProvider.forEach(StatefulRedisConnection::reset);
-    }
-
     /**
      * Synchronize on {@code stateLock} to initiate a happens-before relation and clear the thread caches of other threads.
      *

@@ -2389,11 +2389,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public void reset() {
-        getConnection().reset();
-    }
-
-    @Override
     public RedisFuture<String> restore(K key, long ttl, byte[] value) {
         return dispatch(commandBuilder.restore(key, value, RestoreArgs.Builder.ttl(ttl)));
     }

@@ -103,17 +103,6 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
     ClientResources getResources();
 
     /**
-     * Reset the command state. Queued commands will be canceled and the internal state will be reset. This is useful when the
-     * internal state machine gets out of sync with the connection (e.g. errors during external SSL tunneling). Calling this
-     * method will reset the protocol state, therefore it is considered unsafe.
-     *
-     * @deprecated since 5.2. To be removed with 7.0. This method is unsafe and can cause protocol offsets (i.e. Redis commands
-     *             are completed with previous command values).
-     */
-    @Deprecated
-    void reset();
-
-    /**
      * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands can
      * be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
      * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
