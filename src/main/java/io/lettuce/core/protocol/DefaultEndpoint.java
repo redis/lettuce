@@ -642,24 +642,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     /**
-     * Reset the writer state. Queued commands will be canceled and the internal state will be reset. This is useful when the
-     * internal state machine gets out of sync with the connection.
-     */
-    @Override
-    public void reset() {
-
-        if (debugEnabled) {
-            logger.debug("{} reset()", logPrefix());
-        }
-
-        Channel channel = this.channel;
-        if (channel != null) {
-            channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Reset());
-        }
-        cancelBufferedCommands("Reset");
-    }
-
-    /**
      * Reset the command-handler to the initial not-connected state.
      */
     public void initialState() {

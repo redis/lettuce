@@ -51,17 +51,6 @@ public interface RedisChannelWriter extends Closeable, AsyncCloseable {
     CompletableFuture<Void> closeAsync();
 
     /**
-     * Reset the command state. Queued commands will be canceled and the internal state will be reset. This is useful when the
-     * internal state machine gets out of sync with the connection (e.g. errors during external SSL tunneling). Calling this
-     * method will reset the protocol state, therefore it is considered unsafe.
-     *
-     * @deprecated since 5.2. This method is unsafe and can cause protocol offsets (i.e. Redis commands are completed with
-     *             previous command values).
-     */
-    @Deprecated
-    void reset();
-
-    /**
      * Set the corresponding connection facade in order to notify it about channel active/inactive state.
      *
      * @param connection the connection facade (external connection object)

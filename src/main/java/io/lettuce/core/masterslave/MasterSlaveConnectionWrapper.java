@@ -125,12 +125,6 @@ class MasterSlaveConnectionWrapper<K, V> implements StatefulRedisMasterSlaveConn
     }
 
     @Override
-    @Deprecated
-    public void reset() {
-        delegate.reset();
-    }
-
-    @Override
     public void setAutoFlushCommands(boolean autoFlush) {
         delegate.setAutoFlushCommands(autoFlush);
     }
