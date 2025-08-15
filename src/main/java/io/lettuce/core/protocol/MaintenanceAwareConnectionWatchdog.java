@@ -34,6 +34,7 @@ import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -116,38 +117,20 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         return rebindAwareAddressSupplier.wrappedSupplier(source);
     }
 
-    /**
-     * Creates a wrapped socket address supplier with a custom clock for testing purposes.
-     *
-     * @param socketAddressSupplier the original socket address supplier
-     * @param clock the clock to use for time-based operations
-     * @return the wrapped supplier
-     */
-    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> socketAddressSupplier, Clock clock) {
-        Mono<SocketAddress> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
-        rebindAwareAddressSupplier = new RebindAwareAddressSupplier(clock);
-        return rebindAwareAddressSupplier.wrappedSupplier(source);
-    }
-
     @Override
     public void onPushMessage(PushMessage message) {
         String mType = message.getType();
 
         if (REBIND_MESSAGE_TYPE.equals(mType)) {
+            logger.debug("Rebind requested");
             final MovingEvent movingEvent = MovingEvent.from(message);
             if (movingEvent != null) {
-                logger.debug("Attempting to rebind to new endpoint '{}'", movingEvent.getEndpoint());
-
-                channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
-                rebindAwareAddressSupplier.rebind(movingEvent.getTime(), movingEvent.getEndpoint());
-
-                ChannelPipeline pipeline = channel.pipeline();
-                CommandHandler commandHandler = pipeline.get(CommandHandler.class);
-                if (commandHandler.getStack().isEmpty()) {
-                    channel.close().awaitUninterruptibly();
-                    channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
+                if (null == movingEvent.getEndpoint()) {
+                    logger.debug("Deferred Rebind requested. Rebinding to current endpoint after '{}'", movingEvent.getTime());
+                    channel.eventLoop().schedule(() -> rebind(movingEvent), movingEvent.getTime().toMillis() / 2,
+                            TimeUnit.MILLISECONDS);
                 } else {
-                    notifyRebindStarted(movingEvent.getTime(), movingEvent.getEndpoint());
+                    rebind(movingEvent);
                 }
             }
         } else if (MIGRATING_MESSAGE_TYPE.equals(mType)) {
@@ -162,6 +145,21 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         } else if (FAILED_OVER_MESSAGE_TYPE.equals(mType)) {
             logger.debug("Failover completed");
             notifyFailoverCompleted(getFailedOverShards(message));
+        }
+    }
+
+    private void rebind(MovingEvent movingEvent) {
+        logger.debug("Attempting to rebind to new endpoint '{}'", movingEvent.getEndpoint());
+        channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
+        rebindAwareAddressSupplier.rebind(movingEvent.getTime(), movingEvent.getEndpoint());
+
+        ChannelPipeline pipeline = channel.pipeline();
+        CommandHandler commandHandler = pipeline.get(CommandHandler.class);
+        if (commandHandler.getStack().isEmpty()) {
+            channel.close().awaitUninterruptibly();
+            channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
+        } else {
+            notifyRebindStarted(movingEvent.getTime(), movingEvent.getEndpoint());
         }
     }
 
@@ -260,13 +258,21 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
                 Long timeInSec = (Long) content.get(TIME_INDEX);
                 ByteBuffer addressBuffer = (ByteBuffer) content.get(ADDRESS_INDEX);
 
-                String addressAndPort = StringCodec.UTF8.decodeKey((ByteBuffer) addressBuffer);
-                String[] parts = addressAndPort.split(":");
-                String address = parts[0];
-                int port = Integer.parseInt(parts[1]);
-                InetSocketAddress addr = new InetSocketAddress(address, port);
+                InetSocketAddress endpoint = null;
+                if (addressBuffer != null) {
+                    String addressAndPort = StringCodec.UTF8.decodeKey((ByteBuffer) addressBuffer);
+                    InetSocketAddress addr = null;
 
-                return new MovingEvent(eventId, Duration.ofSeconds(timeInSec), addr);
+                    // Handle "none" option where endpoint is null
+                    if (addressAndPort != null && !"null".equals(addressAndPort)) {
+                        String[] parts = addressAndPort.split(":");
+                        String address = parts[0];
+                        int port = Integer.parseInt(parts[1]);
+                        endpoint = new InetSocketAddress(address, port);
+                    }
+                }
+
+                return new MovingEvent(eventId, Duration.ofSeconds(timeInSec), endpoint);
             } catch (Exception e) {
                 logger.error("Invalid re-bind message format", e);
                 return null;
