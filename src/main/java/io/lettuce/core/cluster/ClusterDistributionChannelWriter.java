@@ -209,7 +209,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             } else {
                 // Keyless command (single): classify and attach metadata without changing routing
                 if (keylessRoutingPolicy != null) {
-                    KeylessRoutingPolicy.Decision d = keylessRoutingPolicy.classify(command, getPartitions());
+                    ReadFrom rf = getReadFrom();
+                    KeylessRoutingPolicy.Decision d = keylessRoutingPolicy.classify(command, getPartitions(), rf);
                     if (d != null) {
                         if (d.strategy == KeylessRoutingPolicy.Strategy.REJECT) {
                             command.completeExceptionally(new RedisException("Command rejected by keyless routing policy"));
@@ -417,7 +418,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             if (firstEncodedKey == null) {
                 // Keyless command: allow policy to classify and attach metadata (no routing change yet)
                 if (keylessRoutingPolicy != null) {
-                    KeylessRoutingPolicy.Decision d = keylessRoutingPolicy.classify(cmd, getPartitions());
+                    ReadFrom rf = getReadFrom();
+                    KeylessRoutingPolicy.Decision d = keylessRoutingPolicy.classify(cmd, getPartitions(), rf);
                     if (d != null) {
                         if (d.strategy == KeylessRoutingPolicy.Strategy.REJECT) {
                             cmd.completeExceptionally(new RedisException("Command rejected by keyless routing policy"));

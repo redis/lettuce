@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.cluster.routing;
 
+import io.lettuce.core.ReadFrom;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag;
@@ -26,6 +27,16 @@ import java.util.List;
  */
 public class SearchKeylessRoutingPolicy implements KeylessRoutingPolicy {
 
+    private final boolean respectReadFrom;
+
+    public SearchKeylessRoutingPolicy() {
+        this(false);
+    }
+
+    public SearchKeylessRoutingPolicy(boolean respectReadFrom) {
+        this.respectReadFrom = respectReadFrom;
+    }
+
     private volatile List<RedisClusterNode> lastPrimaries = Collections.emptyList();
 
     private int offset = 0; // simple RR; reset on topology shape change
@@ -33,7 +44,6 @@ public class SearchKeylessRoutingPolicy implements KeylessRoutingPolicy {
     @Override
     public synchronized <K, V, T> Decision classify(RedisCommand<K, V, T> cmd, Partitions topology) {
         CommandType type = safeType(cmd);
-
         if (isSearchQuery(type, cmd)) {
             List<RedisClusterNode> primaries = primaries(topology);
             if (primaries.isEmpty())
@@ -42,14 +52,44 @@ public class SearchKeylessRoutingPolicy implements KeylessRoutingPolicy {
             return Decision.singleNode(rr);
         }
 
+        return null;
+    }
+
+    @Override
+    public synchronized <K, V, T> Decision classify(RedisCommand<K, V, T> cmd, Partitions topology, ReadFrom rf) {
+        CommandType type = safeType(cmd);
+        if (isSearchQuery(type, cmd)) {
+            List<RedisClusterNode> nodes = eligibleNodes(topology, rf);
+            if (nodes.isEmpty())
+                return null;
+            return Decision.singleNode(roundRobinOnce(nodes));
+        }
         if (isSearchAdmin(type, cmd)) {
             List<RedisClusterNode> primaries = primaries(topology);
             if (primaries.isEmpty())
                 return null;
             return Decision.broadcast(primaries);
         }
-
         return null;
+    }
+
+    private List<RedisClusterNode> eligibleNodes(Partitions p, ReadFrom rf) {
+        if (!respectReadFrom || rf == null || rf == ReadFrom.UPSTREAM) {
+            return primaries(p);
+        }
+        return primariesAndReplicas(p);
+    }
+
+    private static List<RedisClusterNode> primariesAndReplicas(Partitions p) {
+        List<RedisClusterNode> list = new ArrayList<>();
+        for (RedisClusterNode n : p) {
+            if (n == null)
+                continue;
+            if (n.is(NodeFlag.MASTER) || n.is(NodeFlag.UPSTREAM) || n.is(NodeFlag.REPLICA) || n.is(NodeFlag.SLAVE)) {
+                list.add(n);
+            }
+        }
+        return list;
     }
 
     private static <K, V, T> CommandType safeType(RedisCommand<K, V, T> cmd) {

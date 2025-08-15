@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.cluster.routing;
 
+import io.lettuce.core.ReadFrom;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.protocol.RedisCommand;
@@ -50,5 +51,9 @@ public interface KeylessRoutingPolicy {
     }
 
     <K, V, T> Decision classify(RedisCommand<K, V, T> command, Partitions topology);
+
+    default <K, V, T> Decision classify(RedisCommand<K, V, T> command, Partitions topology, ReadFrom rf) {
+        return classify(command, topology);
+    }
 
 }
