@@ -27,7 +27,6 @@ import io.netty.channel.*;
 import io.netty.util.Attribute;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
-import io.netty.channel.embedded.EmbeddedChannel;
 
 import io.netty.util.concurrent.ScheduledFuture;
 import org.junit.jupiter.api.BeforeEach;
@@ -101,9 +100,6 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
     @Mock
     private ChannelPipeline pipeline;
-
-    @Mock
-    private EventLoop eventLoop;
 
     @Mock
     private CommandHandler commandHandler;
@@ -533,6 +529,32 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     }
 
     @Test
+    void testRebindAwareAddressSupplierWithNullRebindAddress() {
+        // Given
+        MutableClock clock = new MutableClock(Instant.parse("2023-01-01T10:00:00Z"));
+        RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(clock);
+
+        SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
+        // Null rebind address - should return original address
+        SocketAddress rebindAddress = null;
+        Mono<SocketAddress> originalSupplier = Mono.just(originalAddress);
+
+        // When - rebind with 30 seconds duration
+        supplier.rebind(Duration.ofSeconds(30), rebindAddress);
+
+        // Should return original address since rebind address is null
+        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+
+        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+
+        // Step 5: Advance clock past expiration (31 seconds)
+        clock.tick(Duration.ofSeconds(31));
+
+        // Step 6: New subscription to same wrappedSupplier should return original address again
+        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+    }
+
+    @Test
     void testRebindAwareAddressSupplierExpirationWithFixedClock() {
         // Given - Create supplier with a mutable clock that we can advance
         MutableClock clock = new MutableClock(Instant.parse("2023-01-01T10:00:00Z"));
@@ -575,6 +597,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Then - should return original address
         StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+
     }
 
     @Test
@@ -628,7 +651,6 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
      * @param seqNumber unique sequence number, can be use to match requests handled by different connections
      * @param time estimated operation completion time
      * @param addressAndPort address and port of the new endpoint
-     * @return
      */
     private static List<Object> movingPushContent(long seqNumber, long time, String addressAndPort) {
         if (addressAndPort == null) {
@@ -644,7 +666,6 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
      * @param seqNumber unique sequence number, can be use to match requests handled by different connections
      * @param time operation will start after <time> seconds
      * @param shards comma-separated list of shard IDs
-     * @return
      */
     private static List<Object> migratingPushContent(long seqNumber, long time, String shards) {
         ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
@@ -655,9 +676,7 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
      * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
      *
      * @param seqNumber unique sequence number, can be use to match requests handled by different connections
-     * @param time
      * @param shards address and port of the new endpoint
-     * @return
      */
     private static List<Object> migratedPushContent(long seqNumber, String shards) {
         ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
@@ -670,7 +689,6 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
      * @param seqNumber unique sequence number, can be use to match requests handled by different connections
      * @param time operation will start after <time> seconds
      * @param shards comma-separated list of shard IDs
-     * @return
      */
     private static List<Object> failingoverPushContent(long seqNumber, long time, String shards) {
         ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
@@ -681,9 +699,6 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
      * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
      *
      * @param seqNumber unique sequence number, can be use to match requests handled by different connections
-     * @param time
-     * @param addressAndPort address and port of the new endpoint
-     * @return
      */
     private static List<Object> failedoverPushContent(long seqNumber, String shards) {
         ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
