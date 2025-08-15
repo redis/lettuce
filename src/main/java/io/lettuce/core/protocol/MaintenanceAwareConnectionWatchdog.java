@@ -260,8 +260,7 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
 
                 InetSocketAddress endpoint = null;
                 if (addressBuffer != null) {
-                    String addressAndPort = StringCodec.UTF8.decodeKey((ByteBuffer) addressBuffer);
-                    InetSocketAddress addr = null;
+                    String addressAndPort = StringCodec.UTF8.decodeKey(addressBuffer);
 
                     // Handle "none" option where endpoint is null
                     if (addressAndPort != null && !"null".equals(addressAndPort)) {

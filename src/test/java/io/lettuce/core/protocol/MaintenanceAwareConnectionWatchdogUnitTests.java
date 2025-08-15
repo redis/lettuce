@@ -9,7 +9,6 @@ package io.lettuce.core.protocol;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static io.lettuce.test.ReflectionTestUtils.getField;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static io.lettuce.test.ReflectionTestUtils.setField;
 
