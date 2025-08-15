@@ -219,6 +219,59 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             }
         }
 
+        // If keyless metadata indicates SINGLE_NODE routing, attempt candidates in order
+        if (commandToSend instanceof ClusterCommand) {
+            ClusterCommand<K, V, T> cc = (ClusterCommand<K, V, T>) commandToSend;
+            if (cc.isKeyless() && cc.getKeylessCandidates() != null && !cc.isKeylessBroadcast()) {
+                for (RedisClusterNode node : cc.getKeylessCandidates()) {
+                    try {
+                        CompletableFuture<StatefulRedisConnection<K, V>> cf = asyncClusterConnectionProvider
+                                .getConnectionAsync(ConnectionIntent.WRITE, node.getUri().getHost(), node.getUri().getPort());
+
+                        if (isSuccessfullyCompleted(cf)) {
+                            writeCommand(commandToSend, /* asking= */false, cf.join(), null);
+                            return commandToSend;
+                        }
+
+                        try {
+                            StatefulRedisConnection<K, V> c = cf.get();
+                            writeCommand(commandToSend, false, c, null);
+                            return commandToSend;
+                        } catch (Exception connectFailure) {
+                            // Try next candidate
+                            continue;
+                        }
+                    } catch (Exception e) {
+                        // try next candidate
+                    }
+                }
+
+                // No candidate succeeded — fail explicitly
+                commandToSend.completeExceptionally(new RedisException("No eligible endpoint for keyless command"));
+                return commandToSend;
+            }
+        }
+
+        // If keyless metadata indicates BROADCAST (admin FT ops), fan-out to primaries
+        if (commandToSend instanceof ClusterCommand) {
+            ClusterCommand<K, V, T> cc = (ClusterCommand<K, V, T>) commandToSend;
+            if (cc.isKeylessBroadcast() && cc.getKeylessCandidates() != null) {
+                for (RedisClusterNode node : cc.getKeylessCandidates()) {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        StatefulRedisConnection<K, V> c = (StatefulRedisConnection<K, V>) (StatefulRedisConnection<?, ?>) asyncClusterConnectionProvider
+                                .getConnectionAsync(ConnectionIntent.WRITE, node.getUri().getHost(), node.getUri().getPort())
+                                .get();
+                        writeCommand(commandToSend, false, c, null);
+                    } catch (Exception e) {
+                        commandToSend.completeExceptionally(e);
+                        return commandToSend;
+                    }
+                }
+                return commandToSend; // Expect status-only semantics (e.g., OK)
+            }
+        }
+
         writeCommand(commandToSend, defaultWriter);
 
         return commandToSend;
@@ -309,6 +362,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
             commands.forEach(it -> it.completeExceptionally(new RedisException("Connection is closed")));
             return (Collection<RedisCommand<K, V, ?>>) commands;
+            // Optionally handle broadcast in batch later; keep batch behavior unchanged for now.
+
         }
 
         List<ClusterCommand<K, V, ?>> clusterCommands = new ArrayList<>(commands.size());

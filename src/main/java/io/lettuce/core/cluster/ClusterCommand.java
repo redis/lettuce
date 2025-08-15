@@ -75,6 +75,11 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
         return false;
     }
 
+    public boolean isKeyless() {
+        CommandArgs<K, V> a = getArgs();
+        return a == null || a.getFirstEncodedKey() == null;
+    }
+
     @Override
     public CommandArgs<K, V> getArgs() {
         return command.getArgs();
