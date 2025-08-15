@@ -370,7 +370,7 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         public Mono<SocketAddress> wrappedSupplier(Mono<SocketAddress> original) {
             return Mono.defer(() -> {
                 State current = state.get();
-                if (current != null && clock.instant().isBefore(current.cutoff)) {
+                if (current != null && current.rebindAddress != null && clock.instant().isBefore(current.cutoff)) {
                     return Mono.just(current.rebindAddress);
                 } else {
                     state.compareAndSet(current, null);
