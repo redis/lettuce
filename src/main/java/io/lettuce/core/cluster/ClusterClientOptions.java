@@ -23,6 +23,9 @@ import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.function.Predicate;
 
+import io.lettuce.core.cluster.routing.KeylessRoutingPolicy;
+import io.lettuce.core.cluster.routing.NoopKeylessRoutingPolicy;
+
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.SslOptions;
@@ -66,6 +69,8 @@ public class ClusterClientOptions extends ClientOptions {
 
     private final Predicate<RedisClusterNode> nodeFilter;
 
+    private final KeylessRoutingPolicy keylessRoutingPolicy;
+
     protected ClusterClientOptions(Builder builder) {
 
         super(builder);
@@ -84,6 +89,8 @@ public class ClusterClientOptions extends ClientOptions {
         this.maxRedirects = builder.maxRedirects;
         this.validateClusterNodeMembership = builder.validateClusterNodeMembership;
         this.nodeFilter = builder.nodeFilter;
+        this.keylessRoutingPolicy = builder.keylessRoutingPolicy != null ? builder.keylessRoutingPolicy
+                : new NoopKeylessRoutingPolicy();
     }
 
     protected ClusterClientOptions(ClusterClientOptions original) {
@@ -94,6 +101,7 @@ public class ClusterClientOptions extends ClientOptions {
         this.topologyRefreshOptions = original.topologyRefreshOptions;
         this.validateClusterNodeMembership = original.validateClusterNodeMembership;
         this.nodeFilter = original.nodeFilter;
+        this.keylessRoutingPolicy = original.getKeylessRoutingPolicy();
     }
 
     /**
@@ -158,6 +166,8 @@ public class ClusterClientOptions extends ClientOptions {
      * Builder for {@link ClusterClientOptions}.
      */
     public static class Builder extends ClientOptions.Builder {
+
+        private KeylessRoutingPolicy keylessRoutingPolicy;
 
         private boolean closeStaleConnections = DEFAULT_CLOSE_STALE_CONNECTIONS;
 
@@ -321,6 +331,14 @@ public class ClusterClientOptions extends ClientOptions {
             return new ClusterClientOptions(this);
         }
 
+        /**
+         * Configure the KeylessRoutingPolicy SPI to classify keyless commands. Defaults to NoopKeylessRoutingPolicy.
+         */
+        public Builder keylessRoutingPolicy(KeylessRoutingPolicy policy) {
+            this.keylessRoutingPolicy = policy;
+            return this;
+        }
+
     }
 
     /**
@@ -344,7 +362,8 @@ public class ClusterClientOptions extends ClientOptions {
                 .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
                 .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
                 .topologyRefreshOptions(getTopologyRefreshOptions())
-                .validateClusterNodeMembership(isValidateClusterNodeMembership()).nodeFilter(getNodeFilter());
+                .validateClusterNodeMembership(isValidateClusterNodeMembership()).nodeFilter(getNodeFilter())
+                .keylessRoutingPolicy(getKeylessRoutingPolicy());
 
         return builder;
     }
@@ -419,6 +438,13 @@ public class ClusterClientOptions extends ClientOptions {
      */
     public Predicate<RedisClusterNode> getNodeFilter() {
         return nodeFilter;
+    }
+
+    /**
+     * Returns the KeylessRoutingPolicy SPI used to classify keyless commands.
+     */
+    public KeylessRoutingPolicy getKeylessRoutingPolicy() {
+        return keylessRoutingPolicy;
     }
 
 }

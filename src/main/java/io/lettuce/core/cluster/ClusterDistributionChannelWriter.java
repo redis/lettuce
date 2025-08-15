@@ -43,6 +43,7 @@ import io.lettuce.core.cluster.event.AskRedirectionEvent;
 import io.lettuce.core.cluster.event.MovedRedirectionEvent;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
+import io.lettuce.core.cluster.routing.KeylessRoutingPolicy;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.event.Event;
 import io.lettuce.core.internal.Futures;
@@ -86,6 +87,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
     private boolean closed = false;
 
+    private final KeylessRoutingPolicy keylessRoutingPolicy;
+
     private volatile Partitions partitions;
 
     ClusterDistributionChannelWriter(RedisChannelWriter defaultWriter, ClientOptions clientOptions,
@@ -101,6 +104,9 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         this.clientOptions = clientOptions;
         this.readOnlyCommands = clientOptions.getReadOnlyCommands();
         this.clusterEventListener = clusterEventListener;
+        this.keylessRoutingPolicy = (clientOptions instanceof ClusterClientOptions)
+                ? ((ClusterClientOptions) clientOptions).getKeylessRoutingPolicy()
+                : null;
     }
 
     @Override
@@ -162,6 +168,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
                     connectFuture.whenComplete((connection, throwable) -> writeCommand(command, asking, connection, throwable));
                 }
 
+                // If keyless and policy provides candidates, still route via default writer for now.
+
                 return command;
             }
         }
@@ -189,6 +197,25 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
                 }
 
                 return commandToSend;
+            } else {
+                // Keyless command (single): classify and attach metadata without changing routing
+                if (keylessRoutingPolicy != null) {
+                    KeylessRoutingPolicy.Decision d = keylessRoutingPolicy.classify(command, getPartitions());
+                    if (d != null) {
+                        if (d.strategy == KeylessRoutingPolicy.Strategy.REJECT) {
+                            command.completeExceptionally(new RedisException("Command rejected by keyless routing policy"));
+                            return commandToSend;
+                        }
+                        if (d.strategy == KeylessRoutingPolicy.Strategy.SINGLE_NODE && d.candidates != null
+                                && commandToSend instanceof ClusterCommand) {
+                            ((ClusterCommand<K, V, T>) commandToSend).withKeylessCandidates(d.candidates);
+                        }
+                        if (d.strategy == KeylessRoutingPolicy.Strategy.BROADCAST && d.candidates != null
+                                && commandToSend instanceof ClusterCommand) {
+                            ((ClusterCommand<K, V, T>) commandToSend).asKeylessBroadcast(d.candidates);
+                        }
+                    }
+                }
             }
         }
 
@@ -303,6 +330,26 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             ByteBuffer firstEncodedKey = args != null ? args.getFirstEncodedKey() : null;
 
             if (firstEncodedKey == null) {
+                // Keyless command: allow policy to classify and attach metadata (no routing change yet)
+                if (keylessRoutingPolicy != null) {
+                    KeylessRoutingPolicy.Decision d = keylessRoutingPolicy.classify(cmd, getPartitions());
+                    if (d != null) {
+                        if (d.strategy == KeylessRoutingPolicy.Strategy.REJECT) {
+                            cmd.completeExceptionally(new RedisException("Command rejected by keyless routing policy"));
+                            continue;
+                        }
+                        if (d.strategy == KeylessRoutingPolicy.Strategy.SINGLE_NODE && d.candidates != null) {
+                            clusterCommands
+                                    .add(new ClusterCommand<>(cmd, this, executionLimit).withKeylessCandidates(d.candidates));
+                            continue;
+                        }
+                        if (d.strategy == KeylessRoutingPolicy.Strategy.BROADCAST && d.candidates != null) {
+                            clusterCommands
+                                    .add(new ClusterCommand<>(cmd, this, executionLimit).asKeylessBroadcast(d.candidates));
+                            continue;
+                        }
+                    }
+                }
                 defaultCommands.add(new ClusterCommand<>(cmd, this, executionLimit));
                 continue;
             }

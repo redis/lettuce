@@ -1,6 +1,7 @@
 package io.lettuce.core.cluster;
 
 import io.lettuce.core.RedisChannelWriter;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.protocol.*;
 import io.netty.buffer.ByteBuf;
 
@@ -17,6 +18,11 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
     private final RedisChannelWriter retry;
 
     private boolean completed;
+
+    // Keyless routing metadata (no behavior change yet)
+    private Iterable<RedisClusterNode> keylessCandidates;
+
+    private boolean keylessBroadcast;
 
     /**
      *
@@ -88,6 +94,26 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
     @Override
     public ProtocolKeyword getType() {
         return command.getType();
+    }
+
+    // --- Keyless routing metadata accessors ---
+    public ClusterCommand<K, V, T> withKeylessCandidates(Iterable<RedisClusterNode> candidates) {
+        this.keylessCandidates = candidates;
+        return this;
+    }
+
+    public ClusterCommand<K, V, T> asKeylessBroadcast(Iterable<RedisClusterNode> nodes) {
+        this.keylessBroadcast = true;
+        this.keylessCandidates = nodes;
+        return this;
+    }
+
+    public Iterable<RedisClusterNode> getKeylessCandidates() {
+        return keylessCandidates;
+    }
+
+    public boolean isKeylessBroadcast() {
+        return keylessBroadcast;
     }
 
     public boolean isCompleted() {
