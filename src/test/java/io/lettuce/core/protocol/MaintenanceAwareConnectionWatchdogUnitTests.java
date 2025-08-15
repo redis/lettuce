@@ -600,12 +600,11 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         ArgumentCaptor<TimeUnit> unitCaptor = ArgumentCaptor.forClass(TimeUnit.class);
         ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
 
-        when(eventLoop.schedule(taskCaptor.capture(), delayCaptor.capture(), unitCaptor.capture()))
-                .thenAnswer(invocation -> {
-                    // For test, execute immediately
-                    taskCaptor.getValue().run();
-                    return future;
-                });
+        when(eventLoop.schedule(taskCaptor.capture(), delayCaptor.capture(), unitCaptor.capture())).thenAnswer(invocation -> {
+            // For test, execute immediately
+            taskCaptor.getValue().run();
+            return future;
+        });
 
         // Set up channel field using ReflectionTestUtils
         setField(watchdog, "channel", channel);
