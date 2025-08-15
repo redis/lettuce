@@ -335,12 +335,23 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         this.componentListeners.forEach(component -> component.onFailoverCompleted(shards));
     }
 
+    /**
+     * A supplier that is aware of re-bind events and can provide the appropriate address based on the current state.
+     * <p>
+     * During a re-bind, the supplier will return the rebind address for a certain period of time. After that period, it will
+     * return the original address.
+     * </p>
+     */
     static class RebindAwareAddressSupplier {
 
         private static final class State {
 
+            // Cutoff time for the current rebind
+            // If the current time is before the cutoff time, the rebind address should be returned
             final Instant cutoff;
 
+            // Address to which the connection should be re-bound
+            // If null, the original address should be returned
             final SocketAddress rebindAddress;
 
             State(Instant cutoff, SocketAddress rebindAddress) {
@@ -362,11 +373,29 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
             this.clock = clock;
         }
 
+        /**
+         * Set a new rebind address for the specified duration.
+         *
+         * @param duration the duration for which the rebind address should be used
+         * @param rebindAddress the address to which the connection should be re-bound
+         */
         public void rebind(Duration duration, SocketAddress rebindAddress) {
             Instant newCutoff = clock.instant().plus(duration);
             state.set(new State(newCutoff, rebindAddress));
         }
 
+        /**
+         * Wrap the original supplier with a rebind-aware supplier.
+         *
+         * <p>
+         * The returned supplier will return the rebind address if a rebind is in progress and the current time is before the
+         * cutoff time set by the last call to {@link #rebind(Duration, SocketAddress)}. Otherwise, it will return the original
+         * address.
+         * </p>
+         *
+         * @param original the original supplier
+         * @return a new supplier that is aware of re-bind events
+         */
         public Mono<SocketAddress> wrappedSupplier(Mono<SocketAddress> original) {
             return Mono.defer(() -> {
                 State current = state.get();
