@@ -31,12 +31,16 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
+import java.util.concurrent.TimeUnit;
+
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.CommandListenerWriter;
 import io.lettuce.core.ReadFrom;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
+import io.lettuce.core.TimeoutOptions;
+
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.cluster.event.AskRedirectionEvent;
@@ -60,6 +64,9 @@ import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.ReadOnlyCommands;
 import io.lettuce.core.protocol.RedisCommand;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+
 import io.lettuce.core.resource.ClientResources;
 
 /**
@@ -86,6 +93,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     private AsyncClusterConnectionProvider asyncClusterConnectionProvider;
 
     private boolean closed = false;
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(ClusterDistributionChannelWriter.class);
 
     private final KeylessRoutingPolicy keylessRoutingPolicy;
 
@@ -223,31 +232,52 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         if (commandToSend instanceof ClusterCommand) {
             ClusterCommand<K, V, T> cc = (ClusterCommand<K, V, T>) commandToSend;
             if (cc.isKeyless() && cc.getKeylessCandidates() != null && !cc.isKeylessBroadcast()) {
-                for (RedisClusterNode node : cc.getKeylessCandidates()) {
-                    try {
-                        CompletableFuture<StatefulRedisConnection<K, V>> cf = asyncClusterConnectionProvider
-                                .getConnectionAsync(ConnectionIntent.WRITE, node.getUri().getHost(), node.getUri().getPort());
+                final java.util.Iterator<RedisClusterNode> it = cc.getKeylessCandidates().iterator();
+                final long deadlineNanos = computeDeadlineNanos(commandToSend, clientOptions);
+                final ConnectionIntent connectionIntent = getIntent(commandToSend);
 
-                        if (isSuccessfullyCompleted(cf)) {
-                            writeCommand(commandToSend, /* asking= */false, cf.join(), null);
-                            return commandToSend;
-                        }
+                class TryNext {
 
-                        try {
-                            StatefulRedisConnection<K, V> c = cf.get();
-                            writeCommand(commandToSend, false, c, null);
-                            return commandToSend;
-                        } catch (Exception connectFailure) {
-                            // Try next candidate
-                            continue;
+                    void startNext() {
+                        if (!it.hasNext()) {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Keyless RR: no more candidates for {}", commandToSend.getType());
+                            }
+                            commandToSend.completeExceptionally(new RedisException("No eligible endpoint for keyless command"));
+                            return;
                         }
-                    } catch (Exception e) {
-                        // try next candidate
+                        if (System.nanoTime() > deadlineNanos) {
+                            if (logger.isDebugEnabled()) {
+                                logger.debug("Keyless RR: deadline exceeded for {}", commandToSend.getType());
+                            }
+                            commandToSend.completeExceptionally(new RedisException("Keyless routing deadline exceeded"));
+                            return;
+                        }
+                        RedisClusterNode node = it.next();
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("Keyless RR: trying {}:{} for {}", node.getUri().getHost(), node.getUri().getPort(),
+                                    commandToSend.getType());
+                        }
+                        asyncClusterConnectionProvider
+                                .getConnectionAsync(connectionIntent, node.getUri().getHost(), node.getUri().getPort())
+                                .whenComplete((connection, throwable) -> {
+                                    if (throwable != null || connection == null || !connection.isOpen()) {
+                                        if (logger.isDebugEnabled()) {
+                                            logger.debug("Keyless RR: failed candidate ({}), trying next",
+                                                    throwable != null ? throwable.toString() : "closed");
+                                        }
+                                        startNext();
+                                        return;
+                                    }
+                                    @SuppressWarnings("unchecked")
+                                    StatefulRedisConnection<K, V> c = (StatefulRedisConnection<K, V>) (StatefulRedisConnection<?, ?>) connection;
+                                    writeCommand(commandToSend, false, c, null);
+                                });
                     }
+
                 }
 
-                // No candidate succeeded — fail explicitly
-                commandToSend.completeExceptionally(new RedisException("No eligible endpoint for keyless command"));
+                new TryNext().startNext();
                 return commandToSend;
             }
         }
@@ -583,6 +613,19 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     @Override
     public ClientResources getClientResources() {
         return defaultWriter.getClientResources();
+    }
+
+    private long computeDeadlineNanos(RedisCommand<?, ?, ?> cmd, ClientOptions options) {
+        TimeoutOptions to = options.getTimeoutOptions();
+        TimeoutOptions.TimeoutSource src = to != null ? to.getSource() : null;
+        if (to != null && to.isTimeoutCommands() && src != null) {
+            long value = src.getTimeout(cmd);
+            TimeUnit unit = src.getTimeUnit();
+            if (value > 0) {
+                return System.nanoTime() + unit.toNanos(value) - TimeUnit.MILLISECONDS.toNanos(5);
+            }
+        }
+        return System.nanoTime() + TimeUnit.SECONDS.toNanos(60);
     }
 
     @Override
