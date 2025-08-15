@@ -1,10 +1,10 @@
 // EXAMPLE: query_em
 // REMOVE_START
-package io.redis.examples.async;
+package io.redis.examples.reactive;
 
 // REMOVE_END
 import io.lettuce.core.*;
-import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 
 import io.lettuce.core.search.arguments.*;
 import io.lettuce.core.search.SearchReply;
@@ -15,7 +15,7 @@ import io.lettuce.core.json.JsonObject;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import reactor.core.publisher.Mono;
 // REMOVE_START
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,14 +28,12 @@ public class QueryEmExample {
         RedisClient redisClient = RedisClient.create("redis://localhost:6379");
 
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
-            RedisAsyncCommands<String, String> asyncCommands = connection.async();
+            RedisReactiveCommands<String, String> reactiveCommands = connection.reactive();
             // REMOVE_START
-            asyncCommands.ftDropindex("idx:bicycle").exceptionally(ex -> null) // Ignore errors if the index doesn't exist.
-                    .toCompletableFuture().join();
-            asyncCommands.ftDropindex("idx:email").exceptionally(ex -> null) // Ignore errors if the index doesn't exist.
-                    .toCompletableFuture().join();
-            asyncCommands.del("bicycle:0", "bicycle:1", "bicycle:2", "bicycle:3", "bicycle:4", "bicycle:5", "bicycle:6",
-                    "bicycle:7", "bicycle:8", "bicycle:9", "key:1").toCompletableFuture().join();
+            reactiveCommands.ftDropindex("idx:bicycle").onErrorReturn("Index `idx:bicycle` does not exist").block();
+            reactiveCommands.ftDropindex("idx:email").onErrorReturn("Index `idx:email` does not exist").block();
+            reactiveCommands.del("bicycle:0", "bicycle:1", "bicycle:2", "bicycle:3", "bicycle:4", "bicycle:5", "bicycle:6",
+                    "bicycle:7", "bicycle:8", "bicycle:9", "key:1").block();
             // REMOVE_END
 
             List<FieldArgs<String>> bicycleSchema = Arrays.asList(
@@ -48,9 +46,9 @@ public class QueryEmExample {
             CreateArgs<String, String> bicycleCreateArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON)
                     .withPrefix("bicycle:").build();
 
-            asyncCommands.ftCreate("idx:bicycle", bicycleCreateArgs, bicycleSchema).toCompletableFuture().join();
+            reactiveCommands.ftCreate("idx:bicycle", bicycleCreateArgs, bicycleSchema).block();
 
-            JsonParser parser = asyncCommands.getJsonParser();
+            JsonParser parser = reactiveCommands.getJsonParser();
 
             List<JsonObject> bicycleJsons = Arrays.asList(parser.createJsonObject()
                     .put("brand", parser.createJsonValue("\"Velorim\"")).put("model", parser.createJsonValue("\"Jigger\""))
@@ -153,38 +151,31 @@ public class QueryEmExample {
                             .put("price", parser.createJsonValue("815"))
                             .put("condition", parser.createJsonValue("\"refurbished\"")));
 
-            CompletableFuture<?>[] bikeFutures = new CompletableFuture[bicycleJsons.size()];
+            Mono<?>[] bikeFutures = new Mono<?>[bicycleJsons.size()];
 
             for (int i = 0; i < bicycleJsons.size(); i++) {
-                bikeFutures[i] = asyncCommands.jsonSet("bicycle:" + i, JsonPath.ROOT_PATH, bicycleJsons.get(i))
-                        .toCompletableFuture();
+                bikeFutures[i] = reactiveCommands.jsonSet("bicycle:" + i, JsonPath.ROOT_PATH, bicycleJsons.get(i));
             }
 
-            CompletableFuture.allOf(bikeFutures).join();
+            Mono.when(bikeFutures).block();
 
             // STEP_START em1
-            CompletableFuture<SearchReply<String, String>> priceResults = asyncCommands.ftSearch("idx:bicycle", "@price:[270]")
-
-                    .thenApply(res -> {
-                        // REMOVE_START
-                        assertThat(res.getResults().size()).isEqualTo(1);
-                        // REMOVE_END
-
+            Mono<SearchReply<String, String>> priceResults = reactiveCommands.ftSearch("idx:bicycle", "@price:[270]")
+                    .doOnNext(res -> {
                         res.getResults().forEach(doc -> {
-                            // REMOVE_START
-                            assertThat(doc.getId()).isEqualTo("bicycle:0");
-                            // REMOVE_END
                             System.out.printf("ID: %s\n", doc.getId());
                         });
                         // >>> ID: bicycle:0
-
-                        return res;
-                    }).toCompletableFuture();
+                        // REMOVE_START
+                        assertThat(res.getResults().size()).isEqualTo(1);
+                        assertThat(res.getResults().get(0).getId()).isEqualTo("bicycle:0");
+                        // REMOVE_END
+                    });
             // STEP_END
 
             // STEP_START em2
-            CompletableFuture<SearchReply<String, String>> conditionResults = asyncCommands
-                    .ftSearch("idx:bicycle", "@condition:{new}").thenApply(res -> {
+            Mono<SearchReply<String, String>> conditionResults = reactiveCommands.ftSearch("idx:bicycle", "@condition:{new}")
+                    .doOnNext(res -> {
                         res.getResults().stream().sorted((doc1, doc2) -> doc1.getId().compareTo(doc2.getId())).forEach(doc -> {
                             System.out.printf("ID: %s\n", doc.getId());
                         });
@@ -193,67 +184,57 @@ public class QueryEmExample {
                         // >>> ID: bicycle:6
                         // >>> ID: bicycle:7
                         // >>> ID: bicycle:8
-
                         // REMOVE_START
                         assertThat(res.getResults().size()).isEqualTo(5);
                         assertThat(res.getResults().stream().map(SearchReply.SearchResult<String, String>::getId).sorted()
                                 .toArray()).containsExactly("bicycle:0", "bicycle:5", "bicycle:6", "bicycle:7", "bicycle:8");
                         // REMOVE_END
-                        return res;
-                    }).toCompletableFuture();
+                    });
             // STEP_END
 
             // STEP_START em3
             List<FieldArgs<String>> emailSchema = Arrays
                     .asList(TagFieldArgs.<String> builder().name("$.email").as("email").build());
+
             CreateArgs<String, String> emailCreateArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON)
                     .withPrefix("key:").build();
 
-            CompletableFuture<SearchReply<String, String>> emailResults = asyncCommands
-                    .ftCreate("idx:email", emailCreateArgs, emailSchema).thenCompose(res -> {
+            Mono<Void> emailResults = reactiveCommands.ftCreate("idx:email", emailCreateArgs, emailSchema).doOnNext(res -> {
+                System.out.println(res); // >>> OK
+                // REMOVE_START
+                assertThat(res).isEqualTo("OK");
+                // REMOVE_END
+            }).flatMap(res -> reactiveCommands.jsonSet("key:1", JsonPath.ROOT_PATH,
+                    parser.createJsonObject().put("email", parser.createJsonValue("\"test@redis.com\"")))).doOnNext(res -> {
                         System.out.println(res); // >>> OK
                         // REMOVE_START
                         assertThat(res).isEqualTo("OK");
                         // REMOVE_END
-                        return asyncCommands.jsonSet("key:1", JsonPath.ROOT_PATH,
-                                parser.createJsonObject().put("email", parser.createJsonValue("\"test@redis.com\"")));
-                    }).thenCompose(res2 -> {
-                        System.out.println(res2); // >>> OK
-                        // REMOVE_START
-                        assertThat(res2).isEqualTo("OK");
-                        // REMOVE_END
-                        return asyncCommands.ftSearch("idx:email", "@email:{test\\@redis\\.com}");
-                    }).thenApply(res3 -> {
-                        System.out.println(res3.getResults().size()); // >>> 1
-                        System.out.println(res3.getResults().get(0).getId());
+                    }).flatMap(res -> reactiveCommands.ftSearch("idx:email", "@email:{test\\@redis\\.com}")).doOnNext(res -> {
+                        System.out.println(res.getResults().size()); // >>> 1
+                        System.out.println(res.getResults().get(0).getId());
                         // >>> key:1
                         // REMOVE_START
-                        assertThat(res3.getResults().size()).isEqualTo(1);
-                        assertThat(res3.getResults().get(0).getId()).isEqualTo("key:1");
+                        assertThat(res.getResults().size()).isEqualTo(1);
+                        assertThat(res.getResults().get(0).getId()).isEqualTo("key:1");
                         // REMOVE_END
-                        return res3;
-                    }).toCompletableFuture();
+                    }).then();
             // STEP_END
 
             // STEP_START em4
-            CompletableFuture<SearchReply<String, String>> textMatchResults = asyncCommands
-                    .ftSearch("idx:bicycle", "@description:\"rough terrain\"").thenApply(res -> {
+            Mono<SearchReply<String, String>> textMatchResults = reactiveCommands
+                    .ftSearch("idx:bicycle", "@description:\"rough terrain\"").doOnNext(res -> {
                         res.getResults().forEach(doc -> {
                             System.out.printf("ID: %s\n", doc.getId());
                         });
                         // >>> ID: bicycle:8
-
                         // REMOVE_START
                         assertThat(res.getResults().size()).isEqualTo(1);
                         assertThat(res.getResults().get(0).getId()).isEqualTo("bicycle:8");
                         // REMOVE_END
-                        return res;
-                    }).toCompletableFuture();
+                    });
             // STEP_END
-
-            CompletableFuture.allOf(priceResults, conditionResults, emailResults, textMatchResults).join();
-        } finally {
-            redisClient.shutdown();
+            Mono.when(priceResults, conditionResults, emailResults, textMatchResults).block();
         }
     }
 
