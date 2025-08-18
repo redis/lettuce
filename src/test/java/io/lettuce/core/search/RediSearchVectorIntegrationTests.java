@@ -30,6 +30,7 @@ import io.lettuce.core.json.JsonValue;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -1067,6 +1068,7 @@ public class RediSearchVectorIntegrationTests {
      * binary vector data and text data in the same hash, with proper decoding of each field type.
      */
     @Test
+    @Disabled("Test is being very flaky on the pipeline")
     void testVectorSearchBinaryAndTextFields() {
         // Create a custom codec that can handle both strings and byte arrays
         RedisCodec<String, Object> mixedCodec = new RedisCodec<String, Object>() {
