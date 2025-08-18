@@ -67,10 +67,6 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
     }
 
     @Override
-    public void reset() {
-    }
-
-    @Override
     public void setAutoFlushCommands(boolean autoFlush) {
     }
 
