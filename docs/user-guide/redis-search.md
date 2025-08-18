@@ -145,7 +145,7 @@ VectorFieldArgs<String> embeddingField = VectorFieldArgs.<String>builder()
 
 ```java
 CreateArgs<String, String> createArgs = CreateArgs.<String, String>builder()
-    .on(CreateArgs.TargetType.HASH)                    // Index HASH documents
+    .on(CreateArgs.TargetType.HASH)            // Index HASH documents
     .withPrefix("product:")                    // Only index keys with this prefix
     .language("english")                       // Default language for text processing
     .languageField("lang")                     // Field containing document language
@@ -167,7 +167,7 @@ String result = search.ftCreate("advanced-idx", createArgs, fields);
 
 ```java
 CreateArgs<String, String> jsonArgs = CreateArgs.<String, String>builder()
-    .on(IndexDataType.JSON)
+    .on(CreateArgs.TargetType.JSON)
     .prefix("user:")
     .build();
 
@@ -181,6 +181,9 @@ search.ftCreate("users-idx", jsonArgs, jsonFields);
 ```
 
 ## Search Queries
+
+!!! INFO
+The Lettuce driver uses `DIALECT 2` by default for all search queries, unless configured otherwise. This is the recommended approach for new applications as all other dialects are [deprecated](https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/dialects/).
 
 ### Query Syntax
 
@@ -235,7 +238,7 @@ SearchArgs<String, String> searchArgs = SearchArgs.<String, String>builder()
     .slop(2)                                                   // Allow term reordering
     .timeout(5000)                                             // Query timeout in milliseconds
     .params("category", "electronics")                         // Query parameters
-    .dialect(QueryDialects.DIALECT2)                          // Query dialect version
+    .dialect(QueryDialects.DIALECT2)                           // Query dialect version
     .build();
 
 SearchReply<String, String> results = search.ftSearch("products-idx", "@title:$category", searchArgs);
