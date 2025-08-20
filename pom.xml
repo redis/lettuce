@@ -267,23 +267,19 @@
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-epoll</artifactId>
-            <classifier>linux-x86_64</classifier>
+            <artifactId>netty-transport-classes-epoll</artifactId>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-kqueue</artifactId>
-            <classifier>osx-x86_64</classifier>
+            <artifactId>netty-transport-classes-kqueue</artifactId>
             <optional>true</optional>
         </dependency>
 
         <dependency>
-            <groupId>io.netty.incubator</groupId>
-            <artifactId>netty-incubator-transport-native-io_uring</artifactId>
-            <version>0.0.26.Final</version>
-            <classifier>linux-x86_64</classifier>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-classes-io_uring</artifactId>
             <optional>true</optional>
         </dependency>
 
