@@ -284,8 +284,9 @@ public class FaultInjectionClient {
                                     new RuntimeException("Rladmin command failed: status=" + status + ", error=" + error));
                         }
 
-                        if ("pending".equals(status)) {
-                            log.debug("Status is PENDING for '{}', returning empty to trigger retry", rladminCommand);
+                        if ("running".equals(status)) {
+                            log.debug("Status is {} for '{}', returning empty to trigger retry",
+                                    status != null ? status.toUpperCase() : "NULL", rladminCommand);
                             return Mono.empty(); // Trigger retry
                         }
 
@@ -429,46 +430,6 @@ public class FaultInjectionClient {
     }
 
     /**
-     * Advanced method to trigger a sequence of maintenance operations for comprehensive testing.
-     *
-     * @param bdbId the BDB ID
-     * @param operations list of operations to execute in sequence
-     * @return a Mono that emits true when all operations complete
-     */
-    public Mono<Boolean> triggerMaintenanceSequence(String bdbId, List<MaintenanceOperation> operations) {
-        if (operations == null || operations.isEmpty()) {
-            return Mono.error(new IllegalArgumentException("Operations list cannot be null or empty"));
-        }
-
-        log.info("Starting maintenance sequence with {} operations on BDB {}", operations.size(), bdbId);
-
-        return Flux.fromIterable(operations).concatMap(operation -> {
-            log.info("Executing maintenance operation: {}", operation);
-            return executeMaintenanceOperation(bdbId, operation).delayElement(OPERATION_DELAY); // Brief delay between
-                                                                                                // operations
-        }).then(Mono.just(true)).doOnSuccess(success -> log.info("Maintenance sequence completed on BDB {}", bdbId))
-                .doOnError(error -> log.error("Maintenance sequence failed on BDB {}: {}", bdbId, error.getMessage()));
-    }
-
-    /**
-     * Executes a single maintenance operation based on its type.
-     */
-    private Mono<Boolean> executeMaintenanceOperation(String bdbId, MaintenanceOperation operation) {
-        switch (operation.getType()) {
-            case ENDPOINT_REBIND:
-                return triggerEndpointRebind(bdbId, operation.getEndpointId(), operation.getPolicy());
-            case SHARD_MIGRATION:
-                return Mono.error(new IllegalArgumentException(
-                        "SHARD_MIGRATION operations require source and target nodes. Use the 4-parameter triggerShardMigration method directly."));
-            case SHARD_FAILOVER:
-                return Mono.error(new IllegalArgumentException(
-                        "SHARD_FAILOVER operations require nodeId and RedisEnterpriseConfig. Use the 4-parameter triggerShardFailover method directly."));
-            default:
-                return Mono.error(new IllegalArgumentException("Unknown operation type: " + operation.getType()));
-        }
-    }
-
-    /**
      * Enum for maintenance operation types.
      */
     public enum MaintenanceOperationType {
@@ -504,18 +465,6 @@ public class FaultInjectionClient {
 
         public MaintenanceOperationType getType() {
             return type;
-        }
-
-        public String getEndpointId() {
-            return endpointId;
-        }
-
-        public String getPolicy() {
-            return policy;
-        }
-
-        public String getShardId() {
-            return shardId;
         }
 
         @Override
@@ -717,14 +666,32 @@ public class FaultInjectionClient {
                                 ? statusResponse.get("error").asText()
                                 : null;
 
-                        // Try to extract the actual command output
+                        // Log available fields for debugging when needed
+                        if (log.isDebugEnabled()) {
+                            statusResponse.fieldNames().forEachRemaining(
+                                    field -> log.debug("Response field '{}': {}", field, statusResponse.get(field)));
+                        }
+
+                        // Extract the actual command output from the nested JSON structure
                         String output = null;
                         if (statusResponse.has("output")) {
-                            output = statusResponse.get("output").asText();
-                        } else if (statusResponse.has("result")) {
-                            output = statusResponse.get("result").asText();
-                        } else if (statusResponse.has("data")) {
-                            output = statusResponse.get("data").asText();
+                            JsonNode outputNode = statusResponse.get("output");
+                            if (outputNode.isNull()) {
+                                // Output field is null - command likely still running
+                                log.debug("Output field is null for command '{}'", rladminCommand);
+                            } else if (outputNode.isTextual()) {
+                                // Simple text output
+                                output = outputNode.asText();
+                                log.debug("Found simple text output in 'output' field");
+                            } else if (outputNode.isObject() && outputNode.has("output")) {
+                                // Nested JSON with output field (expected format)
+                                output = outputNode.get("output").asText();
+                                log.debug("Found nested output in 'output.output' field");
+                            } else {
+                                log.warn("Output field found but unexpected format: {}", outputNode);
+                            }
+                        } else {
+                            log.debug("No output field in response for '{}'", rladminCommand);
                         }
 
                         log.debug("Parsed status: {}, error: {}, output present: {}", status, error, output != null);
@@ -744,8 +711,8 @@ public class FaultInjectionClient {
                                     new RuntimeException("Rladmin command failed: status=" + status + ", error=" + error));
                         }
 
-                        if ("pending".equals(status)) {
-                            log.debug("Command '{}' still pending, will retry...", rladminCommand);
+                        if ("running".equals(status)) {
+                            log.debug("Command '{}' still {}, will retry...", rladminCommand, status);
                             return Mono.empty(); // Trigger retry
                         }
 

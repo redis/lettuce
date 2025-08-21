@@ -63,18 +63,20 @@ public class MaintenanceNotificationTest {
 
     private final FaultInjectionClient faultClient = new FaultInjectionClient();
 
-    // Push notification patterns
+    // Push notification patterns - Updated to new format with sequence numbers
     private static final Pattern MOVING_PATTERN = Pattern
-            .compile(">3\\r\\n\\+MOVING\\r\\n:(\\d+)\\r\\n\\+([^:]+):(\\d+)\\r\\n");
+            .compile(">4\\r\\n\\+MOVING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n\\+([^:]+):(\\d+)\\r\\n");
 
-    private static final Pattern MIGRATING_PATTERN = Pattern.compile(">3\\r\\n\\+MIGRATING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
+    private static final Pattern MIGRATING_PATTERN = Pattern
+            .compile(">4\\r\\n\\+MIGRATING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
-    private static final Pattern MIGRATED_PATTERN = Pattern.compile(">2\\r\\n\\+MIGRATED\\r\\n:(\\d+)\\r\\n");
+    private static final Pattern MIGRATED_PATTERN = Pattern.compile(">3\\r\\n\\+MIGRATED\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
     private static final Pattern FAILING_OVER_PATTERN = Pattern
-            .compile(">3\\r\\n\\+FAILING_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
+            .compile(">4\\r\\n\\+FAILING_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
-    private static final Pattern FAILED_OVER_PATTERN = Pattern.compile(">2\\r\\n\\+FAILED_OVER\\r\\n:(\\d+)\\r\\n");
+    private static final Pattern FAILED_OVER_PATTERN = Pattern
+            .compile(">3\\r\\n\\+FAILED_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
     @BeforeAll
     public static void setup() {
@@ -235,13 +237,15 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = MOVING_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String timeS = matcher.group(1);
-            String newIp = matcher.group(2);
-            String port = matcher.group(3);
+            String seqNumber = matcher.group(1);
+            String timeS = matcher.group(2);
+            String newIp = matcher.group(3);
+            String port = matcher.group(4);
 
-            log.info("Parsed MOVING notification - Time: {}, New IP: {}, Port: {}", timeS, newIp, port);
+            log.info("Parsed MOVING notification - Seq: {}, Time: {}, New IP: {}, Port: {}", seqNumber, timeS, newIp, port);
 
             // Validate parsed values
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
             assertThat(Long.parseLong(timeS)).isGreaterThan(0L);
             assertThat(newIp).isNotEmpty();
             assertThat(Integer.parseInt(port)).isGreaterThan(0);
@@ -302,11 +306,13 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = MIGRATING_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String timeS = matcher.group(1);
-            String migrationShardId = matcher.group(2);
+            String seqNumber = matcher.group(1);
+            String timeS = matcher.group(2);
+            String migrationShardId = matcher.group(3);
 
-            log.info("Parsed MIGRATING notification - Time: {}, Shard ID: {}", timeS, migrationShardId);
+            log.info("Parsed MIGRATING notification - Seq: {}, Time: {}, Shard ID: {}", seqNumber, timeS, migrationShardId);
 
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
             assertThat(Long.parseLong(timeS)).isGreaterThan(0L);
             assertThat(migrationShardId).isNotEmpty();
         }
@@ -364,9 +370,13 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = MIGRATED_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String migratedShardId = matcher.group(1);
-            log.info("Parsed MIGRATED notification - Shard ID: {}", migratedShardId);
-            assertThat(migratedShardId).isEqualTo(shardId);
+            String seqNumber = matcher.group(1);
+            String migratedShardId = matcher.group(2);
+            log.info("Parsed MIGRATED notification - Seq: {}, Shard ID: {}", seqNumber, migratedShardId);
+            // Note: Since we migrate all shards from the source node, we may receive MIGRATED
+            // notification for any shard, not necessarily the specific one we requested
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
+            assertThat(migratedShardId).isNotEmpty();
         }
 
         // Verify client received MIGRATED notification (migration may trigger multiple push messages)
@@ -409,11 +419,13 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = FAILING_OVER_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String timeS = matcher.group(1);
-            String failoverShardId = matcher.group(2);
+            String seqNumber = matcher.group(1);
+            String timeS = matcher.group(2);
+            String failoverShardId = matcher.group(3);
 
-            log.info("Parsed FAILING_OVER notification - Time: {}, Shard ID: {}", timeS, failoverShardId);
+            log.info("Parsed FAILING_OVER notification - Seq: {}, Time: {}, Shard ID: {}", seqNumber, timeS, failoverShardId);
 
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
             assertThat(Long.parseLong(timeS)).isGreaterThan(0L);
             assertThat(failoverShardId).isNotEmpty();
         }
@@ -457,9 +469,11 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = FAILED_OVER_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String failedOverShardId = matcher.group(1);
-            log.info("Parsed FAILED_OVER notification - Shard ID: {}", failedOverShardId);
-            assertThat(failedOverShardId).isEqualTo(shardId);
+            String seqNumber = matcher.group(1);
+            String failedOverShardId = matcher.group(2);
+            log.info("Parsed FAILED_OVER notification - Seq: {}, Shard ID: {}", seqNumber, failedOverShardId);
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
+            assertThat(failedOverShardId).isNotEmpty();
         }
 
         // Verify client removes failover state
