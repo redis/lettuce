@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import io.lettuce.core.MaintenanceEventsOptions;
 import io.lettuce.core.MaintenanceEventsOptions.AddressType;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -91,6 +92,19 @@ public class RelaxedTimeoutConfigurationTest {
         clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
     }
 
+    @AfterEach
+    public void cleanupAfterTest() {
+        log.info("Restoring cluster state after test");
+        try {
+            // Refresh cluster config which will restore the original state
+            // This is the same method used in @BeforeEach but it will restore state for the next test
+            RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+            log.info("Cluster state restored successfully");
+        } catch (Exception e) {
+            log.warn("Failed to restore cluster state: {}", e.getMessage());
+        }
+    }
+
     /**
      * Test context holding common objects used across all timeout tests
      */
@@ -133,6 +147,8 @@ public class RelaxedTimeoutConfigurationTest {
         private final AtomicInteger successCount = new AtomicInteger(0);
 
         private final AtomicBoolean maintenanceActive = new AtomicBoolean(false);
+
+        private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
 
         private final boolean isMovingTest;
 
@@ -177,14 +193,20 @@ public class RelaxedTimeoutConfigurationTest {
         }
 
         public void captureNotification(String notification) {
-            receivedNotifications.add(notification);
-            lastNotification.set(notification);
-            log.info("Captured push notification: {}", notification);
+            // Only capture notifications during the test phase, not during cleanup
+            if (testPhaseActive.get()) {
+                receivedNotifications.add(notification);
+                lastNotification.set(notification);
+                log.info("Captured push notification: {}", notification);
 
-            // Log what type of test this is
-            String testType = isMovingUnrelaxedTest ? "MOVING UN-RELAXED test"
-                    : (isMovingTest ? "MOVING test" : (isUnrelaxedTest ? "UN-RELAXED test" : "OTHER test"));
-            log.info("Test type: {} - Processing notification: {}", testType, notification);
+                // Log what type of test this is
+                String testType = isMovingUnrelaxedTest ? "MOVING UN-RELAXED test"
+                        : (isMovingTest ? "MOVING test" : (isUnrelaxedTest ? "UN-RELAXED test" : "OTHER test"));
+                log.info("Test type: {} - Processing notification: {}", testType, notification);
+            } else {
+                log.debug("Ignoring notification during cleanup phase: {}", notification);
+                return;
+            }
 
             // For MOVING tests: Start traffic on MOVING, test during MOVING
             if (notification.contains("+MIGRATED") && isMovingTest) {
@@ -493,6 +515,11 @@ public class RelaxedTimeoutConfigurationTest {
             return -1; // Not completed
         }
 
+        public void endTestPhase() {
+            testPhaseActive.set(false);
+            log.info("Test phase ended - notifications will be ignored during cleanup");
+        }
+
     }
 
     /**
@@ -635,6 +662,9 @@ public class RelaxedTimeoutConfigurationTest {
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
 
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
         } finally {
             cleanupTimeoutTest(context);
         }
@@ -687,6 +717,9 @@ public class RelaxedTimeoutConfigurationTest {
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
 
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
         } finally {
             cleanupTimeoutTest(context);
         }
@@ -729,6 +762,9 @@ public class RelaxedTimeoutConfigurationTest {
                     .as("Should have detected at least one relaxed timeout during FAILING_OVER maintenance. "
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
 
         } finally {
             cleanupTimeoutTest(context);
@@ -796,6 +832,9 @@ public class RelaxedTimeoutConfigurationTest {
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
 
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
         } finally {
             cleanupTimeoutTest(context);
         }
@@ -854,6 +893,9 @@ public class RelaxedTimeoutConfigurationTest {
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
 
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
         } finally {
             cleanupTimeoutTest(context);
         }
@@ -902,6 +944,9 @@ public class RelaxedTimeoutConfigurationTest {
                     .as("Should have detected at least one relaxed timeout during FAILING_OVER maintenance. "
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
 
         } finally {
             cleanupTimeoutTest(context);

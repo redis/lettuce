@@ -40,9 +40,6 @@ import static io.lettuce.TestTags.SCENARIO_TEST;
  * Connection handoff tests for Redis Enterprise maintenance events. Validates that connections properly receive the correct
  * endpoint address types (internal IP, external IP, internal FQDN, external FQDN) during MOVING notifications and handle
  * reconnection appropriately.
- * 
- * Based on the maintenance events specification from:
- * https://github.com/redis/lettuce/commit/bd408cfb838e5e438bb5f04a15ae56e507dea330
  */
 @Tag(SCENARIO_TEST)
 public class ConnectionHandoffTest {
@@ -55,8 +52,8 @@ public class ConnectionHandoffTest {
     // 300 seconds - for migrations/failovers
     private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5);
 
-    // 120 seconds - for monitoring operations
-    private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(2);
+    // 300 seconds - for monitoring operations (extended to allow for longer maintenance operations)
+    private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(5);
 
     // 10 seconds - for ping operations
     private static final Duration PING_TIMEOUT = Duration.ofSeconds(10);
@@ -495,9 +492,6 @@ public class ConnectionHandoffTest {
             StepVerifier.create(faultClient.triggerShardFailover(bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
                     .expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
-            // Wait for additional notifications
-            capture.waitForAdditionalNotifications(NOTIFICATION_WAIT_TIMEOUT);
-
             // End test phase to prevent capturing cleanup notifications
             capture.endTestPhase();
 
@@ -772,11 +766,6 @@ public class ConnectionHandoffTest {
 
         public boolean waitForNotifications(Duration timeout) throws InterruptedException {
             return notificationLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        }
-
-        public void waitForAdditionalNotifications(Duration timeout) throws InterruptedException {
-            // Wait for additional notifications beyond the first
-            Thread.sleep(timeout.toMillis());
         }
 
         public List<String> getReceivedNotifications() {
