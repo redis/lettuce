@@ -11,17 +11,17 @@ import io.micrometer.common.KeyValues;
 /**
  * Default {@link LettuceObservationConvention} implementation.
  *
- * @author Mark Paluch
+ * @author Mark Paluch, Tommy Luk
  * @since 6.3
  */
-public final class DefaultLettuceObservationConvention implements LettuceObservationConvention {
+public class DefaultLettuceObservationConvention implements LettuceObservationConvention {
 
     private final boolean includeCommandArgsInSpanTags;
 
     /**
      *
      */
-    DefaultLettuceObservationConvention(boolean includeCommandArgsInSpanTags) {
+    public DefaultLettuceObservationConvention(boolean includeCommandArgsInSpanTags) {
         this.includeCommandArgsInSpanTags = includeCommandArgsInSpanTags;
     }
 
