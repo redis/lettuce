@@ -20,12 +20,14 @@
 package io.lettuce.core.tracing;
 
 import io.micrometer.common.docs.KeyName;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.docs.ObservationDocumentation;
 
 /**
  * A Redis-based {@link io.micrometer.observation.Observation}.
  *
- * @author Mark Paluch
+ * @author Mark Paluch, Tommy Luk
  * @since 6.3
  */
 enum RedisObservation implements ObservationDocumentation {
@@ -51,6 +53,11 @@ enum RedisObservation implements ObservationDocumentation {
         }
 
     };
+
+    @Override
+    public Class<? extends ObservationConvention<? extends Observation.Context>> getDefaultConvention() {
+        return DefaultLettuceObservationConvention.class;
+    }
 
     /**
      * Enums related to low cardinality key names for Redis commands.
