@@ -140,49 +140,66 @@ public class MaintenancePushNotificationMonitor {
         }
 
         private void handleMovingMessage(List<Object> content, T capture) {
-            if (content.size() >= 3) {
-                String slotNumber = content.get(1).toString();
+            if (content.size() >= 4) {
+                String seqNumber = content.get(0).toString();
+                String timeValue = content.get(1).toString();
+                String targetNodeId = content.get(2).toString();
+                String newAddress = decodeByteBuffer(content.get(3));
+                log.info("MOVING: slot {} from node to {} -> address {} (seq: {}, time: {})", timeValue, targetNodeId,
+                        newAddress, seqNumber, timeValue);
+                String resp3Format = String.format(">4\r\n+MOVING\r\n:%s\r\n:%s\r\n+%s\r\n", seqNumber, timeValue, newAddress);
+                capture.captureNotification(resp3Format);
+            } else if (content.size() >= 3) {
+                // Try new format with sequence number
+                String seqNumber = content.get(0).toString();
+                String timeValue = content.get(1).toString();
                 String newAddress = decodeByteBuffer(content.get(2));
-                log.info("MOVING: slot {} -> {}", slotNumber, newAddress);
-                String resp3Format = String.format(">3\r\n+MOVING\r\n:%s\r\n+%s\r\n", slotNumber, newAddress);
+                log.info("MOVING: time {} -> address {} (seq: {})", timeValue, newAddress, seqNumber);
+                String resp3Format = String.format(">4\r\n+MOVING\r\n:%s\r\n:%s\r\n+%s\r\n", seqNumber, timeValue, newAddress);
                 capture.captureNotification(resp3Format);
             }
         }
 
         private void handleMigratingMessage(List<Object> content, T capture) {
             if (content.size() >= 3) {
-                String slotNumber = content.get(1).toString();
-                String timestamp = content.get(2).toString();
-                log.info("MIGRATING: slot {} at timestamp {}", slotNumber, timestamp);
-                String resp3Format = String.format(">3\r\n+MIGRATING\r\n:%s\r\n:%s\r\n", timestamp, slotNumber);
+                String seqNumber = content.get(0).toString();
+                String timestamp = content.get(1).toString();
+                String slotNumber = content.get(2).toString();
+                log.info("MIGRATING: slot {} at timestamp {} (seq: {})", slotNumber, timestamp, seqNumber);
+                String resp3Format = String.format(">4\r\n+MIGRATING\r\n:%s\r\n:%s\r\n:%s\r\n", seqNumber, timestamp,
+                        slotNumber);
                 capture.captureNotification(resp3Format);
             }
         }
 
         private void handleMigratedMessage(List<Object> content, T capture) {
             if (content.size() >= 2) {
+                String seqNumber = content.get(0).toString();
                 String slotNumber = content.get(1).toString();
-                log.info("MIGRATED: slot {}", slotNumber);
-                String resp3Format = String.format(">2\r\n+MIGRATED\r\n:%s\r\n", slotNumber);
+                log.info("MIGRATED: slot {} (seq: {})", slotNumber, seqNumber);
+                String resp3Format = String.format(">3\r\n+MIGRATED\r\n:%s\r\n:%s\r\n", seqNumber, slotNumber);
                 capture.captureNotification(resp3Format);
             }
         }
 
         private void handleFailingOverMessage(List<Object> content, T capture) {
             if (content.size() >= 3) {
+                String seqNumber = content.get(0).toString();
                 String timestamp = content.get(1).toString();
                 String shardId = content.get(2).toString();
-                log.info("FAILING_OVER: shard {} at timestamp {}", shardId, timestamp);
-                String resp3Format = String.format(">3\r\n+FAILING_OVER\r\n:%s\r\n:%s\r\n", timestamp, shardId);
+                log.info("FAILING_OVER: shard {} at timestamp {} (seq: {})", shardId, timestamp, seqNumber);
+                String resp3Format = String.format(">4\r\n+FAILING_OVER\r\n:%s\r\n:%s\r\n:%s\r\n", seqNumber, timestamp,
+                        shardId);
                 capture.captureNotification(resp3Format);
             }
         }
 
         private void handleFailedOverMessage(List<Object> content, T capture) {
             if (content.size() >= 2) {
+                String seqNumber = content.get(0).toString();
                 String shardId = content.get(1).toString();
-                log.info("FAILED_OVER: shard {}", shardId);
-                String resp3Format = String.format(">2\r\n+FAILED_OVER\r\n:%s\r\n", shardId);
+                log.info("FAILED_OVER: shard {} (seq: {})", shardId, seqNumber);
+                String resp3Format = String.format(">3\r\n+FAILED_OVER\r\n:%s\r\n:%s\r\n", seqNumber, shardId);
                 capture.captureNotification(resp3Format);
             }
         }
