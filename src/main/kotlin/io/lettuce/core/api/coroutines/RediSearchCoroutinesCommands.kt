@@ -1158,7 +1158,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(Any, Any, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: K, cursorId: Long, count: Int): AggregationReply<K, V>?
+    suspend fun ftCursorread(index: K, aggregateReply: AggregationReply<K, V>, count: Int): AggregationReply<K, V>?
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1191,7 +1191,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(Any, Any, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: K, cursorId: Long): AggregationReply<K, V>?
+    suspend fun ftCursorread(index: K, aggregateReply: AggregationReply<K, V>): AggregationReply<K, V>?
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1230,7 +1230,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftCursorread(Any, long, Integer)
      */
     @Experimental
-    suspend fun ftCursordel(index: K, cursorId: Long): String?
+    suspend fun ftCursordel(index: K, aggregateReply: AggregationReply<K, V>): String?
 
 }
 

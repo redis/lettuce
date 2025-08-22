@@ -80,14 +80,14 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftAggregate(index: K, query: V): AggregationReply<K, V>? =
         ops.ftAggregate(index, query).awaitFirstOrNull()
 
-    override suspend fun ftCursorread(index: K, cursorId: Long): AggregationReply<K, V>? =
-        ops.ftCursorread(index, cursorId).awaitFirstOrNull()
+    override suspend fun ftCursorread(index: K, aggregateReply: AggregationReply<K, V>): AggregationReply<K, V>? =
+        ops.ftCursorread(index, aggregateReply).awaitFirstOrNull()
 
-    override suspend fun ftCursorread(index: K, cursorId: Long, count: Int): AggregationReply<K, V>? =
-        ops.ftCursorread(index, cursorId, count).awaitFirstOrNull()
+    override suspend fun ftCursorread(index: K, aggregateReply: AggregationReply<K, V>, count: Int): AggregationReply<K, V>? =
+        ops.ftCursorread(index, aggregateReply, count).awaitFirstOrNull()
 
-    override suspend fun ftCursordel(index: K, cursorId: Long): String? {
-        return ops.ftCursordel(index, cursorId).awaitFirstOrNull()
+    override suspend fun ftCursordel(index: K, aggregateReply: AggregationReply<K, V>): String? {
+        return ops.ftCursordel(index, aggregateReply).awaitFirstOrNull()
     }
 
     override suspend fun ftDictadd(dict: K, vararg terms: V): Long? =
