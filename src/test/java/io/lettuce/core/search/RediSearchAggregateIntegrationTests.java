@@ -1080,8 +1080,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(searchReply.getResults()).hasSize(2); // Should return 2 results per page
 
         // Read next page from cursor
-        long cursorId = result.getCursorId();
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-basic-test-idx", cursorId);
+        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-basic-test-idx", result);
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
@@ -1122,8 +1121,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(searchReply.getResults()).hasSize(3); // Should return 3 results per page
 
         // Read next page with different count
-        long cursorId = result.getCursorId();
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-count-test-idx", cursorId, 5);
+        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-count-test-idx", result, 5);
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
@@ -1132,8 +1130,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(nextResult.getCursorId()).isNotEqualTo(0L); // Should still have more results
 
         // Read final page
-        cursorId = nextResult.getCursorId();
-        AggregationReply<String, String> finalResult = redis.ftCursorread("cursor-count-test-idx", cursorId);
+        AggregationReply<String, String> finalResult = redis.ftCursorread("cursor-count-test-idx", nextResult);
 
         assertThat(finalResult).isNotNull();
         assertThat(finalResult.getReplies()).hasSize(1); // Should have 1 SearchReply
@@ -1172,8 +1169,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(searchReply.getResults()).hasSize(2);
 
         // Read from cursor should work within timeout
-        long cursorId = result.getCursorId();
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-maxidle-test-idx", cursorId);
+        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-maxidle-test-idx", result);
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
@@ -1208,8 +1204,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(result.getCursorId()).isNotEqualTo(0L);
 
         // Delete the cursor explicitly
-        long cursorId = result.getCursorId();
-        String deleteResult = redis.ftCursordel("cursor-delete-test-idx", cursorId);
+        String deleteResult = redis.ftCursordel("cursor-delete-test-idx", result);
 
         assertThat(deleteResult).isEqualTo("OK");
 
@@ -1246,16 +1241,15 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Collect all results by paginating through cursor
         List<SearchReply.SearchResult<String, String>> allResults = new ArrayList<>(searchReply.getResults());
-        long cursorId = result.getCursorId();
-
-        while (cursorId != 0L) {
-            AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-pagination-test-idx", cursorId);
+        AggregationReply<String, String> current = result;
+        while (current.getCursorId() != 0L) {
+            AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-pagination-test-idx", current);
             assertThat(nextResult).isNotNull();
             assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
             SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
 
             allResults.addAll(nextSearchReply.getResults());
-            cursorId = nextResult.getCursorId();
+            current = nextResult;
         }
 
         // Verify we got all 15 results
@@ -1338,8 +1332,7 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(firstGroup.getFields()).containsKey("avg_price");
 
         // Read next group from cursor
-        long cursorId = result.getCursorId();
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-complex-test-idx", cursorId);
+        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-complex-test-idx", result);
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply

@@ -1705,17 +1705,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count) {
-        return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, count));
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, AggregationReply<K, V> aggregateReply, int count) {
+        if (aggregateReply == null)
+            throw new IllegalArgumentException("aggregateReply must not be null");
+        return dispatch(searchCommandBuilder.ftCursorread(index, aggregateReply.getCursorId(), count));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, long cursorId) {
-        return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, -1));
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, AggregationReply<K, V> aggregateReply) {
+        return ftCursorread(index, aggregateReply, -1);
     }
 
     @Override
-    public RedisFuture<String> ftCursordel(String index, long cursorId) {
+    public RedisFuture<String> ftCursordel(String index, AggregationReply<K, V> aggregateReply) {
+        if (aggregateReply == null)
+            throw new IllegalArgumentException("aggregateReply must not be null");
+        long cursorId = aggregateReply.getCursorId();
+        if (cursorId <= 0) {
+            // idempotent OK for non-existent/finished cursor
+            return dispatch(searchCommandBuilder.ftCursordel(index, 0));
+        }
         return dispatch(searchCommandBuilder.ftCursordel(index, cursorId));
     }
 

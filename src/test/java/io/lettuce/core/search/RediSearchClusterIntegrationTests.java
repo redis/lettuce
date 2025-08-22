@@ -234,7 +234,7 @@ public class RediSearchClusterIntegrationTests {
         // Test cursor read functionality if cursor is available
         if (aggregateResults.getCursorId() != -1 && aggregateResults.getCursorId() > 0) {
             // Read next batch using cursor
-            AggregationReply<String, String> cursorResults = redis.ftCursorread(BOOKS_INDEX, aggregateResults.getCursorId());
+            AggregationReply<String, String> cursorResults = redis.ftCursorread(BOOKS_INDEX, aggregateResults);
 
             // Verify cursor read works
             assertThat(cursorResults).isNotNull();

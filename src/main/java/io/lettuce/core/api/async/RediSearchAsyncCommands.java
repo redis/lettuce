@@ -1157,7 +1157,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
-    RedisFuture<AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count);
+    RedisFuture<AggregationReply<K, V>> ftCursorread(String index, AggregationReply<K, V> aggregateReply, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1190,7 +1190,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
-    RedisFuture<AggregationReply<K, V>> ftCursorread(String index, long cursorId);
+    RedisFuture<AggregationReply<K, V>> ftCursorread(String index, AggregationReply<K, V> aggregateReply);
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1229,6 +1229,6 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftCursorread(String, long, int)
      */
     @Experimental
-    RedisFuture<String> ftCursordel(String index, long cursorId);
+    RedisFuture<String> ftCursordel(String index, AggregationReply<K, V> aggregateReply);
 
 }

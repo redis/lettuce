@@ -54,7 +54,13 @@ import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.ConnectionIntent;
 import reactor.core.publisher.Flux;
+import io.lettuce.core.search.AggregationReply;
+
+import io.lettuce.core.search.arguments.AggregateArgs;
+
 import reactor.core.publisher.Mono;
+
+import java.util.Optional;
 
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
@@ -385,9 +391,77 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+        int slot = SlotHash.getSlot(codec.encodeKey(index));
+        RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
+        if (node == null) {
+            return super.ftAggregate(index, query, args);
+        }
+        String nodeId = node.getNodeId();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.reactive().ftAggregate(index, query, args).mapNotNull(reply -> {
+            if (reply != null && reply.getCursorId() > 0) {
+                AggregationReply.stampNodeId(reply, nodeId);
+            }
+            return reply;
+        });
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query) {
+        return ftAggregate(index, query, null);
+    }
+
+    @Override
     public Mono<Void> shutdown(boolean save) {
         Map<String, Publisher<Void>> publishers = executeOnNodes(commands -> commands.shutdown(save), ALL_NODES);
         return Flux.merge(publishers.values()).then();
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply, int count) {
+        if (aggregateReply == null) {
+            return Mono.error(new IllegalArgumentException("aggregateReply must not be null"));
+        }
+        long cursorId = aggregateReply.getCursorId();
+        if (cursorId <= 0) {
+            return Mono.just(new AggregationReply<>());
+        }
+        Optional<String> nodeIdOpt = aggregateReply.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            return Mono.error(
+                    new IllegalArgumentException("AggregationReply missing nodeId; cannot route cursor READ in cluster mode"));
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.reactive().ftCursorread(index, aggregateReply, count).map(reply -> {
+            AggregationReply.stampNodeId(reply, nodeId);
+            return reply;
+        });
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply) {
+        return ftCursorread(index, aggregateReply, -1);
+    }
+
+    @Override
+    public Mono<String> ftCursordel(K index, AggregationReply<K, V> aggregateReply) {
+        if (aggregateReply == null) {
+            return Mono.error(new IllegalArgumentException("aggregateReply must not be null"));
+        }
+        long cursorId = aggregateReply.getCursorId();
+        if (cursorId <= 0) {
+            return Mono.just("OK");
+        }
+        Optional<String> nodeIdOpt = aggregateReply.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            return Mono.error(
+                    new IllegalArgumentException("AggregationReply missing nodeId; cannot route cursor DEL in cluster mode"));
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.reactive().ftCursordel(index, aggregateReply);
     }
 
     @Override
