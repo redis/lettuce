@@ -38,11 +38,6 @@ enum RedisObservation implements ObservationDocumentation {
     REDIS_COMMAND_OBSERVATION {
 
         @Override
-        public String getName() {
-            return "lettuce";
-        }
-
-        @Override
         public KeyName[] getLowCardinalityKeyNames() {
             return LowCardinalityCommandKeyNames.values();
         }

@@ -70,6 +70,11 @@ public class DefaultLettuceObservationConvention implements LettuceObservationCo
     }
 
     @Override
+    public String getName() {
+        return "lettuce";
+    }
+
+    @Override
     public String getContextualName(LettuceObservationContext context) {
         return context.getRequiredCommand().getType().toString().toLowerCase(Locale.ROOT);
     }
