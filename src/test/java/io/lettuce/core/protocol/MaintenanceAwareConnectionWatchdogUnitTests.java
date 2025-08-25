@@ -27,10 +27,13 @@ import io.netty.channel.*;
 import io.netty.util.Attribute;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
+
+import io.netty.util.concurrent.ScheduledFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -50,7 +53,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Unit tests for {@link MaintenanceAwareConnectionWatchdog}.
@@ -245,71 +248,6 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
         verify(channel).close();
         verify(rebindAttribute).set(RebindState.COMPLETED);
         verify(component1, never()).onRebindStarted(any(), any()); // Not called when stack is empty
-    }
-
-    /**
-     * MOVING <seq_number> <time> <endpoint>: A specific endpoint is going to move to another node within <time> seconds
-     *
-     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
-     * @param time estimated operation completion time
-     * @param addressAndPort address and port of the new endpoint
-     * @return
-     */
-    private static List<Object> movingPushContent(long seqNumber, long time, String addressAndPort) {
-        ByteBuffer addressBuffer = StringCodec.UTF8.encodeKey(addressAndPort);
-        return Arrays.asList("MOVING", seqNumber, time, addressBuffer);
-    }
-
-    /**
-     * MIGRATING <seq_number> <time> <shard_id-s>: A shard migration is going to start within <time> seconds.
-     *
-     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
-     * @param time operation will start after <time> seconds
-     * @param shards comma-separated list of shard IDs
-     * @return
-     */
-    private static List<Object> migratingPushContent(long seqNumber, long time, String shards) {
-        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
-        return Arrays.asList("MIGRATING", seqNumber, time, shardsBuffer);
-    }
-
-    /**
-     * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
-     *
-     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
-     * @param time
-     * @param shards address and port of the new endpoint
-     * @return
-     */
-    private static List<Object> migratedPushContent(long seqNumber, String shards) {
-        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
-        return Arrays.asList("MIGRATED", seqNumber, shardsBuffer);
-    }
-
-    /**
-     * MIGRATING <seq_number> <time> <shard_id-s>: A shard migration is going to start within <time> seconds.
-     *
-     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
-     * @param time operation will start after <time> seconds
-     * @param shards comma-separated list of shard IDs
-     * @return
-     */
-    private static List<Object> failingoverPushContent(long seqNumber, long time, String shards) {
-        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
-        return Arrays.asList("FAILING_OVER", seqNumber, time, shardsBuffer);
-    }
-
-    /**
-     * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
-     *
-     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
-     * @param time
-     * @param addressAndPort address and port of the new endpoint
-     * @return
-     */
-    private static List<Object> failedoverPushContent(long seqNumber, String shards) {
-        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
-        return Arrays.asList("FAILED_OVER", seqNumber, shardsBuffer);
     }
 
     @Test
@@ -591,6 +529,32 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
     }
 
     @Test
+    void testRebindAwareAddressSupplierWithNullRebindAddress() {
+        // Given
+        MutableClock clock = new MutableClock(Instant.parse("2023-01-01T10:00:00Z"));
+        RebindAwareAddressSupplier supplier = new RebindAwareAddressSupplier(clock);
+
+        SocketAddress originalAddress = new InetSocketAddress("localhost", 6379);
+        // Null rebind address - should return original address
+        SocketAddress rebindAddress = null;
+        Mono<SocketAddress> originalSupplier = Mono.just(originalAddress);
+
+        // When - rebind with 30 seconds duration
+        supplier.rebind(Duration.ofSeconds(30), rebindAddress);
+
+        // Should return original address since rebind address is null
+        Mono<SocketAddress> wrappedSupplier = supplier.wrappedSupplier(originalSupplier);
+
+        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+
+        // Step 5: Advance clock past expiration (31 seconds)
+        clock.tick(Duration.ofSeconds(31));
+
+        // Step 6: New subscription to same wrappedSupplier should return original address again
+        StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+    }
+
+    @Test
     void testRebindAwareAddressSupplierExpirationWithFixedClock() {
         // Given - Create supplier with a mutable clock that we can advance
         MutableClock clock = new MutableClock(Instant.parse("2023-01-01T10:00:00Z"));
@@ -633,6 +597,112 @@ class MaintenanceAwareConnectionWatchdogUnitTests {
 
         // Then - should return original address
         StepVerifier.create(wrappedSupplier).expectNext(originalAddress).verifyComplete();
+
+    }
+
+    @Test
+    void testMovingEventWithNullEndpoint() {
+        // Given
+        List<Object> content = movingPushContent(123L, 30L, null);
+
+        when(pushMessage.getType()).thenReturn("MOVING");
+        when(pushMessage.getContent()).thenReturn(content);
+        when(channel.attr(MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE)).thenReturn(rebindAttribute);
+        when(channel.pipeline()).thenReturn(pipeline);
+        when(pipeline.get(CommandHandler.class)).thenReturn(commandHandler);
+        when(commandHandler.getStack()).thenReturn(commandStack);
+        when(commandStack.isEmpty()).thenReturn(false);
+
+        EventLoop eventLoop = mock(EventLoop.class);
+        ScheduledFuture<?> future = mock(ScheduledFuture.class);
+        when(channel.eventLoop()).thenReturn(eventLoop);
+
+        // Capture arguments passed to schedule(...)
+        ArgumentCaptor<Long> delayCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<TimeUnit> unitCaptor = ArgumentCaptor.forClass(TimeUnit.class);
+        ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
+
+        when(eventLoop.schedule(taskCaptor.capture(), delayCaptor.capture(), unitCaptor.capture())).thenAnswer(invocation -> {
+            // For test, execute immediately
+            taskCaptor.getValue().run();
+            return future;
+        });
+
+        // Set up channel field using ReflectionTestUtils
+        setField(watchdog, "channel", channel);
+
+        watchdog.setMaintenanceEventListener(component1);
+
+        // When
+        watchdog.onPushMessage(pushMessage);
+
+        // Then
+        verify(eventLoop).schedule(any(Runnable.class), anyLong(), any());
+        assertThat(delayCaptor.getValue()).isEqualTo(15000L); // expected delay
+        assertThat(unitCaptor.getValue()).isEqualTo(TimeUnit.MILLISECONDS);
+        verify(rebindAttribute).set(RebindState.STARTED);
+        verify(channel, never()).close();
+        verify(component1).onRebindStarted(any(), any()); // Called when stack is not empty
+    }
+
+    /**
+     * MOVING <seq_number> <time> <endpoint>: A specific endpoint is going to move to another node within <time> seconds
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time estimated operation completion time
+     * @param addressAndPort address and port of the new endpoint
+     */
+    private static List<Object> movingPushContent(long seqNumber, long time, String addressAndPort) {
+        if (addressAndPort == null) {
+            return Arrays.asList("MOVING", seqNumber, time, null);
+        } else {
+            return Arrays.asList("MOVING", seqNumber, time, StringCodec.UTF8.encodeKey(addressAndPort));
+        }
+    }
+
+    /**
+     * MIGRATING <seq_number> <time> <shard_id-s>: A shard migration is going to start within <time> seconds.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time operation will start after <time> seconds
+     * @param shards comma-separated list of shard IDs
+     */
+    private static List<Object> migratingPushContent(long seqNumber, long time, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("MIGRATING", seqNumber, time, shardsBuffer);
+    }
+
+    /**
+     * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param shards address and port of the new endpoint
+     */
+    private static List<Object> migratedPushContent(long seqNumber, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("MIGRATED", seqNumber, shardsBuffer);
+    }
+
+    /**
+     * MIGRATING <seq_number> <time> <shard_id-s>: A shard migration is going to start within <time> seconds.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     * @param time operation will start after <time> seconds
+     * @param shards comma-separated list of shard IDs
+     */
+    private static List<Object> failingoverPushContent(long seqNumber, long time, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("FAILING_OVER", seqNumber, time, shardsBuffer);
+    }
+
+    /**
+     * MIGRATED <seq_number> <shard_id-s>: A shard migration ended.
+     *
+     * @param seqNumber unique sequence number, can be use to match requests handled by different connections
+     */
+    private static List<Object> failedoverPushContent(long seqNumber, String shards) {
+        ByteBuffer shardsBuffer = StringCodec.UTF8.encodeKey(shards);
+        return Arrays.asList("FAILED_OVER", seqNumber, shardsBuffer);
     }
 
 }
