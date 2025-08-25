@@ -1157,7 +1157,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    AggregationReply<K, V> ftCursorread(K index, long cursorId, int count);
+    AggregationReply<K, V> ftCursorread(K index, AggregationReply<K, V> aggregateReply, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1190,7 +1190,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    AggregationReply<K, V> ftCursorread(K index, long cursorId);
+    AggregationReply<K, V> ftCursorread(K index, AggregationReply<K, V> aggregateReply);
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1229,6 +1229,6 @@ public interface RediSearchCommands<K, V> {
      * @see #ftCursorread(Object, long, int)
      */
     @Experimental
-    String ftCursordel(K index, long cursorId);
+    String ftCursordel(K index, AggregationReply<K, V> aggregateReply);
 
 }
