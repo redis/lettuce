@@ -19,14 +19,15 @@
  */
 package io.lettuce.core;
 
-import static io.lettuce.core.protocol.CommandKeyword.*;
+import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.protocol.CommandArgs;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
-import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.protocol.CommandArgs;
+import static io.lettuce.core.protocol.CommandKeyword.NX;
+import static io.lettuce.core.protocol.CommandKeyword.XX;
 
 /**
  * Argument list builder for the Redis <a href="https://redis.io/commands/set">SET</a> command starting from Redis 2.6.12.
@@ -53,6 +54,8 @@ public class SetArgs implements CompositeArgument {
     private boolean xx = false;
 
     private boolean keepttl = false;
+
+    private boolean get = false;
 
     /**
      * Builder entry points for {@link SetArgs}.
@@ -210,6 +213,17 @@ public class SetArgs implements CompositeArgument {
          */
         public static SetArgs keepttl() {
             return new SetArgs().keepttl();
+        }
+
+        /**
+         * Creates new {@link SetArgs} and enable {@literal GET}.
+         *
+         * @return new {@link SetArgs} with {@literal GET} enabled.
+         * @see SetArgs#get()
+         * @since 7.0
+         */
+        public static SetArgs get() {
+            return new SetArgs().get();
         }
 
     }
@@ -373,6 +387,18 @@ public class SetArgs implements CompositeArgument {
     }
 
     /**
+     * Retrieve the current value with option GET.
+     *
+     * @return {@code this} {@link SetArgs}.
+     * @since 7.0
+     */
+    public SetArgs get() {
+
+        this.get = true;
+        return this;
+    }
+
+    /**
      * Only set the key if it already exists.
      *
      * @return {@code this} {@link SetArgs}.
@@ -412,6 +438,10 @@ public class SetArgs implements CompositeArgument {
 
         if (keepttl) {
             args.add("KEEPTTL");
+        }
+
+        if (get) {
+            args.add("GET");
         }
     }
 
