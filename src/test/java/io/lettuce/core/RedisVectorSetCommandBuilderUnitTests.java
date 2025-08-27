@@ -25,6 +25,7 @@ import java.util.Map;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RedisVectorSetCommandBuilder}.
@@ -313,6 +314,72 @@ class RedisVectorSetCommandBuilderUnitTests {
                 .isEqualTo("*11\r\n" + "$4\r\n" + "VSIM\r\n" + "$10\r\n" + "vector:set\r\n" + "$6\r\n" + "VALUES\r\n" + "$1\r\n"
                         + "3\r\n" + "$3\r\n" + "0.1\r\n" + "$3\r\n" + "0.2\r\n" + "$3\r\n" + "0.3\r\n" + "$10\r\n"
                         + "WITHSCORES\r\n" + "$5\r\n" + "COUNT\r\n" + "$1\r\n" + "5\r\n" + "$5\r\n" + "TRUTH\r\n");
+    }
+
+    @Test
+    void epsilonBelowZero_throws() {
+        VSimArgs args = new VSimArgs();
+        assertThatThrownBy(() -> args.epsilon(-0.1)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("EPSILON must be in range [0.0, 1.0]");
+    }
+
+    @Test
+    void epsilonAboveOne_throws() {
+        VSimArgs args = new VSimArgs();
+        assertThatThrownBy(() -> args.epsilon(1.1)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("EPSILON must be in range [0.0, 1.0]");
+    }
+
+    @Test
+    void epsilonAtBoundaries_succeeds() {
+        VSimArgs args = new VSimArgs();
+        args.epsilon(0.0);
+        args.epsilon(1.0);
+        // success is absence of exception
+    }
+
+    @Test
+    void epsilonEncodes_whenSet() {
+        VSimArgs vsim = new VSimArgs();
+        vsim.count(5L);
+        vsim.epsilon(0.25);
+        vsim.explorationFactor(200L);
+
+        Command<String, String, List<String>> command = builder.vsim(KEY, vsim, VECTORS);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+        String s = buf.toString(StandardCharsets.UTF_8);
+
+        // Contains EPSILON and value
+        assertThat(s).contains("EPSILON");
+        assertThat(s).contains("0.25");
+
+        // Positioning: COUNT ... EPSILON ... EF
+        int idxCount = s.indexOf("COUNT");
+        int idxEps = s.indexOf("EPSILON");
+        int idxEf = s.indexOf("\r\n$2\r\nEF\r\n");
+        if (idxEf < 0)
+            idxEf = s.indexOf("EF\r\n");
+        if (idxEf < 0)
+            idxEf = s.indexOf("EF");
+
+        assertThat(idxCount).isNotNegative();
+        assertThat(idxEps).isGreaterThan(idxCount);
+        assertThat(idxEf).isGreaterThan(idxEps);
+    }
+
+    @Test
+    void epsilonNotEncoded_whenUnset() {
+        VSimArgs vsim = new VSimArgs();
+        vsim.count(5L);
+        vsim.explorationFactor(200L);
+
+        Command<String, String, List<String>> command = builder.vsim(KEY, vsim, VECTORS);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+        String s = buf.toString(StandardCharsets.UTF_8);
+
+        assertThat(s).doesNotContain("EPSILON");
     }
 
 }
