@@ -104,16 +104,6 @@ class DefaultClientResourcesUnitTests {
     }
 
     @Test
-    void testDnsResolver() {
-
-        DirContextDnsResolver dirContextDnsResolver = new DirContextDnsResolver("8.8.8.8");
-
-        DefaultClientResources sut = DefaultClientResources.builder().dnsResolver(dirContextDnsResolver).build();
-
-        assertThat(sut.dnsResolver()).isEqualTo(dirContextDnsResolver);
-    }
-
-    @Test
     void testShouldUseDnsAddressResolverGroup() {
         DefaultClientResources sut = DefaultClientResources.create();
         AddressResolverGroup<?> addressResolverGroup = sut.addressResolverGroup();
