@@ -41,7 +41,9 @@ import java.net.SocketAddress;
  */
 public class MaintenanceEventsOptions {
 
-    public static final boolean DEFAULT_SUPPORT_MAINTENANCE_EVENTS = false;
+    public static final boolean DEFAULT_SUPPORT_MAINTENANCE_EVENTS = true;
+
+    public static final AddressTypeSource DEFAULT_ADDRESS_TYPE_SOURCE = new AutoresolveAddressTypeSource();
 
     private final boolean supportMaintenanceEvents;
 
@@ -121,7 +123,7 @@ public class MaintenanceEventsOptions {
 
         private boolean supportMaintenanceEvents = DEFAULT_SUPPORT_MAINTENANCE_EVENTS;
 
-        private AddressTypeSource addressTypeSource;
+        private AddressTypeSource addressTypeSource = DEFAULT_ADDRESS_TYPE_SOURCE;
 
         public MaintenanceEventsOptions.Builder supportMaintenanceEvents() {
             return supportMaintenanceEvents(true);
