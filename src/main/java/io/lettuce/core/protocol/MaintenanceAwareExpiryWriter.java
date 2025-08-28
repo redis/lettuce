@@ -11,7 +11,6 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.ExceptionFactory;
 import io.lettuce.core.resource.ClientResources;
-import io.netty.channel.ChannelPipeline;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import org.slf4j.Logger;
@@ -60,11 +59,7 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
 
     private final Duration relaxedTimeout;
 
-    private volatile long timeout = -1;
-
     private volatile boolean relaxTimeouts = false;
-
-    private boolean registered = false;
 
     private Timeout relaxTimeout;
 
@@ -92,10 +87,6 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
 
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
-        // since the MaintenanceAwareExpiryWriter lives outside the netty pipeline, and since it needs to be registered at a
-        // moment
-        // when the pipeline is configured and ready, we can only assume the moment is right if the write() method is called
-        registerAsMaintenanceAwareComponent();
 
         potentiallyExpire(command, executorService);
         return delegate.write(command);
@@ -103,10 +94,6 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
 
     @Override
     public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> redisCommands) {
-        // since the MaintenanceAwareExpiryWriter lives outside the netty pipeline, and since it needs to be registered at a
-        // moment
-        // when the pipeline is configured and ready, we can only assume the moment is right if the write() method is called
-        registerAsMaintenanceAwareComponent();
 
         for (RedisCommand<K, V, ?> command : redisCommands) {
             potentiallyExpire(command, executorService);
@@ -118,7 +105,6 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
     @Override
     public void reset() {
         relaxTimeouts = false;
-        registered = false;
         super.reset();
     }
 
@@ -163,23 +149,6 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
         if (command instanceof CompleteableCommand) {
             ((CompleteableCommand<?>) command).onComplete((o, o2) -> commandTimeout.cancel());
         }
-    }
-
-    private void registerAsMaintenanceAwareComponent() {
-        if (registered) {
-            return;
-        }
-
-        if (delegate instanceof DefaultEndpoint) {
-            DefaultEndpoint endpoint = (DefaultEndpoint) delegate;
-            ChannelPipeline pipeline = endpoint.channel.pipeline();
-            MaintenanceAwareConnectionWatchdog watchdog = pipeline.get(MaintenanceAwareConnectionWatchdog.class);
-            if (watchdog != null) {
-                watchdog.setMaintenanceEventListener(this);
-            }
-        }
-
-        registered = true;
     }
 
     @Override

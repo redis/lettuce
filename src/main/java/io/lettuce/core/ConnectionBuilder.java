@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.lettuce.core.protocol.MaintenanceAwareComponent;
 import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog;
 import jdk.net.ExtendedSocketOptions;
 import reactor.core.publisher.Mono;
@@ -156,9 +157,14 @@ public class ConnectionBuilder {
 
         ConnectionWatchdog watchdog;
         if (clientOptions.getMaintenanceEventsOptions().supportsMaintenanceEvents()) {
-            watchdog = new MaintenanceAwareConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
-                    clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,
-                    connection, clientResources.eventBus(), endpoint);
+            MaintenanceAwareConnectionWatchdog maintenanceAwareWatchdog = new MaintenanceAwareConnectionWatchdog(
+                    clientResources.reconnectDelay(), clientOptions, bootstrap, clientResources.timer(),
+                    clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener, connection,
+                    clientResources.eventBus(), endpoint);
+            if (connection.getChannelWriter() instanceof MaintenanceAwareComponent) {
+                maintenanceAwareWatchdog.setMaintenanceEventListener((MaintenanceAwareComponent) connection.getChannelWriter());
+            }
+            watchdog = maintenanceAwareWatchdog;
         } else {
             watchdog = new ConnectionWatchdog(clientResources.reconnectDelay(), clientOptions, bootstrap,
                     clientResources.timer(), clientResources.eventExecutorGroup(), socketAddressSupplier, reconnectionListener,

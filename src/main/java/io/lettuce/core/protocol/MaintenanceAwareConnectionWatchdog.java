@@ -102,7 +102,7 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
         if (ctx.channel() != null && ctx.channel().isActive() && ctx.channel().hasAttr(REBIND_ATTRIBUTE)
                 && ctx.channel().attr(REBIND_ATTRIBUTE).get() == RebindState.COMPLETED) {
-            logger.debug("Disconnecting at {}", LocalTime.now());
+            logger.debug("[{}]  Disconnecting at {}", ChannelLogDescriptor.logDescriptor(channel), LocalTime.now());
             ctx.channel().close().awaitUninterruptibly();
             notifyRebindCompleted();
         }
@@ -126,7 +126,8 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
             final MovingEvent movingEvent = MovingEvent.from(message);
             if (movingEvent != null) {
                 if (null == movingEvent.getEndpoint()) {
-                    logger.debug("Deferred Rebind requested. Rebinding to current endpoint after '{}'", movingEvent.getTime());
+                    logger.debug("[channel={}] Deferred Rebind requested. Rebinding to current endpoint after '{}'",
+                            channel.id(), movingEvent.getTime());
                     channel.eventLoop().schedule(() -> rebind(movingEvent), movingEvent.getTime().toMillis() / 2,
                             TimeUnit.MILLISECONDS);
                 } else {
@@ -134,28 +135,29 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
                 }
             }
         } else if (MIGRATING_MESSAGE_TYPE.equals(mType)) {
-            logger.debug("Shard migration started");
+            logger.debug("[{}] Shard migration started", ChannelLogDescriptor.logDescriptor(channel));
             notifyMigrateStarted(getMigratingShards(message));
         } else if (MIGRATED_MESSAGE_TYPE.equals(mType)) {
-            logger.debug("Shard migration completed");
+            logger.debug("[{}] Shard migration completed", ChannelLogDescriptor.logDescriptor(channel));
             notifyMigrateCompleted(getMigratedShards(message));
         } else if (FAILING_OVER_MESSAGE_TYPE.equals(mType)) {
-            logger.debug("Failover started");
+            logger.debug("[{}] Failover started", ChannelLogDescriptor.logDescriptor(channel));
             notifyFailoverStarted(getFailingOverShards(message));
         } else if (FAILED_OVER_MESSAGE_TYPE.equals(mType)) {
-            logger.debug("Failover completed");
+            logger.debug("[{}] Failover completed", ChannelLogDescriptor.logDescriptor(channel));
             notifyFailoverCompleted(getFailedOverShards(message));
         }
     }
 
     private void rebind(MovingEvent movingEvent) {
-        logger.debug("Attempting to rebind to new endpoint '{}'", movingEvent.getEndpoint());
+        logger.debug("[{}] Rebind to '{}'", ChannelLogDescriptor.logDescriptor(channel), movingEvent.getEndpoint());
         channel.attr(REBIND_ATTRIBUTE).set(RebindState.STARTED);
         rebindAwareAddressSupplier.rebind(movingEvent.getTime(), movingEvent.getEndpoint());
 
         ChannelPipeline pipeline = channel.pipeline();
         CommandHandler commandHandler = pipeline.get(CommandHandler.class);
         if (commandHandler.getStack().isEmpty()) {
+            logger.debug("[{}] Closing channel as part of rebind", ChannelLogDescriptor.logDescriptor(channel));
             channel.close().awaitUninterruptibly();
             channel.attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
         } else {

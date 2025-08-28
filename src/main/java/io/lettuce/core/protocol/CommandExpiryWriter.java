@@ -59,7 +59,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     private final boolean applyConnectionTimeout;
 
-    private volatile long timeout = -1;
+    volatile long timeout = -1;
 
     /**
      * Create a new {@link CommandExpiryWriter}.

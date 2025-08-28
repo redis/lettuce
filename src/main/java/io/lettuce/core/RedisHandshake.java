@@ -118,7 +118,8 @@ class RedisHandshake implements ConnectionInitializer {
                 // post-handshake commands, executed in a 'fire and forget' manner, to avoid having to react to different
                 // implementations or versions of the server runtime, and whose execution result (whether a success or a
                 // failure ) should not alter the outcome of the connection attempt
-                .thenCompose(ignore -> applyConnectionMetadataSafely(channel));
+                .thenCompose(ignore -> applyConnectionMetadataSafely(channel))
+                .thenCompose(ignore -> enableMaintenanceEvents(channel));
     }
 
     private CompletionStage<?> tryHandshakeResp3(Channel channel) {
@@ -271,19 +272,6 @@ class RedisHandshake implements ConnectionInitializer {
             postHandshake.add(new AsyncCommand<>(this.commandBuilder.readOnly()));
         }
 
-        if (addressTypeSource != null) {
-            CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(MAINT_NOTIFICATIONS).add("on");
-            String addressType = addressType(channel, connectionState, addressTypeSource);
-
-            if (addressType != null) {
-                args.add("moving-endpoint-type").add(addressType);
-            }
-
-            Command<String, String, String> maintNotificationsOn = new Command<>(CLIENT, new StatusOutput<>(StringCodec.UTF8),
-                    args);
-            postHandshake.add(new AsyncCommand<>(maintNotificationsOn));
-        }
-
         if (postHandshake.isEmpty()) {
             return CompletableFuture.completedFuture(null);
         }
@@ -341,6 +329,41 @@ class RedisHandshake implements ConnectionInitializer {
 
         if (LettuceStrings.isNotEmpty(metadata.getLibraryVersion())) {
             postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-ver", metadata.getLibraryVersion())));
+        }
+
+        if (postHandshake.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return dispatch(channel, postHandshake);
+    }
+
+    private CompletionStage<Void> enableMaintenanceEvents(Channel channel) {
+        return sendMaintenanceNotificationsOn(channel).handle((result, error) -> {
+            if (error != null) {
+                LOG.info("Maintenance events not supported.");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Maintenance events not enabled", error);
+                }
+            }
+            return null;
+        });
+    }
+
+    private CompletionStage<Void> sendMaintenanceNotificationsOn(Channel channel) {
+        List<AsyncCommand<?, ?, ?>> postHandshake = new ArrayList<>();
+
+        if (addressTypeSource != null) {
+            CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(MAINT_NOTIFICATIONS).add("on");
+            String addressType = addressType(channel, connectionState, addressTypeSource);
+
+            if (addressType != null) {
+                args.add("moving-endpoint-type").add(addressType);
+            }
+
+            Command<String, String, String> maintNotificationsOn = new Command<>(CLIENT, new StatusOutput<>(StringCodec.UTF8),
+                    args);
+            postHandshake.add(new AsyncCommand<>(maintNotificationsOn));
         }
 
         if (postHandshake.isEmpty()) {

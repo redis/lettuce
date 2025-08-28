@@ -12,6 +12,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+import io.lettuce.core.MaintenanceEventsOptions.AddressTypeSource;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.MaintenanceEventsOptions.AddressType;
@@ -27,8 +28,8 @@ class MaintenanceEventsOptionsUnitTests {
         MaintenanceEventsOptions options = MaintenanceEventsOptions.create();
 
         // Then
-        assertThat(options.supportsMaintenanceEvents()).isFalse();
-        assertThat(options.getAddressTypeSource()).isNull();
+        assertThat(options.supportsMaintenanceEvents()).isTrue();
+        assertThat(options.getAddressTypeSource()).isInstanceOf(AddressTypeSource.class);
     }
 
     @Test
@@ -38,7 +39,6 @@ class MaintenanceEventsOptionsUnitTests {
 
         // Then
         assertThat(options.supportsMaintenanceEvents()).isFalse();
-        assertThat(options.getAddressTypeSource()).isNull();
     }
 
     @Test
@@ -68,8 +68,8 @@ class MaintenanceEventsOptionsUnitTests {
         MaintenanceEventsOptions options = MaintenanceEventsOptions.builder().build();
 
         // Then
-        assertThat(options.supportsMaintenanceEvents()).isFalse();
-        assertThat(options.getAddressTypeSource()).isNull();
+        assertThat(options.supportsMaintenanceEvents()).isTrue();
+        assertThat(options.getAddressTypeSource()).isInstanceOf(AddressTypeSource.class);
     }
 
     @Test
