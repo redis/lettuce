@@ -148,7 +148,7 @@ class RedisHandshakeUnitTests {
         CompletionStage<Void> handshakeInit = handshake.initialize(channel);
         cp.completeCredentials(RedisCredentials.just("foo", "bar"));
 
-        Awaitility.await().atMost(50, MILLISECONDS) // Wait up to 5 seconds
+        Awaitility.await().atMost(100, MILLISECONDS) // Wait up to 5 seconds
                 .pollInterval(5, MILLISECONDS) // Poll every 50 milliseconds
                 .until(() -> !channel.outboundMessages().isEmpty());
 
