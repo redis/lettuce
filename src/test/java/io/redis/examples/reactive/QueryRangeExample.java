@@ -1,10 +1,10 @@
 // EXAMPLE: query_range
 // REMOVE_START
-package io.redis.examples.async;
+package io.redis.examples.reactive;
 
 // REMOVE_END
 import io.lettuce.core.*;
-import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.api.reactive.RedisReactiveCommands;
 
 import io.lettuce.core.search.arguments.*;
 import io.lettuce.core.search.SearchReply;
@@ -15,7 +15,7 @@ import io.lettuce.core.json.JsonObject;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import reactor.core.publisher.Mono;
 // REMOVE_START
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,12 +28,11 @@ public class QueryRangeExample {
         RedisClient redisClient = RedisClient.create("redis://localhost:6379");
 
         try (StatefulRedisConnection<String, String> connection = redisClient.connect()) {
-            RedisAsyncCommands<String, String> asyncCommands = connection.async();
+            RedisReactiveCommands<String, String> reactiveCommands = connection.reactive();
             // REMOVE_START
-            asyncCommands.ftDropindex("idx:bicycle").exceptionally(ex -> null) // Ignore errors if the index doesn't exist.
-                    .toCompletableFuture().join();
-            asyncCommands.del("bicycle:0", "bicycle:1", "bicycle:2", "bicycle:3", "bicycle:4", "bicycle:5", "bicycle:6",
-                    "bicycle:7", "bicycle:8", "bicycle:9").toCompletableFuture().join();
+            reactiveCommands.ftDropindex("idx:bicycle").onErrorReturn("Index `idx:bicycle` does not exist").block();
+            reactiveCommands.del("bicycle:0", "bicycle:1", "bicycle:2", "bicycle:3", "bicycle:4", "bicycle:5", "bicycle:6",
+                    "bicycle:7", "bicycle:8", "bicycle:9", "key:1").block();
             // REMOVE_END
 
             List<FieldArgs<String>> bicycleSchema = Arrays.asList(
@@ -46,9 +45,9 @@ public class QueryRangeExample {
             CreateArgs<String, String> bicycleCreateArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON)
                     .withPrefix("bicycle:").build();
 
-            asyncCommands.ftCreate("idx:bicycle", bicycleCreateArgs, bicycleSchema).toCompletableFuture().join();
+            reactiveCommands.ftCreate("idx:bicycle", bicycleCreateArgs, bicycleSchema).block();
 
-            JsonParser parser = asyncCommands.getJsonParser();
+            JsonParser parser = reactiveCommands.getJsonParser();
 
             List<JsonObject> bicycleJsons = Arrays.asList(parser.createJsonObject()
                     .put("brand", parser.createJsonValue("\"Velorim\"")).put("model", parser.createJsonValue("\"Jigger\""))
@@ -151,18 +150,17 @@ public class QueryRangeExample {
                             .put("price", parser.createJsonValue("815"))
                             .put("condition", parser.createJsonValue("\"refurbished\"")));
 
-            CompletableFuture<?>[] bikeFutures = new CompletableFuture[bicycleJsons.size()];
+            Mono<?>[] bikeFutures = new Mono<?>[bicycleJsons.size()];
 
             for (int i = 0; i < bicycleJsons.size(); i++) {
-                bikeFutures[i] = asyncCommands.jsonSet("bicycle:" + i, JsonPath.ROOT_PATH, bicycleJsons.get(i))
-                        .toCompletableFuture();
+                bikeFutures[i] = reactiveCommands.jsonSet("bicycle:" + i, JsonPath.ROOT_PATH, bicycleJsons.get(i));
             }
 
-            CompletableFuture.allOf(bikeFutures).join();
+            Mono.when(bikeFutures).block();
 
             // STEP_START range1
-            CompletableFuture<SearchReply<String, String>> priceResults = asyncCommands
-                    .ftSearch("idx:bicycle", "@price:[500 1000]").thenApply(res -> {
+            Mono<SearchReply<String, String>> priceResults = reactiveCommands.ftSearch("idx:bicycle", "@price:[500 1000]")
+                    .doOnNext(res -> {
                         res.getResults().stream().sorted((doc1, doc2) -> doc1.getId().compareTo(doc2.getId())).forEach(doc -> {
                             System.out.printf("ID: %s\n", doc.getId());
                         });
@@ -174,8 +172,7 @@ public class QueryRangeExample {
                         assertThat(res.getResults().stream().map(SearchReply.SearchResult<String, String>::getId).sorted()
                                 .toArray()).containsExactly("bicycle:2", "bicycle:5", "bicycle:9");
                         // REMOVE_END
-                        return res;
-                    }).toCompletableFuture();
+                    });
             // STEP_END
 
             // STEP_START range2
@@ -187,8 +184,8 @@ public class QueryRangeExample {
             // STEP_START range3
             SearchArgs<String, String> priceSearchArgs2 = SearchArgs.<String, String> builder().returnField("price").build();
 
-            CompletableFuture<SearchReply<String, String>> priceResults2 = asyncCommands
-                    .ftSearch("idx:bicycle", "@price:[(1000 +inf]", priceSearchArgs2).thenApply(res -> {
+            Mono<SearchReply<String, String>> priceResults2 = reactiveCommands
+                    .ftSearch("idx:bicycle", "@price:[(1000 +inf]", priceSearchArgs2).doOnNext(res -> {
                         res.getResults().stream().sorted((doc1, doc2) -> doc1.getId().compareTo(doc2.getId())).forEach(doc -> {
                             System.out.printf("ID: %s, price: %s\n", doc.getId(), doc.getFields().get("price"));
                         });
@@ -202,16 +199,15 @@ public class QueryRangeExample {
                         assertThat(res.getResults().stream().map(SearchReply.SearchResult<String, String>::getId).sorted()
                                 .toArray()).containsExactly("bicycle:1", "bicycle:3", "bicycle:4", "bicycle:6", "bicycle:8");
                         // REMOVE_END
-                        return res;
-                    }).toCompletableFuture();
+                    });
             // STEP_END
 
             // STEP_START range4
             SearchArgs<String, String> priceSearchArgs3 = SearchArgs.<String, String> builder().returnField("price")
                     .sortBy(SortByArgs.<String> builder().attribute("price").build()).limit(0, 5).build();
 
-            CompletableFuture<SearchReply<String, String>> priceResults3 = asyncCommands
-                    .ftSearch("idx:bicycle", "@price:[-inf 2000]", priceSearchArgs3).thenApply(res -> {
+            Mono<SearchReply<String, String>> priceResults3 = reactiveCommands
+                    .ftSearch("idx:bicycle", "@price:[-inf 2000]", priceSearchArgs3).doOnNext(res -> {
                         res.getResults().stream().sorted((doc1, doc2) -> doc1.getId().compareTo(doc2.getId())).forEach(doc -> {
                             System.out.printf("ID: %s, price: %s\n", doc.getId(), doc.getFields().get("price"));
                         });
@@ -225,11 +221,10 @@ public class QueryRangeExample {
                         assertThat(res.getResults().stream().map(SearchReply.SearchResult<String, String>::getId).sorted()
                                 .toArray()).containsExactly("bicycle:0", "bicycle:2", "bicycle:5", "bicycle:7", "bicycle:9");
                         // REMOVE_END
-                        return res;
-                    }).toCompletableFuture();
+                    });
             // STEP_END
 
-            CompletableFuture.allOf(priceResults, priceResults2, priceResults3).join();
+            Mono.when(priceResults, priceResults2, priceResults3).block();
 
         } finally {
             redisClient.shutdown();
