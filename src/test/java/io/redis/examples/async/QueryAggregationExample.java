@@ -40,7 +40,7 @@ public class QueryAggregationExample {
             // REMOVE_START
             asyncCommands.del("bicycle:0", "bicycle:1", "bicycle:2", "bicycle:3", "bicycle:4", "bicycle:5", "bicycle:6",
                     "bicycle:7", "bicycle:8", "bicycle:9").toCompletableFuture().join();
-            asyncCommands.ftDropindex("idx:bicycle").toCompletableFuture().join();
+            asyncCommands.ftDropindex("idx:bicycle").exceptionally(e -> null).toCompletableFuture().join();
             // REMOVE_END
 
             // create index
