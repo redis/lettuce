@@ -16,6 +16,8 @@ import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Unit tests for {@link DelegateJsonArray}.
  */
@@ -24,8 +26,9 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void add() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.add(parser.createJsonValue("\"test\"")).add(parser.createJsonValue("\"test2\""))
                 .add(parser.createJsonValue("\"test3\""));
 
@@ -40,8 +43,9 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void addCornerCases() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.add(null).add(parser.createJsonValue("null")).add(parser.createJsonValue("\"test3\""));
 
         assertThatThrownBy(() -> underTest.addAll(null)).isInstanceOf(IllegalArgumentException.class);
@@ -55,8 +59,9 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void getCornerCases() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.add(parser.createJsonValue("\"test\"")).add(parser.createJsonValue("\"test2\""))
                 .add(parser.createJsonValue("\"test3\""));
 
@@ -66,12 +71,13 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void addAll() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonArray array = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray array = new DelegateJsonArray(objectMapper);
         array.add(parser.createJsonValue("\"test\"")).add(parser.createJsonValue("\"test2\""))
                 .add(parser.createJsonValue("\"test3\""));
 
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.addAll(array);
         array.remove(1); // verify source array modifications not propagated
 
@@ -86,8 +92,9 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void asList() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2")).add(parser.createJsonValue("3"));
 
         assertThat(underTest.size()).isEqualTo(3);
@@ -98,8 +105,9 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void getFirst() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.add(parser.createJsonValue("\"test\"")).add(parser.createJsonValue("\"test2\""))
                 .add(parser.createJsonValue("\"test3\""));
 
@@ -110,8 +118,9 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void iterator() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2")).add(parser.createJsonValue("3"));
 
         Iterator<JsonValue> iterator = underTest.iterator();
@@ -123,8 +132,9 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void remove() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2")).add(parser.createJsonValue("3"));
 
         assertThat(underTest.remove(1).asNumber()).isEqualTo(2);
@@ -135,8 +145,9 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void replace() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2")).add(parser.createJsonValue("3"));
         underTest.replace(1, parser.createJsonValue("4"));
 
@@ -148,7 +159,8 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void isJsonArray() {
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         assertThat(underTest.isJsonArray()).isTrue();
 
         assertThat(underTest.isJsonObject()).isFalse();
@@ -159,13 +171,15 @@ class DelegateJsonArrayUnitTests {
 
     @Test
     void asJsonArray() {
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         assertThat(underTest.asJsonArray()).isSameAs(underTest);
     }
 
     @Test
     void asAnythingElse() {
-        DelegateJsonArray underTest = new DelegateJsonArray();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
 
         assertThat(underTest.asBoolean()).isNull();
         assertThat(underTest.asJsonObject()).isNull();
