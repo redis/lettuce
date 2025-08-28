@@ -52,7 +52,7 @@ public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
 
-    public static final MaintenanceEventsOptions DEFAULT_MAINTENANCE_EVENTS_OPTIONS = MaintenanceEventsOptions.disabled();
+    public static final MaintenanceEventsOptions DEFAULT_MAINTENANCE_EVENTS_OPTIONS = MaintenanceEventsOptions.enabled();
 
     public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
