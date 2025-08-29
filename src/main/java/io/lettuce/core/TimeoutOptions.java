@@ -28,7 +28,7 @@ public class TimeoutOptions implements Serializable {
 
     public static final boolean DEFAULT_TIMEOUT_COMMANDS = false;
 
-    public static final Duration DEFAULT_RELAXED_TIMEOUT = DISABLED_TIMEOUT;
+    public static final Duration DEFAULT_RELAXED_TIMEOUT = Duration.ofSeconds(10);
 
     private final boolean timeoutCommands;
 

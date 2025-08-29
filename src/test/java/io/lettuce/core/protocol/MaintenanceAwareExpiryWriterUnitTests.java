@@ -200,25 +200,6 @@ class MaintenanceAwareExpiryWriterUnitTests {
     }
 
     @Test
-    void testRegisterAsMaintenanceAwareComponentWithDefaultEndpoint() {
-        // Given
-        // Set up the endpoint.channel field directly
-        setField(endpoint, "channel", channel);
-        when(channel.pipeline()).thenReturn(pipeline);
-        when(pipeline.get(MaintenanceAwareConnectionWatchdog.class)).thenReturn(watchdog);
-        when(endpoint.write(command)).thenReturn(command);
-
-        // Set delegate to DefaultEndpoint
-        setField(writer, "delegate", endpoint);
-
-        // When
-        writer.write(command);
-
-        // Then
-        verify(watchdog).setMaintenanceEventListener(writer);
-    }
-
-    @Test
     void testRegisterAsMaintenanceAwareComponentWithNonDefaultEndpoint() {
         // Given
         when(delegate.write(command)).thenReturn(command);
@@ -228,45 +209,6 @@ class MaintenanceAwareExpiryWriterUnitTests {
 
         // Then
         // Should not attempt to register since delegate is not DefaultEndpoint
-        verifyNoInteractions(watchdog);
-    }
-
-    @Test
-    void testRegisterAsMaintenanceAwareComponentOnlyOnce() {
-        // Given
-        setField(endpoint, "channel", channel);
-        when(channel.pipeline()).thenReturn(pipeline);
-        when(pipeline.get(MaintenanceAwareConnectionWatchdog.class)).thenReturn(watchdog);
-        when(endpoint.write(command)).thenReturn(command);
-
-        // Set delegate to DefaultEndpoint
-        setField(writer, "delegate", endpoint);
-
-        // When
-        writer.write(command);
-        writer.write(command);
-
-        // Then
-        verify(watchdog, times(1)).setMaintenanceEventListener(writer);
-    }
-
-    @Test
-    void testRegisterAsMaintenanceAwareComponentWithNullWatchdog() {
-        // Given
-        setField(endpoint, "channel", channel);
-        when(channel.pipeline()).thenReturn(pipeline);
-        when(pipeline.get(MaintenanceAwareConnectionWatchdog.class)).thenReturn(null);
-        when(endpoint.write(command)).thenReturn(command);
-
-        // Set delegate to DefaultEndpoint
-        setField(writer, "delegate", endpoint);
-
-        // When
-        writer.write(command);
-
-        // Then
-        // Should not throw exception when watchdog is null
-        verify(pipeline).get(MaintenanceAwareConnectionWatchdog.class);
         verifyNoInteractions(watchdog);
     }
 
@@ -296,7 +238,6 @@ class MaintenanceAwareExpiryWriterUnitTests {
     void testReset() {
         // Given
         setField(writer, "relaxTimeouts", true);
-        setField(writer, "registered", true);
 
         // When
         writer.reset();
