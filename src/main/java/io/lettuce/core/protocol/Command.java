@@ -53,6 +53,12 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     protected volatile byte status = ST_INITIAL;
 
     /**
+     * Flag to track encoding failures. When true, indicates this command
+     * failed during encoding and was never successfully sent to Redis.
+     */
+    private volatile boolean encodingError = false;
+
+    /**
      * Create a new command with the supplied type.
      *
      * @param type Command type, must not be {@code null}.
@@ -181,6 +187,16 @@ public class Command<K, V, T> implements RedisCommand<K, V, T> {
     @Override
     public boolean isDone() {
         return status != ST_INITIAL;
+    }
+
+    @Override
+    public void markEncodingError() {
+        this.encodingError = true;
+    }
+
+    @Override
+    public boolean hasEncodingError() {
+        return encodingError;
     }
 
 }

@@ -279,17 +279,28 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         InternalLogLevel logLevel = InternalLogLevel.WARN;
 
         if (!stack.isEmpty()) {
-            RedisCommand<?, ?, ?> command = stack.poll();
-            if (debugEnabled) {
-                logger.debug("{} Storing exception in {}", logPrefix(), command);
+            // Clean up any encoding failures at head of stack first
+            while (!stack.isEmpty() && stack.peek().hasEncodingError()) {
+                RedisCommand<?, ?, ?> failed = stack.poll();
+                // Encoding failures were already completed exceptionally during encoding
+                if (debugEnabled) {
+                    logger.debug("{} Cleaning up encoding failure command {}", logPrefix(), failed);
+                }
             }
-            logLevel = InternalLogLevel.DEBUG;
+            
+            if (!stack.isEmpty()) {
+                RedisCommand<?, ?, ?> command = stack.poll();
+                if (debugEnabled) {
+                    logger.debug("{} Storing exception in {}", logPrefix(), command);
+                }
+                logLevel = InternalLogLevel.DEBUG;
 
-            try {
-                command.completeExceptionally(cause);
-            } catch (Exception ex) {
-                logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(),
-                        ex);
+                try {
+                    command.completeExceptionally(cause);
+                } catch (Exception ex) {
+                    logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(),
+                            ex);
+                }
             }
         }
 
@@ -682,6 +693,14 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 if (isProtectedMode(command)) {
                     onProtectedMode(command.getOutput().getError());
                 } else {
+                    // Clean up encoding failures before processing valid responses
+                    while (!stack.isEmpty() && stack.peek().hasEncodingError()) {
+                        RedisCommand<?, ?, ?> failed = stack.poll();
+                        if (debugEnabled) {
+                            logger.debug("{} Cleaning up encoding failure command {}", logPrefix(), failed);
+                        }
+                        // Encoding failures were already completed exceptionally during encoding
+                    }
 
                     if (canComplete(command)) {
                         stack.poll();

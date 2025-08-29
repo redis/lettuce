@@ -190,6 +190,16 @@ public class CommandWrapper<K, V, T> implements RedisCommand<K, V, T>, Completea
     }
 
     @Override
+    public void markEncodingError() {
+        command.markEncodingError();
+    }
+
+    @Override
+    public boolean hasEncodingError() {
+        return command.hasEncodingError();
+    }
+
+    @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void onComplete(Consumer<? super T> action) {
         if (command instanceof CompleteableCommand) {
