@@ -102,12 +102,6 @@ public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements
         return delegate.write(redisCommands);
     }
 
-    @Override
-    public void reset() {
-        relaxTimeouts = false;
-        super.reset();
-    }
-
     private void potentiallyExpire(RedisCommand<?, ?, ?> command, ScheduledExecutorService executors) {
 
         long timeout = applyConnectionTimeout ? this.timeout : source.getTimeout(command);

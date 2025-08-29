@@ -235,19 +235,6 @@ class MaintenanceAwareExpiryWriterUnitTests {
     }
 
     @Test
-    void testReset() {
-        // Given
-        setField(writer, "relaxTimeouts", true);
-
-        // When
-        writer.reset();
-
-        // Then
-        verify(delegate).reset();
-        // Verify that relaxTimeouts and registered flags are reset (tested indirectly)
-    }
-
-    @Test
     void testOnRebindStarted() {
         // When
         writer.onRebindStarted(Duration.ofSeconds(15), new InetSocketAddress("10.0.0.1", 6379));
