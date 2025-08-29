@@ -18,6 +18,7 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.vector.RawVector;
 import io.lettuce.core.vector.VectorMetadata;
+import io.lettuce.core.vector.VSimScoreAttribs;
 
 import java.util.Arrays;
 import java.util.List;
@@ -383,7 +384,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
         if (vectors.length > 1) {
             args.add(CommandKeyword.VALUES);
             args.add(vectors.length);
-            Arrays.stream(vectors).map(Object::toString).forEach(args::add);
+            Arrays.stream(vectors).forEach(args::add);
         } else {
             args.add(vectors[0]);
         }
@@ -463,7 +464,7 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
         if (vectors.length > 1) {
             args.add(CommandKeyword.VALUES);
             args.add(vectors.length);
-            Arrays.stream(vectors).map(Object::toString).forEach(args::add);
+            Arrays.stream(vectors).forEach(args::add);
         } else {
             args.add(vectors[0]);
         }
@@ -498,6 +499,52 @@ public class RedisVectorSetCommandBuilder<K, V> extends BaseRedisCommandBuilder<
         }
 
         return createCommand(VSIM, new ValueDoubleMapOutput<>(codec), args);
+    }
+
+    // WITHSCORES WITHATTRIBS variants
+    public Command<K, V, Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, Double[] vectors) {
+        return vsimWithScoreWithAttribs(key, null, vectors);
+    }
+
+    public Command<K, V, Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, V element) {
+        return vsimWithScoreWithAttribs(key, null, element);
+    }
+
+    public Command<K, V, Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, VSimArgs vSimArgs, Double[] vectors) {
+        notNullKey(key);
+        notEmpty(vectors);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+
+        if (vectors.length > 1) {
+            args.add(CommandKeyword.VALUES);
+            args.add(vectors.length);
+            Arrays.stream(vectors).forEach(args::add);
+        } else {
+            args.add(vectors[0]);
+        }
+
+        args.add(WITHSCORES).add(WITHATTRIBS);
+
+        if (vSimArgs != null) {
+            vSimArgs.build(args);
+        }
+
+        return createCommand(VSIM, new VSimScoreAttribsMapOutput<>(codec), args);
+    }
+
+    public Command<K, V, Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, VSimArgs vSimArgs, V element) {
+        notNullKey(key);
+        notNullKey(element);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).add(ELE).addValue(element).add(WITHSCORES)
+                .add(WITHATTRIBS);
+
+        if (vSimArgs != null) {
+            vSimArgs.build(args);
+        }
+
+        return createCommand(VSIM, new VSimScoreAttribsMapOutput<>(codec), args);
     }
 
 }

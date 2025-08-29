@@ -12,6 +12,7 @@ import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.vector.RawVector;
+import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
 import io.lettuce.core.vector.QuantizationType;
 import io.netty.buffer.ByteBuf;
@@ -376,10 +377,90 @@ class RedisVectorSetCommandBuilderUnitTests {
 
         Command<String, String, List<String>> command = builder.vsim(KEY, vsim, VECTORS);
         ByteBuf buf = Unpooled.directBuffer();
-        command.encode(buf);
-        String s = buf.toString(StandardCharsets.UTF_8);
+        try {
+            command.encode(buf);
+            String s = buf.toString(StandardCharsets.UTF_8);
+            assertThat(s).doesNotContain("EPSILON");
+        } finally {
+            buf.release();
+        }
+    }
 
-        assertThat(s).doesNotContain("EPSILON");
+    @Test
+    void withAttribs_encodesFlag() {
+        VSimArgs vsim = new VSimArgs().count(5L).epsilon(0.25).explorationFactor(200L);
+        Command<String, String, Map<String, VSimScoreAttribs>> command = builder.vsimWithScoreWithAttribs(KEY, vsim, VECTORS);
+
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            command.encode(buf);
+            String s = buf.toString(StandardCharsets.UTF_8);
+            assertThat(s).contains("WITHATTRIBS");
+            assertThat(s).contains("WITHSCORES");
+        } finally {
+            buf.release();
+        }
+    }
+
+    @Test
+    void withAttribs_positioning_in_vsimWithScoreWithAttribs() {
+        VSimArgs vsim = new VSimArgs().count(5L).epsilon(0.25).explorationFactor(200L);
+
+        Command<String, String, Map<String, VSimScoreAttribs>> command = builder.vsimWithScoreWithAttribs(KEY, vsim, VECTORS);
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            command.encode(buf);
+            String s = buf.toString(StandardCharsets.UTF_8);
+
+            int iCount = s.indexOf("COUNT");
+            int iEps = s.indexOf("EPSILON");
+            int iAttr = s.indexOf("WITHATTRIBS");
+            int iEf = s.indexOf("\r\n$2\r\nEF\r\n");
+            if (iEf < 0)
+                iEf = s.indexOf("EF");
+
+            // In vsimWithScoreWithAttribs, WITHATTRIBS is part of the base tokens and appears before VSimArgs options
+            assertThat(iAttr).isNotNegative();
+            assertThat(iCount).isGreaterThan(iAttr);
+            assertThat(iEps).isGreaterThan(iCount);
+            assertThat(iEf).isGreaterThan(iEps);
+        } finally {
+            buf.release();
+        }
+    }
+
+    @Test
+    void withoutAttribs_doesNotEncode() {
+        VSimArgs vsim = new VSimArgs();
+        Command<String, String, List<String>> command = builder.vsim(KEY, vsim, VECTORS);
+
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            command.encode(buf);
+            String s = buf.toString(StandardCharsets.UTF_8);
+            assertThat(s).doesNotContain("WITHATTRIBS");
+        } finally {
+            buf.release();
+        }
+    }
+
+    @Test
+    void vsimWithScoreWithAttribs_withArgs_emits_withattribs_once() {
+        VSimArgs args = new VSimArgs();
+        Command<String, String, Map<String, VSimScoreAttribs>> cmd = builder.vsimWithScoreWithAttribs(KEY, args,
+                new Double[] { 1.0, 0.0 });
+
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            cmd.encode(buf);
+            String encoded = buf.toString(StandardCharsets.UTF_8);
+            int first = encoded.indexOf("WITHATTRIBS");
+            int last = encoded.lastIndexOf("WITHATTRIBS");
+            assertThat(first).isGreaterThanOrEqualTo(0);
+            assertThat(last).isEqualTo(first);
+        } finally {
+            buf.release();
+        }
     }
 
 }

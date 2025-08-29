@@ -63,6 +63,7 @@ import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.vector.RawVector;
+import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
 
 import java.time.Duration;
@@ -2030,6 +2031,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<Map<V, Double>> vsimWithScore(K key, VSimArgs args, V element) {
         return dispatch(vectorSetCommandBuilder.vsimWithScore(key, args, element));
+    }
+
+    @Override
+    public RedisFuture<Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vsimWithScoreWithAttribs(key, null, vectors));
+    }
+
+    @Override
+    public RedisFuture<Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, V element) {
+        return dispatch(vectorSetCommandBuilder.vsimWithScoreWithAttribs(key, null, element));
+    }
+
+    @Override
+    public RedisFuture<Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, VSimArgs args, Double... vectors) {
+        return dispatch(vectorSetCommandBuilder.vsimWithScoreWithAttribs(key, args, vectors));
+    }
+
+    @Override
+    public RedisFuture<Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, VSimArgs args, V element) {
+        return dispatch(vectorSetCommandBuilder.vsimWithScoreWithAttribs(key, args, element));
     }
 
     @Override

@@ -141,6 +141,27 @@ Map<String, Double> results = vectorSet.vsimWithScore("points", simArgs, 0.9, 0.
 ```
 
 
+### Including Attributes in Results with WITHATTRIBS
+
+Attributes are included by using the API variant that emits WITHATTRIBS. Use vsimWithScoreWithAttribs(...) to obtain scores and attributes per element.
+
+```java
+VSimArgs args = VSimArgs.Builder
+    .count(10)
+    .epsilon(0.2)
+    .build();
+
+Map<String, VSimScoreAttribs> results = vectorSet.vsimWithScoreWithAttribs("points", args, 0.9, 0.1);
+results.forEach((element, sa) -> {
+    double score = sa.getScore();
+    String attrs = sa.getAttributes();
+    System.out.println(element + ": score=" + score + ", attrs=" + attrs);
+});
+```
+
+Note: WITHATTRIBS requires a Redis version that supports returning attributes (Redis 8.2+). Methods are marked @Experimental and subject to change.
+
+
 ## Element Attributes and Filtering
 
 ### Setting and Getting Attributes

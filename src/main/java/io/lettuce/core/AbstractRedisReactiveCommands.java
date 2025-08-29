@@ -67,6 +67,7 @@ import io.lettuce.core.tracing.TraceContext;
 import io.lettuce.core.tracing.TraceContextProvider;
 import io.lettuce.core.tracing.Tracing;
 import io.lettuce.core.vector.RawVector;
+import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ImmediateEventExecutor;
@@ -2098,6 +2099,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<Map<V, Double>> vsimWithScore(K key, VSimArgs args, V element) {
         return createMono(() -> vectorSetCommandBuilder.vsimWithScore(key, args, element));
+    }
+
+    @Override
+    public Mono<Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, Double... vectors) {
+        return createMono(() -> vectorSetCommandBuilder.vsimWithScoreWithAttribs(key, null, vectors));
+    }
+
+    @Override
+    public Mono<Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vsimWithScoreWithAttribs(key, null, element));
+    }
+
+    @Override
+    public Mono<Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, VSimArgs args, Double... vectors) {
+        return createMono(() -> vectorSetCommandBuilder.vsimWithScoreWithAttribs(key, args, vectors));
+    }
+
+    @Override
+    public Mono<Map<V, VSimScoreAttribs>> vsimWithScoreWithAttribs(K key, VSimArgs args, V element) {
+        return createMono(() -> vectorSetCommandBuilder.vsimWithScoreWithAttribs(key, args, element));
     }
 
     @Override
