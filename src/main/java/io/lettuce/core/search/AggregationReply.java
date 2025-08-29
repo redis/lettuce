@@ -9,6 +9,8 @@ package io.lettuce.core.search;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import reactor.util.annotation.Nullable;
 
 /**
  * Represents the response from a Redis Search aggregation command (FT.AGGREGATE) or an (FT.CURSOR READ) command. This class
@@ -54,6 +56,13 @@ public class AggregationReply<K, V> {
     List<SearchReply<K, V>> replies = new ArrayList<>();
 
     long cursorId = NO_CURSOR;
+
+    /**
+     * Cluster nodeId of the shard that created/owns the cursor. Non-null only when running in cluster mode, WITHCURSOR was
+     * used, and the server created a cursor (cursorId > 0).
+     */
+    @Nullable
+    private String nodeId;
 
     /**
      * Creates a new empty AggregationReply. The reply is initialized with defaults.
@@ -151,6 +160,25 @@ public class AggregationReply<K, V> {
      */
     public long getCursorId() {
         return cursorId;
+    }
+
+    /** Cluster nodeId that created the cursor, if available. */
+    public Optional<String> getNodeId() {
+        return Optional.ofNullable(nodeId);
+    }
+
+    /**
+     * Internal helper to stamp the creating node id onto this reply while keeping the setter package-private. Public for
+     * cross-package usage; does not expose the field directly.
+     */
+    public static <K1, V1> AggregationReply<K1, V1> stampNodeId(AggregationReply<K1, V1> reply, @Nullable String nodeId) {
+        reply.setNodeId(nodeId);
+        return reply;
+    }
+
+    // Package-private setter: only in-package impls may stamp nodeId.
+    void setNodeId(@Nullable String nodeId) {
+        this.nodeId = nodeId;
     }
 
     void setGroupCount(long value) {

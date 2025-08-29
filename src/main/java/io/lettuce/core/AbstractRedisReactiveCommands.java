@@ -1748,8 +1748,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftCursordel(K index, long cursorId) {
-        return createMono(() -> searchCommandBuilder.ftCursordel(index, cursorId));
+    public Mono<String> ftCursordel(K index, AggregationReply<K, V> aggregateReply) {
+        return createMono(() -> {
+            if (aggregateReply == null)
+                throw new IllegalArgumentException("aggregateReply must not be null");
+            long cursorId = aggregateReply.getCursorId();
+            return searchCommandBuilder.ftCursordel(index, cursorId > 0 ? cursorId : 0);
+        });
     }
 
     @Override
@@ -1783,13 +1788,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
-        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, count));
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply, int count) {
+        return createMono(() -> {
+            if (aggregateReply == null)
+                throw new IllegalArgumentException("aggregateReply must not be null");
+            long cursorId = aggregateReply.getCursorId();
+            return searchCommandBuilder.ftCursorread(index, cursorId > 0 ? cursorId : 0, count);
+        });
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId) {
-        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, -1));
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply) {
+        return ftCursorread(index, aggregateReply, -1);
     }
 
     @Override
