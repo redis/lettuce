@@ -29,17 +29,23 @@ import java.util.concurrent.CompletionStage;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.lettuce.core.MaintenanceEventsOptions.AddressTypeSource;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceStrings;
+import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.AsyncCommand;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.ConnectionInitializer;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.netty.channel.Channel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+
+import static io.lettuce.core.protocol.CommandKeyword.MAINT_NOTIFICATIONS;
+import static io.lettuce.core.protocol.CommandType.CLIENT;
 
 /**
  * Redis RESP2/RESP3 handshake using the configured {@link ProtocolVersion} and other options for connection initialization and
@@ -63,8 +69,12 @@ class RedisHandshake implements ConnectionInitializer {
 
     private volatile ProtocolVersion negotiatedProtocolVersion;
 
-    RedisHandshake(ProtocolVersion requestedProtocolVersion, boolean pingOnConnect, ConnectionState connectionState) {
+    private final MaintenanceEventsOptions.AddressTypeSource addressTypeSource;
 
+    RedisHandshake(ProtocolVersion requestedProtocolVersion, boolean pingOnConnect, ConnectionState connectionState,
+            MaintenanceEventsOptions.AddressTypeSource addressTypeSource) {
+
+        this.addressTypeSource = addressTypeSource;
         this.requestedProtocolVersion = requestedProtocolVersion;
         this.pingOnConnect = pingOnConnect;
         this.connectionState = connectionState;
@@ -108,7 +118,8 @@ class RedisHandshake implements ConnectionInitializer {
                 // post-handshake commands, executed in a 'fire and forget' manner, to avoid having to react to different
                 // implementations or versions of the server runtime, and whose execution result (whether a success or a
                 // failure ) should not alter the outcome of the connection attempt
-                .thenCompose(ignore -> applyConnectionMetadataSafely(channel));
+                .thenCompose(ignore -> applyConnectionMetadataSafely(channel))
+                .thenCompose(ignore -> enableMaintenanceEvents(channel));
     }
 
     private CompletionStage<?> tryHandshakeResp3(Channel channel) {
@@ -268,6 +279,30 @@ class RedisHandshake implements ConnectionInitializer {
         return dispatch(channel, postHandshake);
     }
 
+    private String addressType(Channel channel, ConnectionState state, AddressTypeSource addressTypeSource) {
+        MaintenanceEventsOptions.AddressType addressType = addressTypeSource.getAddressType(channel.remoteAddress(),
+                state.getConnectionMetadata().isSslEnabled());
+
+        if (addressType == null) {
+            return null;
+        }
+
+        switch (addressType) {
+            case INTERNAL_IP:
+                return "internal-ip";
+            case INTERNAL_FQDN:
+                return "internal-fqdn";
+            case EXTERNAL_IP:
+                return "external-ip";
+            case EXTERNAL_FQDN:
+                return "external-fqdn";
+            case NONE:
+                return "none";
+            default:
+                throw new IllegalArgumentException("Unknown moving endpoint address type:" + addressType);
+        }
+    }
+
     private CompletionStage<Void> applyConnectionMetadataSafely(Channel channel) {
         return applyConnectionMetadata(channel).handle((result, error) -> {
             if (error != null) {
@@ -294,6 +329,41 @@ class RedisHandshake implements ConnectionInitializer {
 
         if (LettuceStrings.isNotEmpty(metadata.getLibraryVersion())) {
             postHandshake.add(new AsyncCommand<>(this.commandBuilder.clientSetinfo("lib-ver", metadata.getLibraryVersion())));
+        }
+
+        if (postHandshake.isEmpty()) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        return dispatch(channel, postHandshake);
+    }
+
+    private CompletionStage<Void> enableMaintenanceEvents(Channel channel) {
+        return sendMaintenanceNotificationsOn(channel).handle((result, error) -> {
+            if (error != null) {
+                LOG.info("Maintenance events not supported.");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Maintenance events not enabled", error);
+                }
+            }
+            return null;
+        });
+    }
+
+    private CompletionStage<Void> sendMaintenanceNotificationsOn(Channel channel) {
+        List<AsyncCommand<?, ?, ?>> postHandshake = new ArrayList<>();
+
+        if (addressTypeSource != null) {
+            CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(MAINT_NOTIFICATIONS).add("on");
+            String addressType = addressType(channel, connectionState, addressTypeSource);
+
+            if (addressType != null) {
+                args.add("moving-endpoint-type").add(addressType);
+            }
+
+            Command<String, String, String> maintNotificationsOn = new Command<>(CLIENT, new StatusOutput<>(StringCodec.UTF8),
+                    args);
+            postHandshake.add(new AsyncCommand<>(maintNotificationsOn));
         }
 
         if (postHandshake.isEmpty()) {

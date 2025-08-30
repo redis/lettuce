@@ -11,6 +11,8 @@ class ConnectionMetadata {
 
     private volatile String libraryVersion;
 
+    private volatile boolean sslEnabled;
+
     public ConnectionMetadata() {
     }
 
@@ -23,6 +25,7 @@ class ConnectionMetadata {
         setClientName(redisURI.getClientName());
         setLibraryName(redisURI.getLibraryName());
         setLibraryVersion(redisURI.getLibraryVersion());
+        setSslEnabled(redisURI.isSsl());
     }
 
     public void apply(ConnectionMetadata metadata) {
@@ -30,6 +33,7 @@ class ConnectionMetadata {
         setClientName(metadata.getClientName());
         setLibraryName(metadata.getLibraryName());
         setLibraryVersion(metadata.getLibraryVersion());
+        setSslEnabled(metadata.isSslEnabled());
     }
 
     protected void setClientName(String clientName) {
@@ -54,6 +58,14 @@ class ConnectionMetadata {
 
     String getLibraryVersion() {
         return libraryVersion;
+    }
+
+    boolean isSslEnabled() {
+        return sslEnabled;
+    }
+
+    void setSslEnabled(boolean sslEnabled) {
+        this.sslEnabled = sslEnabled;
     }
 
 }

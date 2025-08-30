@@ -58,7 +58,7 @@ class ReconnectionHandler {
 
     private final Bootstrap bootstrap;
 
-    private final Mono<SocketAddress> socketAddressSupplier;
+    protected Mono<SocketAddress> socketAddressSupplier;
 
     private final ConnectionFacade connectionFacade;
 
