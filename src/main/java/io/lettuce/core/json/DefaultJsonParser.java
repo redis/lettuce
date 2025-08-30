@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
  *
  * @since 6.5
  * @author Tihomir Mateev
+ * @author Steffen Kreutz
  */
 public class DefaultJsonParser implements JsonParser {
 
