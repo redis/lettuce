@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * Implementation of the {@link DelegateJsonObject} that delegates most of its functionality to the Jackson {@link ObjectNode}.
  *
  * @author Tihomir Mateev
+ * @author Steffen Kreutz
  */
 class DelegateJsonObject extends DelegateJsonValue implements JsonObject {
 
@@ -45,7 +46,7 @@ class DelegateJsonObject extends DelegateJsonValue implements JsonObject {
     public JsonValue remove(String key) {
         JsonNode value = ((ObjectNode) node).remove(key);
 
-        return wrap(value);
+        return value == null ? null : wrap(value);
     }
 
     @Override

@@ -10,6 +10,7 @@ package io.lettuce.core.json;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.lettuce.core.internal.LettuceAssert;
 
 import java.nio.ByteBuffer;
 
@@ -110,6 +111,8 @@ class DelegateJsonValue implements JsonValue {
     }
 
     static JsonValue wrap(JsonNode root) {
+        LettuceAssert.notNull(root, "Root must not be null");
+
         if (root.isObject()) {
             return new DelegateJsonObject(root);
         } else if (root.isArray()) {
