@@ -37,11 +37,19 @@ class DelegateJsonObjectUnitTests {
         DefaultJsonParser parser = new DefaultJsonParser();
         DelegateJsonObject underTest = new DelegateJsonObject();
 
-        underTest.put("test", parser.createJsonValue("\"test\"")).put("test2", parser.createJsonValue("1")).remove("test");
+        underTest.put("test", parser.createJsonValue("\"test\"")).put("test2", parser.createJsonValue("1"));
 
+        assertThat(underTest.remove("test").asString()).isEqualTo("test");
         assertThat(underTest.size()).isEqualTo(1);
         assertThat(underTest.get("test")).isNull();
         assertThat(underTest.get("test2").asNumber()).isEqualTo(1);
+    }
+
+    @Test
+    void removeNonExistingKey() {
+        DelegateJsonObject underTest = new DelegateJsonObject();
+
+        assertThat(underTest.remove("non existing key")).isNull();
     }
 
     @Test
