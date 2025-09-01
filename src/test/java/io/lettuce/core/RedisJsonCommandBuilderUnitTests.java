@@ -550,8 +550,8 @@ class RedisJsonCommandBuilderUnitTests {
         command.encode(buf);
 
         assertThat(buf.toString(StandardCharsets.UTF_8))
-                .isEqualTo("*5\r\n" + "$8\r\nJSON.SET\r\n" + "$15\r\nbikes:inventory\r\n" + "$17\r\n"
-                        + "$..commuter_bikes\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$2\r\nNX\r\n");
+                .isEqualTo("*5\r\n" + "$8\r\nJSON.SET\r\n" + "$15\r\nbikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n"
+                        + "$14\r\n" + ID_BIKE_6 + "\r\n" + "$2\r\nNX\r\n");
     }
 
     @Test
@@ -570,19 +570,63 @@ class RedisJsonCommandBuilderUnitTests {
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
-        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$14\r\nJSON.STRAPPEND\r\n" + "$15\r\n"
-                + "bikes:inventory\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*3\r\n" + "$14\r\nJSON.STRAPPEND\r\n" + "$15\r\n" + "bikes:inventory\r\n" + "$14\r\n" + ID_BIKE_6 + "\r\n");
     }
 
     @Test
     void shouldVerifyStringOverloadPerformanceOptimization() {
         String jsonString = "{\"test\":\"performance\"}";
 
-        Command<String, String, String> command = builder.jsonSet(MY_KEY, JsonPath.ROOT_PATH, jsonString, JsonSetArgs.Builder.defaults());
+        Command<String, String, String> command = builder.jsonSet(MY_KEY, JsonPath.ROOT_PATH, jsonString,
+                JsonSetArgs.Builder.defaults());
         ByteBuf buf = Unpooled.directBuffer();
         command.encode(buf);
 
         String expected = "*4\r\n$8\r\nJSON.SET\r\n$15\r\nbikes:inventory\r\n$1\r\n$\r\n$22\r\n{\"test\":\"performance\"}\r\n";
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(expected);
     }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrindexStringOverloadDefaults() {
+        Command<String, String, List<Long>> command = builder.jsonArrindex(MY_KEY, MY_PATH, ID_BIKE_6,
+                JsonRangeArgs.Builder.defaults());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*4\r\n$13\r\nJSON.ARRINDEX\r\n$15\r\nbikes:inventory\r\n$17\r\n$..commuter_bikes\r\n$14\r\n"
+                        + ID_BIKE_6 + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrinsertStringVararg() {
+        Command<String, String, List<Long>> command = builder.jsonArrinsert(MY_KEY, MY_PATH, 2, "A", "B");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*6\r\n$14\r\nJSON.ARRINSERT\r\n$15\r\nbikes:inventory\r\n$17\r\n$..commuter_bikes\r\n$1\r\n2\r\n$1\r\nA\r\n$1\r\nB\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonSetStringOverloadDefaults() {
+        Command<String, String, String> command = builder.jsonSet(MY_KEY, MY_PATH, ID_BIKE_6, JsonSetArgs.Builder.defaults());
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(
+                "*4\r\n$8\r\nJSON.SET\r\n$15\r\nbikes:inventory\r\n$17\r\n$..commuter_bikes\r\n$14\r\n" + ID_BIKE_6 + "\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrappendStringOverloadRootVararg() {
+        Command<String, String, List<Long>> command = builder.jsonArrappend(MY_KEY, JsonPath.ROOT_PATH, "A", "B");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*4\r\n$14\r\nJSON.ARRAPPEND\r\n$15\r\nbikes:inventory\r\n$1\r\nA\r\n$1\r\nB\r\n");
+    }
+
 }

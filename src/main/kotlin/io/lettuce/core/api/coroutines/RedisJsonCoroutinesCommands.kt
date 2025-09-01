@@ -8,12 +8,11 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import kotlinx.coroutines.flow.Flow
+import io.lettuce.core.json.JsonPath
 import io.lettuce.core.json.JsonType
 import io.lettuce.core.json.JsonValue
 import io.lettuce.core.json.arguments.JsonGetArgs
 import io.lettuce.core.json.arguments.JsonMsetArgs
-import io.lettuce.core.json.JsonPath
 import io.lettuce.core.json.arguments.JsonRangeArgs
 import io.lettuce.core.json.arguments.JsonSetArgs
 
@@ -52,6 +51,27 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
     suspend fun jsonArrappend(key: K, vararg values: JsonValue): List<Long>
 
     /**
+     * Append the JSON string values into the array at the {@link JsonPath#ROOT_PATH} after the last element in a said array.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonStrings one or more JSON strings to be appended.
+     * @return Long the resulting size of the arrays after the new data was appended, or null if the path does not exist.
+     * @since 6.9
+     */
+    suspend fun jsonArrappend(key: K, vararg jsonStrings: String): List<Long>
+
+    /**
+     * Append the JSON string values into the array at a given [JsonPath] after the last element in a said array.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the array inside the document.
+     * @param jsonStrings one or more JSON strings to be appended.
+     * @return Long the resulting size of the arrays after the new data was appended, or null if the path does not exist.
+     * @since 6.9
+     */
+    suspend fun jsonArrappend(key: K, jsonPath: JsonPath, vararg jsonStrings: String): List<Long>
+
+    /**
      * Search for the first occurrence of a [JsonValue] in an array at a given [JsonPath] and return its index.
      *
      * @param key the key holding the JSON document.
@@ -77,6 +97,31 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
     suspend fun jsonArrindex(key: K, jsonPath: JsonPath, value: JsonValue): List<Long>
 
     /**
+     * Search for the first occurrence of a JSON string in an array at a given [JsonPath] and return its index. This
+     * method uses defaults for the start and end indexes, see {@link JsonRangeArgs#DEFAULT_START_INDEX} and
+     * {@link JsonRangeArgs#DEFAULT_END_INDEX}.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the array inside the document.
+     * @param jsonString the JSON string to search for.
+     * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
+     * @since 6.9
+     */
+    suspend fun jsonArrindex(key: K, jsonPath: JsonPath, jsonString: String): List<Long>
+
+    /**
+     * Search for the first occurrence of a JSON string in an array at a given [JsonPath] and return its index.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the array inside the document.
+     * @param jsonString the JSON string to search for.
+     * @param range the [JsonRangeArgs] to search within.
+     * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
+     * @since 6.9
+     */
+    suspend fun jsonArrindex(key: K, jsonPath: JsonPath, jsonString: String, range: JsonRangeArgs): List<Long>
+
+    /**
      * Insert the [JsonValue]s into the array at a given [JsonPath] before the provided index, shifting the existing
      * elements to the right
      *
@@ -88,6 +133,18 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @since 6.5
      */
     suspend fun jsonArrinsert(key: K, jsonPath: JsonPath, index: Int, vararg values: JsonValue): List<Long>
+
+    /**
+     * Insert the JSON string values into the array at a given [JsonPath] before the provided index.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the array inside the document.
+     * @param index the index before which the new elements will be inserted.
+     * @param jsonStrings one or more JSON strings to be inserted.
+     * @return Long the resulting size of the arrays after the new data was inserted, or null if the path does not exist.
+     * @since 6.9
+     */
+    suspend fun jsonArrinsert(key: K, jsonPath: JsonPath, index: Int, vararg jsonStrings: String): List<Long>
 
     /**
      * Report the length of the JSON array at a given [JsonPath]
@@ -258,6 +315,17 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
     suspend fun jsonMerge(key: K, jsonPath: JsonPath, value: JsonValue): String?
 
     /**
+     * Merge a given JSON string with the value matching [JsonPath].
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the value to merge.
+     * @param jsonString the JSON string to merge.
+     * @return String "OK" if the merge was successful, error if the operation failed.
+     * @since 6.9
+     */
+    suspend fun jsonMerge(key: K, jsonPath: JsonPath, jsonString: String): String?
+
+    /**
      * Return the values at the specified path from multiple key arguments.
      *
      * @param jsonPath the [JsonPath] pointing to the value to fetch.
@@ -370,6 +438,29 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
     suspend fun jsonSet(key: K, jsonPath: JsonPath, value: JsonValue): String?
 
     /**
+     * Sets the JSON value at a given [JsonPath] in the JSON document using defaults for the [JsonSetArgs].
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the value(s) where we want to set the value.
+     * @param jsonString the JSON string to set.
+     * @return String "OK" if the set was successful, null if the [JsonSetArgs] conditions are not met.
+     * @since 6.9
+     */
+    suspend fun jsonSet(key: K, jsonPath: JsonPath, jsonString: String): String?
+
+    /**
+     * Sets the JSON value at a given [JsonPath] in the JSON document.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the value(s) where we want to set the value.
+     * @param jsonString the JSON string to set.
+     * @param options the [JsonSetArgs] the options for setting the value.
+     * @return String "OK" if the set was successful, null if the [JsonSetArgs] conditions are not met.
+     * @since 6.9
+     */
+    suspend fun jsonSet(key: K, jsonPath: JsonPath, jsonString: String, options: JsonSetArgs): String?
+
+    /**
      * Append the json-string values to the string at the provided [JsonPath] in the JSON document.
      *
      * @param key the key holding the JSON document.
@@ -389,6 +480,27 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @since 6.5
      */
     suspend fun jsonStrappend(key: K, value: JsonValue): List<Long>
+
+    /**
+     * Append the JSON string to the string at the {@link JsonPath#ROOT_PATH} in the JSON document.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonString the JSON string to append.
+     * @return Long the new length of the string, or null if the matching JSON value is not a string.
+     * @since 6.9
+     */
+    suspend fun jsonStrappend(key: K, jsonString: String): List<Long>
+
+    /**
+     * Append the JSON string to the string at the provided [JsonPath] in the JSON document.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the value(s) where we want to append the value.
+     * @param jsonString the JSON string to append.
+     * @return Long the new length of the string, or null if the matching JSON value is not a string.
+     * @since 6.9
+     */
+    suspend fun jsonStrappend(key: K, jsonPath: JsonPath, jsonString: String): List<Long>
 
     /**
      * Report the length of the JSON String at the provided [JsonPath] in the JSON document.

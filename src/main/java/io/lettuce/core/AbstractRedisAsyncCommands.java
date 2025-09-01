@@ -1743,6 +1743,15 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(jsonCommandBuilder.jsonArrappend(key, jsonPath, jsonStrings));
     }
 
+    /**
+     * Append the JSON string values into the array at the {@link JsonPath#ROOT_PATH} after the last element in a said array.
+     *
+     * @since 6.9
+     */
+    public RedisFuture<List<Long>> jsonArrappend(K key, String... jsonStrings) {
+        return dispatch(jsonCommandBuilder.jsonArrappend(key, JsonPath.ROOT_PATH, jsonStrings));
+    }
+
     @Override
     public RedisFuture<List<Long>> jsonArrindex(K key, JsonPath jsonPath, JsonValue value, JsonRangeArgs range) {
         return dispatch(jsonCommandBuilder.jsonArrindex(key, jsonPath, value, range));
@@ -1756,6 +1765,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<Long>> jsonArrindex(K key, JsonPath jsonPath, String jsonString, JsonRangeArgs range) {
         return dispatch(jsonCommandBuilder.jsonArrindex(key, jsonPath, jsonString, range));
+    }
+
+    /**
+     * Search for the first occurrence of a JSON string in an array at a given {@link JsonPath} and return its index. Uses
+     * defaults for the {@link JsonRangeArgs}.
+     *
+     * @since 6.9
+     */
+    public RedisFuture<List<Long>> jsonArrindex(K key, JsonPath jsonPath, String jsonString) {
+        return dispatch(jsonCommandBuilder.jsonArrindex(key, jsonPath, jsonString, JsonRangeArgs.Builder.defaults()));
     }
 
     @Override
@@ -1888,6 +1907,15 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(jsonCommandBuilder.jsonSet(key, jsonPath, jsonString, options));
     }
 
+    /**
+     * Sets the JSON value at a given {@link JsonPath} in the JSON document using defaults for the {@link JsonSetArgs}.
+     *
+     * @since 6.9
+     */
+    public RedisFuture<String> jsonSet(K key, JsonPath jsonPath, String jsonString) {
+        return dispatch(jsonCommandBuilder.jsonSet(key, jsonPath, jsonString, JsonSetArgs.Builder.defaults()));
+    }
+
     @Override
     public RedisFuture<List<Long>> jsonStrappend(K key, JsonPath jsonPath, JsonValue value) {
         return dispatch(jsonCommandBuilder.jsonStrappend(key, jsonPath, value));
@@ -1901,6 +1929,15 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<Long>> jsonStrappend(K key, JsonPath jsonPath, String jsonString) {
         return dispatch(jsonCommandBuilder.jsonStrappend(key, jsonPath, jsonString));
+    }
+
+    /**
+     * Append the JSON string to the string at the {@link JsonPath#ROOT_PATH} in the JSON document.
+     *
+     * @since 6.9
+     */
+    public RedisFuture<List<Long>> jsonStrappend(K key, String jsonString) {
+        return dispatch(jsonCommandBuilder.jsonStrappend(key, JsonPath.ROOT_PATH, jsonString));
     }
 
     @Override

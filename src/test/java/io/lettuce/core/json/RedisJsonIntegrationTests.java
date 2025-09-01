@@ -95,6 +95,31 @@ public class RedisJsonIntegrationTests {
     }
 
     @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { MOUNTAIN_BIKES_V1, MOUNTAIN_BIKES_V2 })
+    void jsonArrappendStringOverload(String path) {
+        JsonPath myPath = JsonPath.of(path);
+
+        List<Long> appendedElements = redis.jsonArrappend(BIKES_INVENTORY, myPath, "\"{id:bike7}\"");
+        assertThat(appendedElements).hasSize(1);
+        assertThat(appendedElements.get(0)).isEqualTo(4);
+
+        // Verify appended content
+        List<JsonValue> value = redis.jsonGet(BIKES_INVENTORY, myPath);
+        assertThat(value).hasSize(1);
+        if (path.startsWith("$")) {
+            JsonArray matches = value.get(0).asJsonArray();
+            assertThat(matches.size()).isEqualTo(1);
+            JsonArray arr = matches.get(0).asJsonArray();
+            String last = arr.get(arr.size() - 1).toString();
+            assertThat(last).isEqualTo("\"{id:bike7}\"");
+        } else {
+            JsonArray arr = value.get(0).asJsonArray();
+            String last = arr.get(arr.size() - 1).toString();
+            assertThat(last).isEqualTo("\"{id:bike7}\"");
+        }
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
     @ValueSource(strings = { BIKE_COLORS_V1, BIKE_COLORS_V2 })
     void jsonArrindex(String path) {
         JsonParser parser = redis.getJsonParser();
@@ -433,6 +458,32 @@ public class RedisJsonIntegrationTests {
 
         String result = redis.jsonSet(BIKES_INVENTORY, myPath, bikeRecord);
         assertThat(result).isEqualTo("OK");
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { MOUNTAIN_BIKES_V1, MOUNTAIN_BIKES_V2 })
+    void jsonSetStringAndGet(String path) {
+        JsonPath myPath = JsonPath.of(path);
+
+        // Set using String overload, then get and verify
+        String payload = "{\"id\":\"bike:99\",\"model\":\"Stringy\"}";
+        String res = redis.jsonSet(BIKES_INVENTORY, myPath, payload);
+        assertThat(res).isEqualTo("OK");
+
+        List<JsonValue> got = redis.jsonGet(BIKES_INVENTORY, myPath);
+        assertThat(got).hasSize(1);
+        // For $-prefixed paths, RedisJSON returns arrays of matches
+        if (path.startsWith("$")) {
+            assertThat(got.get(0).isJsonArray()).isTrue();
+            assertThat(got.get(0).asJsonArray().size()).isEqualTo(1);
+            assertThat(got.get(0).asJsonArray().get(0).isJsonObject()).isTrue();
+            assertThat(got.get(0).asJsonArray().get(0).asJsonObject().get("id").asString()).isEqualTo("bike:99");
+            assertThat(got.get(0).asJsonArray().get(0).asJsonObject().get("model").asString()).isEqualTo("Stringy");
+        } else {
+            assertThat(got.get(0).isJsonObject()).isTrue();
+            assertThat(got.get(0).asJsonObject().get("id").asString()).isEqualTo("bike:99");
+            assertThat(got.get(0).asJsonObject().get("model").asString()).isEqualTo("Stringy");
+        }
     }
 
     @ParameterizedTest(name = "With {0} as path")

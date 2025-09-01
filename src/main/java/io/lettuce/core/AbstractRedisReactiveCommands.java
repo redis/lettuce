@@ -1808,6 +1808,15 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrappend(key, jsonPath, jsonStrings));
     }
 
+    /**
+     * Append the JSON string values into the array at the {@link JsonPath#ROOT_PATH} after the last element in a said array.
+     *
+     * @since 6.9
+     */
+    public Flux<Long> jsonArrappend(K key, String... jsonStrings) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrappend(key, JsonPath.ROOT_PATH, jsonStrings));
+    }
+
     @Override
     public Flux<Long> jsonArrindex(K key, JsonPath jsonPath, JsonValue value, JsonRangeArgs range) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrindex(key, jsonPath, value, range));
@@ -1822,6 +1831,17 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<Long> jsonArrindex(K key, JsonPath jsonPath, String jsonString, JsonRangeArgs range) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrindex(key, jsonPath, jsonString, range));
+    }
+
+    /**
+     * Search for the first occurrence of a JSON string in an array at a given {@link JsonPath} and return its index. Uses
+     * defaults for the {@link JsonRangeArgs}.
+     *
+     * @since 6.9
+     */
+    public Flux<Long> jsonArrindex(K key, JsonPath jsonPath, String jsonString) {
+        return createDissolvingFlux(
+                () -> jsonCommandBuilder.jsonArrindex(key, jsonPath, jsonString, JsonRangeArgs.Builder.defaults()));
     }
 
     @Override
@@ -1956,6 +1976,15 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> jsonCommandBuilder.jsonSet(key, jsonPath, jsonString, options));
     }
 
+    /**
+     * Sets the JSON value at a given {@link JsonPath} in the JSON document using defaults for the {@link JsonSetArgs}.
+     *
+     * @since 6.9
+     */
+    public Mono<String> jsonSet(K key, JsonPath jsonPath, String jsonString) {
+        return createMono(() -> jsonCommandBuilder.jsonSet(key, jsonPath, jsonString, JsonSetArgs.Builder.defaults()));
+    }
+
     @Override
     public Flux<Long> jsonStrappend(K key, JsonPath jsonPath, JsonValue value) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrappend(key, jsonPath, value));
@@ -1969,6 +1998,15 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<Long> jsonStrappend(K key, JsonPath jsonPath, String jsonString) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrappend(key, jsonPath, jsonString));
+    }
+
+    /**
+     * Append the JSON string to the string at the {@link JsonPath#ROOT_PATH} in the JSON document.
+     *
+     * @since 6.9
+     */
+    public Flux<Long> jsonStrappend(K key, String jsonString) {
+        return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrappend(key, JsonPath.ROOT_PATH, jsonString));
     }
 
     @Override

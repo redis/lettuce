@@ -50,6 +50,16 @@ public interface RedisJsonCommands<K, V> {
     List<Long> jsonArrappend(K key, JsonValue... values);
 
     /**
+     * Append the JSON string values into the array at the {@link JsonPath#ROOT_PATH} after the last element in a said array.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonStrings one or more JSON strings to be appended.
+     * @return Long the resulting size of the arrays after the new data was appended, or null if the path does not exist.
+     * @since 6.9
+     */
+    List<Long> jsonArrappend(K key, String... jsonStrings);
+
+    /**
      * Append the JSON string values into the array at a given {@link JsonPath} after the last element in a said array.
      *
      * @param key the key holding the JSON document.
@@ -84,6 +94,19 @@ public interface RedisJsonCommands<K, V> {
      * @since 6.5
      */
     List<Long> jsonArrindex(K key, JsonPath jsonPath, JsonValue value);
+
+    /**
+     * Search for the first occurrence of a JSON string in an array at a given {@link JsonPath} and return its index. This
+     * method uses defaults for the start and end indexes, see {@link JsonRangeArgs#DEFAULT_START_INDEX} and
+     * {@link JsonRangeArgs#DEFAULT_END_INDEX}.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
+     * @param jsonString the JSON string to search for.
+     * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
+     * @since 6.9
+     */
+    List<Long> jsonArrindex(K key, JsonPath jsonPath, String jsonString);
 
     /**
      * Search for the first occurrence of a JSON string in an array at a given {@link JsonPath} and return its index.
@@ -414,6 +437,17 @@ public interface RedisJsonCommands<K, V> {
     String jsonSet(K key, JsonPath jsonPath, JsonValue value);
 
     /**
+     * Sets the JSON value at a given {@link JsonPath} in the JSON document using defaults for the {@link JsonSetArgs}.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the {@link JsonPath} pointing to the value(s) where we want to set the value.
+     * @param jsonString the JSON string to set.
+     * @return String "OK" if the set was successful, null if the {@link JsonSetArgs} conditions are not met.
+     * @since 6.9
+     */
+    String jsonSet(K key, JsonPath jsonPath, String jsonString);
+
+    /**
      * Sets the JSON value at a given {@link JsonPath} in the JSON document.
      *
      * @param key the key holding the JSON document.
@@ -445,6 +479,16 @@ public interface RedisJsonCommands<K, V> {
      * @since 6.5
      */
     List<Long> jsonStrappend(K key, JsonValue value);
+
+    /**
+     * Append the JSON string to the string at the {@link JsonPath#ROOT_PATH} in the JSON document.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonString the JSON string to append.
+     * @return Long the new length of the string, or null if the matching JSON value is not a string.
+     * @since 6.9
+     */
+    List<Long> jsonStrappend(K key, String jsonString);
 
     /**
      * Append the JSON string to the string at the provided {@link JsonPath} in the JSON document.
