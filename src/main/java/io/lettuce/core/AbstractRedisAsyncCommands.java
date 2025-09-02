@@ -1898,11 +1898,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         return dispatch(jsonCommandBuilder.jsonSet(key, jsonPath, jsonString, options));
     }
 
-    /**
-     * Sets the JSON value at a given {@link JsonPath} in the JSON document using defaults for the {@link JsonSetArgs}.
-     *
-     * @since 6.9
-     */
+    @Override
     public RedisFuture<String> jsonSet(K key, JsonPath jsonPath, String jsonString) {
         return dispatch(jsonCommandBuilder.jsonSet(key, jsonPath, jsonString, JsonSetArgs.Builder.defaults()));
     }

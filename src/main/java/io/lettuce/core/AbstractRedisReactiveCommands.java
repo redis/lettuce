@@ -1967,11 +1967,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createMono(() -> jsonCommandBuilder.jsonSet(key, jsonPath, jsonString, options));
     }
 
-    /**
-     * Sets the JSON value at a given {@link JsonPath} in the JSON document using defaults for the {@link JsonSetArgs}.
-     *
-     * @since 6.9
-     */
+    @Override
     public Mono<String> jsonSet(K key, JsonPath jsonPath, String jsonString) {
         return createMono(() -> jsonCommandBuilder.jsonSet(key, jsonPath, jsonString, JsonSetArgs.Builder.defaults()));
     }
@@ -1991,11 +1987,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrappend(key, jsonPath, jsonString));
     }
 
-    /**
-     * Append the JSON string to the string at the {@link JsonPath#ROOT_PATH} in the JSON document.
-     *
-     * @since 6.9
-     */
+    @Override
     public Flux<Long> jsonStrappend(K key, String jsonString) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonStrappend(key, JsonPath.ROOT_PATH, jsonString));
     }
