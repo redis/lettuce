@@ -362,7 +362,10 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
             }
 
             public String toString() {
-                return "State [cutoff=" + cutoff + ", rebindAddress=" + rebindAddress + "]";
+                StringBuilder sb = new StringBuilder();
+
+                return sb.append("State [cutoff=").append(cutoff).append(", rebindAddress=").append(rebindAddress).append("]")
+                        .toString();
             }
 
         }
