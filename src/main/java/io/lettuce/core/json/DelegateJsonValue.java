@@ -18,13 +18,17 @@ import java.nio.ByteBuffer;
  * Implementation of the {@link JsonValue} that delegates most of its functionality to the Jackson {@link JsonNode}.
  *
  * @author Tihomir Mateev
+ * @author Steffen Kreutz
  */
 class DelegateJsonValue implements JsonValue {
 
     protected JsonNode node;
 
-    DelegateJsonValue(JsonNode node) {
+    protected final ObjectMapper objectMapper;
+
+    DelegateJsonValue(JsonNode node, ObjectMapper objectMapper) {
         this.node = node;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -102,24 +106,23 @@ class DelegateJsonValue implements JsonValue {
 
     @Override
     public <T> T toObject(Class<T> type) {
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            return mapper.treeToValue(node, type);
+            return objectMapper.treeToValue(node, type);
         } catch (IllegalArgumentException | JsonProcessingException e) {
             throw new RedisJsonException("Unable to map the provided JsonValue to " + type.getName(), e);
         }
     }
 
-    static JsonValue wrap(JsonNode root) {
+    static JsonValue wrap(JsonNode root, ObjectMapper objectMapper) {
         LettuceAssert.notNull(root, "Root must not be null");
 
         if (root.isObject()) {
-            return new DelegateJsonObject(root);
+            return new DelegateJsonObject(root, objectMapper);
         } else if (root.isArray()) {
-            return new DelegateJsonArray(root);
+            return new DelegateJsonArray(root, objectMapper);
         }
 
-        return new DelegateJsonValue(root);
+        return new DelegateJsonValue(root, objectMapper);
     }
 
 }

@@ -8,6 +8,7 @@
 package io.lettuce.core.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -19,12 +20,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 class DelegateJsonObject extends DelegateJsonValue implements JsonObject {
 
-    DelegateJsonObject() {
-        super(new ObjectNode(JsonNodeFactory.instance));
+    DelegateJsonObject(ObjectMapper objectMapper) {
+        super(new ObjectNode(JsonNodeFactory.instance), objectMapper);
     }
 
-    DelegateJsonObject(JsonNode node) {
-        super(node);
+    DelegateJsonObject(JsonNode node, ObjectMapper objectMapper) {
+        super(node, objectMapper);
     }
 
     @Override
@@ -39,14 +40,14 @@ class DelegateJsonObject extends DelegateJsonValue implements JsonObject {
     public JsonValue get(String key) {
         JsonNode value = node.get(key);
 
-        return value == null ? null : wrap(value);
+        return value == null ? null : wrap(value, objectMapper);
     }
 
     @Override
     public JsonValue remove(String key) {
         JsonNode value = ((ObjectNode) node).remove(key);
 
-        return value == null ? null : wrap(value);
+        return value == null ? null : wrap(value, objectMapper);
     }
 
     @Override
