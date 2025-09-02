@@ -57,7 +57,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param key the key holding the JSON document.
      * @param jsonStrings one or more JSON strings to be appended.
      * @return Long the resulting size of the arrays after the new data was appended, or null if the path does not exist.
-     * @since 6.9
+     * @since 6.8
      */
     Flux<Long> jsonArrappend(K key, String... jsonStrings);
 
@@ -68,7 +68,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
      * @param jsonStrings one or more JSON strings to be appended.
      * @return Long the resulting size of the arrays after the new data was appended, or null if the path does not exist.
-     * @since 6.9
+     * @since 6.8
      */
     Flux<Long> jsonArrappend(K key, JsonPath jsonPath, String... jsonStrings);
 
@@ -106,7 +106,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
      * @param jsonString the JSON string to search for.
      * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
-     * @since 6.9
+     * @since 6.8
      */
     Flux<Long> jsonArrindex(K key, JsonPath jsonPath, String jsonString);
 
@@ -118,7 +118,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonString the JSON string to search for.
      * @param range the {@link JsonRangeArgs} to search within.
      * @return Long the index hosting the searched element, -1 if not found or null if the specified path is not an array.
-     * @since 6.9
+     * @since 6.8
      */
     Flux<Long> jsonArrindex(K key, JsonPath jsonPath, String jsonString, JsonRangeArgs range);
 
@@ -143,7 +143,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param index the index before which the new elements will be inserted.
      * @param jsonStrings one or more JSON strings to be inserted.
      * @return Long the resulting size of the arrays after the new data was inserted, or null if the path does not exist.
-     * @since 6.9
+     * @since 6.8
      */
     Flux<Long> jsonArrinsert(K key, JsonPath jsonPath, int index, String... jsonStrings);
 
@@ -322,7 +322,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonPath the {@link JsonPath} pointing to the value to merge.
      * @param jsonString the JSON string to merge.
      * @return String "OK" if the merge was successful, error if the operation failed.
-     * @since 6.9
+     * @since 6.8
      */
     Mono<String> jsonMerge(K key, JsonPath jsonPath, String jsonString);
 
@@ -445,7 +445,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonPath the {@link JsonPath} pointing to the value(s) where we want to set the value.
      * @param jsonString the JSON string to set.
      * @return String "OK" if the set was successful, null if the {@link JsonSetArgs} conditions are not met.
-     * @since 6.9
+     * @since 6.8
      */
     Mono<String> jsonSet(K key, JsonPath jsonPath, String jsonString);
 
@@ -457,7 +457,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonString the JSON string to set.
      * @param options the {@link JsonSetArgs} the options for setting the value.
      * @return String "OK" if the set was successful, null if the {@link JsonSetArgs} conditions are not met.
-     * @since 6.9
+     * @since 6.8
      */
     Mono<String> jsonSet(K key, JsonPath jsonPath, String jsonString, JsonSetArgs options);
 
@@ -488,7 +488,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param key the key holding the JSON document.
      * @param jsonString the JSON string to append.
      * @return Long the new length of the string, or null if the matching JSON value is not a string.
-     * @since 6.9
+     * @since 6.8
      */
     Flux<Long> jsonStrappend(K key, String jsonString);
 
@@ -499,7 +499,7 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @param jsonPath the {@link JsonPath} pointing to the value(s) where we want to append the value.
      * @param jsonString the JSON string to append.
      * @return Long the new length of the string, or null if the matching JSON value is not a string.
-     * @since 6.9
+     * @since 6.8
      */
     Flux<Long> jsonStrappend(K key, JsonPath jsonPath, String jsonString);
 
@@ -552,5 +552,4 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @since 6.5
      */
     Flux<JsonType> jsonType(K key);
-
 }
