@@ -336,3 +336,6 @@ hubertchylik
 VMANA
 SocketOptions
 SVS
+DelegateJsonObject
+ObjectMapper
+ctd
