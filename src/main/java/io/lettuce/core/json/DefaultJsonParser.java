@@ -64,19 +64,19 @@ public class DefaultJsonParser implements JsonParser {
 
     @Override
     public JsonObject createJsonObject() {
-        return new DelegateJsonObject();
+        return new DelegateJsonObject(objectMapper);
     }
 
     @Override
     public JsonArray createJsonArray() {
-        return new DelegateJsonArray();
+        return new DelegateJsonArray(objectMapper);
     }
 
     @Override
     public JsonValue fromObject(Object object) {
         try {
             JsonNode root = objectMapper.valueToTree(object);
-            return DelegateJsonValue.wrap(root);
+            return DelegateJsonValue.wrap(root, objectMapper);
         } catch (IllegalArgumentException e) {
             throw new RedisJsonException("Failed to process the provided object as JSON", e);
         }
@@ -84,12 +84,12 @@ public class DefaultJsonParser implements JsonParser {
 
     private JsonValue parse(String value) {
         if (value == null) {
-            return DelegateJsonValue.wrap(NullNode.getInstance());
+            return DelegateJsonValue.wrap(NullNode.getInstance(), objectMapper);
         }
 
         try {
             JsonNode root = objectMapper.readTree(value);
-            return DelegateJsonValue.wrap(root);
+            return DelegateJsonValue.wrap(root, objectMapper);
         } catch (JsonProcessingException e) {
             throw new RedisJsonException(
                     "Failed to process the provided value as JSON: " + String.format("%.50s", value) + "...", e);
@@ -98,14 +98,14 @@ public class DefaultJsonParser implements JsonParser {
 
     private JsonValue parse(ByteBuffer byteBuffer) {
         if (byteBuffer == null) {
-            return DelegateJsonValue.wrap(NullNode.getInstance());
+            return DelegateJsonValue.wrap(NullNode.getInstance(), objectMapper);
         }
 
         try {
             byte[] bytes = new byte[byteBuffer.remaining()];
             byteBuffer.get(bytes);
             JsonNode root = objectMapper.readTree(bytes);
-            return DelegateJsonValue.wrap(root);
+            return DelegateJsonValue.wrap(root, objectMapper);
         } catch (IOException e) {
             throw new RedisJsonException("Failed to process the provided value as JSON", e);
         }
