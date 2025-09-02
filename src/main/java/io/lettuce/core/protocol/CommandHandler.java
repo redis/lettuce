@@ -141,6 +141,12 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
     private Tracing.Endpoint tracedEndpoint;
 
+    private String tracingServerAddress;
+
+    private String tracingDbNamespace;
+
+    private String tracingUsername;
+
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
@@ -213,6 +219,15 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
 
         channel = ctx.channel();
 
+        if (channel.hasAttr(ConnectionBuilder.REDIS_URI)) {
+            String redisUriStr = channel.attr(ConnectionBuilder.REDIS_URI).get();
+            RedisURI redisURI = RedisURI.create(redisUriStr);
+            tracingServerAddress = redisURI.toString();
+            tracingDbNamespace = String.valueOf(redisURI.getDatabase());
+            tracingUsername = Optional.ofNullable(redisURI.getCredentialsProvider().resolveCredentials().block())
+                    .map(RedisCredentials::getUsername).orElse("");
+        }
+
         if (debugEnabled) {
             logPrefix = null;
             logger.debug("{} channelRegistered()", logPrefix());
@@ -245,6 +260,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             return;
         }
         channel = null;
+        tracingServerAddress = null;
+        tracingDbNamespace = null;
+        tracingUsername = null;
 
         if (readBuffer != null) {
             readBuffer.release();
@@ -491,13 +509,16 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             Tracer.Span span = tracer.nextSpan(context);
             span.name(command.getType().toString());
 
-            if (channel.hasAttr(ConnectionBuilder.REDIS_URI)) {
-                String redisUriStr = channel.attr(ConnectionBuilder.REDIS_URI).get();
-                RedisURI redisURI = RedisURI.create(redisUriStr);
-                span.tag("server.address", redisURI.toString());
-                span.tag("db.namespace", String.valueOf(redisURI.getDatabase()));
-                span.tag("user.name", Optional.ofNullable(redisURI.getCredentialsProvider().resolveCredentials().block())
-                        .map(RedisCredentials::getUsername).orElse(""));
+            if (tracingServerAddress != null) {
+                span.tag("server.address", tracingServerAddress);
+            }
+
+            if (tracingDbNamespace != null) {
+                span.tag("db.namespace", tracingDbNamespace);
+            }
+
+            if (tracingUsername != null) {
+                span.tag("user.name", tracingUsername);
             }
 
             if (tracedEndpoint != null) {
