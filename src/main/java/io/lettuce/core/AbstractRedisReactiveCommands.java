@@ -1808,11 +1808,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrappend(key, jsonPath, jsonStrings));
     }
 
-    /**
-     * Append the JSON string values into the array at the {@link JsonPath#ROOT_PATH} after the last element in a said array.
-     *
-     * @since 6.9
-     */
+    @Override
     public Flux<Long> jsonArrappend(K key, String... jsonStrings) {
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrappend(key, JsonPath.ROOT_PATH, jsonStrings));
     }
@@ -1833,12 +1829,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
         return createDissolvingFlux(() -> jsonCommandBuilder.jsonArrindex(key, jsonPath, jsonString, range));
     }
 
-    /**
-     * Search for the first occurrence of a JSON string in an array at a given {@link JsonPath} and return its index. Uses
-     * defaults for the {@link JsonRangeArgs}.
-     *
-     * @since 6.9
-     */
+    @Override
     public Flux<Long> jsonArrindex(K key, JsonPath jsonPath, String jsonString) {
         return createDissolvingFlux(
                 () -> jsonCommandBuilder.jsonArrindex(key, jsonPath, jsonString, JsonRangeArgs.Builder.defaults()));
