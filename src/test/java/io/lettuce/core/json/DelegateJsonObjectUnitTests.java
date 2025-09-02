@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Unit tests for {@link DelegateJsonObject}.
  */
@@ -21,8 +23,9 @@ class DelegateJsonObjectUnitTests {
 
     @Test
     void put() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonObject underTest = new DelegateJsonObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonObject underTest = new DelegateJsonObject(objectMapper);
 
         underTest.put("test", parser.createJsonValue("\"test\"")).put("test2", parser.createJsonValue("1")).put("test2",
                 parser.createJsonValue("true"));
@@ -34,8 +37,9 @@ class DelegateJsonObjectUnitTests {
 
     @Test
     void remove() {
-        DefaultJsonParser parser = new DefaultJsonParser();
-        DelegateJsonObject underTest = new DelegateJsonObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonObject underTest = new DelegateJsonObject(objectMapper);
 
         underTest.put("test", parser.createJsonValue("\"test\"")).put("test2", parser.createJsonValue("1"));
 
@@ -47,14 +51,16 @@ class DelegateJsonObjectUnitTests {
 
     @Test
     void removeNonExistingKey() {
-        DelegateJsonObject underTest = new DelegateJsonObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DelegateJsonObject underTest = new DelegateJsonObject(objectMapper);
 
         assertThat(underTest.remove("non existing key")).isNull();
     }
 
     @Test
     void isAnythingElse() {
-        DelegateJsonObject underTest = new DelegateJsonObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DelegateJsonObject underTest = new DelegateJsonObject(objectMapper);
 
         assertThat(underTest.isJsonObject()).isTrue();
 
@@ -67,7 +73,8 @@ class DelegateJsonObjectUnitTests {
 
     @Test
     void asAnythingElse() {
-        DelegateJsonObject underTest = new DelegateJsonObject();
+        ObjectMapper objectMapper = new ObjectMapper();
+        DelegateJsonObject underTest = new DelegateJsonObject(objectMapper);
 
         assertThat(underTest.asJsonObject()).isNotNull();
 
