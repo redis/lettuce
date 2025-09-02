@@ -552,4 +552,5 @@ public interface RedisJsonReactiveCommands<K, V> {
      * @since 6.5
      */
     Flux<JsonType> jsonType(K key);
+
 }

@@ -549,4 +549,5 @@ public interface NodeSelectionJsonAsyncCommands<K, V> {
      * @since 6.5
      */
     AsyncExecutions<List<JsonType>> jsonType(K key);
+
 }

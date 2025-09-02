@@ -550,4 +550,5 @@ public interface RedisJsonCommands<K, V> {
      * @since 6.5
      */
     List<JsonType> jsonType(K key);
+
 }

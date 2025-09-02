@@ -551,4 +551,5 @@ public interface RedisJsonAsyncCommands<K, V> {
      * @since 6.5
      */
     RedisFuture<List<JsonType>> jsonType(K key);
+
 }

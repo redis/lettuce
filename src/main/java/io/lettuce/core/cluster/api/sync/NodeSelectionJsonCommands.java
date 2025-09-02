@@ -549,4 +549,5 @@ public interface NodeSelectionJsonCommands<K, V> {
      * @since 6.5
      */
     Executions<List<JsonType>> jsonType(K key);
+
 }
