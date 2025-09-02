@@ -361,6 +361,10 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
                 this.rebindAddress = rebindAddress;
             }
 
+            public String toString() {
+                return "State [cutoff=" + cutoff + ", rebindAddress=" + rebindAddress + "]";
+            }
+
         }
 
         private final AtomicReference<State> state = new AtomicReference<>();
@@ -401,11 +405,17 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
         public Mono<SocketAddress> wrappedSupplier(Mono<SocketAddress> original) {
             return Mono.defer(() -> {
                 State current = state.get();
+                logger.debug("RebindAwareAddressSupplier rebind state: {}", state.get());
                 if (current != null && current.rebindAddress != null && clock.instant().isBefore(current.cutoff)) {
-                    return Mono.just(current.rebindAddress);
+                    logger.debug("RebindAwareAddressSupplier using rebind address: {}", state.get());
+                    return Mono.just(current.rebindAddress)
+                            .doOnSubscribe(s -> logger.debug("RebindAwareAddressSupplier subscribed to rebind address"))
+                            .doOnNext(address -> logger.debug("RebindAwareAddressSupplier rebind address: {}", address));
                 } else {
+                    logger.debug("RebindAwareAddressSupplier falling back to original.");
                     state.compareAndSet(current, null);
-                    return original;
+                    return original.doOnSubscribe(s -> logger.debug("RebindAwareAddressSupplier original to rebind address"))
+                            .doOnNext(address -> logger.debug("RebindAwareAddressSupplier original address: {}", address));
                 }
             });
         }
