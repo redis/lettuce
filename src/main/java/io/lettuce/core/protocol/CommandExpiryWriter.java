@@ -59,7 +59,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
 
     private final boolean applyConnectionTimeout;
 
-    private volatile long timeout = -1;
+    volatile long timeout = -1;
 
     /**
      * Create a new {@link CommandExpiryWriter}.
@@ -81,6 +81,25 @@ public class CommandExpiryWriter implements RedisChannelWriter {
         this.timeUnit = source.getTimeUnit();
         this.executorService = clientResources.eventExecutorGroup();
         this.timer = clientResources.timer();
+    }
+
+    /**
+     * Create a new {@link CommandExpiryWriter} or {@link MaintenanceAwareExpiryWriter} depending on the {@link ClientOptions}
+     * configuration.
+     *
+     * @param delegate must not be {@code null}.
+     * @param clientOptions must not be {@code null}.
+     * @param clientResources must not be {@code null}.
+     * @return the {@link CommandExpiryWriter} or {@link MaintenanceAwareExpiryWriter}.
+     * @since 7.0
+     */
+    public static RedisChannelWriter buildCommandExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions,
+            ClientResources clientResources) {
+        if (clientOptions.getMaintenanceEventsOptions().supportsMaintenanceEvents()) {
+            return new MaintenanceAwareExpiryWriter(delegate, clientOptions, clientResources);
+        } else {
+            return new CommandExpiryWriter(delegate, clientOptions, clientResources);
+        }
     }
 
     /**

@@ -20,11 +20,13 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.core.ConnectionEvents.*;
+import static io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.time.LocalTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -708,6 +710,19 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                     }
                 }
                 afterDecode(ctx, command);
+            }
+        }
+
+        final boolean rebindInProgress = ctx.channel().hasAttr(REBIND_ATTRIBUTE)
+                && ctx.channel().attr(REBIND_ATTRIBUTE).get() != null
+                && ctx.channel().attr(REBIND_ATTRIBUTE).get().equals(RebindState.STARTED);
+
+        if (rebindInProgress) {
+            if (stack.isEmpty()) {
+                logger.info("{} Rebind completed at {}", logPrefix(), LocalTime.now());
+                ctx.channel().attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
+            } else {
+                logger.debug("{} Rebind in progress, {} commands remaining in the stack", logPrefix(), stack.size());
             }
         }
 

@@ -3,7 +3,9 @@ package io.lettuce.core;
 import static io.lettuce.TestTags.*;
 import static java.util.concurrent.TimeUnit.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +39,7 @@ class RedisHandshakeUnitTests {
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider("foo", "bar".toCharArray()));
-        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, null);
         handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -54,7 +56,7 @@ class RedisHandshakeUnitTests {
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider("foo", "bar".toCharArray()));
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -71,7 +73,7 @@ class RedisHandshakeUnitTests {
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -94,7 +96,7 @@ class RedisHandshakeUnitTests {
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
         state.apply(connectionMetdata);
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         CompletionStage<Void> handshakeInit = handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -117,7 +119,7 @@ class RedisHandshakeUnitTests {
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         CompletionStage<Void> handshakeInit = handshake.initialize(channel);
 
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
@@ -142,11 +144,11 @@ class RedisHandshakeUnitTests {
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(cp);
         state.apply(connectionMetdata);
-        RedisHandshake handshake = new RedisHandshake(null, false, state);
+        RedisHandshake handshake = new RedisHandshake(null, false, state, null);
         CompletionStage<Void> handshakeInit = handshake.initialize(channel);
         cp.completeCredentials(RedisCredentials.just("foo", "bar"));
 
-        Awaitility.await().atMost(50, MILLISECONDS) // Wait up to 5 seconds
+        Awaitility.await().atMost(100, MILLISECONDS) // Wait up to 5 seconds
                 .pollInterval(5, MILLISECONDS) // Poll every 50 milliseconds
                 .until(() -> !channel.outboundMessages().isEmpty());
 
@@ -175,6 +177,117 @@ class RedisHandshakeUnitTests {
         assertThat(RedisHandshake.RedisVersion.of("1.2.3a").toString()).isEqualTo("1.2.3");
         assertThat(RedisHandshake.RedisVersion.of("1.2.3(c)").toString()).isEqualTo("1.2.3");
         assertThat(RedisHandshake.RedisVersion.of("a.2.3(c)").toString()).isEqualTo("2.3.0");
+    }
+
+    @Test
+    void handshakeWithoutMaintenanceEventsOptionsShouldNotIncludeMaintNotifications() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, null);
+        handshake.initialize(channel);
+
+        // Should have no post-handshake command for MAINT_NOTIFICATIONS
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        // No post-handshake commands should be sent when addressTypeSource is null
+        assertThat(channel.outboundMessages()).isEmpty();
+    }
+
+    @Test
+    void handshakeWithMaintenanceEventsOptionsShouldIncludeMaintNotifications() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // Mock address type source
+        MaintenanceEventsOptions.AddressTypeSource addressTypeSource = mock(MaintenanceEventsOptions.AddressTypeSource.class);
+        when(addressTypeSource.getAddressType(any(SocketAddress.class), anyBoolean()))
+                .thenReturn(MaintenanceEventsOptions.AddressType.INTERNAL_IP);
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, addressTypeSource);
+        handshake.initialize(channel);
+
+        // Should have one post-handshake command for MAINT_NOTIFICATIONS
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        List<AsyncCommand<?, ?, ?>> commands = channel.readOutbound();
+        assertThat(commands).hasSize(1);
+
+        AsyncCommand<?, ?, ?> maintCommand = commands.get(0);
+        // Verify it's a CLIENT command with MAINT_NOTIFICATIONS
+        assertThat(maintCommand.getType().toString()).isEqualTo("CLIENT");
+        assertThat(maintCommand.getArgs().toString()).contains("MAINT_NOTIFICATIONS");
+        assertThat(maintCommand.getArgs().toString()).contains("on");
+        assertThat(maintCommand.getArgs().toString()).contains("moving-endpoint-type");
+        assertThat(maintCommand.getArgs().toString()).contains("internal-ip");
+    }
+
+    @Test
+    void handshakeWithMaintenanceEventsOptionsExternalIpShouldIncludeCorrectAddressType() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // Mock address type source
+        MaintenanceEventsOptions.AddressTypeSource addressTypeSource = mock(MaintenanceEventsOptions.AddressTypeSource.class);
+        when(addressTypeSource.getAddressType(any(SocketAddress.class), anyBoolean()))
+                .thenReturn(MaintenanceEventsOptions.AddressType.EXTERNAL_IP);
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, addressTypeSource);
+        handshake.initialize(channel);
+
+        // Should have one post-handshake command for MAINT_NOTIFICATIONS
+        // Should have one post-handshake command for MAINT_NOTIFICATIONS
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        List<AsyncCommand<?, ?, ?>> commands = channel.readOutbound();
+        assertThat(commands).hasSize(1);
+
+        AsyncCommand<?, ?, ?> maintCommand = commands.get(0);
+
+        // Verify it contains the correct address type
+        assertThat(maintCommand.getArgs().toString()).contains("external-ip");
+    }
+
+    @Test
+    void handshakeWithMaintenanceEventsOptionsNullAddressTypeShouldNotIncludeMovingEndpointType() {
+
+        EmbeddedChannel channel = new EmbeddedChannel(true, false);
+
+        // Mock address type source that returns null
+        MaintenanceEventsOptions.AddressTypeSource addressTypeSource = mock(MaintenanceEventsOptions.AddressTypeSource.class);
+        when(addressTypeSource.getAddressType(any(SocketAddress.class), anyBoolean())).thenReturn(null);
+
+        ConnectionState state = new ConnectionState();
+        state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, addressTypeSource);
+        handshake.initialize(channel);
+
+        // Should have one post-handshake command for MAINT_NOTIFICATIONS
+        AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
+        helloResponse(hello.getOutput());
+        hello.complete();
+
+        List<AsyncCommand<?, ?, ?>> commands = channel.readOutbound();
+        assertThat(commands).hasSize(1);
+
+        AsyncCommand<?, ?, ?> maintCommand = commands.get(0);
+
+        // Verify it contains MAINT_NOTIFICATIONS but not moving-endpoint-type
+        assertThat(maintCommand.getArgs().toString()).contains("MAINT_NOTIFICATIONS");
+        assertThat(maintCommand.getArgs().toString()).contains("on");
+        assertThat(maintCommand.getArgs().toString()).doesNotContain("moving-endpoint-type");
     }
 
     private static void helloResponse(CommandOutput<String, String, Map<String, String>> output) {

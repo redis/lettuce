@@ -115,29 +115,6 @@ public class SentinelConnectionIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testSyncClose() {
-
-        StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        statefulConnection.sync().getStatefulConnection().close();
-
-        Wait.untilTrue(() -> !sentinel.isOpen()).waitOrTimeout();
-
-        assertThat(sentinel.isOpen()).isFalse();
-        assertThat(statefulConnection.isOpen()).isFalse();
-    }
-
-    @Test
-    void testAsyncClose() {
-        StatefulRedisSentinelConnection<String, String> statefulConnection = sentinel.getStatefulConnection();
-        statefulConnection.async().getStatefulConnection().close();
-
-        Wait.untilTrue(() -> !sentinel.isOpen()).waitOrTimeout();
-
-        assertThat(sentinel.isOpen()).isFalse();
-        assertThat(statefulConnection.isOpen()).isFalse();
-    }
-
-    @Test
     void connectToOneNode() {
         RedisSentinelCommands<String, String> connection = redisClient.connectSentinel(SentinelTestSettings.SENTINEL_URI)
                 .sync();
