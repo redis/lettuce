@@ -27,13 +27,15 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.unix.DomainSocketAddress;
-import io.netty.incubator.channel.uring.IOUring;
-import io.netty.incubator.channel.uring.IOUringChannelOption;
-import io.netty.incubator.channel.uring.IOUringDatagramChannel;
-import io.netty.incubator.channel.uring.IOUringEventLoopGroup;
-import io.netty.incubator.channel.uring.IOUringSocketChannel;
+import io.netty.channel.uring.IoUring;
+import io.netty.channel.uring.IoUringChannelOption;
+import io.netty.channel.uring.IoUringDatagramChannel;
+
+import io.netty.channel.uring.IoUringIoHandler;
+import io.netty.channel.uring.IoUringSocketChannel;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
@@ -41,7 +43,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Wraps and provides io_uring classes. This is to protect the user from {@link ClassNotFoundException}'s caused by the absence
- * of the {@literal netty-incubator-transport-native-io_uring} library during runtime. Internal API.
+ * of the {@literal netty-transport-native-io_uring} library during runtime. Internal API.
  *
  * @author Mark Paluch
  * @since 6.1
@@ -63,7 +65,7 @@ public class IOUringProvider {
         boolean availability;
         try {
             Class.forName("io.netty.incubator.channel.uring.IOUring");
-            availability = IOUring.isAvailable();
+            availability = IoUring.isAvailable();
         } catch (ClassNotFoundException e) {
             availability = false;
         }
@@ -119,16 +121,16 @@ public class IOUringProvider {
      */
     public static void applyKeepAlive(Bootstrap bootstrap, int count, Duration idle, Duration interval) {
 
-        bootstrap.option(IOUringChannelOption.TCP_KEEPCNT, count);
-        bootstrap.option(IOUringChannelOption.TCP_KEEPIDLE, Math.toIntExact(idle.getSeconds()));
-        bootstrap.option(IOUringChannelOption.TCP_KEEPINTVL, Math.toIntExact(interval.getSeconds()));
+        bootstrap.option(IoUringChannelOption.TCP_KEEPCNT, count);
+        bootstrap.option(IoUringChannelOption.TCP_KEEPIDLE, Math.toIntExact(idle.getSeconds()));
+        bootstrap.option(IoUringChannelOption.TCP_KEEPINTVL, Math.toIntExact(interval.getSeconds()));
     }
 
     /**
      * Apply TcpUserTimeout options.
      */
     public static void applyTcpUserTimeout(Bootstrap bootstrap, Duration timeout) {
-        bootstrap.option(IOUringChannelOption.TCP_USER_TIMEOUT, Math.toIntExact(timeout.toMillis()));
+        bootstrap.option(IoUringChannelOption.TCP_USER_TIMEOUT, Math.toIntExact(timeout.toMillis()));
     }
 
     /**
@@ -143,32 +145,35 @@ public class IOUringProvider {
 
             LettuceAssert.notNull(type, "EventLoopGroup type must not be null");
 
-            return type.equals(eventLoopGroupClass());
+            // In Netty 4.2, IoUringEventLoopGroup doesn't exist, only MultiThreadIoEventLoopGroup
+            return type.equals(MultiThreadIoEventLoopGroup.class);
         }
 
         @Override
         public Class<? extends EventLoopGroup> eventLoopGroupClass() {
-            return IOUringEventLoopGroup.class;
+            // Return the new recommended class, but keep backward compatibility
+            return MultiThreadIoEventLoopGroup.class;
         }
 
         @Override
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-            return new IOUringEventLoopGroup(nThreads, threadFactory);
+            // Use the new Netty 4.2 approach with IoHandlerFactory
+            return new MultiThreadIoEventLoopGroup(nThreads, threadFactory, IoUringIoHandler.newFactory());
         }
 
         @Override
         public Class<? extends Channel> socketChannelClass() {
-            return IOUringSocketChannel.class;
+            return IoUringSocketChannel.class;
         }
 
         @Override
         public Class<? extends Channel> domainSocketChannelClass() {
-            return IOUringSocketChannel.class;
+            return IoUringSocketChannel.class;
         }
 
         @Override
         public Class<? extends DatagramChannel> datagramChannelClass() {
-            return IOUringDatagramChannel.class;
+            return IoUringDatagramChannel.class;
         }
 
         @Override
