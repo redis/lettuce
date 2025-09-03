@@ -229,7 +229,7 @@ public interface RedisKeyCommands<K, V> {
      * @param pattern the pattern type: patternkey (pattern).
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
      */
-    List<K> keys(K pattern);
+    List<K> keys(String pattern);
 
     /**
      * Find all keys matching the given pattern.
@@ -238,7 +238,7 @@ public interface RedisKeyCommands<K, V> {
      * @param pattern the pattern.
      * @return Long array-reply list of keys matching {@code pattern}.
      */
-    Long keys(KeyStreamingChannel<K> channel, K pattern);
+    Long keys(KeyStreamingChannel<K> channel, String pattern);
 
     /**
      * Atomically transfer a key from a Redis instance to another one.

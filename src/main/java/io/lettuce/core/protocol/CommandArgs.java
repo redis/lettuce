@@ -89,6 +89,11 @@ public class CommandArgs<K, V> {
         return this;
     }
 
+    public CommandArgs<K, V> addGlobalPattern(String pattern) {
+        singularArguments.add(GlobPatternArgument.of(pattern));
+        return this;
+    }
+
     /**
      * Add multiple key arguments.
      *
@@ -718,6 +723,30 @@ public class CommandArgs<K, V> {
         @Override
         public String toString() {
             return String.format("value<%s>", new StringCodec().decodeValue(codec.encodeValue(val)));
+        }
+
+    }
+
+    static class GlobPatternArgument<K, V> extends SingularArgument {
+
+        final String pattern;
+
+        private GlobPatternArgument(String pattern) {
+            this.pattern = pattern;
+        }
+
+        static <K, V> GlobPatternArgument<K, V> of(String pattern) {
+            return new GlobPatternArgument<>(pattern);
+        }
+
+        @Override
+        void encode(ByteBuf target) {
+            StringArgument.writeString(target, pattern);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("glob<%s>", pattern);
         }
 
     }

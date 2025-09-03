@@ -276,7 +276,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<K>> keys(K pattern) {
+    public RedisFuture<List<K>> keys(String pattern) {
 
         Map<String, CompletableFuture<List<K>>> executions = executeOnUpstream(commands -> commands.keys(pattern));
 
@@ -290,7 +290,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, String pattern) {
 
         Map<String, CompletableFuture<Long>> executions = executeOnUpstream(commands -> commands.keys(channel, pattern));
         return MultiNodeExecution.aggregateAsync(executions);
