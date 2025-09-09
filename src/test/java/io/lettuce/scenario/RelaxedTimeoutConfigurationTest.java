@@ -217,10 +217,10 @@ public class RelaxedTimeoutConfigurationTest {
             }
 
             // For MOVING tests: Start traffic on MOVING, test during MOVING
-            if (notification.contains("+MIGRATED") && isMovingTest) {
+            if (notification.contains("MIGRATED") && isMovingTest) {
                 log.info("Migration completed - Waiting for MOVING notification to start traffic");
                 startContinuousTraffic();
-            } else if (notification.contains("+MOVING")) {
+            } else if (notification.contains("MOVING")) {
                 log.info("=== MOVING DECISION TREE START ===");
                 log.info("DECISION: MOVING notification received");
                 log.info("ACTION: Setting maintenanceActive=true, recording MOVING start");
@@ -242,7 +242,7 @@ public class RelaxedTimeoutConfigurationTest {
                 notificationLatch.countDown(); // Count down ONLY on MOVING for MOVING tests
                 log.info("=== MOVING DECISION TREE END ===");
 
-            } else if (notification.contains("+MIGRATING")) {
+            } else if (notification.contains("MIGRATING")) {
                 if (isMovingTest) {
                     log.info("MOVING test received MIGRATING notification - waiting for MIGRATED then MOVING notification...");
                     // CRITICAL: Do NOT countdown for MOVING tests on MIGRATING - wait for MOVING notification
@@ -266,7 +266,7 @@ public class RelaxedTimeoutConfigurationTest {
                     }
                 }
 
-            } else if (notification.contains("+FAILING_OVER") && !isMovingTest) {
+            } else if (notification.contains("FAILING_OVER") && !isMovingTest) {
                 maintenanceActive.set(true);
                 log.info("FAILING_OVER maintenance started - Starting continuous traffic for testing");
 
@@ -285,7 +285,7 @@ public class RelaxedTimeoutConfigurationTest {
                     log.info("Un-relaxed test: Keeping traffic running until FAILED_OVER notification");
                 }
 
-            } else if (notification.contains("+FAILED_OVER")) {
+            } else if (notification.contains("FAILED_OVER")) {
                 maintenanceActive.set(false);
                 log.info("Maintenance completed - timeouts should return to normal");
 
@@ -300,7 +300,7 @@ public class RelaxedTimeoutConfigurationTest {
                     notificationLatch.countDown(); // Count down for FAILED_OVER in FAILED_OVER tests
                 }
 
-            } else if (notification.contains("+MIGRATED") && !isMovingTest) {
+            } else if (notification.contains("MIGRATED") && !isMovingTest) {
                 maintenanceActive.set(false);
                 log.info("MIGRATED completed - timeouts should return to normal");
 
@@ -738,8 +738,8 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify we got the expected notifications
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
 
             // Record MOVING operation completion
             context.capture.recordMovingEnd();
@@ -798,7 +798,7 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATING"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATING"))).isTrue();
 
             log.info("=== MIGRATING Timeout Test Results ===");
             log.info("Successful operations: {}", context.capture.getSuccessCount());
@@ -844,7 +844,7 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+FAILING_OVER"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILING_OVER"))).isTrue();
 
             log.info("=== FAILING_OVER Timeout Test Results ===");
             log.info("Successful operations: {}", context.capture.getSuccessCount());
@@ -897,8 +897,8 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify we got the expected notifications
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
 
             // Record MOVING operation completion
             context.capture.recordMovingEnd();
@@ -969,7 +969,7 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
 
             log.info("=== MIGRATED Un-relaxed Test: Testing normal timeouts after MIGRATED ===");
 
@@ -1021,7 +1021,7 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+FAILED_OVER"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILED_OVER"))).isTrue();
 
             log.info("=== FAILED_OVER Un-relaxed Test: Testing normal timeouts after FAILED_OVER ===");
 
