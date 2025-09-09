@@ -322,6 +322,8 @@ public class ConnectionHandoffTest {
         assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
         assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
 
+        // check via rest call the number of connections to the source and target nodes
+
         log.info("✓ {} completed successfully", testDescription);
     }
 
