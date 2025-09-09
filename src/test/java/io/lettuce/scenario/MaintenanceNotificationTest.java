@@ -65,18 +65,17 @@ public class MaintenanceNotificationTest {
 
     // Push notification patterns - Updated to new format with sequence numbers
     private static final Pattern MOVING_PATTERN = Pattern
-            .compile(">4\\r\\n\\+MOVING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n\\+([^:]+):(\\d+)\\r\\n");
+            .compile(">4\\r\\nMOVING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n([^:]+):(\\d+)\\r\\n");
 
     private static final Pattern MIGRATING_PATTERN = Pattern
-            .compile(">4\\r\\n\\+MIGRATING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
+            .compile(">4\\r\\nMIGRATING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
-    private static final Pattern MIGRATED_PATTERN = Pattern.compile(">3\\r\\n\\+MIGRATED\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
+    private static final Pattern MIGRATED_PATTERN = Pattern.compile(">3\\r\\nMIGRATED\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
     private static final Pattern FAILING_OVER_PATTERN = Pattern
-            .compile(">4\\r\\n\\+FAILING_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
+            .compile(">4\\r\\nFAILING_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
-    private static final Pattern FAILED_OVER_PATTERN = Pattern
-            .compile(">3\\r\\n\\+FAILED_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
+    private static final Pattern FAILED_OVER_PATTERN = Pattern.compile(">3\\r\\nFAILED_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
     @BeforeAll
     public static void setup() {
@@ -255,7 +254,7 @@ public class MaintenanceNotificationTest {
 
         // Verify notification parsing and storage - expect multiple notifications during migration process
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
@@ -319,7 +318,7 @@ public class MaintenanceNotificationTest {
 
         // Verify client received MIGRATING notification (migration may trigger multiple push messages)
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATING"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATING"))).isTrue();
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
@@ -381,7 +380,7 @@ public class MaintenanceNotificationTest {
 
         // Verify client received MIGRATED notification (migration may trigger multiple push messages)
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
@@ -432,7 +431,7 @@ public class MaintenanceNotificationTest {
 
         // Verify client received FAILING_OVER notification (failover may trigger multiple push messages)
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+FAILING_OVER"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILING_OVER"))).isTrue();
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
@@ -478,7 +477,7 @@ public class MaintenanceNotificationTest {
 
         // Verify client removes failover state
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getLastNotification()).contains("+FAILED_OVER");
+        assertThat(context.capture.getLastNotification()).contains("FAILED_OVER");
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
