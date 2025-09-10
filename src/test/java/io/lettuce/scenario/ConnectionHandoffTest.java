@@ -74,8 +74,9 @@ public class ConnectionHandoffTest {
 
     // Push notification patterns for MOVING messages with different address types
     // Handles both IP:PORT and FQDN formats, with both \n and \r\n line endings
+    // Also handles empty address for AddressType.NONE
     private static final Pattern MOVING_PATTERN = Pattern
-            .compile(">\\d+\\r?\\nMOVING\\r?\\n:([^\\r\\n]+)\\r?\\n:(\\d+)\\r?\\n([^\\r\\n\\s]+)\\s*");
+            .compile(">\\d+\\r?\\nMOVING\\r?\\n:([^\\r\\n]+)\\r?\\n:(\\d+)\\r?\\n([^\\r\\n]*)\\s*");
 
     // Pattern to identify IP addresses (IPv4)
     private static final Pattern IP_PATTERN = Pattern.compile("^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$");
@@ -250,10 +251,24 @@ public class ConnectionHandoffTest {
      */
     private void validateAddressType(String address, AddressType expectedType, String testDescription) {
         log.info("Validating address '{}' for type {} in {}", address, expectedType, testDescription);
+        // Handle NONE expected type (endpoint type 'none') - should receive null address by design
+        if (expectedType == AddressType.NONE) {
+            assertThat(address).as("Address should be null with endpoint type 'none' by design").isNull();
+            log.info("✓ Address is null with NONE expected type (endpoint type 'none') - this is correct by design");
+            return;
+        }
 
-        // Handle null address case
-        if (address == null && expectedType == null) {
-            log.info("✓ Address is null - this is valid for endpoint type 'none'");
+        // Handle null expected type (legacy null case) - should receive a valid address, not null
+        if (expectedType == null) {
+            assertThat(address).as("Address should not be null even with null expected type").isNotNull();
+            assertThat(address).as("Address should not be empty with null expected type").isNotEmpty();
+            log.info("✓ Address '{}' received with null expected type - valid non-null address", address);
+            return;
+        }
+
+        // Handle null address case with non-null expected type (this should not happen)
+        if (address == null) {
+            assertThat(false).as("Address should not be null for expected type " + expectedType).isTrue();
             return;
         }
 
@@ -272,6 +287,10 @@ public class ConnectionHandoffTest {
                 assertThat(address.contains(".")).as("FQDN should contain at least one dot").isTrue();
                 log.info("✓ Address '{}' is valid FQDN format for {}", address, expectedType);
                 break;
+
+            case NONE:
+                // This should not be reached as NONE is handled above
+                throw new IllegalStateException("NONE address type should be handled before switch statement");
 
             default:
                 throw new IllegalArgumentException("Unknown address type: " + expectedType);
@@ -358,9 +377,19 @@ public class ConnectionHandoffTest {
         try {
             log.info("=== Reconnection Verification for {} ===", testDescription);
 
-            // Extract expected endpoint from MOVING notification
-            String expectedEndpoint = extractEndpointFromMovingNotification(context.capture.getReceivedNotifications());
-            log.info("Expected reconnection endpoint from MOVING notification: {}", expectedEndpoint);
+            // For AddressType.NONE, we expect to reconnect to the original endpoint, not a new one
+            String expectedEndpoint;
+            if (context.expectedAddressType == AddressType.NONE) {
+                // For NONE, the client should reconnect to the original endpoint
+                String originalUri = mStandard.getEndpoints().get(0); // Original endpoint URI
+                // Extract host:port from redis://host:port format
+                expectedEndpoint = originalUri.replaceFirst("^redis://", "");
+                log.info("Expected reconnection endpoint for NONE type (original endpoint): {}", expectedEndpoint);
+            } else {
+                // For other types, extract from MOVING notification
+                expectedEndpoint = extractEndpointFromMovingNotification(context.capture.getReceivedNotifications());
+                log.info("Expected reconnection endpoint from MOVING notification: {}", expectedEndpoint);
+            }
 
             // Get current connection remote address using lettuce primitives
             Channel channel = getChannelFromConnection(context.connection);
@@ -719,7 +748,7 @@ public class ConnectionHandoffTest {
 
     @Test
     @DisplayName("Client handshake with endpoint type none returns nil IP")
-    public void clientHandshakeWithEndpointTypeTest() throws InterruptedException {
+    public void clientHandshakeWithNoneEndpointTypeTest() throws InterruptedException {
         log.info("Starting clientHandshakeWithEndpointTypeTest");
 
         // Setup connection with a custom address type source that returns null (none)
@@ -728,8 +757,8 @@ public class ConnectionHandoffTest {
 
         RedisClient client = RedisClient.create(uri);
 
-        // Configure client with maintenance events enabled but no specific address type (null case)
-        MaintenanceEventsOptions customOptions = MaintenanceEventsOptions.builder().supportMaintenanceEvents().build();
+        // Configure client with maintenance events enabled and explicit NONE address type
+        MaintenanceEventsOptions customOptions = MaintenanceEventsOptions.enabled(AddressType.NONE);
 
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
                 .supportMaintenanceEvents(customOptions).build();
@@ -745,8 +774,8 @@ public class ConnectionHandoffTest {
 
         String bdbId = String.valueOf(mStandard.getBdbId());
 
-        // Create test context with null expected address type to test null handling
-        currentTestContext = new HandoffTestContext(client, connection, capture, bdbId, null);
+        // Create test context with NONE expected address type to test none handling
+        currentTestContext = new HandoffTestContext(client, connection, capture, bdbId, AddressType.NONE);
 
         log.info("=== Testing endpoint type 'none' behavior ===");
 
@@ -757,7 +786,7 @@ public class ConnectionHandoffTest {
         String sourceNode = clusterConfig.getOptimalSourceNode();
         String targetNode = clusterConfig.getOptimalTargetNode();
 
-        log.info("Expected address type: null (none)");
+        log.info("Expected address type: {} (none)", AddressType.NONE);
         log.info("Starting migrate + moving operation...");
         log.info("Using nodes: source={}, target={}", sourceNode, targetNode);
 
@@ -817,7 +846,7 @@ public class ConnectionHandoffTest {
             assertThat(Integer.parseInt(ttl)).isGreaterThanOrEqualTo(0);
 
             // Validate the address type matches what we requested (null handling test)
-            validateAddressType(newAddress, null, "Client handshake with endpoint type none test");
+            validateAddressType(newAddress, AddressType.NONE, "Client handshake with endpoint type none test");
 
         } else {
             log.error("MOVING notification format not recognized: {}", movingNotification);
