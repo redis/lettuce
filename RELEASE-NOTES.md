@@ -3,8 +3,12 @@ Lettuce 7.0.0.BETA1 RELEASE NOTES
 
 The Lettuce team is pleased to announce the first beta release of Lettuce 7.0!
 
-This release introduces initial support for Hitless Upgrades, enabling clients to react gracefully to maintenance events and reduce downtime during endpoint rebind and migration scenarios. Alongside this, the release includes improvements to the JSON API (string-based access to avoid unnecessary conversions), refinements to the ProtocolKeyword interface, and enhanced adaptive refresh behavior.
+The release focuses on introducing hitless upgrades functionality, API improvements, and cleanup of deprecated features.
 
+Key changes include:
+- Introduction of hitless upgrades support for graceful maintenance event handling
+- Enhanced JSON API with string-based access to avoid unnecessary conversions
+- Removal of multiple deprecated APIs and options as part of the major version upgrade
 As part of the 7.0 line, this beta also removes several deprecated APIs and options.
 
 Lettuce 7.0.0.BETA1 supports Redis 2.6+ up to Redis 8.x and requires Java 8 or newer. The driver is tested against Redis 8.2, 8.0, 7.4, and 7.2.
@@ -40,13 +44,13 @@ If you need any support, meet Lettuce at
 ## 🚀 New Features
 
 - Add String-based JSON API to avoid unnecessary conversions ([#3369](https://github.com/redis/lettuce/pull/3369), [#3394](https://github.com/redis/lettuce/pull/3394))
-- [Hitless Upgrades] React to maintenance events ([#3345](https://github.com/redis/lettuce/issues/3345), [#3354](https://github.com/redis/lettuce/pull/3354))
+- React to maintenance events ([#3345](https://github.com/redis/lettuce/issues/3345), [#3354](https://github.com/redis/lettuce/pull/3354))
 
 ---
 
 ## 🐛 Bug Fixes
 
-- [Hitless Upgrades] Timeouts seen during endpoint re-bind and migrate ([#3426](https://github.com/redis/lettuce/pull/3426))
+- Timeouts seen during endpoint re-bind and migrate ([#3426](https://github.com/redis/lettuce/pull/3426))
 - Fix a `NullPointerException` in `DelegateJsonObject` ([#3417](https://github.com/redis/lettuce/issues/3417), [#3418](https://github.com/redis/lettuce/pull/3418))
 
 ---

@@ -49,6 +49,7 @@ http
 LettuceDriver
 Codecs
 JSON
+JsonValue
 UTF
 CDI
 Pipelining
@@ -336,3 +337,5 @@ hubertchylik
 VMANA
 SocketOptions
 SVS
+Hitless
+hitless
