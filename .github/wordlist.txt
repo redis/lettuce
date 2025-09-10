@@ -339,3 +339,4 @@ SocketOptions
 SVS
 Hitless
 hitless
+noninstantiability
