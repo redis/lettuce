@@ -473,7 +473,7 @@ public class ConnectionTesting {
     @Test
     @DisplayName("CAE-1130.5 - Maintenance notifications only enabled with RESP3")
     public void onlyEnabledWithRESP3Test() throws InterruptedException {
-        // Setup connection with RESP2 (not RESP3) to test that notifications are NOT received
+        // Setup connection with RESP2 (not RESP3) to test that maintenance events fail
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
                 .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).withTimeout(Duration.ofSeconds(5))
                 .build();
@@ -483,7 +483,7 @@ public class ConnectionTesting {
         TimeoutOptions timeoutOptions = TimeoutOptions.builder().timeoutCommands().fixedTimeout(NORMAL_COMMAND_TIMEOUT)
                 .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
 
-        // CRITICAL: Use RESP2 instead of RESP3 - notifications should NOT be received
+        // CRITICAL: Use RESP2 instead of RESP3 - maintenance events should fail with error
         ClientOptions options = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP2) // Changed
                                                                                                                    // from RESP3
                                                                                                                    // to RESP2
@@ -491,88 +491,82 @@ public class ConnectionTesting {
                 .timeoutOptions(timeoutOptions).build();
 
         client.setOptions(options);
-        StatefulRedisConnection<String, String> connection = client.connect();
 
-        ConnectionCapture capture = new ConnectionCapture();
-        capture.setMainSyncCommands(connection.sync());
-        capture.setMainConnection(connection);
+        log.info("=== RESP2 Test: Attempting to connect with maintenance events enabled (should fail) ===");
 
-        // Initial ping to ensure connection is established
+        // The connection attempt should fail because CLIENT MAINT-NOTIFICATIONS command is not supported in RESP2
+        boolean connectionFailed = false;
+        String errorMessage = null;
+        String rootCauseMessage = null;
+        Exception capturedException = null;
+
         try {
-            connection.sync().ping();
-            log.info("Initial PING successful - RESP2 connection established");
+            StatefulRedisConnection<String, String> connection = client.connect();
+            log.info("Connection unexpectedly succeeded with RESP2 and maintenance events");
+            connection.close();
         } catch (Exception e) {
-            log.warn("Initial PING failed: {}", e.getMessage());
-        }
+            connectionFailed = true;
+            capturedException = e;
+            errorMessage = e.getMessage();
 
-        // Setup push notification monitoring with same parameters as RESP3 test
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
-                Duration.ofMillis(5000));
-
-        String bdbId = String.valueOf(mStandard.getBdbId());
-
-        log.info("=== RESP2 Test: Starting maintenance operation (should receive NO notifications) ===");
-
-        String endpointId = clusterConfig.getFirstEndpointId();
-        String policy = "single";
-        String sourceNode = clusterConfig.getOptimalSourceNode();
-        String targetNode = clusterConfig.getOptimalTargetNode();
-
-        // Start maintenance operation with pending commands (same as oldConnectionShutDownTest)
-        log.info("Starting maintenance operation (migrate + rebind) with RESP2 connection...");
-
-        // Send some commands to create pending traffic
-        CompletableFuture<Void> pendingTraffic = CompletableFuture.runAsync(() -> {
-            for (int i = 0; i < 10; i++) {
-                try {
-                    connection.sync().set("resp2-pending-key-" + i, "value-" + i);
-                    Thread.sleep(50); // Small delay between commands
-                } catch (Exception e) {
-                    log.debug("RESP2 pending command {} failed: {}", i, e.getMessage());
-                }
+            // Walk through the exception chain to find the root cause
+            Throwable rootCause = e;
+            while (rootCause.getCause() != null) {
+                rootCause = rootCause.getCause();
             }
-        });
+            rootCauseMessage = rootCause.getMessage();
 
-        // Start the maintenance operation (same as in oldConnectionShutDownTest)
-        Boolean operationResult = faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode)
-                .block(Duration.ofMinutes(3));
-        assertThat(operationResult).isTrue();
-        log.info("MOVING operation fully completed: {}", operationResult);
+            log.info("Connection failed as expected with RESP2 and maintenance events");
+            log.info("Top-level error: {}", errorMessage);
+            log.info("Root cause error: {}", rootCauseMessage);
+            log.info("Full exception chain:");
 
-        // Wait for notification processing - but with RESP2, we should receive NONE
-        log.info("Waiting for notifications (should receive NONE with RESP2)...");
-        boolean received = capture.waitForNotification(Duration.ofSeconds(30));
-
-        // Wait for pending traffic to complete
-        log.info("Waiting for pending commands to complete...");
-        try {
-            pendingTraffic.get(10, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.info("Pending traffic completed");
+            // Log the full exception chain
+            Throwable current = e;
+            int level = 0;
+            while (current != null) {
+                log.info("  [{}] {}: {}", level++, current.getClass().getSimpleName(), current.getMessage());
+                current = current.getCause();
+            }
         }
-
-        Thread.sleep(Duration.ofSeconds(10).toMillis());
-        capture.stopMonitoring();
 
         log.info("=== RESP2 Test Results ===");
-        log.info("Notifications received: {}", capture.getReceivedNotifications().size());
-        log.info("Notification wait result: {}", received);
-        log.info("Successful operations: {}", capture.getSuccessCount());
-        log.info("Failed operations: {}", capture.getFailureCount());
+        log.info("Connection failed: {}", connectionFailed);
+        log.info("Top-level error message: {}", errorMessage);
+        log.info("Root cause error message: {}", rootCauseMessage);
 
-        // VALIDATION: Should NOT receive any maintenance notifications with RESP2
-        assertThat(received)
-                .as("Should NOT receive notifications when using RESP2 protocol - maintenance events are RESP3-only").isFalse();
+        // VALIDATION: Connection should fail when trying to use maintenance events with RESP2
+        assertThat(connectionFailed).as("Connection should fail when trying to use maintenance events with RESP2 protocol")
+                .isTrue();
 
-        // VALIDATION: Should have empty notifications list
-        assertThat(capture.getReceivedNotifications())
-                .as("Should have no notifications with RESP2 - maintenance events require RESP3").isEmpty();
+        // VALIDATION: Check for the exact "ERR: CLIENT NOTIFICATION is not supported in RESP2 mode" error
+        boolean foundSpecificError = false;
+        String specificErrorMessage = null;
 
-        // VALIDATION: No MOVING or MIGRATED notifications should be received
-        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isFalse();
-        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isFalse();
+        if (capturedException != null) {
+            // Walk through the entire exception chain looking for the exact error message
+            Throwable current = capturedException;
+            while (current != null) {
+                String currentMessage = current.getMessage();
+                if (currentMessage != null
+                        && currentMessage.contains("ERR: CLIENT NOTIFICATION is not supported in RESP2 mode")) {
+                    foundSpecificError = true;
+                    specificErrorMessage = currentMessage;
+                    break;
+                }
+                current = current.getCause();
+            }
+        }
 
-        log.info("RESP2 validation: No maintenance notifications received as expected");
+        // VALIDATION: Must find the exact error message
+        assertThat(foundSpecificError).as(
+                "Should find the exact error 'ERR: CLIENT NOTIFICATION is not supported in RESP2 mode' in the exception chain")
+                .isTrue();
+
+        assertThat(specificErrorMessage).as("Should contain the exact CLIENT NOTIFICATION error message")
+                .contains("ERR: CLIENT NOTIFICATION is not supported in RESP2 mode");
+
+        log.info("RESP2 validation: Found exact maintenance notification error as expected - {}", specificErrorMessage);
 
     }
 
