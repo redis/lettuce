@@ -251,6 +251,12 @@ public class ConnectionHandoffTest {
     private void validateAddressType(String address, AddressType expectedType, String testDescription) {
         log.info("Validating address '{}' for type {} in {}", address, expectedType, testDescription);
 
+        // Handle null address case
+        if (address == null && expectedType == null) {
+            log.info("✓ Address is null - this is valid for endpoint type 'none'");
+            return;
+        }
+
         switch (expectedType) {
             case EXTERNAL_IP:
             case INTERNAL_IP:
@@ -716,13 +722,13 @@ public class ConnectionHandoffTest {
     public void clientHandshakeWithEndpointTypeTest() throws InterruptedException {
         log.info("Starting clientHandshakeWithEndpointTypeTest");
 
-        // Setup connection with a custom address type source that returns null
+        // Setup connection with a custom address type source that returns null (none)
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
                 .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
 
         RedisClient client = RedisClient.create(uri);
 
-        // Configure client with a custom address type source that returns null (none)
+        // Configure client with maintenance events enabled but no specific address type (null case)
         MaintenanceEventsOptions customOptions = MaintenanceEventsOptions.builder().supportMaintenanceEvents().build();
 
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
@@ -731,21 +737,104 @@ public class ConnectionHandoffTest {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
+        HandoffCapture capture = new HandoffCapture();
+
+        // Setup push notification monitoring using the utility
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
+                Duration.ofMillis(5000));
+
+        String bdbId = String.valueOf(mStandard.getBdbId());
+
+        // Create test context with null expected address type to test null handling
+        currentTestContext = new HandoffTestContext(client, connection, capture, bdbId, null);
+
         log.info("=== Testing endpoint type 'none' behavior ===");
 
-        // Test that we can connect but CLIENT MAINT_NOTIFICATIONS is not sent with endpoint type
-        // Since we used builder without explicit address type, the addressTypeSource should be null
+        // Trigger the same migrate + moving operation as connectionHandedOffToNewEndpointInternalIPTest
+        // Get cluster configuration for the operation
+        String endpointId = clusterConfig.getFirstEndpointId();
+        String policy = "single";
+        String sourceNode = clusterConfig.getOptimalSourceNode();
+        String targetNode = clusterConfig.getOptimalTargetNode();
 
-        // Perform a simple operation to verify connection works
-        String pingResult = connection.sync().ping();
-        assertThat(pingResult).isEqualTo("PONG");
-        log.info("✓ Connection established with no endpoint type specification");
+        log.info("Expected address type: null (none)");
+        log.info("Starting migrate + moving operation...");
+        log.info("Using nodes: source={}, target={}", sourceNode, targetNode);
 
-        // The handshake should have occurred without the moving-endpoint-type parameter
-        // This is verified by the successful connection without errors
+        // Trigger the migrate + moving operation
+        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode))
+                .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
-        log.info("✓ Client handshake completed successfully with no endpoint type (nil IP scenario)");
+        // Wait for MIGRATED notification first (migration completes before endpoint rebind)
+        log.info("Waiting for MIGRATED notification...");
+        boolean migratedReceived = capture.waitForMigratedNotification(NOTIFICATION_WAIT_TIMEOUT);
+        assertThat(migratedReceived).as("Should receive MIGRATED notification").isTrue();
 
+        // Wait for MOVING notification (endpoint rebind with new address)
+        log.info("Waiting for MOVING notification...");
+        boolean movingReceived = capture.waitForMovingNotification(NOTIFICATION_WAIT_TIMEOUT);
+        assertThat(movingReceived).as("Should receive MOVING notification").isTrue();
+
+        // Validate the MOVING notification - this will test null handling in validateAddressType
+        String movingNotification = capture.getLastMovingNotification();
+        assertThat(movingNotification).as("MOVING notification should not be null").isNotNull();
+
+        // Debug log to show exact notification format
+        log.info("Debug - Raw notification with escaped chars: '{}'",
+                movingNotification.replace("\n", "\\n").replace("\r", "\\r"));
+
+        Matcher matcher = MOVING_PATTERN.matcher(movingNotification);
+        if (matcher.matches()) {
+            String sequence = matcher.group(1);
+            String ttl = matcher.group(2);
+            String addressWithPort = matcher.group(3);
+
+            // Parse address and port from the combined string
+            String newAddress;
+            String port;
+
+            // Handle the case where address might be null or empty for endpoint type 'none'
+            if (addressWithPort == null || addressWithPort.trim().isEmpty()) {
+                newAddress = null;
+                port = null;
+                log.info("Address is null/empty - this is expected for endpoint type 'none'");
+            } else {
+                // IP:PORT format (e.g., "54.155.173.67:12000")
+                int lastColonIndex = addressWithPort.lastIndexOf(':');
+                if (lastColonIndex > 0) {
+                    newAddress = addressWithPort.substring(0, lastColonIndex);
+                    port = addressWithPort.substring(lastColonIndex + 1);
+                } else {
+                    newAddress = addressWithPort;
+                    port = null;
+                }
+            }
+
+            log.info("Parsed MOVING notification - Sequence: {}, TTL: {}, New Address: {}, Port: {}", sequence, ttl, newAddress,
+                    port);
+
+            // Validate basic notification format
+            assertThat(Integer.parseInt(ttl)).isGreaterThanOrEqualTo(0);
+
+            // Validate the address type matches what we requested (null handling test)
+            validateAddressType(newAddress, null, "Client handshake with endpoint type none test");
+
+        } else {
+            log.error("MOVING notification format not recognized: {}", movingNotification);
+            assertThat(false).as("MOVING notification should match expected format").isTrue();
+        }
+
+        // Verify we received both expected notifications
+        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
+        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
+
+        // Perform reconnection verification similar to other tests
+        reconnectionVerification(currentTestContext, "Client handshake with endpoint type none test");
+
+        // End test phase to prevent capturing cleanup notifications
+        capture.endTestPhase();
+
+        log.info("✓ Client handshake with endpoint type 'none' test completed successfully");
         log.info("Completed clientHandshakeWithEndpointTypeTest");
     }
 
