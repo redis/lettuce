@@ -147,7 +147,7 @@ public class MaintenancePushNotificationMonitor {
             log.info("state name: {}, seq number: {}, time to live: {}, new address: {}", stateName, seqNumber, timeToLive,
                     newAddress);
             String resp3Format = String.format(">4\r\n%s\r\n:%s\r\n:%s\r\n%s\r\n", stateName, seqNumber, timeToLive,
-                    newAddress);
+                    newAddress != null ? newAddress : "");
             capture.captureNotification(resp3Format);
 
         }
@@ -195,7 +195,9 @@ public class MaintenancePushNotificationMonitor {
         }
 
         private String decodeByteBuffer(Object obj) {
-            if (obj instanceof ByteBuffer) {
+            if (obj == null) {
+                return null;
+            } else if (obj instanceof ByteBuffer) {
                 ByteBuffer buffer = (ByteBuffer) obj;
                 return io.lettuce.core.codec.StringCodec.UTF8.decodeKey(buffer);
             } else {
