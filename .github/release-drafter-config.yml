@@ -27,6 +27,9 @@ categories:
   - title: '🐛 Bug Fixes'
     labels:
       - 'type: bug'
+  - title: '💡 Other'
+    labels:
+      - 'type: improvement'
   - title: '🧰 Maintenance'
     labels:
       - 'type: documentation'
