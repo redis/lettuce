@@ -27,11 +27,13 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollDatagramChannel;
 import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollIoHandler;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.unix.DomainSocketAddress;
@@ -145,17 +147,20 @@ public class EpollProvider {
 
             LettuceAssert.notNull(type, "EventLoopGroup type must not be null");
 
-            return type.equals(EpollEventLoopGroup.class);
+            // Support both old deprecated EpollEventLoopGroup and new MultiThreadIoEventLoopGroup
+            return type.equals(EpollEventLoopGroup.class) || type.equals(MultiThreadIoEventLoopGroup.class);
         }
 
         @Override
         public Class<? extends EventLoopGroup> eventLoopGroupClass() {
-            return EpollEventLoopGroup.class;
+            // Return the new recommended class, but keep backward compatibility
+            return MultiThreadIoEventLoopGroup.class;
         }
 
         @Override
         public EventLoopGroup newEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-            return new EpollEventLoopGroup(nThreads, threadFactory);
+            // Use the new Netty 4.2 approach with IoHandlerFactory
+            return new MultiThreadIoEventLoopGroup(nThreads, threadFactory, EpollIoHandler.newFactory());
         }
 
         @Override
