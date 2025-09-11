@@ -1159,7 +1159,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count);
+    Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1192,7 +1192,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId);
+    Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply);
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1231,6 +1231,6 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftCursorread(Object, long, int)
      */
     @Experimental
-    Mono<String> ftCursordel(K index, long cursorId);
+    Mono<String> ftCursordel(K index, AggregationReply<K, V> aggregateReply);
 
 }
