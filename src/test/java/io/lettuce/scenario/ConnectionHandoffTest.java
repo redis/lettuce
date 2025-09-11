@@ -15,6 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -550,6 +551,7 @@ public class ConnectionHandoffTest {
     }
 
     @Test
+    @Disabled("This test requires internal IP endpoints, which isn't available in automation")
     @DisplayName("Connection handed off to new endpoint with Internal IP")
     public void connectionHandedOffToNewEndpointInternalIPTest() throws InterruptedException {
         log.info("Starting connectionHandedOffToNewEndpointInternalIPTest");
@@ -565,6 +567,7 @@ public class ConnectionHandoffTest {
     }
 
     @Test
+    @Disabled("This test requres internal FQDN endpoints, which are not available in the current cluster configuration")
     @DisplayName("Connection handoff with FQDN Internal Name")
     public void connectionHandoffWithFQDNInternalNameTest() throws InterruptedException {
         log.info("Starting connectionHandoffWithFQDNInternalNameTest");
@@ -868,55 +871,193 @@ public class ConnectionHandoffTest {
     }
 
     @Test
-    @DisplayName("Client maintenance notification info command returns configuration")
-    public void clientMaintenanceNotificationInfoTest() throws InterruptedException {
-        log.info("Starting clientMaintenanceNotificationInfoTest");
+    @DisplayName("Connection handed off to new endpoint with External IP - Dual Connection Test")
+    public void newConnectionDuringRebindAfterMovingTest() throws InterruptedException {
+        log.info("Starting connectionHandedOffToNewEndpointExternalIPDualConnectionTest");
 
-        // Setup connection with specific moving-endpoint-type
+        // Setup first connection but do NOT setup monitoring yet
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
                 .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
 
-        RedisClient client = RedisClient.create(uri);
-
-        // Configure client with external IP address type
+        RedisClient firstClient = RedisClient.create(uri);
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
                 .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
-        client.setOptions(options);
+        firstClient.setOptions(options);
 
-        StatefulRedisConnection<String, String> connection = client.connect();
+        StatefulRedisConnection<String, String> firstConnection = firstClient.connect();
+        HandoffCapture firstCapture = new HandoffCapture();
+        String bdbId = String.valueOf(mStandard.getBdbId());
 
-        log.info("=== Testing CLIENT MAINT_NOTIFICATIONS info command ===");
+        // Create a specialized capture that will start second connection on MOVING
+        DualConnectionCapture dualCapture = new DualConnectionCapture(firstCapture, uri, bdbId);
 
-        // First verify the connection is established
-        String pingResult = connection.sync().ping();
-        assertThat(pingResult).isEqualTo("PONG");
-        log.info("✓ Connection established");
+        // Setup push notification monitoring on first connection
+        MaintenancePushNotificationMonitor.setupMonitoring(firstConnection, dualCapture, MONITORING_TIMEOUT, PING_TIMEOUT,
+                Duration.ofMillis(1000));
 
-        // Test CLIENT MAINT_NOTIFICATIONS command to get current settings
-        // Note: The exact format may vary based on Redis Enterprise implementation
         try {
-            // This would be the ideal way to test, but may not be supported in current test environment
-            // Object result = connection.sync().dispatch(CommandType.CLIENT,
-            // new StatusOutput<>(StringCodec.UTF8),
-            // new CommandArgs<>(StringCodec.UTF8).add("MAINT_NOTIFICATIONS"));
+            // Trigger maintenance operation
+            performHandoffOperation(
+                    new HandoffTestContext(firstClient, firstConnection, firstCapture, bdbId, AddressType.EXTERNAL_IP),
+                    "Dual Connection External IP Handoff Test");
 
-            // For now, we verify that the handshake included the proper settings
-            // by confirming that maintenance events are configured correctly
+            // Wait for second connection to be created and receive its MOVING notification
+            log.info("Waiting for second connection to receive MOVING notification...");
+            boolean secondMovingReceived = dualCapture.waitForSecondConnectionMoving(NOTIFICATION_WAIT_TIMEOUT);
+            assertThat(secondMovingReceived).as("Second connection should receive MOVING notification").isTrue();
 
-            log.info("✓ Maintenance notifications configured with external-ip endpoint type");
-            log.info("Note: CLIENT MAINT_NOTIFICATIONS info command testing requires Redis Enterprise support");
+            // Verify both connections received MOVING notifications
+            assertThat(dualCapture.getFirstCapture().getLastMovingNotification())
+                    .as("First connection should have MOVING notification").isNotNull();
+            assertThat(dualCapture.getSecondCapture().getLastMovingNotification())
+                    .as("Second connection should have MOVING notification").isNotNull();
 
-            // The fact that we can connect with maintenance events options confirms
-            // that the CLIENT MAINT_NOTIFICATIONS command was sent during handshake
+            log.info("Both connections received MOVING notifications successfully");
 
-        } catch (Exception e) {
-            log.info("CLIENT MAINT_NOTIFICATIONS info command not supported in current environment: {}", e.getMessage());
-            // This is expected in test environments that don't fully support Redis Enterprise features
+            // Perform reconnection verification on both connections
+            reconnectionVerification(new HandoffTestContext(firstClient, firstConnection, dualCapture.getFirstCapture(), bdbId,
+                    AddressType.EXTERNAL_IP), "First Connection - Dual Connection External IP Handoff Test");
+
+            if (dualCapture.getSecondConnection() != null) {
+                reconnectionVerification(
+                        new HandoffTestContext(dualCapture.getSecondClient(), dualCapture.getSecondConnection(),
+                                dualCapture.getSecondCapture(), bdbId, AddressType.EXTERNAL_IP),
+                        "Second Connection - Dual Connection External IP Handoff Test");
+            }
+
+            // End test phase to prevent capturing cleanup notifications
+            dualCapture.endTestPhase();
+
+            log.info("Completed connectionHandedOffToNewEndpointExternalIPDualConnectionTest");
+
+        } finally {
+            // Cleanup both connections
+            if (firstConnection != null && firstConnection.isOpen()) {
+                firstConnection.close();
+            }
+            if (firstClient != null) {
+                firstClient.shutdown();
+            }
+
+            if (dualCapture.getSecondConnection() != null && dualCapture.getSecondConnection().isOpen()) {
+                dualCapture.getSecondConnection().close();
+            }
+            if (dualCapture.getSecondClient() != null) {
+                dualCapture.getSecondClient().shutdown();
+            }
+        }
+    }
+
+    /**
+     * Specialized capture class for dual connection testing that creates a second connection when MOVING is received
+     */
+    public static class DualConnectionCapture implements MaintenanceNotificationCapture {
+
+        private final HandoffCapture firstCapture;
+
+        private final RedisURI uri;
+
+        private final AtomicReference<HandoffCapture> secondCapture = new AtomicReference<>();
+
+        private final AtomicReference<RedisClient> secondClient = new AtomicReference<>();
+
+        private final AtomicReference<StatefulRedisConnection<String, String>> secondConnection = new AtomicReference<>();
+
+        private final CountDownLatch secondConnectionMovingLatch = new CountDownLatch(1);
+
+        private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
+
+        public DualConnectionCapture(HandoffCapture firstCapture, RedisURI uri, String bdbId) {
+            this.firstCapture = firstCapture;
+            this.uri = uri;
         }
 
-        log.info("✓ Client maintenance notification configuration verified");
+        @Override
+        public void captureNotification(String notification) {
+            // Only capture notifications during the test phase
+            if (!testPhaseActive.get()) {
+                log.debug("Ignoring notification during cleanup phase: {}", notification);
+                return;
+            }
 
-        log.info("Completed clientMaintenanceNotificationInfoTest");
+            // Forward to first capture
+            firstCapture.captureNotification(notification);
+
+            // If this is a MOVING notification and we haven't created second connection yet, create it
+            if (notification.contains("MOVING") && secondConnection.get() == null) {
+                log.info("MOVING notification received - creating second connection");
+                createSecondConnection();
+            }
+        }
+
+        private void createSecondConnection() {
+            try {
+                log.info("Creating second connection for dual connection test...");
+
+                RedisClient client = RedisClient.create(uri);
+                ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                        .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
+                client.setOptions(options);
+
+                StatefulRedisConnection<String, String> connection = client.connect();
+                HandoffCapture capture = new HandoffCapture() {
+
+                    @Override
+                    public void captureNotification(String notification) {
+                        super.captureNotification(notification);
+                        // Signal when second connection receives MOVING
+                        if (notification.contains("MOVING")) {
+                            log.info("Second connection received MOVING notification");
+                            secondConnectionMovingLatch.countDown();
+                        }
+                    }
+
+                };
+
+                // Setup push notification monitoring on second connection with immediate pinging
+                MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
+                        Duration.ofMillis(1000)); // Much shorter interval to start pinging immediately
+
+                secondClient.set(client);
+                secondConnection.set(connection);
+                secondCapture.set(capture);
+
+                log.info("Second connection created and monitoring setup completed");
+
+            } catch (Exception e) {
+                log.error("Failed to create second connection: {}", e.getMessage(), e);
+            }
+        }
+
+        public boolean waitForSecondConnectionMoving(Duration timeout) throws InterruptedException {
+            return secondConnectionMovingLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        public HandoffCapture getFirstCapture() {
+            return firstCapture;
+        }
+
+        public HandoffCapture getSecondCapture() {
+            return secondCapture.get();
+        }
+
+        public RedisClient getSecondClient() {
+            return secondClient.get();
+        }
+
+        public StatefulRedisConnection<String, String> getSecondConnection() {
+            return secondConnection.get();
+        }
+
+        public void endTestPhase() {
+            testPhaseActive.set(false);
+            firstCapture.endTestPhase();
+            if (secondCapture.get() != null) {
+                secondCapture.get().endTestPhase();
+            }
+            log.info("Dual connection test phase ended - notifications will be ignored during cleanup");
+        }
+
     }
 
     /**
