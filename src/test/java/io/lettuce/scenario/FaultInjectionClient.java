@@ -46,7 +46,8 @@ public class FaultInjectionClient {
 
     private static final Duration STABILIZATION_DELAY = Duration.ofSeconds(10); // Wait for cluster to stabilize
 
-    private static final Duration CHECK_INTERVAL_LONG = Duration.ofSeconds(5); // Check interval for long operations
+    private static final Duration CHECK_INTERVAL_LONG = Duration.ofSeconds(1); // Check interval for long operations - reduced
+                                                                               // for faster notification detection
 
     private static final Duration CHECK_INTERVAL_MEDIUM = Duration.ofSeconds(3); // Check interval for medium operations
 
