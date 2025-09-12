@@ -509,7 +509,7 @@ public class ConnectionHandoffTest {
     /**
      * Get the underlying channel from a connection, handling MaintenanceAwareExpiryWriter delegation
      */
-    private Channel getChannelFromConnection(StatefulRedisConnection<String, String> connection) {
+    private static Channel getChannelFromConnection(StatefulRedisConnection<String, String> connection) {
         try {
             RedisChannelHandler<?, ?> handler = (RedisChannelHandler<?, ?>) connection;
             RedisChannelWriter writer = handler.getChannelWriter();
@@ -725,6 +725,14 @@ public class ConnectionHandoffTest {
         // Wait to see if any notifications are received (they shouldn't be)
         boolean received = capture.waitForNotifications(Duration.ofSeconds(30));
 
+        // Trigger additional failover operations to get FAILING_OVER and FAILED_OVER
+        String shardId = clusterConfig.getFirstMasterShardId();
+        String nodeId = clusterConfig.getNodeWithMasterShards();
+
+        log.info("Triggering failover operations to get FAILING_OVER and FAILED_OVER notifications...");
+        StepVerifier.create(faultClient.triggerShardFailover(bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
+
         // End test phase
         capture.endTestPhase();
 
@@ -889,10 +897,10 @@ public class ConnectionHandoffTest {
         String bdbId = String.valueOf(mStandard.getBdbId());
 
         // Create a specialized capture that will start second connection on MOVING
-        DualConnectionCapture dualCapture = new DualConnectionCapture(firstCapture, uri, bdbId);
+        DualConnectionCapture dualCapture = new DualConnectionCapture(firstCapture, uri, bdbId, firstConnection);
 
-        // Setup push notification monitoring on first connection
-        MaintenancePushNotificationMonitor.setupMonitoring(firstConnection, dualCapture, MONITORING_TIMEOUT, PING_TIMEOUT,
+        // Setup push notification monitoring on first connection with shorter timeout
+        MaintenancePushNotificationMonitor.setupMonitoring(firstConnection, dualCapture, Duration.ofSeconds(45), PING_TIMEOUT,
                 Duration.ofMillis(1000));
 
         try {
@@ -901,7 +909,7 @@ public class ConnectionHandoffTest {
                     new HandoffTestContext(firstClient, firstConnection, firstCapture, bdbId, AddressType.EXTERNAL_IP),
                     "Dual Connection External IP Handoff Test");
 
-            // Wait for second connection to be created and receive its MOVING notification
+            // Wait for second connection to be created (on MIGRATED) and then receive its MOVING notification
             log.info("Waiting for second connection to receive MOVING notification...");
             boolean secondMovingReceived = dualCapture.waitForSecondConnectionMoving(NOTIFICATION_WAIT_TIMEOUT);
             assertThat(secondMovingReceived).as("Second connection should receive MOVING notification").isTrue();
@@ -949,13 +957,15 @@ public class ConnectionHandoffTest {
     }
 
     /**
-     * Specialized capture class for dual connection testing that creates a second connection when MOVING is received
+     * Specialized capture class for dual connection testing that creates a second connection when MIGRATED is received
      */
     public static class DualConnectionCapture implements MaintenanceNotificationCapture {
 
         private final HandoffCapture firstCapture;
 
         private final RedisURI uri;
+
+        private final StatefulRedisConnection<String, String> firstConnection;
 
         private final AtomicReference<HandoffCapture> secondCapture = new AtomicReference<>();
 
@@ -967,9 +977,11 @@ public class ConnectionHandoffTest {
 
         private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
 
-        public DualConnectionCapture(HandoffCapture firstCapture, RedisURI uri, String bdbId) {
+        public DualConnectionCapture(HandoffCapture firstCapture, RedisURI uri, String bdbId,
+                StatefulRedisConnection<String, String> firstConnection) {
             this.firstCapture = firstCapture;
             this.uri = uri;
+            this.firstConnection = firstConnection;
         }
 
         @Override
@@ -983,9 +995,10 @@ public class ConnectionHandoffTest {
             // Forward to first capture
             firstCapture.captureNotification(notification);
 
-            // If this is a MOVING notification and we haven't created second connection yet, create it
-            if (notification.contains("MOVING") && secondConnection.get() == null) {
-                log.info("MOVING notification received - creating second connection");
+            // If this is a MIGRATED notification and we haven't created second connection yet, create it
+            // MIGRATED comes right after the bind is fired, before MOVING notification
+            if (notification.contains("MIGRATED") && secondConnection.get() == null) {
+                log.info("MIGRATED notification received - creating second connection right after bind");
                 createSecondConnection();
             }
         }
@@ -994,7 +1007,54 @@ public class ConnectionHandoffTest {
             try {
                 log.info("Creating second connection for dual connection test...");
 
-                RedisClient client = RedisClient.create(uri);
+                // Get the channel from the first connection to determine the actual IP address
+                Channel firstChannel = getChannelFromConnection(firstConnection);
+                String actualIpAddress = null;
+                int actualPort = -1;
+
+                if (firstChannel != null && firstChannel.remoteAddress() != null) {
+                    String remoteAddress = firstChannel.remoteAddress().toString();
+                    log.info("First connection remote address: {}", remoteAddress);
+
+                    // Handle different address formats:
+                    // Format 1: "/54.74.227.236:12000" (direct IP)
+                    // Format 2: "redis-12000.ivo-test-a6c42e54.env0.qa.redislabs.com/54.74.227.236:12000" (FQDN with resolved
+                    // IP)
+
+                    String ipPortString = null;
+                    if (remoteAddress.contains("/")) {
+                        // Extract the part after the last slash (the actual IP:port)
+                        int lastSlashIndex = remoteAddress.lastIndexOf('/');
+                        ipPortString = remoteAddress.substring(lastSlashIndex + 1);
+                    } else {
+                        // Direct IP:port format
+                        ipPortString = remoteAddress;
+                    }
+
+                    if (ipPortString != null) {
+                        String[] parts = ipPortString.split(":");
+                        if (parts.length == 2) {
+                            actualIpAddress = parts[0];
+                            actualPort = Integer.parseInt(parts[1]);
+                            log.info("Extracted actual IP address: {}:{}", actualIpAddress, actualPort);
+                        }
+                    }
+                } else {
+                    log.warn("Could not determine actual IP address from first connection, using original URI");
+                }
+
+                // Create URI for the second connection - use the same IP address as the first connection if available
+                RedisURI secondUri;
+                if (actualIpAddress != null && actualPort != -1) {
+                    secondUri = RedisURI.builder().withHost(actualIpAddress).withPort(actualPort)
+                            .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
+                    log.info("Creating second connection to same IP address: {}:{}", actualIpAddress, actualPort);
+                } else {
+                    log.warn("Could not extract actual IP address, falling back to original URI");
+                    secondUri = uri;
+                }
+
+                RedisClient client = RedisClient.create(secondUri);
                 ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
                         .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
                 client.setOptions(options);
@@ -1014,9 +1074,9 @@ public class ConnectionHandoffTest {
 
                 };
 
-                // Setup push notification monitoring on second connection with immediate pinging
-                MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
-                        Duration.ofMillis(1000)); // Much shorter interval to start pinging immediately
+                // Setup push notification monitoring on second connection with shorter timeout and immediate pinging
+                MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, Duration.ofSeconds(45), PING_TIMEOUT,
+                        Duration.ofMillis(1000)); // Much shorter timeout and interval
 
                 secondClient.set(client);
                 secondConnection.set(connection);
@@ -1140,6 +1200,119 @@ public class ConnectionHandoffTest {
             return failedOverCount.get();
         }
 
+    }
+
+    @Test
+    @DisplayName("Detect connection closure and verify no memory leaks during migrate + bind using EventBus monitoring")
+    public void detectConnectionClosureAndMemoryLeaksTest() throws InterruptedException {
+        log.info("=== Connection Closure & Memory Leak Detection Test ===");
+
+        // Setup connection leak detector
+        ConnectionLeakDetectionUtil leakDetector = new ConnectionLeakDetectionUtil();
+
+        // Setup connection with EventBus monitoring
+        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
+                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
+
+        RedisClient client = RedisClient.create(uri);
+
+        // Configure for RESP3 with maintenance events to trigger connection handoff
+        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
+        client.setOptions(options);
+
+        // Setup EventBus monitoring BEFORE creating connection
+        leakDetector.setupEventBusMonitoring(client);
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+
+        // Wait for connection to be fully established
+        Thread.sleep(Duration.ofSeconds(2).toMillis());
+
+        // Capture initial connection state
+        String initialChannelId = leakDetector.getCurrentChannelId();
+        Channel initialChannel = ConnectionLeakDetectionUtil.getChannelFromConnection(connection);
+
+        log.info("Initial connection established - channelId: {}", initialChannelId);
+        if (initialChannel != null) {
+            log.info("Initial channel state - active: {}, open: {}, registered: {}", initialChannel.isActive(),
+                    initialChannel.isOpen(), initialChannel.isRegistered());
+        }
+
+        // Prepare for connection transition and trigger migrate + bind operation
+        leakDetector.prepareForConnectionTransition();
+
+        String bdbId = String.valueOf(mStandard.getBdbId());
+        String endpointId = clusterConfig.getFirstEndpointId();
+        String policy = "single";
+        String sourceNode = clusterConfig.getOptimalSourceNode();
+        String targetNode = clusterConfig.getOptimalTargetNode();
+
+        log.info("Triggering migrate + bind operation: source={}, target={}", sourceNode, targetNode);
+
+        // Trigger the migrate + bind operation that causes connection handoff
+        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode))
+                .expectNext(true).expectComplete().verify(Duration.ofMinutes(3));
+
+        log.info("Migrate + bind operation completed, waiting for connection events...");
+
+        // Wait for connection events to be processed
+        boolean eventsReceived = leakDetector.waitForConnectionTransition(Duration.ofSeconds(30));
+        assertThat(eventsReceived)
+                .as("Should receive connection transition events (DisconnectedEvent + ConnectionDeactivatedEvent)").isTrue();
+
+        // Wait additional time for full cleanup
+        Thread.sleep(Duration.ofSeconds(10).toMillis());
+
+        // Analyze connection closure and memory leak indicators
+        ConnectionLeakDetectionUtil.ConnectionAnalysisResult result = leakDetector.analyzeConnectionClosure(initialChannelId,
+                initialChannel);
+
+        log.info("=== Connection Closure Analysis Results ===");
+        log.info("EventBus indicators - Disconnected: {}, Deactivated: {}, Cleanup: {}", result.wasDisconnected(),
+                result.wasDeactivated(), result.isEventBusCleanup());
+        log.info("Netty channel cleanup: {}", result.isNettyCleanup());
+        log.info("Connection handoff - Initial: {}, Current: {}, Handed off: {}", result.getInitialChannelId(),
+                result.getCurrentChannelId(), result.isConnectionHandedOff());
+
+        // VALIDATIONS: Connection properly closed and no memory leaks
+        assertThat(result.wasDisconnected()).as("Old connection should have been disconnected (TCP level)").isTrue();
+
+        assertThat(result.wasDeactivated())
+                .as("Old connection should have been deactivated (logical level) - this is the key signal").isTrue();
+
+        assertThat(result.isEventBusCleanup()).as("EventBus should indicate proper cleanup (both disconnected and deactivated)")
+                .isTrue();
+
+        if (initialChannel != null) {
+            assertThat(result.isNettyCleanup())
+                    .as("Netty channel should be properly cleaned up (inactive, closed, unregistered)").isTrue();
+        }
+
+        assertThat(result.isConnectionHandedOff()).as("Connection should have been handed off to new channel").isTrue();
+
+        assertThat(result.isFullyCleanedUpWithoutLeaks()).as("Connection should be fully cleaned up without memory leaks")
+                .isTrue();
+
+        // Verify new connection is functional
+        String testKey = "leak-detection-test-" + System.currentTimeMillis();
+        String testValue = "test-value";
+
+        connection.sync().set(testKey, testValue);
+        String retrievedValue = connection.sync().get(testKey);
+
+        assertThat(retrievedValue).isEqualTo(testValue);
+        assertThat(connection.isOpen()).isTrue();
+
+        log.info("✓ New connection is fully functional after handoff");
+        log.info("✓ Connection closure validation passed - no memory leaks detected");
+
+        // Cleanup
+        connection.close();
+        client.shutdown();
+        leakDetector.stopMonitoring();
+
+        log.info("=== Connection Closure & Memory Leak Detection Test Completed Successfully ===");
     }
 
 }
