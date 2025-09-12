@@ -144,9 +144,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection, must not be {@code null}
+     * @param clientOptions   client options for this connection, must not be {@code null}
      * @param clientResources client resources for this connection, must not be {@code null}
-     * @param endpoint must not be {@code null}.
+     * @param endpoint        must not be {@code null}.
      */
     public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Endpoint endpoint) {
 
@@ -291,7 +291,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                     logger.debug("{} Cleaning up encoding failure command {}", logPrefix(), failed);
                 }
             }
-            
+
             if (!stack.isEmpty()) {
                 RedisCommand<?, ?, ?> command = stack.poll();
                 if (debugEnabled) {
@@ -683,6 +683,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             } else {
 
                 RedisCommand<?, ?, ?> command = stack.peek();
+                // Clean up encoding failures before processing valid responses
+                while (!stack.isEmpty() && stack.peek().hasEncodingError()) {
+                    RedisCommand<?, ?, ?> failed = stack.poll();
+                    if (debugEnabled) {
+                        logger.debug("{} Cleaning up encoding failure command {}", logPrefix(), failed);
+                    }
+                    // Encoding failures were already completed exceptionally during encoding
+                    if (!stack.isEmpty()) {
+                        command = stack.peek();
+                    }
+                }
+
                 if (debugEnabled) {
                     logger.debug("{} Stack contains: {} commands", logPrefix(), stack.size());
                 }
@@ -706,14 +718,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 if (isProtectedMode(command)) {
                     onProtectedMode(command.getOutput().getError());
                 } else {
-                    // Clean up encoding failures before processing valid responses
-                    while (!stack.isEmpty() && stack.peek().hasEncodingError()) {
-                        RedisCommand<?, ?, ?> failed = stack.poll();
-                        if (debugEnabled) {
-                            logger.debug("{} Cleaning up encoding failure command {}", logPrefix(), failed);
-                        }
-                        // Encoding failures were already completed exceptionally during encoding
-                    }
 
                     if (canComplete(command)) {
                         stack.poll();
