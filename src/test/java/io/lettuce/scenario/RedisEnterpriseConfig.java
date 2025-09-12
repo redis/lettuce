@@ -411,30 +411,6 @@ public class RedisEnterpriseConfig {
     }
 
     /**
-     * Set the node-to-shard mapping (used by dynamic discovery).
-     */
-    public void setNodeToShards(Map<String, List<String>> nodeToShards) {
-        this.nodeToShards.clear();
-        this.nodeToShards.putAll(nodeToShards);
-
-        // Also populate the node shard counts for consistency
-        this.nodeShardCounts.clear();
-        for (Map.Entry<String, List<String>> entry : nodeToShards.entrySet()) {
-            String nodeId = entry.getKey();
-            int shardCount = entry.getValue().size();
-            this.nodeShardCounts.put(nodeId, shardCount);
-
-            // Ensure node IDs are tracked in case they have appeared during shards discovery
-            if (!nodeIds.contains(nodeId)) {
-                nodeIds.add(nodeId);
-            }
-        }
-
-        log.info("Node-to-shard mapping updated: {}", nodeToShards);
-        log.info("Node shard counts updated: {}", nodeShardCounts);
-    }
-
-    /**
      * Currently it only works for 3 nodes environment, and even has hardcoded node:1, node:2, node:3 This is a temporary
      * solution to get the tests running, and should be replaced with a dynamic class that can work in more than 3 nodes
      * environment.
@@ -645,21 +621,6 @@ public class RedisEnterpriseConfig {
      * Get optimal source node based on target configuration.
      */
     public String getOptimalSourceNode() {
-        // In target config, node:1 should have shards
-        if (TARGET_CONFIGURATION.containsKey("node:1") && TARGET_CONFIGURATION.get("node:1") > 0) {
-            // Verify this node actually exists and has shards
-            String expectedSourceNode = "1";
-            if (!nodeIds.contains("node:1")) {
-                log.warn("Target configuration expects node:1 to exist, but it was not discovered. Available nodes: {}",
-                        nodeIds);
-            }
-            Integer actualShards = nodeShardCounts.get("node:1");
-            if (actualShards == null || actualShards == 0) {
-                log.warn("Target configuration expects node:1 to have shards, but it has {} shards. Shard distribution: {}",
-                        actualShards, nodeShardCounts);
-            }
-            return expectedSourceNode;
-        }
 
         // Find any node with shards
         String nodeWithShards = getNodeWithShards();
@@ -669,7 +630,6 @@ public class RedisEnterpriseConfig {
             throw new IllegalStateException("No nodes with shards found. Cluster appears to be empty or malformed.");
         }
 
-        log.warn("Using fallback source node {} instead of optimal node:1", nodeWithShards);
         return nodeWithShards;
     }
 
@@ -677,15 +637,6 @@ public class RedisEnterpriseConfig {
      * Get optimal target node based on target configuration.
      */
     public String getOptimalTargetNode() {
-        // In target config, node:2 should be empty
-        if (TARGET_CONFIGURATION.containsKey("node:2") && TARGET_CONFIGURATION.get("node:2") == 0) {
-            // Verify this node actually exists
-            if (!nodeIds.contains("node:2")) {
-                log.warn("Target configuration expects node:2 to exist, but it was not discovered. Available nodes: {}",
-                        nodeIds);
-            }
-            return "2";
-        }
 
         // Find any empty node
         String emptyNode = getEmptyNode();
@@ -695,7 +646,6 @@ public class RedisEnterpriseConfig {
             throw new IllegalStateException("No empty nodes found. All nodes have shards, cannot perform migration.");
         }
 
-        log.warn("Using fallback target node {} instead of optimal node:2", emptyNode);
         return emptyNode;
     }
 
@@ -703,20 +653,6 @@ public class RedisEnterpriseConfig {
      * Get optimal intermediate node based on target configuration.
      */
     public String getOptimalIntermediateNode() {
-        // In target config, node:3 should have shards
-        if (TARGET_CONFIGURATION.containsKey("node:3") && TARGET_CONFIGURATION.get("node:3") > 0) {
-            // Verify this node actually exists and has shards
-            if (!nodeIds.contains("node:3")) {
-                log.warn("Target configuration expects node:3 to exist, but it was not discovered. Available nodes: {}",
-                        nodeIds);
-            }
-            Integer actualShards = nodeShardCounts.get("node:3");
-            if (actualShards == null || actualShards == 0) {
-                log.warn("Target configuration expects node:3 to have shards, but it has {} shards. Shard distribution: {}",
-                        actualShards, nodeShardCounts);
-            }
-            return "3";
-        }
 
         // Find any node with shards (not source)
         String secondNodeWithShards = getSecondNodeWithShards();
@@ -727,7 +663,6 @@ public class RedisEnterpriseConfig {
                     "Insufficient nodes with shards for intermediate migration. Need at least 2 nodes with shards.");
         }
 
-        log.warn("Using fallback intermediate node {} instead of optimal node:3", secondNodeWithShards);
         return secondNodeWithShards;
     }
 
@@ -751,16 +686,19 @@ public class RedisEnterpriseConfig {
      * Check if we can do a direct migration based on target configuration.
      */
     public boolean canMigrateDirectly() {
-        return isInTargetConfiguration() || (getOptimalTargetNode().equals("2") && getOptimalSourceNode().equals("1"));
-    }
+        if (isInTargetConfiguration()) {
+            return true;
+        }
 
-    /**
-     * Update shard distribution to match target configuration.
-     */
-    public void setToTargetConfiguration() {
-        nodeShardCounts.clear();
-        nodeShardCounts.putAll(TARGET_CONFIGURATION);
-        log.info("Set to target configuration: {}", TARGET_CONFIGURATION);
+        // Check if target node is actually empty
+        String targetNode = getOptimalTargetNode();
+        if (targetNode != null) {
+            String targetNodeKey = "node:" + targetNode;
+            Integer shardCount = nodeShardCounts.get(targetNodeKey);
+            return shardCount != null && shardCount == 0;
+        }
+
+        return false;
     }
 
     /**

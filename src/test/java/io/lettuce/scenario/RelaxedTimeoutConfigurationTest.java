@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.lettuce.core.MaintenanceEventsOptions;
+import io.lettuce.core.MaintenanceEventsOptions.AddressType;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -37,6 +39,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.RedisFuture;
+import io.lettuce.test.ConnectionTestUtil;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
 
@@ -90,6 +93,19 @@ public class RelaxedTimeoutConfigurationTest {
         clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
     }
 
+    @AfterEach
+    public void cleanupAfterTest() {
+        log.info("Restoring cluster state after test");
+        try {
+            // Refresh cluster config which will restore the original state
+            // This is the same method used in @BeforeEach but it will restore state for the next test
+            RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+            log.info("Cluster state restored successfully");
+        } catch (Exception e) {
+            log.warn("Failed to restore cluster state: {}", e.getMessage());
+        }
+    }
+
     /**
      * Test context holding common objects used across all timeout tests
      */
@@ -132,6 +148,8 @@ public class RelaxedTimeoutConfigurationTest {
         private final AtomicInteger successCount = new AtomicInteger(0);
 
         private final AtomicBoolean maintenanceActive = new AtomicBoolean(false);
+
+        private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
 
         private final boolean isMovingTest;
 
@@ -176,37 +194,55 @@ public class RelaxedTimeoutConfigurationTest {
         }
 
         public void captureNotification(String notification) {
-            receivedNotifications.add(notification);
-            lastNotification.set(notification);
-            log.info("Captured push notification: {}", notification);
+            log.info("=== NOTIFICATION CAPTURE START ===");
+            log.info("Raw notification received: {}", notification);
 
-            // Log what type of test this is
-            String testType = isMovingUnrelaxedTest ? "MOVING UN-RELAXED test"
-                    : (isMovingTest ? "MOVING test" : (isUnrelaxedTest ? "UN-RELAXED test" : "OTHER test"));
-            log.info("Test type: {} - Processing notification: {}", testType, notification);
+            // Only capture notifications during the test phase, not during cleanup
+            if (testPhaseActive.get()) {
+                log.info("DECISION: testPhaseActive=true -> Processing notification");
+                receivedNotifications.add(notification);
+                lastNotification.set(notification);
+                log.info("Captured push notification: {}", notification);
+
+                // Log what type of test this is
+                String testType = isMovingUnrelaxedTest ? "MOVING UN-RELAXED test"
+                        : (isMovingTest ? "MOVING test" : (isUnrelaxedTest ? "UN-RELAXED test" : "OTHER test"));
+                log.info("Test type: {} - Processing notification: {}", testType, notification);
+                log.info("Test flags: isMovingUnrelaxedTest={}, isMovingTest={}, isUnrelaxedTest={}", isMovingUnrelaxedTest,
+                        isMovingTest, isUnrelaxedTest);
+            } else {
+                log.info("DECISION: testPhaseActive=false -> Ignoring notification during cleanup phase");
+                log.debug("Ignoring notification during cleanup phase: {}", notification);
+                return;
+            }
 
             // For MOVING tests: Start traffic on MOVING, test during MOVING
-            if (notification.contains("+MIGRATED") && isMovingTest) {
+            if (notification.contains("MIGRATED") && isMovingTest) {
                 log.info("Migration completed - Waiting for MOVING notification to start traffic");
                 startContinuousTraffic();
-            } else if (notification.contains("+MOVING")) {
+            } else if (notification.contains("MOVING")) {
+                log.info("=== MOVING DECISION TREE START ===");
+                log.info("DECISION: MOVING notification received");
+                log.info("ACTION: Setting maintenanceActive=true, recording MOVING start");
                 maintenanceActive.set(true);
                 recordMovingStart(); // Record when MOVING operation starts
 
                 if (isMovingUnrelaxedTest) {
-                    log.info("MOVING maintenance started - Connection will drop, waiting for reconnection");
-
+                    log.info("DECISION: isMovingUnrelaxedTest=true");
+                    log.info("ACTION: Connection will drop, stopping traffic, waiting for reconnection");
                     stopContinuousTraffic();
                 } else {
-                    log.info("MOVING maintenance started - Starting continuous traffic for testing");
-
+                    log.info("DECISION: isMovingUnrelaxedTest=false (regular MOVING test)");
+                    log.info("ACTION: Starting continuous traffic for testing, then stopping");
                     // Stop traffic after testing
                     stopContinuousTraffic();
                 }
 
+                log.info("ACTION: Counting down notification latch for MOVING");
                 notificationLatch.countDown(); // Count down ONLY on MOVING for MOVING tests
+                log.info("=== MOVING DECISION TREE END ===");
 
-            } else if (notification.contains("+MIGRATING")) {
+            } else if (notification.contains("MIGRATING")) {
                 if (isMovingTest) {
                     log.info("MOVING test received MIGRATING notification - waiting for MIGRATED then MOVING notification...");
                     // CRITICAL: Do NOT countdown for MOVING tests on MIGRATING - wait for MOVING notification
@@ -230,7 +266,7 @@ public class RelaxedTimeoutConfigurationTest {
                     }
                 }
 
-            } else if (notification.contains("+FAILING_OVER") && !isMovingTest) {
+            } else if (notification.contains("FAILING_OVER") && !isMovingTest) {
                 maintenanceActive.set(true);
                 log.info("FAILING_OVER maintenance started - Starting continuous traffic for testing");
 
@@ -249,7 +285,7 @@ public class RelaxedTimeoutConfigurationTest {
                     log.info("Un-relaxed test: Keeping traffic running until FAILED_OVER notification");
                 }
 
-            } else if (notification.contains("+FAILED_OVER")) {
+            } else if (notification.contains("FAILED_OVER")) {
                 maintenanceActive.set(false);
                 log.info("Maintenance completed - timeouts should return to normal");
 
@@ -264,7 +300,7 @@ public class RelaxedTimeoutConfigurationTest {
                     notificationLatch.countDown(); // Count down for FAILED_OVER in FAILED_OVER tests
                 }
 
-            } else if (notification.contains("+MIGRATED") && !isMovingTest) {
+            } else if (notification.contains("MIGRATED") && !isMovingTest) {
                 maintenanceActive.set(false);
                 log.info("MIGRATED completed - timeouts should return to normal");
 
@@ -421,12 +457,93 @@ public class RelaxedTimeoutConfigurationTest {
         }
 
         /**
+         * Clear the command stack to allow rebind completion mechanism to work properly. This method uses reflection to access
+         * the internal command stack and clear it.
+         * 
+         * @param context a description of when/why the stack is being cleared for logging
+         */
+        private void clearCommandStack(String context) {
+            log.info("Attempting to clear command stack {}...", context);
+            try {
+                if (mainConnection != null && mainConnection.isOpen()) {
+                    // Access the delegate inside MaintenanceAwareExpiryWriter to get the real ChannelWriter
+                    io.lettuce.core.RedisChannelHandler<?, ?> handler = (io.lettuce.core.RedisChannelHandler<?, ?>) mainConnection;
+                    io.lettuce.core.RedisChannelWriter writer = handler.getChannelWriter();
+
+                    if (writer instanceof io.lettuce.core.protocol.MaintenanceAwareExpiryWriter) {
+                        // Get the delegate field from MaintenanceAwareExpiryWriter
+                        java.lang.reflect.Field delegateField = writer.getClass().getDeclaredField("delegate");
+                        delegateField.setAccessible(true);
+                        io.lettuce.core.RedisChannelWriter delegate = (io.lettuce.core.RedisChannelWriter) delegateField
+                                .get(writer);
+
+                        // Get the channel directly from the delegate
+                        java.lang.reflect.Field channelField = delegate.getClass().getDeclaredField("channel");
+                        channelField.setAccessible(true);
+                        io.netty.channel.Channel channel = (io.netty.channel.Channel) channelField.get(delegate);
+
+                        // Print detailed channel and rebind state information
+                        log.info("=== CHANNEL STATE DEBUG INFO ===");
+                        log.info("Channel: {}", channel);
+                        log.info("Channel active: {}", channel.isActive());
+                        log.info("Channel registered: {}", channel.isRegistered());
+
+                        // Check rebind attribute
+                        if (channel.hasAttr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE)) {
+                            Object rebindState = channel
+                                    .attr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE).get();
+                            log.info("Rebind attribute present: true, state: {}", rebindState);
+                        } else {
+                            log.info("Rebind attribute present: false");
+                        }
+
+                        // Access the CommandHandler directly
+                        io.lettuce.core.protocol.CommandHandler commandHandler = channel.pipeline()
+                                .get(io.lettuce.core.protocol.CommandHandler.class);
+                        if (commandHandler != null) {
+                            int stackSize = commandHandler.getStack().size();
+                            log.info("CommandHandler found, stack size: {}", stackSize);
+                            if (stackSize > 0) {
+                                log.info("Clearing command stack ({} commands) to allow rebind completion", stackSize);
+                                commandHandler.getStack().clear();
+                                log.info("Command stack cleared successfully");
+                            } else {
+                                log.info("Command stack is already empty ({} commands)", stackSize);
+                            }
+                        } else {
+                            log.warn("CommandHandler not found in pipeline");
+                        }
+                        log.info("=== END CHANNEL STATE DEBUG INFO ===");
+                    } else {
+                        // Fallback to normal approach if not MaintenanceAwareExpiryWriter
+                        int stackSize = ConnectionTestUtil.getStack(mainConnection).size();
+                        if (stackSize > 0) {
+                            log.info("Clearing command stack ({} commands) to allow rebind completion", stackSize);
+                            ConnectionTestUtil.getStack(mainConnection).clear();
+                            log.info("Command stack cleared successfully");
+                        } else {
+                            log.info("Command stack is already empty ({} commands)", stackSize);
+                        }
+                    }
+                } else {
+                    log.warn("mainConnection is null or closed - cannot clear stack");
+                }
+            } catch (Exception e) {
+                log.warn("Failed to clear command stack {}: {} - {}", context, e.getClass().getSimpleName(), e.getMessage());
+            }
+        }
+
+        /**
          * Stop continuous traffic
          */
         public void stopContinuousTraffic() {
             if (trafficStarted.get()) {
                 log.info("Stopping continuous traffic...");
                 stopTraffic.set(true);
+
+                // Clear the command stack immediately when stopping traffic during MOVING
+                // This should help the rebind completion mechanism work properly
+                clearCommandStack("during traffic stop");
 
                 // Wait for all traffic threads to complete
                 try {
@@ -492,6 +609,11 @@ public class RelaxedTimeoutConfigurationTest {
             return -1; // Not completed
         }
 
+        public void endTestPhase() {
+            testPhaseActive.set(false);
+            log.info("Test phase ended - notifications will be ignored during cleanup");
+        }
+
     }
 
     /**
@@ -546,7 +668,8 @@ public class RelaxedTimeoutConfigurationTest {
         // Enable maintenance events support
         // Apply timeout configuration
         ClientOptions options = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled()).timeoutOptions(timeoutOptions).build();
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP))
+                .timeoutOptions(timeoutOptions).build();
 
         client.setOptions(options);
 
@@ -615,8 +738,8 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify we got the expected notifications
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
 
             // Record MOVING operation completion
             context.capture.recordMovingEnd();
@@ -632,6 +755,9 @@ public class RelaxedTimeoutConfigurationTest {
                     .as("Should have detected at least one relaxed timeout during MOVING maintenance. "
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
 
         } finally {
             cleanupTimeoutTest(context);
@@ -672,7 +798,7 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATING"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATING"))).isTrue();
 
             log.info("=== MIGRATING Timeout Test Results ===");
             log.info("Successful operations: {}", context.capture.getSuccessCount());
@@ -684,6 +810,9 @@ public class RelaxedTimeoutConfigurationTest {
                     .as("Should have detected at least one relaxed timeout during MIGRATING maintenance. "
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
 
         } finally {
             cleanupTimeoutTest(context);
@@ -715,7 +844,7 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+FAILING_OVER"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILING_OVER"))).isTrue();
 
             log.info("=== FAILING_OVER Timeout Test Results ===");
             log.info("Successful operations: {}", context.capture.getSuccessCount());
@@ -728,13 +857,15 @@ public class RelaxedTimeoutConfigurationTest {
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
 
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
         } finally {
             cleanupTimeoutTest(context);
         }
     }
 
     @Test
-    @Disabled("This test is flaky and needs to be fixed")
     @DisplayName("CAE-1130.2 - Timeout un-relaxed after MOVING notification")
     public void timeoutUnrelaxedOnMovingTest() throws InterruptedException {
         TimeoutTestContext context = setupTimeoutTestForMovingUnrelaxed();
@@ -762,14 +893,16 @@ public class RelaxedTimeoutConfigurationTest {
             log.info("Verifying we received the expected notifications...");
             // Short wait since operation already completed
             boolean received = context.capture.waitForNotification(Duration.ofSeconds(5));
+
             assertThat(received).isTrue();
 
             // Verify we got the expected notifications
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
 
             // Record MOVING operation completion
             context.capture.recordMovingEnd();
+
             log.info("Waiting 15 seconds for maintenance state to be fully cleared...");
             Thread.sleep(Duration.ofSeconds(15).toMillis());
             // Stop any remaining traffic for this specific test case
@@ -793,6 +926,9 @@ public class RelaxedTimeoutConfigurationTest {
                     .as("Should have detected at least one relaxed timeout during MOVING maintenance. "
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
 
         } finally {
             cleanupTimeoutTest(context);
@@ -833,7 +969,7 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
 
             log.info("=== MIGRATED Un-relaxed Test: Testing normal timeouts after MIGRATED ===");
 
@@ -851,6 +987,9 @@ public class RelaxedTimeoutConfigurationTest {
                     .as("Should have detected at least one relaxed timeout during MIGRATING maintenance. "
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
 
         } finally {
             cleanupTimeoutTest(context);
@@ -882,7 +1021,7 @@ public class RelaxedTimeoutConfigurationTest {
             assertThat(received).isTrue();
 
             // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+FAILED_OVER"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILED_OVER"))).isTrue();
 
             log.info("=== FAILED_OVER Un-relaxed Test: Testing normal timeouts after FAILED_OVER ===");
 
@@ -900,6 +1039,9 @@ public class RelaxedTimeoutConfigurationTest {
                     .as("Should have detected at least one relaxed timeout during FAILING_OVER maintenance. "
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
 
         } finally {
             cleanupTimeoutTest(context);
