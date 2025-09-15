@@ -48,8 +48,20 @@ class RedisAdvancedClusterAggregateUnitTests {
         for (int i = 0; i < io.lettuce.core.cluster.SlotHash.SLOT_COUNT; i++)
             allSlots.add(i);
         node.setSlots(allSlots);
+        node.setFlags(java.util.EnumSet.of(RedisClusterNode.NodeFlag.UPSTREAM));
+
         partitions.addPartition(node);
         partitions.updateCache();
+        // Mock channel writer and async connection provider to satisfy getConnectionAsync(host,port)
+        ClusterDistributionChannelWriter writer = mock(ClusterDistributionChannelWriter.class);
+        when(clusterConn.getChannelWriter()).thenReturn(writer);
+        // Single Mockito mock that implements BOTH interfaces
+        ClusterConnectionProvider provider =
+                mock(ClusterConnectionProvider.class, withSettings().extraInterfaces(AsyncClusterConnectionProvider.class));
+        AsyncClusterConnectionProvider asyncProvider = (AsyncClusterConnectionProvider) provider;
+        when(writer.getClusterConnectionProvider()).thenReturn(provider);
+        when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.WRITE), anyString(), anyInt()))
+                .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
 
         when(clusterConn.getPartitions()).thenReturn(partitions);
         when(clusterConn.getConnection(eq("node-1"), eq(ConnectionIntent.WRITE))).thenReturn(nodeConn);
@@ -63,15 +75,7 @@ class RedisAdvancedClusterAggregateUnitTests {
                 .withCursor(AggregateArgs.WithCursor.of(1L)).build();
 
         AggregationReply<String, String> replyWithCursor = new AggregationReply<>();
-        AggregationReply.stampNodeId(replyWithCursor, null);
-        // set cursor id via reflection to avoid package-private setter
-        try {
-            java.lang.reflect.Method m = AggregationReply.class.getDeclaredMethod("setCursorId", long.class);
-            m.setAccessible(true);
-            m.invoke(replyWithCursor, 42L);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        replyWithCursor.setCursor(AggregationReply.Cursor.of(42L, null));
 
         CompletableFuture<AggregationReply<String, String>> cf = new CompletableFuture<>();
         cf.complete(replyWithCursor);
@@ -85,22 +89,16 @@ class RedisAdvancedClusterAggregateUnitTests {
 
         AggregationReply<String, String> out = async.ftAggregate("idx", "*", args).toCompletableFuture().join();
 
-        assertThat(out.getCursorId()).isEqualTo(42L);
-        assertThat(out.getNodeId()).contains("node-1");
+        assertThat(out.getCursor()).isPresent();
+        assertThat(out.getCursor().get().getCursorId()).isEqualTo(42L);
+        assertThat(out.getCursor().get().getNodeId()).contains("node-1");
     }
 
     @Test
     void ftCursordel_throwsWhenMissingNodeId() {
-        AggregationReply<String, String> withoutNode = new AggregationReply<>();
-        try {
-            java.lang.reflect.Method m = AggregationReply.class.getDeclaredMethod("setCursorId", long.class);
-            m.setAccessible(true);
-            m.invoke(withoutNode, 5L);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        AggregationReply.Cursor cursor = AggregationReply.Cursor.of(5L, null);
 
-        CompletableFuture<String> cf = async.ftCursordel("idx", withoutNode).toCompletableFuture();
+        CompletableFuture<String> cf = async.ftCursordel("idx", cursor).toCompletableFuture();
 
         assertThatThrownBy(cf::join).hasCauseInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing nodeId");
     }

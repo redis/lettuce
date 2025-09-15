@@ -24,6 +24,8 @@ import io.lettuce.core.search.arguments.SugAddArgs
 import io.lettuce.core.search.arguments.SugGetArgs
 import io.lettuce.core.search.arguments.SynUpdateArgs
 
+import io.lettuce.core.search.AggregationReply.Cursor
+
 /**
  * Coroutine executed commands for RediSearch functionality
  *
@@ -1157,8 +1159,14 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see SearchReply
      * @see #ftAggregate(Any, Any, AggregateArgs)
      */
+
     @Experimental
-    suspend fun ftCursorread(index: K, aggregateReply: AggregationReply<K, V>, count: Int): AggregationReply<K, V>?
+    suspend fun ftCursorread(index: K, cursor: Cursor, count: Int): AggregationReply<K, V>?
+
+    @Experimental
+    suspend fun ftCursorread(index: K, cursor: Cursor): AggregationReply<K, V>?
+
+
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1189,9 +1197,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      *      API</a>
      * @see SearchReply
      * @see #ftAggregate(Any, Any, AggregateArgs)
+
      */
-    @Experimental
-    suspend fun ftCursorread(index: K, aggregateReply: AggregationReply<K, V>): AggregationReply<K, V>?
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1222,15 +1229,12 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return @code "OK"} if the cursor was successfully deleted
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-del/">FT.CURSOR DEL</a>
-     * @see <a href=
-     *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
-     *      API</a>
-     * @see #ftAggregate(Any, Any, AggregateArgs)
-     * @see #ftCursorread(Any, long)
-     * @see #ftCursorread(Any, long, Integer)
      */
+
     @Experimental
-    suspend fun ftCursordel(index: K, aggregateReply: AggregationReply<K, V>): String?
+    suspend fun ftCursordel(index: K, cursor: Cursor): String?
+
+
 
 }
 

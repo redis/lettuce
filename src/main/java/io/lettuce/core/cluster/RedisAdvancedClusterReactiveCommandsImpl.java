@@ -55,8 +55,13 @@ import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.ConnectionIntent;
 import reactor.core.publisher.Flux;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.AggregationReply.Cursor;
 
+import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.arguments.AggregateArgs;
+import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
 
 import reactor.core.publisher.Mono;
 
@@ -392,19 +397,170 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
-        int slot = SlotHash.getSlot(codec.encodeKey(index));
-        RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
-        if (node == null) {
-            return super.ftAggregate(index, query, args);
-        }
-        String nodeId = node.getNodeId();
-        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        return byNode.reactive().ftAggregate(index, query, args).mapNotNull(reply -> {
-            if (reply != null && reply.getCursorId() > 0) {
-                AggregationReply.stampNodeId(reply, nodeId);
+        return routeFirstIterationOrSuper(() -> super.ftAggregate(index, query, args),
+                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                        .flatMap(conn -> conn.ftAggregate(index, query, args)).mapNotNull(reply -> {
+                            if (reply != null) {
+                                reply.getCursor().filter(c -> c.getCursorId() > 0)
+                                        .ifPresent(c -> c.setNodeId(node.getNodeId()));
+                            }
+                            return reply;
+                        }));
+    }
+
+    // --- Keyless RediSearch commands: route to an arbitrary upstream (master) ---
+    // --- Read selection honoring ReadFrom (for read-only Search commands) ---
+
+    private RedisClusterNode randomUpstreamNode() {
+        Partitions partitions = getStatefulConnection().getPartitions();
+        List<RedisClusterNode> masters = new ArrayList<>();
+        for (RedisClusterNode n : partitions) {
+            if (n.is(UPSTREAM)) {
+                masters.add(n);
             }
-            return reply;
-        });
+        }
+        if (masters.isEmpty()) {
+            return null;
+        }
+        int idx = ThreadLocalRandom.current().nextInt(masters.size());
+        return masters.get(idx);
+    }
+
+    private <R> Mono<R> routeFirstIterationOrSuper(Supplier<Mono<R>> superCall,
+            Function<RedisClusterNode, Mono<R>> routedCall) {
+        ReadFrom rf = getStatefulConnection().getReadFrom();
+        if (rf != null && rf != ReadFrom.UPSTREAM) {
+            return superCall.get();
+        }
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return superCall.get();
+        }
+        return routedCall.apply(node);
+    }
+
+    private <R> Flux<R> routeFirstIterationOrSuperMany(Supplier<Flux<R>> superCall,
+            Function<RedisClusterNode, Flux<R>> routedCall) {
+        ReadFrom rf = getStatefulConnection().getReadFrom();
+        if (rf != null && rf != ReadFrom.UPSTREAM) {
+            return superCall.get();
+        }
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return superCall.get();
+        }
+        return routedCall.apply(node);
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+        return routeFirstIterationOrSuper(() -> super.ftSearch(index, query, args),
+                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                        .flatMap(conn -> conn.ftSearch(index, query, args)));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftSearch(K index, V query) {
+        return ftSearch(index, query, SearchArgs.<K, V> builder().build());
+    }
+
+    @Override
+    public Mono<String> ftExplain(K index, V query) {
+        return routeFirstIterationOrSuper(() -> super.ftExplain(index, query),
+                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                        .flatMap(conn -> conn.ftExplain(index, query)));
+    }
+
+    @Override
+    public Mono<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+        return routeFirstIterationOrSuper(() -> super.ftExplain(index, query, args),
+                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                        .flatMap(conn -> conn.ftExplain(index, query, args)));
+    }
+
+    @Override
+    public Flux<V> ftTagvals(K index, K fieldName) {
+        return routeFirstIterationOrSuperMany(() -> super.ftTagvals(index, fieldName),
+                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                        .flatMapMany(conn -> conn.ftTagvals(index, fieldName)));
+    }
+
+    @Override
+    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+        return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query),
+                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                        .flatMap(conn -> conn.ftSpellcheck(index, query)));
+    }
+
+    @Override
+    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query,
+            io.lettuce.core.search.arguments.SpellCheckArgs<K, V> args) {
+        return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query, args),
+                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                        .flatMap(conn -> conn.ftSpellcheck(index, query, args)));
+    }
+
+    @Override
+    public Mono<Long> ftDictadd(K dict, V... terms) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftDictadd(dict, terms);
+        }
+        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                .flatMap(conn -> conn.ftDictadd(dict, terms));
+    }
+
+    @Override
+    public Mono<Long> ftDictdel(K dict, V... terms) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftDictdel(dict, terms);
+        }
+        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                .flatMap(conn -> conn.ftDictdel(dict, terms));
+    }
+
+    @Override
+    public Flux<V> ftDictdump(K dict) {
+        return routeFirstIterationOrSuperMany(() -> super.ftDictdump(dict),
+                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                        .flatMapMany(conn -> conn.ftDictdump(dict)));
+    }
+
+    @Override
+    public Mono<String> ftAliasadd(K alias, K index) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftAliasadd(alias, index);
+        }
+        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                .flatMap(conn -> conn.ftAliasadd(alias, index));
+    }
+
+    @Override
+    public Mono<String> ftAliasupdate(K alias, K index) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftAliasupdate(alias, index);
+        }
+        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                .flatMap(conn -> conn.ftAliasupdate(alias, index));
+    }
+
+    @Override
+    public Mono<String> ftAliasdel(K alias) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftAliasdel(alias);
+        }
+        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort()).flatMap(conn -> conn.ftAliasdel(alias));
+    }
+
+    @Override
+    public Flux<V> ftList() {
+        return routeFirstIterationOrSuperMany(super::ftList,
+                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
+                        .flatMapMany(conn -> conn.ftList()));
     }
 
     @Override
@@ -419,49 +575,49 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply, int count) {
-        if (aggregateReply == null) {
-            return Mono.error(new IllegalArgumentException("aggregateReply must not be null"));
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor, int count) {
+        if (cursor == null) {
+            return Mono.error(new IllegalArgumentException("cursor must not be null"));
         }
-        long cursorId = aggregateReply.getCursorId();
+        long cursorId = cursor.getCursorId();
         if (cursorId <= 0) {
             return Mono.just(new AggregationReply<>());
         }
-        Optional<String> nodeIdOpt = aggregateReply.getNodeId();
+        Optional<String> nodeIdOpt = cursor.getNodeId();
         if (!nodeIdOpt.isPresent()) {
-            return Mono.error(
-                    new IllegalArgumentException("AggregationReply missing nodeId; cannot route cursor READ in cluster mode"));
+            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor READ in cluster mode"));
         }
         String nodeId = nodeIdOpt.get();
         StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        return byNode.reactive().ftCursorread(index, aggregateReply, count).map(reply -> {
-            AggregationReply.stampNodeId(reply, nodeId);
+        return byNode.reactive().ftCursorread(index, cursor, count).map(reply -> {
+            if (reply != null) {
+                reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
+            }
             return reply;
         });
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply) {
-        return ftCursorread(index, aggregateReply, -1);
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor) {
+        return ftCursorread(index, cursor, -1);
     }
 
     @Override
-    public Mono<String> ftCursordel(K index, AggregationReply<K, V> aggregateReply) {
-        if (aggregateReply == null) {
-            return Mono.error(new IllegalArgumentException("aggregateReply must not be null"));
+    public Mono<String> ftCursordel(K index, Cursor cursor) {
+        if (cursor == null) {
+            return Mono.error(new IllegalArgumentException("cursor must not be null"));
         }
-        long cursorId = aggregateReply.getCursorId();
+        long cursorId = cursor.getCursorId();
         if (cursorId <= 0) {
             return Mono.just("OK");
         }
-        Optional<String> nodeIdOpt = aggregateReply.getNodeId();
+        Optional<String> nodeIdOpt = cursor.getNodeId();
         if (!nodeIdOpt.isPresent()) {
-            return Mono.error(
-                    new IllegalArgumentException("AggregationReply missing nodeId; cannot route cursor DEL in cluster mode"));
+            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor DEL in cluster mode"));
         }
         String nodeId = nodeIdOpt.get();
         StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        return byNode.reactive().ftCursordel(index, aggregateReply);
+        return byNode.reactive().ftCursordel(index, cursor);
     }
 
     @Override

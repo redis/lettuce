@@ -51,6 +51,8 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.AggregationReply.Cursor;
+
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -1735,11 +1737,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftCursordel(K index, AggregationReply<K, V> aggregateReply) {
+    public Mono<String> ftCursordel(K index, Cursor cursor) {
         return createMono(() -> {
-            if (aggregateReply == null)
-                throw new IllegalArgumentException("aggregateReply must not be null");
-            long cursorId = aggregateReply.getCursorId();
+            if (cursor == null)
+                throw new IllegalArgumentException("cursor must not be null");
+            long cursorId = cursor.getCursorId();
             return searchCommandBuilder.ftCursordel(index, cursorId > 0 ? cursorId : 0);
         });
     }
@@ -1775,18 +1777,18 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply, int count) {
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor, int count) {
         return createMono(() -> {
-            if (aggregateReply == null)
-                throw new IllegalArgumentException("aggregateReply must not be null");
-            long cursorId = aggregateReply.getCursorId();
+            if (cursor == null)
+                throw new IllegalArgumentException("cursor must not be null");
+            long cursorId = cursor.getCursorId();
             return searchCommandBuilder.ftCursorread(index, cursorId > 0 ? cursorId : 0, count);
         });
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply) {
-        return ftCursorread(index, aggregateReply, -1);
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor) {
+        return ftCursorread(index, cursor, -1);
     }
 
     @Override

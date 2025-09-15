@@ -1074,19 +1074,21 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
-        assertThat(result.getCursorId()).isNotEqualTo(0L); // Should have a valid cursor ID
+        assertThat(result.getCursor()).isPresent();
+        assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L); // Should have a valid cursor ID
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2); // Should return 2 results per page
 
         // Read next page from cursor
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-basic-test-idx", result);
+        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-basic-test-idx", result.getCursor().get());
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
         assertThat(nextSearchReply.getResults()).hasSize(1); // Should return remaining 1 result
-        assertThat(nextResult.getCursorId()).isEqualTo(0L); // Should indicate end of results
+        assertThat(nextResult.getCursor()).isPresent();
+        assertThat(nextResult.getCursor().get().getCursorId()).isEqualTo(0L); // Should indicate end of results
 
         assertThat(redis.ftDropindex("cursor-basic-test-idx")).isEqualTo("OK");
     }
@@ -1115,28 +1117,32 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
-        assertThat(result.getCursorId()).isNotEqualTo(0L);
+        assertThat(result.getCursor()).isPresent();
+        assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L);
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(3); // Should return 3 results per page
 
         // Read next page with different count
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-count-test-idx", result, 5);
+        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-count-test-idx", result.getCursor().get(), 5);
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
         assertThat(nextSearchReply.getResults()).hasSize(5); // Should return 5 results as specified
-        assertThat(nextResult.getCursorId()).isNotEqualTo(0L); // Should still have more results
+        assertThat(nextResult.getCursor()).isPresent();
+        assertThat(nextResult.getCursor().get().getCursorId()).isNotEqualTo(0L); // Should still have more results
 
         // Read final page
-        AggregationReply<String, String> finalResult = redis.ftCursorread("cursor-count-test-idx", nextResult);
+        AggregationReply<String, String> finalResult = redis.ftCursorread("cursor-count-test-idx",
+                nextResult.getCursor().get());
 
         assertThat(finalResult).isNotNull();
         assertThat(finalResult.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> finalSearchReply = finalResult.getReplies().get(0);
         assertThat(finalSearchReply.getResults()).hasSize(2); // Should return remaining 2 results
-        assertThat(finalResult.getCursorId()).isEqualTo(0L); // Should indicate end of results
+        assertThat(finalResult.getCursor()).isPresent();
+        assertThat(finalResult.getCursor().get().getCursorId()).isEqualTo(0L); // Should indicate end of results
 
         assertThat(redis.ftDropindex("cursor-count-test-idx")).isEqualTo("OK");
     }
@@ -1163,13 +1169,14 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
-        assertThat(result.getCursorId()).isNotEqualTo(0L);
+        assertThat(result.getCursor()).isPresent();
+        assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L);
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(2);
 
         // Read from cursor should work within timeout
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-maxidle-test-idx", result);
+        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-maxidle-test-idx", result.getCursor().get());
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
@@ -1201,10 +1208,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1);
         assertThat(result.getReplies()).hasSize(1);
-        assertThat(result.getCursorId()).isNotEqualTo(0L);
+        assertThat(result.getCursor()).isPresent();
+        assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L);
 
         // Delete the cursor explicitly
-        String deleteResult = redis.ftCursordel("cursor-delete-test-idx", result);
+        String deleteResult = redis.ftCursordel("cursor-delete-test-idx", result.getCursor().get());
 
         assertThat(deleteResult).isEqualTo("OK");
 
@@ -1234,7 +1242,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
-        assertThat(result.getCursorId()).isNotEqualTo(0L);
+        assertThat(result.getCursor()).isPresent();
+        assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L);
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(4);
@@ -1242,8 +1251,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Collect all results by paginating through cursor
         List<SearchReply.SearchResult<String, String>> allResults = new ArrayList<>(searchReply.getResults());
         AggregationReply<String, String> current = result;
-        while (current.getCursorId() != 0L) {
-            AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-pagination-test-idx", current);
+        while (current.getCursor().isPresent() && current.getCursor().get().getCursorId() != 0L) {
+            AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-pagination-test-idx",
+                    current.getCursor().get());
             assertThat(nextResult).isNotNull();
             assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
             SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
@@ -1320,7 +1330,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregationReply<String, String> result = redis.ftAggregate("cursor-complex-test-idx", "*", args);
 
         assertThat(result).isNotNull();
-        assertThat(result.getCursorId()).isNotEqualTo(0L);
+        assertThat(result.getCursor()).isPresent();
+        assertThat(result.getCursor().get().getCursorId()).isNotEqualTo(0L);
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> searchReply = result.getReplies().get(0);
         assertThat(searchReply.getResults()).hasSize(1); // Should return 1 group per page
@@ -1332,13 +1343,14 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(firstGroup.getFields()).containsKey("avg_price");
 
         // Read next group from cursor
-        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-complex-test-idx", result);
+        AggregationReply<String, String> nextResult = redis.ftCursorread("cursor-complex-test-idx", result.getCursor().get());
 
         assertThat(nextResult).isNotNull();
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
         assertThat(nextSearchReply.getResults()).hasSize(1); // Should return second group
-        assertThat(nextSearchReply.getCursorId()).isNull(); // Should indicate end of results
+        assertThat(nextResult.getCursor()).isPresent();
+        assertThat(nextResult.getCursor().get().getCursorId()).isEqualTo(0L); // Should indicate end of results
 
         // Verify second group has expected fields
         SearchReply.SearchResult<String, String> secondGroup = nextSearchReply.getResults().get(0);
@@ -1367,7 +1379,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(result).isNotNull();
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 0 aggregation groups for empty index
         assertThat(result.getReplies().get(0).getResults()).isEmpty(); // Should have no SearchReply objects for empty results
-        assertThat(result.getCursorId()).isEqualTo(0L); // Should indicate no more results
+        assertThat(result.getCursor()).isPresent();
+        assertThat(result.getCursor().get().getCursorId()).isEqualTo(0L); // Should indicate no more results
 
         assertThat(redis.ftDropindex("cursor-empty-test-idx")).isEqualTo("OK");
     }

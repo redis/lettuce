@@ -38,6 +38,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.Iterator;
 
 import io.lettuce.core.*;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -66,7 +67,15 @@ import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ConnectionIntent;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.AggregationReply.Cursor;
+
+import io.lettuce.core.search.SearchReply;
+import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.arguments.AggregateArgs;
+import io.lettuce.core.search.arguments.SearchArgs;
+import io.lettuce.core.search.arguments.ExplainArgs;
+
+import io.lettuce.core.models.role.RedisNodeDescription;
 
 /**
  * An advanced asynchronous and thread-safe API for a Redis Cluster connection.
@@ -201,27 +210,162 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
-        // Route by index slot to ensure we know the creating node; stamp nodeId if a cursor is created
-        int slot = SlotHash.getSlot(codec.encodeKey(index));
-        RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
-        if (node == null) {
-            return super.ftAggregate(index, query, args);
-        }
-        String nodeId = node.getNodeId();
-        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        RedisFuture<AggregationReply<K, V>> f = byNode.async().ftAggregate(index, query, args);
-        CompletableFuture<AggregationReply<K, V>> mapped = new CompletableFuture<>();
-        f.whenComplete((reply, err) -> {
-            if (err != null) {
-                mapped.completeExceptionally(err);
-                return;
-            }
-            if (reply != null && reply.getCursorId() > 0) {
-                AggregationReply.stampNodeId(reply, nodeId);
-            }
-            mapped.complete(reply);
+        return routeFirstIterationOrSuper(() -> super.ftAggregate(index, query, args), node -> {
+            String nodeId = node.getNodeId();
+            return getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                    .thenCompose(conn -> conn.ftAggregate(index, query, args)).thenApply(reply -> {
+                        if (reply != null) {
+                            reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(nodeId));
+                        }
+                        return reply;
+                    });
         });
-        return new PipelinedRedisFuture<>(mapped);
+    }
+
+    // --- Upstream-only selection (for write Search commands) ---
+    private RedisClusterNode randomUpstreamNode() {
+        Partitions partitions = getStatefulConnection().getPartitions();
+        List<RedisClusterNode> masters = new ArrayList<>();
+        for (RedisClusterNode n : partitions) {
+            if (n.is(UPSTREAM)) {
+                masters.add(n);
+            }
+        }
+        if (masters.isEmpty()) {
+            return null;
+        }
+        int idx = ThreadLocalRandom.current().nextInt(masters.size());
+        return masters.get(idx);
+    }
+
+    private <R> RedisFuture<R> routeFirstIterationOrSuper(Supplier<RedisFuture<R>> superCall,
+            Function<RedisClusterNode, CompletableFuture<R>> routedCall) {
+        ReadFrom rf = getStatefulConnection().getReadFrom();
+        if (rf != null && rf != ReadFrom.UPSTREAM) {
+            return superCall.get();
+        }
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return superCall.get();
+        }
+        return new PipelinedRedisFuture<>(routedCall.apply(node));
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+        return routeFirstIterationOrSuper(() -> super.ftSearch(index, query, args),
+                node -> getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                        .thenCompose(conn -> conn.ftSearch(index, query, args)));
+    }
+
+    @Override
+    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query) {
+        return ftSearch(index, query, SearchArgs.<K, V> builder().build());
+    }
+
+    @Override
+    public RedisFuture<String> ftExplain(K index, V query) {
+        return routeFirstIterationOrSuper(() -> super.ftExplain(index, query),
+                node -> getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                        .thenCompose(conn -> conn.ftExplain(index, query)));
+    }
+
+    @Override
+    public RedisFuture<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+        return routeFirstIterationOrSuper(() -> super.ftExplain(index, query, args),
+                node -> getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                        .thenCompose(conn -> conn.ftExplain(index, query, args)));
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftTagvals(K index, K fieldName) {
+        return routeFirstIterationOrSuper(() -> super.ftTagvals(index, fieldName),
+                node -> getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                        .thenCompose(conn -> conn.ftTagvals(index, fieldName)));
+    }
+
+    @Override
+    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+        return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query),
+                node -> getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                        .thenCompose(conn -> conn.ftSpellcheck(index, query)));
+    }
+
+    @Override
+    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query,
+            io.lettuce.core.search.arguments.SpellCheckArgs<K, V> args) {
+        return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query, args),
+                node -> getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                        .thenCompose(conn -> conn.ftSpellcheck(index, query, args)));
+    }
+
+    @Override
+    public RedisFuture<Long> ftDictadd(K dict, V... terms) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftDictadd(dict, terms);
+        }
+        CompletableFuture<Long> future = getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                .thenCompose(conn -> conn.ftDictadd(dict, terms));
+        return new PipelinedRedisFuture<>(future);
+    }
+
+    @Override
+    public RedisFuture<Long> ftDictdel(K dict, V... terms) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftDictdel(dict, terms);
+        }
+        CompletableFuture<Long> future = getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                .thenCompose(conn -> conn.ftDictdel(dict, terms));
+        return new PipelinedRedisFuture<>(future);
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftDictdump(K dict) {
+        return routeFirstIterationOrSuper(() -> super.ftDictdump(dict),
+                node -> getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                        .thenCompose(conn -> conn.ftDictdump(dict)));
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasadd(K alias, K index) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftAliasadd(alias, index);
+        }
+        CompletableFuture<String> future = getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                .thenCompose(conn -> conn.ftAliasadd(alias, index));
+        return new PipelinedRedisFuture<>(future);
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasupdate(K alias, K index) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftAliasupdate(alias, index);
+        }
+        CompletableFuture<String> future = getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                .thenCompose(conn -> conn.ftAliasupdate(alias, index));
+        return new PipelinedRedisFuture<>(future);
+    }
+
+    @Override
+    public RedisFuture<String> ftAliasdel(K alias) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftAliasdel(alias);
+        }
+        CompletableFuture<String> future = getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                .thenCompose(conn -> conn.ftAliasdel(alias));
+        return new PipelinedRedisFuture<>(future);
+    }
+
+    @Override
+    public RedisFuture<List<V>> ftList() {
+        return routeFirstIterationOrSuper(super::ftList,
+                node -> getConnectionAsync(node.getUri().getHost(), node.getUri().getPort())
+                        .thenCompose(conn -> conn.ftList()));
     }
 
     @Override
@@ -234,29 +378,26 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply, int count) {
-        if (aggregateReply == null) {
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor, int count) {
+        if (cursor == null) {
             CompletableFuture<AggregationReply<K, V>> failed = new CompletableFuture<>();
-            failed.completeExceptionally(new IllegalArgumentException("aggregateReply must not be null"));
+            failed.completeExceptionally(new IllegalArgumentException("cursor must not be null"));
             return new PipelinedRedisFuture<>(failed);
         }
-        long cursorId = aggregateReply.getCursorId();
+        long cursorId = cursor.getCursorId();
         if (cursorId <= 0) {
-            // terminal: return empty reply
-            CompletableFuture<AggregationReply<K, V>> done = new CompletableFuture<>();
-            done.complete(new AggregationReply<>());
-            return new PipelinedRedisFuture<>(done);
+            return new PipelinedRedisFuture<>(CompletableFuture.completedFuture(new AggregationReply<>()));
         }
-        Optional<String> nodeIdOpt = aggregateReply.getNodeId();
+        Optional<String> nodeIdOpt = cursor.getNodeId();
         if (!nodeIdOpt.isPresent()) {
             CompletableFuture<AggregationReply<K, V>> failed = new CompletableFuture<>();
             failed.completeExceptionally(
-                    new IllegalArgumentException("AggregationReply missing nodeId; cannot route cursor READ in cluster mode"));
+                    new IllegalArgumentException("Cursor missing nodeId; cannot route cursor READ in cluster mode"));
             return new PipelinedRedisFuture<>(failed);
         }
         String nodeId = nodeIdOpt.get();
         StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        RedisFuture<AggregationReply<K, V>> f = byNode.async().ftCursorread(index, aggregateReply, count);
+        RedisFuture<AggregationReply<K, V>> f = byNode.async().ftCursorread(index, cursor, count);
         CompletableFuture<AggregationReply<K, V>> mapped = new CompletableFuture<>();
         f.whenComplete((reply, err) -> {
             if (err != null) {
@@ -264,7 +405,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
                 return;
             }
             if (reply != null) {
-                AggregationReply.stampNodeId(reply, nodeId);
+                reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
             }
             mapped.complete(reply);
         });
@@ -272,33 +413,31 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, AggregationReply<K, V> aggregateReply) {
-        return ftCursorread(index, aggregateReply, -1);
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor) {
+        return ftCursorread(index, cursor, -1);
     }
 
     @Override
-    public RedisFuture<String> ftCursordel(K index, AggregationReply<K, V> aggregateReply) {
-        if (aggregateReply == null) {
+    public RedisFuture<String> ftCursordel(K index, Cursor cursor) {
+        if (cursor == null) {
             CompletableFuture<String> failed = new CompletableFuture<>();
-            failed.completeExceptionally(new IllegalArgumentException("aggregateReply must not be null"));
+            failed.completeExceptionally(new IllegalArgumentException("cursor must not be null"));
             return new PipelinedRedisFuture<>(failed);
         }
-        long cursorId = aggregateReply.getCursorId();
+        long cursorId = cursor.getCursorId();
         if (cursorId <= 0) {
-            CompletableFuture<String> done = new CompletableFuture<>();
-            done.complete("OK");
-            return new PipelinedRedisFuture<>(done);
+            return new PipelinedRedisFuture<>(CompletableFuture.completedFuture("OK"));
         }
-        Optional<String> nodeIdOpt = aggregateReply.getNodeId();
+        Optional<String> nodeIdOpt = cursor.getNodeId();
         if (!nodeIdOpt.isPresent()) {
             CompletableFuture<String> failed = new CompletableFuture<>();
             failed.completeExceptionally(
-                    new IllegalArgumentException("AggregationReply missing nodeId; cannot route cursor DEL in cluster mode"));
+                    new IllegalArgumentException("Cursor missing nodeId; cannot route cursor DEL in cluster mode"));
             return new PipelinedRedisFuture<>(failed);
         }
         String nodeId = nodeIdOpt.get();
         StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        return byNode.async().ftCursordel(index, aggregateReply);
+        return byNode.async().ftCursordel(index, cursor);
     }
 
     @Override
