@@ -50,6 +50,8 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.AggregationReply.Cursor;
+
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -1705,22 +1707,23 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, AggregationReply<K, V> aggregateReply, int count) {
-        if (aggregateReply == null)
-            throw new IllegalArgumentException("aggregateReply must not be null");
-        return dispatch(searchCommandBuilder.ftCursorread(index, aggregateReply.getCursorId(), count));
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
+        if (cursor == null)
+            throw new IllegalArgumentException("cursor must not be null");
+        long cursorId = cursor.getCursorId();
+        return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, count));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, AggregationReply<K, V> aggregateReply) {
-        return ftCursorread(index, aggregateReply, -1);
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
+        return ftCursorread(index, cursor, -1);
     }
 
     @Override
-    public RedisFuture<String> ftCursordel(String index, AggregationReply<K, V> aggregateReply) {
-        if (aggregateReply == null)
-            throw new IllegalArgumentException("aggregateReply must not be null");
-        long cursorId = aggregateReply.getCursorId();
+    public RedisFuture<String> ftCursordel(String index, Cursor cursor) {
+        if (cursor == null)
+            throw new IllegalArgumentException("cursor must not be null");
+        long cursorId = cursor.getCursorId();
         if (cursorId <= 0) {
             // idempotent OK for non-existent/finished cursor
             return dispatch(searchCommandBuilder.ftCursordel(index, 0));

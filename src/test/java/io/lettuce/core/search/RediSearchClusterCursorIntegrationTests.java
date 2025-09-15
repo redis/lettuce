@@ -19,10 +19,13 @@ import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.lettuce.test.condition.RedisConditions;
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import org.junit.jupiter.api.*;
 import reactor.test.StepVerifier;
 
-import java.lang.reflect.Method;
+import java.util.Set;
+import java.util.HashSet;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -123,27 +126,27 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
                 .withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
         AggregationReply<String, String> first = sync.ftAggregate(INDEX, "*", args);
-        assertThat(first.getCursorId()).isGreaterThan(0);
-        assertThat(first.getNodeId()).isPresent();
+        assertThat(first.getCursor().get().getCursorId()).isGreaterThan(0);
+        assertThat(first.getCursor().get().getNodeId()).isPresent();
         assertThat(first.getReplies()).isNotEmpty();
-        String nodeId = first.getNodeId().get();
+        String nodeId = first.getCursor().get().getNodeId().get();
 
         // Stickiness: reads route to the same node and pages advance
-        AggregationReply<String, String> page2 = sync.ftCursorread(INDEX, first);
+        AggregationReply<String, String> page2 = sync.ftCursorread(INDEX, first.getCursor().get());
         assertThat(page2).isNotNull();
-        assertThat(page2.getNodeId()).isPresent();
-        assertThat(page2.getNodeId().get()).isEqualTo(nodeId);
+        assertThat(page2.getCursor().get().getNodeId()).isPresent();
+        assertThat(page2.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page2.getReplies()).isNotEmpty();
         assertThat(page2.getReplies()).isNotEqualTo(first.getReplies());
 
-        AggregationReply<String, String> page3 = sync.ftCursorread(INDEX, page2);
-        assertThat(page3.getNodeId()).isPresent();
-        assertThat(page3.getNodeId().get()).isEqualTo(nodeId);
+        AggregationReply<String, String> page3 = sync.ftCursorread(INDEX, page2.getCursor().get());
+        assertThat(page3.getCursor().get().getNodeId()).isPresent();
+        assertThat(page3.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page3.getReplies()).isNotEmpty();
         assertThat(page3.getReplies()).isNotEqualTo(page2.getReplies());
 
         // Delete cursor
-        String del = sync.ftCursordel(INDEX, page3);
+        String del = sync.ftCursordel(INDEX, page3.getCursor().get());
         assertThat(del).isEqualTo("OK");
     }
 
@@ -155,24 +158,26 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
                 .withCursor(AggregateArgs.WithCursor.of(2L)).build();
 
         AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
-        assertThat(first.getCursorId()).isGreaterThan(0);
-        assertThat(first.getNodeId()).isPresent();
+        assertThat(first.getCursor().get().getCursorId()).isGreaterThan(0);
+        assertThat(first.getCursor().get().getNodeId()).isPresent();
         assertThat(first.getReplies()).isNotEmpty();
-        String nodeId = first.getNodeId().get();
+        String nodeId = first.getCursor().get().getNodeId().get();
 
-        AggregationReply<String, String> page2 = async.ftCursorread(INDEX, first).toCompletableFuture().join();
-        assertThat(page2.getNodeId()).isPresent();
-        assertThat(page2.getNodeId().get()).isEqualTo(nodeId);
+        AggregationReply<String, String> page2 = async.ftCursorread(INDEX, first.getCursor().get()).toCompletableFuture()
+                .join();
+        assertThat(page2.getCursor().get().getNodeId()).isPresent();
+        assertThat(page2.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page2.getReplies()).isNotEmpty();
         assertThat(page2.getReplies()).isNotEqualTo(first.getReplies());
 
-        AggregationReply<String, String> page3 = async.ftCursorread(INDEX, page2).toCompletableFuture().join();
-        assertThat(page3.getNodeId()).isPresent();
-        assertThat(page3.getNodeId().get()).isEqualTo(nodeId);
+        AggregationReply<String, String> page3 = async.ftCursorread(INDEX, page2.getCursor().get()).toCompletableFuture()
+                .join();
+        assertThat(page3.getCursor().get().getNodeId()).isPresent();
+        assertThat(page3.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page3.getReplies()).isNotEmpty();
         assertThat(page3.getReplies()).isNotEqualTo(page2.getReplies());
 
-        String del = async.ftCursordel(INDEX, page3).toCompletableFuture().join();
+        String del = async.ftCursordel(INDEX, page3.getCursor().get()).toCompletableFuture().join();
         assertThat(del).isEqualTo("OK");
     }
 
@@ -185,78 +190,89 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
 
         AggregationReply<String, String> first = reactive.ftAggregate(INDEX, "*", args).block();
         assertThat(first).isNotNull();
-        assertThat(first.getCursorId()).isGreaterThan(0);
-        assertThat(first.getNodeId()).isPresent();
+        assertThat(first.getCursor().get().getCursorId()).isGreaterThan(0);
+        assertThat(first.getCursor().get().getNodeId()).isPresent();
         assertThat(first.getReplies()).isNotEmpty();
-        String nodeId = first.getNodeId().get();
+        String nodeId = first.getCursor().get().getNodeId().get();
 
-        AggregationReply<String, String> page2 = reactive.ftCursorread(INDEX, first).block();
+        AggregationReply<String, String> page2 = reactive.ftCursorread(INDEX, first.getCursor().get()).block();
         assertThat(page2).isNotNull();
-        assertThat(page2.getNodeId()).isPresent();
-        assertThat(page2.getNodeId().get()).isEqualTo(nodeId);
+        assertThat(page2.getCursor().get().getNodeId()).isPresent();
+        assertThat(page2.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page2.getReplies()).isNotEmpty();
         assertThat(page2.getReplies()).isNotEqualTo(first.getReplies());
 
-        AggregationReply<String, String> page3 = reactive.ftCursorread(INDEX, page2).block();
-        assertThat(page3.getNodeId()).isPresent();
-        assertThat(page3.getNodeId().get()).isEqualTo(nodeId);
+        AggregationReply<String, String> page3 = reactive.ftCursorread(INDEX, page2.getCursor().get()).block();
+        assertThat(page3.getCursor().get().getNodeId()).isPresent();
+        assertThat(page3.getCursor().get().getNodeId().get()).isEqualTo(nodeId);
         assertThat(page3.getReplies()).isNotEmpty();
         assertThat(page3.getReplies()).isNotEqualTo(page2.getReplies());
 
-        String del = reactive.ftCursordel(INDEX, page3).block();
+        String del = reactive.ftCursordel(INDEX, page3.getCursor().get()).block();
         assertThat(del).isEqualTo("OK");
     }
 
     @Test
     void sync_errorHandling_missingNodeId_throws() {
-        AggregationReply<String, String> noNode = new AggregationReply<>();
-        try {
-            Method m = AggregationReply.class.getDeclaredMethod("setCursorId", long.class);
-            m.setAccessible(true);
-            m.invoke(noNode, 5L);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        assertThatThrownBy(() -> sync.ftCursorread(INDEX, noNode)).isInstanceOf(IllegalArgumentException.class)
+        AggregationReply.Cursor c = AggregationReply.Cursor.of(5L, null);
+        assertThatThrownBy(() -> sync.ftCursorread(INDEX, c)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("missing nodeId");
-        assertThatThrownBy(() -> sync.ftCursordel(INDEX, noNode)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> sync.ftCursordel(INDEX, c)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("missing nodeId");
     }
 
     @Test
     void async_errorHandling_missingNodeId_throws() {
-        AggregationReply<String, String> noNode = new AggregationReply<>();
-        try {
-            Method m = AggregationReply.class.getDeclaredMethod("setCursorId", long.class);
-            m.setAccessible(true);
-            m.invoke(noNode, 5L);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        assertThatThrownBy(() -> async.ftCursorread(INDEX, noNode).toCompletableFuture().join())
+        AggregationReply.Cursor c2 = AggregationReply.Cursor.of(5L, null);
+        assertThatThrownBy(() -> async.ftCursorread(INDEX, c2).toCompletableFuture().join())
                 .hasCauseInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing nodeId");
-        assertThatThrownBy(() -> async.ftCursordel(INDEX, noNode).toCompletableFuture().join())
+        assertThatThrownBy(() -> async.ftCursordel(INDEX, c2).toCompletableFuture().join())
                 .hasCauseInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing nodeId");
     }
 
     @Test
     void reactive_errorHandling_missingNodeId_emitsError() {
-        AggregationReply<String, String> noNode = new AggregationReply<>();
-        try {
-            Method m = AggregationReply.class.getDeclaredMethod("setCursorId", long.class);
-            m.setAccessible(true);
-            m.invoke(noNode, 5L);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        AggregationReply.Cursor c3 = AggregationReply.Cursor.of(5L, null);
+        StepVerifier.create(reactive.ftCursorread(INDEX, c3))
+                .expectErrorSatisfies(
+                        t -> assertThat(t).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing nodeId"))
+                .verify();
+        StepVerifier.create(reactive.ftCursordel(INDEX, c3))
+                .expectErrorSatisfies(
+                        t -> assertThat(t).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing nodeId"))
+                .verify();
         }
-        StepVerifier.create(reactive.ftCursorread(INDEX, noNode))
-                .expectErrorSatisfies(
-                        t -> assertThat(t).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing nodeId"))
-                .verify();
-        StepVerifier.create(reactive.ftCursordel(INDEX, noNode))
-                .expectErrorSatisfies(
-                        t -> assertThat(t).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing nodeId"))
-                .verify();
+
+    @Test
+    void async_firstIteration_rotatesAcrossUpstreamNodes() {
+        // Ensure we have at least two upstream nodes in the cluster; otherwise skip to avoid flakiness
+        long upstreams = connection.getPartitions().stream()
+                .filter(n -> n.is(RedisClusterNode.NodeFlag.UPSTREAM))
+                .count();
+        assumeTrue(upstreams >= 2, "requires >= 2 upstream nodes");
+
+        AggregateArgs<String, String> args = AggregateArgs.<String, String>builder()
+                .groupBy(AggregateArgs.GroupBy.<String, String>of("author")
+                        .reduce(AggregateArgs.Reducer.<String, String>avg("@rating").as("avg_rating")))
+                .withCursor(AggregateArgs.WithCursor.of(1L))
+                .build();
+
+        Set<String> nodeIds = new HashSet<>();
+        int observedCursors = 0;
+        for (int i = 0; i < 30 && nodeIds.size() < upstreams; i++) {
+            AggregationReply<String, String> first = async.ftAggregate(INDEX, "*", args).toCompletableFuture().join();
+            assertThat(first).isNotNull();
+            if (first.getCursor().isPresent() && first.getCursor().get().getCursorId() > 0) {
+                observedCursors++;
+                first.getCursor().get().getNodeId().ifPresent(nodeId -> {
+                    nodeIds.add(nodeId);
+                    async.ftCursordel(INDEX, first.getCursor().get()).toCompletableFuture().join();
+                });
+            }
+        }
+
+        assumeTrue(observedCursors > 0, "no cursors were created; cannot validate rotation");
+        assertThat(nodeIds.size()).isEqualTo(upstreams);
     }
 
 }
