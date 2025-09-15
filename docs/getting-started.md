@@ -79,7 +79,7 @@ Do you want to see working examples?
 
 - [Redis Cluster](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToRedisCluster.java)
 
-- [Connecting to a ElastiCache Master](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToElastiCacheMaster.java)
+- [Connecting to the ElastiCache Master](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToElastiCacheMaster.java)
 
 - [Connecting to ElastiCache with Master/Replica](https://github.com/redis/lettuce/blob/main/src/test/java/io/lettuce/examples/ConnectToMasterSlaveUsingElastiCacheCluster.java)
 
