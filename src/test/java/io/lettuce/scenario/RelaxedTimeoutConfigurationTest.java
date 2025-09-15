@@ -21,7 +21,6 @@ import io.lettuce.core.MaintenanceEventsOptions.AddressType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -708,346 +707,6 @@ public class RelaxedTimeoutConfigurationTest {
         context.client.shutdown();
     }
 
-    @Test
-    @DisplayName("CAE-1130.1 - Timeout relaxed on MOVING notification")
-    public void timeoutRelaxedOnMovingTest() throws InterruptedException {
-        TimeoutTestContext context = setupTimeoutTestForMoving();
-
-        try {
-            log.info("=== MOVING Timeout Test: Starting maintenance operation ===");
-
-            String endpointId = clusterConfig.getFirstEndpointId();
-            String policy = "single";
-            String sourceNode = clusterConfig.getOptimalSourceNode();
-            String targetNode = clusterConfig.getOptimalTargetNode();
-
-            // Start maintenance operation - notification handler will manage traffic automatically
-            log.info("Starting maintenance operation (migrate + rebind)...");
-
-            // Start the maintenance operation asynchronously
-            faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode).subscribe(
-                    result -> log.info("MOVING operation completed: {}", result),
-                    error -> log.error("MOVING operation failed: {}", error.getMessage()));
-
-            // Wait for MOVING notification - the capture handler will:
-            // 1. Start traffic when MIGRATED is received
-            // 2. Test relaxed timeouts when MOVING is received
-            // 3. Stop traffic after testing
-            log.info("Waiting for MOVING notification (traffic will be managed automatically)...");
-            boolean received = context.capture.waitForNotification(Duration.ofMinutes(3));
-            assertThat(received).isTrue();
-
-            // Verify we got the expected notifications
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
-
-            // Record MOVING operation completion
-            context.capture.recordMovingEnd();
-
-            log.info("=== MOVING Timeout Test Results ===");
-            log.info("MOVING operation duration: {}ms", context.capture.getMovingDuration());
-            log.info("Successful operations: {}", context.capture.getSuccessCount());
-            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
-            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
-
-            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
-            assertThat(context.capture.getTimeoutCount())
-                    .as("Should have detected at least one relaxed timeout during MOVING maintenance. "
-                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
-                    .isGreaterThan(0);
-
-            // End test phase to prevent capturing cleanup notifications
-            context.capture.endTestPhase();
-
-        } finally {
-            cleanupTimeoutTest(context);
-        }
-    }
-
-    @Test
-    @DisplayName("CAE-1130.3 - Timeout relaxed on MIGRATING notification")
-    public void timeoutRelaxedOnMigratingTest() throws InterruptedException {
-        TimeoutTestContext context = setupTimeoutTest();
-
-        try {
-            log.info("=== MIGRATING Timeout Test: Starting maintenance operation ===");
-
-            // Start MIGRATING notification in background
-            String shardId = clusterConfig.getFirstMasterShardId();
-            String sourceNode = clusterConfig.getOptimalSourceNode();
-            String targetNode = clusterConfig.getOptimalTargetNode();
-            String intermediateNode = clusterConfig.getOptimalIntermediateNode();
-
-            log.info("Triggering shard migration for MIGRATING notification asynchronously...");
-
-            // Start the operation but don't wait for completion
-            if (clusterConfig.canMigrateDirectly()) {
-                faultClient.triggerShardMigration(context.bdbId, shardId, sourceNode, targetNode).subscribe(
-                        result -> log.info("MIGRATING operation completed: {}", result),
-                        error -> log.error("MIGRATING operation failed: {}", error.getMessage()));
-            } else {
-                faultClient
-                        .triggerShardMigrationWithEmptyTarget(context.bdbId, shardId, sourceNode, targetNode, intermediateNode)
-                        .subscribe(result -> log.info("MIGRATING operation completed: {}", result),
-                                error -> log.error("MIGRATING operation failed: {}", error.getMessage()));
-            }
-
-            // Wait for MIGRATING notification and automatic timeout testing
-            log.info("Waiting for MIGRATING notification (timeout testing will happen automatically)...");
-            boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
-            assertThat(received).isTrue();
-
-            // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATING"))).isTrue();
-
-            log.info("=== MIGRATING Timeout Test Results ===");
-            log.info("Successful operations: {}", context.capture.getSuccessCount());
-            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
-            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
-
-            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
-            assertThat(context.capture.getTimeoutCount())
-                    .as("Should have detected at least one relaxed timeout during MIGRATING maintenance. "
-                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
-                    .isGreaterThan(0);
-
-            // End test phase to prevent capturing cleanup notifications
-            context.capture.endTestPhase();
-
-        } finally {
-            cleanupTimeoutTest(context);
-        }
-    }
-
-    @Test
-    @DisplayName("CAE-1130.5 - Timeout relaxed on FAILING_OVER notification")
-    public void timeoutRelaxedOnFailoverTest() throws InterruptedException {
-        TimeoutTestContext context = setupTimeoutTest();
-
-        try {
-            log.info("=== FAILING_OVER Timeout Test: Starting maintenance operation ===");
-
-            // Start FAILING_OVER notification in background
-            String shardId = clusterConfig.getFirstMasterShardId();
-            String nodeId = clusterConfig.getNodeWithMasterShards();
-
-            log.info("Triggering shard failover for FAILING_OVER notification asynchronously...");
-
-            // Start the operation but don't wait for completion
-            faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig).subscribe(
-                    result -> log.info("FAILING_OVER operation completed: {}", result),
-                    error -> log.error("FAILING_OVER operation failed: {}", error.getMessage()));
-
-            // Wait for FAILING_OVER notification and automatic timeout testing
-            log.info("Waiting for FAILING_OVER notification (timeout testing will happen automatically)...");
-            boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
-            assertThat(received).isTrue();
-
-            // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILING_OVER"))).isTrue();
-
-            log.info("=== FAILING_OVER Timeout Test Results ===");
-            log.info("Successful operations: {}", context.capture.getSuccessCount());
-            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
-            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
-
-            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
-            assertThat(context.capture.getTimeoutCount())
-                    .as("Should have detected at least one relaxed timeout during FAILING_OVER maintenance. "
-                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
-                    .isGreaterThan(0);
-
-            // End test phase to prevent capturing cleanup notifications
-            context.capture.endTestPhase();
-
-        } finally {
-            cleanupTimeoutTest(context);
-        }
-    }
-
-    @Test
-    @DisplayName("CAE-1130.2 - Timeout un-relaxed after MOVING notification")
-    public void timeoutUnrelaxedOnMovingTest() throws InterruptedException {
-        TimeoutTestContext context = setupTimeoutTestForMovingUnrelaxed();
-
-        try {
-            log.info("=== MOVING Un-relaxed Timeout Test: Starting maintenance operation ===");
-
-            String endpointId = clusterConfig.getFirstEndpointId();
-            String policy = "single";
-            String sourceNode = clusterConfig.getOptimalSourceNode();
-            String targetNode = clusterConfig.getOptimalTargetNode();
-
-            // Start maintenance operation - notification handler will manage traffic automatically
-            log.info("Starting maintenance operation (migrate + rebind)...");
-
-            // Start the maintenance operation and wait for it to complete fully
-            log.info("Starting MOVING operation and waiting for it to complete...");
-            Boolean operationResult = faultClient
-                    .triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode)
-                    .block(Duration.ofMinutes(3));
-            assertThat(operationResult).isTrue();
-            log.info("MOVING operation fully completed: {}", operationResult);
-
-            // Verify we got the expected notifications during the operation
-            log.info("Verifying we received the expected notifications...");
-            // Short wait since operation already completed
-            boolean received = context.capture.waitForNotification(Duration.ofSeconds(5));
-
-            assertThat(received).isTrue();
-
-            // Verify we got the expected notifications
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
-
-            // Record MOVING operation completion
-            context.capture.recordMovingEnd();
-
-            log.info("Waiting 15 seconds for maintenance state to be fully cleared...");
-            Thread.sleep(Duration.ofSeconds(15).toMillis());
-            // Stop any remaining traffic for this specific test case
-            log.info("Un-relaxed MOVING test: Stopping all traffic after MOVING operation completed");
-            context.capture.stopContinuousTraffic();
-
-            log.info("=== MOVING Un-relaxed Test: Testing normal timeouts after MOVING ===");
-
-            // Test that timeouts are back to normal after MOVING (including reconnection)
-            log.info("Testing that timeouts are back to normal after MOVING notification and reconnection...");
-            testNormalTimeoutsAfterMoving(context);
-
-            log.info("=== MOVING Un-relaxed Test Results ===");
-            log.info("MOVING operation duration: {}ms", context.capture.getMovingDuration());
-            log.info("Successful operations: {}", context.capture.getSuccessCount());
-            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
-            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
-
-            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
-            assertThat(context.capture.getTimeoutCount())
-                    .as("Should have detected at least one relaxed timeout during MOVING maintenance. "
-                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
-                    .isGreaterThan(0);
-
-            // End test phase to prevent capturing cleanup notifications
-            context.capture.endTestPhase();
-
-        } finally {
-            cleanupTimeoutTest(context);
-        }
-    }
-
-    @Test
-    @DisplayName("CAE-1130.4 - Timeout un-relaxed after MIGRATED notification")
-    public void timeoutUnrelaxedOnMigratedTest() throws InterruptedException {
-        TimeoutTestContext context = setupTimeoutTestForUnrelaxed();
-
-        try {
-            log.info("=== MIGRATED Un-relaxed Timeout Test: Starting maintenance operation ===");
-
-            // Start MIGRATING notification in background
-            String shardId = clusterConfig.getFirstMasterShardId();
-            String sourceNode = clusterConfig.getOptimalSourceNode();
-            String targetNode = clusterConfig.getOptimalTargetNode();
-            String intermediateNode = clusterConfig.getOptimalIntermediateNode();
-
-            log.info("Triggering shard migration for MIGRATED notification asynchronously...");
-
-            // Start the operation but don't wait for completion
-            if (clusterConfig.canMigrateDirectly()) {
-                faultClient.triggerShardMigration(context.bdbId, shardId, sourceNode, targetNode).subscribe(
-                        result -> log.info("MIGRATED operation completed: {}", result),
-                        error -> log.error("MIGRATED operation failed: {}", error.getMessage()));
-            } else {
-                faultClient
-                        .triggerShardMigrationWithEmptyTarget(context.bdbId, shardId, sourceNode, targetNode, intermediateNode)
-                        .subscribe(result -> log.info("MIGRATED operation completed: {}", result),
-                                error -> log.error("MIGRATED operation failed: {}", error.getMessage()));
-            }
-
-            // Wait for MIGRATED notification and automatic timeout testing
-            log.info("Waiting for MIGRATED notification (timeout testing will happen automatically)...");
-            boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
-            assertThat(received).isTrue();
-
-            // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
-
-            log.info("=== MIGRATED Un-relaxed Test: Testing normal timeouts after MIGRATED ===");
-
-            // Test that timeouts are back to normal after MIGRATED
-            log.info("Testing that timeouts are back to normal after MIGRATED notification...");
-            testNormalTimeoutsAfterMaintenance(context);
-
-            log.info("=== MIGRATED Un-relaxed Test Results ===");
-            log.info("Successful operations: {}", context.capture.getSuccessCount());
-            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
-            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
-
-            // Verify that we detected relaxed timeouts during maintenance
-            assertThat(context.capture.getTimeoutCount())
-                    .as("Should have detected at least one relaxed timeout during MIGRATING maintenance. "
-                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
-                    .isGreaterThan(0);
-
-            // End test phase to prevent capturing cleanup notifications
-            context.capture.endTestPhase();
-
-        } finally {
-            cleanupTimeoutTest(context);
-        }
-    }
-
-    @Test
-    @DisplayName("CAE-1130.6 - Timeout un-relaxed after FAILED_OVER notification")
-    public void timeoutUnrelaxedOnFailedoverTest() throws InterruptedException {
-        TimeoutTestContext context = setupTimeoutTestForUnrelaxed();
-
-        try {
-            log.info("=== FAILED_OVER Un-relaxed Timeout Test: Starting maintenance operation ===");
-
-            // Start FAILING_OVER notification in background
-            String shardId = clusterConfig.getFirstMasterShardId();
-            String nodeId = clusterConfig.getNodeWithMasterShards();
-
-            log.info("Triggering shard failover for FAILED_OVER notification asynchronously...");
-
-            // Start the operation but don't wait for completion
-            faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig).subscribe(
-                    result -> log.info("FAILED_OVER operation completed: {}", result),
-                    error -> log.error("FAILED_OVER operation failed: {}", error.getMessage()));
-
-            // Wait for FAILED_OVER notification and automatic timeout testing
-            log.info("Waiting for FAILED_OVER notification (timeout testing will happen automatically)...");
-            boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
-            assertThat(received).isTrue();
-
-            // Verify notification was received and timeout testing completed
-            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILED_OVER"))).isTrue();
-
-            log.info("=== FAILED_OVER Un-relaxed Test: Testing normal timeouts after FAILED_OVER ===");
-
-            // Test that timeouts are back to normal after FAILED_OVER
-            log.info("Testing that timeouts are back to normal after FAILED_OVER notification...");
-            testNormalTimeoutsAfterMaintenance(context);
-
-            log.info("=== FAILED_OVER Un-relaxed Test Results ===");
-            log.info("Successful operations: {}", context.capture.getSuccessCount());
-            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
-            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
-
-            // Verify that we detected relaxed timeouts during maintenance
-            assertThat(context.capture.getTimeoutCount())
-                    .as("Should have detected at least one relaxed timeout during FAILING_OVER maintenance. "
-                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
-                    .isGreaterThan(0);
-
-            // End test phase to prevent capturing cleanup notifications
-            context.capture.endTestPhase();
-
-        } finally {
-            cleanupTimeoutTest(context);
-        }
-    }
-
     /**
      * Helper method to test that timeouts are back to normal after maintenance events
      */
@@ -1198,6 +857,346 @@ public class RelaxedTimeoutConfigurationTest {
                 .as("Should have fewer relaxed timeouts than normal timeouts after MOVING notification and reconnection. "
                         + "Too many relaxed timeouts indicates the timeout un-relaxation mechanism is not working properly after MOVING.")
                 .isLessThan(normalTimeoutCount);
+    }
+
+    @Test
+    @DisplayName("Timeout relaxed on MOVING notification")
+    public void timeoutRelaxedOnMovingTest() throws InterruptedException {
+        TimeoutTestContext context = setupTimeoutTestForMoving();
+
+        try {
+            log.info("=== MOVING Timeout Test: Starting maintenance operation ===");
+
+            String endpointId = clusterConfig.getFirstEndpointId();
+            String policy = "single";
+            String sourceNode = clusterConfig.getOptimalSourceNode();
+            String targetNode = clusterConfig.getOptimalTargetNode();
+
+            // Start maintenance operation - notification handler will manage traffic automatically
+            log.info("Starting maintenance operation (migrate + rebind)...");
+
+            // Start the maintenance operation asynchronously
+            faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode).subscribe(
+                    result -> log.info("MOVING operation completed: {}", result),
+                    error -> log.error("MOVING operation failed: {}", error.getMessage()));
+
+            // Wait for MOVING notification - the capture handler will:
+            // 1. Start traffic when MIGRATED is received
+            // 2. Test relaxed timeouts when MOVING is received
+            // 3. Stop traffic after testing
+            log.info("Waiting for MOVING notification (traffic will be managed automatically)...");
+            boolean received = context.capture.waitForNotification(Duration.ofMinutes(3));
+            assertThat(received).isTrue();
+
+            // Verify we got the expected notifications
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
+
+            // Record MOVING operation completion
+            context.capture.recordMovingEnd();
+
+            log.info("=== MOVING Timeout Test Results ===");
+            log.info("MOVING operation duration: {}ms", context.capture.getMovingDuration());
+            log.info("Successful operations: {}", context.capture.getSuccessCount());
+            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
+            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
+
+            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
+            assertThat(context.capture.getTimeoutCount())
+                    .as("Should have detected at least one relaxed timeout during MOVING maintenance. "
+                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
+                    .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
+        } finally {
+            cleanupTimeoutTest(context);
+        }
+    }
+
+    @Test
+    @DisplayName("Timeout relaxed on MIGRATING notification")
+    public void timeoutRelaxedOnMigratingTest() throws InterruptedException {
+        TimeoutTestContext context = setupTimeoutTest();
+
+        try {
+            log.info("=== MIGRATING Timeout Test: Starting maintenance operation ===");
+
+            // Start MIGRATING notification in background
+            String shardId = clusterConfig.getFirstMasterShardId();
+            String sourceNode = clusterConfig.getOptimalSourceNode();
+            String targetNode = clusterConfig.getOptimalTargetNode();
+            String intermediateNode = clusterConfig.getOptimalIntermediateNode();
+
+            log.info("Triggering shard migration for MIGRATING notification asynchronously...");
+
+            // Start the operation but don't wait for completion
+            if (clusterConfig.canMigrateDirectly()) {
+                faultClient.triggerShardMigration(context.bdbId, shardId, sourceNode, targetNode).subscribe(
+                        result -> log.info("MIGRATING operation completed: {}", result),
+                        error -> log.error("MIGRATING operation failed: {}", error.getMessage()));
+            } else {
+                faultClient
+                        .triggerShardMigrationWithEmptyTarget(context.bdbId, shardId, sourceNode, targetNode, intermediateNode)
+                        .subscribe(result -> log.info("MIGRATING operation completed: {}", result),
+                                error -> log.error("MIGRATING operation failed: {}", error.getMessage()));
+            }
+
+            // Wait for MIGRATING notification and automatic timeout testing
+            log.info("Waiting for MIGRATING notification (timeout testing will happen automatically)...");
+            boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
+            assertThat(received).isTrue();
+
+            // Verify notification was received and timeout testing completed
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATING"))).isTrue();
+
+            log.info("=== MIGRATING Timeout Test Results ===");
+            log.info("Successful operations: {}", context.capture.getSuccessCount());
+            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
+            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
+
+            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
+            assertThat(context.capture.getTimeoutCount())
+                    .as("Should have detected at least one relaxed timeout during MIGRATING maintenance. "
+                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
+                    .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
+        } finally {
+            cleanupTimeoutTest(context);
+        }
+    }
+
+    @Test
+    @DisplayName("Timeout relaxed on FAILING_OVER notification")
+    public void timeoutRelaxedOnFailoverTest() throws InterruptedException {
+        TimeoutTestContext context = setupTimeoutTest();
+
+        try {
+            log.info("=== FAILING_OVER Timeout Test: Starting maintenance operation ===");
+
+            // Start FAILING_OVER notification in background
+            String shardId = clusterConfig.getFirstMasterShardId();
+            String nodeId = clusterConfig.getNodeWithMasterShards();
+
+            log.info("Triggering shard failover for FAILING_OVER notification asynchronously...");
+
+            // Start the operation but don't wait for completion
+            faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig).subscribe(
+                    result -> log.info("FAILING_OVER operation completed: {}", result),
+                    error -> log.error("FAILING_OVER operation failed: {}", error.getMessage()));
+
+            // Wait for FAILING_OVER notification and automatic timeout testing
+            log.info("Waiting for FAILING_OVER notification (timeout testing will happen automatically)...");
+            boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
+            assertThat(received).isTrue();
+
+            // Verify notification was received and timeout testing completed
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILING_OVER"))).isTrue();
+
+            log.info("=== FAILING_OVER Timeout Test Results ===");
+            log.info("Successful operations: {}", context.capture.getSuccessCount());
+            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
+            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
+
+            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
+            assertThat(context.capture.getTimeoutCount())
+                    .as("Should have detected at least one relaxed timeout during FAILING_OVER maintenance. "
+                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
+                    .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
+        } finally {
+            cleanupTimeoutTest(context);
+        }
+    }
+
+    @Test
+    @DisplayName("Timeout un-relaxed after MOVING notification")
+    public void timeoutUnrelaxedOnMovingTest() throws InterruptedException {
+        TimeoutTestContext context = setupTimeoutTestForMovingUnrelaxed();
+
+        try {
+            log.info("=== MOVING Un-relaxed Timeout Test: Starting maintenance operation ===");
+
+            String endpointId = clusterConfig.getFirstEndpointId();
+            String policy = "single";
+            String sourceNode = clusterConfig.getOptimalSourceNode();
+            String targetNode = clusterConfig.getOptimalTargetNode();
+
+            // Start maintenance operation - notification handler will manage traffic automatically
+            log.info("Starting maintenance operation (migrate + rebind)...");
+
+            // Start the maintenance operation and wait for it to complete fully
+            log.info("Starting MOVING operation and waiting for it to complete...");
+            Boolean operationResult = faultClient
+                    .triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode)
+                    .block(Duration.ofMinutes(3));
+            assertThat(operationResult).isTrue();
+            log.info("MOVING operation fully completed: {}", operationResult);
+
+            // Verify we got the expected notifications during the operation
+            log.info("Verifying we received the expected notifications...");
+            // Short wait since operation already completed
+            boolean received = context.capture.waitForNotification(Duration.ofSeconds(5));
+
+            assertThat(received).isTrue();
+
+            // Verify we got the expected notifications
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
+
+            // Record MOVING operation completion
+            context.capture.recordMovingEnd();
+
+            log.info("Waiting 15 seconds for maintenance state to be fully cleared...");
+            Thread.sleep(Duration.ofSeconds(15).toMillis());
+            // Stop any remaining traffic for this specific test case
+            log.info("Un-relaxed MOVING test: Stopping all traffic after MOVING operation completed");
+            context.capture.stopContinuousTraffic();
+
+            log.info("=== MOVING Un-relaxed Test: Testing normal timeouts after MOVING ===");
+
+            // Test that timeouts are back to normal after MOVING (including reconnection)
+            log.info("Testing that timeouts are back to normal after MOVING notification and reconnection...");
+            testNormalTimeoutsAfterMoving(context);
+
+            log.info("=== MOVING Un-relaxed Test Results ===");
+            log.info("MOVING operation duration: {}ms", context.capture.getMovingDuration());
+            log.info("Successful operations: {}", context.capture.getSuccessCount());
+            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
+            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
+
+            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
+            assertThat(context.capture.getTimeoutCount())
+                    .as("Should have detected at least one relaxed timeout during MOVING maintenance. "
+                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
+                    .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
+        } finally {
+            cleanupTimeoutTest(context);
+        }
+    }
+
+    @Test
+    @DisplayName("Timeout un-relaxed after MIGRATED notification")
+    public void timeoutUnrelaxedOnMigratedTest() throws InterruptedException {
+        TimeoutTestContext context = setupTimeoutTestForUnrelaxed();
+
+        try {
+            log.info("=== MIGRATED Un-relaxed Timeout Test: Starting maintenance operation ===");
+
+            // Start MIGRATING notification in background
+            String shardId = clusterConfig.getFirstMasterShardId();
+            String sourceNode = clusterConfig.getOptimalSourceNode();
+            String targetNode = clusterConfig.getOptimalTargetNode();
+            String intermediateNode = clusterConfig.getOptimalIntermediateNode();
+
+            log.info("Triggering shard migration for MIGRATED notification asynchronously...");
+
+            // Start the operation but don't wait for completion
+            if (clusterConfig.canMigrateDirectly()) {
+                faultClient.triggerShardMigration(context.bdbId, shardId, sourceNode, targetNode).subscribe(
+                        result -> log.info("MIGRATED operation completed: {}", result),
+                        error -> log.error("MIGRATED operation failed: {}", error.getMessage()));
+            } else {
+                faultClient
+                        .triggerShardMigrationWithEmptyTarget(context.bdbId, shardId, sourceNode, targetNode, intermediateNode)
+                        .subscribe(result -> log.info("MIGRATED operation completed: {}", result),
+                                error -> log.error("MIGRATED operation failed: {}", error.getMessage()));
+            }
+
+            // Wait for MIGRATED notification and automatic timeout testing
+            log.info("Waiting for MIGRATED notification (timeout testing will happen automatically)...");
+            boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
+            assertThat(received).isTrue();
+
+            // Verify notification was received and timeout testing completed
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
+
+            log.info("=== MIGRATED Un-relaxed Test: Testing normal timeouts after MIGRATED ===");
+
+            // Test that timeouts are back to normal after MIGRATED
+            log.info("Testing that timeouts are back to normal after MIGRATED notification...");
+            testNormalTimeoutsAfterMaintenance(context);
+
+            log.info("=== MIGRATED Un-relaxed Test Results ===");
+            log.info("Successful operations: {}", context.capture.getSuccessCount());
+            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
+            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
+
+            // Verify that we detected relaxed timeouts during maintenance
+            assertThat(context.capture.getTimeoutCount())
+                    .as("Should have detected at least one relaxed timeout during MIGRATING maintenance. "
+                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
+                    .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
+        } finally {
+            cleanupTimeoutTest(context);
+        }
+    }
+
+    @Test
+    @DisplayName("Timeout un-relaxed after FAILED_OVER notification")
+    public void timeoutUnrelaxedOnFailedoverTest() throws InterruptedException {
+        TimeoutTestContext context = setupTimeoutTestForUnrelaxed();
+
+        try {
+            log.info("=== FAILED_OVER Un-relaxed Timeout Test: Starting maintenance operation ===");
+
+            // Start FAILING_OVER notification in background
+            String shardId = clusterConfig.getFirstMasterShardId();
+            String nodeId = clusterConfig.getNodeWithMasterShards();
+
+            log.info("Triggering shard failover for FAILED_OVER notification asynchronously...");
+
+            // Start the operation but don't wait for completion
+            faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig).subscribe(
+                    result -> log.info("FAILED_OVER operation completed: {}", result),
+                    error -> log.error("FAILED_OVER operation failed: {}", error.getMessage()));
+
+            // Wait for FAILED_OVER notification and automatic timeout testing
+            log.info("Waiting for FAILED_OVER notification (timeout testing will happen automatically)...");
+            boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
+            assertThat(received).isTrue();
+
+            // Verify notification was received and timeout testing completed
+            assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILED_OVER"))).isTrue();
+
+            log.info("=== FAILED_OVER Un-relaxed Test: Testing normal timeouts after FAILED_OVER ===");
+
+            // Test that timeouts are back to normal after FAILED_OVER
+            log.info("Testing that timeouts are back to normal after FAILED_OVER notification...");
+            testNormalTimeoutsAfterMaintenance(context);
+
+            log.info("=== FAILED_OVER Un-relaxed Test Results ===");
+            log.info("Successful operations: {}", context.capture.getSuccessCount());
+            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
+            log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
+
+            // Verify that we detected relaxed timeouts during maintenance
+            assertThat(context.capture.getTimeoutCount())
+                    .as("Should have detected at least one relaxed timeout during FAILING_OVER maintenance. "
+                            + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
+                    .isGreaterThan(0);
+
+            // End test phase to prevent capturing cleanup notifications
+            context.capture.endTestPhase();
+
+        } finally {
+            cleanupTimeoutTest(context);
+        }
     }
 
 }
