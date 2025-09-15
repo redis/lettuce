@@ -204,9 +204,9 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.1 - Receive MOVING push notification during endpoint rebind")
+    @DisplayName("Receive MOVING push notification during endpoint rebind")
     public void receiveMovingPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.1 - Receive MOVING push notification during endpoint rebind");
+        log.info("Starting test:  Receive MOVING push notification during endpoint rebind");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger MOVING notification using the proper two-step process:
@@ -266,9 +266,9 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.2 - Receive MIGRATING push notification during node migration")
+    @DisplayName("Receive MIGRATING push notification during node migration")
     public void receiveMigratingPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.2 - Receive MIGRATING push notification during node migration");
+        log.info("Starting test: Receive MIGRATING push notification during node migration");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger node migration using optimal node selection
@@ -330,9 +330,9 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.3 - Receive MIGRATED push notification on migration completion")
+    @DisplayName("Receive MIGRATED push notification on migration completion")
     public void receiveMigratedPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.3 - Receive MIGRATED push notification on migration completion");
+        log.info("Starting test: Receive MIGRATED push notification on migration completion");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger migration to get into migrating state using optimal node selection
@@ -392,9 +392,9 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.4 - Receive FAILING_OVER push notification during shard failover")
+    @DisplayName("Receive FAILING_OVER push notification during shard failover")
     public void receiveFailingOverPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.4 - Receive FAILING_OVER push notification during shard failover");
+        log.info("Starting test:  Receive FAILING_OVER push notification during shard failover");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger shard failover using dynamic node discovery
@@ -442,9 +442,9 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.5 - Receive FAILED_OVER push notification on failover completion")
+    @DisplayName("Receive FAILED_OVER push notification on failover completion")
     public void receiveFailedOverPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.5 - Receive FAILED_OVER push notification on failover completion");
+        log.info("Starting test: Receive FAILED_OVER push notification on failover completion");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger failover to get into failing over state using dynamic node discovery
