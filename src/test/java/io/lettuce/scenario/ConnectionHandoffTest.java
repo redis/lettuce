@@ -6,10 +6,13 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +34,10 @@ import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.protocol.MaintenanceAwareExpiryWriter;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.ConnectionTestUtil;
@@ -64,6 +70,11 @@ public class ConnectionHandoffTest {
 
     // 10 seconds - for ping operations
     private static final Duration PING_TIMEOUT = Duration.ofSeconds(10);
+
+    // Timeout constants for command execution
+    private static final Duration NORMAL_COMMAND_TIMEOUT = Duration.ofMillis(30);
+
+    private static final Duration RELAXED_TIMEOUT_ADDITION = Duration.ofMillis(100);
 
     private static Endpoint mStandard;
 
@@ -218,6 +229,132 @@ public class ConnectionHandoffTest {
 
         public boolean isReconnectionTested() {
             return reconnectionTested.get();
+        }
+
+    }
+
+    /**
+     * Continuous traffic generator for async GET/SET operations with failure counting
+     */
+    public static class ContinuousTrafficGenerator {
+
+        private final RedisAsyncCommands<String, String> asyncCommands;
+
+        private final AtomicBoolean stopTraffic = new AtomicBoolean(false);
+
+        private final AtomicLong successfulOperations = new AtomicLong(0);
+
+        private final AtomicLong failedOperations = new AtomicLong(0);
+
+        private final AtomicInteger commandCounter = new AtomicInteger(0);
+
+        private final List<CompletableFuture<Void>> trafficFutures = new CopyOnWriteArrayList<>();
+
+        private final AtomicBoolean trafficStarted = new AtomicBoolean(false);
+
+        public ContinuousTrafficGenerator(RedisAsyncCommands<String, String> asyncCommands) {
+            this.asyncCommands = asyncCommands;
+        }
+
+        /**
+         * Start continuous traffic with async GET/SET commands in 50:50 ratio
+         */
+        public void startTraffic() {
+            if (!trafficStarted.compareAndSet(false, true)) {
+                log.info("Traffic already started, skipping...");
+                return;
+            }
+
+            log.info("Starting continuous async traffic (GET/SET 50:50 ratio)...");
+            stopTraffic.set(false);
+
+            CompletableFuture<Void> trafficFuture = CompletableFuture.runAsync(() -> {
+                while (!stopTraffic.get()) {
+                    try {
+                        int cmdNumber = commandCounter.incrementAndGet();
+                        String key = "traffic-key-" + (cmdNumber % 100); // Rotate through 100 keys
+
+                        // 50:50 ratio between GET and SET operations
+                        if (cmdNumber % 2 == 0) {
+                            // SET operation
+                            String value = "value-" + cmdNumber;
+                            RedisFuture<String> future = asyncCommands.set(key, value);
+                            handleAsyncResult(future, "SET " + key);
+                        } else {
+                            // GET operation
+                            RedisFuture<String> future = asyncCommands.get(key);
+                            handleAsyncResult(future, "GET " + key);
+                        }
+
+                        // Small delay to prevent overwhelming the connection
+                        Thread.sleep(10);
+                    } catch (Exception e) {
+                        log.warn("Traffic generation error: {}", e.getMessage());
+                        failedOperations.incrementAndGet();
+                    }
+                }
+                log.info("Traffic generator stopped after {} commands", commandCounter.get());
+            });
+
+            trafficFutures.add(trafficFuture);
+            log.info("Continuous async traffic started");
+        }
+
+        /**
+         * Handle async command results and count successes/failures
+         */
+        private void handleAsyncResult(RedisFuture<?> future, String operation) {
+            future.whenComplete((result, throwable) -> {
+                if (throwable != null) {
+                    log.debug("Traffic command failed: {} - {}", operation, throwable.getMessage());
+                    failedOperations.incrementAndGet();
+                } else {
+                    log.debug("Traffic command succeeded: {}", operation);
+                    successfulOperations.incrementAndGet();
+                }
+            });
+        }
+
+        /**
+         * Stop traffic generation
+         */
+        public void stopTraffic() {
+            if (!trafficStarted.get()) {
+                log.info("Traffic not started, nothing to stop");
+                return;
+            }
+
+            log.info("Stopping continuous traffic...");
+            stopTraffic.set(true);
+
+            // Wait for all traffic futures to complete
+            for (CompletableFuture<Void> future : trafficFutures) {
+                try {
+                    future.get(Duration.ofSeconds(10).toMillis(), TimeUnit.MILLISECONDS);
+                } catch (Exception e) {
+                    log.warn("Error waiting for traffic future to complete: {}", e.getMessage());
+                }
+            }
+
+            trafficStarted.set(false);
+            log.info("Traffic stopped. Total commands: {}, Successful: {}, Failed: {}", commandCounter.get(),
+                    successfulOperations.get(), failedOperations.get());
+        }
+
+        public long getSuccessfulOperations() {
+            return successfulOperations.get();
+        }
+
+        public long getFailedOperations() {
+            return failedOperations.get();
+        }
+
+        public int getTotalCommands() {
+            return commandCounter.get();
+        }
+
+        public boolean isTrafficActive() {
+            return trafficStarted.get() && !stopTraffic.get();
         }
 
     }
@@ -548,6 +685,73 @@ public class ConnectionHandoffTest {
         context.capture.endTestPhase();
 
         log.info("Completed connectionHandedOffToNewEndpointExternalIPTest");
+    }
+
+    @Test
+    @DisplayName("Traffic resumes correctly after MOVING with async GET/SET operations")
+    public void trafficResumesAfterMovingTest() throws InterruptedException {
+        log.info("Starting trafficResumesAfterMovingTest");
+        HandoffTestContext context = setupHandoffTest(AddressType.EXTERNAL_IP);
+
+        // Create async commands and traffic generator
+        RedisAsyncCommands<String, String> asyncCommands = context.connection.async();
+        ContinuousTrafficGenerator trafficGenerator = new ContinuousTrafficGenerator(asyncCommands);
+
+        // Start traffic before maintenance operation
+        log.info("=== Starting traffic before MOVING operation ===");
+        trafficGenerator.startTraffic();
+
+        // Let traffic run for a bit to establish baseline
+        Thread.sleep(Duration.ofSeconds(2).toMillis());
+        long initialSuccessful = trafficGenerator.getSuccessfulOperations();
+        long initialFailed = trafficGenerator.getFailedOperations();
+        log.info("Initial traffic stats - Successful: {}, Failed: {}", initialSuccessful, initialFailed);
+
+        // Perform handoff operation while traffic is running
+        log.info("=== Performing MOVING operation while traffic is active ===");
+        performHandoffOperation(context, "Traffic Resumption Test");
+
+        // Continue traffic during and after maintenance
+        log.info("=== Continuing traffic during maintenance ===");
+        Thread.sleep(Duration.ofSeconds(5).toMillis());
+
+        // Wait for reconnection verification
+        reconnectionVerification(context, "Traffic Resumption Test");
+
+        // Let traffic continue after reconnection to verify resumption
+        log.info("=== Allowing traffic to continue after reconnection ===");
+        Thread.sleep(Duration.ofSeconds(3).toMillis());
+
+        // Stop traffic and collect final statistics
+        trafficGenerator.stopTraffic();
+
+        long finalSuccessful = trafficGenerator.getSuccessfulOperations();
+        long finalFailed = trafficGenerator.getFailedOperations();
+        int totalCommands = trafficGenerator.getTotalCommands();
+
+        log.info("=== Traffic Resumption Test Results ===");
+        log.info("Total commands executed: {}", totalCommands);
+        log.info("Successful operations: {}", finalSuccessful);
+        log.info("Failed operations: {}", finalFailed);
+        log.info("Success rate: {:.2f}%", (double) finalSuccessful / totalCommands * 100);
+
+        // Verify traffic resumed successfully after MOVING
+        assertThat(totalCommands).as("Should have executed traffic commands").isGreaterThan(0);
+        assertThat(finalSuccessful).as("Should have successful operations after MOVING").isGreaterThan(initialSuccessful);
+
+        // Allow some failures during maintenance but most should succeed
+        double failureRate = (double) finalFailed / totalCommands;
+        assertThat(failureRate).as("Failure rate should be reasonable (< 50%)").isLessThan(0.5);
+
+        // Verify we had traffic both before and after the maintenance operation
+        assertThat(finalSuccessful - initialSuccessful).as("Should have additional successful operations after MOVING")
+                .isGreaterThan(0);
+
+        log.info("✓ Traffic resumed successfully after MOVING operation");
+
+        context.capture.endTestPhase();
+
+        log.info("Completed trafficResumesAfterMovingTest");
     }
 
     @Test
@@ -1313,6 +1517,106 @@ public class ConnectionHandoffTest {
         leakDetector.stopMonitoring();
 
         log.info("=== Connection Closure & Memory Leak Detection Test Completed Successfully ===");
+    }
+
+    @Test
+    @DisplayName("CAE-1130.5 - Maintenance notifications only enabled with RESP3")
+    public void onlyEnabledWithRESP3Test() throws InterruptedException {
+        // Setup connection with RESP2 (not RESP3) to test that maintenance events fail
+        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
+                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).withTimeout(Duration.ofSeconds(5))
+                .build();
+
+        RedisClient client = RedisClient.create(uri);
+
+        TimeoutOptions timeoutOptions = TimeoutOptions.builder().timeoutCommands().fixedTimeout(NORMAL_COMMAND_TIMEOUT)
+                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
+
+        // CRITICAL: Use RESP2 instead of RESP3 - maintenance events should fail with error
+        ClientOptions options = ClientOptions.builder().autoReconnect(true).protocolVersion(ProtocolVersion.RESP2) // Changed
+                                                                                                                   // from RESP3
+                                                                                                                   // to RESP2
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP))
+                .timeoutOptions(timeoutOptions).build();
+
+        client.setOptions(options);
+
+        log.info("=== RESP2 Test: Attempting to connect with maintenance events enabled (should fail) ===");
+
+        // The connection attempt should fail because CLIENT MAINT-NOTIFICATIONS command is not supported in RESP2
+        boolean connectionFailed = false;
+        String errorMessage = null;
+        String rootCauseMessage = null;
+        Exception capturedException = null;
+
+        try {
+            StatefulRedisConnection<String, String> connection = client.connect();
+            log.info("Connection unexpectedly succeeded with RESP2 and maintenance events");
+            connection.close();
+        } catch (Exception e) {
+            connectionFailed = true;
+            capturedException = e;
+            errorMessage = e.getMessage();
+
+            // Walk through the exception chain to find the root cause
+            Throwable rootCause = e;
+            while (rootCause.getCause() != null) {
+                rootCause = rootCause.getCause();
+            }
+            rootCauseMessage = rootCause.getMessage();
+
+            log.info("Connection failed as expected with RESP2 and maintenance events");
+            log.info("Top-level error: {}", errorMessage);
+            log.info("Root cause error: {}", rootCauseMessage);
+            log.info("Full exception chain:");
+
+            // Log the full exception chain
+            Throwable current = e;
+            int level = 0;
+            while (current != null) {
+                log.info("  [{}] {}: {}", level++, current.getClass().getSimpleName(), current.getMessage());
+                current = current.getCause();
+            }
+        }
+
+        log.info("=== RESP2 Test Results ===");
+        log.info("Connection failed: {}", connectionFailed);
+        log.info("Top-level error message: {}", errorMessage);
+        log.info("Root cause error message: {}", rootCauseMessage);
+
+        // VALIDATION: Connection should fail when trying to use maintenance events with RESP2
+        assertThat(connectionFailed).as("Connection should fail when trying to use maintenance events with RESP2 protocol")
+                .isTrue();
+
+        // VALIDATION: Check for the exact "ERR: CLIENT NOTIFICATION is not supported in RESP2 mode" error
+        boolean foundSpecificError = false;
+        String specificErrorMessage = null;
+
+        if (capturedException != null) {
+            // Walk through the entire exception chain looking for the exact error message
+            Throwable current = capturedException;
+            while (current != null) {
+                String currentMessage = current.getMessage();
+                if (currentMessage != null
+                        && currentMessage.contains("ERR: CLIENT NOTIFICATION is not supported in RESP2 mode")) {
+                    foundSpecificError = true;
+                    specificErrorMessage = currentMessage;
+                    break;
+                }
+                current = current.getCause();
+            }
+        }
+
+        // VALIDATION: Must find the exact error message
+        assertThat(foundSpecificError).as(
+                "Should find the exact error 'ERR: CLIENT NOTIFICATION is not supported in RESP2 mode' in the exception chain")
+                .isTrue();
+
+        assertThat(specificErrorMessage).as("Should contain the exact CLIENT NOTIFICATION error message")
+                .contains("ERR: CLIENT NOTIFICATION is not supported in RESP2 mode");
+
+        log.info("RESP2 validation: Found exact maintenance notification error as expected - {}", specificErrorMessage);
+
     }
 
 }
