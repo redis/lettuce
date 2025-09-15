@@ -672,6 +672,252 @@ public class ConnectionHandoffTest {
         }
     }
 
+    /**
+     * Specialized capture class for dual connection testing that creates a second connection when MIGRATED is received
+     */
+    public static class DualConnectionCapture implements MaintenanceNotificationCapture {
+
+        private final HandoffCapture firstCapture;
+
+        private final RedisURI uri;
+
+        private final StatefulRedisConnection<String, String> firstConnection;
+
+        private final AtomicReference<HandoffCapture> secondCapture = new AtomicReference<>();
+
+        private final AtomicReference<RedisClient> secondClient = new AtomicReference<>();
+
+        private final AtomicReference<StatefulRedisConnection<String, String>> secondConnection = new AtomicReference<>();
+
+        private final CountDownLatch secondConnectionMovingLatch = new CountDownLatch(1);
+
+        private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
+
+        public DualConnectionCapture(HandoffCapture firstCapture, RedisURI uri, String bdbId,
+                StatefulRedisConnection<String, String> firstConnection) {
+            this.firstCapture = firstCapture;
+            this.uri = uri;
+            this.firstConnection = firstConnection;
+        }
+
+        @Override
+        public void captureNotification(String notification) {
+            // Only capture notifications during the test phase
+            if (!testPhaseActive.get()) {
+                log.debug("Ignoring notification during cleanup phase: {}", notification);
+                return;
+            }
+
+            // Forward to first capture
+            firstCapture.captureNotification(notification);
+
+            // If this is a MIGRATED notification and we haven't created second connection yet, create it
+            // MIGRATED comes right after the bind is fired, before MOVING notification
+            if (notification.contains("MIGRATED") && secondConnection.get() == null) {
+                log.info("MIGRATED notification received - creating second connection right after bind");
+                createSecondConnection();
+            }
+        }
+
+        private void createSecondConnection() {
+            try {
+                log.info("Creating second connection for dual connection test...");
+
+                // Get the channel from the first connection to determine the actual IP address
+                Channel firstChannel = getChannelFromConnection(firstConnection);
+                String actualIpAddress = null;
+                int actualPort = -1;
+
+                if (firstChannel != null && firstChannel.remoteAddress() != null) {
+                    String remoteAddress = firstChannel.remoteAddress().toString();
+                    log.info("First connection remote address: {}", remoteAddress);
+
+                    // Handle different address formats:
+                    // Format 1: "/54.74.227.236:12000" (direct IP)
+                    // Format 2: "redis-12000.ivo-test-a6c42e54.env0.qa.redislabs.com/54.74.227.236:12000" (FQDN with resolved
+                    // IP)
+
+                    String ipPortString = null;
+                    if (remoteAddress.contains("/")) {
+                        // Extract the part after the last slash (the actual IP:port)
+                        int lastSlashIndex = remoteAddress.lastIndexOf('/');
+                        ipPortString = remoteAddress.substring(lastSlashIndex + 1);
+                    } else {
+                        // Direct IP:port format
+                        ipPortString = remoteAddress;
+                    }
+
+                    if (ipPortString != null) {
+                        String[] parts = ipPortString.split(":");
+                        if (parts.length == 2) {
+                            actualIpAddress = parts[0];
+                            actualPort = Integer.parseInt(parts[1]);
+                            log.info("Extracted actual IP address: {}:{}", actualIpAddress, actualPort);
+                        }
+                    }
+                } else {
+                    log.warn("Could not determine actual IP address from first connection, using original URI");
+                }
+
+                // Create URI for the second connection - use the same IP address as the first connection if available
+                RedisURI secondUri;
+                if (actualIpAddress != null && actualPort != -1) {
+                    secondUri = RedisURI.builder().withHost(actualIpAddress).withPort(actualPort)
+                            .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
+                    log.info("Creating second connection to same IP address: {}:{}", actualIpAddress, actualPort);
+                } else {
+                    log.warn("Could not extract actual IP address, falling back to original URI");
+                    secondUri = uri;
+                }
+
+                RedisClient client = RedisClient.create(secondUri);
+                ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                        .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
+                client.setOptions(options);
+
+                StatefulRedisConnection<String, String> connection = client.connect();
+                HandoffCapture capture = new HandoffCapture() {
+
+                    @Override
+                    public void captureNotification(String notification) {
+                        super.captureNotification(notification);
+                        // Signal when second connection receives MOVING
+                        if (notification.contains("MOVING")) {
+                            log.info("Second connection received MOVING notification");
+                            secondConnectionMovingLatch.countDown();
+                        }
+                    }
+
+                };
+
+                // Setup push notification monitoring on second connection with shorter timeout and immediate pinging
+                MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, Duration.ofSeconds(45), PING_TIMEOUT,
+                        Duration.ofMillis(1000)); // Much shorter timeout and interval
+
+                secondClient.set(client);
+                secondConnection.set(connection);
+                secondCapture.set(capture);
+
+                log.info("Second connection created and monitoring setup completed");
+
+            } catch (Exception e) {
+                log.error("Failed to create second connection: {}", e.getMessage(), e);
+            }
+        }
+
+        public boolean waitForSecondConnectionMoving(Duration timeout) throws InterruptedException {
+            return secondConnectionMovingLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        public HandoffCapture getFirstCapture() {
+            return firstCapture;
+        }
+
+        public HandoffCapture getSecondCapture() {
+            return secondCapture.get();
+        }
+
+        public RedisClient getSecondClient() {
+            return secondClient.get();
+        }
+
+        public StatefulRedisConnection<String, String> getSecondConnection() {
+            return secondConnection.get();
+        }
+
+        public void endTestPhase() {
+            testPhaseActive.set(false);
+            firstCapture.endTestPhase();
+            if (secondCapture.get() != null) {
+                secondCapture.get().endTestPhase();
+            }
+            log.info("Dual connection test phase ended - notifications will be ignored during cleanup");
+        }
+
+    }
+
+    /**
+     * Specialized capture class to track all 5 notification types
+     */
+    public static class AllNotificationTypesCapture implements MaintenanceNotificationCapture {
+
+        private final List<String> receivedNotifications = new CopyOnWriteArrayList<>();
+
+        private final CountDownLatch notificationLatch = new CountDownLatch(1);
+
+        private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
+
+        // Counters for each notification type
+        private final AtomicReference<Integer> movingCount = new AtomicReference<>(0);
+
+        private final AtomicReference<Integer> migratingCount = new AtomicReference<>(0);
+
+        private final AtomicReference<Integer> migratedCount = new AtomicReference<>(0);
+
+        private final AtomicReference<Integer> failingOverCount = new AtomicReference<>(0);
+
+        private final AtomicReference<Integer> failedOverCount = new AtomicReference<>(0);
+
+        public void captureNotification(String notification) {
+            if (testPhaseActive.get()) {
+                receivedNotifications.add(notification);
+                log.info("Captured notification: {}", notification);
+
+                // Count notification types
+                if (notification.contains("MOVING")) {
+                    movingCount.updateAndGet(count -> count + 1);
+                    notificationLatch.countDown();
+                } else if (notification.contains("MIGRATING")) {
+                    migratingCount.updateAndGet(count -> count + 1);
+                    notificationLatch.countDown();
+                } else if (notification.contains("MIGRATED")) {
+                    migratedCount.updateAndGet(count -> count + 1);
+                    notificationLatch.countDown();
+                } else if (notification.contains("FAILING_OVER")) {
+                    failingOverCount.updateAndGet(count -> count + 1);
+                    notificationLatch.countDown();
+                } else if (notification.contains("FAILED_OVER")) {
+                    failedOverCount.updateAndGet(count -> count + 1);
+                    notificationLatch.countDown();
+                }
+            }
+        }
+
+        public boolean waitForNotifications(Duration timeout) throws InterruptedException {
+            return notificationLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        public List<String> getReceivedNotifications() {
+            return receivedNotifications;
+        }
+
+        public void endTestPhase() {
+            testPhaseActive.set(false);
+            log.info("Test phase ended - notifications will be ignored during cleanup");
+        }
+
+        public int getMovingCount() {
+            return movingCount.get();
+        }
+
+        public int getMigratingCount() {
+            return migratingCount.get();
+        }
+
+        public int getMigratedCount() {
+            return migratedCount.get();
+        }
+
+        public int getFailingOverCount() {
+            return failingOverCount.get();
+        }
+
+        public int getFailedOverCount() {
+            return failedOverCount.get();
+        }
+
+    }
+
     @Test
     @DisplayName("Connection handed off to new endpoint with External IP")
     public void connectionHandedOffToNewEndpointExternalIPTest() throws InterruptedException {
@@ -752,38 +998,6 @@ public class ConnectionHandoffTest {
         context.capture.endTestPhase();
 
         log.info("Completed trafficResumesAfterMovingTest");
-    }
-
-    @Test
-    @Disabled("This test requires internal IP endpoints, which isn't available in automation")
-    @DisplayName("Connection handed off to new endpoint with Internal IP")
-    public void connectionHandedOffToNewEndpointInternalIPTest() throws InterruptedException {
-        log.info("Starting connectionHandedOffToNewEndpointInternalIPTest");
-        HandoffTestContext context = setupHandoffTest(AddressType.INTERNAL_IP);
-
-        performHandoffOperation(context, "Internal IP Handoff Test");
-        reconnectionVerification(context, "Internal IP Handoff Test");
-
-        // End test phase to prevent capturing cleanup notifications
-        context.capture.endTestPhase();
-
-        log.info("Completed connectionHandedOffToNewEndpointInternalIPTest");
-    }
-
-    @Test
-    @Disabled("This test requres internal FQDN endpoints, which are not available in the current cluster configuration")
-    @DisplayName("Connection handoff with FQDN Internal Name")
-    public void connectionHandoffWithFQDNInternalNameTest() throws InterruptedException {
-        log.info("Starting connectionHandoffWithFQDNInternalNameTest");
-        HandoffTestContext context = setupHandoffTest(AddressType.INTERNAL_FQDN);
-
-        performHandoffOperation(context, "Internal FQDN Handoff Test");
-        reconnectionVerification(context, "Internal FQDN Handoff Test");
-
-        // End test phase to prevent capturing cleanup notifications
-        context.capture.endTestPhase();
-
-        log.info("Completed connectionHandoffWithFQDNInternalNameTest");
     }
 
     @Test
@@ -1160,252 +1374,6 @@ public class ConnectionHandoffTest {
         }
     }
 
-    /**
-     * Specialized capture class for dual connection testing that creates a second connection when MIGRATED is received
-     */
-    public static class DualConnectionCapture implements MaintenanceNotificationCapture {
-
-        private final HandoffCapture firstCapture;
-
-        private final RedisURI uri;
-
-        private final StatefulRedisConnection<String, String> firstConnection;
-
-        private final AtomicReference<HandoffCapture> secondCapture = new AtomicReference<>();
-
-        private final AtomicReference<RedisClient> secondClient = new AtomicReference<>();
-
-        private final AtomicReference<StatefulRedisConnection<String, String>> secondConnection = new AtomicReference<>();
-
-        private final CountDownLatch secondConnectionMovingLatch = new CountDownLatch(1);
-
-        private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
-
-        public DualConnectionCapture(HandoffCapture firstCapture, RedisURI uri, String bdbId,
-                StatefulRedisConnection<String, String> firstConnection) {
-            this.firstCapture = firstCapture;
-            this.uri = uri;
-            this.firstConnection = firstConnection;
-        }
-
-        @Override
-        public void captureNotification(String notification) {
-            // Only capture notifications during the test phase
-            if (!testPhaseActive.get()) {
-                log.debug("Ignoring notification during cleanup phase: {}", notification);
-                return;
-            }
-
-            // Forward to first capture
-            firstCapture.captureNotification(notification);
-
-            // If this is a MIGRATED notification and we haven't created second connection yet, create it
-            // MIGRATED comes right after the bind is fired, before MOVING notification
-            if (notification.contains("MIGRATED") && secondConnection.get() == null) {
-                log.info("MIGRATED notification received - creating second connection right after bind");
-                createSecondConnection();
-            }
-        }
-
-        private void createSecondConnection() {
-            try {
-                log.info("Creating second connection for dual connection test...");
-
-                // Get the channel from the first connection to determine the actual IP address
-                Channel firstChannel = getChannelFromConnection(firstConnection);
-                String actualIpAddress = null;
-                int actualPort = -1;
-
-                if (firstChannel != null && firstChannel.remoteAddress() != null) {
-                    String remoteAddress = firstChannel.remoteAddress().toString();
-                    log.info("First connection remote address: {}", remoteAddress);
-
-                    // Handle different address formats:
-                    // Format 1: "/54.74.227.236:12000" (direct IP)
-                    // Format 2: "redis-12000.ivo-test-a6c42e54.env0.qa.redislabs.com/54.74.227.236:12000" (FQDN with resolved
-                    // IP)
-
-                    String ipPortString = null;
-                    if (remoteAddress.contains("/")) {
-                        // Extract the part after the last slash (the actual IP:port)
-                        int lastSlashIndex = remoteAddress.lastIndexOf('/');
-                        ipPortString = remoteAddress.substring(lastSlashIndex + 1);
-                    } else {
-                        // Direct IP:port format
-                        ipPortString = remoteAddress;
-                    }
-
-                    if (ipPortString != null) {
-                        String[] parts = ipPortString.split(":");
-                        if (parts.length == 2) {
-                            actualIpAddress = parts[0];
-                            actualPort = Integer.parseInt(parts[1]);
-                            log.info("Extracted actual IP address: {}:{}", actualIpAddress, actualPort);
-                        }
-                    }
-                } else {
-                    log.warn("Could not determine actual IP address from first connection, using original URI");
-                }
-
-                // Create URI for the second connection - use the same IP address as the first connection if available
-                RedisURI secondUri;
-                if (actualIpAddress != null && actualPort != -1) {
-                    secondUri = RedisURI.builder().withHost(actualIpAddress).withPort(actualPort)
-                            .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
-                    log.info("Creating second connection to same IP address: {}:{}", actualIpAddress, actualPort);
-                } else {
-                    log.warn("Could not extract actual IP address, falling back to original URI");
-                    secondUri = uri;
-                }
-
-                RedisClient client = RedisClient.create(secondUri);
-                ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                        .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
-                client.setOptions(options);
-
-                StatefulRedisConnection<String, String> connection = client.connect();
-                HandoffCapture capture = new HandoffCapture() {
-
-                    @Override
-                    public void captureNotification(String notification) {
-                        super.captureNotification(notification);
-                        // Signal when second connection receives MOVING
-                        if (notification.contains("MOVING")) {
-                            log.info("Second connection received MOVING notification");
-                            secondConnectionMovingLatch.countDown();
-                        }
-                    }
-
-                };
-
-                // Setup push notification monitoring on second connection with shorter timeout and immediate pinging
-                MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, Duration.ofSeconds(45), PING_TIMEOUT,
-                        Duration.ofMillis(1000)); // Much shorter timeout and interval
-
-                secondClient.set(client);
-                secondConnection.set(connection);
-                secondCapture.set(capture);
-
-                log.info("Second connection created and monitoring setup completed");
-
-            } catch (Exception e) {
-                log.error("Failed to create second connection: {}", e.getMessage(), e);
-            }
-        }
-
-        public boolean waitForSecondConnectionMoving(Duration timeout) throws InterruptedException {
-            return secondConnectionMovingLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        }
-
-        public HandoffCapture getFirstCapture() {
-            return firstCapture;
-        }
-
-        public HandoffCapture getSecondCapture() {
-            return secondCapture.get();
-        }
-
-        public RedisClient getSecondClient() {
-            return secondClient.get();
-        }
-
-        public StatefulRedisConnection<String, String> getSecondConnection() {
-            return secondConnection.get();
-        }
-
-        public void endTestPhase() {
-            testPhaseActive.set(false);
-            firstCapture.endTestPhase();
-            if (secondCapture.get() != null) {
-                secondCapture.get().endTestPhase();
-            }
-            log.info("Dual connection test phase ended - notifications will be ignored during cleanup");
-        }
-
-    }
-
-    /**
-     * Specialized capture class to track all 5 notification types
-     */
-    public static class AllNotificationTypesCapture implements MaintenanceNotificationCapture {
-
-        private final List<String> receivedNotifications = new CopyOnWriteArrayList<>();
-
-        private final CountDownLatch notificationLatch = new CountDownLatch(1);
-
-        private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
-
-        // Counters for each notification type
-        private final AtomicReference<Integer> movingCount = new AtomicReference<>(0);
-
-        private final AtomicReference<Integer> migratingCount = new AtomicReference<>(0);
-
-        private final AtomicReference<Integer> migratedCount = new AtomicReference<>(0);
-
-        private final AtomicReference<Integer> failingOverCount = new AtomicReference<>(0);
-
-        private final AtomicReference<Integer> failedOverCount = new AtomicReference<>(0);
-
-        public void captureNotification(String notification) {
-            if (testPhaseActive.get()) {
-                receivedNotifications.add(notification);
-                log.info("Captured notification: {}", notification);
-
-                // Count notification types
-                if (notification.contains("MOVING")) {
-                    movingCount.updateAndGet(count -> count + 1);
-                    notificationLatch.countDown();
-                } else if (notification.contains("MIGRATING")) {
-                    migratingCount.updateAndGet(count -> count + 1);
-                    notificationLatch.countDown();
-                } else if (notification.contains("MIGRATED")) {
-                    migratedCount.updateAndGet(count -> count + 1);
-                    notificationLatch.countDown();
-                } else if (notification.contains("FAILING_OVER")) {
-                    failingOverCount.updateAndGet(count -> count + 1);
-                    notificationLatch.countDown();
-                } else if (notification.contains("FAILED_OVER")) {
-                    failedOverCount.updateAndGet(count -> count + 1);
-                    notificationLatch.countDown();
-                }
-            }
-        }
-
-        public boolean waitForNotifications(Duration timeout) throws InterruptedException {
-            return notificationLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        }
-
-        public List<String> getReceivedNotifications() {
-            return receivedNotifications;
-        }
-
-        public void endTestPhase() {
-            testPhaseActive.set(false);
-            log.info("Test phase ended - notifications will be ignored during cleanup");
-        }
-
-        public int getMovingCount() {
-            return movingCount.get();
-        }
-
-        public int getMigratingCount() {
-            return migratingCount.get();
-        }
-
-        public int getMigratedCount() {
-            return migratedCount.get();
-        }
-
-        public int getFailingOverCount() {
-            return failingOverCount.get();
-        }
-
-        public int getFailedOverCount() {
-            return failedOverCount.get();
-        }
-
-    }
-
     @Test
     @DisplayName("Detect connection closure and verify no memory leaks during migrate + bind using EventBus monitoring")
     public void detectConnectionClosureAndMemoryLeaksTest() throws InterruptedException {
@@ -1520,7 +1488,7 @@ public class ConnectionHandoffTest {
     }
 
     @Test
-    @DisplayName("CAE-1130.5 - Maintenance notifications only enabled with RESP3")
+    @DisplayName("Maintenance notifications only enabled with RESP3")
     public void onlyEnabledWithRESP3Test() throws InterruptedException {
         // Setup connection with RESP2 (not RESP3) to test that maintenance events fail
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))

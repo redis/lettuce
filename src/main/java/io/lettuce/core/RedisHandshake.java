@@ -345,6 +345,11 @@ class RedisHandshake implements ConnectionInitializer {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Maintenance events not enabled", error);
                 }
+                if (error instanceof RuntimeException) {
+                    throw (RuntimeException) error;
+                } else {
+                    throw new RuntimeException(error);
+                }
             }
             return null;
         });
