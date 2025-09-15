@@ -16,12 +16,6 @@
         <!--
         <Logger name="org.testcontainers" level="DEBUG"/>
         -->
-        <Logger name="io.lettuce.core.protocol.CommandHandler" level="INFO"/>
-        <Logger name="io.lettuce.core.cluster.RedisClusterClient" level="INFO"/>
-        <Logger name="io.lettuce.core.protocol.ConnectionWatchdog" level="INFO"/>
-        <Logger name="io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog" level="INFO"/>
-        <Logger name="io.lettuce.core.protocol.MaintenanceAwareExpiryWriter" level="INFO"/>
-        <Logger name="io.lettuce.core.protocol.ReconnectionHandler" level="INFO"/>
         <Logger name="io.lettuce.scenario" level="INFO"/>
         <Root level="FATAL">
             <AppenderRef ref="Console"/>
