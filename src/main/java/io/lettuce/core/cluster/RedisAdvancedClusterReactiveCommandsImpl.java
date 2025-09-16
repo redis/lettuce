@@ -454,6 +454,15 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         }
         return routedCall.apply(node);
     }
+    private <R> Mono<R> routeWriteOrSuper(Supplier<Mono<R>> superCall,
+            Function<RedisClusterNode, Mono<R>> routedCall) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return superCall.get();
+        }
+        return routedCall.apply(node);
+    }
+
 
     @Override
     public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
@@ -498,20 +507,14 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<Long> ftDictadd(K dict, V... terms) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftDictadd(dict, terms);
-        }
-        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftDictadd(dict, terms));
+        return routeWriteOrSuper(() -> super.ftDictadd(dict, terms),
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftDictadd(dict, terms)));
     }
 
     @Override
     public Mono<Long> ftDictdel(K dict, V... terms) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftDictdel(dict, terms);
-        }
-        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftDictdel(dict, terms));
+        return routeWriteOrSuper(() -> super.ftDictdel(dict, terms),
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftDictdel(dict, terms)));
     }
 
     @Override
@@ -522,47 +525,32 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<String> ftAliasadd(K alias, K index) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftAliasadd(alias, index);
-        }
-        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAliasadd(alias, index));
+        return routeWriteOrSuper(() -> super.ftAliasadd(alias, index),
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAliasadd(alias, index)));
     }
 
     @Override
     public Mono<String> ftAliasupdate(K alias, K index) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftAliasupdate(alias, index);
-        }
-        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAliasupdate(alias, index));
+        return routeWriteOrSuper(() -> super.ftAliasupdate(alias, index),
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAliasupdate(alias, index)));
     }
 
     @Override
     public Mono<String> ftAliasdel(K alias) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftAliasdel(alias);
-        }
-        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAliasdel(alias));
+        return routeWriteOrSuper(() -> super.ftAliasdel(alias),
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAliasdel(alias)));
     }
 
     @Override
     public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftCreate(index, fieldArgs);
-        }
-        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftCreate(index, fieldArgs));
+        return routeWriteOrSuper(() -> super.ftCreate(index, fieldArgs),
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftCreate(index, fieldArgs)));
     }
 
     @Override
     public Mono<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftCreate(index, arguments, fieldArgs);
-        }
-        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftCreate(index, arguments, fieldArgs));
+        return routeWriteOrSuper(() -> super.ftCreate(index, arguments, fieldArgs),
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftCreate(index, arguments, fieldArgs)));
     }
 
     @Override

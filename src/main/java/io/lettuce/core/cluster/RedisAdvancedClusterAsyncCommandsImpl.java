@@ -213,16 +213,13 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
-        return routeFirstIterationOrSuper(() -> super.ftAggregate(index, query, args), node -> {
-            String nodeId = node.getNodeId();
-            return getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftAggregate(index, query, args))
-                    .thenApply(reply -> {
-                        if (reply != null) {
-                            reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(nodeId));
-                        }
-                        return reply;
-                    });
-        });
+        return routeFirstIterationOrSuper(() -> super.ftAggregate(index, query, args), (node, conn) ->
+                conn.ftAggregate(index, query, args).thenApply(reply -> {
+                    if (reply != null) {
+                        reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(node.getNodeId()));
+                    }
+                    return reply;
+                }));
     }
 
     // --- Upstream-only selection (for write Search commands) ---
@@ -241,8 +238,9 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return masters.get(idx);
     }
 
-    private <R> RedisFuture<R> routeFirstIterationOrSuper(Supplier<RedisFuture<R>> superCall,
-            Function<RedisClusterNode, CompletableFuture<R>> routedCall) {
+    private <R> RedisFuture<R> routeFirstIterationOrSuper(
+            Supplier<RedisFuture<R>> superCall,
+            BiFunction<RedisClusterNode, RedisClusterAsyncCommands<K, V>, CompletionStage<R>> routedCall) {
         ReadFrom rf = getStatefulConnection().getReadFrom();
         if (rf != null && rf != ReadFrom.UPSTREAM) {
             return superCall.get();
@@ -251,13 +249,29 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         if (node == null) {
             return superCall.get();
         }
-        return new PipelinedRedisFuture<>(routedCall.apply(node));
+        CompletableFuture<R> future = getStatefulConnection(node.getNodeId())
+                .thenApply(StatefulRedisConnection::async)
+                .thenCompose(conn -> routedCall.apply(node, conn));
+        return new PipelinedRedisFuture<>(future);
+    }
+
+    private <R> RedisFuture<R> routeWriteOrSuper(
+            Supplier<RedisFuture<R>> superCall,
+            BiFunction<RedisClusterNode, RedisClusterAsyncCommands<K, V>, CompletionStage<R>> routedCall) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return superCall.get();
+        }
+        CompletableFuture<R> future = getStatefulConnection(node.getNodeId())
+                .thenApply(StatefulRedisConnection::async)
+                .thenCompose(conn -> routedCall.apply(node, conn));
+        return new PipelinedRedisFuture<>(future);
     }
 
     @Override
     public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
         return routeFirstIterationOrSuper(() -> super.ftSearch(index, query, args),
-                node -> getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftSearch(index, query, args)));
+                (node, conn) -> conn.ftSearch(index, query, args));
     }
 
     @Override
@@ -268,117 +282,85 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<String> ftExplain(K index, V query) {
         return routeFirstIterationOrSuper(() -> super.ftExplain(index, query),
-                node -> getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftExplain(index, query)));
+                (node, conn) -> conn.ftExplain(index, query));
     }
 
     @Override
     public RedisFuture<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
         return routeFirstIterationOrSuper(() -> super.ftExplain(index, query, args),
-                node -> getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftExplain(index, query, args)));
+                (node, conn) -> conn.ftExplain(index, query, args));
     }
 
     @Override
     public RedisFuture<List<V>> ftTagvals(K index, K fieldName) {
         return routeFirstIterationOrSuper(() -> super.ftTagvals(index, fieldName),
-                node -> getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftTagvals(index, fieldName)));
+                (node, conn) -> conn.ftTagvals(index, fieldName));
     }
 
     @Override
     public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
         return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query),
-                node -> getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftSpellcheck(index, query)));
+                (node, conn) -> conn.ftSpellcheck(index, query));
     }
 
     @Override
     public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
         return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query, args),
-                node -> getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftSpellcheck(index, query, args)));
+                (node, conn) -> conn.ftSpellcheck(index, query, args));
     }
 
     @Override
     public RedisFuture<Long> ftDictadd(K dict, V... terms) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftDictadd(dict, terms);
-        }
-        CompletableFuture<Long> future = getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftDictadd(dict, terms));
-        return new PipelinedRedisFuture<>(future);
+        return routeWriteOrSuper(() -> super.ftDictadd(dict, terms),
+                (node, conn) -> conn.ftDictadd(dict, terms));
     }
 
     @Override
     public RedisFuture<Long> ftDictdel(K dict, V... terms) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftDictdel(dict, terms);
-        }
-        CompletableFuture<Long> future = getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftDictdel(dict, terms));
-        return new PipelinedRedisFuture<>(future);
+        return routeWriteOrSuper(() -> super.ftDictdel(dict, terms),
+                (node, conn) -> conn.ftDictdel(dict, terms));
     }
 
     @Override
     public RedisFuture<List<V>> ftDictdump(K dict) {
         return routeFirstIterationOrSuper(() -> super.ftDictdump(dict),
-                node -> getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftDictdump(dict)));
+                (node, conn) -> conn.ftDictdump(dict));
     }
 
     @Override
     public RedisFuture<String> ftAliasadd(K alias, K index) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftAliasadd(alias, index);
-        }
-        CompletableFuture<String> future = getConnectionAsync(node.getNodeId())
-                .thenCompose(conn -> conn.ftAliasadd(alias, index));
-        return new PipelinedRedisFuture<>(future);
+        return routeWriteOrSuper(() -> super.ftAliasadd(alias, index),
+                (node, conn) -> conn.ftAliasadd(alias, index));
     }
 
     @Override
     public RedisFuture<String> ftAliasupdate(K alias, K index) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftAliasupdate(alias, index);
-        }
-        CompletableFuture<String> future = getConnectionAsync(node.getNodeId())
-                .thenCompose(conn -> conn.ftAliasupdate(alias, index));
-        return new PipelinedRedisFuture<>(future);
+        return routeWriteOrSuper(() -> super.ftAliasupdate(alias, index),
+                (node, conn) -> conn.ftAliasupdate(alias, index));
     }
 
     @Override
     public RedisFuture<String> ftAliasdel(K alias) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftAliasdel(alias);
-        }
-        CompletableFuture<String> future = getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftAliasdel(alias));
-        return new PipelinedRedisFuture<>(future);
+        return routeWriteOrSuper(() -> super.ftAliasdel(alias),
+                (node, conn) -> conn.ftAliasdel(alias));
     }
 
     @Override
     public RedisFuture<List<V>> ftList() {
         return routeFirstIterationOrSuper(super::ftList,
-                node -> getConnectionAsync(node.getNodeId()).thenCompose(conn -> conn.ftList()));
+                (node, conn) -> conn.ftList());
     }
 
     @Override
     public RedisFuture<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftCreate(index, fieldArgs);
-        }
-        CompletableFuture<String> future = getConnectionAsync(node.getNodeId())
-                .thenCompose(conn -> conn.ftCreate(index, fieldArgs));
-        return new PipelinedRedisFuture<>(future);
+        return routeWriteOrSuper(() -> super.ftCreate(index, fieldArgs),
+                (node, conn) -> conn.ftCreate(index, fieldArgs));
     }
 
     @Override
     public RedisFuture<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return super.ftCreate(index, arguments, fieldArgs);
-        }
-        CompletableFuture<String> future = getConnectionAsync(node.getNodeId())
-                .thenCompose(conn -> conn.ftCreate(index, arguments, fieldArgs));
-        return new PipelinedRedisFuture<>(future);
+        return routeWriteOrSuper(() -> super.ftCreate(index, arguments, fieldArgs),
+                (node, conn) -> conn.ftCreate(index, arguments, fieldArgs));
     }
 
     @Override
