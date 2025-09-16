@@ -401,14 +401,12 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
         return routeFirstIterationOrSuper(() -> super.ftAggregate(index, query, args),
-                (node, conn) -> conn.ftAggregate(index, query, args)
-                        .mapNotNull(reply -> {
-                            if (reply != null) {
-                                reply.getCursor().filter(c -> c.getCursorId() > 0)
-                                        .ifPresent(c -> c.setNodeId(node.getNodeId()));
-                            }
-                            return reply;
-                        }));
+                (node, conn) -> conn.ftAggregate(index, query, args).mapNotNull(reply -> {
+                    if (reply != null) {
+                        reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(node.getNodeId()));
+                    }
+                    return reply;
+                }));
     }
 
     // --- Keyless RediSearch commands: route to an arbitrary upstream (master) ---
@@ -454,6 +452,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         }
         return getConnectionReactive(node.getNodeId()).flatMapMany(conn -> routedCall.apply(node, conn));
     }
+
     private <R> Mono<R> routeWriteOrSuper(Supplier<Mono<R>> superCall,
             BiFunction<RedisClusterNode, RedisClusterReactiveCommands<K, V>, Mono<R>> routedCall) {
         RedisClusterNode node = randomUpstreamNode();
@@ -462,7 +461,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         }
         return getConnectionReactive(node.getNodeId()).flatMap(conn -> routedCall.apply(node, conn));
     }
-
 
     @Override
     public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
@@ -477,8 +475,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<String> ftExplain(K index, V query) {
-        return routeFirstIterationOrSuper(() -> super.ftExplain(index, query),
-                (node, conn) -> conn.ftExplain(index, query));
+        return routeFirstIterationOrSuper(() -> super.ftExplain(index, query), (node, conn) -> conn.ftExplain(index, query));
     }
 
     @Override
@@ -507,44 +504,37 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<Long> ftDictadd(K dict, V... terms) {
-        return routeWriteOrSuper(() -> super.ftDictadd(dict, terms),
-                (node, conn) -> conn.ftDictadd(dict, terms));
+        return routeWriteOrSuper(() -> super.ftDictadd(dict, terms), (node, conn) -> conn.ftDictadd(dict, terms));
     }
 
     @Override
     public Mono<Long> ftDictdel(K dict, V... terms) {
-        return routeWriteOrSuper(() -> super.ftDictdel(dict, terms),
-                (node, conn) -> conn.ftDictdel(dict, terms));
+        return routeWriteOrSuper(() -> super.ftDictdel(dict, terms), (node, conn) -> conn.ftDictdel(dict, terms));
     }
 
     @Override
     public Flux<V> ftDictdump(K dict) {
-        return routeFirstIterationOrSuperMany(() -> super.ftDictdump(dict),
-                (node, conn) -> conn.ftDictdump(dict));
+        return routeFirstIterationOrSuperMany(() -> super.ftDictdump(dict), (node, conn) -> conn.ftDictdump(dict));
     }
 
     @Override
     public Mono<String> ftAliasadd(K alias, K index) {
-        return routeWriteOrSuper(() -> super.ftAliasadd(alias, index),
-                (node, conn) -> conn.ftAliasadd(alias, index));
+        return routeWriteOrSuper(() -> super.ftAliasadd(alias, index), (node, conn) -> conn.ftAliasadd(alias, index));
     }
 
     @Override
     public Mono<String> ftAliasupdate(K alias, K index) {
-        return routeWriteOrSuper(() -> super.ftAliasupdate(alias, index),
-                (node, conn) -> conn.ftAliasupdate(alias, index));
+        return routeWriteOrSuper(() -> super.ftAliasupdate(alias, index), (node, conn) -> conn.ftAliasupdate(alias, index));
     }
 
     @Override
     public Mono<String> ftAliasdel(K alias) {
-        return routeWriteOrSuper(() -> super.ftAliasdel(alias),
-                (node, conn) -> conn.ftAliasdel(alias));
+        return routeWriteOrSuper(() -> super.ftAliasdel(alias), (node, conn) -> conn.ftAliasdel(alias));
     }
 
     @Override
     public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
-        return routeWriteOrSuper(() -> super.ftCreate(index, fieldArgs),
-                (node, conn) -> conn.ftCreate(index, fieldArgs));
+        return routeWriteOrSuper(() -> super.ftCreate(index, fieldArgs), (node, conn) -> conn.ftCreate(index, fieldArgs));
     }
 
     @Override
@@ -555,8 +545,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Flux<V> ftList() {
-        return routeFirstIterationOrSuperMany(super::ftList,
-                (node, conn) -> conn.ftList());
+        return routeFirstIterationOrSuperMany(super::ftList, (node, conn) -> conn.ftList());
     }
 
     @Override
