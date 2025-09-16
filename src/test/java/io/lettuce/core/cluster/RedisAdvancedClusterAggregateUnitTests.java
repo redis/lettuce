@@ -52,7 +52,7 @@ class RedisAdvancedClusterAggregateUnitTests {
 
         partitions.addPartition(node);
         partitions.updateCache();
-        // Mock channel writer and async connection provider to satisfy getConnectionAsync(host,port)
+        // Mock channel writer and async connection provider to satisfy getConnectionAsync(nodeId)
         ClusterDistributionChannelWriter writer = mock(ClusterDistributionChannelWriter.class);
         when(clusterConn.getChannelWriter()).thenReturn(writer);
         // Single Mockito mock that implements BOTH interfaces
@@ -60,7 +60,7 @@ class RedisAdvancedClusterAggregateUnitTests {
                 withSettings().extraInterfaces(AsyncClusterConnectionProvider.class));
         AsyncClusterConnectionProvider asyncProvider = (AsyncClusterConnectionProvider) provider;
         when(writer.getClusterConnectionProvider()).thenReturn(provider);
-        when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.WRITE), anyString(), anyInt()))
+        when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.WRITE), eq("node-1")))
                 .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
 
         when(clusterConn.getPartitions()).thenReturn(partitions);
