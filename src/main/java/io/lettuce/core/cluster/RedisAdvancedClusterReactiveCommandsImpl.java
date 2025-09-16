@@ -62,7 +62,10 @@ import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
+import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.FieldArgs;
 
+import io.lettuce.core.search.arguments.SpellCheckArgs;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
@@ -398,8 +401,8 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
         return routeFirstIterationOrSuper(() -> super.ftAggregate(index, query, args),
-                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                        .flatMap(conn -> conn.ftAggregate(index, query, args)).mapNotNull(reply -> {
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAggregate(index, query, args))
+                        .mapNotNull(reply -> {
                             if (reply != null) {
                                 reply.getCursor().filter(c -> c.getCursorId() > 0)
                                         .ifPresent(c -> c.setNodeId(node.getNodeId()));
@@ -455,8 +458,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
         return routeFirstIterationOrSuper(() -> super.ftSearch(index, query, args),
-                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                        .flatMap(conn -> conn.ftSearch(index, query, args)));
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftSearch(index, query, args)));
     }
 
     @Override
@@ -467,37 +469,31 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Mono<String> ftExplain(K index, V query) {
         return routeFirstIterationOrSuper(() -> super.ftExplain(index, query),
-                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                        .flatMap(conn -> conn.ftExplain(index, query)));
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftExplain(index, query)));
     }
 
     @Override
     public Mono<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
         return routeFirstIterationOrSuper(() -> super.ftExplain(index, query, args),
-                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                        .flatMap(conn -> conn.ftExplain(index, query, args)));
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftExplain(index, query, args)));
     }
 
     @Override
     public Flux<V> ftTagvals(K index, K fieldName) {
         return routeFirstIterationOrSuperMany(() -> super.ftTagvals(index, fieldName),
-                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                        .flatMapMany(conn -> conn.ftTagvals(index, fieldName)));
+                node -> getConnectionReactive(node.getNodeId()).flatMapMany(conn -> conn.ftTagvals(index, fieldName)));
     }
 
     @Override
     public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
         return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query),
-                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                        .flatMap(conn -> conn.ftSpellcheck(index, query)));
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftSpellcheck(index, query)));
     }
 
     @Override
-    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query,
-            io.lettuce.core.search.arguments.SpellCheckArgs<K, V> args) {
+    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
         return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query, args),
-                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                        .flatMap(conn -> conn.ftSpellcheck(index, query, args)));
+                node -> getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftSpellcheck(index, query, args)));
     }
 
     @Override
@@ -506,8 +502,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         if (node == null) {
             return super.ftDictadd(dict, terms);
         }
-        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                .flatMap(conn -> conn.ftDictadd(dict, terms));
+        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftDictadd(dict, terms));
     }
 
     @Override
@@ -516,15 +511,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         if (node == null) {
             return super.ftDictdel(dict, terms);
         }
-        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                .flatMap(conn -> conn.ftDictdel(dict, terms));
+        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftDictdel(dict, terms));
     }
 
     @Override
     public Flux<V> ftDictdump(K dict) {
         return routeFirstIterationOrSuperMany(() -> super.ftDictdump(dict),
-                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                        .flatMapMany(conn -> conn.ftDictdump(dict)));
+                node -> getConnectionReactive(node.getNodeId()).flatMapMany(conn -> conn.ftDictdump(dict)));
     }
 
     @Override
@@ -533,8 +526,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         if (node == null) {
             return super.ftAliasadd(alias, index);
         }
-        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                .flatMap(conn -> conn.ftAliasadd(alias, index));
+        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAliasadd(alias, index));
     }
 
     @Override
@@ -543,8 +535,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         if (node == null) {
             return super.ftAliasupdate(alias, index);
         }
-        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                .flatMap(conn -> conn.ftAliasupdate(alias, index));
+        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAliasupdate(alias, index));
     }
 
     @Override
@@ -553,14 +544,31 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         if (node == null) {
             return super.ftAliasdel(alias);
         }
-        return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort()).flatMap(conn -> conn.ftAliasdel(alias));
+        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftAliasdel(alias));
+    }
+
+    @Override
+    public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftCreate(index, fieldArgs);
+        }
+        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftCreate(index, fieldArgs));
+    }
+
+    @Override
+    public Mono<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return super.ftCreate(index, arguments, fieldArgs);
+        }
+        return getConnectionReactive(node.getNodeId()).flatMap(conn -> conn.ftCreate(index, arguments, fieldArgs));
     }
 
     @Override
     public Flux<V> ftList() {
         return routeFirstIterationOrSuperMany(super::ftList,
-                node -> getConnectionReactive(node.getUri().getHost(), node.getUri().getPort())
-                        .flatMapMany(conn -> conn.ftList()));
+                node -> getConnectionReactive(node.getNodeId()).flatMapMany(conn -> conn.ftList()));
     }
 
     @Override
@@ -815,7 +823,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
         if (node != null) {
-            return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort());
+            return getConnectionReactive(node.getNodeId());
         }
 
         return Mono.error(new RedisException("No partition for slot " + slot));
