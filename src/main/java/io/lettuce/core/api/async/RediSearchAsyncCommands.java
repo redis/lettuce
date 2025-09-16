@@ -1153,7 +1153,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see <a href=
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
-     * @see SearchReply
+     * @see AggregationReply
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental
@@ -1179,7 +1179,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see <a href=
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
-     * @see SearchReply
+     * @see AggregationReply
      * @see #ftAggregate(Object, Object, AggregateArgs)
      */
     @Experimental

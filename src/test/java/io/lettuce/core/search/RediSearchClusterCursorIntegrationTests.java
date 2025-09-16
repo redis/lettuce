@@ -241,21 +241,18 @@ public class RediSearchClusterCursorIntegrationTests extends TestSupport {
                 .expectErrorSatisfies(
                         t -> assertThat(t).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("missing nodeId"))
                 .verify();
-        }
+    }
 
     @Test
     void async_firstIteration_rotatesAcrossUpstreamNodes() {
         // Ensure we have at least two upstream nodes in the cluster; otherwise skip to avoid flakiness
-        long upstreams = connection.getPartitions().stream()
-                .filter(n -> n.is(RedisClusterNode.NodeFlag.UPSTREAM))
-                .count();
+        long upstreams = connection.getPartitions().stream().filter(n -> n.is(RedisClusterNode.NodeFlag.UPSTREAM)).count();
         assumeTrue(upstreams >= 2, "requires >= 2 upstream nodes");
 
-        AggregateArgs<String, String> args = AggregateArgs.<String, String>builder()
-                .groupBy(AggregateArgs.GroupBy.<String, String>of("author")
-                        .reduce(AggregateArgs.Reducer.<String, String>avg("@rating").as("avg_rating")))
-                .withCursor(AggregateArgs.WithCursor.of(1L))
-                .build();
+        AggregateArgs<String, String> args = AggregateArgs.<String, String> builder()
+                .groupBy(AggregateArgs.GroupBy.<String, String> of("author")
+                        .reduce(AggregateArgs.Reducer.<String, String> avg("@rating").as("avg_rating")))
+                .withCursor(AggregateArgs.WithCursor.of(1L)).build();
 
         Set<String> nodeIds = new HashSet<>();
         int observedCursors = 0;

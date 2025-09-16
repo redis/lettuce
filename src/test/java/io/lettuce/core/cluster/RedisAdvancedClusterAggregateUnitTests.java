@@ -56,8 +56,8 @@ class RedisAdvancedClusterAggregateUnitTests {
         ClusterDistributionChannelWriter writer = mock(ClusterDistributionChannelWriter.class);
         when(clusterConn.getChannelWriter()).thenReturn(writer);
         // Single Mockito mock that implements BOTH interfaces
-        ClusterConnectionProvider provider =
-                mock(ClusterConnectionProvider.class, withSettings().extraInterfaces(AsyncClusterConnectionProvider.class));
+        ClusterConnectionProvider provider = mock(ClusterConnectionProvider.class,
+                withSettings().extraInterfaces(AsyncClusterConnectionProvider.class));
         AsyncClusterConnectionProvider asyncProvider = (AsyncClusterConnectionProvider) provider;
         when(writer.getClusterConnectionProvider()).thenReturn(provider);
         when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.WRITE), anyString(), anyInt()))
