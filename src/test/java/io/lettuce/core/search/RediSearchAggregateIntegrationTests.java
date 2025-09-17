@@ -1349,8 +1349,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
         assertThat(nextSearchReply.getResults()).hasSize(1); // Should return second group
-        assertThat(nextResult.getCursor()).isPresent();
-        assertThat(nextResult.getCursor().get().getCursorId()).isEqualTo(0L); // Should indicate end of results
+        // RediSearch may either omit the cursor on the final page, or return a non-zero cursor
+        // that requires one more empty READ to return 0. Be tolerant across versions.
+        long effective = nextResult.getCursor().map(AggregationReply.Cursor::getCursorId).orElse(0L);
+        if (effective != 0L) {
+            AggregationReply<String, String> finalPage = redis.ftCursorread("cursor-complex-test-idx", nextResult.getCursor().get());
+            assertThat(finalPage).isNotNull();
+            assertThat(finalPage.getReplies()).hasSize(1);
+            assertThat(finalPage.getReplies().get(0).getResults()).isEmpty();
+            assertThat(finalPage.getCursor().map(AggregationReply.Cursor::getCursorId).orElse(0L)).isEqualTo(0L);
+        }
 
         // Verify second group has expected fields
         SearchReply.SearchResult<String, String> secondGroup = nextSearchReply.getResults().get(0);
