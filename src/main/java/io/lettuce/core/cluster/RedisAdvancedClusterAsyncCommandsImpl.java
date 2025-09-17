@@ -209,6 +209,10 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return super.clusterGetKeysInSlot(slot, count);
     }
 
+    public RedisFuture<Long> dbsize() {
+        return MultiNodeExecution.aggregateAsync(executeOnUpstream(RedisServerAsyncCommands::dbsize));
+    }
+
     @Override
     public RedisFuture<Long> del(K... keys) {
         return del(Arrays.asList(keys));
@@ -841,10 +845,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     public RedisFuture<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
         return routeUpstream(() -> super.ftSynupdate(index, synonymGroupId, args, terms),
                 (node, conn) -> conn.ftSynupdate(index, synonymGroupId, args, terms));
-    }
-
-    public RedisFuture<Long> dbsize() {
-        return MultiNodeExecution.aggregateAsync(executeOnUpstream(RedisServerAsyncCommands::dbsize));
     }
 
     @Override

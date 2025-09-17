@@ -835,7 +835,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
         RedisClusterNode node = getStatefulConnection().getPartitions().getPartitionBySlot(slot);
         if (node != null) {
-            return getConnectionReactive(node.getNodeId());
+            return getConnectionReactive(node.getUri().getHost(), node.getUri().getPort());
         }
 
         return Mono.error(new RedisException("No partition for slot " + slot));
