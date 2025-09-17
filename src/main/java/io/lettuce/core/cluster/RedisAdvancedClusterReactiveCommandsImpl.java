@@ -66,6 +66,7 @@ import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 
 import io.lettuce.core.search.arguments.SpellCheckArgs;
+import io.lettuce.core.search.arguments.SynUpdateArgs;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
@@ -400,7 +401,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     @Override
     public Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
-        return routeFirstIterationOrSuper(() -> super.ftAggregate(index, query, args),
+        return routeUpstreamOrSuper(() -> super.ftAggregate(index, query, args),
                 (node, conn) -> conn.ftAggregate(index, query, args).mapNotNull(reply -> {
                     if (reply != null) {
                         reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(node.getNodeId()));
@@ -409,200 +410,10 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
                 }));
     }
 
-    // --- Keyless RediSearch commands: route to an arbitrary upstream (master) ---
-    // --- Read selection honoring ReadFrom (for read-only Search commands) ---
-
-    private RedisClusterNode randomUpstreamNode() {
-        Partitions partitions = getStatefulConnection().getPartitions();
-        List<RedisClusterNode> masters = new ArrayList<>();
-        for (RedisClusterNode n : partitions) {
-            if (n.is(UPSTREAM)) {
-                masters.add(n);
-            }
-        }
-        if (masters.isEmpty()) {
-            return null;
-        }
-        int idx = ThreadLocalRandom.current().nextInt(masters.size());
-        return masters.get(idx);
-    }
-
-    private <R> Mono<R> routeFirstIterationOrSuper(Supplier<Mono<R>> superCall,
-            BiFunction<RedisClusterNode, RedisClusterReactiveCommands<K, V>, Mono<R>> routedCall) {
-        ReadFrom rf = getStatefulConnection().getReadFrom();
-        if (rf != null && rf != ReadFrom.UPSTREAM) {
-            return superCall.get();
-        }
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return superCall.get();
-        }
-        return getConnectionReactive(node.getNodeId()).flatMap(conn -> routedCall.apply(node, conn));
-    }
-
-    private <R> Flux<R> routeFirstIterationOrSuperMany(Supplier<Flux<R>> superCall,
-            BiFunction<RedisClusterNode, RedisClusterReactiveCommands<K, V>, Flux<R>> routedCall) {
-        ReadFrom rf = getStatefulConnection().getReadFrom();
-        if (rf != null && rf != ReadFrom.UPSTREAM) {
-            return superCall.get();
-        }
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return superCall.get();
-        }
-        return getConnectionReactive(node.getNodeId()).flatMapMany(conn -> routedCall.apply(node, conn));
-    }
-
-    private <R> Mono<R> routeWriteOrSuper(Supplier<Mono<R>> superCall,
-            BiFunction<RedisClusterNode, RedisClusterReactiveCommands<K, V>, Mono<R>> routedCall) {
-        RedisClusterNode node = randomUpstreamNode();
-        if (node == null) {
-            return superCall.get();
-        }
-        return getConnectionReactive(node.getNodeId()).flatMap(conn -> routedCall.apply(node, conn));
-    }
-
-    @Override
-    public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
-        return routeFirstIterationOrSuper(() -> super.ftSearch(index, query, args),
-                (node, conn) -> conn.ftSearch(index, query, args));
-    }
-
-    @Override
-    public Mono<SearchReply<K, V>> ftSearch(K index, V query) {
-        return ftSearch(index, query, SearchArgs.<K, V> builder().build());
-    }
-
-    @Override
-    public Mono<String> ftExplain(K index, V query) {
-        return routeFirstIterationOrSuper(() -> super.ftExplain(index, query), (node, conn) -> conn.ftExplain(index, query));
-    }
-
-    @Override
-    public Mono<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
-        return routeFirstIterationOrSuper(() -> super.ftExplain(index, query, args),
-                (node, conn) -> conn.ftExplain(index, query, args));
-    }
-
-    @Override
-    public Flux<V> ftTagvals(K index, K fieldName) {
-        return routeFirstIterationOrSuperMany(() -> super.ftTagvals(index, fieldName),
-                (node, conn) -> conn.ftTagvals(index, fieldName));
-    }
-
-    @Override
-    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
-        return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query),
-                (node, conn) -> conn.ftSpellcheck(index, query));
-    }
-
-    @Override
-    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
-        return routeFirstIterationOrSuper(() -> super.ftSpellcheck(index, query, args),
-                (node, conn) -> conn.ftSpellcheck(index, query, args));
-    }
-
-    @Override
-    public Mono<Long> ftDictadd(K dict, V... terms) {
-        return routeWriteOrSuper(() -> super.ftDictadd(dict, terms), (node, conn) -> conn.ftDictadd(dict, terms));
-    }
-
-    @Override
-    public Mono<Long> ftDictdel(K dict, V... terms) {
-        return routeWriteOrSuper(() -> super.ftDictdel(dict, terms), (node, conn) -> conn.ftDictdel(dict, terms));
-    }
-
-    @Override
-    public Flux<V> ftDictdump(K dict) {
-        return routeFirstIterationOrSuperMany(() -> super.ftDictdump(dict), (node, conn) -> conn.ftDictdump(dict));
-    }
-
-    @Override
-    public Mono<String> ftAliasadd(K alias, K index) {
-        return routeWriteOrSuper(() -> super.ftAliasadd(alias, index), (node, conn) -> conn.ftAliasadd(alias, index));
-    }
-
-    @Override
-    public Mono<String> ftAliasupdate(K alias, K index) {
-        return routeWriteOrSuper(() -> super.ftAliasupdate(alias, index), (node, conn) -> conn.ftAliasupdate(alias, index));
-    }
-
-    @Override
-    public Mono<String> ftAliasdel(K alias) {
-        return routeWriteOrSuper(() -> super.ftAliasdel(alias), (node, conn) -> conn.ftAliasdel(alias));
-    }
-
-    @Override
-    public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
-        return routeWriteOrSuper(() -> super.ftCreate(index, fieldArgs), (node, conn) -> conn.ftCreate(index, fieldArgs));
-    }
-
-    @Override
-    public Mono<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs) {
-        return routeWriteOrSuper(() -> super.ftCreate(index, arguments, fieldArgs),
-                (node, conn) -> conn.ftCreate(index, arguments, fieldArgs));
-    }
-
-    @Override
-    public Flux<V> ftList() {
-        return routeFirstIterationOrSuperMany(super::ftList, (node, conn) -> conn.ftList());
-    }
-
-    @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query) {
-        return ftAggregate(index, query, null);
-    }
-
     @Override
     public Mono<Void> shutdown(boolean save) {
         Map<String, Publisher<Void>> publishers = executeOnNodes(commands -> commands.shutdown(save), ALL_NODES);
         return Flux.merge(publishers.values()).then();
-    }
-
-    @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor, int count) {
-        if (cursor == null) {
-            return Mono.error(new IllegalArgumentException("cursor must not be null"));
-        }
-        long cursorId = cursor.getCursorId();
-        if (cursorId <= 0) {
-            return Mono.just(new AggregationReply<>());
-        }
-        Optional<String> nodeIdOpt = cursor.getNodeId();
-        if (!nodeIdOpt.isPresent()) {
-            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor READ in cluster mode"));
-        }
-        String nodeId = nodeIdOpt.get();
-        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        return byNode.reactive().ftCursorread(index, cursor, count).map(reply -> {
-            if (reply != null) {
-                reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
-            }
-            return reply;
-        });
-    }
-
-    @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor) {
-        return ftCursorread(index, cursor, -1);
-    }
-
-    @Override
-    public Mono<String> ftCursordel(K index, Cursor cursor) {
-        if (cursor == null) {
-            return Mono.error(new IllegalArgumentException("cursor must not be null"));
-        }
-        long cursorId = cursor.getCursorId();
-        if (cursorId <= 0) {
-            return Mono.just("OK");
-        }
-        Optional<String> nodeIdOpt = cursor.getNodeId();
-        if (!nodeIdOpt.isPresent()) {
-            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor DEL in cluster mode"));
-        }
-        String nodeId = nodeIdOpt.get();
-        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
-        return byNode.reactive().ftCursordel(index, cursor);
     }
 
     @Override
@@ -728,6 +539,230 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor),
                 reactiveClusterStreamScanCursorMapper());
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+        return routeUpstreamOrSuper(() -> super.ftSearch(index, query, args),
+                (node, conn) -> conn.ftSearch(index, query, args));
+    }
+
+    @Override
+    public Mono<SearchReply<K, V>> ftSearch(K index, V query) {
+        return ftSearch(index, query, SearchArgs.<K, V> builder().build());
+    }
+
+    @Override
+    public Mono<String> ftExplain(K index, V query) {
+        return routeUpstreamOrSuper(() -> super.ftExplain(index, query), (node, conn) -> conn.ftExplain(index, query));
+    }
+
+    @Override
+    public Mono<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+        return routeUpstreamOrSuper(() -> super.ftExplain(index, query, args),
+                (node, conn) -> conn.ftExplain(index, query, args));
+    }
+
+    @Override
+    public Flux<V> ftTagvals(K index, K fieldName) {
+        return routeUpstreamOrSuperMany(() -> super.ftTagvals(index, fieldName),
+                (node, conn) -> conn.ftTagvals(index, fieldName));
+    }
+
+    @Override
+    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+        return routeUpstreamOrSuper(() -> super.ftSpellcheck(index, query), (node, conn) -> conn.ftSpellcheck(index, query));
+    }
+
+    @Override
+    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+        return routeUpstreamOrSuper(() -> super.ftSpellcheck(index, query, args),
+                (node, conn) -> conn.ftSpellcheck(index, query, args));
+    }
+
+    @Override
+    public Mono<Long> ftDictadd(K dict, V... terms) {
+        return routeUpstream(() -> super.ftDictadd(dict, terms), (node, conn) -> conn.ftDictadd(dict, terms));
+    }
+
+    @Override
+    public Mono<Long> ftDictdel(K dict, V... terms) {
+        return routeUpstream(() -> super.ftDictdel(dict, terms), (node, conn) -> conn.ftDictdel(dict, terms));
+    }
+
+    @Override
+    public Flux<V> ftDictdump(K dict) {
+        return routeUpstreamOrSuperMany(() -> super.ftDictdump(dict), (node, conn) -> conn.ftDictdump(dict));
+    }
+
+    @Override
+    public Mono<String> ftAliasadd(K alias, K index) {
+        return routeUpstream(() -> super.ftAliasadd(alias, index), (node, conn) -> conn.ftAliasadd(alias, index));
+    }
+
+    @Override
+    public Mono<String> ftAliasupdate(K alias, K index) {
+        return routeUpstream(() -> super.ftAliasupdate(alias, index), (node, conn) -> conn.ftAliasupdate(alias, index));
+    }
+
+    @Override
+    public Mono<String> ftAliasdel(K alias) {
+        return routeUpstream(() -> super.ftAliasdel(alias), (node, conn) -> conn.ftAliasdel(alias));
+    }
+
+    @Override
+    public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+        return routeUpstream(() -> super.ftCreate(index, fieldArgs), (node, conn) -> conn.ftCreate(index, fieldArgs));
+    }
+
+    @Override
+    public Mono<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs) {
+        return routeUpstream(() -> super.ftCreate(index, arguments, fieldArgs),
+                (node, conn) -> conn.ftCreate(index, arguments, fieldArgs));
+    }
+
+    @Override
+    public Mono<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+        return routeUpstream(() -> super.ftAlter(index, skipInitialScan, fieldArgs),
+                (node, conn) -> conn.ftAlter(index, skipInitialScan, fieldArgs));
+    }
+
+    @Override
+    public Mono<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs) {
+        return routeUpstream(() -> super.ftAlter(index, fieldArgs), (node, conn) -> conn.ftAlter(index, fieldArgs));
+    }
+
+    @Override
+    public Mono<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+        return routeUpstream(() -> super.ftDropindex(index, deleteDocumentKeys),
+                (node, conn) -> conn.ftDropindex(index, deleteDocumentKeys));
+    }
+
+    @Override
+    public Mono<String> ftDropindex(K index) {
+        return routeUpstream(() -> super.ftDropindex(index), (node, conn) -> conn.ftDropindex(index));
+    }
+
+    @Override
+    public Mono<Map<V, List<V>>> ftSyndump(K index) {
+        return routeUpstreamOrSuper(() -> super.ftSyndump(index), (node, conn) -> conn.ftSyndump(index));
+    }
+
+    @Override
+    public Mono<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+        return routeUpstream(() -> super.ftSynupdate(index, synonymGroupId, terms),
+                (node, conn) -> conn.ftSynupdate(index, synonymGroupId, terms));
+    }
+
+    @Override
+    public Mono<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+        return routeUpstream(() -> super.ftSynupdate(index, synonymGroupId, args, terms),
+                (node, conn) -> conn.ftSynupdate(index, synonymGroupId, args, terms));
+    }
+
+    @Override
+    public Flux<V> ftList() {
+        return routeUpstreamOrSuperMany(super::ftList, (node, conn) -> conn.ftList());
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query) {
+        return ftAggregate(index, query, null);
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor, int count) {
+        if (cursor == null) {
+            return Mono.error(new IllegalArgumentException("cursor must not be null"));
+        }
+        long cursorId = cursor.getCursorId();
+        if (cursorId <= 0) {
+            return Mono.just(new AggregationReply<>());
+        }
+        Optional<String> nodeIdOpt = cursor.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor READ in cluster mode"));
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.reactive().ftCursorread(index, cursor, count).map(reply -> {
+            if (reply != null) {
+                reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
+            }
+            return reply;
+        });
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor) {
+        return ftCursorread(index, cursor, -1);
+    }
+
+    @Override
+    public Mono<String> ftCursordel(K index, Cursor cursor) {
+        if (cursor == null) {
+            return Mono.error(new IllegalArgumentException("cursor must not be null"));
+        }
+        long cursorId = cursor.getCursorId();
+        if (cursorId <= 0) {
+            return Mono.just("OK");
+        }
+        Optional<String> nodeIdOpt = cursor.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor DEL in cluster mode"));
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.reactive().ftCursordel(index, cursor);
+    }
+
+    // --- Keyless RediSearch commands: route to an arbitrary upstream (master) ---
+    // --- Read selection honoring ReadFrom (for read-only Search commands) ---
+
+    private RedisClusterNode randomUpstreamNode() {
+        Partitions partitions = getStatefulConnection().getPartitions();
+        List<RedisClusterNode> masters = new ArrayList<>();
+        for (RedisClusterNode n : partitions) {
+            if (n.is(UPSTREAM)) {
+                masters.add(n);
+            }
+        }
+        if (masters.isEmpty()) {
+            return null;
+        }
+        int idx = ThreadLocalRandom.current().nextInt(masters.size());
+        return masters.get(idx);
+    }
+
+    private <R> Mono<R> routeUpstreamOrSuper(Supplier<Mono<R>> superCall,
+            BiFunction<RedisClusterNode, RedisClusterReactiveCommands<K, V>, Mono<R>> routedCall) {
+        ReadFrom rf = getStatefulConnection().getReadFrom();
+        if (rf != null && rf != ReadFrom.UPSTREAM) {
+            return superCall.get();
+        }
+        return routeUpstream(superCall, routedCall);
+    }
+
+    private <R> Flux<R> routeUpstreamOrSuperMany(Supplier<Flux<R>> superCall,
+            BiFunction<RedisClusterNode, RedisClusterReactiveCommands<K, V>, Flux<R>> routedCall) {
+        ReadFrom rf = getStatefulConnection().getReadFrom();
+        if (rf != null && rf != ReadFrom.UPSTREAM) {
+            return superCall.get();
+        }
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return superCall.get();
+        }
+        return getConnectionReactive(node.getNodeId()).flatMapMany(conn -> routedCall.apply(node, conn));
+    }
+
+    private <R> Mono<R> routeUpstream(Supplier<Mono<R>> superCall,
+            BiFunction<RedisClusterNode, RedisClusterReactiveCommands<K, V>, Mono<R>> routedCall) {
+        RedisClusterNode node = randomUpstreamNode();
+        if (node == null) {
+            return superCall.get();
+        }
+        return getConnectionReactive(node.getNodeId()).flatMap(conn -> routedCall.apply(node, conn));
     }
 
     @SuppressWarnings("unchecked")
