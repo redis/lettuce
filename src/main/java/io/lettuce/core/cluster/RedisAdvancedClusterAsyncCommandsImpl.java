@@ -209,6 +209,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return super.clusterGetKeysInSlot(slot, count);
     }
 
+    @Override
     public RedisFuture<Long> dbsize() {
         return MultiNodeExecution.aggregateAsync(executeOnUpstream(RedisServerAsyncCommands::dbsize));
     }
