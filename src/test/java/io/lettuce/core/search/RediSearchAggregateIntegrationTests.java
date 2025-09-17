@@ -1353,7 +1353,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // that requires one more empty READ to return 0. Be tolerant across versions.
         long effective = nextResult.getCursor().map(AggregationReply.Cursor::getCursorId).orElse(0L);
         if (effective != 0L) {
-            AggregationReply<String, String> finalPage = redis.ftCursorread("cursor-complex-test-idx", nextResult.getCursor().get());
+            AggregationReply<String, String> finalPage = redis.ftCursorread("cursor-complex-test-idx",
+                    nextResult.getCursor().get());
             assertThat(finalPage).isNotNull();
             assertThat(finalPage.getReplies()).hasSize(1);
             assertThat(finalPage.getReplies().get(0).getResults()).isEmpty();
