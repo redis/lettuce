@@ -492,15 +492,15 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * Finds the most similar vectors to the given query vector in the vector set stored at `key` and returns them with
      * their similarity scores and attributes.
      * <p>
-     * The similarity scores represent the distance between the query vector and the result vectors. Attributes are returned
-     * as a server-provided string.
+     * The similarity scores represent the distance between the query vector and the result vectors. Attributes are returned as
+     * a server-provided string.
      * <p>
      * Time complexity: O(log(N)) where N is the number of elements in the vector set
      *
      * @param key the key of the vector set
      * @param vectors the query vector values as floating point numbers
      * @return a map of elements to their (score, attributes), or an empty map if the key does not exist
-     * @since <NEXT>
+     * @since 7.0
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
@@ -518,15 +518,15 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @param key the key of the vector set
      * @param element the name of the element whose vector will be used as the query
      * @return a map of elements to their (score, attributes), or an empty map if the key or element does not exist
-     * @since <NEXT>
+     * @since 7.0
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
     suspend fun vsimWithScoreWithAttribs(key: K, element: V): Map<V, VSimScoreAttribs>?
 
     /**
-     * Finds the most similar vectors to the given query vector in the vector set stored at `key` with additional
-     * options and returns them with their similarity scores and attributes.
+     * Finds the most similar vectors to the given query vector in the vector set stored at `key` with additional options
+     * and returns them with their similarity scores and attributes.
      * <p>
      * The [VSimArgs] allows configuring various options such as the number of results (`COUNT`), epsilon cutoff
      * (`EPSILON`), exploration factor (`EF`), and filtering.
@@ -537,7 +537,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @param args the additional arguments for the VSIM command
      * @param vectors the query vector values as floating point numbers
      * @return a map of elements to their (score, attributes), or an empty map if the key does not exist
-     * @since <NEXT>
+     * @since 7.0
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
@@ -556,7 +556,7 @@ interface RedisVectorSetCoroutinesCommands<K : Any, V : Any> {
      * @param element the name of the element whose vector will be used as the query
      * @param args the additional arguments for the VSIM command
      * @return a map of elements to their (score, attributes), or an empty map if the key or element does not exist
-     * @since <NEXT>
+     * @since 7.0
      * @see <a href="https://redis.io/docs/latest/commands/vsim/">Redis Documentation: VSIM</a>
      */
     @Experimental
