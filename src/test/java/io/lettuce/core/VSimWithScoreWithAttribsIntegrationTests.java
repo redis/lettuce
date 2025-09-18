@@ -46,7 +46,7 @@ class VSimWithScoreWithAttribsIntegrationTests extends TestSupport {
 
     @BeforeEach
     void ensureServer() {
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("7.4"));
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
     }
 
     // 0) Helpers
