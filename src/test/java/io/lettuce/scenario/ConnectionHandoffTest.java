@@ -99,7 +99,7 @@ public class ConnectionHandoffTest {
 
     @BeforeAll
     public static void setup() {
-        mStandard = Endpoints.DEFAULT.getEndpoint("m-standard");
+        mStandard = Endpoints.DEFAULT.getEndpoint("m1-standard");
         assumeTrue(mStandard != null, "Skipping test because no M-Standard Redis endpoint is configured!");
     }
 
