@@ -769,7 +769,10 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         String currentNodeId = ClusterScanSupport.getCurrentNodeId(cursor, nodeIds);
         ScanCursor continuationCursor = ClusterScanSupport.getContinuationCursor(cursor);
 
-        RedisFuture<T> scanCursor = scanFunction.apply(connection.getConnection(currentNodeId).async(), continuationCursor);
+        CompletionStage<T> stage = connection.getConnectionAsync(currentNodeId)
+                .thenCompose(conn -> scanFunction.apply(conn.async(), continuationCursor).toCompletableFuture());
+
+        RedisFuture<T> scanCursor = new PipelinedRedisFuture<>(stage);
         return mapper.map(nodeIds, currentNodeId, scanCursor);
     }
 
