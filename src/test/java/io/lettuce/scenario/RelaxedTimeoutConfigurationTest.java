@@ -83,7 +83,7 @@ public class RelaxedTimeoutConfigurationTest {
 
     @BeforeAll
     public static void setup() {
-        mStandard = Endpoints.DEFAULT.getEndpoint("re-standalone");
+        mStandard = Endpoints.DEFAULT.getEndpoint("m-standard");
         assumeTrue(mStandard != null, "Skipping test because no M-Standard Redis endpoint is configured!");
     }
 
