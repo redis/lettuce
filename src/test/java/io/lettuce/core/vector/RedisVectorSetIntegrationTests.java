@@ -402,4 +402,43 @@ public class RedisVectorSetIntegrationTests {
         }).verifyComplete();
     }
 
+    @Test
+    void shouldFilterResultsWithEpsilonThreshold() {
+        // Guard: require a Redis version that likely supports VSIM and EPSILON
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
+
+        String key = VECTOR_SET_KEY + ":epsilon";
+
+        // Create a simple 2D vector set with predictable similarities to (1.0, 0.0)
+        redis.vadd(key, "a", 1.0, 0.0); // expect high similarity (~1.0)
+        redis.vadd(key, "b", 0.8, 0.2); // moderately high similarity
+        redis.vadd(key, "c", 0.0, 1.0); // low similarity
+        redis.vadd(key, "d", 0.6, 0.8); // lower similarity to (1.0, 0.0)
+
+        double qx = 1.0, qy = 0.0;
+
+        // Dynamic guard: if EPSILON is not recognized by the server, skip
+        try {
+            VSimArgs probe = new VSimArgs();
+            probe.epsilon(0.5);
+            redis.vsimWithScore(key, probe, qx, qy);
+        } catch (RedisCommandExecutionException e) {
+            assumeTrue(false, "Skipping: VSIM EPSILON not supported: " + e.getMessage());
+        }
+
+        VSimArgs loose = new VSimArgs();
+        loose.epsilon(0.5);
+        Map<String, Double> resLoose = redis.vsimWithScore(key, loose, qx, qy);
+
+        VSimArgs tight = new VSimArgs();
+        tight.epsilon(0.2);
+        Map<String, Double> resTight = redis.vsimWithScore(key, tight, qx, qy);
+
+        // Tighter epsilon should yield fewer or equal results
+        assertThat(resTight.size()).isLessThanOrEqualTo(resLoose.size());
+
+        // All scores in the tighter set should be >= 0.8 (1 - 0.2)
+        assertThat(resTight.values()).allMatch(score -> score >= 0.8);
+    }
+
 }
