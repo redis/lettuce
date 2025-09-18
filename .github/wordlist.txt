@@ -336,3 +336,5 @@ hubertchylik
 VMANA
 SocketOptions
 SVS
+WITHATTRIBS
+vsimWithScoreWithAttribs
