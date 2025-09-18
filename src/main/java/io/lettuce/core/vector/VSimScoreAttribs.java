@@ -9,8 +9,6 @@ package io.lettuce.core.vector;
 /**
  * Holder for a VSIM result entry that includes both the similarity score and the element attributes when WITHATTRIBS is
  * requested.
- *
- * @since <NEXT>
  */
 public final class VSimScoreAttribs {
 
