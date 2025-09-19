@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.http.client.HttpClient;
@@ -584,10 +583,21 @@ public class FaultInjectionClient {
     public Mono<Boolean> ensureEmptyTargetNode(String bdbId, String nodeToEmpty, String destinationNode) {
         log.info("Ensuring node {} is empty by migrating all shards to node {} on BDB {}", nodeToEmpty, destinationNode, bdbId);
 
-        String emptyNodeCommand = String.format("migrate node %s all_shards target_node %s", nodeToEmpty, destinationNode);
+        // First check if the node is already empty to avoid "nothing to do" errors
+        return Mono.fromCallable(() -> RedisEnterpriseConfig.discover(this, bdbId)).flatMap(currentConfig -> {
+            List<String> shardsOnNode = currentConfig.getShardsForNode(nodeToEmpty);
 
-        return executeRladminCommand(bdbId, emptyNodeCommand, CHECK_INTERVAL_LONG, MEDIUM_OPERATION_TIMEOUT)
-                .doOnSuccess(success -> log.info("Successfully emptied node {} on BDB {}", nodeToEmpty, bdbId))
+            if (shardsOnNode.isEmpty()) {
+                log.info("Node {} is already empty on BDB {}, no migration needed", nodeToEmpty, bdbId);
+                return Mono.just(true);
+            }
+
+            log.info("Node {} has {} shards on BDB {}, proceeding with migration to node {}", nodeToEmpty, shardsOnNode.size(),
+                    bdbId, destinationNode);
+
+            String emptyNodeCommand = String.format("migrate node %s all_shards target_node %s", nodeToEmpty, destinationNode);
+            return executeRladminCommand(bdbId, emptyNodeCommand, CHECK_INTERVAL_LONG, MEDIUM_OPERATION_TIMEOUT);
+        }).doOnSuccess(success -> log.info("Successfully ensured node {} is empty on BDB {}", nodeToEmpty, bdbId))
                 .doOnError(error -> log.error("Failed to empty node {} on BDB {}: {}", nodeToEmpty, bdbId, error.getMessage()));
     }
 
