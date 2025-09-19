@@ -869,14 +869,12 @@ public class RelaxedTimeoutConfigurationTest {
 
             String endpointId = clusterConfig.getFirstEndpointId();
             String policy = "single";
-            String sourceNode = clusterConfig.getOptimalSourceNode();
-            String targetNode = clusterConfig.getOptimalTargetNode();
 
             // Start maintenance operation - notification handler will manage traffic automatically
-            log.info("Starting maintenance operation (migrate + rebind)...");
+            log.info("Starting maintenance operation (migrate + rebind) with endpoint-aware node selection...");
 
-            // Start the maintenance operation asynchronously
-            faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode).subscribe(
+            // Start the maintenance operation asynchronously using endpoint-aware node selection
+            faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, clusterConfig).subscribe(
                     result -> log.info("MOVING operation completed: {}", result),
                     error -> log.error("MOVING operation failed: {}", error.getMessage()));
 
@@ -1026,16 +1024,12 @@ public class RelaxedTimeoutConfigurationTest {
 
             String endpointId = clusterConfig.getFirstEndpointId();
             String policy = "single";
-            String sourceNode = clusterConfig.getOptimalSourceNode();
-            String targetNode = clusterConfig.getOptimalTargetNode();
-
             // Start maintenance operation - notification handler will manage traffic automatically
-            log.info("Starting maintenance operation (migrate + rebind)...");
+            log.info("Starting maintenance operation (migrate + rebind) with endpoint-aware node selection...");
 
             // Start the maintenance operation and wait for it to complete fully
-            log.info("Starting MOVING operation and waiting for it to complete...");
-            Boolean operationResult = faultClient
-                    .triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode)
+            log.info("Starting MOVING operation with endpoint-aware node selection and waiting for it to complete...");
+            Boolean operationResult = faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, clusterConfig)
                     .block(Duration.ofMinutes(3));
             assertThat(operationResult).isTrue();
             log.info("MOVING operation fully completed: {}", operationResult);

@@ -18,7 +18,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +34,6 @@ import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.RedisFuture;
-import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.protocol.MaintenanceAwareExpiryWriter;
@@ -99,7 +97,7 @@ public class ConnectionHandoffTest {
 
     @BeforeAll
     public static void setup() {
-        mStandard = Endpoints.DEFAULT.getEndpoint("m1-standard");
+        mStandard = Endpoints.DEFAULT.getEndpoint("m-standard");
         assumeTrue(mStandard != null, "Skipping test because no M-Standard Redis endpoint is configured!");
     }
 
