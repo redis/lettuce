@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.http.client.HttpClient;
@@ -485,6 +484,38 @@ public class FaultInjectionClient {
     }
 
     /**
+     * Triggers a MOVING notification by automatically determining the optimal source and target nodes based on the endpoint's
+     * current binding. This ensures the endpoint will need to be rebound after migration, triggering the MOVING notification.
+     *
+     * @param bdbId the BDB ID
+     * @param endpointId the endpoint ID to rebind
+     * @param policy the policy to use for rebinding (typically "single")
+     * @param clusterConfig the cluster configuration to use for node selection
+     * @return a Mono that emits true when the operation sequence is completed
+     */
+    public Mono<Boolean> triggerMovingNotification(String bdbId, String endpointId, String policy,
+            RedisEnterpriseConfig clusterConfig) {
+        // Enhanced parameter validation
+        if (endpointId == null || endpointId.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Endpoint ID cannot be null or empty"));
+        }
+        if (policy == null || policy.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Policy cannot be null or empty"));
+        }
+        if (clusterConfig == null) {
+            return Mono.error(new IllegalArgumentException("Cluster configuration cannot be null"));
+        }
+
+        // Use endpoint-aware node selection
+        String sourceNode = clusterConfig.getOptimalSourceNodeForEndpoint(endpointId);
+        String targetNode = clusterConfig.getOptimalTargetNode();
+
+        log.info("Auto-selected nodes for MOVING notification: source={} (endpoint-bound), target={}", sourceNode, targetNode);
+
+        return triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode);
+    }
+
+    /**
      * Triggers a MOVING notification by following the proper two-step process: 1. Find which node the endpoint is pointing
      * towards 2. Migrate all shards from that node to another node (making it an "empty node") 3. Bind endpoint to trigger the
      * MOVING notification
@@ -552,10 +583,21 @@ public class FaultInjectionClient {
     public Mono<Boolean> ensureEmptyTargetNode(String bdbId, String nodeToEmpty, String destinationNode) {
         log.info("Ensuring node {} is empty by migrating all shards to node {} on BDB {}", nodeToEmpty, destinationNode, bdbId);
 
-        String emptyNodeCommand = String.format("migrate node %s all_shards target_node %s", nodeToEmpty, destinationNode);
+        // First check if the node is already empty to avoid "nothing to do" errors
+        return Mono.fromCallable(() -> RedisEnterpriseConfig.discover(this, bdbId)).flatMap(currentConfig -> {
+            List<String> shardsOnNode = currentConfig.getShardsForNode(nodeToEmpty);
 
-        return executeRladminCommand(bdbId, emptyNodeCommand, CHECK_INTERVAL_LONG, MEDIUM_OPERATION_TIMEOUT)
-                .doOnSuccess(success -> log.info("Successfully emptied node {} on BDB {}", nodeToEmpty, bdbId))
+            if (shardsOnNode.isEmpty()) {
+                log.info("Node {} is already empty on BDB {}, no migration needed", nodeToEmpty, bdbId);
+                return Mono.just(true);
+            }
+
+            log.info("Node {} has {} shards on BDB {}, proceeding with migration to node {}", nodeToEmpty, shardsOnNode.size(),
+                    bdbId, destinationNode);
+
+            String emptyNodeCommand = String.format("migrate node %s all_shards target_node %s", nodeToEmpty, destinationNode);
+            return executeRladminCommand(bdbId, emptyNodeCommand, CHECK_INTERVAL_LONG, MEDIUM_OPERATION_TIMEOUT);
+        }).doOnSuccess(success -> log.info("Successfully ensured node {} is empty on BDB {}", nodeToEmpty, bdbId))
                 .doOnError(error -> log.error("Failed to empty node {} on BDB {}: {}", nodeToEmpty, bdbId, error.getMessage()));
     }
 
