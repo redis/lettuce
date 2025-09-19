@@ -268,9 +268,7 @@ public class RedisEnterpriseConfig {
                         nodeIds.add(nodeId);
                         log.info("Found node from nodes output: {}", nodeId);
                         // Initialize shard count if not already tracked
-                        Integer previousCount = nodeShardCounts.putIfAbsent(nodeId, 0);
-                        log.info("DEBUG: Initialized node {} with shard count 0 (previous count was {})", nodeId,
-                                previousCount);
+                        nodeShardCounts.putIfAbsent(nodeId, 0);
                     }
                 }
             }
@@ -748,16 +746,11 @@ public class RedisEnterpriseConfig {
 
         // Find which node the endpoint is currently bound to
         // Try both formats: raw endpointId and full "endpoint:X:Y" format
-        log.info("DEBUG: Starting endpoint lookup for endpointId='{}'", endpointId);
         String endpointNode = getEndpointNode(endpointId);
-        log.info("DEBUG: First lookup attempt: getEndpointNode('{}') returned '{}'", endpointId, endpointNode);
-
         if (endpointNode == null) {
             // Try with "endpoint:" prefix
             String fullEndpointId = "endpoint:" + endpointId;
-            log.info("DEBUG: First attempt failed, trying with prefix: '{}'", fullEndpointId);
             endpointNode = getEndpointNode(fullEndpointId);
-            log.info("DEBUG: Second lookup attempt: getEndpointNode('{}') returned '{}'", fullEndpointId, endpointNode);
         }
 
         if (endpointNode == null) {
@@ -768,25 +761,18 @@ public class RedisEnterpriseConfig {
             return getOptimalSourceNode();
         }
 
-        log.info("DEBUG: Final endpointNode result: '{}' for endpointId '{}'", endpointNode, endpointId);
-
         // Check if the endpoint's node has shards to migrate
         // endpointNode is already in "node:X" format, so use it directly
         Integer shardCount = nodeShardCounts.get(endpointNode);
-        log.info("DEBUG: Looking up shardCount for endpointNode='{}' in nodeShardCounts={}", endpointNode, nodeShardCounts);
-        log.info("DEBUG: Retrieved shardCount={} for node={}", shardCount, endpointNode);
-
         if (shardCount == null || shardCount == 0) {
             log.warn("Endpoint {} is bound to node {} which has no shards, falling back to general source node selection",
                     endpointId, endpointNode);
-            log.warn("DEBUG: This fallback is causing the 'nothing to do' error!");
             return getOptimalSourceNode();
         }
 
         // Extract numeric node ID for return value
         String numericNodeId = extractNumericNodeId(endpointNode);
         log.info("Selected endpoint-bound node {} as migration source (has {} shards)", numericNodeId, shardCount);
-        log.info("DEBUG: About to return numericNodeId='{}' from endpointNode='{}'", numericNodeId, endpointNode);
         return numericNodeId;
     }
 
@@ -1038,4 +1024,159 @@ public class RedisEnterpriseConfig {
         }
     }
 
+    /**
+     * Restore the original cluster state (both shard distribution and roles) recorded at startup. This ensures all tests start
+     * with the exact same cluster state.
+     */
+    private static void restoreOriginalClusterState(FaultInjectionClient faultClient, String bdbId) {
+        log.info("Restoring original cluster state...");
+
+        try {
+            // Get current state
+            RedisEnterpriseConfig currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
+
+            // Log current state
+            log.info("Current cluster state before restoration:");
+            for (String nodeId : currentConfig.getNodeIds()) {
+                List<String> shards = currentConfig.getShardsForNode(nodeId);
+                log.info("  {}: {} shards {}", nodeId, shards.size(), shards);
+            }
+
+            // Step 1: Restore shard distribution across nodes
+            boolean needsMigration = false;
+            for (Map.Entry<String, List<String>> entry : originalNodeToShards.entrySet()) {
+                String nodeId = entry.getKey();
+                List<String> expectedShards = entry.getValue();
+                List<String> currentShards = new ArrayList<>();
+
+                // Get current shards (already in "redis:X" format)
+                currentShards.addAll(currentConfig.getShardsForNode(nodeId));
+
+                if (!expectedShards.equals(currentShards)) {
+                    needsMigration = true;
+                    log.info("Node {} has wrong shards. Expected: {}, Current: {}", nodeId, expectedShards, currentShards);
+                }
+            }
+
+            if (needsMigration) {
+                log.info("Need to restore shard distribution. Performing migrations...");
+
+                // Strategy: Find misplaced shards and migrate them to their correct nodes
+                // First, find nodes that have shards but should be empty
+                for (Map.Entry<String, List<String>> entry : originalNodeToShards.entrySet()) {
+                    String nodeId = entry.getKey();
+                    List<String> expectedShards = entry.getValue();
+                    List<String> currentShards = new ArrayList<>(currentConfig.getShardsForNode(nodeId));
+
+                    if (expectedShards.isEmpty() && !currentShards.isEmpty()) {
+                        // This node should be empty but has shards - migrate them away
+                        log.info("Node {} should be empty but has {} shards - migrating away", nodeId, currentShards.size());
+
+                        // Find the node that should have these shards
+                        String sourceNodeNum = nodeId.replace("node:", "");
+                        String targetNodeNum = null;
+
+                        for (Map.Entry<String, List<String>> targetEntry : originalNodeToShards.entrySet()) {
+                            String potentialTarget = targetEntry.getKey();
+                            List<String> potentialTargetExpected = targetEntry.getValue();
+                            List<String> potentialTargetCurrent = currentConfig.getShardsForNode(potentialTarget);
+
+                            // Find a node that should have shards but currently doesn't have enough
+                            if (!potentialTargetExpected.isEmpty() && !potentialTarget.equals(nodeId)
+                                    && potentialTargetCurrent.size() < potentialTargetExpected.size()) {
+                                targetNodeNum = potentialTarget.replace("node:", "");
+                                break;
+                            }
+                        }
+
+                        if (targetNodeNum != null) {
+                            String migrateCommand = "migrate node " + sourceNodeNum + " all_shards target_node "
+                                    + targetNodeNum;
+                            log.info("Executing restoration migration: {}", migrateCommand);
+
+                            StepVerifier
+                                    .create(faultClient.executeRladminCommand(bdbId, migrateCommand, DISCOVERY_CHECK_INTERVAL,
+                                            LONG_OPERATION_TIMEOUT))
+                                    .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
+
+                            // Refresh config after migration
+                            currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
+                            break; // Only one migration at a time to avoid conflicts
+                        }
+                    }
+                }
+
+                log.info("Shard distribution restored");
+            }
+
+            // Step 2: Restore master/slave roles
+            // Only failover shards that are currently MASTERS but should be SLAVES
+            List<String> mastersToFailover = new ArrayList<>();
+            for (Map.Entry<String, String> entry : originalShardRoles.entrySet()) {
+                String shardId = entry.getKey();
+                String originalRole = entry.getValue();
+
+                // Only failover shards that are currently masters but should be slaves
+                if ("slave".equals(originalRole) && currentConfig.getMasterShardIds().contains(shardId)) {
+                    // Should be slave but is currently master - failover this master
+                    mastersToFailover.add(shardId.replace("redis:", ""));
+                    log.info("Shard {} should be slave but is currently master - will failover", shardId);
+                }
+            }
+
+            if (!mastersToFailover.isEmpty()) {
+                log.info("Found {} master shards that should be slaves, failing them over: {}", mastersToFailover.size(),
+                        mastersToFailover);
+
+                // Build failover command (only failover current masters)
+                String failoverCommand = "failover shard " + String.join(" ", mastersToFailover);
+                log.info("Executing restoration failover: {}", failoverCommand);
+
+                // Execute the failover
+                StepVerifier.create(faultClient.executeRladminCommand(bdbId, failoverCommand, DISCOVERY_CHECK_INTERVAL,
+                        LONG_OPERATION_TIMEOUT)).expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
+
+                log.info("Role restoration failover completed");
+            } else {
+                log.info("No role restoration needed - all shards are in correct roles");
+            }
+
+            // Step 3: Restore endpoint bindings
+            for (Map.Entry<String, String> entry : originalEndpointToNode.entrySet()) {
+                String endpointId = entry.getKey();
+                String originalNodeId = entry.getValue();
+                String currentNodeId = currentConfig.getEndpointNode(endpointId);
+
+                log.info("Checking endpoint binding: endpointId='{}', originalNodeId='{}', currentNodeId='{}'", endpointId,
+                        originalNodeId, currentNodeId);
+
+                if (!originalNodeId.equals(currentNodeId)) {
+                    log.info("Endpoint {} is bound to node {}, but should be bound to {}. Rebinding...", endpointId,
+                            currentNodeId, originalNodeId);
+                    // Extract the endpoint ID without the "endpoint:" prefix for the bind command
+                    String extractedEndpointId = extractEndpointId(endpointId);
+                    String rebindCommand = "bind endpoint " + extractedEndpointId + " policy single";
+                    log.info("Executing rebind command: '{}'", rebindCommand);
+                    StepVerifier.create(faultClient.executeRladminCommand(bdbId, rebindCommand, DISCOVERY_CHECK_INTERVAL,
+                            LONG_OPERATION_TIMEOUT)).expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
+                    log.info("Endpoint {} rebinded to {}", endpointId, originalNodeId);
+                } else {
+                    log.info("Endpoint {} is already correctly bound to {}", endpointId, originalNodeId);
+                }
+            }
+
+            // Step 4: Verify final state matches original
+            currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
+            log.info("Final cluster state after restoration:");
+            for (String nodeId : currentConfig.getNodeIds()) {
+                List<String> shards = currentConfig.getShardsForNode(nodeId);
+                log.info("  {}: {} shards {}", nodeId, shards.size(), shards);
+            }
+            log.info("Original cluster state restored successfully");
+
+        } catch (Exception e) {
+            fail("Failed to restore original cluster state - test should fail if we reach this line: " + e.getMessage());
+            log.warn("Failed to restore original cluster state: {}", e.getMessage());
+        }
+    }
 }
