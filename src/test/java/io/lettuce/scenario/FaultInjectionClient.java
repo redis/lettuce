@@ -485,6 +485,38 @@ public class FaultInjectionClient {
     }
 
     /**
+     * Triggers a MOVING notification by automatically determining the optimal source and target nodes based on the endpoint's
+     * current binding. This ensures the endpoint will need to be rebound after migration, triggering the MOVING notification.
+     *
+     * @param bdbId the BDB ID
+     * @param endpointId the endpoint ID to rebind
+     * @param policy the policy to use for rebinding (typically "single")
+     * @param clusterConfig the cluster configuration to use for node selection
+     * @return a Mono that emits true when the operation sequence is completed
+     */
+    public Mono<Boolean> triggerMovingNotification(String bdbId, String endpointId, String policy,
+            RedisEnterpriseConfig clusterConfig) {
+        // Enhanced parameter validation
+        if (endpointId == null || endpointId.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Endpoint ID cannot be null or empty"));
+        }
+        if (policy == null || policy.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Policy cannot be null or empty"));
+        }
+        if (clusterConfig == null) {
+            return Mono.error(new IllegalArgumentException("Cluster configuration cannot be null"));
+        }
+
+        // Use endpoint-aware node selection
+        String sourceNode = clusterConfig.getOptimalSourceNodeForEndpoint(endpointId);
+        String targetNode = clusterConfig.getOptimalTargetNode();
+
+        log.info("Auto-selected nodes for MOVING notification: source={} (endpoint-bound), target={}", sourceNode, targetNode);
+
+        return triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode);
+    }
+
+    /**
      * Triggers a MOVING notification by following the proper two-step process: 1. Find which node the endpoint is pointing
      * towards 2. Migrate all shards from that node to another node (making it an "empty node") 3. Bind endpoint to trigger the
      * MOVING notification

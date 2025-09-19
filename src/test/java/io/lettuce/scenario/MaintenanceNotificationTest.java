@@ -210,20 +210,15 @@ public class MaintenanceNotificationTest {
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger MOVING notification using the proper two-step process:
-        // 1. Migrate all shards from source node to target node (making it empty)
+        // 1. Migrate all shards from the node where the endpoint is bound
         // 2. Bind endpoint to trigger MOVING notification
         // Dynamically discovered endpoint ID
         String endpointId = clusterConfig.getFirstEndpointId();
         // M-Standard uses single policy
         String policy = "single";
-        // Dynamically discovered source node (finds node with shards)
-        String sourceNode = clusterConfig.getOptimalSourceNode();
-        // Dynamically discovered target node (finds empty node)
-        String targetNode = clusterConfig.getOptimalTargetNode();
 
-        log.info("Triggering MOVING notification using proper two-step process...");
-        log.info("Using dynamic nodes: source={}, target={}", sourceNode, targetNode);
-        StepVerifier.create(faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode))
+        log.info("Triggering MOVING notification using endpoint-aware node selection...");
+        StepVerifier.create(faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, clusterConfig))
                 .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for MOVING notification

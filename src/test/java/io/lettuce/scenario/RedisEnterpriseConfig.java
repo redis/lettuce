@@ -84,23 +84,12 @@ public class RedisEnterpriseConfig {
         RedisEnterpriseConfig config = new RedisEnterpriseConfig(bdbId);
 
         try {
-            // Execute discovery commands to get actual cluster information
-            String shardsOutput = executeCommandAndCaptureOutput(faultClient, bdbId, "status shards", "shards discovery");
-            String endpointsOutput = executeCommandAndCaptureOutput(faultClient, bdbId, "status endpoints",
-                    "endpoints discovery");
-            String nodesOutput = executeCommandAndCaptureOutput(faultClient, bdbId, "status nodes", "nodes discovery");
+            // Execute single discovery command to get all cluster information at once
+            String statusOutput = executeCommandAndCaptureOutput(faultClient, bdbId, "status", "full cluster discovery");
 
-            // Parse the actual output to populate configuration using existing methods
-            if (shardsOutput != null && !shardsOutput.trim().isEmpty()) {
-                config.parseShards(shardsOutput);
-            }
-
-            if (endpointsOutput != null && !endpointsOutput.trim().isEmpty()) {
-                config.parseEndpoints(endpointsOutput);
-            }
-
-            if (nodesOutput != null && !nodesOutput.trim().isEmpty()) {
-                config.parseNodes(nodesOutput);
+            // Parse the comprehensive output to populate configuration
+            if (statusOutput != null && !statusOutput.trim().isEmpty()) {
+                config.parseFullStatus(statusOutput);
             }
 
             log.info("Configuration discovery completed: {}", config.getSummary());
@@ -145,6 +134,43 @@ public class RedisEnterpriseConfig {
         } catch (Exception e) {
             log.warn("Error during {}: {}", description, e.getMessage());
             return "";
+        }
+    }
+
+    /**
+     * Parse comprehensive cluster information from rladmin status output. This replaces the need for separate status shards,
+     * status endpoints, and status nodes calls.
+     */
+    public void parseFullStatus(String statusOutput) {
+        log.info("Parsing full cluster status from single command output...");
+
+        if (statusOutput == null || statusOutput.trim().isEmpty()) {
+            log.warn("Empty status output received");
+            return;
+        }
+
+        // Split the output into sections and add debug logging
+        log.debug("Raw status output length: {}", statusOutput.length());
+        String[] sections = statusOutput.split("(?=CLUSTER NODES:|DATABASES:|ENDPOINTS:|SHARDS:)");
+        log.debug("Split into {} sections", sections.length);
+
+        for (int i = 0; i < sections.length; i++) {
+            String section = sections[i].trim();
+            log.debug("Processing section {}: starts with '{}'", i, section.substring(0, Math.min(50, section.length())));
+
+            if (section.startsWith("SHARDS:")) {
+                log.debug("Parsing SHARDS section with {} characters", section.length());
+                parseShards(section);
+            } else if (section.startsWith("ENDPOINTS:")) {
+                log.debug("Parsing ENDPOINTS section with {} characters", section.length());
+                parseEndpoints(section);
+            } else if (section.startsWith("CLUSTER NODES:")) {
+                log.debug("Parsing CLUSTER NODES section with {} characters", section.length());
+                parseNodes(section);
+            } else {
+                log.debug("Skipping section that starts with: {}", section.substring(0, Math.min(20, section.length())));
+            }
+            // We can ignore DATABASES: section for now as it's not used
         }
     }
 
@@ -219,16 +245,24 @@ public class RedisEnterpriseConfig {
         for (String line : lines) {
             line = line.trim();
             if (line.contains("node:")) {
-                // Extract node ID from lines like "node:1 master 10.0.101.47..."
+                // Extract node ID from lines like "node:1 master..." or "*node:1 master..."
                 String[] parts = line.split("\\s+");
-                if (parts.length > 0 && parts[0].startsWith("node:")) {
-                    String nodeId = parts[0];
-                    if (!nodeIds.contains(nodeId)) {
+                if (parts.length > 0) {
+                    String firstPart = parts[0];
+                    // Handle both "node:1" and "*node:1" formats
+                    String nodeId = null;
+                    if (firstPart.startsWith("node:")) {
+                        nodeId = firstPart;
+                    } else if (firstPart.startsWith("*node:")) {
+                        nodeId = firstPart.substring(1); // Remove the "*" prefix
+                    }
+
+                    if (nodeId != null && !nodeIds.contains(nodeId)) {
                         nodeIds.add(nodeId);
                         log.info("Found node from nodes output: {}", nodeId);
+                        // Initialize shard count if not already tracked
+                        nodeShardCounts.putIfAbsent(nodeId, 0);
                     }
-                    // Initialize shard count if not already tracked
-                    nodeShardCounts.putIfAbsent(nodeId, 0);
                 }
             }
         }
@@ -419,14 +453,18 @@ public class RedisEnterpriseConfig {
      * state).
      */
     public String getEmptyNode() {
-        String emptyNode = nodeShardCounts.entrySet().stream().filter(entry -> entry.getValue() == 0).map(Map.Entry::getKey)
-                .findFirst().map(this::extractNumericNodeId).orElse(null);
-
-        if (emptyNode == null) {
-            log.debug("No empty nodes found. Node shard distribution: {}", nodeShardCounts);
+        // Check all discovered nodes, not just those in nodeShardCounts
+        for (String nodeId : nodeIds) {
+            Integer shardCount = nodeShardCounts.get(nodeId);
+            if (shardCount == null || shardCount == 0) {
+                log.debug("Found empty node: {} (shard count: {})", nodeId, shardCount);
+                return extractNumericNodeId(nodeId);
+            }
         }
 
-        return emptyNode;
+        log.debug("No empty nodes found. Node shard distribution: {}", nodeShardCounts);
+        log.debug("All discovered nodes: {}", nodeIds);
+        return null;
     }
 
     /**
@@ -631,6 +669,49 @@ public class RedisEnterpriseConfig {
         }
 
         return nodeWithShards;
+    }
+
+    /**
+     * Get optimal source node for endpoint-based operations. This method considers which node the endpoint is currently bound
+     * to and selects that node as the migration source. This ensures that after migration, the endpoint will need to be
+     * rebound, triggering the desired MOVING notification.
+     */
+    public String getOptimalSourceNodeForEndpoint(String endpointId) {
+        if (endpointId == null || endpointId.trim().isEmpty()) {
+            log.warn("Endpoint ID is null or empty, falling back to general source node selection");
+            return getOptimalSourceNode();
+        }
+
+        // Find which node the endpoint is currently bound to
+        // Try both formats: raw endpointId and full "endpoint:X:Y" format
+        String endpointNode = getEndpointNode(endpointId);
+        if (endpointNode == null) {
+            // Try with "endpoint:" prefix
+            String fullEndpointId = "endpoint:" + endpointId;
+            endpointNode = getEndpointNode(fullEndpointId);
+        }
+
+        if (endpointNode == null) {
+            log.warn(
+                    "Could not determine which node endpoint {} is bound to (tried both '{}' and 'endpoint:{}'), falling back to general source node selection",
+                    endpointId, endpointId, endpointId);
+            log.warn("Available endpoint mappings: {}", endpointToNode);
+            return getOptimalSourceNode();
+        }
+
+        // Check if the endpoint's node has shards to migrate
+        // endpointNode is already in "node:X" format, so use it directly
+        Integer shardCount = nodeShardCounts.get(endpointNode);
+        if (shardCount == null || shardCount == 0) {
+            log.warn("Endpoint {} is bound to node {} which has no shards, falling back to general source node selection",
+                    endpointId, endpointNode);
+            return getOptimalSourceNode();
+        }
+
+        // Extract numeric node ID for return value
+        String numericNodeId = extractNumericNodeId(endpointNode);
+        log.info("Selected endpoint-bound node {} as migration source (has {} shards)", numericNodeId, shardCount);
+        return numericNodeId;
     }
 
     /**
@@ -954,8 +1035,6 @@ public class RedisEnterpriseConfig {
                                             LONG_OPERATION_TIMEOUT))
                                     .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
-                            Thread.sleep(20000);
-
                             // Refresh config after migration
                             currentConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
                             break; // Only one migration at a time to avoid conflicts
@@ -993,8 +1072,6 @@ public class RedisEnterpriseConfig {
                 StepVerifier.create(faultClient.executeRladminCommand(bdbId, failoverCommand, DISCOVERY_CHECK_INTERVAL,
                         LONG_OPERATION_TIMEOUT)).expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
-                // Wait for completion
-                Thread.sleep(15000);
                 log.info("Role restoration failover completed");
             } else {
                 log.info("No role restoration needed - all shards are in correct roles");
@@ -1018,7 +1095,6 @@ public class RedisEnterpriseConfig {
                     log.info("Executing rebind command: '{}'", rebindCommand);
                     StepVerifier.create(faultClient.executeRladminCommand(bdbId, rebindCommand, DISCOVERY_CHECK_INTERVAL,
                             LONG_OPERATION_TIMEOUT)).expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
-                    Thread.sleep(10000); // Wait for rebind to complete
                     log.info("Endpoint {} rebinded to {}", endpointId, originalNodeId);
                 } else {
                     log.info("Endpoint {} is already correctly bound to {}", endpointId, originalNodeId);

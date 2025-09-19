@@ -442,16 +442,13 @@ public class ConnectionHandoffTest {
         // Get cluster configuration for the operation
         String endpointId = clusterConfig.getFirstEndpointId();
         String policy = "single";
-        String sourceNode = clusterConfig.getOptimalSourceNode();
-        String targetNode = clusterConfig.getOptimalTargetNode();
 
         log.info("=== {} ===", testDescription);
         log.info("Expected address type: {}", context.expectedAddressType);
-        log.info("Starting migrate + moving operation...");
-        log.info("Using nodes: source={}, target={}", sourceNode, targetNode);
+        log.info("Starting migrate + moving operation with endpoint-aware node selection...");
 
-        // Trigger the migrate + moving operation
-        StepVerifier.create(faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode))
+        // Trigger the migrate + moving operation using endpoint-aware node selection
+        StepVerifier.create(faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, clusterConfig))
                 .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for MIGRATED notification first (migration completes before endpoint rebind)
@@ -1049,15 +1046,12 @@ public class ConnectionHandoffTest {
         // Trigger operations that should generate all 5 notification types
         String endpointId = clusterConfig.getFirstEndpointId();
         String policy = "single";
-        String sourceNode = clusterConfig.getOptimalSourceNode();
-        String targetNode = clusterConfig.getOptimalTargetNode();
 
         log.info("Starting comprehensive maintenance operations to trigger all notification types...");
-        log.info("Using nodes: source={}, target={}", sourceNode, targetNode);
 
         // This operation will trigger MIGRATING, MIGRATED, and MOVING notifications
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode))
-                .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
+        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for initial notifications
         boolean received = capture.waitForNotifications(NOTIFICATION_WAIT_TIMEOUT);
@@ -1130,15 +1124,12 @@ public class ConnectionHandoffTest {
         // Trigger the same operations as the enabled test
         String endpointId = clusterConfig.getFirstEndpointId();
         String policy = "single";
-        String sourceNode = clusterConfig.getOptimalSourceNode();
-        String targetNode = clusterConfig.getOptimalTargetNode();
 
         log.info("Starting maintenance operations with disabled notifications...");
-        log.info("Using nodes: source={}, target={}", sourceNode, targetNode);
 
         // This operation would normally trigger notifications, but they should be disabled
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode))
-                .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
+        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait to see if any notifications are received (they shouldn't be)
         boolean received = capture.waitForNotifications(Duration.ofSeconds(30));
@@ -1212,16 +1203,13 @@ public class ConnectionHandoffTest {
         // Get cluster configuration for the operation
         String endpointId = clusterConfig.getFirstEndpointId();
         String policy = "single";
-        String sourceNode = clusterConfig.getOptimalSourceNode();
-        String targetNode = clusterConfig.getOptimalTargetNode();
 
         log.info("Expected address type: {} (none)", AddressType.NONE);
         log.info("Starting migrate + moving operation...");
-        log.info("Using nodes: source={}, target={}", sourceNode, targetNode);
 
         // Trigger the migrate + moving operation
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode))
-                .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
+        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for MIGRATED notification first (migration completes before endpoint rebind)
         log.info("Waiting for MIGRATED notification...");
@@ -1417,14 +1405,12 @@ public class ConnectionHandoffTest {
         String bdbId = String.valueOf(mStandard.getBdbId());
         String endpointId = clusterConfig.getFirstEndpointId();
         String policy = "single";
-        String sourceNode = clusterConfig.getOptimalSourceNode();
-        String targetNode = clusterConfig.getOptimalTargetNode();
 
-        log.info("Triggering migrate + bind operation: source={}, target={}", sourceNode, targetNode);
+        log.info("Triggering migrate + bind operation with endpoint-aware node selection...");
 
         // Trigger the migrate + bind operation that causes connection handoff
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode))
-                .expectNext(true).expectComplete().verify(Duration.ofMinutes(3));
+        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
+                .expectComplete().verify(Duration.ofMinutes(3));
 
         log.info("Migrate + bind operation completed, waiting for connection events...");
 
