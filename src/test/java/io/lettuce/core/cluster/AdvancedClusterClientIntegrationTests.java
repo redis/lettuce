@@ -22,6 +22,7 @@ package io.lettuce.core.cluster;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.test.LettuceExtension.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +31,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.DefaultClientResources;
+import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
 
 import javax.enterprise.inject.New;
 import javax.inject.Inject;
@@ -664,6 +672,49 @@ class AdvancedClusterClientIntegrationTests extends TestSupport {
     @Test
     void clusterScanCursorFinished() {
         assertThatThrownBy(() -> sync.scan(ScanCursor.FINISHED)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void clusterScanAsyncSingleIoThread() {
+
+        // Create a dedicated client with a single IO thread to stress async chaining
+        ClientResources resources = DefaultClientResources.builder()
+                .eventLoopGroupProvider(new DefaultEventLoopGroupProvider(1)).build();
+        RedisClusterClient singleThreadClient = RedisClusterClient.create(resources,
+                RedisURI.Builder.redis(ClusterTestSettings.host, ClusterTestSettings.port1).build());
+        StatefulRedisClusterConnection<String, String> conn = singleThreadClient.connect();
+
+        // Seed keys across the cluster
+        conn.sync().mset(KeysAndValues.MAP);
+
+        Set<String> allKeys = new HashSet<>();
+        ScanArgs args = ScanArgs.Builder.limit(200);
+
+        boolean timedOut = false;
+        try {
+            scanDatabase(conn, ScanCursor.INITIAL, args, keys -> {
+                allKeys.addAll(keys);
+                return CompletableFuture.completedFuture(null);
+            }).get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            timedOut = true;
+        }
+
+        assertFalse(timedOut);
+        assertThat(allKeys).containsAll(KeysAndValues.KEYS);
+    }
+
+    private CompletableFuture<Void> scanDatabase(StatefulRedisClusterConnection<String, String> connection, ScanCursor cursor,
+            ScanArgs scanArgs, Function<List<String>, CompletableFuture<?>> keysProcessor) {
+
+        RedisAdvancedClusterAsyncCommands<String, String> asyncCommands = connection.async();
+        RedisFuture<KeyScanCursor<String>> res = asyncCommands.scan(cursor, scanArgs);
+        return res.thenCompose(newCursor -> keysProcessor.apply(newCursor.getKeys()).thenCompose(ignore -> {
+            if (newCursor.isFinished()) {
+                return CompletableFuture.completedFuture(null);
+            }
+            return scanDatabase(connection, newCursor, scanArgs, keysProcessor);
+        })).toCompletableFuture();
     }
 
     @Test
