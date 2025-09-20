@@ -25,33 +25,23 @@ import static io.lettuce.core.StringMatchResult.Position;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.*;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.test.KeyValueStreamingAdapter;
+import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.condition.EnabledOnCommand;
 import javax.inject.Inject;
-
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import io.lettuce.core.*;
-import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.dynamic.Commands;
-import io.lettuce.core.dynamic.RedisCommandFactory;
-import io.lettuce.core.dynamic.annotation.Command;
-import io.lettuce.core.dynamic.annotation.Param;
-import io.lettuce.test.KeyValueStreamingAdapter;
-import io.lettuce.test.LettuceExtension;
-import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
  * Integration tests for {@link io.lettuce.core.api.sync.RedisStringCommands}.
@@ -214,6 +204,13 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(redis.set(key, value, px(20000).nx())).isEqualTo("OK");
         assertThat(redis.get(key)).isEqualTo(value);
         assertThat(redis.ttl(key) >= 19).isTrue();
+
+        redis.del(key);
+
+        assertThat(redis.set(key, "value-1", SetArgs.Builder.get())).isNull();
+        assertThat(redis.set(key, "value-2", SetArgs.Builder.get())).isEqualTo("value-1");
+        assertThat(redis.set(key, "value-3", SetArgs.Builder.get().nx())).isEqualTo("value-2");
+        assertThat(redis.get(key)).isEqualTo("value-2");
     }
 
     @Test
