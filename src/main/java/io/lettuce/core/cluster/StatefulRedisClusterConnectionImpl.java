@@ -126,6 +126,10 @@ public class StatefulRedisClusterConnectionImpl<K, V> extends RedisChannelHandle
         this.reactive = newRedisAdvancedClusterReactiveCommandsImpl();
     }
 
+    public RedisCodec<K, V> getCodec() {
+        return codec;
+    }
+
     protected RedisAdvancedClusterReactiveCommandsImpl<K, V> newRedisAdvancedClusterReactiveCommandsImpl() {
         return new RedisAdvancedClusterReactiveCommandsImpl<>((StatefulRedisClusterConnection<K, V>) this, codec, parser);
     }
