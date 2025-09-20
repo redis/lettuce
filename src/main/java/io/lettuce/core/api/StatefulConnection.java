@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisConnectionStateListener;
+import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 
@@ -81,7 +82,7 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
      * connection will become not usable anymore as soon as this method was called.
      *
      * @return a {@link CompletableFuture} that is notified once the operation completes, either because the operation was
-     *         successful or because of an error.
+     * successful or because of an error.
      * @since 5.1
      */
     @Override
@@ -116,5 +117,10 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
      * achieve batching. No-op if channel is not connected.
      */
     void flushCommands();
+
+    /**
+     * @return the codec used for this connection.
+     */
+    RedisCodec<K, V> getCodec();
 
 }
