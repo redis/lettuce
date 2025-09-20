@@ -80,7 +80,9 @@ public class MaintenancePushNotificationMonitor {
         long totalPings = monitoringTimeout.toMillis() / pingInterval.toMillis();
 
         // Start monitoring - the Disposable is not stored as it runs asynchronously
-        Flux.interval(pingInterval).take(totalPings).doOnNext(i -> log.info("Ping #{} - Activity to trigger push messages", i))
+        // Use Flux.interval(Duration.ZERO, pingInterval) to start immediately without initial delay
+        Flux.interval(Duration.ZERO, pingInterval).take(totalPings)
+                .doOnNext(i -> log.info("Ping #{} - Activity to trigger push messages", i))
                 .flatMap(i -> reactive.ping().timeout(pingTimeout)
                         .doOnNext(response -> log.info("Ping #{} response: '{}'", i, response)).onErrorResume(e -> {
                             log.debug("Ping #{} failed, continuing: {}", i, e.getMessage());
@@ -140,55 +142,64 @@ public class MaintenancePushNotificationMonitor {
         }
 
         private void handleMovingMessage(List<Object> content, T capture) {
-            if (content.size() >= 3) {
-                String slotNumber = content.get(1).toString();
-                String newAddress = decodeByteBuffer(content.get(2));
-                log.info("MOVING: slot {} -> {}", slotNumber, newAddress);
-                String resp3Format = String.format(">3\r\n+MOVING\r\n:%s\r\n+%s\r\n", slotNumber, newAddress);
-                capture.captureNotification(resp3Format);
-            }
+            String stateName = decodeByteBuffer(content.get(0));
+            String seqNumber = decodeByteBuffer(content.get(1));
+            String timeToLive = decodeByteBuffer(content.get(2));
+            String newAddress = decodeByteBuffer(content.get(3));
+            log.info("state name: {}, seq number: {}, time to live: {}, new address: {}", stateName, seqNumber, timeToLive,
+                    newAddress);
+            String resp3Format = String.format(">4\r\n%s\r\n:%s\r\n:%s\r\n%s\r\n", stateName, seqNumber, timeToLive,
+                    newAddress != null ? newAddress : "");
+            capture.captureNotification(resp3Format);
+
         }
 
         private void handleMigratingMessage(List<Object> content, T capture) {
-            if (content.size() >= 3) {
-                String slotNumber = content.get(1).toString();
-                String timestamp = content.get(2).toString();
-                log.info("MIGRATING: slot {} at timestamp {}", slotNumber, timestamp);
-                String resp3Format = String.format(">3\r\n+MIGRATING\r\n:%s\r\n:%s\r\n", timestamp, slotNumber);
-                capture.captureNotification(resp3Format);
-            }
+            String stateName = decodeByteBuffer(content.get(0));
+            String seqNumber = decodeByteBuffer(content.get(1));
+            String timeToLive = decodeByteBuffer(content.get(2));
+            String slotNumber = decodeByteBuffer(content.get(3));
+            log.info("state name: {}, seq number: {}, time to live: {}, slot number: {}", stateName, seqNumber, timeToLive,
+                    slotNumber);
+            String resp3Format = String.format(">4\r\n%s\r\n:%s\r\n:%s\r\n:%s\r\n", stateName, seqNumber, timeToLive,
+                    slotNumber);
+            capture.captureNotification(resp3Format);
         }
 
         private void handleMigratedMessage(List<Object> content, T capture) {
-            if (content.size() >= 2) {
-                String slotNumber = content.get(1).toString();
-                log.info("MIGRATED: slot {}", slotNumber);
-                String resp3Format = String.format(">2\r\n+MIGRATED\r\n:%s\r\n", slotNumber);
-                capture.captureNotification(resp3Format);
-            }
+            String stateName = decodeByteBuffer(content.get(0));
+            String seqNumber = decodeByteBuffer(content.get(1));
+            String slotNumber = decodeByteBuffer(content.get(2));
+            log.info("state name: {}, seq number: {}, slot number: {}", stateName, seqNumber, slotNumber);
+            String resp3Format = String.format(">3\r\n%s\r\n:%s\r\n:%s\r\n", stateName, seqNumber, slotNumber);
+            capture.captureNotification(resp3Format);
         }
 
         private void handleFailingOverMessage(List<Object> content, T capture) {
-            if (content.size() >= 3) {
-                String timestamp = content.get(1).toString();
-                String shardId = content.get(2).toString();
-                log.info("FAILING_OVER: shard {} at timestamp {}", shardId, timestamp);
-                String resp3Format = String.format(">3\r\n+FAILING_OVER\r\n:%s\r\n:%s\r\n", timestamp, shardId);
-                capture.captureNotification(resp3Format);
-            }
+            String stateName = decodeByteBuffer(content.get(0));
+            String seqNumber = decodeByteBuffer(content.get(1));
+            String timeToLive = decodeByteBuffer(content.get(2));
+            String slotNumber = decodeByteBuffer(content.get(3));
+            log.info("state name: {}, seq number: {}, time to live: {}, slot number: {}", stateName, seqNumber, timeToLive,
+                    slotNumber);
+            String resp3Format = String.format(">4\r\n%s\r\n:%s\r\n:%s\r\n:%s\r\n", stateName, seqNumber, timeToLive,
+                    slotNumber);
+            capture.captureNotification(resp3Format);
         }
 
         private void handleFailedOverMessage(List<Object> content, T capture) {
-            if (content.size() >= 2) {
-                String shardId = content.get(1).toString();
-                log.info("FAILED_OVER: shard {}", shardId);
-                String resp3Format = String.format(">2\r\n+FAILED_OVER\r\n:%s\r\n", shardId);
-                capture.captureNotification(resp3Format);
-            }
+            String stateName = decodeByteBuffer(content.get(0));
+            String seqNumber = decodeByteBuffer(content.get(1));
+            String slotNumber = decodeByteBuffer(content.get(2));
+            log.info("state name: {}, seq number: {}, slot number: {}", stateName, seqNumber, slotNumber);
+            String resp3Format = String.format(">3\r\n%s\r\n:%s\r\n:%s\r\n", stateName, seqNumber, slotNumber);
+            capture.captureNotification(resp3Format);
         }
 
         private String decodeByteBuffer(Object obj) {
-            if (obj instanceof ByteBuffer) {
+            if (obj == null) {
+                return null;
+            } else if (obj instanceof ByteBuffer) {
                 ByteBuffer buffer = (ByteBuffer) obj;
                 return io.lettuce.core.codec.StringCodec.UTF8.decodeKey(buffer);
             } else {

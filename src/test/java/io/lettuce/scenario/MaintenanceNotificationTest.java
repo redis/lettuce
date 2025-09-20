@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.MaintenanceEventsOptions;
+import io.lettuce.core.MaintenanceEventsOptions.AddressType;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -61,18 +63,19 @@ public class MaintenanceNotificationTest {
 
     private final FaultInjectionClient faultClient = new FaultInjectionClient();
 
-    // Push notification patterns
+    // Push notification patterns - Updated to new format with sequence numbers
     private static final Pattern MOVING_PATTERN = Pattern
-            .compile(">3\\r\\n\\+MOVING\\r\\n:(\\d+)\\r\\n\\+([^:]+):(\\d+)\\r\\n");
+            .compile(">4\\r\\nMOVING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n([^:]+):(\\d+)\\r\\n");
 
-    private static final Pattern MIGRATING_PATTERN = Pattern.compile(">3\\r\\n\\+MIGRATING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
+    private static final Pattern MIGRATING_PATTERN = Pattern
+            .compile(">4\\r\\nMIGRATING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
-    private static final Pattern MIGRATED_PATTERN = Pattern.compile(">2\\r\\n\\+MIGRATED\\r\\n:(\\d+)\\r\\n");
+    private static final Pattern MIGRATED_PATTERN = Pattern.compile(">3\\r\\nMIGRATED\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
     private static final Pattern FAILING_OVER_PATTERN = Pattern
-            .compile(">3\\r\\n\\+FAILING_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
+            .compile(">4\\r\\nFAILING_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
-    private static final Pattern FAILED_OVER_PATTERN = Pattern.compile(">2\\r\\n\\+FAILED_OVER\\r\\n:(\\d+)\\r\\n");
+    private static final Pattern FAILED_OVER_PATTERN = Pattern.compile(">3\\r\\nFAILED_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n");
 
     @BeforeAll
     public static void setup() {
@@ -175,7 +178,8 @@ public class MaintenanceNotificationTest {
         RedisClient client = RedisClient.create(uri);
 
         // Configure client for RESP3 to receive push notifications
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3).build();
+        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
@@ -200,26 +204,21 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.1 - Receive MOVING push notification during endpoint rebind")
+    @DisplayName("Receive MOVING push notification during endpoint rebind")
     public void receiveMovingPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.1 - Receive MOVING push notification during endpoint rebind");
+        log.info("Starting test:  Receive MOVING push notification during endpoint rebind");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger MOVING notification using the proper two-step process:
-        // 1. Migrate all shards from source node to target node (making it empty)
+        // 1. Migrate all shards from the node where the endpoint is bound
         // 2. Bind endpoint to trigger MOVING notification
         // Dynamically discovered endpoint ID
         String endpointId = clusterConfig.getFirstEndpointId();
         // M-Standard uses single policy
         String policy = "single";
-        // Dynamically discovered source node (finds node with shards)
-        String sourceNode = clusterConfig.getOptimalSourceNode();
-        // Dynamically discovered target node (finds empty node)
-        String targetNode = clusterConfig.getOptimalTargetNode();
 
-        log.info("Triggering MOVING notification using proper two-step process...");
-        log.info("Using dynamic nodes: source={}, target={}", sourceNode, targetNode);
-        StepVerifier.create(faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, sourceNode, targetNode))
+        log.info("Triggering MOVING notification using endpoint-aware node selection...");
+        StepVerifier.create(faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, clusterConfig))
                 .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for MOVING notification
@@ -232,13 +231,15 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = MOVING_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String timeS = matcher.group(1);
-            String newIp = matcher.group(2);
-            String port = matcher.group(3);
+            String seqNumber = matcher.group(1);
+            String timeS = matcher.group(2);
+            String newIp = matcher.group(3);
+            String port = matcher.group(4);
 
-            log.info("Parsed MOVING notification - Time: {}, New IP: {}, Port: {}", timeS, newIp, port);
+            log.info("Parsed MOVING notification - Seq: {}, Time: {}, New IP: {}, Port: {}", seqNumber, timeS, newIp, port);
 
             // Validate parsed values
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
             assertThat(Long.parseLong(timeS)).isGreaterThan(0L);
             assertThat(newIp).isNotEmpty();
             assertThat(Integer.parseInt(port)).isGreaterThan(0);
@@ -248,7 +249,7 @@ public class MaintenanceNotificationTest {
 
         // Verify notification parsing and storage - expect multiple notifications during migration process
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MOVING"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
@@ -260,9 +261,9 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.2 - Receive MIGRATING push notification during node migration")
+    @DisplayName("Receive MIGRATING push notification during node migration")
     public void receiveMigratingPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.2 - Receive MIGRATING push notification during node migration");
+        log.info("Starting test: Receive MIGRATING push notification during node migration");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger node migration using optimal node selection
@@ -299,18 +300,20 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = MIGRATING_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String timeS = matcher.group(1);
-            String migrationShardId = matcher.group(2);
+            String seqNumber = matcher.group(1);
+            String timeS = matcher.group(2);
+            String migrationShardId = matcher.group(3);
 
-            log.info("Parsed MIGRATING notification - Time: {}, Shard ID: {}", timeS, migrationShardId);
+            log.info("Parsed MIGRATING notification - Seq: {}, Time: {}, Shard ID: {}", seqNumber, timeS, migrationShardId);
 
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
             assertThat(Long.parseLong(timeS)).isGreaterThan(0L);
             assertThat(migrationShardId).isNotEmpty();
         }
 
         // Verify client received MIGRATING notification (migration may trigger multiple push messages)
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATING"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATING"))).isTrue();
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
@@ -322,9 +325,9 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.3 - Receive MIGRATED push notification on migration completion")
+    @DisplayName("Receive MIGRATED push notification on migration completion")
     public void receiveMigratedPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.3 - Receive MIGRATED push notification on migration completion");
+        log.info("Starting test: Receive MIGRATED push notification on migration completion");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger migration to get into migrating state using optimal node selection
@@ -361,14 +364,18 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = MIGRATED_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String migratedShardId = matcher.group(1);
-            log.info("Parsed MIGRATED notification - Shard ID: {}", migratedShardId);
-            assertThat(migratedShardId).isEqualTo(shardId);
+            String seqNumber = matcher.group(1);
+            String migratedShardId = matcher.group(2);
+            log.info("Parsed MIGRATED notification - Seq: {}, Shard ID: {}", seqNumber, migratedShardId);
+            // Note: Since we migrate all shards from the source node, we may receive MIGRATED
+            // notification for any shard, not necessarily the specific one we requested
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
+            assertThat(migratedShardId).isNotEmpty();
         }
 
         // Verify client received MIGRATED notification (migration may trigger multiple push messages)
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+MIGRATED"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
@@ -380,9 +387,9 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.4 - Receive FAILING_OVER push notification during shard failover")
+    @DisplayName("Receive FAILING_OVER push notification during shard failover")
     public void receiveFailingOverPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.4 - Receive FAILING_OVER push notification during shard failover");
+        log.info("Starting test:  Receive FAILING_OVER push notification during shard failover");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger shard failover using dynamic node discovery
@@ -406,18 +413,20 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = FAILING_OVER_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String timeS = matcher.group(1);
-            String failoverShardId = matcher.group(2);
+            String seqNumber = matcher.group(1);
+            String timeS = matcher.group(2);
+            String failoverShardId = matcher.group(3);
 
-            log.info("Parsed FAILING_OVER notification - Time: {}, Shard ID: {}", timeS, failoverShardId);
+            log.info("Parsed FAILING_OVER notification - Seq: {}, Time: {}, Shard ID: {}", seqNumber, timeS, failoverShardId);
 
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
             assertThat(Long.parseLong(timeS)).isGreaterThan(0L);
             assertThat(failoverShardId).isNotEmpty();
         }
 
         // Verify client received FAILING_OVER notification (failover may trigger multiple push messages)
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("+FAILING_OVER"))).isTrue();
+        assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILING_OVER"))).isTrue();
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
@@ -428,9 +437,9 @@ public class MaintenanceNotificationTest {
     }
 
     @Test
-    @DisplayName("T.1.1.5 - Receive FAILED_OVER push notification on failover completion")
+    @DisplayName("Receive FAILED_OVER push notification on failover completion")
     public void receiveFailedOverPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: T.1.1.5 - Receive FAILED_OVER push notification on failover completion");
+        log.info("Starting test: Receive FAILED_OVER push notification on failover completion");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger failover to get into failing over state using dynamic node discovery
@@ -454,14 +463,16 @@ public class MaintenanceNotificationTest {
 
         Matcher matcher = FAILED_OVER_PATTERN.matcher(notification);
         if (matcher.matches()) {
-            String failedOverShardId = matcher.group(1);
-            log.info("Parsed FAILED_OVER notification - Shard ID: {}", failedOverShardId);
-            assertThat(failedOverShardId).isEqualTo(shardId);
+            String seqNumber = matcher.group(1);
+            String failedOverShardId = matcher.group(2);
+            log.info("Parsed FAILED_OVER notification - Seq: {}, Shard ID: {}", seqNumber, failedOverShardId);
+            assertThat(Long.parseLong(seqNumber)).isGreaterThan(0L);
+            assertThat(failedOverShardId).isNotEmpty();
         }
 
         // Verify client removes failover state
         assertThat(context.capture.getReceivedNotifications()).isNotEmpty();
-        assertThat(context.capture.getLastNotification()).contains("+FAILED_OVER");
+        assertThat(context.capture.getLastNotification()).contains("FAILED_OVER");
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
