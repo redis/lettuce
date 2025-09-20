@@ -22,6 +22,8 @@ import io.lettuce.core.search.arguments.SpellCheckArgs
 import io.lettuce.core.search.arguments.SugAddArgs
 import io.lettuce.core.search.arguments.SugGetArgs
 import io.lettuce.core.search.arguments.SynUpdateArgs
+import io.lettuce.core.search.AggregationReply.Cursor
+
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
@@ -80,15 +82,14 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftAggregate(index: K, query: V): AggregationReply<K, V>? =
         ops.ftAggregate(index, query).awaitFirstOrNull()
 
-    override suspend fun ftCursorread(index: K, cursorId: Long): AggregationReply<K, V>? =
-        ops.ftCursorread(index, cursorId).awaitFirstOrNull()
+    override suspend fun ftCursorread(index: K, cursor: Cursor, count: Int): AggregationReply<K, V>? =
+        ops.ftCursorread(index, cursor, count).awaitFirstOrNull()
 
-    override suspend fun ftCursorread(index: K, cursorId: Long, count: Int): AggregationReply<K, V>? =
-        ops.ftCursorread(index, cursorId, count).awaitFirstOrNull()
+    override suspend fun ftCursorread(index: K, cursor: Cursor): AggregationReply<K, V>? =
+        ops.ftCursorread(index, cursor).awaitFirstOrNull()
 
-    override suspend fun ftCursordel(index: K, cursorId: Long): String? {
-        return ops.ftCursordel(index, cursorId).awaitFirstOrNull()
-    }
+    override suspend fun ftCursordel(index: K, cursor: Cursor): String? =
+        ops.ftCursordel(index, cursor).awaitFirstOrNull()
 
     override suspend fun ftDictadd(dict: K, vararg terms: V): Long? =
         ops.ftDictadd(dict, *terms).awaitFirstOrNull()
