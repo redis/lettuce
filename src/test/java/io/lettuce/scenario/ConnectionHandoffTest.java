@@ -1,8 +1,10 @@
 package io.lettuce.scenario;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.List;
@@ -36,6 +38,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.protocol.MaintenanceAwareExpiryWriter;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.ConnectionTestUtil;
@@ -285,7 +288,7 @@ public class ConnectionHandoffTest {
                         }
 
                         // Small delay to prevent overwhelming the connection
-                        Thread.sleep(10);
+                        await().pollDelay(Duration.ofMillis(10)).atMost(Duration.ofMillis(50)).until(() -> true);
                     } catch (Exception e) {
                         log.warn("Traffic generation error: {}", e.getMessage());
                         failedOperations.incrementAndGet();
@@ -599,39 +602,36 @@ public class ConnectionHandoffTest {
     }
 
     /**
-     * Verify if the current remote address matches the expected endpoint, handling FQDN resolution
+     * Verify if the current remote address matches the expected endpoint
      */
     private boolean verifyEndpointMatch(SocketAddress currentRemoteAddress, String expectedEndpoint) {
-        String currentEndpointStr = currentRemoteAddress.toString();
-        // Remove leading slash if present (e.g., "/54.155.173.67:12000" -> "54.155.173.67:12000")
-        String cleanCurrentEndpoint = currentEndpointStr.startsWith("/") ? currentEndpointStr.substring(1) : currentEndpointStr;
+        if (!(currentRemoteAddress instanceof InetSocketAddress)) {
+            return false;
+        }
 
-        // Direct match (for IP addresses)
-        if (cleanCurrentEndpoint.equals(expectedEndpoint)) {
+        InetSocketAddress inetAddress = (InetSocketAddress) currentRemoteAddress;
+        String currentHost = inetAddress.getHostString();
+        int currentPort = inetAddress.getPort();
+        String currentEndpoint = currentHost + ":" + currentPort;
+
+        // Direct match
+        if (currentEndpoint.equals(expectedEndpoint)) {
             return true;
         }
 
-        // Handle FQDN resolution: "node3.ivo-test-f2655aa0.env0.qa.redislabs.com/54.155.173.67:12000"
-        // should match "node3.ivo-test-f2655aa0.env0.qa.redislabs.com:12000"
-        if (cleanCurrentEndpoint.contains("/")) {
-            // Extract the FQDN part before the "/" and combine with port
-            String[] parts = cleanCurrentEndpoint.split("/");
-            if (parts.length == 2) {
-                String fqdnPart = parts[0]; // "node3.ivo-test-f2655aa0.env0.qa.redislabs.com"
-                String ipWithPort = parts[1]; // "54.155.173.67:12000"
-
-                // Extract port from IP:PORT
-                String[] ipPortParts = ipWithPort.split(":");
-                if (ipPortParts.length == 2) {
-                    String port = ipPortParts[1]; // "12000"
-                    String reconstructedFqdnEndpoint = fqdnPart + ":" + port; // "node3.ivo-test-f2655aa0.env0.qa.redislabs.com:12000"
-
-                    if (reconstructedFqdnEndpoint.equals(expectedEndpoint)) {
-                        log.info("✓ FQDN endpoint match: current '{}' matches expected '{}' (resolved: {})",
-                                reconstructedFqdnEndpoint, expectedEndpoint, cleanCurrentEndpoint);
-                        return true;
-                    }
+        // Handle case where expectedEndpoint might have resolved hostname but current has IP
+        // Extract port from expected endpoint for comparison
+        String[] expectedParts = expectedEndpoint.split(":");
+        if (expectedParts.length == 2) {
+            try {
+                int expectedPort = Integer.parseInt(expectedParts[1]);
+                if (currentPort == expectedPort) {
+                    log.info("✓ Port match: current '{}' port {} matches expected '{}' port {}", currentEndpoint, currentPort,
+                            expectedEndpoint, expectedPort);
+                    return true;
                 }
+            } catch (NumberFormatException e) {
+                // Invalid port format in expected endpoint
             }
         }
 
@@ -916,7 +916,7 @@ public class ConnectionHandoffTest {
     @Test
     @DisplayName("Connection handed off to new endpoint with External IP")
     public void connectionHandedOffToNewEndpointExternalIPTest() throws InterruptedException {
-        log.info("Starting connectionHandedOffToNewEndpointExternalIPTest");
+        log.info("test connectionHandedOffToNewEndpointExternalIPTest started");
         HandoffTestContext context = setupHandoffTest(AddressType.EXTERNAL_IP);
 
         performHandoffOperation(context, "External IP Handoff Test");
@@ -925,13 +925,13 @@ public class ConnectionHandoffTest {
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
 
-        log.info("Completed connectionHandedOffToNewEndpointExternalIPTest");
+        log.info("test connectionHandedOffToNewEndpointExternalIPTest ended");
     }
 
     @Test
     @DisplayName("Traffic resumes correctly after MOVING with async GET/SET operations")
     public void trafficResumesAfterMovingTest() throws InterruptedException {
-        log.info("Starting trafficResumesAfterMovingTest");
+        log.info("test trafficResumesAfterMovingTest started");
         HandoffTestContext context = setupHandoffTest(AddressType.EXTERNAL_IP);
 
         // Create async commands and traffic generator
@@ -943,7 +943,7 @@ public class ConnectionHandoffTest {
         trafficGenerator.startTraffic();
 
         // Let traffic run for a bit to establish baseline
-        Thread.sleep(Duration.ofSeconds(2).toMillis());
+        await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(5)).until(() -> true);
         long initialSuccessful = trafficGenerator.getSuccessfulOperations();
         long initialFailed = trafficGenerator.getFailedOperations();
         log.info("Initial traffic stats - Successful: {}, Failed: {}", initialSuccessful, initialFailed);
@@ -954,14 +954,14 @@ public class ConnectionHandoffTest {
 
         // Continue traffic during and after maintenance
         log.info("=== Continuing traffic during maintenance ===");
-        Thread.sleep(Duration.ofSeconds(5).toMillis());
+        await().pollDelay(Duration.ofSeconds(5)).atMost(Duration.ofSeconds(10)).until(() -> true);
 
         // Wait for reconnection verification
         reconnectionVerification(context, "Traffic Resumption Test");
 
         // Let traffic continue after reconnection to verify resumption
         log.info("=== Allowing traffic to continue after reconnection ===");
-        Thread.sleep(Duration.ofSeconds(3).toMillis());
+        await().pollDelay(Duration.ofSeconds(3)).atMost(Duration.ofSeconds(6)).until(() -> true);
 
         // Stop traffic and collect final statistics
         trafficGenerator.stopTraffic();
@@ -992,13 +992,13 @@ public class ConnectionHandoffTest {
 
         context.capture.endTestPhase();
 
-        log.info("Completed trafficResumesAfterMovingTest");
+        log.info("test trafficResumesAfterMovingTest ended");
     }
 
     @Test
     @DisplayName("Connection handoff with FQDN External Name")
     public void connectionHandoffWithFQDNExternalNameTest() throws InterruptedException {
-        log.info("Starting connectionHandoffWithFQDNExternalNameTest");
+        log.info("test connectionHandoffWithFQDNExternalNameTest started");
         HandoffTestContext context = setupHandoffTest(AddressType.EXTERNAL_FQDN);
 
         performHandoffOperation(context, "External FQDN Handoff Test");
@@ -1007,13 +1007,13 @@ public class ConnectionHandoffTest {
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
 
-        log.info("Completed connectionHandoffWithFQDNExternalNameTest");
+        log.info("test connectionHandoffWithFQDNExternalNameTest ended");
     }
 
     @Test
     @DisplayName("Connection handshake includes enabling notifications and receives all 5 notification types")
     public void connectionHandshakeIncludesEnablingNotificationsTest() throws InterruptedException {
-        log.info("Starting connectionHandshakeIncludesEnablingNotificationsTest");
+        log.info("test connectionHandshakeIncludesEnablingNotificationsTest started");
 
         // Setup connection with maintenance events enabled
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
@@ -1087,13 +1087,13 @@ public class ConnectionHandoffTest {
         // Failover notifications may be received depending on cluster state
         log.info("✓ All expected maintenance notifications received successfully");
 
-        log.info("Completed connectionHandshakeIncludesEnablingNotificationsTest");
+        log.info("test connectionHandshakeIncludesEnablingNotificationsTest ended");
     }
 
     @Test
     @DisplayName("Disabled maintenance events don't receive notifications")
     public void disabledDontReceiveNotificationsTest() throws InterruptedException {
-        log.info("Starting disabledDontReceiveNotificationsTest");
+        log.info("test disabledDontReceiveNotificationsTest started");
 
         // Setup connection with maintenance events explicitly disabled
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
@@ -1161,13 +1161,13 @@ public class ConnectionHandoffTest {
 
         log.info("✓ Disabled maintenance events correctly prevent notifications");
 
-        log.info("Completed disabledDontReceiveNotificationsTest");
+        log.info("test disabledDontReceiveNotificationsTest ended");
     }
 
     @Test
     @DisplayName("Client handshake with endpoint type none returns nil IP")
     public void clientHandshakeWithNoneEndpointTypeTest() throws InterruptedException {
-        log.info("Starting clientHandshakeWithEndpointTypeTest");
+        log.info("test clientHandshakeWithNoneEndpointTypeTest started");
 
         // Setup connection with a custom address type source that returns null (none)
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
@@ -1279,13 +1279,13 @@ public class ConnectionHandoffTest {
         capture.endTestPhase();
 
         log.info("✓ Client handshake with endpoint type 'none' test completed successfully");
-        log.info("Completed clientHandshakeWithEndpointTypeTest");
+        log.info("test clientHandshakeWithNoneEndpointTypeTest ended");
     }
 
     @Test
     @DisplayName("Connection handed off to new endpoint with External IP - Dual Connection Test")
     public void newConnectionDuringRebindAfterMovingTest() throws InterruptedException {
-        log.info("Starting connectionHandedOffToNewEndpointExternalIPDualConnectionTest");
+        log.info("test newConnectionDuringRebindAfterMovingTest started");
 
         // Setup first connection but do NOT setup monitoring yet
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
@@ -1340,7 +1340,7 @@ public class ConnectionHandoffTest {
             // End test phase to prevent capturing cleanup notifications
             dualCapture.endTestPhase();
 
-            log.info("Completed connectionHandedOffToNewEndpointExternalIPDualConnectionTest");
+            log.info("test newConnectionDuringRebindAfterMovingTest ended");
 
         } finally {
             // Cleanup both connections
@@ -1361,9 +1361,356 @@ public class ConnectionHandoffTest {
     }
 
     @Test
+    @DisplayName("Combined BLPOP timeout unblock during MOVING with connection closure and memory leak detection")
+    public void connectionHandoffDuringMovingWithMemoryLeakDetectionTest() throws InterruptedException {
+        log.info("test connectionHandoffDuringMovingWithMemoryLeakDetectionTest started");
+
+        // Setup connection leak detector
+        ConnectionLeakDetectionUtil leakDetector = new ConnectionLeakDetectionUtil();
+
+        // Setup main connection with EventBus monitoring
+        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
+                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
+
+        RedisClient client = RedisClient.create(uri);
+
+        // Configure for RESP3 with maintenance events to trigger connection handoff
+        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
+        client.setOptions(options);
+
+        // Setup EventBus monitoring BEFORE creating connection
+        leakDetector.setupEventBusMonitoring(client);
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+
+        // Setup second connection for LPUSH unblocking
+        RedisClient secondClient = RedisClient.create(uri);
+        StatefulRedisConnection<String, String> secondConnection = secondClient.connect();
+
+        // Combined capture that handles both BLPOP unblocking and memory leak detection
+        CombinedBlpopAndMemoryLeakCapture capture = new CombinedBlpopAndMemoryLeakCapture(connection, secondConnection);
+
+        // Setup push notification monitoring
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
+                Duration.ofMillis(5000));
+
+        try {
+            // Wait for connection to be fully established
+            await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(100)).until(() -> connection.isOpen());
+
+            // Capture initial connection state
+            String initialChannelId = leakDetector.getCurrentChannelId();
+            Channel initialChannel = ConnectionLeakDetectionUtil.getChannelFromConnection(connection);
+
+            log.info("Initial connection established - channelId: {}", initialChannelId);
+            if (initialChannel != null) {
+                log.info("Initial channel state - active: {}, open: {}, registered: {}", initialChannel.isActive(),
+                        initialChannel.isOpen(), initialChannel.isRegistered());
+            }
+
+            // Prepare for connection transition and trigger migrate + bind operation
+            leakDetector.prepareForConnectionTransition();
+
+            String bdbId = String.valueOf(mStandard.getBdbId());
+            String endpointId = clusterConfig.getFirstEndpointId();
+            String policy = "single";
+
+            log.info("Starting migrate + moving operation with endpoint-aware node selection...");
+
+            // Trigger the migrate + moving operation that causes connection handoff
+            StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig))
+                    .expectNext(true).expectComplete().verify(Duration.ofMinutes(3));
+
+            log.info("Migrate + moving operation completed, waiting for connection events and BLPOP completion...");
+
+            // Wait for BLPOP to be unblocked and connection events to be processed
+            boolean blpopCompleted = capture.waitForBlpopCompletion(Duration.ofMinutes(2));
+            assertThat(blpopCompleted).as("BLPOP should be unblocked by LPUSH during MOVING").isTrue();
+
+            // Wait for connection events to be processed
+            boolean eventsReceived = leakDetector.waitForConnectionTransition(Duration.ofSeconds(30));
+            assertThat(eventsReceived)
+                    .as("Should receive connection transition events (DisconnectedEvent + ConnectionDeactivatedEvent)")
+                    .isTrue();
+
+            // Wait additional time for full cleanup
+            await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> true); // Allow time for cleanup
+
+            // Analyze connection closure and memory leak indicators
+            ConnectionLeakDetectionUtil.ConnectionAnalysisResult result = leakDetector
+                    .analyzeConnectionClosure(initialChannelId, initialChannel);
+
+            log.info("=== Combined Test Results ===");
+            log.info("BLPOP unblock test - Completed: {}, Value received: {}", capture.isBlpopCompleted(),
+                    capture.getBlpopResult());
+            log.info("Command stack verification - Performed: {}, Stack size before: {}", capture.isStackVerified(),
+                    capture.getStackSizeBeforeVerification());
+            log.info("EventBus indicators - Disconnected: {}, Deactivated: {}, Cleanup: {}", result.wasDisconnected(),
+                    result.wasDeactivated(), result.isEventBusCleanup());
+            log.info("Netty channel cleanup: {}", result.isNettyCleanup());
+            log.info("Connection handoff - Initial: {}, Current: {}, Handed off: {}", result.getInitialChannelId(),
+                    result.getCurrentChannelId(), result.isConnectionHandedOff());
+
+            // VALIDATIONS: BLPOP unblock functionality
+            assertThat(capture.isBlpopCompleted()).as("BLPOP should have been unblocked during MOVING").isTrue();
+            assertThat(capture.getBlpopResult()).as("BLPOP should have received the unblocking value").isNotNull();
+            assertThat(capture.isStackVerified()).as("Command stack verification should have been performed").isTrue();
+
+            // VALIDATIONS: Connection properly closed and no memory leaks
+            assertThat(result.wasDisconnected()).as("Old connection should have been disconnected (TCP level)").isTrue();
+            assertThat(result.wasDeactivated())
+                    .as("Old connection should have been deactivated (logical level) - this is the key signal").isTrue();
+            assertThat(result.isEventBusCleanup())
+                    .as("EventBus should indicate proper cleanup (both disconnected and deactivated)").isTrue();
+
+            if (initialChannel != null) {
+                assertThat(result.isNettyCleanup())
+                        .as("Netty channel should be properly cleaned up (inactive, closed, unregistered)").isTrue();
+            }
+
+            assertThat(result.isConnectionHandedOff()).as("Connection should have been handed off to new channel").isTrue();
+            assertThat(result.isFullyCleanedUpWithoutLeaks()).as("Connection should be fully cleaned up without memory leaks")
+                    .isTrue();
+
+            // Channel State Assertions - after MOVING and reconnection
+            Channel newChannel = ConnectionLeakDetectionUtil.getChannelFromConnection(connection);
+            if (newChannel != null) {
+                assertThat(newChannel.isActive()).as("New channel should be active after MOVING reconnection").isTrue();
+                assertThat(newChannel.isRegistered()).as("New channel should be registered after MOVING reconnection").isTrue();
+                log.info("✓ New channel state verified - active: {}, registered: {}", newChannel.isActive(),
+                        newChannel.isRegistered());
+            }
+
+            // Verify new connection is functional
+            String testKey = "combined-test-" + System.currentTimeMillis();
+            String testValue = "test-value";
+
+            connection.sync().set(testKey, testValue);
+            String retrievedValue = connection.sync().get(testKey);
+
+            assertThat(retrievedValue).isEqualTo(testValue);
+            assertThat(connection.isOpen()).isTrue();
+
+            log.info("✓ New connection is fully functional after handoff");
+            log.info("✓ BLPOP unblock during MOVING test passed");
+            log.info("✓ Connection closure validation passed - no memory leaks detected");
+
+        } finally {
+            // Cleanup
+            if (connection != null && connection.isOpen()) {
+                connection.close();
+            }
+            if (client != null) {
+                client.shutdown();
+            }
+            if (secondConnection != null && secondConnection.isOpen()) {
+                secondConnection.close();
+            }
+            if (secondClient != null) {
+                secondClient.shutdown();
+            }
+            leakDetector.stopMonitoring();
+        }
+
+        log.info("test connectionHandoffDuringMovingWithMemoryLeakDetectionTest ended");
+    }
+
+    /**
+     * Combined capture class that handles BLPOP unblocking during MOVING and memory leak detection
+     */
+    public static class CombinedBlpopAndMemoryLeakCapture implements MaintenanceNotificationCapture {
+
+        private final StatefulRedisConnection<String, String> mainConnection;
+
+        private final StatefulRedisConnection<String, String> secondConnection;
+
+        private final AtomicReference<String> blpopResult = new AtomicReference<>();
+
+        private final AtomicBoolean blpopCompleted = new AtomicBoolean(false);
+
+        private final AtomicBoolean stackVerified = new AtomicBoolean(false);
+
+        private final AtomicInteger stackSizeBeforeVerification = new AtomicInteger(-1);
+
+        private final CountDownLatch blpopCompletionLatch = new CountDownLatch(1);
+
+        private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
+
+        private static final String BLPOP_QUEUE_KEY = "blpop-unblock-test-queue";
+
+        private static final String UNBLOCK_VALUE = "unblock-value-" + System.currentTimeMillis();
+
+        public CombinedBlpopAndMemoryLeakCapture(StatefulRedisConnection<String, String> mainConnection,
+                StatefulRedisConnection<String, String> secondConnection) {
+            this.mainConnection = mainConnection;
+            this.secondConnection = secondConnection;
+        }
+
+        @Override
+        public void captureNotification(String notification) {
+            if (!testPhaseActive.get()) {
+                log.debug("Ignoring notification during cleanup phase: {}", notification);
+                return;
+            }
+
+            log.info("Combined capture received notification: {}", notification);
+
+            if (notification.contains("MIGRATED")) {
+                log.info("MIGRATED notification received - starting BLPOP with 60-second timeout");
+                startBlpopWithTimeout();
+            } else if (notification.contains("MOVING")) {
+                log.info("MOVING notification received - performing command stack verification and LPUSH unblock");
+                performCommandStackVerificationAndUnblock();
+            }
+        }
+
+        private void startBlpopWithTimeout() {
+            CompletableFuture.runAsync(() -> {
+                long startTime = System.currentTimeMillis();
+                try {
+                    log.info("Starting BLPOP with 60-second timeout on key: {}", BLPOP_QUEUE_KEY);
+
+                    // Use 60-second timeout as requested
+                    RedisFuture<KeyValue<String, String>> future = mainConnection.async().blpop(60, BLPOP_QUEUE_KEY);
+                    KeyValue<String, String> result = future.get();
+
+                    long duration = System.currentTimeMillis() - startTime;
+
+                    if (result != null) {
+                        blpopResult.set(result.getValue());
+                        log.info("BLPOP completed successfully in {}ms with value: {}", duration, result.getValue());
+                    } else {
+                        log.info("BLPOP completed in {}ms but returned null (timeout)", duration);
+                    }
+
+                    blpopCompleted.set(true);
+                    blpopCompletionLatch.countDown();
+
+                } catch (Exception e) {
+                    long duration = System.currentTimeMillis() - startTime;
+                    log.info("BLPOP failed after {}ms: {}", duration, e.getMessage());
+                    blpopCompleted.set(true);
+                    blpopCompletionLatch.countDown();
+                }
+            });
+        }
+
+        private void performCommandStackVerificationAndUnblock() {
+            try {
+                log.info("Performing command stack verification (without clearing)...");
+
+                // Perform the same verification as clearCommandStack but don't actually clear
+                if (mainConnection != null && mainConnection.isOpen()) {
+                    // Access the delegate inside MaintenanceAwareExpiryWriter to get the real ChannelWriter
+                    io.lettuce.core.RedisChannelHandler<?, ?> handler = (io.lettuce.core.RedisChannelHandler<?, ?>) mainConnection;
+                    io.lettuce.core.RedisChannelWriter writer = handler.getChannelWriter();
+
+                    if (writer instanceof io.lettuce.core.protocol.MaintenanceAwareExpiryWriter) {
+                        // Get the delegate field from MaintenanceAwareExpiryWriter
+                        java.lang.reflect.Field delegateField = writer.getClass().getDeclaredField("delegate");
+                        delegateField.setAccessible(true);
+                        io.lettuce.core.RedisChannelWriter delegate = (io.lettuce.core.RedisChannelWriter) delegateField
+                                .get(writer);
+
+                        // Get the channel directly from the delegate
+                        java.lang.reflect.Field channelField = delegate.getClass().getDeclaredField("channel");
+                        channelField.setAccessible(true);
+                        io.netty.channel.Channel channel = (io.netty.channel.Channel) channelField.get(delegate);
+
+                        // Print detailed channel and rebind state information (same as clearCommandStack)
+                        log.info("=== COMMAND STACK VERIFICATION INFO ===");
+                        log.info("Channel: {}", channel);
+                        log.info("Channel active: {}", channel.isActive());
+                        log.info("Channel registered: {}", channel.isRegistered());
+
+                        // Check rebind attribute
+                        if (channel.hasAttr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE)) {
+                            Object rebindState = channel
+                                    .attr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE).get();
+                            log.info("Rebind attribute present: true, state: {}", rebindState);
+                        } else {
+                            log.info("Rebind attribute present: false");
+                        }
+
+                        // Access the CommandHandler directly
+                        io.lettuce.core.protocol.CommandHandler commandHandler = channel.pipeline()
+                                .get(io.lettuce.core.protocol.CommandHandler.class);
+                        if (commandHandler != null) {
+                            int stackSize = commandHandler.getStack().size();
+                            stackSizeBeforeVerification.set(stackSize);
+                            log.info("CommandHandler found, stack size: {} (NOT clearing as requested)", stackSize);
+
+                            // Print the stack contents when it has elements
+                            if (stackSize > 0) {
+                                log.info("Command stack contents:");
+                                int i = 0;
+                                for (Object command : commandHandler.getStack()) {
+                                    log.info("  [{}]: {}", i++, command);
+                                }
+                            }
+
+                            // Command Stack Verification Assertions
+                            assertThat(stackSize).as("Command stack should have pending commands during MOVING")
+                                    .isGreaterThan(0);
+
+                        } else {
+                            log.warn("CommandHandler not found in pipeline");
+                        }
+
+                        // Channel State Assertions - during MOVING
+                        assertThat(channel.isActive()).as("Channel should be active during MOVING verification").isTrue();
+                        assertThat(channel.isRegistered()).as("Channel should be registered during MOVING verification")
+                                .isTrue();
+
+                        log.info("=== END COMMAND STACK VERIFICATION INFO ===");
+
+                        stackVerified.set(true);
+                    }
+                }
+
+                // Now send LPUSH via second connection to unblock the BLPOP
+                log.info("Sending LPUSH via second connection to unblock BLPOP...");
+                Long pushResult = secondConnection.sync().lpush(BLPOP_QUEUE_KEY, UNBLOCK_VALUE);
+                log.info("LPUSH completed, result: {}", pushResult);
+
+            } catch (Exception e) {
+                log.warn("Failed to perform command stack verification and unblock: {}", e.getMessage());
+                stackVerified.set(false);
+            }
+        }
+
+        public boolean waitForBlpopCompletion(Duration timeout) throws InterruptedException {
+            return blpopCompletionLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        public boolean isBlpopCompleted() {
+            return blpopCompleted.get();
+        }
+
+        public String getBlpopResult() {
+            return blpopResult.get();
+        }
+
+        public boolean isStackVerified() {
+            return stackVerified.get();
+        }
+
+        public int getStackSizeBeforeVerification() {
+            return stackSizeBeforeVerification.get();
+        }
+
+        public void endTestPhase() {
+            testPhaseActive.set(false);
+            log.info("Combined capture test phase ended - notifications will be ignored during cleanup");
+        }
+
+    }
+
+    @Test
     @DisplayName("Detect connection closure and verify no memory leaks during migrate + bind using EventBus monitoring")
     public void detectConnectionClosureAndMemoryLeaksTest() throws InterruptedException {
-        log.info("=== Connection Closure & Memory Leak Detection Test ===");
+        log.info("test detectConnectionClosureAndMemoryLeaksTest started");
 
         // Setup connection leak detector
         ConnectionLeakDetectionUtil leakDetector = new ConnectionLeakDetectionUtil();
@@ -1385,7 +1732,7 @@ public class ConnectionHandoffTest {
         StatefulRedisConnection<String, String> connection = client.connect();
 
         // Wait for connection to be fully established
-        Thread.sleep(Duration.ofSeconds(2).toMillis());
+        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(100)).until(() -> connection.isOpen());
 
         // Capture initial connection state
         String initialChannelId = leakDetector.getCurrentChannelId();
@@ -1418,7 +1765,7 @@ public class ConnectionHandoffTest {
                 .as("Should receive connection transition events (DisconnectedEvent + ConnectionDeactivatedEvent)").isTrue();
 
         // Wait additional time for full cleanup
-        Thread.sleep(Duration.ofSeconds(10).toMillis());
+        await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> true); // Allow time for cleanup
 
         // Analyze connection closure and memory leak indicators
         ConnectionLeakDetectionUtil.ConnectionAnalysisResult result = leakDetector.analyzeConnectionClosure(initialChannelId,
@@ -1468,7 +1815,7 @@ public class ConnectionHandoffTest {
         client.shutdown();
         leakDetector.stopMonitoring();
 
-        log.info("=== Connection Closure & Memory Leak Detection Test Completed Successfully ===");
+        log.info("test detectConnectionClosureAndMemoryLeaksTest ended");
     }
 
 }

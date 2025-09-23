@@ -80,7 +80,7 @@ public class MaintenancePushNotificationMonitor {
         long totalPings = monitoringTimeout.toMillis() / pingInterval.toMillis();
 
         // Start monitoring - the Disposable is not stored as it runs asynchronously
-        // Use Flux.interval(Duration.ZERO, pingInterval) to start immediately without initial delay
+        // Use Flux.interval(Duration.ZERO, pingInterval) with Duration.ZERO as the initial delay to start immediately
         Flux.interval(Duration.ZERO, pingInterval).take(totalPings)
                 .doOnNext(i -> log.info("Ping #{} - Activity to trigger push messages", i))
                 .flatMap(i -> reactive.ping().timeout(pingTimeout)
