@@ -1,6 +1,7 @@
 package io.lettuce.scenario;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.time.Duration;
@@ -45,8 +46,8 @@ import io.lettuce.test.env.Endpoints.Endpoint;
 import static io.lettuce.TestTags.SCENARIO_TEST;
 
 /**
- * CAE-1130: Functional tests for relaxed timeout configuration during Redis Enterprise maintenance events. Validates that
- * command timeouts are properly relaxed during maintenance operations and return to normal afterward.
+ * Functional tests for relaxed timeout configuration during Redis Enterprise maintenance events. Validates that command
+ * timeouts are properly relaxed during maintenance operations and return to normal afterward.
  */
 @Tag(SCENARIO_TEST)
 public class RelaxedTimeoutConfigurationTest {
@@ -415,10 +416,8 @@ public class RelaxedTimeoutConfigurationTest {
                 int waitInterval = 100; // Check every 100ms
                 int waited = 0;
 
-                while (waited < maxWaitTime && !mainConnection.isOpen()) {
-                    Thread.sleep(waitInterval);
-                    waited += waitInterval;
-                }
+                await().atMost(Duration.ofMillis(maxWaitTime)).pollInterval(Duration.ofMillis(waitInterval))
+                        .until(() -> mainConnection.isOpen());
 
                 if (mainConnection.isOpen()) {
                     log.info("Connection auto-reconnected successfully after {} ms", waited);
@@ -714,7 +713,7 @@ public class RelaxedTimeoutConfigurationTest {
         log.info("Testing normal timeouts after maintenance completion...");
 
         // Wait a bit for any pending operations to complete
-        Thread.sleep(Duration.ofSeconds(2).toMillis());
+        await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(5)).until(() -> true);
 
         // Send several BLPOP commands to test timeout behavior
         int normalTimeoutCount = 0;
@@ -786,8 +785,10 @@ public class RelaxedTimeoutConfigurationTest {
         log.info("Waiting for connection to drop and reconnect after MOVING notification...");
 
         // Wait longer for any pending operations to complete after reconnection and for relaxed timeouts to be cleared
-        log.info("Waiting 15 seconds for maintenance state to be fully cleared...");
-        Thread.sleep(Duration.ofSeconds(20).toMillis());
+        log.info("Waiting for maintenance state to be fully cleared...");
+        await().pollDelay(Duration.ofSeconds(15)).atMost(Duration.ofSeconds(30)).until(() -> true); // Allow time for
+                                                                                                    // maintenance state to
+                                                                                                    // clear
 
         log.info("Connection status before timeout tests: {}", context.connection.isOpen());
 
@@ -862,6 +863,7 @@ public class RelaxedTimeoutConfigurationTest {
     @Test
     @DisplayName("Timeout relaxed on MOVING notification")
     public void timeoutRelaxedOnMovingTest() throws InterruptedException {
+        log.info("test timeoutRelaxedOnMovingTest started");
         TimeoutTestContext context = setupTimeoutTestForMoving();
 
         try {
@@ -911,11 +913,13 @@ public class RelaxedTimeoutConfigurationTest {
         } finally {
             cleanupTimeoutTest(context);
         }
+        log.info("test timeoutRelaxedOnMovingTest ended");
     }
 
     @Test
     @DisplayName("Timeout relaxed on MIGRATING notification")
     public void timeoutRelaxedOnMigratingTest() throws InterruptedException {
+        log.info("test timeoutRelaxedOnMigratingTest started");
         TimeoutTestContext context = setupTimeoutTest();
 
         try {
@@ -966,11 +970,13 @@ public class RelaxedTimeoutConfigurationTest {
         } finally {
             cleanupTimeoutTest(context);
         }
+        log.info("test timeoutRelaxedOnMigratingTest ended");
     }
 
     @Test
     @DisplayName("Timeout relaxed on FAILING_OVER notification")
     public void timeoutRelaxedOnFailoverTest() throws InterruptedException {
+        log.info("test timeoutRelaxedOnFailoverTest started");
         TimeoutTestContext context = setupTimeoutTest();
 
         try {
@@ -1012,11 +1018,13 @@ public class RelaxedTimeoutConfigurationTest {
         } finally {
             cleanupTimeoutTest(context);
         }
+        log.info("test timeoutRelaxedOnFailoverTest ended");
     }
 
     @Test
     @DisplayName("Timeout un-relaxed after MOVING notification")
     public void timeoutUnrelaxedOnMovingTest() throws InterruptedException {
+        log.info("test timeoutUnrelaxedOnMovingTest started");
         TimeoutTestContext context = setupTimeoutTestForMovingUnrelaxed();
 
         try {
@@ -1048,8 +1056,10 @@ public class RelaxedTimeoutConfigurationTest {
             // Record MOVING operation completion
             context.capture.recordMovingEnd();
 
-            log.info("Waiting 15 seconds for maintenance state to be fully cleared...");
-            Thread.sleep(Duration.ofSeconds(15).toMillis());
+            log.info("Waiting for maintenance state to be fully cleared...");
+            await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(20)).until(() -> true); // Allow time for
+                                                                                                        // maintenance state to
+                                                                                                        // clear
             // Stop any remaining traffic for this specific test case
             log.info("Un-relaxed MOVING test: Stopping all traffic after MOVING operation completed");
             context.capture.stopContinuousTraffic();
@@ -1078,11 +1088,13 @@ public class RelaxedTimeoutConfigurationTest {
         } finally {
             cleanupTimeoutTest(context);
         }
+        log.info("test timeoutUnrelaxedOnMovingTest ended");
     }
 
     @Test
     @DisplayName("Timeout un-relaxed after MIGRATED notification")
     public void timeoutUnrelaxedOnMigratedTest() throws InterruptedException {
+        log.info("test timeoutUnrelaxedOnMigratedTest started");
         TimeoutTestContext context = setupTimeoutTestForUnrelaxed();
 
         try {
@@ -1139,11 +1151,13 @@ public class RelaxedTimeoutConfigurationTest {
         } finally {
             cleanupTimeoutTest(context);
         }
+        log.info("test timeoutUnrelaxedOnMigratedTest ended");
     }
 
     @Test
     @DisplayName("Timeout un-relaxed after FAILED_OVER notification")
     public void timeoutUnrelaxedOnFailedoverTest() throws InterruptedException {
+        log.info("test timeoutUnrelaxedOnFailedoverTest started");
         TimeoutTestContext context = setupTimeoutTestForUnrelaxed();
 
         try {
@@ -1191,6 +1205,7 @@ public class RelaxedTimeoutConfigurationTest {
         } finally {
             cleanupTimeoutTest(context);
         }
+        log.info("test timeoutUnrelaxedOnFailedoverTest ended");
     }
 
 }

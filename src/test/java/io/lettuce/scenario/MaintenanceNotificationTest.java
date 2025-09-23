@@ -37,8 +37,8 @@ import reactor.test.StepVerifier;
 import static io.lettuce.TestTags.SCENARIO_TEST;
 
 /**
- * CAE-633: Tests for Redis Enterprise maintenance push notifications. Validates client reception and processing of different
- * types of push notifications during maintenance operations like migration, failover, and endpoint rebinding.
+ * Tests for Redis Enterprise maintenance push notifications. Validates client reception and processing of different types of
+ * push notifications during maintenance operations like migration, failover, and endpoint rebinding.
  */
 @Tag(SCENARIO_TEST)
 public class MaintenanceNotificationTest {
@@ -206,7 +206,7 @@ public class MaintenanceNotificationTest {
     @Test
     @DisplayName("Receive MOVING push notification during endpoint rebind")
     public void receiveMovingPushNotificationTest() throws InterruptedException {
-        log.info("Starting test:  Receive MOVING push notification during endpoint rebind");
+        log.info("test receiveMovingPushNotificationTest started");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger MOVING notification using the proper two-step process:
@@ -258,12 +258,13 @@ public class MaintenanceNotificationTest {
 
         // Cleanup test resources
         cleanupNotificationTest(context);
+        log.info("test receiveMovingPushNotificationTest ended");
     }
 
     @Test
     @DisplayName("Receive MIGRATING push notification during node migration")
     public void receiveMigratingPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: Receive MIGRATING push notification during node migration");
+        log.info("test receiveMigratingPushNotificationTest started");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger node migration using optimal node selection
@@ -322,12 +323,13 @@ public class MaintenanceNotificationTest {
 
         // Cleanup test resources
         cleanupNotificationTest(context);
+        log.info("test receiveMigratingPushNotificationTest ended");
     }
 
     @Test
     @DisplayName("Receive MIGRATED push notification on migration completion")
     public void receiveMigratedPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: Receive MIGRATED push notification on migration completion");
+        log.info("test receiveMigratedPushNotificationTest started");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger migration to get into migrating state using optimal node selection
@@ -384,12 +386,13 @@ public class MaintenanceNotificationTest {
 
         // Cleanup test resources
         cleanupNotificationTest(context);
+        log.info("test receiveMigratedPushNotificationTest ended");
     }
 
     @Test
     @DisplayName("Receive FAILING_OVER push notification during shard failover")
     public void receiveFailingOverPushNotificationTest() throws InterruptedException {
-        log.info("Starting test:  Receive FAILING_OVER push notification during shard failover");
+        log.info("test receiveFailingOverPushNotificationTest started");
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger shard failover using dynamic node discovery
@@ -434,12 +437,13 @@ public class MaintenanceNotificationTest {
 
         // Cleanup test resources
         cleanupNotificationTest(context);
+        log.info("test receiveFailingOverPushNotificationTest ended");
     }
 
     @Test
     @DisplayName("Receive FAILED_OVER push notification on failover completion")
     public void receiveFailedOverPushNotificationTest() throws InterruptedException {
-        log.info("Starting test: Receive FAILED_OVER push notification on failover completion");
+        log.info("test receiveFailedOverPushNotificationTest started");
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger failover to get into failing over state using dynamic node discovery
@@ -481,6 +485,7 @@ public class MaintenanceNotificationTest {
 
         // Cleanup test resources
         cleanupNotificationTest(context);
+        log.info("test receiveFailedOverPushNotificationTest ended");
     }
 
 }
