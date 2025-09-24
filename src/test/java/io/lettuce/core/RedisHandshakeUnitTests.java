@@ -194,7 +194,7 @@ class RedisHandshakeUnitTests {
         helloResponse(hello.getOutput());
         hello.complete();
 
-        // No post-handshake commands should be sent when addressTypeSource is null
+        // No post-handshake commands should be sent when endpointTypeSource is null
         assertThat(channel.outboundMessages()).isEmpty();
     }
 
@@ -204,13 +204,13 @@ class RedisHandshakeUnitTests {
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
         // Mock address type source
-        MaintNotificationsConfig.AddressTypeSource addressTypeSource = mock(MaintNotificationsConfig.AddressTypeSource.class);
-        when(addressTypeSource.getAddressType(any(SocketAddress.class), anyBoolean()))
-                .thenReturn(MaintNotificationsConfig.AddressType.INTERNAL_IP);
+        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(MaintNotificationsConfig.EndpointTypeSource.class);
+        when(endpointTypeSource.getEndpointType(any(SocketAddress.class), anyBoolean()))
+                .thenReturn(MaintNotificationsConfig.EndpointType.INTERNAL_IP);
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
-        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, addressTypeSource);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, endpointTypeSource);
         handshake.initialize(channel);
 
         // Should have one post-handshake command for MAINT_NOTIFICATIONS
@@ -231,18 +231,18 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
-    void handshakeWithMaintNotificationsConfigExternalIpShouldIncludeCorrectAddressType() {
+    void handshakeWithMaintNotificationsConfigExternalIpShouldIncludeCorrectMovingEndpointType() {
 
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
         // Mock address type source
-        MaintNotificationsConfig.AddressTypeSource addressTypeSource = mock(MaintNotificationsConfig.AddressTypeSource.class);
-        when(addressTypeSource.getAddressType(any(SocketAddress.class), anyBoolean()))
-                .thenReturn(MaintNotificationsConfig.AddressType.EXTERNAL_IP);
+        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(MaintNotificationsConfig.EndpointTypeSource.class);
+        when(endpointTypeSource.getEndpointType(any(SocketAddress.class), anyBoolean()))
+                .thenReturn(MaintNotificationsConfig.EndpointType.EXTERNAL_IP);
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
-        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, addressTypeSource);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, endpointTypeSource);
         handshake.initialize(channel);
 
         // Should have one post-handshake command for MAINT_NOTIFICATIONS
@@ -260,17 +260,17 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
-    void handshakeWithMaintNotificationsConfigNullAddressTypeShouldNotIncludeMovingEndpointType() {
+    void handshakeWithMaintNotificationsConfigNullMovingEndpointTypeShouldNotIncludeMovingEndpointType() {
 
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
         // Mock address type source that returns null
-        MaintNotificationsConfig.AddressTypeSource addressTypeSource = mock(MaintNotificationsConfig.AddressTypeSource.class);
-        when(addressTypeSource.getAddressType(any(SocketAddress.class), anyBoolean())).thenReturn(null);
+        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(MaintNotificationsConfig.EndpointTypeSource.class);
+        when(endpointTypeSource.getEndpointType(any(SocketAddress.class), anyBoolean())).thenReturn(null);
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
-        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, addressTypeSource);
+        RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, endpointTypeSource);
         handshake.initialize(channel);
 
         // Should have one post-handshake command for MAINT_NOTIFICATIONS

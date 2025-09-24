@@ -12,10 +12,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-import io.lettuce.core.MaintNotificationsConfig.AddressTypeSource;
+import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.MaintNotificationsConfig.AddressType;
+import io.lettuce.core.MaintNotificationsConfig.EndpointType;
 
 /**
  * Unit tests for {@link MaintNotificationsConfig}.
@@ -29,7 +29,7 @@ class MaintNotificationsConfigUnitTests {
 
         // Then
         assertThat(options.maintNotificationsEnabled()).isTrue();
-        assertThat(options.getAddressTypeSource()).isInstanceOf(AddressTypeSource.class);
+        assertThat(options.getEndpointTypeSource()).isInstanceOf(EndpointTypeSource.class);
     }
 
     @Test
@@ -48,18 +48,18 @@ class MaintNotificationsConfigUnitTests {
 
         // Then
         assertThat(options.maintNotificationsEnabled()).isTrue();
-        assertThat(options.getAddressTypeSource()).isNotNull();
+        assertThat(options.getEndpointTypeSource()).isNotNull();
     }
 
     @Test
-    void enabledWithAddressTypeShouldReturnEnabledOptionsWithFixedAddressType() {
+    void enabledWithEndpointTypeTypeShouldReturnEnabledOptionsWithFixedEndpointType() {
         // When
-        MaintNotificationsConfig options = MaintNotificationsConfig.enabled(AddressType.EXTERNAL_IP);
+        MaintNotificationsConfig options = MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP);
 
         // Then
         assertThat(options.maintNotificationsEnabled()).isTrue();
-        assertThat(options.getAddressTypeSource()).isNotNull();
-        assertThat(options.getAddressTypeSource().getAddressType(null, true)).isEqualTo(AddressType.EXTERNAL_IP);
+        assertThat(options.getEndpointTypeSource()).isNotNull();
+        assertThat(options.getEndpointTypeSource().getEndpointType(null, true)).isEqualTo(EndpointType.EXTERNAL_IP);
     }
 
     @Test
@@ -69,86 +69,86 @@ class MaintNotificationsConfigUnitTests {
 
         // Then
         assertThat(options.maintNotificationsEnabled()).isTrue();
-        assertThat(options.getAddressTypeSource()).isInstanceOf(AddressTypeSource.class);
+        assertThat(options.getEndpointTypeSource()).isInstanceOf(EndpointTypeSource.class);
     }
 
     @Test
     void builderShouldSupportMaintenanceEvents() {
         // When
         MaintNotificationsConfig options = MaintNotificationsConfig.builder().enableMaintNotifications()
-                .autoResolveAddressType().build();
+                .autoResolveEndpointType().build();
 
         // Then
         assertThat(options.maintNotificationsEnabled()).isTrue();
-        assertThat(options.getAddressTypeSource()).isNotNull();
+        assertThat(options.getEndpointTypeSource()).isNotNull();
     }
 
     @Test
-    void builderShouldSupportFixedAddressType() {
+    void builderShouldSupportFixedEndpointType() {
         // When
         MaintNotificationsConfig options = MaintNotificationsConfig.builder().enableMaintNotifications()
-                .fixedAddressType(AddressType.INTERNAL_FQDN).build();
+                .endpointType(EndpointType.INTERNAL_FQDN).build();
 
         // Then
         assertThat(options.maintNotificationsEnabled()).isTrue();
-        assertThat(options.getAddressTypeSource()).isNotNull();
-        assertThat(options.getAddressTypeSource().getAddressType(null, true)).isEqualTo(AddressType.INTERNAL_FQDN);
+        assertThat(options.getEndpointTypeSource()).isNotNull();
+        assertThat(options.getEndpointTypeSource().getEndpointType(null, true)).isEqualTo(EndpointType.INTERNAL_FQDN);
     }
 
     @Test
-    void autoResolveAddressTypeSourceShouldReturnInternalIpForPrivateAddress() throws UnknownHostException {
+    void autoResolveEndpointTypeSourceShouldReturnInternalIpForPrivateAddress() throws UnknownHostException {
         // Given
         MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
         InetAddress privateAddress = InetAddress.getByName("192.168.1.1");
         InetSocketAddress socketAddress = new InetSocketAddress(privateAddress, 6379);
 
         // When
-        AddressType result = options.getAddressTypeSource().getAddressType(socketAddress, false);
+        EndpointType result = options.getEndpointTypeSource().getEndpointType(socketAddress, false);
 
         // Then
-        assertThat(result).isEqualTo(AddressType.INTERNAL_IP);
+        assertThat(result).isEqualTo(EndpointType.INTERNAL_IP);
     }
 
     @Test
-    void autoResolveAddressTypeSourceShouldReturnInternalFqdnForPrivateAddressWithSsl() throws UnknownHostException {
+    void autoResolveEndpointTypeSourceShouldReturnInternalFqdnForPrivateAddressWithSsl() throws UnknownHostException {
         // Given
         MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
         InetAddress privateAddress = InetAddress.getByName("192.168.1.1");
         InetSocketAddress socketAddress = new InetSocketAddress(privateAddress, 6379);
 
         // When
-        AddressType result = options.getAddressTypeSource().getAddressType(socketAddress, true);
+        EndpointType result = options.getEndpointTypeSource().getEndpointType(socketAddress, true);
 
         // Then
-        assertThat(result).isEqualTo(AddressType.INTERNAL_FQDN);
+        assertThat(result).isEqualTo(EndpointType.INTERNAL_FQDN);
     }
 
     @Test
-    void autoResolveAddressTypeSourceShouldReturnPublicIpForPublicAddress() throws UnknownHostException {
+    void autoResolveEndpointTypeSourceShouldReturnPublicIpForPublicAddress() throws UnknownHostException {
         // Given
         MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
         InetAddress publicAddress = InetAddress.getByName("8.8.8.8");
         InetSocketAddress socketAddress = new InetSocketAddress(publicAddress, 6379);
 
         // When
-        AddressType result = options.getAddressTypeSource().getAddressType(socketAddress, false);
+        EndpointType result = options.getEndpointTypeSource().getEndpointType(socketAddress, false);
 
         // Then
-        assertThat(result).isEqualTo(AddressType.EXTERNAL_IP);
+        assertThat(result).isEqualTo(EndpointType.EXTERNAL_IP);
     }
 
     @Test
-    void autoResolveAddressTypeSourceShouldReturnPublicFqdnForPublicAddressWithSsl() throws UnknownHostException {
+    void autoResolveEndpointTypeSourceShouldReturnPublicFqdnForPublicAddressWithSsl() throws UnknownHostException {
         // Given
         MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
         InetAddress publicAddress = InetAddress.getByName("8.8.8.8");
         InetSocketAddress socketAddress = new InetSocketAddress(publicAddress, 6379);
 
         // When
-        AddressType result = options.getAddressTypeSource().getAddressType(socketAddress, true);
+        EndpointType result = options.getEndpointTypeSource().getEndpointType(socketAddress, true);
 
         // Then
-        assertThat(result).isEqualTo(AddressType.EXTERNAL_FQDN);
+        assertThat(result).isEqualTo(EndpointType.EXTERNAL_FQDN);
     }
 
 }

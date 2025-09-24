@@ -11,13 +11,14 @@ import io.lettuce.core.internal.NetUtils;
 import java.net.SocketAddress;
 
 /**
+ *
  * Configuration options for Redis maintenance events notifications.
  * <p>
  * Maintenance events allow clients to receive push notifications about server-side maintenance operations (moving, failing
  * over, migrating) to enable graceful handling of connection disruptions.
  * <p>
  * The options provided by this class are used by Lettuce to determine whether to listen for and process maintenance events, and
- * how to resolve address types when such events occur.
+ * configure requested endpoint type for maintenance notifications.
  * </p>
  * <h3>Usage Examples:</h3>
  * 
@@ -25,14 +26,14 @@ import java.net.SocketAddress;
  * 
  * {
  *     &#64;code
- *     // Enable maintenance events with endpoint address type automatically determined based on connection characteristics.
+ *     // Enable maintenance events with endpoint type automatically determined based on connection characteristics.
  *     MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
  *
- *     // Enable maintenance events and force endpoint addresses to external IP addresses
- *     MaintNotificationsConfig options = MaintNotificationsConfig.enabled(AddressType.EXTERNAL_IP);
+ *     // Enable maintenance events and force endpoint to external IP addresses
+ *     MaintNotificationsConfig options = MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP);
  *
  *     // Builder pattern
- *     MaintNotificationsConfig options = MaintNotificationsConfig.builder().supportMaintNotifications().autoResolveAddressType()
+ *     MaintNotificationsConfig options = MaintNotificationsConfig.builder().enableMaintNotifications().autoResolveEndpointType()
  *             .build();
  * }
  * </pre>
@@ -43,14 +44,14 @@ public class MaintNotificationsConfig {
 
     public static final boolean DEFAULT_MAINT_NOTIFICATIONS_ENABLED = true;
 
-    public static final AddressTypeSource DEFAULT_ADDRESS_TYPE_SOURCE = new AutoresolveAddressTypeSource();
+    public static final EndpointTypeSource DEFAULT_ENDPOINT_TYPE_SOURCE = new AutoresolveEndpointTypeSource();
 
     private final boolean maintNotificationsEnabled;
 
-    private final AddressTypeSource addressTypeSource;
+    private final EndpointTypeSource endpointTypeSource;
 
     protected MaintNotificationsConfig(MaintNotificationsConfig.Builder builder) {
-        this.addressTypeSource = builder.addressTypeSource;
+        this.endpointTypeSource = builder.endpointTypeSource;
         this.maintNotificationsEnabled = builder.maintNotificationsEnabled;
     }
 
@@ -83,24 +84,24 @@ public class MaintNotificationsConfig {
     /**
      * Creates  {@link MaintNotificationsConfig} with enabled support for maintenance notifications.
      * <p>
-     * The maintenance notifications endpoint address type is automatically determined based on connection characteristics.
+     * The maintenance notifications endpoint type is automatically determined based on connection characteristics.
      *
      * @return enabled options with auto-resolution
      */
     public static MaintNotificationsConfig enabled() {
-        return builder().enableMaintNotifications().autoResolveAddressType().build();
+        return builder().enableMaintNotifications().autoResolveEndpointType().build();
     }
 
     /**
      * Creates maintenance events options with a fixed address type.
      * <p>
-     * Always requests the specified address type for maintenance notifications.
+     * Always requests the specified endpoint type for maintenance notifications.
      *
-     * @param addressType the fixed address type to request
-     * @return enabled options with fixed address type
+     * @param endpointType the fixed endpoint type to request
+     * @return enabled options with fixed endpoint type
      */
-    public static MaintNotificationsConfig enabled(AddressType addressType) {
-        return builder().enableMaintNotifications().fixedAddressType(addressType).build();
+    public static MaintNotificationsConfig enabled(EndpointType endpointType) {
+        return builder().enableMaintNotifications().endpointType(endpointType).build();
     }
 
     /**
@@ -113,21 +114,21 @@ public class MaintNotificationsConfig {
     }
 
     /**
-     * Returns the address type source used to determine the requested address type.
+     * Returns the endpoint type source used to determine the requested endpoint type.
      * <p>
-     * The address type source determines what address type to request for maintenance notifications.
+     * The endpoint type source determines what {@link EndpointType} to request for maintenance notifications.
      *
-     * @return the address type source, or {@code null} if maintenance events are disabled
+     * @return the endpoint type source, or {@code null} if maintenance events are disabled
      */
-    public AddressTypeSource getAddressTypeSource() {
-        return addressTypeSource;
+    public EndpointTypeSource getEndpointTypeSource() {
+        return endpointTypeSource;
     }
 
     public static class Builder {
 
         private boolean maintNotificationsEnabled = DEFAULT_MAINT_NOTIFICATIONS_ENABLED;
 
-        private AddressTypeSource addressTypeSource = DEFAULT_ADDRESS_TYPE_SOURCE;
+        private EndpointTypeSource endpointTypeSource = DEFAULT_ENDPOINT_TYPE_SOURCE;
 
         public MaintNotificationsConfig.Builder enableMaintNotifications() {
             return enableMaintNotifications(true);
@@ -139,21 +140,21 @@ public class MaintNotificationsConfig {
         }
 
         /**
-         * Configure a fixed address type for all maintenance notifications.
+         * Configure a fixed endpoint type for all maintenance notifications.
          * <p>
          * Overrides automatic resolution and always requests the specified type.
          *
-         * @param addressType the address type to request from server
+         * @param endpointType the {@link EndpointType} to request from server
          * @return this builder
-         * @see AddressType
+         * @see EndpointType
          */
-        public Builder fixedAddressType(AddressType addressType) {
-            this.addressTypeSource = new FixedAddressTypeSource(addressType);
+        public Builder endpointType(EndpointType endpointType) {
+            this.endpointTypeSource = new FixedEndpointTypeSource(endpointType);
             return this;
         }
 
         /**
-         * Configure automatic address type resolution based on connection characteristics.
+         * Configure automatic {@link EndpointType} resolution based on connection characteristics.
          * <p>
          * <strong>Resolution logic:</strong>
          * <ol>
@@ -172,8 +173,8 @@ public class MaintNotificationsConfig {
          *
          * @return this builder
          */
-        public Builder autoResolveAddressType() {
-            this.addressTypeSource = new AutoresolveAddressTypeSource();
+        public Builder autoResolveEndpointType() {
+            this.endpointTypeSource = new AutoresolveEndpointTypeSource();
             return this;
         }
 
@@ -184,13 +185,13 @@ public class MaintNotificationsConfig {
     }
 
     /**
-     * Address types for maintenance event notifications.
+     * Endpoint types for maintenance event notifications.
      * <p>
      * Determines the format of endpoint addresses returned in MOVING notifications.
      *
      * @since 7.0
      */
-    public enum AddressType {
+    public enum EndpointType {
         /** Internal IP address (for private network connections) */
         INTERNAL_IP,
         /** Internal fully qualified domain name (for private network connections with TLS) */
@@ -207,42 +208,42 @@ public class MaintNotificationsConfig {
         NONE
     }
 
-    private static class FixedAddressTypeSource extends MaintNotificationsConfig.AddressTypeSource {
+    private static class FixedEndpointTypeSource extends EndpointTypeSource {
 
-        private final AddressType addressType;
+        private final EndpointType endpointType;
 
-        FixedAddressTypeSource(AddressType addressType) {
+        FixedEndpointTypeSource(EndpointType endpointType) {
 
-            this.addressType = addressType;
+            this.endpointType = endpointType;
         }
 
         @Override
-        public AddressType getAddressType(SocketAddress socketAddress, boolean sslEnabled) {
-            return addressType;
+        public EndpointType getEndpointType(SocketAddress socketAddress, boolean sslEnabled) {
+            return endpointType;
         }
 
     }
 
-    private static class AutoresolveAddressTypeSource extends MaintNotificationsConfig.AddressTypeSource {
+    private static class AutoresolveEndpointTypeSource extends EndpointTypeSource {
 
-        AutoresolveAddressTypeSource() {
+        AutoresolveEndpointTypeSource() {
         }
 
         @Override
-        public MaintNotificationsConfig.AddressType getAddressType(SocketAddress socketAddress, boolean sslEnabled) {
+        public EndpointType getEndpointType(SocketAddress socketAddress, boolean sslEnabled) {
             if (NetUtils.isPrivateIp(socketAddress)) {
                 // use private
                 if (sslEnabled) {
-                    return MaintNotificationsConfig.AddressType.INTERNAL_FQDN;
+                    return EndpointType.INTERNAL_FQDN;
                 } else {
-                    return MaintNotificationsConfig.AddressType.INTERNAL_IP;
+                    return EndpointType.INTERNAL_IP;
                 }
             } else {
                 // use public
                 if (sslEnabled) {
-                    return MaintNotificationsConfig.AddressType.EXTERNAL_FQDN;
+                    return EndpointType.EXTERNAL_FQDN;
                 } else {
-                    return MaintNotificationsConfig.AddressType.EXTERNAL_IP;
+                    return EndpointType.EXTERNAL_IP;
                 }
             }
         }
@@ -250,20 +251,20 @@ public class MaintNotificationsConfig {
     }
 
     /**
-     * Strategy interface for determining the address type to request in maintenance notifications.
+     * Strategy interface for determining the endpoint address type to request in maintenance notifications.
      * <p>
-     * Implementations determine what address type to request for maintenance notifications.
+     * Implementations determine what endpoint type to request for maintenance notifications.
      */
-    public static abstract class AddressTypeSource {
+    public static abstract class EndpointTypeSource {
 
         /**
-         * Determines the address type based on connection characteristics.
+         * Determines the endpoint type based on connection characteristics.
          *
          * @param socketAddress the remote socket address of the connection
          * @param sslEnabled whether TLS/SSL is enabled for the connection
-         * @return the address type to request, or null if no specific type is needed
+         * @return the {@link EndpointType} type to request, or null if no specific type is needed
          */
-        public abstract AddressType getAddressType(SocketAddress socketAddress, boolean sslEnabled);
+        public abstract EndpointType getEndpointType(SocketAddress socketAddress, boolean sslEnabled);
 
     }
 
