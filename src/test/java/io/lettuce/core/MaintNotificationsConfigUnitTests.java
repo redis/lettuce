@@ -52,7 +52,7 @@ class MaintNotificationsConfigUnitTests {
     }
 
     @Test
-    void enabledWithEndpointTypeTypeShouldReturnEnabledOptionsWithFixedEndpointType() {
+    void enabledWithEndpointTypeShouldReturnEnabledOptionsWithFixedEndpointType() {
         // When
         MaintNotificationsConfig options = MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP);
 
