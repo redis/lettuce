@@ -3,7 +3,9 @@
  */
 package io.lettuce.core.cluster;
 
+import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -13,7 +15,6 @@ import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +61,13 @@ class RedisAdvancedClusterAggregateUnitTests {
                 withSettings().extraInterfaces(AsyncClusterConnectionProvider.class));
         AsyncClusterConnectionProvider asyncProvider = (AsyncClusterConnectionProvider) provider;
         when(writer.getClusterConnectionProvider()).thenReturn(provider);
+        // Route by nodeId (cursor ops)
         when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.WRITE), eq("node-1")))
+                .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
+        // Random/intent-based route
+        when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.WRITE)))
+                .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
+        when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.READ)))
                 .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
 
         when(clusterConn.getPartitions()).thenReturn(partitions);
@@ -79,13 +86,12 @@ class RedisAdvancedClusterAggregateUnitTests {
 
         CompletableFuture<AggregationReply<String, String>> cf = new CompletableFuture<>();
         cf.complete(replyWithCursor);
-        io.lettuce.core.RedisFuture<AggregationReply<String, String>> nodeFuture = new io.lettuce.core.cluster.PipelinedRedisFuture<>(
-                cf);
+        RedisFuture<AggregationReply<String, String>> nodeFuture = new PipelinedRedisFuture<>(cf);
 
-        io.lettuce.core.api.async.RedisAsyncCommands<String, String> nodeAsync = mock(
-                io.lettuce.core.api.async.RedisAsyncCommands.class);
+        RedisAsyncCommands<String, String> nodeAsync = mock(RedisAsyncCommands.class);
         when(nodeConn.async()).thenReturn(nodeAsync);
         when(nodeAsync.ftAggregate(anyString(), anyString(), any())).thenReturn(nodeFuture);
+        when(nodeAsync.clusterMyId()).thenReturn(new PipelinedRedisFuture<>(CompletableFuture.completedFuture("node-1")));
 
         AggregationReply<String, String> out = async.ftAggregate("idx", "*", args).toCompletableFuture().join();
 
