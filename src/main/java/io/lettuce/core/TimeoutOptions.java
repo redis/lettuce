@@ -118,7 +118,7 @@ public class TimeoutOptions implements Serializable {
         }
 
         /**
-         * Enable timeout relaxing during maintenance events. Disabled by default, see {@link #DEFAULT_RELAXED_TIMEOUT}.
+         * Enable timeout relaxing during maintenance events.
          * <p/>
          * If the Redis server supports sending maintenance events, and the client is set up to use that by the
          * {@link ClientOptions#getMaintNotificationsConfig()} option, the client would listen to notifications that the current
