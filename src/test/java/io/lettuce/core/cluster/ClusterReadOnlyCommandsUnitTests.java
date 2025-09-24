@@ -19,14 +19,16 @@ class ClusterReadOnlyCommandsUnitTests {
 
     @Test
     void testCount() {
-        assertThat(ClusterReadOnlyCommands.getReadOnlyCommands()).hasSize(84);
+        assertThat(ClusterReadOnlyCommands.getReadOnlyCommands()).hasSize(92);
     }
 
     @Test
     void testResolvableCommandNames() {
-
+        // Use enum name() instead of toString() because complex commands (e.g. "FT.SEARCH")
+        // have a different wire command string than the enum constant name ("FT_SEARCH").
         for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
-            assertThat(readOnlyCommand.toString()).isEqualTo(CommandType.valueOf(readOnlyCommand.toString()).name());
+            CommandType ct = (CommandType) readOnlyCommand;
+            assertThat(CommandType.valueOf(ct.name())).isEqualTo(ct);
         }
     }
 
