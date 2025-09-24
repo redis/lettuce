@@ -95,7 +95,7 @@ public class CommandExpiryWriter implements RedisChannelWriter {
      */
     public static RedisChannelWriter buildCommandExpiryWriter(RedisChannelWriter delegate, ClientOptions clientOptions,
             ClientResources clientResources) {
-        if (clientOptions.getMaintenanceEventsOptions().supportsMaintenanceEvents()) {
+        if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
             return new MaintenanceAwareExpiryWriter(delegate, clientOptions, clientResources);
         } else {
             return new CommandExpiryWriter(delegate, clientOptions, clientResources);

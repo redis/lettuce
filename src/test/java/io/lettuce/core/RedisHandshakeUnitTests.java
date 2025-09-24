@@ -180,7 +180,7 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
-    void handshakeWithoutMaintenanceEventsOptionsShouldNotIncludeMaintNotifications() {
+    void handshakeWithoutMaintNotificationsConfigShouldNotIncludeMaintNotifications() {
 
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
@@ -199,14 +199,14 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
-    void handshakeWithMaintenanceEventsOptionsShouldIncludeMaintNotifications() {
+    void handshakeWithMaintNotificationsConfigShouldIncludeMaintNotifications() {
 
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
         // Mock address type source
-        MaintenanceEventsOptions.AddressTypeSource addressTypeSource = mock(MaintenanceEventsOptions.AddressTypeSource.class);
+        MaintNotificationsConfig.AddressTypeSource addressTypeSource = mock(MaintNotificationsConfig.AddressTypeSource.class);
         when(addressTypeSource.getAddressType(any(SocketAddress.class), anyBoolean()))
-                .thenReturn(MaintenanceEventsOptions.AddressType.INTERNAL_IP);
+                .thenReturn(MaintNotificationsConfig.AddressType.INTERNAL_IP);
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
@@ -231,21 +231,20 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
-    void handshakeWithMaintenanceEventsOptionsExternalIpShouldIncludeCorrectAddressType() {
+    void handshakeWithMaintNotificationsConfigExternalIpShouldIncludeCorrectAddressType() {
 
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
         // Mock address type source
-        MaintenanceEventsOptions.AddressTypeSource addressTypeSource = mock(MaintenanceEventsOptions.AddressTypeSource.class);
+        MaintNotificationsConfig.AddressTypeSource addressTypeSource = mock(MaintNotificationsConfig.AddressTypeSource.class);
         when(addressTypeSource.getAddressType(any(SocketAddress.class), anyBoolean()))
-                .thenReturn(MaintenanceEventsOptions.AddressType.EXTERNAL_IP);
+                .thenReturn(MaintNotificationsConfig.AddressType.EXTERNAL_IP);
 
         ConnectionState state = new ConnectionState();
         state.setCredentialsProvider(new StaticCredentialsProvider(null, null));
         RedisHandshake handshake = new RedisHandshake(ProtocolVersion.RESP3, false, state, addressTypeSource);
         handshake.initialize(channel);
 
-        // Should have one post-handshake command for MAINT_NOTIFICATIONS
         // Should have one post-handshake command for MAINT_NOTIFICATIONS
         AsyncCommand<String, String, Map<String, String>> hello = channel.readOutbound();
         helloResponse(hello.getOutput());
@@ -261,12 +260,12 @@ class RedisHandshakeUnitTests {
     }
 
     @Test
-    void handshakeWithMaintenanceEventsOptionsNullAddressTypeShouldNotIncludeMovingEndpointType() {
+    void handshakeWithMaintNotificationsConfigNullAddressTypeShouldNotIncludeMovingEndpointType() {
 
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
         // Mock address type source that returns null
-        MaintenanceEventsOptions.AddressTypeSource addressTypeSource = mock(MaintenanceEventsOptions.AddressTypeSource.class);
+        MaintNotificationsConfig.AddressTypeSource addressTypeSource = mock(MaintNotificationsConfig.AddressTypeSource.class);
         when(addressTypeSource.getAddressType(any(SocketAddress.class), anyBoolean())).thenReturn(null);
 
         ConnectionState state = new ConnectionState();

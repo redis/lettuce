@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Tihomir Mateev
  * @since 7.0
- * @see ClientOptions#getMaintenanceEventsOptions()
+ * @see ClientOptions#getMaintNotificationsConfig()
  */
 @ChannelHandler.Sharable
 public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog implements PushListener {

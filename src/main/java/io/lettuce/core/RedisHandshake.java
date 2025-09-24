@@ -29,7 +29,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.lettuce.core.MaintenanceEventsOptions.AddressTypeSource;
+import io.lettuce.core.MaintNotificationsConfig.AddressTypeSource;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
@@ -69,10 +69,10 @@ class RedisHandshake implements ConnectionInitializer {
 
     private volatile ProtocolVersion negotiatedProtocolVersion;
 
-    private final MaintenanceEventsOptions.AddressTypeSource addressTypeSource;
+    private final MaintNotificationsConfig.AddressTypeSource addressTypeSource;
 
     RedisHandshake(ProtocolVersion requestedProtocolVersion, boolean pingOnConnect, ConnectionState connectionState,
-            MaintenanceEventsOptions.AddressTypeSource addressTypeSource) {
+            MaintNotificationsConfig.AddressTypeSource addressTypeSource) {
 
         this.addressTypeSource = addressTypeSource;
         this.requestedProtocolVersion = requestedProtocolVersion;
@@ -280,7 +280,7 @@ class RedisHandshake implements ConnectionInitializer {
     }
 
     private String addressType(Channel channel, ConnectionState state, AddressTypeSource addressTypeSource) {
-        MaintenanceEventsOptions.AddressType addressType = addressTypeSource.getAddressType(channel.remoteAddress(),
+        MaintNotificationsConfig.AddressType addressType = addressTypeSource.getAddressType(channel.remoteAddress(),
                 state.getConnectionMetadata().isSslEnabled());
 
         if (addressType == null) {

@@ -32,14 +32,14 @@ import static io.lettuce.core.TimeoutOptions.TimeoutSource;
  * progress. The relaxation is done by starting a new timer with the relaxed timeout value. The relaxed timeout is configured
  * via {@link TimeoutOptions#getRelaxedTimeout()}.
  * <p/>
- * The logic is only applied when the {@link ClientOptions#getMaintenanceEventsOptions()} is enabled.
+ * The logic is only applied when the {@link ClientOptions#getMaintNotificationsConfig()} is enabled.
  *
  * @author Tihomir Mateev
  * @since 7.0
  * @see TimeoutOptions
  * @see MaintenanceAwareComponent
  * @see MaintenanceAwareConnectionWatchdog
- * @see ClientOptions#getMaintenanceEventsOptions()
+ * @see ClientOptions#getMaintNotificationsConfig()
  */
 public class MaintenanceAwareExpiryWriter extends CommandExpiryWriter implements MaintenanceAwareComponent {
 

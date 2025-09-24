@@ -12,52 +12,52 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
-import io.lettuce.core.MaintenanceEventsOptions.AddressTypeSource;
+import io.lettuce.core.MaintNotificationsConfig.AddressTypeSource;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.MaintenanceEventsOptions.AddressType;
+import io.lettuce.core.MaintNotificationsConfig.AddressType;
 
 /**
- * Unit tests for {@link MaintenanceEventsOptions}.
+ * Unit tests for {@link MaintNotificationsConfig}.
  */
-class MaintenanceEventsOptionsUnitTests {
+class MaintNotificationsConfigUnitTests {
 
     @Test
     void createShouldReturnDefaultOptions() {
         // When
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.create();
+        MaintNotificationsConfig options = MaintNotificationsConfig.create();
 
         // Then
-        assertThat(options.supportsMaintenanceEvents()).isTrue();
+        assertThat(options.maintNotificationsEnabled()).isTrue();
         assertThat(options.getAddressTypeSource()).isInstanceOf(AddressTypeSource.class);
     }
 
     @Test
     void disabledShouldReturnDisabledOptions() {
         // When
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.disabled();
+        MaintNotificationsConfig options = MaintNotificationsConfig.disabled();
 
         // Then
-        assertThat(options.supportsMaintenanceEvents()).isFalse();
+        assertThat(options.maintNotificationsEnabled()).isFalse();
     }
 
     @Test
     void enabledShouldReturnEnabledOptionsWithAutoResolve() {
         // When
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled();
+        MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
 
         // Then
-        assertThat(options.supportsMaintenanceEvents()).isTrue();
+        assertThat(options.maintNotificationsEnabled()).isTrue();
         assertThat(options.getAddressTypeSource()).isNotNull();
     }
 
     @Test
     void enabledWithAddressTypeShouldReturnEnabledOptionsWithFixedAddressType() {
         // When
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP);
+        MaintNotificationsConfig options = MaintNotificationsConfig.enabled(AddressType.EXTERNAL_IP);
 
         // Then
-        assertThat(options.supportsMaintenanceEvents()).isTrue();
+        assertThat(options.maintNotificationsEnabled()).isTrue();
         assertThat(options.getAddressTypeSource()).isNotNull();
         assertThat(options.getAddressTypeSource().getAddressType(null, true)).isEqualTo(AddressType.EXTERNAL_IP);
     }
@@ -65,32 +65,32 @@ class MaintenanceEventsOptionsUnitTests {
     @Test
     void builderShouldCreateOptionsWithDefaultValues() {
         // When
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.builder().build();
+        MaintNotificationsConfig options = MaintNotificationsConfig.builder().build();
 
         // Then
-        assertThat(options.supportsMaintenanceEvents()).isTrue();
+        assertThat(options.maintNotificationsEnabled()).isTrue();
         assertThat(options.getAddressTypeSource()).isInstanceOf(AddressTypeSource.class);
     }
 
     @Test
     void builderShouldSupportMaintenanceEvents() {
         // When
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.builder().supportMaintenanceEvents()
+        MaintNotificationsConfig options = MaintNotificationsConfig.builder().enableMaintNotifications()
                 .autoResolveAddressType().build();
 
         // Then
-        assertThat(options.supportsMaintenanceEvents()).isTrue();
+        assertThat(options.maintNotificationsEnabled()).isTrue();
         assertThat(options.getAddressTypeSource()).isNotNull();
     }
 
     @Test
     void builderShouldSupportFixedAddressType() {
         // When
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.builder().supportMaintenanceEvents()
+        MaintNotificationsConfig options = MaintNotificationsConfig.builder().enableMaintNotifications()
                 .fixedAddressType(AddressType.INTERNAL_FQDN).build();
 
         // Then
-        assertThat(options.supportsMaintenanceEvents()).isTrue();
+        assertThat(options.maintNotificationsEnabled()).isTrue();
         assertThat(options.getAddressTypeSource()).isNotNull();
         assertThat(options.getAddressTypeSource().getAddressType(null, true)).isEqualTo(AddressType.INTERNAL_FQDN);
     }
@@ -98,7 +98,7 @@ class MaintenanceEventsOptionsUnitTests {
     @Test
     void autoResolveAddressTypeSourceShouldReturnInternalIpForPrivateAddress() throws UnknownHostException {
         // Given
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled();
+        MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
         InetAddress privateAddress = InetAddress.getByName("192.168.1.1");
         InetSocketAddress socketAddress = new InetSocketAddress(privateAddress, 6379);
 
@@ -112,7 +112,7 @@ class MaintenanceEventsOptionsUnitTests {
     @Test
     void autoResolveAddressTypeSourceShouldReturnInternalFqdnForPrivateAddressWithSsl() throws UnknownHostException {
         // Given
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled();
+        MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
         InetAddress privateAddress = InetAddress.getByName("192.168.1.1");
         InetSocketAddress socketAddress = new InetSocketAddress(privateAddress, 6379);
 
@@ -126,7 +126,7 @@ class MaintenanceEventsOptionsUnitTests {
     @Test
     void autoResolveAddressTypeSourceShouldReturnPublicIpForPublicAddress() throws UnknownHostException {
         // Given
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled();
+        MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
         InetAddress publicAddress = InetAddress.getByName("8.8.8.8");
         InetSocketAddress socketAddress = new InetSocketAddress(publicAddress, 6379);
 
@@ -140,7 +140,7 @@ class MaintenanceEventsOptionsUnitTests {
     @Test
     void autoResolveAddressTypeSourceShouldReturnPublicFqdnForPublicAddressWithSsl() throws UnknownHostException {
         // Given
-        MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled();
+        MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
         InetAddress publicAddress = InetAddress.getByName("8.8.8.8");
         InetSocketAddress socketAddress = new InetSocketAddress(publicAddress, 6379);
 

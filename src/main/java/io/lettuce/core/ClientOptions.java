@@ -51,7 +51,7 @@ public class ClientOptions implements Serializable {
 
     public static final boolean DEFAULT_AUTO_RECONNECT = true;
 
-    public static final MaintenanceEventsOptions DEFAULT_MAINTENANCE_EVENTS_OPTIONS = MaintenanceEventsOptions.enabled();
+    public static final MaintNotificationsConfig DEFAULT_MAINT_NOTIFICATIONS_CONFIG = MaintNotificationsConfig.enabled();
 
     public static final Predicate<RedisCommand<?, ?, ?>> DEFAULT_REPLAY_FILTER = (cmd) -> false;
 
@@ -95,7 +95,7 @@ public class ClientOptions implements Serializable {
 
     private final boolean autoReconnect;
 
-    private final MaintenanceEventsOptions maintenanceEventsOptions;
+    private final MaintNotificationsConfig maintNotificationsConfig;
 
     private final Predicate<RedisCommand<?, ?, ?>> replayFilter;
 
@@ -131,7 +131,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(Builder builder) {
         this.autoReconnect = builder.autoReconnect;
-        this.maintenanceEventsOptions = builder.maintenanceEventsOptions;
+        this.maintNotificationsConfig = builder.maintNotificationsConfig;
         this.replayFilter = builder.replayFilter;
         this.decodeBufferPolicy = builder.decodeBufferPolicy;
         this.disconnectedBehavior = builder.disconnectedBehavior;
@@ -152,7 +152,7 @@ public class ClientOptions implements Serializable {
 
     protected ClientOptions(ClientOptions original) {
         this.autoReconnect = original.isAutoReconnect();
-        this.maintenanceEventsOptions = original.getMaintenanceEventsOptions();
+        this.maintNotificationsConfig = original.getMaintNotificationsConfig();
         this.replayFilter = original.getReplayFilter();
         this.decodeBufferPolicy = original.getDecodeBufferPolicy();
         this.disconnectedBehavior = original.getDisconnectedBehavior();
@@ -206,7 +206,7 @@ public class ClientOptions implements Serializable {
 
         private boolean autoReconnect = DEFAULT_AUTO_RECONNECT;
 
-        private MaintenanceEventsOptions maintenanceEventsOptions = DEFAULT_MAINTENANCE_EVENTS_OPTIONS;
+        private MaintNotificationsConfig maintNotificationsConfig = DEFAULT_MAINT_NOTIFICATIONS_CONFIG;
 
         private Predicate<RedisCommand<?, ?, ?>> replayFilter = DEFAULT_REPLAY_FILTER;
 
@@ -259,14 +259,14 @@ public class ClientOptions implements Serializable {
          * Configure whether the driver should listen for server events that notify on current maintenance activities. When
          * enabled, this option will help with the connection handover and reduce the number of failed commands. This feature
          * requires the server to support maintenance events. Defaults to {@code false}. See
-         * {@link #DEFAULT_MAINTENANCE_EVENTS_OPTIONS}.
+         * {@link #DEFAULT_MAINT_NOTIFICATIONS_CONFIG}.
          *
-         * @param maintenanceEventsOptions true/false
+         * @param maintNotificationsConfig true/false
          * @return {@code this}
          * @since 7.0
          */
-        public Builder supportMaintenanceEvents(MaintenanceEventsOptions maintenanceEventsOptions) {
-            this.maintenanceEventsOptions = maintenanceEventsOptions;
+        public Builder maintNotificationsConfig(MaintNotificationsConfig maintNotificationsConfig) {
+            this.maintNotificationsConfig = maintNotificationsConfig;
             return this;
         }
 
@@ -530,7 +530,7 @@ public class ClientOptions implements Serializable {
     public ClientOptions.Builder mutate() {
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).supportMaintenanceEvents(getMaintenanceEventsOptions())
+        builder.autoReconnect(isAutoReconnect()).maintNotificationsConfig(getMaintNotificationsConfig())
                 .replayFilter(getReplayFilter()).decodeBufferPolicy(getDecodeBufferPolicy())
                 .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
                 .readOnlyCommands(getReadOnlyCommands()).publishOnScheduler(isPublishOnScheduler())
@@ -556,15 +556,15 @@ public class ClientOptions implements Serializable {
     }
 
     /**
-     * Returns the {@link MaintenanceEventsOptions} to listen for server events that notify on current maintenance activities.
+     * Returns the {@link MaintNotificationsConfig} to listen for server events that notify on current maintenance activities.
      *
-     * @return {@link MaintenanceEventsOptions}
+     * @return {@link MaintNotificationsConfig}
      * @since 7.0
-     * @see #DEFAULT_MAINTENANCE_EVENTS_OPTIONS
-     * @see #getMaintenanceEventsOptions()
+     * @see #DEFAULT_MAINT_NOTIFICATIONS_CONFIG
+     * @see #getMaintNotificationsConfig()
      */
-    public MaintenanceEventsOptions getMaintenanceEventsOptions() {
-        return maintenanceEventsOptions;
+    public MaintNotificationsConfig getMaintNotificationsConfig() {
+        return maintNotificationsConfig;
     }
 
     /**

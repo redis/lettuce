@@ -25,66 +25,70 @@ import java.net.SocketAddress;
  * 
  * {
  *     &#64;code
- *     // Auto-resolve based on connection
- *     MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled();
+ *     // Enable maintenance events with endpoint address type automatically determined based on connection characteristics.
+ *     MaintNotificationsConfig options = MaintNotificationsConfig.enabled();
  *
- *     // Force external IP addresses
- *     MaintenanceEventsOptions options = MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP);
+ *     // Enable maintenance events and force endpoint addresses to external IP addresses
+ *     MaintNotificationsConfig options = MaintNotificationsConfig.enabled(AddressType.EXTERNAL_IP);
  *
  *     // Builder pattern
- *     MaintenanceEventsOptions options = MaintenanceEventsOptions.builder().supportMaintenanceEvents().autoResolveAddressType()
+ *     MaintNotificationsConfig options = MaintNotificationsConfig.builder().supportMaintNotifications().autoResolveAddressType()
  *             .build();
  * }
  * </pre>
  *
  * @see <a href="https://redislabs.atlassian.net/wiki/spaces/CAE/pages/5071044609">Redis Maintenance Events Specification</a>
  */
-public class MaintenanceEventsOptions {
+public class MaintNotificationsConfig {
 
-    public static final boolean DEFAULT_SUPPORT_MAINTENANCE_EVENTS = true;
+    public static final boolean DEFAULT_MAINT_NOTIFICATIONS_ENABLED = true;
 
     public static final AddressTypeSource DEFAULT_ADDRESS_TYPE_SOURCE = new AutoresolveAddressTypeSource();
 
-    private final boolean supportMaintenanceEvents;
+    private final boolean maintNotificationsEnabled;
 
     private final AddressTypeSource addressTypeSource;
 
-    protected MaintenanceEventsOptions(MaintenanceEventsOptions.Builder builder) {
+    protected MaintNotificationsConfig(MaintNotificationsConfig.Builder builder) {
         this.addressTypeSource = builder.addressTypeSource;
-        this.supportMaintenanceEvents = builder.supportMaintenanceEvents;
+        this.maintNotificationsEnabled = builder.maintNotificationsEnabled;
     }
 
-    public static MaintenanceEventsOptions.Builder builder() {
-        return new MaintenanceEventsOptions.Builder();
+    public static MaintNotificationsConfig.Builder builder() {
+        return new MaintNotificationsConfig.Builder();
     }
 
     /**
-     * Create a new instance of {@link MaintenanceEventsOptions} with default settings.
+     * Create a new instance of {@link MaintNotificationsConfig} with default settings.
      *
-     * @return a new instance of {@link MaintenanceEventsOptions} with default settings.
+     * @return a new instance of {@link MaintNotificationsConfig} with default settings.
      */
-    public static MaintenanceEventsOptions create() {
+    public static MaintNotificationsConfig create() {
         return builder().build();
     }
 
     /**
-     * Creates maintenance events options with maintenance events disabled.
+     * Creates {@link MaintNotificationsConfig} with disabled support for maintenance notifications.
+     *
+     * <p>
+     * Client will not send MAIN_NOTIFICATIONS ON command and will not listen for maintenance notifications.
+     * </p>
      *
      * @return disabled maintenance events options
      */
-    public static MaintenanceEventsOptions disabled() {
-        return builder().supportMaintenanceEvents(false).build();
+    public static MaintNotificationsConfig disabled() {
+        return builder().enableMaintNotifications(false).build();
     }
 
     /**
-     * Creates maintenance events options with automatic address type resolution.
+     * Creates  {@link MaintNotificationsConfig} with enabled support for maintenance notifications.
      * <p>
-     * The address type is automatically determined based on connection characteristics.
+     * The maintenance notifications endpoint address type is automatically determined based on connection characteristics.
      *
      * @return enabled options with auto-resolution
      */
-    public static MaintenanceEventsOptions enabled() {
-        return builder().supportMaintenanceEvents().autoResolveAddressType().build();
+    public static MaintNotificationsConfig enabled() {
+        return builder().enableMaintNotifications().autoResolveAddressType().build();
     }
 
     /**
@@ -95,8 +99,8 @@ public class MaintenanceEventsOptions {
      * @param addressType the fixed address type to request
      * @return enabled options with fixed address type
      */
-    public static MaintenanceEventsOptions enabled(AddressType addressType) {
-        return builder().supportMaintenanceEvents().fixedAddressType(addressType).build();
+    public static MaintNotificationsConfig enabled(AddressType addressType) {
+        return builder().enableMaintNotifications().fixedAddressType(addressType).build();
     }
 
     /**
@@ -104,8 +108,8 @@ public class MaintenanceEventsOptions {
      *
      * @return true if maintenance events are supported
      */
-    public boolean supportsMaintenanceEvents() {
-        return supportMaintenanceEvents;
+    public boolean maintNotificationsEnabled() {
+        return maintNotificationsEnabled;
     }
 
     /**
@@ -121,16 +125,16 @@ public class MaintenanceEventsOptions {
 
     public static class Builder {
 
-        private boolean supportMaintenanceEvents = DEFAULT_SUPPORT_MAINTENANCE_EVENTS;
+        private boolean maintNotificationsEnabled = DEFAULT_MAINT_NOTIFICATIONS_ENABLED;
 
         private AddressTypeSource addressTypeSource = DEFAULT_ADDRESS_TYPE_SOURCE;
 
-        public MaintenanceEventsOptions.Builder supportMaintenanceEvents() {
-            return supportMaintenanceEvents(true);
+        public MaintNotificationsConfig.Builder enableMaintNotifications() {
+            return enableMaintNotifications(true);
         }
 
-        public MaintenanceEventsOptions.Builder supportMaintenanceEvents(boolean supportMaintenanceEvents) {
-            this.supportMaintenanceEvents = supportMaintenanceEvents;
+        public MaintNotificationsConfig.Builder enableMaintNotifications(boolean enabled) {
+            this.maintNotificationsEnabled = enabled;
             return this;
         }
 
@@ -173,8 +177,8 @@ public class MaintenanceEventsOptions {
             return this;
         }
 
-        public MaintenanceEventsOptions build() {
-            return new MaintenanceEventsOptions(this);
+        public MaintNotificationsConfig build() {
+            return new MaintNotificationsConfig(this);
         }
 
     }
@@ -203,7 +207,7 @@ public class MaintenanceEventsOptions {
         NONE
     }
 
-    private static class FixedAddressTypeSource extends MaintenanceEventsOptions.AddressTypeSource {
+    private static class FixedAddressTypeSource extends MaintNotificationsConfig.AddressTypeSource {
 
         private final AddressType addressType;
 
@@ -219,26 +223,26 @@ public class MaintenanceEventsOptions {
 
     }
 
-    private static class AutoresolveAddressTypeSource extends MaintenanceEventsOptions.AddressTypeSource {
+    private static class AutoresolveAddressTypeSource extends MaintNotificationsConfig.AddressTypeSource {
 
         AutoresolveAddressTypeSource() {
         }
 
         @Override
-        public MaintenanceEventsOptions.AddressType getAddressType(SocketAddress socketAddress, boolean sslEnabled) {
+        public MaintNotificationsConfig.AddressType getAddressType(SocketAddress socketAddress, boolean sslEnabled) {
             if (NetUtils.isPrivateIp(socketAddress)) {
                 // use private
                 if (sslEnabled) {
-                    return MaintenanceEventsOptions.AddressType.INTERNAL_FQDN;
+                    return MaintNotificationsConfig.AddressType.INTERNAL_FQDN;
                 } else {
-                    return MaintenanceEventsOptions.AddressType.INTERNAL_IP;
+                    return MaintNotificationsConfig.AddressType.INTERNAL_IP;
                 }
             } else {
                 // use public
                 if (sslEnabled) {
-                    return MaintenanceEventsOptions.AddressType.EXTERNAL_FQDN;
+                    return MaintNotificationsConfig.AddressType.EXTERNAL_FQDN;
                 } else {
-                    return MaintenanceEventsOptions.AddressType.EXTERNAL_IP;
+                    return MaintNotificationsConfig.AddressType.EXTERNAL_IP;
                 }
             }
         }
