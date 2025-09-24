@@ -1707,8 +1707,9 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor, int count) {
-        if (cursor == null)
+        if (cursor == null) {
             throw new IllegalArgumentException("cursor must not be null");
+        }
         long cursorId = cursor.getCursorId();
         return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, count));
     }
@@ -1720,8 +1721,9 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
 
     @Override
     public RedisFuture<String> ftCursordel(K index, Cursor cursor) {
-        if (cursor == null)
+        if (cursor == null) {
             throw new IllegalArgumentException("cursor must not be null");
+        }
         long cursorId = cursor.getCursorId();
         if (cursorId <= 0) {
             return dispatch(searchCommandBuilder.ftCursordel(index, 0));

@@ -141,7 +141,9 @@ public class AggregationReply<K, V> {
      * or attaching the server-returned cursor id (standalone).
      */
     public void setCursor(Cursor cursor) {
-        this.cursor = cursor;
+        if (this.cursor == null) {
+            this.cursor = cursor;
+        }
     }
 
     void setGroupCount(long value) {
@@ -166,20 +168,26 @@ public class AggregationReply<K, V> {
             this.nodeId = nodeId;
         }
 
+        /** Create a new cursor handle with the given cursor id and optional creating node id. */
         public static Cursor of(long cursorId, String nodeId) {
             return new Cursor(cursorId, nodeId);
         }
 
+        /** Return the server-assigned cursor id for continued reads/deletes. */
         public long getCursorId() {
             return cursorId;
         }
 
+        /** Return the node id that created this cursor, if known (cluster routing). */
         public Optional<String> getNodeId() {
             return Optional.ofNullable(nodeId);
         }
 
+        /** Set the node id for this cursor (used for cluster-sticky routing). */
         public void setNodeId(String nodeId) {
-            this.nodeId = nodeId;
+            if (this.nodeId == null) {
+                this.nodeId = nodeId;
+            }
         }
 
     }

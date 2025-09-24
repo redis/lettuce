@@ -1739,8 +1739,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> ftCursordel(K index, Cursor cursor) {
         return createMono(() -> {
-            if (cursor == null)
+            if (cursor == null) {
                 throw new IllegalArgumentException("cursor must not be null");
+            }
             long cursorId = cursor.getCursorId();
             return searchCommandBuilder.ftCursordel(index, cursorId > 0 ? cursorId : 0);
         });
@@ -1779,8 +1780,9 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor, int count) {
         return createMono(() -> {
-            if (cursor == null)
+            if (cursor == null) {
                 throw new IllegalArgumentException("cursor must not be null");
+            }
             long cursorId = cursor.getCursorId();
             return searchCommandBuilder.ftCursorread(index, cursorId > 0 ? cursorId : 0, count);
         });
