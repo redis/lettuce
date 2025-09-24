@@ -33,8 +33,8 @@ import java.net.SocketAddress;
  *     MaintNotificationsConfig options = MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP);
  *
  *     // Builder pattern
- *     MaintNotificationsConfig options = MaintNotificationsConfig.builder().enableMaintNotifications().autoResolveEndpointType()
- *             .build();
+ *     MaintNotificationsConfig options = MaintNotificationsConfig.builder().enableMaintNotifications()
+ *             .autoResolveEndpointType().build();
  * }
  * </pre>
  *
@@ -82,7 +82,7 @@ public class MaintNotificationsConfig {
     }
 
     /**
-     * Creates  {@link MaintNotificationsConfig} with enabled support for maintenance notifications.
+     * Creates {@link MaintNotificationsConfig} with enabled support for maintenance notifications.
      * <p>
      * The maintenance notifications endpoint type is automatically determined based on connection characteristics.
      *

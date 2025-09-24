@@ -204,7 +204,8 @@ class RedisHandshakeUnitTests {
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
         // Mock address type source
-        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(MaintNotificationsConfig.EndpointTypeSource.class);
+        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(
+                MaintNotificationsConfig.EndpointTypeSource.class);
         when(endpointTypeSource.getEndpointType(any(SocketAddress.class), anyBoolean()))
                 .thenReturn(MaintNotificationsConfig.EndpointType.INTERNAL_IP);
 
@@ -236,7 +237,8 @@ class RedisHandshakeUnitTests {
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
         // Mock address type source
-        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(MaintNotificationsConfig.EndpointTypeSource.class);
+        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(
+                MaintNotificationsConfig.EndpointTypeSource.class);
         when(endpointTypeSource.getEndpointType(any(SocketAddress.class), anyBoolean()))
                 .thenReturn(MaintNotificationsConfig.EndpointType.EXTERNAL_IP);
 
@@ -265,7 +267,8 @@ class RedisHandshakeUnitTests {
         EmbeddedChannel channel = new EmbeddedChannel(true, false);
 
         // Mock address type source that returns null
-        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(MaintNotificationsConfig.EndpointTypeSource.class);
+        MaintNotificationsConfig.EndpointTypeSource endpointTypeSource = mock(
+                MaintNotificationsConfig.EndpointTypeSource.class);
         when(endpointTypeSource.getEndpointType(any(SocketAddress.class), anyBoolean())).thenReturn(null);
 
         ConnectionState state = new ConnectionState();
