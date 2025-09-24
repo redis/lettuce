@@ -88,19 +88,6 @@ public class MaintenanceNotificationTest {
         clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
     }
 
-    @AfterEach
-    public void cleanupAfterTest() {
-        log.info("Restoring cluster state after test");
-        try {
-            // Refresh cluster config which will restore the original state
-            // This is the same method used in @BeforeEach but it will restore state for the next test
-            RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
-            log.info("Cluster state restored successfully");
-        } catch (Exception e) {
-            log.warn("Failed to restore cluster state: {}", e.getMessage());
-        }
-    }
-
     /**
      * Test context holding common objects used across all notification tests
      */
@@ -396,14 +383,12 @@ public class MaintenanceNotificationTest {
         NotificationTestContext context = setupNotificationTest();
 
         // Trigger shard failover using dynamic node discovery
-        // Dynamically discovered master shard
-        String shardId = clusterConfig.getFirstMasterShardId();
         // Node that contains master shards
         String nodeId = clusterConfig.getNodeWithMasterShards();
 
         log.info("Triggering shard failover for FAILING_OVER notification...");
         log.info("Using dynamic node: {}", nodeId);
-        StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
+        StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig)).expectNext(true)
                 .expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for FAILING_OVER notification
@@ -433,8 +418,13 @@ public class MaintenanceNotificationTest {
 
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
-        log.info("Completed test: T.1.1.4 - Receive FAILING_OVER push notification during shard failover");
 
+        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+        nodeId = clusterConfig.getNodeWithMasterShards();
+
+        log.info("performing cluster cleanup operation for failover testing");
+        StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
         // Cleanup test resources
         cleanupNotificationTest(context);
         log.info("test receiveFailingOverPushNotificationTest ended");
@@ -447,14 +437,12 @@ public class MaintenanceNotificationTest {
         NotificationTestContext context = setupNotificationTest();
 
         // First trigger failover to get into failing over state using dynamic node discovery
-        // Dynamically discovered second master shard
-        String shardId = clusterConfig.getSecondMasterShardId();
         // Node that contains master shards
         String nodeId = clusterConfig.getNodeWithMasterShards();
 
         log.info("Triggering shard failover and waiting for completion...");
         log.info("Using dynamic node: {}", nodeId);
-        StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
+        StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig)).expectNext(true)
                 .expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Wait for failover completion (FAILED_OVER notification)
@@ -481,7 +469,12 @@ public class MaintenanceNotificationTest {
         // End test phase to prevent capturing cleanup notifications
         context.capture.endTestPhase();
 
-        log.info("Completed test: T.1.1.5 - Receive FAILED_OVER push notification on failover completion");
+        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+        nodeId = clusterConfig.getNodeWithMasterShards();
+
+        log.info("performing cluster cleanup operation for failover testing");
+        StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
         // Cleanup test resources
         cleanupNotificationTest(context);

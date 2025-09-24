@@ -122,7 +122,6 @@ public class ConnectionHandoffTest {
 
     @AfterEach
     public void cleanupHandoffTest() {
-        cleanupConfigAfterTest();
         if (currentTestContext != null) {
             if (currentTestContext.connection != null && currentTestContext.connection.isOpen()) {
                 currentTestContext.connection.close();
@@ -1056,12 +1055,11 @@ public class ConnectionHandoffTest {
         assertThat(received).as("Should receive maintenance notifications").isTrue();
 
         // Trigger additional failover operations to get FAILING_OVER and FAILED_OVER
-        String shardId = clusterConfig.getFirstMasterShardId();
         String nodeId = clusterConfig.getNodeWithMasterShards();
 
         log.info("Triggering failover operations to get FAILING_OVER and FAILED_OVER notifications...");
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
-                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
+        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
+                .verify(LONG_OPERATION_TIMEOUT);
 
         // End test phase to prevent capturing cleanup notifications
         capture.endTestPhase();
@@ -1086,6 +1084,13 @@ public class ConnectionHandoffTest {
 
         // Failover notifications may be received depending on cluster state
         log.info("✓ All expected maintenance notifications received successfully");
+
+        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+        nodeId = clusterConfig.getNodeWithMasterShards();
+
+        log.info("performing cluster cleanup operation for failover testing");
+        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
+                .verify(LONG_OPERATION_TIMEOUT);
 
         log.info("test connectionHandshakeIncludesEnablingNotificationsTest ended");
     }
@@ -1133,12 +1138,12 @@ public class ConnectionHandoffTest {
         boolean received = capture.waitForNotifications(Duration.ofSeconds(30));
 
         // Trigger additional failover operations to get FAILING_OVER and FAILED_OVER
-        String shardId = clusterConfig.getFirstMasterShardId();
+        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
         String nodeId = clusterConfig.getNodeWithMasterShards();
 
         log.info("Triggering failover operations to get FAILING_OVER and FAILED_OVER notifications...");
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, shardId, nodeId, clusterConfig)).expectNext(true)
-                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
+        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
+                .verify(LONG_OPERATION_TIMEOUT);
 
         // End test phase
         capture.endTestPhase();
@@ -1160,6 +1165,13 @@ public class ConnectionHandoffTest {
         assertThat(capture.getFailedOverCount()).as("Should have no FAILED_OVER notifications").isZero();
 
         log.info("✓ Disabled maintenance events correctly prevent notifications");
+
+        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+        nodeId = clusterConfig.getNodeWithMasterShards();
+
+        log.info("performing cluster cleanup operation for failover testing");
+        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
+                .verify(LONG_OPERATION_TIMEOUT);
 
         log.info("test disabledDontReceiveNotificationsTest ended");
     }
@@ -1388,6 +1400,11 @@ public class ConnectionHandoffTest {
         RedisClient secondClient = RedisClient.create(uri);
         StatefulRedisConnection<String, String> secondConnection = secondClient.connect();
 
+        // Clear any leftover data from previous test runs
+        log.info("Clearing BLPOP queue from previous test runs...");
+        Long deletedKeys = connection.sync().del(CombinedBlpopAndMemoryLeakCapture.BLPOP_QUEUE_KEY);
+        log.info("Deleted {} keys from BLPOP queue", deletedKeys);
+
         // Combined capture that handles both BLPOP unblocking and memory leak detection
         CombinedBlpopAndMemoryLeakCapture capture = new CombinedBlpopAndMemoryLeakCapture(connection, secondConnection);
 
@@ -1537,7 +1554,7 @@ public class ConnectionHandoffTest {
 
         private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
 
-        private static final String BLPOP_QUEUE_KEY = "blpop-unblock-test-queue";
+        public static final String BLPOP_QUEUE_KEY = "blpop-unblock-test-queue";
 
         private static final String UNBLOCK_VALUE = "unblock-value-" + System.currentTimeMillis();
 
