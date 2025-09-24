@@ -390,8 +390,7 @@ public class FaultInjectionClient {
      * @param redisEnterpriseConfig the configuration to get shard information from
      * @return a Mono that emits true when the failover is initiated
      */
-    public Mono<Boolean> triggerShardFailover(String bdbId, String shardId, String nodeId,
-            RedisEnterpriseConfig redisEnterpriseConfig) {
+    public Mono<Boolean> triggerShardFailover(String bdbId, String nodeId, RedisEnterpriseConfig redisEnterpriseConfig) {
         // Enhanced parameter validation
         if (nodeId == null || nodeId.trim().isEmpty()) {
             return Mono.error(new IllegalArgumentException("Node ID cannot be null or empty"));

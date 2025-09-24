@@ -43,6 +43,8 @@ import io.lettuce.test.ConnectionTestUtil;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
 
+import reactor.test.StepVerifier;
+
 import static io.lettuce.TestTags.SCENARIO_TEST;
 
 /**
@@ -91,19 +93,6 @@ public class RelaxedTimeoutConfigurationTest {
     @BeforeEach
     public void refreshClusterConfig() {
         clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
-    }
-
-    @AfterEach
-    public void cleanupAfterTest() {
-        log.info("Restoring cluster state after test");
-        try {
-            // Refresh cluster config which will restore the original state
-            // This is the same method used in @BeforeEach but it will restore state for the next test
-            RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
-            log.info("Cluster state restored successfully");
-        } catch (Exception e) {
-            log.warn("Failed to restore cluster state: {}", e.getMessage());
-        }
     }
 
     /**
@@ -983,13 +972,12 @@ public class RelaxedTimeoutConfigurationTest {
             log.info("=== FAILING_OVER Timeout Test: Starting maintenance operation ===");
 
             // Start FAILING_OVER notification in background
-            String shardId = clusterConfig.getFirstMasterShardId();
             String nodeId = clusterConfig.getNodeWithMasterShards();
 
             log.info("Triggering shard failover for FAILING_OVER notification asynchronously...");
 
             // Start the operation but don't wait for completion
-            faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig).subscribe(
+            faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig).subscribe(
                     result -> log.info("FAILING_OVER operation completed: {}", result),
                     error -> log.error("FAILING_OVER operation failed: {}", error.getMessage()));
 
@@ -1015,6 +1003,12 @@ public class RelaxedTimeoutConfigurationTest {
             // End test phase to prevent capturing cleanup notifications
             context.capture.endTestPhase();
 
+            clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+            nodeId = clusterConfig.getNodeWithMasterShards();
+
+            log.info("performing cluster cleanup operation for failover testing");
+            StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig)).expectNext(true)
+                    .expectComplete().verify(LONG_OPERATION_TIMEOUT);
         } finally {
             cleanupTimeoutTest(context);
         }
@@ -1164,13 +1158,12 @@ public class RelaxedTimeoutConfigurationTest {
             log.info("=== FAILED_OVER Un-relaxed Timeout Test: Starting maintenance operation ===");
 
             // Start FAILING_OVER notification in background
-            String shardId = clusterConfig.getFirstMasterShardId();
             String nodeId = clusterConfig.getNodeWithMasterShards();
 
             log.info("Triggering shard failover for FAILED_OVER notification asynchronously...");
 
             // Start the operation but don't wait for completion
-            faultClient.triggerShardFailover(context.bdbId, shardId, nodeId, clusterConfig).subscribe(
+            faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig).subscribe(
                     result -> log.info("FAILED_OVER operation completed: {}", result),
                     error -> log.error("FAILED_OVER operation failed: {}", error.getMessage()));
 
@@ -1202,8 +1195,16 @@ public class RelaxedTimeoutConfigurationTest {
             // End test phase to prevent capturing cleanup notifications
             context.capture.endTestPhase();
 
+            clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+            nodeId = clusterConfig.getNodeWithMasterShards();
+
+            log.info("performing cluster cleanup operation for failover testing");
+            StepVerifier.create(faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig)).expectNext(true)
+                    .expectComplete().verify(LONG_OPERATION_TIMEOUT);
+
         } finally {
             cleanupTimeoutTest(context);
+
         }
         log.info("test timeoutUnrelaxedOnFailedoverTest ended");
     }
