@@ -131,7 +131,7 @@ public class TimeoutOptions implements Serializable {
          * @since 7.0
          * @see ClientOptions#getMaintNotificationsConfig()
          */
-        public Builder timeoutsRelaxingDuringMaintenance(Duration duration) {
+        public Builder relaxedTimeoutsDuringMaintenance(Duration duration) {
             LettuceAssert.notNull(duration, "Duration must not be null");
 
             this.relaxedTimeout = duration;

@@ -538,7 +538,7 @@ public class RelaxedTimeoutConfigurationTest {
         // Set normal timeout
         // Set relaxed timeout addition
         TimeoutOptions timeoutOptions = TimeoutOptions.builder().timeoutCommands().fixedTimeout(NORMAL_COMMAND_TIMEOUT)
-                .timeoutsRelaxingDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
+                .relaxedTimeoutsDuringMaintenance(RELAXED_TIMEOUT_ADDITION).build();
 
         // Configure client with maintenance events support and relaxed timeouts
         // CRITICAL: Required for MaintenanceAwareConnectionWatchdog
