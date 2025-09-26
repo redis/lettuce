@@ -28,39 +28,45 @@ If you need any support, meet Lettuce at
 
 ## 🔥 Breaking Changes
 
-- chore: remove usage of deprecated connection methods in command APIs in integration tests ([#3328](https://github.com/redis/lettuce/issues/3328), [#3343](https://github.com/redis/lettuce/pull/3343))
-- Remove deprecated `dnsResolver` option ([#3328](https://github.com/redis/lettuce/issues/3328), [#3333](https://github.com/redis/lettuce/pull/3333))
-- Remove deprecated `reset()` method from Lettuce API and internals ([#3395](https://github.com/redis/lettuce/pull/3395))
-- Make Utility Class constructor private to enforce noninstantiability ([#3266](https://github.com/redis/lettuce/pull/3266))
-- Enable adaptive refresh by default ([#3249](https://github.com/redis/lettuce/issues/3249), [#3316](https://github.com/redis/lettuce/pull/3316))
-- Remove deprecated code from ISSUE [#1314](https://github.com/redis/lettuce/issues/1314) ([#3328](https://github.com/redis/lettuce/issues/3328), [#3351](https://github.com/redis/lettuce/pull/3351))
-- chore: deprecated `withPassword(String)` method ([#3328](https://github.com/redis/lettuce/issues/3328), [#3350](https://github.com/redis/lettuce/pull/3350))
-- Remove deprecated `Utf8StringCodec` class ([#3328](https://github.com/redis/lettuce/issues/3328), [#3389](https://github.com/redis/lettuce/pull/3389))
-- chore: remove deprecated default timeout from `AbstractRedisClient` ([#3328](https://github.com/redis/lettuce/issues/3328), [#3344](https://github.com/redis/lettuce/pull/3344))
-- chore: remove deprecated `ClientOptions#cancelCommandsOnReconnectFailure` ([#3328](https://github.com/redis/lettuce/issues/3328), [#3346](https://github.com/redis/lettuce/pull/3346))
-
----
+- chore: remove usage of deprecated connection methods in command APIs in integration tests (#3328) (#3343)
+- Remove deprecated dnsResolver option (#3328) (#3333)
+- Remove deprecated `reset()` method from Lettuce API and internals (#3395)
+- Make Utility Class constructor private to enforce noninstantiability (#3266)
+- Enable adaptive refresh by default #3249 (#3316)
+- ISSUE#3328 - Remove deprecated code from ISSUE#1314 (#3351)
+- chore: deprecated withPassword(String) method (#3328) (#3350)
+- Remove deprecated Utf8StringCodec class (#3328) (#3389)
+- chore: remove deprecated default timeout from AbstractRedisClient (#3328) (#3344)
+- chore: remove deprecated ClientOptions#cancelCommandsOnReconnectFailure (#3328) (#3346)
 
 ## 🚀 New Features
 
-- Add String-based JSON API to avoid unnecessary conversions ([#3369](https://github.com/redis/lettuce/pull/3369), [#3394](https://github.com/redis/lettuce/pull/3394))
-- React to maintenance events ([#3345](https://github.com/redis/lettuce/issues/3345), [#3354](https://github.com/redis/lettuce/pull/3354))
-
----
+- Add support for EPSILON and WITHATTRIBS arguments in VSIM command (#3449)
+- Add String-based JSON API to avoid unnecessary conversions (#3369) (#3394)
+- React to maintenance events #3345 (#3354)
 
 ## 🐛 Bug Fixes
-
-- Timeouts seen during endpoint re-bind and migrate ([#3426](https://github.com/redis/lettuce/pull/3426))
-- Fix a `NullPointerException` in `DelegateJsonObject` ([#3417](https://github.com/redis/lettuce/issues/3417), [#3418](https://github.com/redis/lettuce/pull/3418))
-
----
+- Rename maintenance notification configuration properties (#3450)
+- Timeouts seen during endpoint re-bind and migrate (#3426)
+- Fix a NullPointerException in DelegateJsonObject #3417 (#3418)
 
 ## 💡 Other
 
-- Return `name` method to `ProtocolKeyword` public interface ([#3424](https://github.com/redis/lettuce/pull/3424))
-- Refactor JsonValue to Object mapping ([#3412](https://github.com/redis/lettuce/issues/3412), [#3413](https://github.com/redis/lettuce/pull/3413))
-- Using non-native transports with `SocketOptions` should cause an error ([#3279](https://github.com/redis/lettuce/pull/3279))
+- Timeouts seen during endpoint re-bind and migrate (#3426)
+- Return name method to ProtocolKeyword public interface. (#3424)
+- Refactor JsonValue to Object mapping #3412 (#3413)
+- Using non-native transports with SocketOptions should cause an error (#3279)
 
+## 🧰 Maintenance
+
+- Fixing compilation error in benchmark code (#3442)
+- docs: Fix various typos in documentation (#3423)
+- bump test inra to 8.2.1-pre (#3399)
+- Fixing the benchmarks action (#3402)
+- Disable flaky test to stabilize the pipeline (#3403)
+- Update redis-search.md (#3401)
+- Bump kotlin.version from 1.7.21 to 2.0.0 (#2979)
+- 
 ---
 
 **Full Changelog**: [6.8.0.RELEASE...7.0.0.BETA2](https://github.com/redis/lettuce/compare/6.8.0.RELEASE...7.0.0.BETA2)
