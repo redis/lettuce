@@ -1,7 +1,7 @@
-Lettuce 7.0.0.BETA1 RELEASE NOTES
+Lettuce 7.0.0.BETA2 RELEASE NOTES
 ==============================
 
-The Lettuce team is pleased to announce the first beta release of Lettuce 7.0!
+The Lettuce team is pleased to announce the second beta release of Lettuce 7.0!
 
 The release focuses on introducing hitless upgrades functionality, API improvements, and cleanup of deprecated features.
 
@@ -11,9 +11,9 @@ Key changes include:
 - Removal of multiple deprecated APIs and options as part of the major version upgrade
 As part of the 7.0 line, this beta also removes several deprecated APIs and options.
 
-Lettuce 7.0.0.BETA1 supports Redis 2.6+ up to Redis 8.x and requires Java 8 or newer. The driver is tested against Redis 8.2, 8.0, 7.4, and 7.2.
+Lettuce 7.0.0.BETA2 supports Redis 2.6+ up to Redis 8.x and requires Java 8 or newer. The driver is tested against Redis 8.2, 8.0, 7.4, and 7.2.
 
-Thanks to all contributors who made Lettuce 7.0.0.BETA1 possible!
+Thanks to all contributors who made Lettuce 7.0.0.BETA2 possible!
 
 If you need any support, meet Lettuce at
 
@@ -21,8 +21,8 @@ If you need any support, meet Lettuce at
 * Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
 * Join the chat at https://discord.gg/redis and look for the "Help:Tools Lettuce" channel 
 * GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/7.0.0.BETA1/reference/
-* Javadoc: https://lettuce.io/core/7.0.0.BETA1/api/
+* Documentation: https://lettuce.io/core/7.0.0.BETA2/reference/
+* Javadoc: https://lettuce.io/core/7.0.0.BETA2/api/
 
 # Changes
 
@@ -63,4 +63,4 @@ If you need any support, meet Lettuce at
 
 ---
 
-**Full Changelog**: [6.8.0.RELEASE...7.0.0.BETA1](https://github.com/redis/lettuce/compare/6.8.0.RELEASE...v7.0.0.BETA1)
+**Full Changelog**: [6.8.0.RELEASE...7.0.0.BETA2](https://github.com/redis/lettuce/compare/6.8.0.RELEASE...7.0.0.BETA2)
