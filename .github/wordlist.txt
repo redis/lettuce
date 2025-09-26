@@ -343,3 +343,12 @@ noninstantiability
 Changelog
 WITHATTRIBS
 vsimWithScoreWithAttribs
+withPassword
+StringCodec
+Utf
+AbstractRedisClient
+cancelCommandsOnReconnectFailure
+VSIM
+DelegateJsonObject
+ProtocolKeyword
+kotlin

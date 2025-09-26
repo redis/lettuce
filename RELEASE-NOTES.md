@@ -57,16 +57,6 @@ If you need any support, meet Lettuce at
 - Refactor JsonValue to Object mapping #3412 (#3413)
 - Using non-native transports with SocketOptions should cause an error (#3279)
 
-## 🧰 Maintenance
-
-- Fixing compilation error in benchmark code (#3442)
-- docs: Fix various typos in documentation (#3423)
-- bump test inra to 8.2.1-pre (#3399)
-- Fixing the benchmarks action (#3402)
-- Disable flaky test to stabilize the pipeline (#3403)
-- Update redis-search.md (#3401)
-- Bump kotlin.version from 1.7.21 to 2.0.0 (#2979)
-- 
 ---
 
 **Full Changelog**: [6.8.0.RELEASE...7.0.0.BETA2](https://github.com/redis/lettuce/compare/6.8.0.RELEASE...7.0.0.BETA2)
