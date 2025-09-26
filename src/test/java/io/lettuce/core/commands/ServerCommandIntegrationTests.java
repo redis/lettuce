@@ -643,7 +643,19 @@ public class ServerCommandIntegrationTests extends TestSupport {
     @Test
     void testReadOnlyCommands() {
         for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
-            assertThat(isCommandReadOnly(readOnlyCommand.toString())).isTrue();
+            String name = readOnlyCommand.toString();
+            // Skip commands that are not available on this server (e.g., module not loaded)
+            List<Object> info = redis.commandInfo(name);
+            if (info == null || info.isEmpty()) {
+                continue;
+            }
+            // Parse details once and use these flags for assertion to avoid inconsistencies
+            // If no details we assume version is not compatible
+            List<CommandDetail> details = CommandDetailParser.parse(info);
+            if (details.isEmpty()) {
+                continue;
+            }
+            assertThat(isCommandReadOnly(details)).as(name + " is not read-only").isTrue();
         }
     }
 
@@ -654,17 +666,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
         return !info.contains("aof_rewrite_in_progress:1") && !info.contains("rdb_bgsave_in_progress:1");
     }
 
-    private boolean isCommandReadOnly(String commandName) {
-        List<Object> commandInfo = redis.commandInfo(commandName);
-        if (commandInfo == null || commandInfo.isEmpty()) {
-            throw new IllegalArgumentException("Command not found: " + commandName);
-        }
-
-        List<CommandDetail> details = CommandDetailParser.parse(commandInfo);
-        if (details.isEmpty()) {
-            throw new IllegalArgumentException("Command details could not be parsed: " + commandName);
-        }
-
+    private boolean isCommandReadOnly(List<CommandDetail> details) {
         CommandDetail detail = details.get(0);
         return !detail.getFlags().contains(CommandDetail.Flag.WRITE);
     }

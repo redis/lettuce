@@ -232,16 +232,17 @@ public class RediSearchClusterIntegrationTests {
         assertThat(aggregateResults.getAggregationGroups()).isGreaterThan(0);
 
         // Test cursor read functionality if cursor is available
-        if (aggregateResults.getCursorId() != -1 && aggregateResults.getCursorId() > 0) {
+        if (aggregateResults.getCursor().isPresent() && aggregateResults.getCursor().get().getCursorId() > 0) {
             // Read next batch using cursor
-            AggregationReply<String, String> cursorResults = redis.ftCursorread(BOOKS_INDEX, aggregateResults.getCursorId());
+            AggregationReply<String, String> cursorResults = redis.ftCursorread(BOOKS_INDEX,
+                    aggregateResults.getCursor().get());
 
             // Verify cursor read works
             assertThat(cursorResults).isNotNull();
 
             // The cursor results should be valid (either have data or indicate completion)
             // Cursor ID of 0 indicates end of results
-            assertThat(cursorResults.getCursorId()).isGreaterThanOrEqualTo(0);
+            assertThat(cursorResults.getCursor().get().getCursorId()).isGreaterThanOrEqualTo(0);
         }
 
         // Cleanup

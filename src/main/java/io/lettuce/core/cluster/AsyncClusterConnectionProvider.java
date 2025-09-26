@@ -21,7 +21,10 @@ package io.lettuce.core.cluster;
 
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
+import io.lettuce.core.ReadFrom;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.protocol.ConnectionIntent;
@@ -33,6 +36,32 @@ import io.lettuce.core.protocol.ConnectionIntent;
  * @since 4.4
  */
 interface AsyncClusterConnectionProvider extends Closeable {
+
+    /**
+     * Obtain a node-scoped connection for the given {@link ConnectionIntent} by first selecting a random upstream (master)
+     * shard to ensure even distribution across partitions and then delegating to the slot-based selection logic.
+     * <p>
+     * For READ intents, the subsequent slot-based path applies the configured {@link ReadFrom} policy (including
+     * order-sensitivity and replica eligibility) and reuses cached reader connections where available. For WRITE intents, the
+     * slot-based path selects the upstream node responsible for the chosen slot. If no master with assigned slots is available,
+     * this method falls back to selecting a random slot across the full slot space.
+     *
+     * @param connectionIntent the desired {@link ConnectionIntent} (READ or WRITE), used to determine eligibility and routing
+     *        behavior.
+     * @return a {@link CompletableFuture} that completes with a node-scoped {@link StatefulRedisConnection} for the selected
+     *         node.
+     *
+     * @implNote This method uses the current {@code partitions} snapshot for shard/slot selection and delegates to
+     *           {@link #getConnectionAsync(ConnectionIntent, int)} to perform the actual connection acquisition, thereby
+     *           centralizing membership validation, caching, and ReadFrom handling.
+     *
+     * @throws CompletionException if the connection cannot be obtained. The underlying cause can be a
+     *         {@link PartitionSelectorException} when no eligible partition/slot can be determined, or a
+     *         {@link RedisConnectionException} originating from the connection attempt.
+     *
+     * @see #getConnectionAsync(ConnectionIntent, int)
+     */
+    <K, V> CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent);
 
     /**
      * Provide a connection for the connectionIntent and cluster slot. The underlying connection is bound to the nodeId. If the
