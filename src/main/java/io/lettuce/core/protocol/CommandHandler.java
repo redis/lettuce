@@ -722,7 +722,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                 logger.info("{} Rebind completed at {}", logPrefix(), LocalTime.now());
                 ctx.channel().attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
             } else {
-                logger.debug("{} Rebind in progress, {} commands remaining in the stack", logPrefix(), stack.size());
+                if (debugEnabled) {
+                    logger.debug("{} Rebind in progress, {} commands remaining in the stack", logPrefix(), stack.size());
+                }
             }
         }
 
