@@ -1,0 +1,76 @@
+name: Publish GitHub Packages
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (for manual runs)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Set up Java with Maven cache
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: 'maven'
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+
+      - name: Resolve release version
+        id: release-version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+        run: |
+          VERSION="$RELEASE_TAG"
+          if [ -z "$VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+          fi
+
+          if [ -z "$VERSION" ]; then
+            echo "Release version is required" >&2
+            exit 1
+          fi
+
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Update version in Maven configuration
+        if: ${{ steps.release-version.outputs.value != '' }}
+        run: |
+          mvn --no-transfer-progress \\
+            --batch-mode \\
+            versions:set -DnewVersion=${{ steps.release-version.outputs.value }}
+
+      - name: Install GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.OSSH_GPG_SECRET_KEY }}
+        run: |
+          cat <(echo -e "$GPG_PRIVATE_KEY") | gpg --batch --import
+          gpg --list-secret-keys --keyid-format LONG
+
+      - name: Publish to GitHub Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_PASSPHRASE: ${{ secrets.OSSH_GPG_SECRET_KEY_PASSWORD }}
+        run: |
+          mvn --no-transfer-progress \\
+            --batch-mode \\
+            -Dgpg.passphrase="$GPG_PASSPHRASE" \\
+            -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/adRise/lettuce \\
+            deploy -P sonatype-oss-release
