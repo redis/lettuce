@@ -3,12 +3,12 @@ Lettuce 7.0.0.BETA2 RELEASE NOTES
 
 The Lettuce team is pleased to announce the second beta release of Lettuce 7.0!
 
-The release focuses on introducing hitless upgrades functionality, API improvements, and cleanup of deprecated features.
+The release focuses on introducing **Maintenance events support** functionality, API improvements, and cleanup of deprecated features.
 
-Key changes include:
-- Introduction of hitless upgrades support for graceful maintenance event handling
-- Enhanced JSON API with string-based access to avoid unnecessary conversions
-- Removal of multiple deprecated APIs and options as part of the major version upgrade
+### Key changes
+- **Maintenance events support** for graceful maintenance handling
+- **Enhanced JSON API** with `String`-based access to avoid unnecessary conversions
+- **Removal of deprecated APIs** and options as part of the major version upgrade
 As part of the 7.0 line, this beta also removes several deprecated APIs and options.
 
 Lettuce 7.0.0.BETA2 supports Redis 2.6+ up to Redis 8.x and requires Java 8 or newer. The driver is tested against Redis 8.2, 8.0, 7.4, and 7.2.
