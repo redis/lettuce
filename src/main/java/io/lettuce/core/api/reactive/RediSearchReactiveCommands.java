@@ -25,7 +25,6 @@ import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import reactor.core.publisher.Flux;
-
 import reactor.core.publisher.Mono;
 
 /**
@@ -1150,7 +1149,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @param index the index name
      * @param cursor the cursor obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
      * @param count the number of results to read; overrides the {@code COUNT} from {@code FT.AGGREGATE}
-     * @return a {@link Mono} emitting the next batch of results; see {@link AggregationReply}
+     * @return the next batch of results; see {@link AggregationReply}
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-read/">FT.CURSOR READ</a>
      * @see <a href=
@@ -1182,7 +1181,7 @@ public interface RediSearchReactiveCommands<K, V> {
      *
      * @param index the index name
      * @param cursor the cursor obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
-     * @return a {@link Mono} emitting the next batch of results; see {@link AggregationReply}
+     * @return the next batch of results; see {@link AggregationReply}
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-read/">FT.CURSOR READ</a>
      * @see <a href=
@@ -1220,7 +1219,7 @@ public interface RediSearchReactiveCommands<K, V> {
      *
      * @param index the index name, as a key
      * @param cursor the cursor obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
-     * @return a {@link Mono} emitting {@code "OK"} if the cursor was successfully deleted
+     * @return {@code "OK"} if the cursor was successfully deleted
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-del/">FT.CURSOR DEL</a>
      * @see <a href=

@@ -1208,7 +1208,7 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      *
      * <p>
      * Once a cursor is deleted, any subsequent attempts to read from it using {@link #ftCursorread(String, long)} or
-     * {@link #ftCursorread(String, long, int)} will result in an error.
+     * {@link #ftCursorread(String, Cursor, int)} will result in an error.
      * </p>
      *
      * <p>
