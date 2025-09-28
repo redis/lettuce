@@ -56,7 +56,7 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftAlter(index: K, skipInitialScan: Boolean, fieldArgs: List<FieldArgs<K>>): String? =
         ops.ftAlter(index, skipInitialScan, fieldArgs).awaitFirstOrNull()
 
-     override suspend fun ftTagvals(index: K, fieldName: K): List<V> =
+     override suspend fun ftTagvals(index: String, fieldName: K): List<V> =
          ops.ftTagvals(index, fieldName).asFlow().toList()
 
     override suspend fun ftAlter(index: K, fieldArgs: List<FieldArgs<K>>): String? =
@@ -68,16 +68,16 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftDropindex(index: K): String? =
         ops.ftDropindex(index).awaitFirstOrNull()
 
-    override suspend fun ftSearch(index: K, query: V): SearchReply<K, V>? =
+    override suspend fun ftSearch(index: String, query: V): SearchReply<K, V>? =
         ops.ftSearch(index, query).awaitFirstOrNull()
 
-    override suspend fun ftSearch(index: K, query: V, args: SearchArgs<K, V>): SearchReply<K, V>? =
+    override suspend fun ftSearch(index: String, query: V, args: SearchArgs<K, V>): SearchReply<K, V>? =
         ops.ftSearch(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: K, query: V, args: AggregateArgs<K, V>): AggregationReply<K, V>? =
+    override suspend fun ftAggregate(index: String, query: V, args: AggregateArgs<K, V>): AggregationReply<K, V>? =
         ops.ftAggregate(index, query, args).awaitFirstOrNull()
 
-    override suspend fun ftAggregate(index: K, query: V): AggregationReply<K, V>? =
+    override suspend fun ftAggregate(index: String, query: V): AggregationReply<K, V>? =
         ops.ftAggregate(index, query).awaitFirstOrNull()
 
     override suspend fun ftCursorread(index: K, cursorId: Long): AggregationReply<K, V>? =
@@ -96,13 +96,13 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftDictdel(dict: K, vararg terms: V): Long? =
         ops.ftDictdel(dict, *terms).awaitFirstOrNull()
 
-    override suspend fun ftDictdump(dict: K): List<V> =
+    override suspend fun ftDictdump(dict: String): List<V> =
         ops.ftDictdump(dict).asFlow().toList()
 
-    override suspend fun ftSpellcheck(index: K, query: V): SpellCheckResult<V>? =
+    override suspend fun ftSpellcheck(index: String, query: V): SpellCheckResult<V>? =
         ops.ftSpellcheck(index, query).awaitFirstOrNull()
 
-    override suspend fun ftSpellcheck(index: K, query: V, args: SpellCheckArgs<K, V>): SpellCheckResult<V>? =
+    override suspend fun ftSpellcheck(index: String, query: V, args: SpellCheckArgs<K, V>): SpellCheckResult<V>? =
         ops.ftSpellcheck(index, query, args).awaitFirstOrNull()
 
     override suspend fun ftSugadd(key: K, suggestion: V, score: Double): Long? =
@@ -129,13 +129,13 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftSynupdate(index: K, synonymGroupId: V, args: SynUpdateArgs<K, V>, vararg terms: V): String? =
         ops.ftSynupdate(index, synonymGroupId, args, *terms).awaitFirstOrNull()
 
-    override suspend fun ftSyndump(index: K): Map<V, List<V>> =
-        ops.ftSyndump(index).awaitFirstOrNull()!!
+    override suspend fun ftSyndump(index: String): Map<V, List<V>>? =
+        ops.ftSyndump(index).awaitFirstOrNull()
 
-    override suspend fun ftExplain(index: K, query: V): String? =
+    override suspend fun ftExplain(index: String, query: V): String? =
         ops.ftExplain(index, query).awaitFirstOrNull()
 
-    override suspend fun ftExplain(index: K, query: V, args: ExplainArgs<K, V>): String? =
+    override suspend fun ftExplain(index: String, query: V, args: ExplainArgs<K, V>): String? =
         ops.ftExplain(index, query, args).awaitFirstOrNull()
 
     override suspend fun ftList(): List<V> =

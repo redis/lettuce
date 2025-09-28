@@ -1580,17 +1580,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> ftTagvals(K index, K fieldName) {
+    public RedisFuture<List<V>> ftTagvals(String index, K fieldName) {
         return dispatch(searchCommandBuilder.ftTagvals(index, fieldName));
     }
 
     @Override
-    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(String index, V query) {
         return dispatch(searchCommandBuilder.ftSpellcheck(index, query));
     }
 
     @Override
-    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(String index, V query, SpellCheckArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftSpellcheck(index, query, args));
     }
 
@@ -1605,17 +1605,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<List<V>> ftDictdump(K dict) {
+    public RedisFuture<List<V>> ftDictdump(String dict) {
         return dispatch(searchCommandBuilder.ftDictdump(dict));
     }
 
     @Override
-    public RedisFuture<String> ftExplain(K index, V query) {
+    public RedisFuture<String> ftExplain(String index, V query) {
         return dispatch(searchCommandBuilder.ftExplain(index, query));
     }
 
     @Override
-    public RedisFuture<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+    public RedisFuture<String> ftExplain(String index, V query, ExplainArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftExplain(index, query, args));
     }
 
@@ -1625,7 +1625,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Map<V, List<V>>> ftSyndump(K index) {
+    public RedisFuture<Map<V, List<V>>> ftSyndump(String index) {
         return dispatch(searchCommandBuilder.ftSyndump(index));
     }
 
@@ -1685,22 +1685,22 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+    public RedisFuture<SearchReply<K, V>> ftSearch(String index, V query, SearchArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query) {
+    public RedisFuture<SearchReply<K, V>> ftSearch(String index, V query) {
         return dispatch(searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
         return dispatch(searchCommandBuilder.ftAggregate(index, query, args));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(K index, V query) {
+    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, V query) {
         return dispatch(searchCommandBuilder.ftAggregate(index, query, null));
     }
 

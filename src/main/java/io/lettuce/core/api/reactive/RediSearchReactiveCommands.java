@@ -369,7 +369,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftCreate(Object, CreateArgs, List)
      */
     @Experimental
-    Flux<V> ftTagvals(K index, K fieldName);
+    Flux<V> ftTagvals(String index, K fieldName);
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.
@@ -404,13 +404,13 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftSpellcheck(Object, Object, SpellCheckArgs)
+     * @see #ftSpellcheck(String, Object, SpellCheckArgs)
      * @see #ftDictadd(Object, Object[])
      * @see #ftDictdel(Object, Object[])
-     * @see #ftDictdump(Object)
+     * @see #ftDictdump(String)
      */
     @Experimental
-    Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query);
+    Mono<SpellCheckResult<V>> ftSpellcheck(String index, V query);
 
     /**
      * Perform spelling correction on a query with additional options.
@@ -441,13 +441,13 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftSpellcheck(Object, Object)
+     * @see #ftSpellcheck(String, Object)
      * @see #ftDictadd(Object, Object[])
      * @see #ftDictdel(Object, Object[])
-     * @see #ftDictdump(Object)
+     * @see #ftDictdump(String)
      */
     @Experimental
-    Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args);
+    Mono<SpellCheckResult<V>> ftSpellcheck(String index, V query, SpellCheckArgs<K, V> args);
 
     /**
      * Add terms to a dictionary.
@@ -478,7 +478,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictadd/">FT.DICTADD</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
      * @see #ftDictdel(Object, Object[])
-     * @see #ftDictdump(Object)
+     * @see #ftDictdump(String)
      */
     @Experimental
     Mono<Long> ftDictadd(K dict, V... terms);
@@ -501,7 +501,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictdel/">FT.DICTDEL</a>
      * @see #ftDictadd(Object, Object[])
-     * @see #ftDictdump(Object)
+     * @see #ftDictdump(String)
      */
     @Experimental
     Mono<Long> ftDictdel(K dict, V... terms);
@@ -525,7 +525,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftDictdel(Object, Object[])
      */
     @Experimental
-    Flux<V> ftDictdump(K dict);
+    Flux<V> ftDictdump(String dict);
 
     /**
      * Return the execution plan for a complex query.
@@ -554,11 +554,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return the execution plan as a string
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.explain/">FT.EXPLAIN</a>
-     * @see #ftExplain(Object, Object, ExplainArgs)
-     * @see #ftSearch(Object, Object)
+     * @see #ftExplain(String, Object, ExplainArgs)
+     * @see #ftSearch(String, Object)
      */
     @Experimental
-    Mono<String> ftExplain(K index, V query);
+    Mono<String> ftExplain(String index, V query);
 
     /**
      * Return the execution plan for a complex query with additional options.
@@ -585,11 +585,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return the execution plan as a string
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.explain/">FT.EXPLAIN</a>
-     * @see #ftExplain(Object, Object)
-     * @see #ftSearch(Object, Object)
+     * @see #ftExplain(String, Object)
+     * @see #ftSearch(String, Object)
      */
     @Experimental
-    Mono<String> ftExplain(K index, V query, ExplainArgs<K, V> args);
+    Mono<String> ftExplain(String index, V query, ExplainArgs<K, V> args);
 
     /**
      * Return a list of all existing indexes.
@@ -657,7 +657,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftSynupdate(Object, Object, SynUpdateArgs, Object[])
      */
     @Experimental
-    Mono<Map<V, List<V>>> ftSyndump(K index);
+    Mono<Map<V, List<V>>> ftSyndump(String index);
 
     /**
      * Update a synonym group with additional terms.
@@ -688,7 +688,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
      * @see #ftSynupdate(Object, Object, SynUpdateArgs, Object[])
-     * @see #ftSyndump(Object)
+     * @see #ftSyndump(String)
      */
     @Experimental
     Mono<String> ftSynupdate(K index, V synonymGroupId, V... terms);
@@ -720,7 +720,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
      * @see #ftSynupdate(Object, Object, Object[])
-     * @see #ftSyndump(Object)
+     * @see #ftSyndump(String)
      */
     @Experimental
     Mono<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms);
@@ -973,10 +973,10 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/query/">Query syntax</a>
      * @see SearchReply
      * @see SearchArgs
-     * @see #ftSearch(Object, Object, SearchArgs)
+     * @see #ftSearch(String, Object, SearchArgs)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftSearch(K index, V query);
+    Mono<SearchReply<K, V>> ftSearch(String index, V query);
 
     /**
      * Search the index with a textual query using advanced search options and filters.
@@ -1024,23 +1024,23 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/">Advanced concepts</a>
      * @see SearchReply
      * @see SearchArgs
-     * @see #ftSearch(Object, Object)
+     * @see #ftSearch(String, Object)
      */
     @Experimental
-    Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args);
+    Mono<SearchReply<K, V>> ftSearch(String index, V query, SearchArgs<K, V> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.
      *
      * <p>
      * This command executes a search query and applies aggregation operations to transform and analyze the results. Unlike
-     * {@link #ftSearch(Object, Object)}, which returns individual documents, FT.AGGREGATE processes the result set through a
+     * {@link #ftSearch(String, Object)}, which returns individual documents, FT.AGGREGATE processes the result set through a
      * pipeline of transformations to produce analytical insights, summaries, and computed values.
      * </p>
      *
      * <p>
      * This basic variant uses default aggregation behavior without additional pipeline operations. For advanced aggregations
-     * with grouping, sorting, filtering, and custom transformations, use {@link #ftAggregate(Object, Object, AggregateArgs)}.
+     * with grouping, sorting, filtering, and custom transformations, use {@link #ftAggregate(String, Object, AggregateArgs)}.
      * </p>
      *
      * <p>
@@ -1066,10 +1066,10 @@ public interface RediSearchReactiveCommands<K, V> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/">Aggregations</a>
      * @see SearchReply
      * @see AggregateArgs
-     * @see #ftAggregate(Object, Object, AggregateArgs)
+     * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftAggregate(K index, V query);
+    Mono<AggregationReply<K, V>> ftAggregate(String index, V query);
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -1121,18 +1121,18 @@ public interface RediSearchReactiveCommands<K, V> {
      *      API</a>
      * @see SearchReply
      * @see AggregateArgs
-     * @see #ftAggregate(Object, Object)
+     * @see #ftAggregate(String, Object)
      * @see #ftCursorread(Object, long)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args);
+    Mono<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args);
 
     /**
      * Read next results from an existing cursor.
      *
      * <p>
      * This command is used to read the next batch of results from a cursor created by
-     * {@link #ftAggregate(Object, Object, AggregateArgs)} with the {@code WITHCURSOR} option. Cursors provide an efficient way
+     * {@link #ftAggregate(String, Object, AggregateArgs)} with the {@code WITHCURSOR} option. Cursors provide an efficient way
      * to iterate through large result sets without loading all results into memory at once.
      * </p>
      *
@@ -1156,7 +1156,7 @@ public interface RediSearchReactiveCommands<K, V> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
      * @see SearchReply
-     * @see #ftAggregate(Object, Object, AggregateArgs)
+     * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
     Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count);
@@ -1166,7 +1166,7 @@ public interface RediSearchReactiveCommands<K, V> {
      *
      * <p>
      * This command is used to read the next batch of results from a cursor created by
-     * {@link #ftAggregate(Object, Object, AggregateArgs)} with the {@code WITHCURSOR} option. This variant uses the default
+     * {@link #ftAggregate(String, Object, AggregateArgs)} with the {@code WITHCURSOR} option. This variant uses the default
      * batch size that was specified in the original {@code FT.AGGREGATE} command's {@code WITHCURSOR} clause.
      * </p>
      *
@@ -1189,7 +1189,7 @@ public interface RediSearchReactiveCommands<K, V> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
      * @see SearchReply
-     * @see #ftAggregate(Object, Object, AggregateArgs)
+     * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
     Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId);
@@ -1198,7 +1198,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * Delete a cursor and free its associated resources.
      *
      * <p>
-     * This command is used to explicitly delete a cursor created by {@link #ftAggregate(Object, Object, AggregateArgs)} with
+     * This command is used to explicitly delete a cursor created by {@link #ftAggregate(String, Object, AggregateArgs)} with
      * the {@code WITHCURSOR} option. Deleting a cursor frees up server resources and should be done when you no longer need to
      * read more results from the cursor.
      * </p>
@@ -1226,7 +1226,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href=
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
-     * @see #ftAggregate(Object, Object, AggregateArgs)
+     * @see #ftAggregate(String, Object, AggregateArgs)
      * @see #ftCursorread(Object, long)
      * @see #ftCursorread(Object, long, int)
      */
