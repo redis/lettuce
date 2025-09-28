@@ -413,7 +413,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
         return routeKeyless(() -> super.ftAggregate(index, query, args),
                 (nodeId, conn) -> conn.ftAggregate(index, query, args).mapNotNull(reply -> {
                     if (reply != null) {
@@ -563,41 +563,41 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+    public Mono<SearchReply<K, V>> ftSearch(String index, V query, SearchArgs<K, V> args) {
         return routeKeyless(() -> super.ftSearch(index, query, args), conn -> conn.ftSearch(index, query, args),
                 CommandType.FT_SEARCH);
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(K index, V query) {
+    public Mono<SearchReply<K, V>> ftSearch(String index, V query) {
         return ftSearch(index, query, SearchArgs.<K, V> builder().build());
     }
 
     @Override
-    public Mono<String> ftExplain(K index, V query) {
+    public Mono<String> ftExplain(String index, V query) {
         return routeKeyless(() -> super.ftExplain(index, query), conn -> conn.ftExplain(index, query), CommandType.FT_EXPLAIN);
     }
 
     @Override
-    public Mono<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+    public Mono<String> ftExplain(String index, V query, ExplainArgs<K, V> args) {
         return routeKeyless(() -> super.ftExplain(index, query, args), conn -> conn.ftExplain(index, query, args),
                 CommandType.FT_EXPLAIN);
     }
 
     @Override
-    public Flux<V> ftTagvals(K index, K fieldName) {
+    public Flux<V> ftTagvals(String index, K fieldName) {
         return routeKeylessMany(() -> super.ftTagvals(index, fieldName), conn -> conn.ftTagvals(index, fieldName),
                 CommandType.FT_TAGVALS);
     }
 
     @Override
-    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+    public Mono<SpellCheckResult<V>> ftSpellcheck(String index, V query) {
         return routeKeyless(() -> super.ftSpellcheck(index, query), conn -> conn.ftSpellcheck(index, query),
                 CommandType.FT_SPELLCHECK);
     }
 
     @Override
-    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+    public Mono<SpellCheckResult<V>> ftSpellcheck(String index, V query, SpellCheckArgs<K, V> args) {
         return routeKeyless(() -> super.ftSpellcheck(index, query, args), conn -> conn.ftSpellcheck(index, query, args),
                 CommandType.FT_SPELLCHECK);
     }
@@ -613,7 +613,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Flux<V> ftDictdump(K dict) {
+    public Flux<V> ftDictdump(String dict) {
         return routeKeylessMany(() -> super.ftDictdump(dict), conn -> conn.ftDictdump(dict), CommandType.FT_DICTDUMP);
     }
 
@@ -670,7 +670,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<Map<V, List<V>>> ftSyndump(K index) {
+    public Mono<Map<V, List<V>>> ftSyndump(String index) {
         return routeKeyless(() -> super.ftSyndump(index), conn -> conn.ftSyndump(index), CommandType.FT_SYNDUMP);
     }
 
@@ -692,7 +692,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query) {
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query) {
         return ftAggregate(index, query, null);
     }
 

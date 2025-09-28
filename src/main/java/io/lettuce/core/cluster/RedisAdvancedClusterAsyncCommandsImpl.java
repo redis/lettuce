@@ -725,7 +725,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
         return routeKeyless(() -> super.ftAggregate(index, query, args),
                 (nodeId, conn) -> conn.ftAggregate(index, query, args).thenApply(reply -> {
                     if (reply != null) {
@@ -736,47 +736,47 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftAggregate(K index, V query) {
+    public RedisFuture<AggregationReply<K, V>> ftAggregate(String index, V query) {
         return ftAggregate(index, query, null);
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+    public RedisFuture<SearchReply<K, V>> ftSearch(String index, V query, SearchArgs<K, V> args) {
         return routeKeyless(() -> super.ftSearch(index, query, args), (conn) -> conn.ftSearch(index, query, args),
                 CommandType.FT_SEARCH);
     }
 
     @Override
-    public RedisFuture<SearchReply<K, V>> ftSearch(K index, V query) {
+    public RedisFuture<SearchReply<K, V>> ftSearch(String index, V query) {
         return ftSearch(index, query, SearchArgs.<K, V> builder().build());
     }
 
     @Override
-    public RedisFuture<String> ftExplain(K index, V query) {
+    public RedisFuture<String> ftExplain(String index, V query) {
         return routeKeyless(() -> super.ftExplain(index, query), (conn) -> conn.ftExplain(index, query),
                 CommandType.FT_EXPLAIN);
     }
 
     @Override
-    public RedisFuture<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+    public RedisFuture<String> ftExplain(String index, V query, ExplainArgs<K, V> args) {
         return routeKeyless(() -> super.ftExplain(index, query, args), (conn) -> conn.ftExplain(index, query, args),
                 CommandType.FT_EXPLAIN);
     }
 
     @Override
-    public RedisFuture<List<V>> ftTagvals(K index, K fieldName) {
+    public RedisFuture<List<V>> ftTagvals(String index, K fieldName) {
         return routeKeyless(() -> super.ftTagvals(index, fieldName), (conn) -> conn.ftTagvals(index, fieldName),
                 CommandType.FT_TAGVALS);
     }
 
     @Override
-    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(String index, V query) {
         return routeKeyless(() -> super.ftSpellcheck(index, query), (conn) -> conn.ftSpellcheck(index, query),
                 CommandType.FT_SPELLCHECK);
     }
 
     @Override
-    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+    public RedisFuture<SpellCheckResult<V>> ftSpellcheck(String index, V query, SpellCheckArgs<K, V> args) {
         return routeKeyless(() -> super.ftSpellcheck(index, query, args), (conn) -> conn.ftSpellcheck(index, query, args),
                 CommandType.FT_SPELLCHECK);
     }
@@ -792,7 +792,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<V>> ftDictdump(K dict) {
+    public RedisFuture<List<V>> ftDictdump(String dict) {
         return routeKeyless(() -> super.ftDictdump(dict), (conn) -> conn.ftDictdump(dict), CommandType.FT_DICTDUMP);
     }
 
@@ -854,7 +854,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<Map<V, List<V>>> ftSyndump(K index) {
+    public RedisFuture<Map<V, List<V>>> ftSyndump(String index) {
         return routeKeyless(() -> super.ftSyndump(index), (conn) -> conn.ftSyndump(index), CommandType.FT_SYNDUMP);
     }
 
