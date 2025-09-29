@@ -1122,7 +1122,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see SearchReply
      * @see AggregateArgs
      * @see #ftAggregate(String, Object)
-     * @see #ftCursorread(Object, long)
+     * @see #ftCursorread(String, long)
      */
     @Experimental
     Mono<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args);
@@ -1145,7 +1145,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * <strong>Time complexity:</strong> O(1)
      * </p>
      *
-     * @param index the index name, as a key
+     * @param index the index name
      * @param cursorId the cursor id obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
      * @param count the number of results to read. This parameter overrides the {@code COUNT} specified in {@code FT.AGGREGATE}
      * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
@@ -1159,7 +1159,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count);
+    Mono<AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1179,7 +1179,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * <strong>Time complexity:</strong> O(1)
      * </p>
      *
-     * @param index the index name, as a key
+     * @param index the index name
      * @param cursorId the cursor id obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
      * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
      *         {@link SearchReply}
@@ -1192,7 +1192,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
-    Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId);
+    Mono<AggregationReply<K, V>> ftCursorread(String index, long cursorId);
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1210,8 +1210,8 @@ public interface RediSearchReactiveCommands<K, V> {
      * </p>
      *
      * <p>
-     * Once a cursor is deleted, any subsequent attempts to read from it using {@link #ftCursorread(Object, long)} or
-     * {@link #ftCursorread(Object, long, int)} will result in an error.
+     * Once a cursor is deleted, any subsequent attempts to read from it using {@link #ftCursorread(String, long)} or
+     * {@link #ftCursorread(String, long, int)} will result in an error.
      * </p>
      *
      * <p>
@@ -1227,10 +1227,10 @@ public interface RediSearchReactiveCommands<K, V> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
      * @see #ftAggregate(String, Object, AggregateArgs)
-     * @see #ftCursorread(Object, long)
-     * @see #ftCursorread(Object, long, int)
+     * @see #ftCursorread(String, long)
+     * @see #ftCursorread(String, long, int)
      */
     @Experimental
-    Mono<String> ftCursordel(K index, long cursorId);
+    Mono<String> ftCursordel(String index, long cursorId);
 
 }

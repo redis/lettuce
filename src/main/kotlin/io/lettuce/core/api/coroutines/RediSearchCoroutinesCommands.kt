@@ -1144,7 +1144,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * <strong>Time complexity:</strong> O(1)
      * </p>
      *
-     * @param index the index name, as a key
+     * @param index the index name
      * @param cursorId the cursor id obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
      * @param count the number of results to read. This parameter overrides the `COUNT` specified in `FT.AGGREGATE`
      * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
@@ -1158,14 +1158,14 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(String, Any, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: K, cursorId: Long, count: Int): AggregationReply<K, V>?
+    suspend fun ftCursorread(index: String, cursorId: Long, count: Int): AggregationReply<K, V>?
 
     /**
      * Read next results from an existing cursor using the default batch size.
      *
      * <p>
      * This command is used to read the next batch of results from a cursor created by
-     * [ftAggregate(Any, Any, AggregateArgs)] with the `WITHCURSOR` option. This variant uses the default
+     * [ftAggregate(String, Any, AggregateArgs)] with the `WITHCURSOR` option. This variant uses the default
      * batch size that was specified in the original `FT.AGGREGATE` command's `WITHCURSOR` clause.
      * </p>
      *
@@ -1178,7 +1178,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * <strong>Time complexity:</strong> O(1)
      * </p>
      *
-     * @param index the index name, as a key
+     * @param index the index name
      * @param cursorId the cursor id obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
      * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
      *         [SearchReply]
@@ -1191,7 +1191,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftAggregate(String, Any, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: K, cursorId: Long): AggregationReply<K, V>?
+    suspend fun ftCursorread(index: String, cursorId: Long): AggregationReply<K, V>?
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1209,8 +1209,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * </p>
      *
      * <p>
-     * Once a cursor is deleted, any subsequent attempts to read from it using [ftCursorread(Any, long)] or
-     * [ftCursorread(Any, long, Integer)] will result in an error.
+     * Once a cursor is deleted, any subsequent attempts to read from it using [ftCursorread(String, long)] or
+     * [ftCursorread(String, long, Integer)] will result in an error.
      * </p>
      *
      * <p>
@@ -1226,11 +1226,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
      * @see #ftAggregate(String, Any, AggregateArgs)
-     * @see #ftCursorread(Any, long)
-     * @see #ftCursorread(Any, long, Integer)
+     * @see #ftCursorread(String, long)
+     * @see #ftCursorread(String, long, Integer)
      */
     @Experimental
-    suspend fun ftCursordel(index: K, cursorId: Long): String?
+    suspend fun ftCursordel(index: String, cursorId: Long): String?
 
 }
 

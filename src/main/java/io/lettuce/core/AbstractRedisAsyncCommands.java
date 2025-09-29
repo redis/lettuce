@@ -1705,17 +1705,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count) {
         return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, count));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, long cursorId) {
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, long cursorId) {
         return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, -1));
     }
 
     @Override
-    public RedisFuture<String> ftCursordel(K index, long cursorId) {
+    public RedisFuture<String> ftCursordel(String index, long cursorId) {
         return dispatch(searchCommandBuilder.ftCursordel(index, cursorId));
     }
 

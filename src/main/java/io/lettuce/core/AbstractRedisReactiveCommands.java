@@ -1736,7 +1736,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftCursordel(K index, long cursorId) {
+    public Mono<String> ftCursordel(String index, long cursorId) {
         return createMono(() -> searchCommandBuilder.ftCursordel(index, cursorId));
     }
 
@@ -1771,12 +1771,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count) {
         return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, count));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId) {
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, long cursorId) {
         return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, -1));
     }
 

@@ -142,10 +142,10 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param count the number of results to read
      * @return the result of the cursor read command
      */
-    public Command<K, V, AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
-        notNullKey(index);
+    public Command<K, V, AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count) {
+        LettuceAssert.notNull(index, "Index must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).add(index);
         args.add(cursorId);
 
         if (count >= 0) {
@@ -163,10 +163,10 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param cursorId the cursor id
      * @return the result of the cursor delete command
      */
-    public Command<K, V, String> ftCursordel(K index, long cursorId) {
-        notNullKey(index);
+    public Command<K, V, String> ftCursordel(String index, long cursorId) {
+        LettuceAssert.notNull(index, "Index must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.DEL).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.DEL).add(index);
         args.add(cursorId);
 
         return createCommand(FT_CURSOR, new StatusOutput<>(codec), args);
