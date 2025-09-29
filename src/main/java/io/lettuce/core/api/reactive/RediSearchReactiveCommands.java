@@ -58,11 +58,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      * @see CreateArgs
      * @see FieldArgs
-     * @see #ftCreate(Object, CreateArgs, List)
-     * @see #ftDropindex(Object)
+     * @see #ftCreate(String, CreateArgs, List)
+     * @see #ftDropindex(String)
      */
     @Experimental
-    Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs);
+    Mono<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Create a new search index with the given name, custom configuration, and field definitions.
@@ -97,11 +97,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      * @see CreateArgs
      * @see FieldArgs
-     * @see #ftCreate(Object, List)
-     * @see #ftDropindex(Object)
+     * @see #ftCreate(String, List)
+     * @see #ftDropindex(String)
      */
     @Experimental
-    Mono<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs);
+    Mono<String> ftCreate(String index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Add an alias to a search index.
@@ -129,7 +129,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * <li>An index can have multiple aliases, but an alias can only point to one index</li>
      * <li>Aliases cannot reference other aliases (no alias chaining)</li>
      * <li>If the alias already exists, this command will fail with an error</li>
-     * <li>Use {@link #ftAliasupdate(Object, Object)} to reassign an existing alias</li>
+     * <li>Use {@link #ftAliasupdate(String, String)} to reassign an existing alias</li>
      * </ul>
      *
      * <p>
@@ -141,18 +141,18 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return {@code "OK"} if the alias was successfully created
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aliasadd/">FT.ALIASADD</a>
-     * @see #ftAliasupdate(Object, Object)
-     * @see #ftAliasdel(Object)
+     * @see #ftAliasupdate(String, String)
+     * @see #ftAliasdel(String)
      */
     @Experimental
-    Mono<String> ftAliasadd(K alias, K index);
+    Mono<String> ftAliasadd(String alias, String index);
 
     /**
      * Update an existing alias to point to a different search index.
      *
      * <p>
      * This command updates an existing alias to point to a different index, or creates the alias if it doesn't exist. Unlike
-     * {@link #ftAliasadd(Object, Object)}, this command will succeed even if the alias already exists, making it useful for
+     * {@link #ftAliasadd(String, String)}, this command will succeed even if the alias already exists, making it useful for
      * atomic alias updates during index migrations.
      * </p>
      *
@@ -185,11 +185,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return {@code "OK"} if the alias was successfully updated
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aliasupdate/">FT.ALIASUPDATE</a>
-     * @see #ftAliasadd(Object, Object)
-     * @see #ftAliasdel(Object)
+     * @see #ftAliasadd(String, String)
+     * @see #ftAliasdel(String)
      */
     @Experimental
-    Mono<String> ftAliasupdate(K alias, K index);
+    Mono<String> ftAliasupdate(String alias, String index);
 
     /**
      * Remove an alias from a search index.
@@ -216,7 +216,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * <li>Only the alias is removed - the target index is not affected</li>
      * <li>If the alias doesn't exist, this command will fail with an error</li>
      * <li>Applications using the alias will receive errors after deletion</li>
-     * <li>Consider using {@link #ftAliasupdate(Object, Object)} to redirect before deletion</li>
+     * <li>Consider using {@link #ftAliasupdate(String, String)} to redirect before deletion</li>
      * </ul>
      *
      * <p>
@@ -227,11 +227,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return {@code "OK"} if the alias was successfully removed
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aliasdel/">FT.ALIASDEL</a>
-     * @see #ftAliasadd(Object, Object)
-     * @see #ftAliasupdate(Object, Object)
+     * @see #ftAliasadd(String, String)
+     * @see #ftAliasupdate(String, String)
      */
     @Experimental
-    Mono<String> ftAliasdel(K alias);
+    Mono<String> ftAliasdel(String alias);
 
     /**
      * Add new attributes to an existing search index.
@@ -274,11 +274,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
      * @see FieldArgs
-     * @see #ftCreate(Object, List)
-     * @see #ftCreate(Object, CreateArgs, List)
+     * @see #ftCreate(String, List)
+     * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    Mono<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs);
+    Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Add new attributes to an existing search index.
@@ -309,11 +309,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
      * @see FieldArgs
-     * @see #ftCreate(Object, List)
-     * @see #ftCreate(Object, CreateArgs, List)
+     * @see #ftCreate(String, List)
+     * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    Mono<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs);
+    Mono<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Return a distinct set of values indexed in a Tag field.
@@ -365,11 +365,11 @@ public interface RediSearchReactiveCommands<K, V> {
      *         were indexed (lowercase, whitespace removed).
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
-     * @see #ftCreate(Object, List)
-     * @see #ftCreate(Object, CreateArgs, List)
+     * @see #ftCreate(String, List)
+     * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    Flux<V> ftTagvals(String index, K fieldName);
+    Flux<V> ftTagvals(String index, String fieldName);
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.
@@ -405,8 +405,8 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
      * @see #ftSpellcheck(String, Object, SpellCheckArgs)
-     * @see #ftDictadd(Object, Object[])
-     * @see #ftDictdel(Object, Object[])
+     * @see #ftDictadd(String, Object[])
+     * @see #ftDictdel(String, Object[])
      * @see #ftDictdump(String)
      */
     @Experimental
@@ -442,8 +442,8 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
      * @see #ftSpellcheck(String, Object)
-     * @see #ftDictadd(Object, Object[])
-     * @see #ftDictdel(Object, Object[])
+     * @see #ftDictadd(String, Object[])
+     * @see #ftDictdel(String, Object[])
      * @see #ftDictdump(String)
      */
     @Experimental
@@ -477,11 +477,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictadd/">FT.DICTADD</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftDictdel(Object, Object[])
+     * @see #ftDictdel(String, Object[])
      * @see #ftDictdump(String)
      */
     @Experimental
-    Mono<Long> ftDictadd(K dict, V... terms);
+    Mono<Long> ftDictadd(String dict, V... terms);
 
     /**
      * Delete terms from a dictionary.
@@ -500,11 +500,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return the number of terms that were deleted
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictdel/">FT.DICTDEL</a>
-     * @see #ftDictadd(Object, Object[])
+     * @see #ftDictadd(String, Object[])
      * @see #ftDictdump(String)
      */
     @Experimental
-    Mono<Long> ftDictdel(K dict, V... terms);
+    Mono<Long> ftDictdel(String dict, V... terms);
 
     /**
      * Dump all terms in a dictionary.
@@ -521,8 +521,8 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return a list of all terms in the dictionary
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictdump/">FT.DICTDUMP</a>
-     * @see #ftDictadd(Object, Object[])
-     * @see #ftDictdel(Object, Object[])
+     * @see #ftDictadd(String, Object[])
+     * @see #ftDictdel(String, Object[])
      */
     @Experimental
     Flux<V> ftDictdump(String dict);
@@ -621,8 +621,8 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return a list of index names
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft._list/">FT._LIST</a>
-     * @see #ftCreate(Object, CreateArgs, FieldArgs[])
-     * @see #ftDropindex(Object)
+     * @see #ftCreate(String, CreateArgs, FieldArgs[])
+     * @see #ftDropindex(String)
      */
     @Experimental
     Flux<V> ftList();
@@ -653,8 +653,8 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return a map where keys are synonym terms and values are lists of group IDs containing that synonym
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.syndump/">FT.SYNDUMP</a>
-     * @see #ftSynupdate(Object, Object, Object[])
-     * @see #ftSynupdate(Object, Object, SynUpdateArgs, Object[])
+     * @see #ftSynupdate(String, Object, Object[])
+     * @see #ftSynupdate(String, Object, SynUpdateArgs, Object[])
      */
     @Experimental
     Mono<Map<V, List<V>>> ftSyndump(String index);
@@ -687,11 +687,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return OK if executed correctly
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
-     * @see #ftSynupdate(Object, Object, SynUpdateArgs, Object[])
+     * @see #ftSynupdate(String, Object, SynUpdateArgs, Object[])
      * @see #ftSyndump(String)
      */
     @Experimental
-    Mono<String> ftSynupdate(K index, V synonymGroupId, V... terms);
+    Mono<String> ftSynupdate(String index, V synonymGroupId, V... terms);
 
     /**
      * Update a synonym group with additional terms and options.
@@ -719,11 +719,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return OK if executed correctly
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
-     * @see #ftSynupdate(Object, Object, Object[])
+     * @see #ftSynupdate(String, Object, Object[])
      * @see #ftSyndump(String)
      */
     @Experimental
-    Mono<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms);
+    Mono<String> ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms);
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary.
@@ -903,11 +903,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return {@code "OK"} if the index was successfully dropped
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
-     * @see #ftDropindex(Object, boolean)
-     * @see #ftCreate(Object, List)
+     * @see #ftDropindex(String, boolean)
+     * @see #ftCreate(String, List)
      */
     @Experimental
-    Mono<String> ftDropindex(K index);
+    Mono<String> ftDropindex(String index);
 
     /**
      * Drop a search index with optional document deletion.
@@ -919,7 +919,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * </p>
      *
      * <p>
-     * <strong>Asynchronous Behavior:</strong> If an index creation is still running ({@link #ftCreate(Object, List)} is running
+     * <strong>Asynchronous Behavior:</strong> If an index creation is still running ({@link #ftCreate(String, List)} is running
      * asynchronously), only the document hashes that have already been indexed are deleted. Documents that are queued for
      * indexing but not yet processed will remain in the database.
      * </p>
@@ -933,11 +933,11 @@ public interface RediSearchReactiveCommands<K, V> {
      * @return {@code "OK"} if the index was successfully dropped
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
-     * @see #ftDropindex(Object)
-     * @see #ftCreate(Object, List)
+     * @see #ftDropindex(String)
+     * @see #ftCreate(String, List)
      */
     @Experimental
-    Mono<String> ftDropindex(K index, boolean deleteDocuments);
+    Mono<String> ftDropindex(String index, boolean deleteDocuments);
 
     /**
      * Search the index with a textual query using default search options.

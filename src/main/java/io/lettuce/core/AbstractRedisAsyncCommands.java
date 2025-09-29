@@ -1550,37 +1550,37 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftCreate(K index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
         return dispatch(searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 
     @Override
-    public RedisFuture<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
         return dispatch(searchCommandBuilder.ftCreate(index, null, fieldArgs));
     }
 
     @Override
-    public RedisFuture<String> ftAliasadd(K alias, K index) {
+    public RedisFuture<String> ftAliasadd(String alias, String index) {
         return dispatch(searchCommandBuilder.ftAliasadd(alias, index));
     }
 
     @Override
-    public RedisFuture<String> ftAliasupdate(K alias, K index) {
+    public RedisFuture<String> ftAliasupdate(String alias, String index) {
         return dispatch(searchCommandBuilder.ftAliasupdate(alias, index));
     }
 
     @Override
-    public RedisFuture<String> ftAliasdel(K alias) {
+    public RedisFuture<String> ftAliasdel(String alias) {
         return dispatch(searchCommandBuilder.ftAliasdel(alias));
     }
 
     @Override
-    public RedisFuture<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return dispatch(searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }
 
     @Override
-    public RedisFuture<List<V>> ftTagvals(String index, K fieldName) {
+    public RedisFuture<List<V>> ftTagvals(String index, String fieldName) {
         return dispatch(searchCommandBuilder.ftTagvals(index, fieldName));
     }
 
@@ -1595,12 +1595,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Long> ftDictadd(K dict, V... terms) {
+    public RedisFuture<Long> ftDictadd(String dict, V... terms) {
         return dispatch(searchCommandBuilder.ftDictadd(dict, terms));
     }
 
     @Override
-    public RedisFuture<Long> ftDictdel(K dict, V... terms) {
+    public RedisFuture<Long> ftDictdel(String dict, V... terms) {
         return dispatch(searchCommandBuilder.ftDictdel(dict, terms));
     }
 
@@ -1630,12 +1630,12 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+    public RedisFuture<String> ftSynupdate(String index, V synonymGroupId, V... terms) {
         return dispatch(searchCommandBuilder.ftSynupdate(index, synonymGroupId, terms));
     }
 
     @Override
-    public RedisFuture<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+    public RedisFuture<String> ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
         return dispatch(searchCommandBuilder.ftSynupdate(index, synonymGroupId, args, terms));
     }
 
@@ -1670,17 +1670,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
         return dispatch(searchCommandBuilder.ftAlter(index, false, fieldArgs));
     }
 
     @Override
-    public RedisFuture<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+    public RedisFuture<String> ftDropindex(String index, boolean deleteDocumentKeys) {
         return dispatch(searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
     }
 
     @Override
-    public RedisFuture<String> ftDropindex(K index) {
+    public RedisFuture<String> ftDropindex(String index) {
         return dispatch(searchCommandBuilder.ftDropindex(index, false));
     }
 

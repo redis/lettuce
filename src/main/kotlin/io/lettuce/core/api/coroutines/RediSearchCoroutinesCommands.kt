@@ -8,7 +8,6 @@
 package io.lettuce.core.api.coroutines
 
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import io.lettuce.core.annotations.Experimental
 import io.lettuce.core.search.AggregationReply
 import io.lettuce.core.search.SearchReply
@@ -57,11 +56,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      * @see CreateArgs
      * @see FieldArgs
-     * @see #ftCreate(Any, CreateArgs, List)
-     * @see #ftDropindex(Any)
+     * @see #ftCreate(String, CreateArgs, List)
+     * @see #ftDropindex(String)
      */
     @Experimental
-    suspend fun ftCreate(index: K, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftCreate(index: String, fieldArgs: List<FieldArgs<K>>): String?
 
     /**
      * Create a new search index with the given name, custom configuration, and field definitions.
@@ -96,11 +95,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      * @see CreateArgs
      * @see FieldArgs
-     * @see #ftCreate(Any, List)
-     * @see #ftDropindex(Any)
+     * @see #ftCreate(String, List)
+     * @see #ftDropindex(String)
      */
     @Experimental
-    suspend fun ftCreate(index: K, arguments: CreateArgs<K, V>, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftCreate(index: String, arguments: CreateArgs<K, V>, fieldArgs: List<FieldArgs<K>>): String?
 
     /**
      * Add an alias to a search index.
@@ -128,7 +127,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * <li>An index can have multiple aliases, but an alias can only point to one index</li>
      * <li>Aliases cannot reference other aliases (no alias chaining)</li>
      * <li>If the alias already exists, this command will fail with an error</li>
-     * <li>Use [ftAliasupdate(Any, Any)] to reassign an existing alias</li>
+     * <li>Use [ftAliasupdate(String, String)] to reassign an existing alias</li>
      * </ul>
      *
      * <p>
@@ -140,18 +139,18 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return @code "OK"} if the alias was successfully created
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aliasadd/">FT.ALIASADD</a>
-     * @see #ftAliasupdate(Any, Any)
-     * @see #ftAliasdel(Any)
+     * @see #ftAliasupdate(String, String)
+     * @see #ftAliasdel(String)
      */
     @Experimental
-    suspend fun ftAliasadd(alias: K, index: K): String?
+    suspend fun ftAliasadd(alias: String, index: String): String?
 
     /**
      * Update an existing alias to point to a different search index.
      *
      * <p>
      * This command updates an existing alias to point to a different index, or creates the alias if it doesn't exist. Unlike
-     * [ftAliasadd(Any, Any)], this command will succeed even if the alias already exists, making it useful for
+     * [ftAliasadd(String, String)], this command will succeed even if the alias already exists, making it useful for
      * atomic alias updates during index migrations.
      * </p>
      *
@@ -184,11 +183,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return @code "OK"} if the alias was successfully updated
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aliasupdate/">FT.ALIASUPDATE</a>
-     * @see #ftAliasadd(Any, Any)
-     * @see #ftAliasdel(Any)
+     * @see #ftAliasadd(String, String)
+     * @see #ftAliasdel(String)
      */
     @Experimental
-    suspend fun ftAliasupdate(alias: K, index: K): String?
+    suspend fun ftAliasupdate(alias: String, index: String): String?
 
     /**
      * Remove an alias from a search index.
@@ -215,7 +214,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * <li>Only the alias is removed - the target index is not affected</li>
      * <li>If the alias doesn't exist, this command will fail with an error</li>
      * <li>Applications using the alias will receive errors after deletion</li>
-     * <li>Consider using [ftAliasupdate(Any, Any)] to redirect before deletion</li>
+     * <li>Consider using [ftAliasupdate(String, String)] to redirect before deletion</li>
      * </ul>
      *
      * <p>
@@ -226,11 +225,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return @code "OK"} if the alias was successfully removed
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aliasdel/">FT.ALIASDEL</a>
-     * @see #ftAliasadd(Any, Any)
-     * @see #ftAliasupdate(Any, Any)
+     * @see #ftAliasadd(String, String)
+     * @see #ftAliasupdate(String, String)
      */
     @Experimental
-    suspend fun ftAliasdel(alias: K): String?
+    suspend fun ftAliasdel(alias: String): String?
 
     /**
      * Add new attributes to an existing search index.
@@ -273,11 +272,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
      * @see FieldArgs
-     * @see #ftCreate(Any, List)
-     * @see #ftCreate(Any, CreateArgs, List)
+     * @see #ftCreate(String, List)
+     * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    suspend fun ftAlter(index: K, skipInitialScan: Boolean, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftAlter(index: String, skipInitialScan: Boolean, fieldArgs: List<FieldArgs<K>>): String?
 
     /**
      * Add new attributes to an existing search index.
@@ -308,11 +307,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
      * @see FieldArgs
-     * @see #ftCreate(Any, List)
-     * @see #ftCreate(Any, CreateArgs, List)
+     * @see #ftCreate(String, List)
+     * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    suspend fun ftAlter(index: K, fieldArgs: List<FieldArgs<K>>): String?
+    suspend fun ftAlter(index: String, fieldArgs: List<FieldArgs<K>>): String?
 
     /**
      * Return a distinct set of values indexed in a Tag field.
@@ -364,11 +363,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      *         were indexed (lowercase, whitespace removed).
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
-     * @see #ftCreate(Any, List)
-     * @see #ftCreate(Any, CreateArgs, List)
+     * @see #ftCreate(String, List)
+     * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    suspend fun ftTagvals(index: String, fieldName: K): List<V>
+    suspend fun ftTagvals(index: String, fieldName: String): List<V>
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.
@@ -404,8 +403,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
      * @see #ftSpellcheck(String, Any, SpellCheckArgs)
-     * @see #ftDictadd(Any, Any[])
-     * @see #ftDictdel(Any, Any[])
+     * @see #ftDictadd(String, Any[])
+     * @see #ftDictdel(String, Any[])
      * @see #ftDictdump(String)
      */
     @Experimental
@@ -441,8 +440,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
      * @see #ftSpellcheck(String, Any)
-     * @see #ftDictadd(Any, Any[])
-     * @see #ftDictdel(Any, Any[])
+     * @see #ftDictadd(String, Any[])
+     * @see #ftDictdel(String, Any[])
      * @see #ftDictdump(String)
      */
     @Experimental
@@ -476,11 +475,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictadd/">FT.DICTADD</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftDictdel(Any, Any[])
+     * @see #ftDictdel(String, Any[])
      * @see #ftDictdump(String)
      */
     @Experimental
-    suspend fun ftDictadd(dict: K, vararg terms: V): Long?
+    suspend fun ftDictadd(dict: String, vararg terms: V): Long?
 
     /**
      * Delete terms from a dictionary.
@@ -499,11 +498,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return the number of terms that were deleted
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictdel/">FT.DICTDEL</a>
-     * @see #ftDictadd(Any, Any[])
+     * @see #ftDictadd(String, Any[])
      * @see #ftDictdump(String)
      */
     @Experimental
-    suspend fun ftDictdel(dict: K, vararg terms: V): Long?
+    suspend fun ftDictdel(dict: String, vararg terms: V): Long?
 
     /**
      * Dump all terms in a dictionary.
@@ -520,8 +519,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return a list of all terms in the dictionary
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictdump/">FT.DICTDUMP</a>
-     * @see #ftDictadd(Any, Any[])
-     * @see #ftDictdel(Any, Any[])
+     * @see #ftDictadd(String, Any[])
+     * @see #ftDictdel(String, Any[])
      */
     @Experimental
     suspend fun ftDictdump(dict: String): List<V>
@@ -620,8 +619,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return a list of index names
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft._list/">FT._LIST</a>
-     * @see #ftCreate(Any, CreateArgs, FieldArgs[])
-     * @see #ftDropindex(Any)
+     * @see #ftCreate(String, CreateArgs, FieldArgs[])
+     * @see #ftDropindex(String)
      */
     @Experimental
     suspend fun ftList(): List<V>
@@ -652,8 +651,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return a map where keys are synonym terms and values are lists of group IDs containing that synonym
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.syndump/">FT.SYNDUMP</a>
-     * @see #ftSynupdate(Any, Any, Any[])
-     * @see #ftSynupdate(Any, Any, SynUpdateArgs, Any[])
+     * @see #ftSynupdate(String, Any, Any[])
+     * @see #ftSynupdate(String, Any, SynUpdateArgs, Any[])
      */
     @Experimental
     suspend fun ftSyndump(index: String): Map<V, List<V>>?
@@ -686,11 +685,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return OK if executed correctly
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
-     * @see #ftSynupdate(Any, Any, SynUpdateArgs, Any[])
+     * @see #ftSynupdate(String, Any, SynUpdateArgs, Any[])
      * @see #ftSyndump(String)
      */
     @Experimental
-    suspend fun ftSynupdate(index: K, synonymGroupId: V, vararg terms: V): String?
+    suspend fun ftSynupdate(index: String, synonymGroupId: V, vararg terms: V): String?
 
     /**
      * Update a synonym group with additional terms and options.
@@ -718,11 +717,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return OK if executed correctly
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
-     * @see #ftSynupdate(Any, Any, Any[])
+     * @see #ftSynupdate(String, Any, Any[])
      * @see #ftSyndump(String)
      */
     @Experimental
-    suspend fun ftSynupdate(index: K, synonymGroupId: V, args: SynUpdateArgs<K, V>, vararg terms: V): String?
+    suspend fun ftSynupdate(index: String, synonymGroupId: V, args: SynUpdateArgs<K, V>, vararg terms: V): String?
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary.
@@ -902,11 +901,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return @code "OK"} if the index was successfully dropped
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
-     * @see #ftDropindex(Any, boolean)
-     * @see #ftCreate(Any, List)
+     * @see #ftDropindex(String, boolean)
+     * @see #ftCreate(String, List)
      */
     @Experimental
-    suspend fun ftDropindex(index: K): String?
+    suspend fun ftDropindex(index: String): String?
 
     /**
      * Drop a search index with optional document deletion.
@@ -918,7 +917,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * </p>
      *
      * <p>
-     * <strong>Asynchronous Behavior:</strong> If an index creation is still running ([ftCreate(Any, List)] is running
+     * <strong>Asynchronous Behavior:</strong> If an index creation is still running ([ftCreate(String, List)] is running
      * asynchronously), only the document hashes that have already been indexed are deleted. Documents that are queued for
      * indexing but not yet processed will remain in the database.
      * </p>
@@ -932,11 +931,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @return @code "OK"} if the index was successfully dropped
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
-     * @see #ftDropindex(Any)
-     * @see #ftCreate(Any, List)
+     * @see #ftDropindex(String)
+     * @see #ftCreate(String, List)
      */
     @Experimental
-    suspend fun ftDropindex(index: K, deleteDocuments: Boolean): String?
+    suspend fun ftDropindex(index: String, deleteDocuments: Boolean): String?
 
     /**
      * Search the index with a textual query using default search options.
@@ -1121,7 +1120,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see SearchReply
      * @see AggregateArgs
      * @see #ftAggregate(String, Any)
-     * @see #ftCursorread(Any, long)
+     * @see #ftCursorread(String, long)
      */
     @Experimental
     suspend fun ftAggregate(index: String, query: V, args: AggregateArgs<K, V>): AggregationReply<K, V>?

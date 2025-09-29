@@ -1611,37 +1611,37 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftCreate(K index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftCreate(String index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 
     @Override
-    public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, null, fieldArgs));
     }
 
     @Override
-    public Mono<String> ftAliasadd(K alias, K index) {
+    public Mono<String> ftAliasadd(String alias, String index) {
         return createMono(() -> searchCommandBuilder.ftAliasadd(alias, index));
     }
 
     @Override
-    public Mono<String> ftAliasupdate(K alias, K index) {
+    public Mono<String> ftAliasupdate(String alias, String index) {
         return createMono(() -> searchCommandBuilder.ftAliasupdate(alias, index));
     }
 
     @Override
-    public Mono<String> ftAliasdel(K alias) {
+    public Mono<String> ftAliasdel(String alias) {
         return createMono(() -> searchCommandBuilder.ftAliasdel(alias));
     }
 
     @Override
-    public Mono<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }
 
     @Override
-    public Flux<V> ftTagvals(String index, K fieldName) {
+    public Flux<V> ftTagvals(String index, String fieldName) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftTagvals(index, fieldName));
     }
 
@@ -1656,12 +1656,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Long> ftDictadd(K dict, V... terms) {
+    public Mono<Long> ftDictadd(String dict, V... terms) {
         return createMono(() -> searchCommandBuilder.ftDictadd(dict, terms));
     }
 
     @Override
-    public Mono<Long> ftDictdel(K dict, V... terms) {
+    public Mono<Long> ftDictdel(String dict, V... terms) {
         return createMono(() -> searchCommandBuilder.ftDictdel(dict, terms));
     }
 
@@ -1691,12 +1691,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+    public Mono<String> ftSynupdate(String index, V synonymGroupId, V... terms) {
         return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, terms));
     }
 
     @Override
-    public Mono<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+    public Mono<String> ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
         return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, args, terms));
     }
 
@@ -1731,7 +1731,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, false, fieldArgs));
     }
 
@@ -1741,12 +1741,12 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+    public Mono<String> ftDropindex(String index, boolean deleteDocumentKeys) {
         return createMono(() -> searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
     }
 
     @Override
-    public Mono<String> ftDropindex(K index) {
+    public Mono<String> ftDropindex(String index) {
         return createMono(() -> searchCommandBuilder.ftDropindex(index, false));
     }
 
