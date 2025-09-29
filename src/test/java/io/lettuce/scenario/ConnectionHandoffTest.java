@@ -29,8 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.MaintenanceEventsOptions;
-import io.lettuce.core.MaintenanceEventsOptions.AddressType;
+import io.lettuce.core.MaintNotificationsConfig;
+import io.lettuce.core.MaintNotificationsConfig.EndpointType;
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
@@ -87,7 +87,7 @@ public class ConnectionHandoffTest {
 
     // Push notification patterns for MOVING messages with different address types
     // Handles both IP:PORT and FQDN formats, with both \n and \r\n line endings
-    // Also handles empty address for AddressType.NONE
+    // Also handles empty address for EndpointType.NONE
     private static final Pattern MOVING_PATTERN = Pattern
             .compile(">\\d+\\r?\\nMOVING\\r?\\n:([^\\r\\n]+)\\r?\\n:(\\d+)\\r?\\n([^\\r\\n]*)\\s*");
 
@@ -146,15 +146,15 @@ public class ConnectionHandoffTest {
 
         final String bdbId;
 
-        final AddressType expectedAddressType;
+        final EndpointType expectedEndpointType;
 
         HandoffTestContext(RedisClient client, StatefulRedisConnection<String, String> connection, HandoffCapture capture,
-                String bdbId, AddressType expectedAddressType) {
+                String bdbId, EndpointType expectedEndpointType) {
             this.client = client;
             this.connection = connection;
             this.capture = capture;
             this.bdbId = bdbId;
-            this.expectedAddressType = expectedAddressType;
+            this.expectedEndpointType = expectedEndpointType;
         }
 
     }
@@ -359,7 +359,7 @@ public class ConnectionHandoffTest {
 
     }
 
-    private HandoffTestContext setupHandoffTest(AddressType addressType) {
+    private HandoffTestContext setupHandoffTest(EndpointType addressType) {
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
                 .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
 
@@ -367,7 +367,7 @@ public class ConnectionHandoffTest {
 
         // Configure client for RESP3 to receive push notifications with specific address type
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(addressType)).build();
+                .maintNotificationsConfig(MaintNotificationsConfig.enabled(addressType)).build();
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
@@ -387,10 +387,10 @@ public class ConnectionHandoffTest {
     /**
      * Validates the address format in MOVING notification matches expected type
      */
-    private void validateAddressType(String address, AddressType expectedType, String testDescription) {
+    private void validateEndpointType(String address, EndpointType expectedType, String testDescription) {
         log.info("Validating address '{}' for type {} in {}", address, expectedType, testDescription);
         // Handle NONE expected type (endpoint type 'none') - should receive null address by design
-        if (expectedType == AddressType.NONE) {
+        if (expectedType == EndpointType.NONE) {
             assertThat(address).as("Address should be null with endpoint type 'none' by design").isNull();
             log.info("✓ Address is null with NONE expected type (endpoint type 'none') - this is correct by design");
             return;
@@ -444,7 +444,7 @@ public class ConnectionHandoffTest {
         String policy = "single";
 
         log.info("=== {} ===", testDescription);
-        log.info("Expected address type: {}", context.expectedAddressType);
+        log.info("Expected address type: {}", context.expectedEndpointType);
         log.info("Starting migrate + moving operation with endpoint-aware node selection...");
 
         // Trigger the migrate + moving operation using endpoint-aware node selection
@@ -493,7 +493,7 @@ public class ConnectionHandoffTest {
             assertThat(Integer.parseInt(port)).isGreaterThan(0);
 
             // Validate the address type matches what we requested
-            validateAddressType(newAddress, context.expectedAddressType, testDescription);
+            validateEndpointType(newAddress, context.expectedEndpointType, testDescription);
 
         } else {
             log.error("MOVING notification format not recognized: {}", movingNotification);
@@ -512,9 +512,9 @@ public class ConnectionHandoffTest {
         try {
             log.info("=== Reconnection Verification for {} ===", testDescription);
 
-            // For AddressType.NONE, we expect to reconnect to the original endpoint, not a new one
+            // For EndpointType.NONE, we expect to reconnect to the original endpoint, not a new one
             String expectedEndpoint;
-            if (context.expectedAddressType == AddressType.NONE) {
+            if (context.expectedEndpointType == EndpointType.NONE) {
                 // For NONE, the client should reconnect to the original endpoint
                 String originalUri = mStandard.getEndpoints().get(0); // Original endpoint URI
                 // Extract host:port from redis://host:port format
@@ -766,7 +766,7 @@ public class ConnectionHandoffTest {
 
                 RedisClient client = RedisClient.create(secondUri);
                 ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                        .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
+                        .maintNotificationsConfig(MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)).build();
                 client.setOptions(options);
 
                 StatefulRedisConnection<String, String> connection = client.connect();
@@ -916,7 +916,7 @@ public class ConnectionHandoffTest {
     @DisplayName("Connection handed off to new endpoint with External IP")
     public void connectionHandedOffToNewEndpointExternalIPTest() throws InterruptedException {
         log.info("test connectionHandedOffToNewEndpointExternalIPTest started");
-        HandoffTestContext context = setupHandoffTest(AddressType.EXTERNAL_IP);
+        HandoffTestContext context = setupHandoffTest(EndpointType.EXTERNAL_IP);
 
         performHandoffOperation(context, "External IP Handoff Test");
         reconnectionVerification(context, "External IP Handoff Test");
@@ -931,7 +931,7 @@ public class ConnectionHandoffTest {
     @DisplayName("Traffic resumes correctly after MOVING with async GET/SET operations")
     public void trafficResumesAfterMovingTest() throws InterruptedException {
         log.info("test trafficResumesAfterMovingTest started");
-        HandoffTestContext context = setupHandoffTest(AddressType.EXTERNAL_IP);
+        HandoffTestContext context = setupHandoffTest(EndpointType.EXTERNAL_IP);
 
         // Create async commands and traffic generator
         RedisAsyncCommands<String, String> asyncCommands = context.connection.async();
@@ -998,7 +998,7 @@ public class ConnectionHandoffTest {
     @DisplayName("Connection handoff with FQDN External Name")
     public void connectionHandoffWithFQDNExternalNameTest() throws InterruptedException {
         log.info("test connectionHandoffWithFQDNExternalNameTest started");
-        HandoffTestContext context = setupHandoffTest(AddressType.EXTERNAL_FQDN);
+        HandoffTestContext context = setupHandoffTest(EndpointType.EXTERNAL_FQDN);
 
         performHandoffOperation(context, "External FQDN Handoff Test");
         reconnectionVerification(context, "External FQDN Handoff Test");
@@ -1022,7 +1022,7 @@ public class ConnectionHandoffTest {
 
         // Configure client for RESP3 to receive push notifications with maintenance events enabled
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
+                .maintNotificationsConfig(MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)).build();
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
@@ -1108,7 +1108,7 @@ public class ConnectionHandoffTest {
 
         // Configure client for RESP3 but with maintenance events DISABLED
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.disabled()).build();
+                .maintNotificationsConfig(MaintNotificationsConfig.disabled()).build();
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
@@ -1188,10 +1188,10 @@ public class ConnectionHandoffTest {
         RedisClient client = RedisClient.create(uri);
 
         // Configure client with maintenance events enabled and explicit NONE address type
-        MaintenanceEventsOptions customOptions = MaintenanceEventsOptions.enabled(AddressType.NONE);
+        MaintNotificationsConfig customOptions = MaintNotificationsConfig.enabled(EndpointType.NONE);
 
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(customOptions).build();
+                .maintNotificationsConfig(customOptions).build();
         client.setOptions(options);
 
         StatefulRedisConnection<String, String> connection = client.connect();
@@ -1205,7 +1205,7 @@ public class ConnectionHandoffTest {
         String bdbId = String.valueOf(mStandard.getBdbId());
 
         // Create test context with NONE expected address type to test none handling
-        currentTestContext = new HandoffTestContext(client, connection, capture, bdbId, AddressType.NONE);
+        currentTestContext = new HandoffTestContext(client, connection, capture, bdbId, EndpointType.NONE);
 
         log.info("=== Testing endpoint type 'none' behavior ===");
 
@@ -1214,7 +1214,7 @@ public class ConnectionHandoffTest {
         String endpointId = clusterConfig.getFirstEndpointId();
         String policy = "single";
 
-        log.info("Expected address type: {} (none)", AddressType.NONE);
+        log.info("Expected address type: {} (none)", EndpointType.NONE);
         log.info("Starting migrate + moving operation...");
 
         // Trigger the migrate + moving operation
@@ -1231,7 +1231,7 @@ public class ConnectionHandoffTest {
         boolean movingReceived = capture.waitForMovingNotification(NOTIFICATION_WAIT_TIMEOUT);
         assertThat(movingReceived).as("Should receive MOVING notification").isTrue();
 
-        // Validate the MOVING notification - this will test null handling in validateAddressType
+        // Validate the MOVING notification - this will test null handling in validateEndpointType
         String movingNotification = capture.getLastMovingNotification();
         assertThat(movingNotification).as("MOVING notification should not be null").isNotNull();
 
@@ -1273,7 +1273,7 @@ public class ConnectionHandoffTest {
             assertThat(Integer.parseInt(ttl)).isGreaterThanOrEqualTo(0);
 
             // Validate the address type matches what we requested (null handling test)
-            validateAddressType(newAddress, AddressType.NONE, "Client handshake with endpoint type none test");
+            validateEndpointType(newAddress, EndpointType.NONE, "Client handshake with endpoint type none test");
 
         } else {
             log.error("MOVING notification format not recognized: {}", movingNotification);
@@ -1305,7 +1305,7 @@ public class ConnectionHandoffTest {
 
         RedisClient firstClient = RedisClient.create(uri);
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
+                .maintNotificationsConfig(MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)).build();
         firstClient.setOptions(options);
 
         StatefulRedisConnection<String, String> firstConnection = firstClient.connect();
@@ -1322,7 +1322,7 @@ public class ConnectionHandoffTest {
         try {
             // Trigger maintenance operation
             performHandoffOperation(
-                    new HandoffTestContext(firstClient, firstConnection, firstCapture, bdbId, AddressType.EXTERNAL_IP),
+                    new HandoffTestContext(firstClient, firstConnection, firstCapture, bdbId, EndpointType.EXTERNAL_IP),
                     "Dual Connection External IP Handoff Test");
 
             // Wait for second connection to be created (on MIGRATED) and then receive its MOVING notification
@@ -1340,12 +1340,12 @@ public class ConnectionHandoffTest {
 
             // Perform reconnection verification on both connections
             reconnectionVerification(new HandoffTestContext(firstClient, firstConnection, dualCapture.getFirstCapture(), bdbId,
-                    AddressType.EXTERNAL_IP), "First Connection - Dual Connection External IP Handoff Test");
+                    EndpointType.EXTERNAL_IP), "First Connection - Dual Connection External IP Handoff Test");
 
             if (dualCapture.getSecondConnection() != null) {
                 reconnectionVerification(
                         new HandoffTestContext(dualCapture.getSecondClient(), dualCapture.getSecondConnection(),
-                                dualCapture.getSecondCapture(), bdbId, AddressType.EXTERNAL_IP),
+                                dualCapture.getSecondCapture(), bdbId, EndpointType.EXTERNAL_IP),
                         "Second Connection - Dual Connection External IP Handoff Test");
             }
 
@@ -1388,7 +1388,7 @@ public class ConnectionHandoffTest {
 
         // Configure for RESP3 with maintenance events to trigger connection handoff
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
+                .maintNotificationsConfig(MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)).build();
         client.setOptions(options);
 
         // Setup EventBus monitoring BEFORE creating connection
@@ -1740,7 +1740,7 @@ public class ConnectionHandoffTest {
 
         // Configure for RESP3 with maintenance events to trigger connection handoff
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .supportMaintenanceEvents(MaintenanceEventsOptions.enabled(AddressType.EXTERNAL_IP)).build();
+                .maintNotificationsConfig(MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)).build();
         client.setOptions(options);
 
         // Setup EventBus monitoring BEFORE creating connection

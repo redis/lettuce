@@ -1179,4 +1179,5 @@ public class RedisEnterpriseConfig {
             log.warn("Failed to restore original cluster state: {}", e.getMessage());
         }
     }
+
 }
