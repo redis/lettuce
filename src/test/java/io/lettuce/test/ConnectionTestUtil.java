@@ -1,20 +1,15 @@
 package io.lettuce.test;
 
-import java.lang.reflect.UndeclaredThrowableException;
 import java.util.Queue;
 
 import io.lettuce.test.ReflectionTestUtils;
 
 import io.lettuce.core.RedisChannelHandler;
 import io.lettuce.core.RedisChannelWriter;
-import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.DefaultEndpoint;
-import io.lettuce.test.settings.TestSettings;
 import io.netty.channel.Channel;
 
 /**
@@ -24,7 +19,8 @@ import io.netty.channel.Channel;
 public class ConnectionTestUtil {
 
     /**
-     * Extract the {@link Channel} from a {@link StatefulConnection}.
+     * Extract the {@link Channel} from a {@link StatefulConnection}. Handles MaintenanceAwareExpiryWriter delegation
+     * automatically.
      *
      * @param connection the connection
      * @return the {@link Channel}
@@ -32,7 +28,17 @@ public class ConnectionTestUtil {
     public static Channel getChannel(StatefulConnection<?, ?> connection) {
 
         RedisChannelHandler<?, ?> channelHandler = (RedisChannelHandler<?, ?>) connection;
-        return (Channel) ReflectionTestUtils.getField(channelHandler.getChannelWriter(), "channel");
+        RedisChannelWriter writer = channelHandler.getChannelWriter();
+
+        // Handle MaintenanceAwareExpiryWriter which wraps the real channel writer
+        if (writer.getClass().getSimpleName().equals("MaintenanceAwareExpiryWriter")) {
+            // Get the delegate field from MaintenanceAwareExpiryWriter
+            RedisChannelWriter delegate = ReflectionTestUtils.getField(writer, "delegate");
+            return (Channel) ReflectionTestUtils.getField(delegate, "channel");
+        } else {
+            // Use the standard approach for regular writers
+            return (Channel) ReflectionTestUtils.getField(writer, "channel");
+        }
     }
 
     /**

@@ -25,21 +25,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.MaintNotificationsConfig;
 import io.lettuce.core.MaintNotificationsConfig.EndpointType;
-import io.lettuce.core.RedisChannelHandler;
-import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.KeyValue;
-import io.lettuce.core.protocol.MaintenanceAwareExpiryWriter;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.test.ConnectionTestUtil;
 import io.lettuce.test.env.Endpoints;
@@ -50,32 +50,14 @@ import reactor.test.StepVerifier;
 
 import static io.lettuce.TestTags.SCENARIO_TEST;
 
-/**
- * Connection handoff tests for Redis Enterprise maintenance events. Validates that connections properly receive the correct
- * endpoint address types (internal IP, external IP, internal FQDN, external FQDN) during MOVING notifications and handle
- * reconnection appropriately.
- */
 @Tag(SCENARIO_TEST)
 public class ConnectionHandoffTest {
 
     private static final Logger log = LoggerFactory.getLogger(ConnectionHandoffTest.class);
 
-    // 180 seconds - for waiting for notifications
     private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofMinutes(3);
 
-    // 300 seconds - for migrations/failovers
     private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5);
-
-    // 300 seconds - for monitoring operations (extended to allow for longer maintenance operations)
-    private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(5);
-
-    // 10 seconds - for ping operations
-    private static final Duration PING_TIMEOUT = Duration.ofSeconds(10);
-
-    // Timeout constants for command execution
-    private static final Duration NORMAL_COMMAND_TIMEOUT = Duration.ofMillis(30);
-
-    private static final Duration RELAXED_TIMEOUT_ADDITION = Duration.ofMillis(100);
 
     private static Endpoint mStandard;
 
@@ -114,9 +96,6 @@ public class ConnectionHandoffTest {
     private static final Pattern FAILED_OVER_NOTIFICATION_PATTERN = Pattern
             .compile(">3\\r\\nFAILED_OVER\\r\\n:(\\d+)\\r\\n:(.+)\\r\\n");
 
-    /**
-     * Enum representing the different types of maintenance notifications
-     */
     public enum NotificationType {
 
         MOVING(MOVING_NOTIFICATION_PATTERN, "MOVING", 4), MIGRATING(MIGRATING_NOTIFICATION_PATTERN, "MIGRATING", 3), MIGRATED(
@@ -149,13 +128,6 @@ public class ConnectionHandoffTest {
 
     }
 
-    /**
-     * Common function to validate and parse maintenance notifications
-     * 
-     * @param notification The raw notification string
-     * @param expectedType The expected notification type
-     * @return ParsedNotification object with extracted values
-     */
     public static class ParsedNotification {
 
         private final String sequenceNumber;
@@ -206,14 +178,6 @@ public class ConnectionHandoffTest {
 
     }
 
-    /**
-     * Validates and parses a maintenance notification against the expected type
-     * 
-     * @param notification The notification string to validate
-     * @param expectedType The expected notification type
-     * @return ParsedNotification with extracted values
-     * @throws AssertionError if validation fails
-     */
     public static ParsedNotification validateAndParseNotification(String notification, NotificationType expectedType) {
         assertThat(notification).as("Notification should not be null").isNotNull();
         assertThat(notification).as("Notification should contain " + expectedType.getNotificationName())
@@ -308,7 +272,6 @@ public class ConnectionHandoffTest {
     public void cleanupConfigAfterTest() {
         log.info("Restoring cluster state after test");
         try {
-            // Refresh cluster config which will restore the original state
             RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
             log.info("Cluster state restored successfully");
         } catch (Exception e) {
@@ -329,9 +292,6 @@ public class ConnectionHandoffTest {
         }
     }
 
-    /**
-     * Test context holding common objects used across all handoff tests
-     */
     private static class HandoffTestContext {
 
         final RedisClient client;
@@ -355,9 +315,6 @@ public class ConnectionHandoffTest {
 
     }
 
-    /**
-     * Helper class to capture and validate handoff notifications with address type validation
-     */
     public static class HandoffCapture implements MaintenanceNotificationCapture {
 
         private final List<String> receivedNotifications = new CopyOnWriteArrayList<>();
@@ -429,9 +386,6 @@ public class ConnectionHandoffTest {
 
     }
 
-    /**
-     * Continuous traffic generator for async GET/SET operations with failure counting
-     */
     public static class ContinuousTrafficGenerator {
 
         private final RedisAsyncCommands<String, String> asyncCommands;
@@ -452,9 +406,6 @@ public class ConnectionHandoffTest {
             this.asyncCommands = asyncCommands;
         }
 
-        /**
-         * Start continuous traffic with async GET/SET commands in 50:50 ratio
-         */
         public void startTraffic() {
             if (!trafficStarted.compareAndSet(false, true)) {
                 log.info("Traffic already started, skipping...");
@@ -470,20 +421,15 @@ public class ConnectionHandoffTest {
                         int cmdNumber = commandCounter.incrementAndGet();
                         String key = "traffic-key-" + (cmdNumber % 100); // Rotate through 100 keys
 
-                        // 50:50 ratio between GET and SET operations
                         if (cmdNumber % 2 == 0) {
-                            // SET operation
                             String value = "value-" + cmdNumber;
                             RedisFuture<String> future = asyncCommands.set(key, value);
                             handleAsyncResult(future, "SET " + key);
                         } else {
-                            // GET operation
                             RedisFuture<String> future = asyncCommands.get(key);
                             handleAsyncResult(future, "GET " + key);
                         }
 
-                        // Small delay to prevent overwhelming the connection
-                        await().pollDelay(Duration.ofMillis(10)).atMost(Duration.ofMillis(50)).until(() -> true);
                     } catch (Exception e) {
                         log.warn("Traffic generation error: {}", e.getMessage());
                         failedOperations.incrementAndGet();
@@ -496,9 +442,6 @@ public class ConnectionHandoffTest {
             log.info("Continuous async traffic started");
         }
 
-        /**
-         * Handle async command results and count successes/failures
-         */
         private void handleAsyncResult(RedisFuture<?> future, String operation) {
             future.whenComplete((result, throwable) -> {
                 if (throwable != null) {
@@ -511,9 +454,6 @@ public class ConnectionHandoffTest {
             });
         }
 
-        /**
-         * Stop traffic generation
-         */
         public void stopTraffic() {
             if (!trafficStarted.get()) {
                 log.info("Traffic not started, nothing to stop");
@@ -523,7 +463,6 @@ public class ConnectionHandoffTest {
             log.info("Stopping continuous traffic...");
             stopTraffic.set(true);
 
-            // Wait for all traffic futures to complete
             for (CompletableFuture<Void> future : trafficFutures) {
                 try {
                     future.get(Duration.ofSeconds(10).toMillis(), TimeUnit.MILLISECONDS);
@@ -561,7 +500,6 @@ public class ConnectionHandoffTest {
 
         RedisClient client = RedisClient.create(uri);
 
-        // Configure client for RESP3 to receive push notifications with specific address type
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
                 .maintNotificationsConfig(MaintNotificationsConfig.enabled(addressType)).build();
         client.setOptions(options);
@@ -570,7 +508,6 @@ public class ConnectionHandoffTest {
 
         HandoffCapture capture = new HandoffCapture();
 
-        // Setup push notification monitoring using the utility
         MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         String bdbId = String.valueOf(mStandard.getBdbId());
@@ -579,19 +516,14 @@ public class ConnectionHandoffTest {
         return currentTestContext;
     }
 
-    /**
-     * Validates the address format in MOVING notification matches expected type
-     */
     private void validateEndpointType(String address, EndpointType expectedType, String testDescription) {
         log.info("Validating address '{}' for type {} in {}", address, expectedType, testDescription);
-        // Handle NONE expected type (endpoint type 'none') - should receive null address by design
         if (expectedType == EndpointType.NONE) {
             assertThat(address).as("Address should be null with endpoint type 'none' by design").isNull();
             log.info("✓ Address is null with NONE expected type (endpoint type 'none') - this is correct by design");
             return;
         }
 
-        // Handle null expected type (legacy null case) - should receive a valid address, not null
         if (expectedType == null) {
             assertThat(address).as("Address should not be null even with null expected type").isNotNull();
             assertThat(address).as("Address should not be empty with null expected type").isNotEmpty();
@@ -599,7 +531,6 @@ public class ConnectionHandoffTest {
             return;
         }
 
-        // Handle null address case with non-null expected type (this should not happen)
         if (address == null) {
             assertThat(false).as("Address should not be null for expected type " + expectedType).isTrue();
             return;
@@ -621,20 +552,12 @@ public class ConnectionHandoffTest {
                 log.info("✓ Address '{}' is valid FQDN format for {}", address, expectedType);
                 break;
 
-            case NONE:
-                // This should not be reached as NONE is handled above
-                throw new IllegalStateException("NONE address type should be handled before switch statement");
-
             default:
                 throw new IllegalArgumentException("Unknown address type: " + expectedType);
         }
     }
 
-    /**
-     * Performs the migrate + moving operation and validates notifications
-     */
     private void performHandoffOperation(HandoffTestContext context, String testDescription) throws InterruptedException {
-        // Get cluster configuration for the operation
         String endpointId = clusterConfig.getFirstEndpointId();
         String policy = "single";
 
@@ -642,25 +565,20 @@ public class ConnectionHandoffTest {
         log.info("Expected address type: {}", context.expectedEndpointType);
         log.info("Starting migrate + moving operation with endpoint-aware node selection...");
 
-        // Trigger the migrate + moving operation using endpoint-aware node selection
         StepVerifier.create(faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, clusterConfig))
                 .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
-        // Wait for MIGRATED notification first (migration completes before endpoint rebind)
         log.info("Waiting for MIGRATED notification...");
         boolean migratedReceived = context.capture.waitForMigratedNotification(NOTIFICATION_WAIT_TIMEOUT);
         assertThat(migratedReceived).as("Should receive MIGRATED notification").isTrue();
 
-        // Wait for MOVING notification (endpoint rebind with new address)
         log.info("Waiting for MOVING notification...");
         boolean movingReceived = context.capture.waitForMovingNotification(NOTIFICATION_WAIT_TIMEOUT);
         assertThat(movingReceived).as("Should receive MOVING notification").isTrue();
 
-        // Validate the MOVING notification contains correct address type
         String movingNotification = context.capture.getLastMovingNotification();
         assertThat(movingNotification).as("MOVING notification should not be null").isNotNull();
 
-        // Debug log to show exact notification format
         log.info("Debug - Raw notification with escaped chars: '{}'",
                 movingNotification.replace("\n", "\\n").replace("\r", "\\r"));
 
@@ -670,24 +588,36 @@ public class ConnectionHandoffTest {
             String ttl = matcher.group(2);
             String addressWithPort = matcher.group(3);
 
-            // Parse address and port from the combined string
             String newAddress;
             String port;
 
-            // IP:PORT format (e.g., "54.155.173.67:12000")
-            int lastColonIndex = addressWithPort.lastIndexOf(':');
-            newAddress = addressWithPort.substring(0, lastColonIndex);
-            port = addressWithPort.substring(lastColonIndex + 1);
+            if (addressWithPort == null || addressWithPort.trim().isEmpty()) {
+                newAddress = null;
+                port = null;
+                log.info("Address is null/empty - this is expected for endpoint type 'none'");
+            } else {
+                // IP:PORT format (e.g., "54.155.173.67:12000")
+                int lastColonIndex = addressWithPort.lastIndexOf(':');
+                if (lastColonIndex > 0) {
+                    newAddress = addressWithPort.substring(0, lastColonIndex);
+                    port = addressWithPort.substring(lastColonIndex + 1);
+                } else {
+                    // No colon found, treat entire string as address
+                    newAddress = addressWithPort;
+                    port = null;
+                }
+            }
 
             log.info("Parsed MOVING notification - Sequence: {}, TTL: {}, New Address: {}, Port: {}", sequence, ttl, newAddress,
                     port);
 
-            // Validate basic notification format
             assertThat(Integer.parseInt(ttl)).isGreaterThanOrEqualTo(0);
-            assertThat(newAddress).isNotEmpty();
-            assertThat(Integer.parseInt(port)).isGreaterThan(0);
 
-            // Validate the address type matches what we requested
+            if (context.expectedEndpointType != EndpointType.NONE) {
+                assertThat(newAddress).isNotEmpty();
+                assertThat(port).isNotNull();
+                assertThat(Integer.parseInt(port)).isGreaterThan(0);
+            }
             validateEndpointType(newAddress, context.expectedEndpointType, testDescription);
 
         } else {
@@ -695,14 +625,10 @@ public class ConnectionHandoffTest {
             assertThat(false).as("MOVING notification should match expected format").isTrue();
         }
 
-        // Verify we received both expected notifications
         assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
         assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
     }
 
-    /**
-     * Reconnection verification test - validates that connection reconnected to the correct endpoint after handoff
-     */
     private void reconnectionVerification(HandoffTestContext context, String testDescription) {
         try {
             log.info("=== Reconnection Verification for {} ===", testDescription);
@@ -710,7 +636,6 @@ public class ConnectionHandoffTest {
             // For EndpointType.NONE, we expect to reconnect to the original endpoint, not a new one
             String expectedEndpoint;
             if (context.expectedEndpointType == EndpointType.NONE) {
-                // For NONE, the client should reconnect to the original endpoint
                 String originalUri = mStandard.getEndpoints().get(0); // Original endpoint URI
                 // Extract host:port from redis://host:port format
                 expectedEndpoint = originalUri.replaceFirst("^redis://", "");
@@ -721,8 +646,7 @@ public class ConnectionHandoffTest {
                 log.info("Expected reconnection endpoint from MOVING notification: {}", expectedEndpoint);
             }
 
-            // Get current connection remote address using lettuce primitives
-            Channel channel = getChannelFromConnection(context.connection);
+            Channel channel = ConnectionTestUtil.getChannel(context.connection);
             SocketAddress currentRemoteAddress = null;
 
             if (channel != null && channel.isActive()) {
@@ -732,12 +656,10 @@ public class ConnectionHandoffTest {
                 log.warn("Channel is null or inactive, cannot verify remote address");
             }
 
-            // Test basic connectivity after handoff
             String pingResult = context.connection.sync().ping();
             assertThat(pingResult).isEqualTo("PONG");
             log.info("✓ Connection still responsive after handoff: {}", pingResult);
 
-            // Verify reconnection to correct endpoint
             if (currentRemoteAddress != null && expectedEndpoint != null) {
                 boolean endpointMatches = verifyEndpointMatch(currentRemoteAddress, expectedEndpoint);
 
@@ -759,13 +681,11 @@ public class ConnectionHandoffTest {
                         expectedEndpoint);
             }
 
-            // Test a few basic operations to ensure connection stability
             context.connection.sync().set("handoff-test-key", "handoff-test-value");
             String getValue = context.connection.sync().get("handoff-test-key");
             assertThat(getValue).isEqualTo("handoff-test-value");
             log.info("✓ Basic operations work after handoff");
 
-            // Clean up test key
             context.connection.sync().del("handoff-test-key");
 
             context.capture.setReconnectionTested(true);
@@ -773,13 +693,9 @@ public class ConnectionHandoffTest {
 
         } catch (Exception e) {
             log.warn("Reconnection verification failed for {}: {}", testDescription, e.getMessage());
-            // Don't fail the main test if reconnection test fails, just log it
         }
     }
 
-    /**
-     * Extract the expected endpoint address from MOVING notifications
-     */
     private String extractEndpointFromMovingNotification(java.util.List<String> notifications) {
         for (String notification : notifications) {
             if (notification.contains("MOVING")) {
@@ -795,9 +711,6 @@ public class ConnectionHandoffTest {
         return null;
     }
 
-    /**
-     * Verify if the current remote address matches the expected endpoint
-     */
     private boolean verifyEndpointMatch(SocketAddress currentRemoteAddress, String expectedEndpoint) {
         if (!(currentRemoteAddress instanceof InetSocketAddress)) {
             return false;
@@ -817,53 +730,168 @@ public class ConnectionHandoffTest {
         // Extract port from expected endpoint for comparison
         String[] expectedParts = expectedEndpoint.split(":");
         if (expectedParts.length == 2) {
-            try {
-                int expectedPort = Integer.parseInt(expectedParts[1]);
-                if (currentPort == expectedPort) {
-                    log.info("✓ Port match: current '{}' port {} matches expected '{}' port {}", currentEndpoint, currentPort,
-                            expectedEndpoint, expectedPort);
-                    return true;
-                }
-            } catch (NumberFormatException e) {
-                // Invalid port format in expected endpoint
+
+            int expectedPort = Integer.parseInt(expectedParts[1]);
+            if (currentPort == expectedPort) {
+                log.info("✓ Port match: current '{}' port {} matches expected '{}' port {}", currentEndpoint, currentPort,
+                        expectedEndpoint, expectedPort);
+                return true;
             }
+
         }
 
         return false;
     }
 
-    /**
-     * Get the underlying channel from a connection, handling MaintenanceAwareExpiryWriter delegation
-     */
-    private static Channel getChannelFromConnection(StatefulRedisConnection<String, String> connection) {
-        try {
-            RedisChannelHandler<?, ?> handler = (RedisChannelHandler<?, ?>) connection;
-            RedisChannelWriter writer = handler.getChannelWriter();
+    private RedisClient createClientWithEndpointType(EndpointType endpointType) {
+        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
+                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
 
-            // Handle MaintenanceAwareExpiryWriter which wraps the real channel writer
-            if (writer instanceof MaintenanceAwareExpiryWriter) {
-                // Get the delegate field from MaintenanceAwareExpiryWriter
-                java.lang.reflect.Field delegateField = writer.getClass().getDeclaredField("delegate");
-                delegateField.setAccessible(true);
-                RedisChannelWriter delegate = (RedisChannelWriter) delegateField.get(writer);
+        RedisClient client = RedisClient.create(uri);
 
-                // Get the channel from the delegate
-                java.lang.reflect.Field channelField = delegate.getClass().getDeclaredField("channel");
-                channelField.setAccessible(true);
-                return (Channel) channelField.get(delegate);
-            } else {
-                // Use the standard ConnectionTestUtil approach for regular writers
-                return ConnectionTestUtil.getChannel(connection);
-            }
-        } catch (Exception e) {
-            log.warn("Could not extract channel from connection: {}", e.getMessage());
-            return null;
-        }
+        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                .maintNotificationsConfig(MaintNotificationsConfig.enabled(endpointType)).build();
+        client.setOptions(options);
+
+        return client;
     }
 
-    /**
-     * Specialized capture class for dual connection testing that creates a second connection when MIGRATED is received
-     */
+    private RedisClient createClientWithDisabledNotifications() {
+        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
+                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
+
+        RedisClient client = RedisClient.create(uri);
+
+        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
+                .maintNotificationsConfig(MaintNotificationsConfig.disabled()).build();
+        client.setOptions(options);
+
+        return client;
+    }
+
+    private void executeBasicHandoffTest(EndpointType endpointType, String testDescription) throws InterruptedException {
+        log.info("test {} started for endpoint type {}", testDescription, endpointType);
+
+        HandoffTestContext context = setupHandoffTest(endpointType);
+
+        performHandoffOperation(context, testDescription);
+        reconnectionVerification(context, testDescription);
+
+        // End test phase to prevent capturing cleanup notifications
+        context.capture.endTestPhase();
+
+        log.info("test {} ended for endpoint type {}", testDescription, endpointType);
+    }
+
+    private void executeNotificationBehaviorTest(boolean notificationsEnabled) throws InterruptedException {
+        String testDescription = notificationsEnabled ? "enabled notifications" : "disabled notifications";
+        log.info("test {} started", testDescription);
+
+        RedisClient client = notificationsEnabled ? createClientWithEndpointType(EndpointType.EXTERNAL_IP)
+                : createClientWithDisabledNotifications();
+
+        StatefulRedisConnection<String, String> connection = client.connect();
+
+        AllNotificationTypesCapture capture = new AllNotificationTypesCapture();
+
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
+
+        String bdbId = String.valueOf(mStandard.getBdbId());
+
+        log.info("=== Testing {} ===", testDescription);
+
+        String endpointId = clusterConfig.getFirstEndpointId();
+        String policy = "single";
+
+        log.info("Starting comprehensive maintenance operations to trigger all notification types...");
+
+        // This operation will trigger MIGRATING, MIGRATED, and MOVING notifications
+        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
+                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
+
+        boolean migrationReceived = false;
+        boolean failoverReceived = false;
+
+        if (notificationsEnabled) {
+            migrationReceived = capture.waitForMigrationNotifications(NOTIFICATION_WAIT_TIMEOUT);
+        } else {
+            // For disabled notifications, give a brief moment for any unexpected notifications
+            // then proceed without waiting the full timeout
+            Thread.sleep(Duration.ofSeconds(2).toMillis());
+            log.info("Skipped waiting for migration notifications (disabled test)");
+        }
+
+        // Trigger additional failover operations to get FAILING_OVER and FAILED_OVER
+        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+        String nodeId = clusterConfig.getNodeWithMasterShards();
+
+        log.info("Triggering failover operations to get FAILING_OVER and FAILED_OVER notifications...");
+        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
+                .verify(LONG_OPERATION_TIMEOUT);
+
+        if (notificationsEnabled) {
+            failoverReceived = capture.waitForFailoverNotifications(NOTIFICATION_WAIT_TIMEOUT);
+        } else {
+            // For disabled notifications, give a brief moment for any unexpected notifications
+            // then proceed without waiting the full timeout
+            Thread.sleep(Duration.ofSeconds(2).toMillis());
+            log.info("Skipped waiting for failover notifications (disabled test)");
+        }
+
+        capture.endTestPhase();
+
+        log.info("=== Notification Results ===");
+        log.info("Total notifications received: {}", capture.getReceivedNotifications().size());
+        log.info("MOVING notifications: {}", capture.getMovingCount());
+        log.info("MIGRATING notifications: {}", capture.getMigratingCount());
+        log.info("MIGRATED notifications: {}", capture.getMigratedCount());
+        log.info("FAILING_OVER notifications: {}", capture.getFailingOverCount());
+        log.info("FAILED_OVER notifications: {}", capture.getFailedOverCount());
+
+        if (notificationsEnabled) {
+            assertThat(capture.getReceivedNotifications())
+                    .as("Should receive notifications when maintenance events are enabled").isNotEmpty();
+
+            assertThat(migrationReceived).as("Should receive migration notifications").isTrue();
+            assertThat(failoverReceived).as("Should receive failover notifications").isTrue();
+            assertThat(capture.getMovingCount()).as("Should receive MOVING notifications").isGreaterThan(0);
+            assertThat(capture.getMigratingCount()).as("Should receive MIGRATING notifications").isGreaterThan(0);
+            assertThat(capture.getMigratedCount()).as("Should receive MIGRATED notifications").isGreaterThan(0);
+            assertThat(capture.getFailingOverCount()).as("Should receive FAILING_OVER notifications").isGreaterThan(0);
+            assertThat(capture.getFailedOverCount()).as("Should receive FAILED_OVER notifications").isGreaterThan(0);
+
+            log.info("✓ All expected maintenance notifications received and validated successfully");
+        } else {
+            assertThat(capture.getReceivedNotifications())
+                    .as("Should have no notifications when maintenance events are disabled").isEmpty();
+
+            assertThat(capture.getMovingCount()).as("Should have no MOVING notifications").isZero();
+            assertThat(capture.getMigratingCount()).as("Should have no MIGRATING notifications").isZero();
+            assertThat(capture.getMigratedCount()).as("Should have no MIGRATED notifications").isZero();
+            assertThat(capture.getFailingOverCount()).as("Should have no FAILING_OVER notifications").isZero();
+            assertThat(capture.getFailedOverCount()).as("Should have no FAILED_OVER notifications").isZero();
+
+            log.info("✓ Disabled maintenance events correctly prevent notifications");
+        }
+
+        // Cleanup operations (same for both enabled and disabled tests)
+        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+        nodeId = clusterConfig.getNodeWithMasterShards();
+
+        log.info("performing cluster cleanup operation for failover testing");
+        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
+                .verify(LONG_OPERATION_TIMEOUT);
+
+        if (connection != null && connection.isOpen()) {
+            connection.close();
+        }
+        if (client != null) {
+            client.shutdown();
+        }
+
+        log.info("test {} ended", testDescription);
+    }
+
     public static class DualConnectionCapture implements MaintenanceNotificationCapture {
 
         private final HandoffCapture firstCapture;
@@ -891,13 +919,11 @@ public class ConnectionHandoffTest {
 
         @Override
         public void captureNotification(String notification) {
-            // Only capture notifications during the test phase
             if (!testPhaseActive.get()) {
                 log.debug("Ignoring notification during cleanup phase: {}", notification);
                 return;
             }
 
-            // Forward to first capture
             firstCapture.captureNotification(notification);
 
             // If this is a MIGRATED notification and we haven't created second connection yet, create it
@@ -913,7 +939,7 @@ public class ConnectionHandoffTest {
                 log.info("Creating second connection for dual connection test...");
 
                 // Get the channel from the first connection to determine the actual IP address
-                Channel firstChannel = getChannelFromConnection(firstConnection);
+                Channel firstChannel = ConnectionTestUtil.getChannel(firstConnection);
                 String actualIpAddress = null;
                 int actualPort = -1;
 
@@ -923,7 +949,7 @@ public class ConnectionHandoffTest {
 
                     // Handle different address formats:
                     // Format 1: "/54.74.227.236:12000" (direct IP)
-                    // Format 2: "redis-12000.ivo-test-a6c42e54.env0.qa.redislabs.com/54.74.227.236:12000" (FQDN with resolved
+                    // Format 2: "redis-12000.ivo-somefdqn.com/54.74.227.236:12000" (FQDN with resolved
                     // IP)
 
                     String ipPortString = null;
@@ -979,8 +1005,7 @@ public class ConnectionHandoffTest {
 
                 };
 
-                // Setup push notification monitoring on second connection with shorter timeout and immediate pinging
-                MaintenancePushNotificationMonitor.setupMonitoring(connection, capture); // Much shorter timeout and interval
+                MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
                 secondClient.set(client);
                 secondConnection.set(connection);
@@ -1024,14 +1049,25 @@ public class ConnectionHandoffTest {
 
     }
 
-    /**
-     * Specialized capture class to track all 5 notification types
-     */
     public static class AllNotificationTypesCapture implements MaintenanceNotificationCapture {
 
         private final List<String> receivedNotifications = new CopyOnWriteArrayList<>();
 
-        private final CountDownLatch notificationLatch = new CountDownLatch(1);
+        // Separate latches for different operation types
+        private final CountDownLatch migrationLatch = new CountDownLatch(3); // MIGRATING + MIGRATED + MOVING
+
+        private final CountDownLatch failoverLatch = new CountDownLatch(2); // FAILING_OVER + FAILED_OVER
+
+        // Track which notification types we've already seen (to avoid duplicate countdown)
+        private final AtomicBoolean migratingReceived = new AtomicBoolean(false);
+
+        private final AtomicBoolean migratedReceived = new AtomicBoolean(false);
+
+        private final AtomicBoolean movingReceived = new AtomicBoolean(false);
+
+        private final AtomicBoolean failingOverReceived = new AtomicBoolean(false);
+
+        private final AtomicBoolean failedOverReceived = new AtomicBoolean(false);
 
         private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
 
@@ -1051,7 +1087,6 @@ public class ConnectionHandoffTest {
                 receivedNotifications.add(notification);
                 log.info("Captured notification: {}", notification);
 
-                // Count and validate notification types using common validation function
                 if (notification.contains("MOVING")) {
                     try {
                         validateAndParseNotification(notification, NotificationType.MOVING);
@@ -1060,7 +1095,10 @@ public class ConnectionHandoffTest {
                     } catch (Exception e) {
                         log.warn("✗ MOVING notification validation failed: {}", e.getMessage());
                     }
-                    notificationLatch.countDown();
+                    if (movingReceived.compareAndSet(false, true)) {
+                        migrationLatch.countDown();
+                        log.info("First MOVING notification - migration latch count down");
+                    }
                 } else if (notification.contains("MIGRATING")) {
                     try {
                         validateAndParseNotification(notification, NotificationType.MIGRATING);
@@ -1069,7 +1107,10 @@ public class ConnectionHandoffTest {
                     } catch (Exception e) {
                         log.warn("✗ MIGRATING notification validation failed: {}", e.getMessage());
                     }
-                    notificationLatch.countDown();
+                    if (migratingReceived.compareAndSet(false, true)) {
+                        migrationLatch.countDown();
+                        log.info("First MIGRATING notification - migration latch count down");
+                    }
                 } else if (notification.contains("MIGRATED")) {
                     try {
                         validateAndParseNotification(notification, NotificationType.MIGRATED);
@@ -1078,7 +1119,10 @@ public class ConnectionHandoffTest {
                     } catch (Exception e) {
                         log.warn("✗ MIGRATED notification validation failed: {}", e.getMessage());
                     }
-                    notificationLatch.countDown();
+                    if (migratedReceived.compareAndSet(false, true)) {
+                        migrationLatch.countDown();
+                        log.info("First MIGRATED notification - migration latch count down");
+                    }
                 } else if (notification.contains("FAILING_OVER")) {
                     try {
                         validateAndParseNotification(notification, NotificationType.FAILING_OVER);
@@ -1087,7 +1131,10 @@ public class ConnectionHandoffTest {
                     } catch (Exception e) {
                         log.warn("✗ FAILING_OVER notification validation failed: {}", e.getMessage());
                     }
-                    notificationLatch.countDown();
+                    if (failingOverReceived.compareAndSet(false, true)) {
+                        failoverLatch.countDown();
+                        log.info("First FAILING_OVER notification - failover latch count down");
+                    }
                 } else if (notification.contains("FAILED_OVER")) {
                     try {
                         validateAndParseNotification(notification, NotificationType.FAILED_OVER);
@@ -1096,13 +1143,20 @@ public class ConnectionHandoffTest {
                     } catch (Exception e) {
                         log.warn("✗ FAILED_OVER notification validation failed: {}", e.getMessage());
                     }
-                    notificationLatch.countDown();
+                    if (failedOverReceived.compareAndSet(false, true)) {
+                        failoverLatch.countDown();
+                        log.info("First FAILED_OVER notification - failover latch count down");
+                    }
                 }
             }
         }
 
-        public boolean waitForNotifications(Duration timeout) throws InterruptedException {
-            return notificationLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        public boolean waitForMigrationNotifications(Duration timeout) throws InterruptedException {
+            return migrationLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        public boolean waitForFailoverNotifications(Duration timeout) throws InterruptedException {
+            return failoverLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
         }
 
         public List<String> getReceivedNotifications() {
@@ -1136,19 +1190,11 @@ public class ConnectionHandoffTest {
 
     }
 
-    @Test
-    @DisplayName("Connection handed off to new endpoint with External IP")
-    public void connectionHandedOffToNewEndpointExternalIPTest() throws InterruptedException {
-        log.info("test connectionHandedOffToNewEndpointExternalIPTest started");
-        HandoffTestContext context = setupHandoffTest(EndpointType.EXTERNAL_IP);
-
-        performHandoffOperation(context, "External IP Handoff Test");
-        reconnectionVerification(context, "External IP Handoff Test");
-
-        // End test phase to prevent capturing cleanup notifications
-        context.capture.endTestPhase();
-
-        log.info("test connectionHandedOffToNewEndpointExternalIPTest ended");
+    @ParameterizedTest
+    @EnumSource(value = EndpointType.class, names = { "EXTERNAL_IP", "EXTERNAL_FQDN", "NONE" })
+    @DisplayName("Connection handoff with supported endpoint types")
+    public void connectionHandoffWithEndpointTypesTest(EndpointType endpointType) throws InterruptedException {
+        executeBasicHandoffTest(endpointType, endpointType + " Handoff Test");
     }
 
     @Test
@@ -1157,36 +1203,28 @@ public class ConnectionHandoffTest {
         log.info("test trafficResumesAfterMovingTest started");
         HandoffTestContext context = setupHandoffTest(EndpointType.EXTERNAL_IP);
 
-        // Create async commands and traffic generator
         RedisAsyncCommands<String, String> asyncCommands = context.connection.async();
         ContinuousTrafficGenerator trafficGenerator = new ContinuousTrafficGenerator(asyncCommands);
 
-        // Start traffic before maintenance operation
         log.info("=== Starting traffic before MOVING operation ===");
         trafficGenerator.startTraffic();
 
-        // Let traffic run for a bit to establish baseline
         await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(5)).until(() -> true);
         long initialSuccessful = trafficGenerator.getSuccessfulOperations();
         long initialFailed = trafficGenerator.getFailedOperations();
         log.info("Initial traffic stats - Successful: {}, Failed: {}", initialSuccessful, initialFailed);
 
-        // Perform handoff operation while traffic is running
         log.info("=== Performing MOVING operation while traffic is active ===");
         performHandoffOperation(context, "Traffic Resumption Test");
 
-        // Continue traffic during and after maintenance
         log.info("=== Continuing traffic during maintenance ===");
         await().pollDelay(Duration.ofSeconds(5)).atMost(Duration.ofSeconds(10)).until(() -> true);
 
-        // Wait for reconnection verification
         reconnectionVerification(context, "Traffic Resumption Test");
 
-        // Let traffic continue after reconnection to verify resumption
         log.info("=== Allowing traffic to continue after reconnection ===");
         await().pollDelay(Duration.ofSeconds(3)).atMost(Duration.ofSeconds(6)).until(() -> true);
 
-        // Stop traffic and collect final statistics
         trafficGenerator.stopTraffic();
 
         long finalSuccessful = trafficGenerator.getSuccessfulOperations();
@@ -1199,11 +1237,9 @@ public class ConnectionHandoffTest {
         log.info("Failed operations: {}", finalFailed);
         log.info("Success rate: {:.2f}%", (double) finalSuccessful / totalCommands * 100);
 
-        // Verify traffic resumed successfully after MOVING
         assertThat(totalCommands).as("Should have executed traffic commands").isGreaterThan(0);
         assertThat(finalSuccessful).as("Should have successful operations after MOVING").isGreaterThan(initialSuccessful);
 
-        // Allow some failures during maintenance but most should succeed
         double failureRate = (double) finalFailed / totalCommands;
         assertThat(failureRate).as("Failure rate should be zero").isZero();
 
@@ -1214,303 +1250,11 @@ public class ConnectionHandoffTest {
         log.info("test trafficResumesAfterMovingTest ended");
     }
 
-    @Test
-    @DisplayName("Connection handoff with FQDN External Name")
-    public void connectionHandoffWithFQDNExternalNameTest() throws InterruptedException {
-        log.info("test connectionHandoffWithFQDNExternalNameTest started");
-        HandoffTestContext context = setupHandoffTest(EndpointType.EXTERNAL_FQDN);
-
-        performHandoffOperation(context, "External FQDN Handoff Test");
-        reconnectionVerification(context, "External FQDN Handoff Test");
-
-        // End test phase to prevent capturing cleanup notifications
-        context.capture.endTestPhase();
-
-        log.info("test connectionHandoffWithFQDNExternalNameTest ended");
-    }
-
-    @Test
-    @DisplayName("Connection handshake includes enabling notifications and receives all 5 notification types")
-    public void connectionHandshakeIncludesEnablingNotificationsTest() throws InterruptedException {
-        log.info("test connectionHandshakeIncludesEnablingNotificationsTest started");
-
-        // Setup connection with maintenance events enabled
-        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
-
-        RedisClient client = RedisClient.create(uri);
-
-        // Configure client for RESP3 to receive push notifications with maintenance events enabled
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .maintNotificationsConfig(MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)).build();
-        client.setOptions(options);
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-
-        // Specialized capture to track all 5 notification types
-        AllNotificationTypesCapture capture = new AllNotificationTypesCapture();
-
-        // Setup push notification monitoring
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
-
-        String bdbId = String.valueOf(mStandard.getBdbId());
-
-        // Verify connection handshake included CLIENT MAINT_NOTIFICATIONS ON command
-        // (This is verified by the fact that we can receive notifications)
-        log.info("=== Testing all notification types ===");
-
-        // Trigger operations that should generate all 5 notification types
-        String endpointId = clusterConfig.getFirstEndpointId();
-        String policy = "single";
-
-        log.info("Starting comprehensive maintenance operations to trigger all notification types...");
-
-        // This operation will trigger MIGRATING, MIGRATED, and MOVING notifications
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
-                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
-
-        // Wait for initial notifications
-        boolean received = capture.waitForNotifications(NOTIFICATION_WAIT_TIMEOUT);
-        assertThat(received).as("Should receive maintenance notifications").isTrue();
-
-        // Trigger additional failover operations to get FAILING_OVER and FAILED_OVER
-        String nodeId = clusterConfig.getNodeWithMasterShards();
-
-        log.info("Triggering failover operations to get FAILING_OVER and FAILED_OVER notifications...");
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
-                .verify(LONG_OPERATION_TIMEOUT);
-
-        // End test phase to prevent capturing cleanup notifications
-        capture.endTestPhase();
-
-        log.info("=== Notification Results ===");
-        log.info("Total notifications received: {}", capture.getReceivedNotifications().size());
-        log.info("MOVING notifications: {}", capture.getMovingCount());
-        log.info("MIGRATING notifications: {}", capture.getMigratingCount());
-        log.info("MIGRATED notifications: {}", capture.getMigratedCount());
-        log.info("FAILING_OVER notifications: {}", capture.getFailingOverCount());
-        log.info("FAILED_OVER notifications: {}", capture.getFailedOverCount());
-
-        // VALIDATION: Should receive all 5 notification types when maintenance events are enabled
-        assertThat(capture.getReceivedNotifications()).as("Should receive notifications when maintenance events are enabled")
-                .isNotEmpty();
-
-        // Verify we received the expected notification types
-        // Note: We expect at least some of each type, though exact counts depend on cluster operations
-        assertThat(capture.getMovingCount()).as("Should receive MOVING notifications").isGreaterThan(0);
-        assertThat(capture.getMigratingCount()).as("Should receive MIGRATING notifications").isGreaterThan(0);
-        assertThat(capture.getMigratedCount()).as("Should receive MIGRATED notifications").isGreaterThan(0);
-        assertThat(capture.getFailingOverCount()).as("Should receive FAILING_OVER notifications").isGreaterThan(0);
-        assertThat(capture.getFailedOverCount()).as("Should receive FAILED_OVER notifications").isGreaterThan(0);
-
-        // Failover notifications may be received depending on cluster state
-        log.info("✓ All expected maintenance notifications received and validated successfully");
-
-        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
-        nodeId = clusterConfig.getNodeWithMasterShards();
-
-        log.info("performing cluster cleanup operation for failover testing");
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
-                .verify(LONG_OPERATION_TIMEOUT);
-
-        log.info("test connectionHandshakeIncludesEnablingNotificationsTest ended");
-    }
-
-    @Test
-    @DisplayName("Disabled maintenance events don't receive notifications")
-    public void disabledDontReceiveNotificationsTest() throws InterruptedException {
-        log.info("test disabledDontReceiveNotificationsTest started");
-
-        // Setup connection with maintenance events explicitly disabled
-        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
-
-        RedisClient client = RedisClient.create(uri);
-
-        // Configure client for RESP3 but with maintenance events DISABLED
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .maintNotificationsConfig(MaintNotificationsConfig.disabled()).build();
-        client.setOptions(options);
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-
-        // Simple capture to verify no notifications are received
-        AllNotificationTypesCapture capture = new AllNotificationTypesCapture();
-
-        // Setup monitoring (though we expect no notifications)
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
-
-        String bdbId = String.valueOf(mStandard.getBdbId());
-
-        log.info("=== Testing disabled maintenance events ===");
-
-        // Trigger the same operations as the enabled test
-        String endpointId = clusterConfig.getFirstEndpointId();
-        String policy = "single";
-
-        log.info("Starting maintenance operations with disabled notifications...");
-
-        // This operation would normally trigger notifications, but they should be disabled
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
-                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
-
-        // Wait to see if any notifications are received (they shouldn't be)
-        boolean received = capture.waitForNotifications(Duration.ofSeconds(30));
-
-        // Trigger additional failover operations to get FAILING_OVER and FAILED_OVER
-        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
-        String nodeId = clusterConfig.getNodeWithMasterShards();
-
-        log.info("Triggering failover operations to get FAILING_OVER and FAILED_OVER notifications...");
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
-                .verify(LONG_OPERATION_TIMEOUT);
-
-        // End test phase
-        capture.endTestPhase();
-
-        log.info("=== Disabled Notification Results ===");
-        log.info("Total notifications received: {}", capture.getReceivedNotifications().size());
-        log.info("Any notifications received: {}", received);
-
-        // VALIDATION: Should NOT receive any maintenance notifications when disabled
-        assertThat(received).as("Should NOT receive notifications when maintenance events are disabled").isFalse();
-
-        assertThat(capture.getReceivedNotifications()).as("Should have no notifications when maintenance events are disabled")
-                .isEmpty();
-
-        assertThat(capture.getMovingCount()).as("Should have no MOVING notifications").isZero();
-        assertThat(capture.getMigratingCount()).as("Should have no MIGRATING notifications").isZero();
-        assertThat(capture.getMigratedCount()).as("Should have no MIGRATED notifications").isZero();
-        assertThat(capture.getFailingOverCount()).as("Should have no FAILING_OVER notifications").isZero();
-        assertThat(capture.getFailedOverCount()).as("Should have no FAILED_OVER notifications").isZero();
-
-        log.info("✓ Disabled maintenance events correctly prevent notifications");
-
-        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
-        nodeId = clusterConfig.getNodeWithMasterShards();
-
-        log.info("performing cluster cleanup operation for failover testing");
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
-                .verify(LONG_OPERATION_TIMEOUT);
-
-        log.info("test disabledDontReceiveNotificationsTest ended");
-    }
-
-    @Test
-    @DisplayName("Client handshake with endpoint type none returns nil IP")
-    public void clientHandshakeWithNoneEndpointTypeTest() throws InterruptedException {
-        log.info("test clientHandshakeWithNoneEndpointTypeTest started");
-
-        // Setup connection with a custom address type source that returns null (none)
-        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
-
-        RedisClient client = RedisClient.create(uri);
-
-        // Configure client with maintenance events enabled and explicit NONE address type
-        MaintNotificationsConfig customOptions = MaintNotificationsConfig.enabled(EndpointType.NONE);
-
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .maintNotificationsConfig(customOptions).build();
-        client.setOptions(options);
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-
-        HandoffCapture capture = new HandoffCapture();
-
-        // Setup push notification monitoring using the utility
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
-
-        String bdbId = String.valueOf(mStandard.getBdbId());
-
-        // Create test context with NONE expected address type to test none handling
-        currentTestContext = new HandoffTestContext(client, connection, capture, bdbId, EndpointType.NONE);
-
-        log.info("=== Testing endpoint type 'none' behavior ===");
-
-        // Trigger the same migrate + moving operation as connectionHandedOffToNewEndpointInternalIPTest
-        // Get cluster configuration for the operation
-        String endpointId = clusterConfig.getFirstEndpointId();
-        String policy = "single";
-
-        log.info("Expected address type: {} (none)", EndpointType.NONE);
-        log.info("Starting migrate + moving operation...");
-
-        // Trigger the migrate + moving operation
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
-                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
-
-        // Wait for MIGRATED notification first (migration completes before endpoint rebind)
-        log.info("Waiting for MIGRATED notification...");
-        boolean migratedReceived = capture.waitForMigratedNotification(NOTIFICATION_WAIT_TIMEOUT);
-        assertThat(migratedReceived).as("Should receive MIGRATED notification").isTrue();
-
-        // Wait for MOVING notification (endpoint rebind with new address)
-        log.info("Waiting for MOVING notification...");
-        boolean movingReceived = capture.waitForMovingNotification(NOTIFICATION_WAIT_TIMEOUT);
-        assertThat(movingReceived).as("Should receive MOVING notification").isTrue();
-
-        // Validate the MOVING notification - this will test null handling in validateEndpointType
-        String movingNotification = capture.getLastMovingNotification();
-        assertThat(movingNotification).as("MOVING notification should not be null").isNotNull();
-
-        // Debug log to show exact notification format
-        log.info("Debug - Raw notification with escaped chars: '{}'",
-                movingNotification.replace("\n", "\\n").replace("\r", "\\r"));
-
-        Matcher matcher = MOVING_PATTERN.matcher(movingNotification);
-        if (matcher.matches()) {
-            String sequence = matcher.group(1);
-            String ttl = matcher.group(2);
-            String addressWithPort = matcher.group(3);
-
-            // Parse address and port from the combined string
-            String newAddress;
-            String port;
-
-            // Handle the case where address might be null or empty for endpoint type 'none'
-            if (addressWithPort == null || addressWithPort.trim().isEmpty()) {
-                newAddress = null;
-                port = null;
-                log.info("Address is null/empty - this is expected for endpoint type 'none'");
-            } else {
-                // IP:PORT format (e.g., "54.155.173.67:12000")
-                int lastColonIndex = addressWithPort.lastIndexOf(':');
-                if (lastColonIndex > 0) {
-                    newAddress = addressWithPort.substring(0, lastColonIndex);
-                    port = addressWithPort.substring(lastColonIndex + 1);
-                } else {
-                    newAddress = addressWithPort;
-                    port = null;
-                }
-            }
-
-            log.info("Parsed MOVING notification - Sequence: {}, TTL: {}, New Address: {}, Port: {}", sequence, ttl, newAddress,
-                    port);
-
-            // Validate basic notification format
-            assertThat(Integer.parseInt(ttl)).isGreaterThanOrEqualTo(0);
-
-            // Validate the address type matches what we requested (null handling test)
-            validateEndpointType(newAddress, EndpointType.NONE, "Client handshake with endpoint type none test");
-
-        } else {
-            log.error("MOVING notification format not recognized: {}", movingNotification);
-            assertThat(false).as("MOVING notification should match expected format").isTrue();
-        }
-
-        // Verify we received both expected notifications
-        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
-        assertThat(capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
-
-        // Perform reconnection verification similar to other tests
-        reconnectionVerification(currentTestContext, "Client handshake with endpoint type none test");
-
-        // End test phase to prevent capturing cleanup notifications
-        capture.endTestPhase();
-
-        log.info("✓ Client handshake with endpoint type 'none' test completed successfully");
-        log.info("test clientHandshakeWithNoneEndpointTypeTest ended");
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @DisplayName("Maintenance notifications enabled/disabled behavior")
+    public void maintenanceNotificationsBehaviorTest(boolean notificationsEnabled) throws InterruptedException {
+        executeNotificationBehaviorTest(notificationsEnabled);
     }
 
     @Test
@@ -1518,7 +1262,6 @@ public class ConnectionHandoffTest {
     public void newConnectionDuringRebindAfterMovingTest() throws InterruptedException {
         log.info("test newConnectionDuringRebindAfterMovingTest started");
 
-        // Setup first connection but do NOT setup monitoring yet
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
                 .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
 
@@ -1531,24 +1274,19 @@ public class ConnectionHandoffTest {
         HandoffCapture firstCapture = new HandoffCapture();
         String bdbId = String.valueOf(mStandard.getBdbId());
 
-        // Create a specialized capture that will start second connection on MIGRATED
         DualConnectionCapture dualCapture = new DualConnectionCapture(firstCapture, uri, bdbId, firstConnection);
 
-        // Setup push notification monitoring on first connection with shorter timeout
         MaintenancePushNotificationMonitor.setupMonitoring(firstConnection, dualCapture);
 
         try {
-            // Trigger maintenance operation
             performHandoffOperation(
                     new HandoffTestContext(firstClient, firstConnection, firstCapture, bdbId, EndpointType.EXTERNAL_IP),
                     "Dual Connection External IP Handoff Test");
 
-            // Wait for second connection to be created (on MIGRATED) and then receive its MOVING notification
             log.info("Waiting for second connection to receive MOVING notification...");
             boolean secondMovingReceived = dualCapture.waitForSecondConnectionMoving(NOTIFICATION_WAIT_TIMEOUT);
             assertThat(secondMovingReceived).as("Second connection should receive MOVING notification").isTrue();
 
-            // Verify both connections received MOVING notifications
             assertThat(dualCapture.getFirstCapture().getLastMovingNotification())
                     .as("First connection should have MOVING notification").isNotNull();
             assertThat(dualCapture.getSecondCapture().getLastMovingNotification())
@@ -1556,7 +1294,6 @@ public class ConnectionHandoffTest {
 
             log.info("Both connections received MOVING notifications successfully");
 
-            // Perform reconnection verification on both connections
             reconnectionVerification(new HandoffTestContext(firstClient, firstConnection, dualCapture.getFirstCapture(), bdbId,
                     EndpointType.EXTERNAL_IP), "First Connection - Dual Connection External IP Handoff Test");
 
@@ -1567,13 +1304,11 @@ public class ConnectionHandoffTest {
                         "Second Connection - Dual Connection External IP Handoff Test");
             }
 
-            // End test phase to prevent capturing cleanup notifications
             dualCapture.endTestPhase();
 
             log.info("test newConnectionDuringRebindAfterMovingTest ended");
 
         } finally {
-            // Cleanup both connections
             if (firstConnection != null && firstConnection.isOpen()) {
                 firstConnection.close();
             }
@@ -1591,51 +1326,41 @@ public class ConnectionHandoffTest {
     }
 
     @Test
-    @DisplayName("Combined BLPOP timeout unblock during MOVING with connection closure and memory leak detection")
-    public void connectionHandoffDuringMovingWithMemoryLeakDetectionTest() throws InterruptedException {
-        log.info("test connectionHandoffDuringMovingWithMemoryLeakDetectionTest started");
+    @DisplayName("Combined BLPOP timeout unblock during MOVING with connection closure and EventBus monitoring")
+    public void connectionHandoffDuringMovingWithEventBusMonitoringTest() throws InterruptedException {
+        log.info("test connectionHandoffDuringMovingWithEventBusMonitoringTest started");
 
-        // Setup connection leak detector
-        ConnectionLeakDetectionUtil leakDetector = new ConnectionLeakDetectionUtil();
+        ConnectionEventBusMonitoringUtil eventBusMonitor = new ConnectionEventBusMonitoringUtil();
 
-        // Setup main connection with EventBus monitoring
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
                 .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
 
         RedisClient client = RedisClient.create(uri);
 
-        // Configure for RESP3 with maintenance events to trigger connection handoff
         ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
                 .maintNotificationsConfig(MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)).build();
         client.setOptions(options);
 
-        // Setup EventBus monitoring BEFORE creating connection
-        leakDetector.setupEventBusMonitoring(client);
+        eventBusMonitor.setupEventBusMonitoring(client);
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
-        // Setup second connection for LPUSH unblocking
         RedisClient secondClient = RedisClient.create(uri);
         StatefulRedisConnection<String, String> secondConnection = secondClient.connect();
 
-        // Clear any leftover data from previous test runs
         log.info("Clearing BLPOP queue from previous test runs...");
-        Long deletedKeys = connection.sync().del(CombinedBlpopAndMemoryLeakCapture.BLPOP_QUEUE_KEY);
+        Long deletedKeys = connection.sync().del(CombinedBlpopAndEventBusCapture.BLPOP_QUEUE_KEY);
         log.info("Deleted {} keys from BLPOP queue", deletedKeys);
 
-        // Combined capture that handles both BLPOP unblocking and memory leak detection
-        CombinedBlpopAndMemoryLeakCapture capture = new CombinedBlpopAndMemoryLeakCapture(connection, secondConnection);
+        CombinedBlpopAndEventBusCapture capture = new CombinedBlpopAndEventBusCapture(connection, secondConnection);
 
-        // Setup push notification monitoring
         MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         try {
-            // Wait for connection to be fully established
             await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(100)).until(() -> connection.isOpen());
 
-            // Capture initial connection state
-            String initialChannelId = leakDetector.getCurrentChannelId();
-            Channel initialChannel = ConnectionLeakDetectionUtil.getChannelFromConnection(connection);
+            String initialChannelId = eventBusMonitor.getCurrentChannelId();
+            Channel initialChannel = ConnectionTestUtil.getChannel(connection);
 
             log.info("Initial connection established - channelId: {}", initialChannelId);
             if (initialChannel != null) {
@@ -1643,8 +1368,7 @@ public class ConnectionHandoffTest {
                         initialChannel.isOpen(), initialChannel.isRegistered());
             }
 
-            // Prepare for connection transition and trigger migrate + bind operation
-            leakDetector.prepareForConnectionTransition();
+            eventBusMonitor.prepareForConnectionTransition();
 
             String bdbId = String.valueOf(mStandard.getBdbId());
             String endpointId = clusterConfig.getFirstEndpointId();
@@ -1652,27 +1376,22 @@ public class ConnectionHandoffTest {
 
             log.info("Starting migrate + moving operation with endpoint-aware node selection...");
 
-            // Trigger the migrate + moving operation that causes connection handoff
             StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig))
                     .expectNext(true).expectComplete().verify(Duration.ofMinutes(3));
 
             log.info("Migrate + moving operation completed, waiting for connection events and BLPOP completion...");
 
-            // Wait for BLPOP to be unblocked and connection events to be processed
             boolean blpopCompleted = capture.waitForBlpopCompletion(Duration.ofMinutes(2));
             assertThat(blpopCompleted).as("BLPOP should be unblocked by LPUSH during MOVING").isTrue();
 
-            // Wait for connection events to be processed
-            boolean eventsReceived = leakDetector.waitForConnectionTransition(Duration.ofSeconds(30));
+            boolean eventsReceived = eventBusMonitor.waitForConnectionTransition(Duration.ofSeconds(30));
             assertThat(eventsReceived)
                     .as("Should receive connection transition events (DisconnectedEvent + ConnectionDeactivatedEvent)")
                     .isTrue();
 
-            // Wait additional time for full cleanup
             await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> true); // Allow time for cleanup
 
-            // Analyze connection closure and memory leak indicators
-            ConnectionLeakDetectionUtil.ConnectionAnalysisResult result = leakDetector
+            ConnectionEventBusMonitoringUtil.ConnectionAnalysisResult result = eventBusMonitor
                     .analyzeConnectionClosure(initialChannelId, initialChannel);
 
             log.info("=== Combined Test Results ===");
@@ -1691,7 +1410,7 @@ public class ConnectionHandoffTest {
             assertThat(capture.getBlpopResult()).as("BLPOP should have received the unblocking value").isNotNull();
             assertThat(capture.isStackVerified()).as("Command stack verification should have been performed").isTrue();
 
-            // VALIDATIONS: Connection properly closed and no memory leaks
+            // VALIDATIONS: Connection properly closed based on EventBus monitoring
             assertThat(result.wasDisconnected()).as("Old connection should have been disconnected (TCP level)").isTrue();
             assertThat(result.wasDeactivated())
                     .as("Old connection should have been deactivated (logical level) - this is the key signal").isTrue();
@@ -1704,11 +1423,10 @@ public class ConnectionHandoffTest {
             }
 
             assertThat(result.isConnectionHandedOff()).as("Connection should have been handed off to new channel").isTrue();
-            assertThat(result.isFullyCleanedUpWithoutLeaks()).as("Connection should be fully cleaned up without memory leaks")
-                    .isTrue();
+            assertThat(result.isFullyCleanedUpViaEventBus())
+                    .as("Connection should be fully cleaned up based on EventBus monitoring").isTrue();
 
-            // Channel State Assertions - after MOVING and reconnection
-            Channel newChannel = ConnectionLeakDetectionUtil.getChannelFromConnection(connection);
+            Channel newChannel = ConnectionTestUtil.getChannel(connection);
             if (newChannel != null) {
                 assertThat(newChannel.isActive()).as("New channel should be active after MOVING reconnection").isTrue();
                 assertThat(newChannel.isRegistered()).as("New channel should be registered after MOVING reconnection").isTrue();
@@ -1716,7 +1434,6 @@ public class ConnectionHandoffTest {
                         newChannel.isRegistered());
             }
 
-            // Verify new connection is functional
             String testKey = "combined-test-" + System.currentTimeMillis();
             String testValue = "test-value";
 
@@ -1728,10 +1445,9 @@ public class ConnectionHandoffTest {
 
             log.info("✓ New connection is fully functional after handoff");
             log.info("✓ BLPOP unblock during MOVING test passed");
-            log.info("✓ Connection closure validation passed - no memory leaks detected");
+            log.info("✓ Connection closure validation passed - EventBus monitoring indicates proper cleanup");
 
         } finally {
-            // Cleanup
             if (connection != null && connection.isOpen()) {
                 connection.close();
             }
@@ -1744,16 +1460,13 @@ public class ConnectionHandoffTest {
             if (secondClient != null) {
                 secondClient.shutdown();
             }
-            leakDetector.stopMonitoring();
+            eventBusMonitor.stopMonitoring();
         }
 
-        log.info("test connectionHandoffDuringMovingWithMemoryLeakDetectionTest ended");
+        log.info("test connectionHandoffDuringMovingWithEventBusMonitoringTest ended");
     }
 
-    /**
-     * Combined capture class that handles BLPOP unblocking during MOVING and memory leak detection
-     */
-    public static class CombinedBlpopAndMemoryLeakCapture implements MaintenanceNotificationCapture {
+    public static class CombinedBlpopAndEventBusCapture implements MaintenanceNotificationCapture {
 
         private final StatefulRedisConnection<String, String> mainConnection;
 
@@ -1775,7 +1488,7 @@ public class ConnectionHandoffTest {
 
         private static final String UNBLOCK_VALUE = "unblock-value-" + System.currentTimeMillis();
 
-        public CombinedBlpopAndMemoryLeakCapture(StatefulRedisConnection<String, String> mainConnection,
+        public CombinedBlpopAndEventBusCapture(StatefulRedisConnection<String, String> mainConnection,
                 StatefulRedisConnection<String, String> secondConnection) {
             this.mainConnection = mainConnection;
             this.secondConnection = secondConnection;
@@ -1805,7 +1518,6 @@ public class ConnectionHandoffTest {
                 try {
                     log.info("Starting BLPOP with 60-second timeout on key: {}", BLPOP_QUEUE_KEY);
 
-                    // Use 60-second timeout as requested
                     RedisFuture<KeyValue<String, String>> future = mainConnection.async().blpop(60, BLPOP_QUEUE_KEY);
                     KeyValue<String, String> result = future.get();
 
@@ -1836,29 +1548,24 @@ public class ConnectionHandoffTest {
 
                 // Perform the same verification as clearCommandStack but don't actually clear
                 if (mainConnection != null && mainConnection.isOpen()) {
-                    // Access the delegate inside MaintenanceAwareExpiryWriter to get the real ChannelWriter
                     io.lettuce.core.RedisChannelHandler<?, ?> handler = (io.lettuce.core.RedisChannelHandler<?, ?>) mainConnection;
                     io.lettuce.core.RedisChannelWriter writer = handler.getChannelWriter();
 
                     if (writer instanceof io.lettuce.core.protocol.MaintenanceAwareExpiryWriter) {
-                        // Get the delegate field from MaintenanceAwareExpiryWriter
                         java.lang.reflect.Field delegateField = writer.getClass().getDeclaredField("delegate");
                         delegateField.setAccessible(true);
                         io.lettuce.core.RedisChannelWriter delegate = (io.lettuce.core.RedisChannelWriter) delegateField
                                 .get(writer);
 
-                        // Get the channel directly from the delegate
                         java.lang.reflect.Field channelField = delegate.getClass().getDeclaredField("channel");
                         channelField.setAccessible(true);
                         io.netty.channel.Channel channel = (io.netty.channel.Channel) channelField.get(delegate);
 
-                        // Print detailed channel and rebind state information (same as clearCommandStack)
                         log.info("=== COMMAND STACK VERIFICATION INFO ===");
                         log.info("Channel: {}", channel);
                         log.info("Channel active: {}", channel.isActive());
                         log.info("Channel registered: {}", channel.isRegistered());
 
-                        // Check rebind attribute
                         if (channel.hasAttr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE)) {
                             Object rebindState = channel
                                     .attr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE).get();
@@ -1867,7 +1574,6 @@ public class ConnectionHandoffTest {
                             log.info("Rebind attribute present: false");
                         }
 
-                        // Access the CommandHandler directly
                         io.lettuce.core.protocol.CommandHandler commandHandler = channel.pipeline()
                                 .get(io.lettuce.core.protocol.CommandHandler.class);
                         if (commandHandler != null) {
@@ -1875,7 +1581,6 @@ public class ConnectionHandoffTest {
                             stackSizeBeforeVerification.set(stackSize);
                             log.info("CommandHandler found, stack size: {} (NOT clearing as requested)", stackSize);
 
-                            // Print the stack contents when it has elements
                             if (stackSize > 0) {
                                 log.info("Command stack contents:");
                                 int i = 0;
@@ -1939,117 +1644,6 @@ public class ConnectionHandoffTest {
             log.info("Combined capture test phase ended - notifications will be ignored during cleanup");
         }
 
-    }
-
-    @Test
-    @DisplayName("Detect connection closure and verify no memory leaks during migrate + bind using EventBus monitoring")
-    public void detectConnectionClosureAndMemoryLeaksTest() throws InterruptedException {
-        log.info("test detectConnectionClosureAndMemoryLeaksTest started");
-
-        // Setup connection leak detector
-        ConnectionLeakDetectionUtil leakDetector = new ConnectionLeakDetectionUtil();
-
-        // Setup connection with EventBus monitoring
-        RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
-                .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
-
-        RedisClient client = RedisClient.create(uri);
-
-        // Configure for RESP3 with maintenance events to trigger connection handoff
-        ClientOptions options = ClientOptions.builder().protocolVersion(ProtocolVersion.RESP3)
-                .maintNotificationsConfig(MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)).build();
-        client.setOptions(options);
-
-        // Setup EventBus monitoring BEFORE creating connection
-        leakDetector.setupEventBusMonitoring(client);
-
-        StatefulRedisConnection<String, String> connection = client.connect();
-
-        // Wait for connection to be fully established
-        await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(100)).until(() -> connection.isOpen());
-
-        // Capture initial connection state
-        String initialChannelId = leakDetector.getCurrentChannelId();
-        Channel initialChannel = ConnectionLeakDetectionUtil.getChannelFromConnection(connection);
-
-        log.info("Initial connection established - channelId: {}", initialChannelId);
-        if (initialChannel != null) {
-            log.info("Initial channel state - active: {}, open: {}, registered: {}", initialChannel.isActive(),
-                    initialChannel.isOpen(), initialChannel.isRegistered());
-        }
-
-        // Prepare for connection transition and trigger migrate + bind operation
-        leakDetector.prepareForConnectionTransition();
-
-        String bdbId = String.valueOf(mStandard.getBdbId());
-        String endpointId = clusterConfig.getFirstEndpointId();
-        String policy = "single";
-
-        log.info("Triggering migrate + bind operation with endpoint-aware node selection...");
-
-        // Trigger the migrate + bind operation that causes connection handoff
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
-                .expectComplete().verify(Duration.ofMinutes(3));
-
-        log.info("Migrate + bind operation completed, waiting for connection events...");
-
-        // Wait for connection events to be processed
-        boolean eventsReceived = leakDetector.waitForConnectionTransition(Duration.ofSeconds(30));
-        assertThat(eventsReceived)
-                .as("Should receive connection transition events (DisconnectedEvent + ConnectionDeactivatedEvent)").isTrue();
-
-        // Wait additional time for full cleanup
-        await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> true); // Allow time for cleanup
-
-        // Analyze connection closure and memory leak indicators
-        ConnectionLeakDetectionUtil.ConnectionAnalysisResult result = leakDetector.analyzeConnectionClosure(initialChannelId,
-                initialChannel);
-
-        log.info("=== Connection Closure Analysis Results ===");
-        log.info("EventBus indicators - Disconnected: {}, Deactivated: {}, Cleanup: {}", result.wasDisconnected(),
-                result.wasDeactivated(), result.isEventBusCleanup());
-        log.info("Netty channel cleanup: {}", result.isNettyCleanup());
-        log.info("Connection handoff - Initial: {}, Current: {}, Handed off: {}", result.getInitialChannelId(),
-                result.getCurrentChannelId(), result.isConnectionHandedOff());
-
-        // VALIDATIONS: Connection properly closed and no memory leaks
-        assertThat(result.wasDisconnected()).as("Old connection should have been disconnected (TCP level)").isTrue();
-
-        assertThat(result.wasDeactivated())
-                .as("Old connection should have been deactivated (logical level) - this is the key signal").isTrue();
-
-        assertThat(result.isEventBusCleanup()).as("EventBus should indicate proper cleanup (both disconnected and deactivated)")
-                .isTrue();
-
-        if (initialChannel != null) {
-            assertThat(result.isNettyCleanup())
-                    .as("Netty channel should be properly cleaned up (inactive, closed, unregistered)").isTrue();
-        }
-
-        assertThat(result.isConnectionHandedOff()).as("Connection should have been handed off to new channel").isTrue();
-
-        assertThat(result.isFullyCleanedUpWithoutLeaks()).as("Connection should be fully cleaned up without memory leaks")
-                .isTrue();
-
-        // Verify new connection is functional
-        String testKey = "leak-detection-test-" + System.currentTimeMillis();
-        String testValue = "test-value";
-
-        connection.sync().set(testKey, testValue);
-        String retrievedValue = connection.sync().get(testKey);
-
-        assertThat(retrievedValue).isEqualTo(testValue);
-        assertThat(connection.isOpen()).isTrue();
-
-        log.info("✓ New connection is fully functional after handoff");
-        log.info("✓ Connection closure validation passed - no memory leaks detected");
-
-        // Cleanup
-        connection.close();
-        client.shutdown();
-        leakDetector.stopMonitoring();
-
-        log.info("test detectConnectionClosureAndMemoryLeaksTest ended");
     }
 
 }

@@ -959,8 +959,6 @@ public class RedisEnterpriseConfig {
 
     private static Map<String, String> originalEndpointToNode = new HashMap<>();
 
-    private static boolean originalStateRecorded = false;
-
     /**
      * Refresh the Redis Enterprise cluster configuration before test.
      */
@@ -970,13 +968,7 @@ public class RedisEnterpriseConfig {
         RedisEnterpriseConfig clusterConfig = RedisEnterpriseConfig.discover(faultClient, bdbId);
         log.info("Cluster configuration refreshed: {}", clusterConfig.getSummary());
 
-        // Record original state for proper cleanup (only once)
-        // if (originalStateRecorded) {
-        // restoreOriginalClusterState(faultClient, bdbId);
-        // } else {
         recordOriginalClusterState(faultClient, bdbId);
-        // originalStateRecorded = true;
-        // }
 
         return clusterConfig;
     }

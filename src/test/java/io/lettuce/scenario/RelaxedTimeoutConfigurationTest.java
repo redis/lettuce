@@ -1,7 +1,6 @@
 package io.lettuce.scenario;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.time.Duration;
@@ -34,11 +33,8 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.push.PushListener;
-import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.RedisFuture;
-import io.lettuce.test.ConnectionTestUtil;
 import io.lettuce.test.env.Endpoints;
 import io.lettuce.test.env.Endpoints.Endpoint;
 
@@ -46,15 +42,7 @@ import reactor.test.StepVerifier;
 
 import static io.lettuce.TestTags.SCENARIO_TEST;
 
-/**
- * Optimized functional tests for relaxed timeout configuration during Redis Enterprise maintenance events. Validates that
- * command timeouts are properly relaxed during maintenance operations and return to normal afterward.
- * 
- * This test suite has been optimized to run only 2 comprehensive test cases that provide complete coverage: 1. MOVING
- * operations - Tests complete 4-phase sequence: relaxed during MIGRATING, unrelaxed after MIGRATED, relaxed during MOVING,
- * unrelaxed after MOVING 2. Failover operations - Tests complete 2-phase sequence: relaxed during FAILING_OVER, unrelaxed after
- * FAILED_OVER
- */
+
 @Tag(SCENARIO_TEST)
 public class RelaxedTimeoutConfigurationTest {
 
@@ -70,14 +58,14 @@ public class RelaxedTimeoutConfigurationTest {
     // Total timeout during maintenance
     private static final Duration EFFECTIVE_TIMEOUT_DURING_MAINTENANCE = NORMAL_COMMAND_TIMEOUT.plus(RELAXED_TIMEOUT_ADDITION);
 
-    // Wait for notifications
-    private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofMinutes(3);
-
     // For migrations/failovers
     private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5);
 
     // For blpop operations
     private static final Duration BLPOP_TIMEOUT = Duration.ofSeconds(10);
+
+    // Number of commands to send in timeout verification tests
+    private static final int TEST_COMMAND_COUNT = 10;
 
     private static Endpoint mStandard;
 
@@ -128,13 +116,30 @@ public class RelaxedTimeoutConfigurationTest {
 
         private final List<String> receivedNotifications = new CopyOnWriteArrayList<>();
 
-        private final CountDownLatch notificationLatch = new CountDownLatch(1);
+        // Separate latches for different operation types
+        private final CountDownLatch migrationLatch = new CountDownLatch(3); // MIGRATING + MIGRATED + MOVING
+
+        private final CountDownLatch failoverLatch = new CountDownLatch(2); // FAILING_OVER + FAILED_OVER
+
+        // Track which notification types we've already seen (to avoid duplicate countdown)
+        private final AtomicBoolean migratingReceived = new AtomicBoolean(false);
+
+        private final AtomicBoolean migratedReceived = new AtomicBoolean(false);
+
+        private final AtomicBoolean movingReceived = new AtomicBoolean(false);
+
+        private final AtomicBoolean failingOverReceived = new AtomicBoolean(false);
+
+        private final AtomicBoolean failedOverReceived = new AtomicBoolean(false);
 
         private final AtomicReference<String> lastNotification = new AtomicReference<>();
 
         private final AtomicInteger timeoutCount = new AtomicInteger(0);
 
         private final AtomicInteger successCount = new AtomicInteger(0);
+
+        // Track normal timeouts during maintenance (should be 0)
+        private final AtomicInteger normalTimeoutsDuringMaintenance = new AtomicInteger(0);
 
         private final AtomicBoolean maintenanceActive = new AtomicBoolean(false);
 
@@ -197,6 +202,34 @@ public class RelaxedTimeoutConfigurationTest {
                 return;
             }
 
+            // Count down appropriate latches based on notification type (only once per type)
+            if (notification.contains("MIGRATING")) {
+                if (migratingReceived.compareAndSet(false, true)) {
+                    migrationLatch.countDown();
+                    log.info("First MIGRATING notification - migration latch count down");
+                }
+            } else if (notification.contains("MIGRATED")) {
+                if (migratedReceived.compareAndSet(false, true)) {
+                    migrationLatch.countDown();
+                    log.info("First MIGRATED notification - migration latch count down");
+                }
+            } else if (notification.contains("MOVING")) {
+                if (movingReceived.compareAndSet(false, true)) {
+                    migrationLatch.countDown();
+                    log.info("First MOVING notification - migration latch count down");
+                }
+            } else if (notification.contains("FAILING_OVER")) {
+                if (failingOverReceived.compareAndSet(false, true)) {
+                    failoverLatch.countDown();
+                    log.info("First FAILING_OVER notification - failover latch count down");
+                }
+            } else if (notification.contains("FAILED_OVER")) {
+                if (failedOverReceived.compareAndSet(false, true)) {
+                    failoverLatch.countDown();
+                    log.info("First FAILED_OVER notification - failover latch count down");
+                }
+            }
+
             // For MOVING tests: Test all 4 phases
             if (notification.contains("MIGRATED") && isMovingTest) {
                 maintenanceActive.set(false);
@@ -221,13 +254,6 @@ public class RelaxedTimeoutConfigurationTest {
                 log.info("ACTION: Starting traffic to test relaxed timeouts during MOVING");
                 startContinuousTraffic();
 
-                // Let traffic run for a bit to test relaxed timeouts during MOVING
-                try {
-                    Thread.sleep(3000); // 3 seconds to test MOVING relaxed timeouts
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-
                 log.info("ACTION: Stopping traffic after MOVING relaxed timeout testing");
                 stopContinuousTraffic();
 
@@ -235,8 +261,6 @@ public class RelaxedTimeoutConfigurationTest {
                 maintenanceActive.set(false);
                 log.info("ACTION: Setting maintenanceActive=false after MOVING testing");
 
-                log.info("ACTION: Counting down notification latch for MOVING");
-                notificationLatch.countDown(); // Count down ONLY on MOVING for MOVING tests
                 log.info("=== MOVING DECISION TREE END ===");
 
             } else if (notification.contains("MIGRATING")) {
@@ -265,11 +289,6 @@ public class RelaxedTimeoutConfigurationTest {
                 // All remaining tests are unrelaxed tests, so stop traffic after FAILED_OVER
                 log.info("Un-relaxed test: Stopping traffic after FAILED_OVER notification");
                 stopContinuousTraffic();
-
-                // Only count down latch for non-MOVING tests (failover tests)
-                if (!isMovingTest) {
-                    notificationLatch.countDown(); // Count down for FAILED_OVER in FAILED_OVER tests
-                }
 
             } else {
                 log.info("Ignoring notification: {} (not relevant for current test)", notification);
@@ -330,13 +349,18 @@ public class RelaxedTimeoutConfigurationTest {
                 log.info("BLPOP command #{} timed out - Wall clock: {}ms, Actual timeout: {}ms, Exception: {}", commandCount,
                         wallClockDuration, timeoutDurationStr, e.getMessage());
 
-                // Check if this is a relaxed timeout
+                // Check timeout behavior during maintenance
                 if (isMaintenanceActive() && !"unknown".equals(timeoutDurationStr)) {
                     int timeoutDuration = Integer.parseInt(timeoutDurationStr);
                     if (timeoutDuration > NORMAL_COMMAND_TIMEOUT.toMillis()
                             && timeoutDuration <= EFFECTIVE_TIMEOUT_DURING_MAINTENANCE.toMillis()) {
-                        log.info("Relaxed timeout detected: {}ms", timeoutDuration);
+                        log.info("Relaxed timeout detected during maintenance: {}ms", timeoutDuration);
                         recordRelaxedTimeout(); // Count this as a relaxed timeout
+                    } else if (timeoutDuration <= NORMAL_COMMAND_TIMEOUT.toMillis()) {
+                        log.warn(
+                                "UNEXPECTED: Normal timeout detected during maintenance: {}ms - This indicates relaxed timeout mechanism is not working!",
+                                timeoutDuration);
+                        recordNormalTimeoutDuringMaintenance(); // Count this as an error
                     }
                 }
 
@@ -446,12 +470,12 @@ public class RelaxedTimeoutConfigurationTest {
             }
         }
 
-        public boolean waitForNotification(Duration timeout) throws InterruptedException {
-            return notificationLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
-        }
-
         public void recordRelaxedTimeout() {
             timeoutCount.incrementAndGet();
+        }
+
+        public void recordNormalTimeoutDuringMaintenance() {
+            normalTimeoutsDuringMaintenance.incrementAndGet();
         }
 
         public void recordSuccess() {
@@ -466,8 +490,20 @@ public class RelaxedTimeoutConfigurationTest {
             return timeoutCount.get();
         }
 
+        public int getNormalTimeoutsDuringMaintenance() {
+            return normalTimeoutsDuringMaintenance.get();
+        }
+
         public int getSuccessCount() {
             return successCount.get();
+        }
+
+        public boolean waitForMigrationNotifications(Duration timeout) throws InterruptedException {
+            return migrationLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        }
+
+        public boolean waitForFailoverNotifications(Duration timeout) throws InterruptedException {
+            return failoverLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
         }
 
         public List<String> getReceivedNotifications() {
@@ -507,16 +543,9 @@ public class RelaxedTimeoutConfigurationTest {
         private void testUnrelaxedTimeoutsAfterMigrated() {
             log.info("Testing unrelaxed timeouts after MIGRATED notification...");
 
-            // Wait a moment for maintenance state to clear
-            try {
-                Thread.sleep(2000); // 2 second pause
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-
             int normalTimeoutCount = 0;
             int relaxedTimeoutCount = 0;
-            int totalCommands = 10; // Smaller batch for intermediate testing
+            int totalCommands = TEST_COMMAND_COUNT; // Smaller batch for intermediate testing
 
             for (int i = 0; i < totalCommands; i++) {
                 if (!mainConnection.isOpen()) {
@@ -526,7 +555,8 @@ public class RelaxedTimeoutConfigurationTest {
 
                 long startTime = System.currentTimeMillis();
                 try {
-                    RedisFuture<KeyValue<String, String>> future = mainConnection.async().blpop(5, "migrated-test-key-" + i);
+                    RedisFuture<KeyValue<String, String>> future = mainConnection.async().blpop(BLPOP_TIMEOUT.getSeconds(),
+                            "migrated-test-key-" + i);
                     future.get();
 
                     long duration = System.currentTimeMillis() - startTime;
@@ -557,12 +587,18 @@ public class RelaxedTimeoutConfigurationTest {
             log.info("Normal timeouts detected: {}", normalTimeoutCount);
             log.info("Relaxed timeouts still active: {}", relaxedTimeoutCount);
 
-            // We expect mostly normal timeouts after MIGRATED
-            if (normalTimeoutCount > 0) {
-                log.info("SUCCESS: Detected normal timeouts after MIGRATED - unrelaxation working");
-            } else {
-                log.warn("WARNING: No normal timeouts detected after MIGRATED - unrelaxation may not be working");
-            }
+            // STRICT VERIFICATION: After MIGRATED notification, ALL commands should fail with normal timeout
+            // No mixing of timeout types should occur - this ensures the timeout un-relaxation mechanism works correctly after
+            // MIGRATED
+            assertThat(normalTimeoutCount).as("After MIGRATED notification, ALL commands should fail with normal timeout. "
+                    + "Found {} normal timeouts out of {} total commands. "
+                    + "Mixed timeout behavior indicates the timeout un-relaxation mechanism is not working properly after MIGRATED.",
+                    normalTimeoutCount, totalCommands).isEqualTo(totalCommands);
+
+            assertThat(relaxedTimeoutCount).as("After MIGRATED notification, NO commands should fail with relaxed timeout. "
+                    + "Found {} relaxed timeouts out of {} total commands. "
+                    + "Any relaxed timeouts indicate the timeout un-relaxation mechanism is not working properly after MIGRATED.",
+                    relaxedTimeoutCount, totalCommands).isEqualTo(0);
         }
 
     }
@@ -648,13 +684,10 @@ public class RelaxedTimeoutConfigurationTest {
     private void testNormalTimeoutsAfterMaintenance(TimeoutTestContext context) throws InterruptedException {
         log.info("Testing normal timeouts after maintenance completion...");
 
-        // Wait a bit for any pending operations to complete
-        await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(5)).until(() -> true);
-
         // Send several BLPOP commands to test timeout behavior
         int normalTimeoutCount = 0;
         int relaxedTimeoutCount = 0;
-        int totalCommands = 20;
+        int totalCommands = TEST_COMMAND_COUNT;
 
         for (int i = 0; i < totalCommands; i++) {
             // Check connection state before each command
@@ -666,7 +699,8 @@ public class RelaxedTimeoutConfigurationTest {
             long startTime = System.currentTimeMillis();
             try {
                 // Use the normal timeout duration for BLPOP to test if timeouts are back to normal
-                RedisFuture<KeyValue<String, String>> future = context.connection.async().blpop(10, "normal-test-key-" + i);
+                RedisFuture<KeyValue<String, String>> future = context.connection.async().blpop(BLPOP_TIMEOUT.getSeconds(),
+                        "normal-test-key-" + i);
                 future.get(); // Execute the command, result not needed
 
                 long duration = System.currentTimeMillis() - startTime;
@@ -699,16 +733,19 @@ public class RelaxedTimeoutConfigurationTest {
         log.info("Normal timeouts detected: {}", normalTimeoutCount);
         log.info("Relaxed timeouts still active: {}", relaxedTimeoutCount);
 
-        // Verify that we have some normal timeouts (indicating timeout relaxation was properly disabled)
-        assertThat(normalTimeoutCount).as("Should have detected normal timeouts after maintenance completion. "
-                + "All timeouts still being relaxed indicates the timeout un-relaxation mechanism is not working properly.")
-                .isGreaterThan(0);
+        // STRICT VERIFICATION: After maintenance completion, ALL commands should fail with normal timeout
+        // No mixing of timeout types should occur - this ensures the timeout un-relaxation mechanism works correctly
+        assertThat(normalTimeoutCount).as(
+                "After maintenance completion, ALL commands should fail with normal timeout. "
+                        + "Found {} normal timeouts out of {} total commands. "
+                        + "Mixed timeout behavior indicates the timeout un-relaxation mechanism is not working properly.",
+                normalTimeoutCount, totalCommands).isEqualTo(totalCommands);
 
-        // Verify that relaxed timeouts are not predominant (indicating proper un-relaxation)
-        assertThat(relaxedTimeoutCount)
-                .as("Should have fewer relaxed timeouts than normal timeouts after maintenance completion. "
-                        + "Too many relaxed timeouts indicates the timeout un-relaxation mechanism is not working properly.")
-                .isLessThan(normalTimeoutCount);
+        assertThat(relaxedTimeoutCount).as(
+                "After maintenance completion, NO commands should fail with relaxed timeout. "
+                        + "Found {} relaxed timeouts out of {} total commands. "
+                        + "Any relaxed timeouts indicate the timeout un-relaxation mechanism is not working properly.",
+                relaxedTimeoutCount, totalCommands).isEqualTo(0);
     }
 
     /**
@@ -717,21 +754,12 @@ public class RelaxedTimeoutConfigurationTest {
     private void testNormalTimeoutsAfterMoving(TimeoutTestContext context) throws InterruptedException {
         log.info("Testing normal timeouts after MOVING notification and reconnection...");
 
-        // Wait for the connection to drop and reconnect after MOVING
-        log.info("Waiting for connection to drop and reconnect after MOVING notification...");
-
-        // Wait longer for any pending operations to complete after reconnection and for relaxed timeouts to be cleared
-        log.info("Waiting for maintenance state to be fully cleared...");
-        await().pollDelay(Duration.ofSeconds(15)).atMost(Duration.ofSeconds(30)).until(() -> true); // Allow time for
-                                                                                                    // maintenance state to
-                                                                                                    // clear
-
         log.info("Connection status before timeout tests: {}", context.connection.isOpen());
 
         // Send several BLPOP commands to test timeout behavior after reconnection
         int normalTimeoutCount = 0;
         int relaxedTimeoutCount = 0;
-        int totalCommands = 20;
+        int totalCommands = TEST_COMMAND_COUNT;
 
         for (int i = 0; i < totalCommands; i++) {
             // Check connection state before each command
@@ -744,8 +772,8 @@ public class RelaxedTimeoutConfigurationTest {
             try {
                 // Use the normal timeout duration for BLPOP to test if timeouts are back to normal
                 // CRITICAL: Use mainConnection like traffic generation does, not context.connection
-                RedisFuture<KeyValue<String, String>> future = context.capture.getMainConnection().async().blpop(10,
-                        "moving-normal-test-key-" + i);
+                RedisFuture<KeyValue<String, String>> future = context.capture.getMainConnection().async()
+                        .blpop(BLPOP_TIMEOUT.getSeconds(), "moving-normal-test-key-" + i);
                 future.get(); // Execute the command, result not needed
 
                 long duration = System.currentTimeMillis() - startTime;
@@ -784,16 +812,17 @@ public class RelaxedTimeoutConfigurationTest {
         log.info("Normal timeouts detected: {}", normalTimeoutCount);
         log.info("Relaxed timeouts still active: {}", relaxedTimeoutCount);
 
-        // Verify that we have some normal timeouts (indicating timeout relaxation was properly disabled after MOVING)
-        assertThat(normalTimeoutCount).as("Should have detected normal timeouts after MOVING notification and reconnection. "
-                + "All timeouts still being relaxed indicates the timeout un-relaxation mechanism is not working properly after MOVING.")
-                .isGreaterThan(0);
+        assertThat(normalTimeoutCount).as(
+                "After MOVING notification and reconnection, ALL commands should fail with normal timeout. "
+                        + "Found {} normal timeouts out of {} total commands. "
+                        + "Mixed timeout behavior indicates the timeout un-relaxation mechanism is not working properly after MOVING.",
+                normalTimeoutCount, totalCommands).isEqualTo(totalCommands);
 
-        // Verify that relaxed timeouts are not predominant (indicating proper un-relaxation after MOVING)
-        assertThat(relaxedTimeoutCount)
-                .as("Should have fewer relaxed timeouts than normal timeouts after MOVING notification and reconnection. "
-                        + "Too many relaxed timeouts indicates the timeout un-relaxation mechanism is not working properly after MOVING.")
-                .isLessThan(normalTimeoutCount);
+        assertThat(relaxedTimeoutCount).as(
+                "After MOVING notification and reconnection, NO commands should fail with relaxed timeout. "
+                        + "Found {} relaxed timeouts out of {} total commands. "
+                        + "Any relaxed timeouts indicate the timeout un-relaxation mechanism is not working properly after MOVING.",
+                relaxedTimeoutCount, totalCommands).isEqualTo(0);
     }
 
     @Test
@@ -807,35 +836,24 @@ public class RelaxedTimeoutConfigurationTest {
 
             String endpointId = clusterConfig.getFirstEndpointId();
             String policy = "single";
-            // Start maintenance operation - notification handler will manage traffic automatically
             log.info("Starting maintenance operation (migrate + rebind) with endpoint-aware node selection...");
 
-            // Start the maintenance operation and wait for it to complete fully
             log.info("Starting MOVING operation with endpoint-aware node selection and waiting for it to complete...");
             Boolean operationResult = faultClient.triggerMovingNotification(context.bdbId, endpointId, policy, clusterConfig)
                     .block(Duration.ofMinutes(3));
             assertThat(operationResult).isTrue();
             log.info("MOVING operation fully completed: {}", operationResult);
 
-            // Verify we got the expected notifications during the operation
+            // Wait for migration notifications (3 expected: MIGRATING + MIGRATED + MOVING)
+            boolean migrationReceived = context.capture.waitForMigrationNotifications(Duration.ofMinutes(1));
+            assertThat(migrationReceived).as("Should receive migration notifications").isTrue();
+
             log.info("Verifying we received the expected notifications...");
-            // Short wait since operation already completed
-            boolean received = context.capture.waitForNotification(Duration.ofSeconds(5));
-
-            assertThat(received).isTrue();
-
-            // Verify we got the expected notifications
+            log.info("Received notifications: {}", context.capture.getReceivedNotifications());
             assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MIGRATED"))).isTrue();
             assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
 
-            // Record MOVING operation completion
             context.capture.recordMovingEnd();
-
-            log.info("Waiting for maintenance state to be fully cleared...");
-            await().pollDelay(Duration.ofSeconds(10)).atMost(Duration.ofSeconds(20)).until(() -> true); // Allow time for
-                                                                                                        // maintenance state to
-                                                                                                        // clear
-            // Stop any remaining traffic for this specific test case
             log.info("Un-relaxed MOVING test: Stopping all traffic after MOVING operation completed");
             context.capture.stopContinuousTraffic();
 
@@ -848,14 +866,22 @@ public class RelaxedTimeoutConfigurationTest {
             log.info("=== MOVING Un-relaxed Test Results ===");
             log.info("MOVING operation duration: {}ms", context.capture.getMovingDuration());
             log.info("Successful operations: {}", context.capture.getSuccessCount());
-            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
+            log.info("Relaxed timeout operations during maintenance: {}", context.capture.getTimeoutCount());
+            log.info("Normal timeout operations during maintenance (should be 0): {}",
+                    context.capture.getNormalTimeoutsDuringMaintenance());
             log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
 
-            // CRITICAL: Verify that we detected at least one relaxed timeout during maintenance
+            // STRICT VERIFICATION: During maintenance, ALL timeouts should be relaxed, NONE should be normal
             assertThat(context.capture.getTimeoutCount())
                     .as("Should have detected at least one relaxed timeout during MOVING maintenance. "
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
+
+            assertThat(context.capture.getNormalTimeoutsDuringMaintenance()).as(
+                    "During MOVING maintenance, NO commands should fail with normal timeout. "
+                            + "Found {} normal timeouts during maintenance. "
+                            + "Any normal timeouts during maintenance indicate the timeout relaxation mechanism is not working properly.",
+                    context.capture.getNormalTimeoutsDuringMaintenance()).isEqualTo(0);
 
             // End test phase to prevent capturing cleanup notifications
             context.capture.endTestPhase();
@@ -880,15 +906,15 @@ public class RelaxedTimeoutConfigurationTest {
 
             log.info("Triggering shard failover for FAILED_OVER notification asynchronously...");
 
-            // Start the operation but don't wait for completion
-            faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig).subscribe(
-                    result -> log.info("FAILED_OVER operation completed: {}", result),
-                    error -> log.error("FAILED_OVER operation failed: {}", error.getMessage()));
+            // Start the operation and wait for completion
+            Boolean failoverResult = faultClient.triggerShardFailover(context.bdbId, nodeId, clusterConfig)
+                    .block(Duration.ofMinutes(3));
+            assertThat(failoverResult).isTrue();
+            log.info("FAILED_OVER operation completed: {}", failoverResult);
 
-            // Wait for FAILED_OVER notification and automatic timeout testing
-            log.info("Waiting for FAILED_OVER notification (timeout testing will happen automatically)...");
-            boolean received = context.capture.waitForNotification(NOTIFICATION_WAIT_TIMEOUT);
-            assertThat(received).isTrue();
+            // Wait for failover notifications (2 expected: FAILING_OVER + FAILED_OVER)
+            boolean failoverReceived = context.capture.waitForFailoverNotifications(Duration.ofMinutes(1));
+            assertThat(failoverReceived).as("Should receive failover notifications").isTrue();
 
             // Verify notification was received and timeout testing completed
             assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("FAILED_OVER"))).isTrue();
@@ -901,14 +927,22 @@ public class RelaxedTimeoutConfigurationTest {
 
             log.info("=== FAILED_OVER Un-relaxed Test Results ===");
             log.info("Successful operations: {}", context.capture.getSuccessCount());
-            log.info("Timeout operations: {}", context.capture.getTimeoutCount());
+            log.info("Relaxed timeout operations during maintenance: {}", context.capture.getTimeoutCount());
+            log.info("Normal timeout operations during maintenance (should be 0): {}",
+                    context.capture.getNormalTimeoutsDuringMaintenance());
             log.info("Notifications received: {}", context.capture.getReceivedNotifications().size());
 
-            // Verify that we detected relaxed timeouts during maintenance
+            // STRICT VERIFICATION: During maintenance, ALL timeouts should be relaxed, NONE should be normal
             assertThat(context.capture.getTimeoutCount())
                     .as("Should have detected at least one relaxed timeout during FAILING_OVER maintenance. "
                             + "No relaxed timeouts detected indicates the timeout relaxation mechanism is not working properly.")
                     .isGreaterThan(0);
+
+            assertThat(context.capture.getNormalTimeoutsDuringMaintenance()).as(
+                    "During FAILING_OVER maintenance, NO commands should fail with normal timeout. "
+                            + "Found {} normal timeouts during maintenance. "
+                            + "Any normal timeouts during maintenance indicate the timeout relaxation mechanism is not working properly.",
+                    context.capture.getNormalTimeoutsDuringMaintenance()).isEqualTo(0);
 
             // End test phase to prevent capturing cleanup notifications
             context.capture.endTestPhase();
@@ -922,7 +956,6 @@ public class RelaxedTimeoutConfigurationTest {
 
         } finally {
             cleanupTimeoutTest(context);
-
         }
         log.info("test timeoutUnrelaxedOnFailedoverTest ended");
     }
