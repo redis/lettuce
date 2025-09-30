@@ -1,7 +1,6 @@
 package io.lettuce.scenario;
 
 import java.nio.ByteBuffer;
-import java.time.Duration;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -10,9 +9,6 @@ import org.slf4j.LoggerFactory;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * Utility class for setting up Redis Enterprise maintenance event push notification monitoring. Provides a reusable way to
@@ -22,15 +18,8 @@ public class MaintenancePushNotificationMonitor {
 
     private static final Logger log = LoggerFactory.getLogger(MaintenancePushNotificationMonitor.class);
 
-    // Default timeout constants
-    private static final Duration DEFAULT_MONITORING_TIMEOUT = Duration.ofMinutes(2);
-
-    private static final Duration DEFAULT_PING_TIMEOUT = Duration.ofSeconds(10);
-
-    private static final Duration DEFAULT_PING_INTERVAL = Duration.ofSeconds(5);
-
     /**
-     * Sets up push notification monitoring with default timeouts
+     * Sets up push notification monitoring. Lettuce automatically observes the input buffer and parses PUSH notifications.
      * 
      * @param connection the Redis connection to monitor
      * @param capture the capture implementation to handle notifications
@@ -38,22 +27,6 @@ public class MaintenancePushNotificationMonitor {
      */
     public static <T extends MaintenanceNotificationCapture> void setupMonitoring(
             StatefulRedisConnection<String, String> connection, T capture) {
-        setupMonitoring(connection, capture, DEFAULT_MONITORING_TIMEOUT, DEFAULT_PING_TIMEOUT, DEFAULT_PING_INTERVAL);
-    }
-
-    /**
-     * Sets up push notification monitoring with custom timeouts
-     * 
-     * @param connection the Redis connection to monitor
-     * @param capture the capture implementation to handle notifications
-     * @param monitoringTimeout how long to run periodic ping monitoring
-     * @param pingTimeout timeout for individual ping operations
-     * @param pingInterval interval between ping operations
-     * @param <T> the type of capture that implements MaintenanceNotificationCapture
-     */
-    public static <T extends MaintenanceNotificationCapture> void setupMonitoring(
-            StatefulRedisConnection<String, String> connection, T capture, Duration monitoringTimeout, Duration pingTimeout,
-            Duration pingInterval) {
 
         log.info("Setting up push notification monitoring for maintenance events...");
 
@@ -62,33 +35,8 @@ public class MaintenancePushNotificationMonitor {
         connection.addListener(maintenanceListener);
         log.info("PushListener registered for maintenance event monitoring");
 
-        // Start periodic ping monitoring to encourage push messages
-        startPeriodicPingMonitoring(connection, monitoringTimeout, pingTimeout, pingInterval);
-
-        log.info("Push notification monitoring active");
-    }
-
-    /**
-     * Starts periodic ping monitoring to trigger push notifications
-     */
-    private static void startPeriodicPingMonitoring(StatefulRedisConnection<String, String> connection,
-            Duration monitoringTimeout, Duration pingTimeout, Duration pingInterval) {
-
-        RedisReactiveCommands<String, String> reactive = connection.reactive();
-
-        // Calculate number of pings based on monitoring timeout and interval
-        long totalPings = monitoringTimeout.toMillis() / pingInterval.toMillis();
-
-        // Start monitoring - the Disposable is not stored as it runs asynchronously
-        // Use Flux.interval(Duration.ZERO, pingInterval) with Duration.ZERO as the initial delay to start immediately
-        Flux.interval(Duration.ZERO, pingInterval).take(totalPings)
-                .doOnNext(i -> log.info("Ping #{} - Activity to trigger push messages", i))
-                .flatMap(i -> reactive.ping().timeout(pingTimeout)
-                        .doOnNext(response -> log.info("Ping #{} response: '{}'", i, response)).onErrorResume(e -> {
-                            log.debug("Ping #{} failed, continuing: {}", i, e.getMessage());
-                            return Mono.empty();
-                        }))
-                .doOnComplete(() -> log.info("Push notification monitoring completed")).subscribe();
+        // No periodic ping monitoring needed - Lettuce automatically handles PUSH notifications
+        log.info("Push notification monitoring active - Lettuce will automatically parse PUSH notifications");
     }
 
     /**

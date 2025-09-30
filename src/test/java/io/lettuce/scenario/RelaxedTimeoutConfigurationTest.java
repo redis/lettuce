@@ -34,7 +34,8 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.KeyValue;
 import io.lettuce.core.api.StatefulRedisConnection;
-
+import io.lettuce.core.api.push.PushListener;
+import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.protocol.ProtocolVersion;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.test.ConnectionTestUtil;
@@ -75,11 +76,8 @@ public class RelaxedTimeoutConfigurationTest {
     // For migrations/failovers
     private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5);
 
-    // For ping operations
-    private static final Duration PING_TIMEOUT = Duration.ofSeconds(10);
-
-    // For monitoring operations
-    private static final Duration MONITORING_TIMEOUT = Duration.ofMinutes(2);
+    // For blpop operations
+    private static final Duration BLPOP_TIMEOUT = Duration.ofSeconds(10);
 
     private static Endpoint mStandard;
 
@@ -317,7 +315,8 @@ public class RelaxedTimeoutConfigurationTest {
             long startTime = System.currentTimeMillis();
             try {
                 // Use the normal timeout duration for BLPOP to test timeout behavior
-                RedisFuture<KeyValue<String, String>> future = mainConnection.async().blpop(10, "traffic-key-" + commandCount);
+                RedisFuture<KeyValue<String, String>> future = mainConnection.async().blpop(BLPOP_TIMEOUT.toMillis(),
+                        "traffic-key-" + commandCount);
                 future.get(); // Execute the command, result not needed
 
                 long duration = System.currentTimeMillis() - startTime;
@@ -364,66 +363,55 @@ public class RelaxedTimeoutConfigurationTest {
         private void clearCommandStack(String context) {
             log.info("Attempting to clear command stack {}...", context);
             try {
-                if (mainConnection != null && mainConnection.isOpen()) {
-                    // Access the delegate inside MaintenanceAwareExpiryWriter to get the real ChannelWriter
-                    io.lettuce.core.RedisChannelHandler<?, ?> handler = (io.lettuce.core.RedisChannelHandler<?, ?>) mainConnection;
-                    io.lettuce.core.RedisChannelWriter writer = handler.getChannelWriter();
+                // Access the delegate inside MaintenanceAwareExpiryWriter to get the real ChannelWriter
+                io.lettuce.core.RedisChannelHandler<?, ?> handler = (io.lettuce.core.RedisChannelHandler<?, ?>) mainConnection;
+                io.lettuce.core.RedisChannelWriter writer = handler.getChannelWriter();
 
-                    if (writer instanceof io.lettuce.core.protocol.MaintenanceAwareExpiryWriter) {
-                        // Get the delegate field from MaintenanceAwareExpiryWriter
-                        java.lang.reflect.Field delegateField = writer.getClass().getDeclaredField("delegate");
-                        delegateField.setAccessible(true);
-                        io.lettuce.core.RedisChannelWriter delegate = (io.lettuce.core.RedisChannelWriter) delegateField
-                                .get(writer);
+                if (writer instanceof io.lettuce.core.protocol.MaintenanceAwareExpiryWriter) {
+                    // Get the delegate field from MaintenanceAwareExpiryWriter
+                    java.lang.reflect.Field delegateField = writer.getClass().getDeclaredField("delegate");
+                    delegateField.setAccessible(true);
+                    io.lettuce.core.RedisChannelWriter delegate = (io.lettuce.core.RedisChannelWriter) delegateField
+                            .get(writer);
 
-                        // Get the channel directly from the delegate
-                        java.lang.reflect.Field channelField = delegate.getClass().getDeclaredField("channel");
-                        channelField.setAccessible(true);
-                        io.netty.channel.Channel channel = (io.netty.channel.Channel) channelField.get(delegate);
+                    // Get the channel directly from the delegate
+                    java.lang.reflect.Field channelField = delegate.getClass().getDeclaredField("channel");
+                    channelField.setAccessible(true);
+                    io.netty.channel.Channel channel = (io.netty.channel.Channel) channelField.get(delegate);
 
-                        // Print detailed channel and rebind state information
-                        log.info("=== CHANNEL STATE DEBUG INFO ===");
-                        log.info("Channel: {}", channel);
-                        log.info("Channel active: {}", channel.isActive());
-                        log.info("Channel registered: {}", channel.isRegistered());
+                    // Print detailed channel and rebind state information
+                    log.info("=== CHANNEL STATE DEBUG INFO ===");
+                    log.info("Channel: {}", channel);
+                    log.info("Channel active: {}", channel.isActive());
+                    log.info("Channel registered: {}", channel.isRegistered());
 
-                        // Check rebind attribute
-                        if (channel.hasAttr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE)) {
-                            Object rebindState = channel
-                                    .attr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE).get();
-                            log.info("Rebind attribute present: true, state: {}", rebindState);
-                        } else {
-                            log.info("Rebind attribute present: false");
-                        }
-
-                        // Access the CommandHandler directly
-                        io.lettuce.core.protocol.CommandHandler commandHandler = channel.pipeline()
-                                .get(io.lettuce.core.protocol.CommandHandler.class);
-                        if (commandHandler != null) {
-                            int stackSize = commandHandler.getStack().size();
-                            log.info("CommandHandler found, stack size: {}", stackSize);
-                            if (stackSize > 0) {
-                                log.info("Clearing command stack ({} commands) to allow rebind completion", stackSize);
-                                commandHandler.getStack().clear();
-                                log.info("Command stack cleared successfully");
-                            } else {
-                                log.info("Command stack is already empty ({} commands)", stackSize);
-                            }
-                        } else {
-                            log.warn("CommandHandler not found in pipeline");
-                        }
-                        log.info("=== END CHANNEL STATE DEBUG INFO ===");
+                    // Check rebind attribute
+                    if (channel.hasAttr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE)) {
+                        Object rebindState = channel
+                                .attr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE).get();
+                        log.info("Rebind attribute present: true, state: {}", rebindState);
                     } else {
-                        // Fallback to normal approach if not MaintenanceAwareExpiryWriter
-                        int stackSize = ConnectionTestUtil.getStack(mainConnection).size();
+                        log.info("Rebind attribute present: false");
+                    }
+
+                    // Access the CommandHandler directly
+                    io.lettuce.core.protocol.CommandHandler commandHandler = channel.pipeline()
+                            .get(io.lettuce.core.protocol.CommandHandler.class);
+                    if (commandHandler != null) {
+                        int stackSize = commandHandler.getStack().size();
+                        log.info("CommandHandler found, stack size: {}", stackSize);
                         if (stackSize > 0) {
                             log.info("Clearing command stack ({} commands) to allow rebind completion", stackSize);
-                            ConnectionTestUtil.getStack(mainConnection).clear();
+                            commandHandler.getStack().clear();
                             log.info("Command stack cleared successfully");
                         } else {
                             log.info("Command stack is already empty ({} commands)", stackSize);
                         }
+                    } else {
+                        log.warn("CommandHandler not found in pipeline");
                     }
+                    log.info("=== END CHANNEL STATE DEBUG INFO ===");
+
                 } else {
                     log.warn("mainConnection is null or closed - cannot clear stack");
                 }
@@ -639,9 +627,7 @@ public class RelaxedTimeoutConfigurationTest {
             log.warn("Initial PING failed: {}", e.getMessage());
         }
 
-        // Setup push notification monitoring using the utility
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
-                Duration.ofMillis(5000));
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         String bdbId = String.valueOf(mStandard.getBdbId());
 

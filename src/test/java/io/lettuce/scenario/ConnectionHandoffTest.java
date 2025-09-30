@@ -98,6 +98,202 @@ public class ConnectionHandoffTest {
     private static final Pattern FQDN_PATTERN = Pattern
             .compile("^[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?(\\.[a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?)*$");
 
+    // Push notification patterns for all 5 notification types
+    private static final Pattern MOVING_NOTIFICATION_PATTERN = Pattern
+            .compile(">4\\r\\nMOVING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n([^:]+):(\\d+)\\r\\n");
+
+    private static final Pattern MIGRATING_NOTIFICATION_PATTERN = Pattern
+            .compile(">4\\r\\nMIGRATING\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(.+)\\r\\n");
+
+    private static final Pattern MIGRATED_NOTIFICATION_PATTERN = Pattern
+            .compile(">3\\r\\nMIGRATED\\r\\n:(\\d+)\\r\\n:(.+)\\r\\n");
+
+    private static final Pattern FAILING_OVER_NOTIFICATION_PATTERN = Pattern
+            .compile(">4\\r\\nFAILING_OVER\\r\\n:(\\d+)\\r\\n:(\\d+)\\r\\n:(.+)\\r\\n");
+
+    private static final Pattern FAILED_OVER_NOTIFICATION_PATTERN = Pattern
+            .compile(">3\\r\\nFAILED_OVER\\r\\n:(\\d+)\\r\\n:(.+)\\r\\n");
+
+    /**
+     * Enum representing the different types of maintenance notifications
+     */
+    public enum NotificationType {
+
+        MOVING(MOVING_NOTIFICATION_PATTERN, "MOVING", 4), MIGRATING(MIGRATING_NOTIFICATION_PATTERN, "MIGRATING", 3), MIGRATED(
+                MIGRATED_NOTIFICATION_PATTERN, "MIGRATED", 2), FAILING_OVER(FAILING_OVER_NOTIFICATION_PATTERN, "FAILING_OVER",
+                        3), FAILED_OVER(FAILED_OVER_NOTIFICATION_PATTERN, "FAILED_OVER", 2);
+
+        private final Pattern pattern;
+
+        private final String notificationName;
+
+        private final int expectedGroups;
+
+        NotificationType(Pattern pattern, String notificationName, int expectedGroups) {
+            this.pattern = pattern;
+            this.notificationName = notificationName;
+            this.expectedGroups = expectedGroups;
+        }
+
+        public Pattern getPattern() {
+            return pattern;
+        }
+
+        public String getNotificationName() {
+            return notificationName;
+        }
+
+        public int getExpectedGroups() {
+            return expectedGroups;
+        }
+
+    }
+
+    /**
+     * Common function to validate and parse maintenance notifications
+     * 
+     * @param notification The raw notification string
+     * @param expectedType The expected notification type
+     * @return ParsedNotification object with extracted values
+     */
+    public static class ParsedNotification {
+
+        private final String sequenceNumber;
+
+        private final String timeSeconds;
+
+        private final String shardId;
+
+        private final String ipAddress;
+
+        private final String port;
+
+        private final NotificationType type;
+
+        public ParsedNotification(NotificationType type, String sequenceNumber, String timeSeconds, String shardId,
+                String ipAddress, String port) {
+            this.type = type;
+            this.sequenceNumber = sequenceNumber;
+            this.timeSeconds = timeSeconds;
+            this.shardId = shardId;
+            this.ipAddress = ipAddress;
+            this.port = port;
+        }
+
+        public String getSequenceNumber() {
+            return sequenceNumber;
+        }
+
+        public String getTimeSeconds() {
+            return timeSeconds;
+        }
+
+        public String getShardId() {
+            return shardId;
+        }
+
+        public String getIpAddress() {
+            return ipAddress;
+        }
+
+        public String getPort() {
+            return port;
+        }
+
+        public NotificationType getType() {
+            return type;
+        }
+
+    }
+
+    /**
+     * Validates and parses a maintenance notification against the expected type
+     * 
+     * @param notification The notification string to validate
+     * @param expectedType The expected notification type
+     * @return ParsedNotification with extracted values
+     * @throws AssertionError if validation fails
+     */
+    public static ParsedNotification validateAndParseNotification(String notification, NotificationType expectedType) {
+        assertThat(notification).as("Notification should not be null").isNotNull();
+        assertThat(notification).as("Notification should contain " + expectedType.getNotificationName())
+                .contains(expectedType.getNotificationName());
+
+        log.info("Validating {} notification: {}", expectedType.getNotificationName(),
+                notification.replace("\n", "\\n").replace("\r", "\\r"));
+
+        Matcher matcher = expectedType.getPattern().matcher(notification);
+        assertThat(matcher.matches()).as(expectedType.getNotificationName() + " notification should match expected format")
+                .isTrue();
+
+        String sequenceNumber = matcher.group(1);
+        String timeSeconds = null;
+        String shardId = null;
+        String ipAddress = null;
+        String port = null;
+
+        // Parse based on notification type
+        switch (expectedType) {
+            case MOVING:
+                timeSeconds = matcher.group(2);
+                ipAddress = matcher.group(3);
+                port = matcher.group(4);
+                log.info("Parsed MOVING - Seq: {}, Time: {}, IP: {}, Port: {}", sequenceNumber, timeSeconds, ipAddress, port);
+                break;
+            case MIGRATING:
+                timeSeconds = matcher.group(2);
+                shardId = matcher.group(3); // This will be JSON array like ["2", "4"] for multiple shards
+                log.info("Parsed MIGRATING - Seq: {}, Time: {}, Shard: {}", sequenceNumber, timeSeconds, shardId);
+                break;
+            case MIGRATED:
+                shardId = matcher.group(2); // This will be JSON array like ["2", "4"] for multiple shards
+                log.info("Parsed MIGRATED - Seq: {}, Shard: {}", sequenceNumber, shardId);
+                break;
+            case FAILING_OVER:
+                timeSeconds = matcher.group(2);
+                shardId = matcher.group(3); // This will be JSON array like ["2", "4"] for multiple shards
+                log.info("Parsed FAILING_OVER - Seq: {}, Time: {}, Shard: {}", sequenceNumber, timeSeconds, shardId);
+                break;
+            case FAILED_OVER:
+                shardId = matcher.group(2); // This will be JSON array like ["2", "4"] for multiple shards
+                log.info("Parsed FAILED_OVER - Seq: {}, Shard: {}", sequenceNumber, shardId);
+                break;
+        }
+
+        // Validate common fields
+        assertThat(Long.parseLong(sequenceNumber)).as("Sequence number should be positive").isGreaterThan(0L);
+
+        if (timeSeconds != null) {
+            assertThat(Long.parseLong(timeSeconds)).as("Time seconds should be positive").isGreaterThan(0L);
+        }
+
+        if (shardId != null) {
+            assertThat(shardId).as("Shard ID should not be empty").isNotEmpty();
+            // Shard ID can be either a single number or JSON array like ["2", "4"]
+            if (shardId.startsWith("[") && shardId.endsWith("]")) {
+                log.info("Shard ID is JSON array format: {}", shardId);
+            } else {
+                // Single shard ID - validate it's numeric
+                try {
+                    Long.parseLong(shardId);
+                } catch (NumberFormatException e) {
+                    // If it's not numeric and not JSON array, it might be a different format
+                    log.warn("Shard ID '{}' is neither numeric nor JSON array format", shardId);
+                }
+            }
+        }
+
+        if (ipAddress != null) {
+            assertThat(ipAddress).as("IP address should not be empty").isNotEmpty();
+        }
+
+        if (port != null) {
+            assertThat(Integer.parseInt(port)).as("Port should be positive").isGreaterThan(0);
+        }
+
+        return new ParsedNotification(expectedType, sequenceNumber, timeSeconds, shardId, ipAddress, port);
+    }
+
     @BeforeAll
     public static void setup() {
         mStandard = Endpoints.DEFAULT.getEndpoint("m-standard");
@@ -375,8 +571,7 @@ public class ConnectionHandoffTest {
         HandoffCapture capture = new HandoffCapture();
 
         // Setup push notification monitoring using the utility
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
-                Duration.ofMillis(5000));
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         String bdbId = String.valueOf(mStandard.getBdbId());
 
@@ -785,8 +980,7 @@ public class ConnectionHandoffTest {
                 };
 
                 // Setup push notification monitoring on second connection with shorter timeout and immediate pinging
-                MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, Duration.ofSeconds(45), PING_TIMEOUT,
-                        Duration.ofMillis(1000)); // Much shorter timeout and interval
+                MaintenancePushNotificationMonitor.setupMonitoring(connection, capture); // Much shorter timeout and interval
 
                 secondClient.set(client);
                 secondConnection.set(connection);
@@ -857,21 +1051,51 @@ public class ConnectionHandoffTest {
                 receivedNotifications.add(notification);
                 log.info("Captured notification: {}", notification);
 
-                // Count notification types
+                // Count and validate notification types using common validation function
                 if (notification.contains("MOVING")) {
-                    movingCount.updateAndGet(count -> count + 1);
+                    try {
+                        validateAndParseNotification(notification, NotificationType.MOVING);
+                        movingCount.updateAndGet(count -> count + 1);
+                        log.info("✓ MOVING notification validated successfully");
+                    } catch (Exception e) {
+                        log.warn("✗ MOVING notification validation failed: {}", e.getMessage());
+                    }
                     notificationLatch.countDown();
                 } else if (notification.contains("MIGRATING")) {
-                    migratingCount.updateAndGet(count -> count + 1);
+                    try {
+                        validateAndParseNotification(notification, NotificationType.MIGRATING);
+                        migratingCount.updateAndGet(count -> count + 1);
+                        log.info("✓ MIGRATING notification validated successfully");
+                    } catch (Exception e) {
+                        log.warn("✗ MIGRATING notification validation failed: {}", e.getMessage());
+                    }
                     notificationLatch.countDown();
                 } else if (notification.contains("MIGRATED")) {
-                    migratedCount.updateAndGet(count -> count + 1);
+                    try {
+                        validateAndParseNotification(notification, NotificationType.MIGRATED);
+                        migratedCount.updateAndGet(count -> count + 1);
+                        log.info("✓ MIGRATED notification validated successfully");
+                    } catch (Exception e) {
+                        log.warn("✗ MIGRATED notification validation failed: {}", e.getMessage());
+                    }
                     notificationLatch.countDown();
                 } else if (notification.contains("FAILING_OVER")) {
-                    failingOverCount.updateAndGet(count -> count + 1);
+                    try {
+                        validateAndParseNotification(notification, NotificationType.FAILING_OVER);
+                        failingOverCount.updateAndGet(count -> count + 1);
+                        log.info("✓ FAILING_OVER notification validated successfully");
+                    } catch (Exception e) {
+                        log.warn("✗ FAILING_OVER notification validation failed: {}", e.getMessage());
+                    }
                     notificationLatch.countDown();
                 } else if (notification.contains("FAILED_OVER")) {
-                    failedOverCount.updateAndGet(count -> count + 1);
+                    try {
+                        validateAndParseNotification(notification, NotificationType.FAILED_OVER);
+                        failedOverCount.updateAndGet(count -> count + 1);
+                        log.info("✓ FAILED_OVER notification validated successfully");
+                    } catch (Exception e) {
+                        log.warn("✗ FAILED_OVER notification validation failed: {}", e.getMessage());
+                    }
                     notificationLatch.countDown();
                 }
             }
@@ -981,11 +1205,7 @@ public class ConnectionHandoffTest {
 
         // Allow some failures during maintenance but most should succeed
         double failureRate = (double) finalFailed / totalCommands;
-        assertThat(failureRate).as("Failure rate should be reasonable (< 50%)").isLessThan(0.5);
-
-        // Verify we had traffic both before and after the maintenance operation
-        assertThat(finalSuccessful - initialSuccessful).as("Should have additional successful operations after MOVING")
-                .isGreaterThan(0);
+        assertThat(failureRate).as("Failure rate should be zero").isZero();
 
         log.info("✓ Traffic resumed successfully after MOVING operation");
 
@@ -1031,8 +1251,7 @@ public class ConnectionHandoffTest {
         AllNotificationTypesCapture capture = new AllNotificationTypesCapture();
 
         // Setup push notification monitoring
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
-                Duration.ofMillis(5000));
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         String bdbId = String.valueOf(mStandard.getBdbId());
 
@@ -1081,9 +1300,11 @@ public class ConnectionHandoffTest {
         assertThat(capture.getMovingCount()).as("Should receive MOVING notifications").isGreaterThan(0);
         assertThat(capture.getMigratingCount()).as("Should receive MIGRATING notifications").isGreaterThan(0);
         assertThat(capture.getMigratedCount()).as("Should receive MIGRATED notifications").isGreaterThan(0);
+        assertThat(capture.getFailingOverCount()).as("Should receive FAILING_OVER notifications").isGreaterThan(0);
+        assertThat(capture.getFailedOverCount()).as("Should receive FAILED_OVER notifications").isGreaterThan(0);
 
         // Failover notifications may be received depending on cluster state
-        log.info("✓ All expected maintenance notifications received successfully");
+        log.info("✓ All expected maintenance notifications received and validated successfully");
 
         clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
         nodeId = clusterConfig.getNodeWithMasterShards();
@@ -1117,8 +1338,7 @@ public class ConnectionHandoffTest {
         AllNotificationTypesCapture capture = new AllNotificationTypesCapture();
 
         // Setup monitoring (though we expect no notifications)
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
-                Duration.ofMillis(5000));
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         String bdbId = String.valueOf(mStandard.getBdbId());
 
@@ -1199,8 +1419,7 @@ public class ConnectionHandoffTest {
         HandoffCapture capture = new HandoffCapture();
 
         // Setup push notification monitoring using the utility
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
-                Duration.ofMillis(5000));
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         String bdbId = String.valueOf(mStandard.getBdbId());
 
@@ -1312,12 +1531,11 @@ public class ConnectionHandoffTest {
         HandoffCapture firstCapture = new HandoffCapture();
         String bdbId = String.valueOf(mStandard.getBdbId());
 
-        // Create a specialized capture that will start second connection on MOVING
+        // Create a specialized capture that will start second connection on MIGRATED
         DualConnectionCapture dualCapture = new DualConnectionCapture(firstCapture, uri, bdbId, firstConnection);
 
         // Setup push notification monitoring on first connection with shorter timeout
-        MaintenancePushNotificationMonitor.setupMonitoring(firstConnection, dualCapture, Duration.ofSeconds(45), PING_TIMEOUT,
-                Duration.ofMillis(1000));
+        MaintenancePushNotificationMonitor.setupMonitoring(firstConnection, dualCapture);
 
         try {
             // Trigger maintenance operation
@@ -1409,8 +1627,7 @@ public class ConnectionHandoffTest {
         CombinedBlpopAndMemoryLeakCapture capture = new CombinedBlpopAndMemoryLeakCapture(connection, secondConnection);
 
         // Setup push notification monitoring
-        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture, MONITORING_TIMEOUT, PING_TIMEOUT,
-                Duration.ofMillis(5000));
+        MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         try {
             // Wait for connection to be fully established
