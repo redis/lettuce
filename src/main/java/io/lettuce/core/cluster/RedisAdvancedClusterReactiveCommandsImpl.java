@@ -36,6 +36,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandType;
+import io.lettuce.core.protocol.ProtocolKeyword;
+import io.lettuce.core.protocol.RedisCommand;
 import org.reactivestreams.Publisher;
 
 import io.lettuce.core.*;
@@ -54,7 +58,14 @@ import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 import io.lettuce.core.protocol.ConnectionIntent;
 import reactor.core.publisher.Flux;
+import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.AggregationReply.Cursor;
+
+import io.lettuce.core.search.arguments.AggregateArgs;
+
 import reactor.core.publisher.Mono;
+
+import java.util.Optional;
 
 /**
  * An advanced reactive and thread-safe API to a Redis Cluster connection.
@@ -469,6 +480,14 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return (StatefulRedisClusterConnection<K, V>) super.getConnection();
     }
 
+    /**
+     * Obtain a node-scoped connection for the given intent (READ/WRITE). Selection honors the current ReadFrom policy via the
+     * cluster connection provider.
+     */
+    private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(ConnectionIntent intent) {
+        return getMono(getConnectionProvider().getRandomConnectionAsync(intent));
+    }
+
     @Override
     public Mono<KeyScanCursor<K>> scan() {
         return clusterScan(ScanCursor.INITIAL, (connection, cursor) -> connection.scan(), reactiveClusterKeyScanCursorMapper());
@@ -513,6 +532,68 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     public Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor) {
         return clusterScan(scanCursor, (connection, cursor) -> connection.scan(channel, cursor),
                 reactiveClusterStreamScanCursorMapper());
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
+        return routeKeyless(() -> super.ftAggregate(index, query, args),
+                (nodeId, conn) -> conn.ftAggregate(index, query, args).map(reply -> {
+                    if (reply != null) {
+                        reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
+                    }
+                    return reply;
+                }), CommandType.FT_AGGREGATE);
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query) {
+        return ftAggregate(index, query, null);
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
+        if (cursor == null) {
+            return Mono.error(new IllegalArgumentException("cursor must not be null"));
+        }
+        long cursorId = cursor.getCursorId();
+        if (cursorId <= 0) {
+            return Mono.just(new AggregationReply<>());
+        }
+        Optional<String> nodeIdOpt = cursor.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor READ in cluster mode"));
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.reactive().ftCursorread(index, cursor, count).map(reply -> {
+            if (reply != null) {
+                reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
+            }
+            return reply;
+        });
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
+        return ftCursorread(index, cursor, -1);
+    }
+
+    @Override
+    public Mono<String> ftCursordel(String index, Cursor cursor) {
+        if (cursor == null) {
+            return Mono.error(new IllegalArgumentException("cursor must not be null"));
+        }
+        long cursorId = cursor.getCursorId();
+        if (cursorId <= 0) {
+            return Mono.just("OK");
+        }
+        Optional<String> nodeIdOpt = cursor.getNodeId();
+        if (!nodeIdOpt.isPresent()) {
+            return Mono.error(new IllegalArgumentException("Cursor missing nodeId; cannot route cursor DEL in cluster mode"));
+        }
+        String nodeId = nodeIdOpt.get();
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        return byNode.reactive().ftCursordel(index, cursor);
     }
 
     @SuppressWarnings("unchecked")
@@ -617,6 +698,32 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
 
     private static <T> Mono<T> getMono(CompletableFuture<T> future) {
         return Mono.fromCompletionStage(future);
+    }
+
+    /**
+     * Route a keyless RediSearch command with node context. Obtains the executing node id via CLUSTER MYID and passes it to
+     * {@code routedCall} so replies can be stamped (e.g., cursor.nodeId). Honors ReadFrom and READ/WRITE intent. Falls back to
+     * {@code superCall} on failure.
+     */
+    <R> Mono<R> routeKeyless(Supplier<Mono<R>> superCall,
+            BiFunction<String, RedisClusterReactiveCommands<K, V>, Mono<R>> routedCall, ProtocolKeyword commandType) {
+
+        ConnectionIntent intent = getConnectionIntent(commandType);
+
+        return getStatefulConnection(intent).map(StatefulRedisConnection::reactive)
+                .flatMap(conn -> conn.clusterMyId().flatMap(nodeId -> routedCall.apply(nodeId, conn)))
+                .onErrorResume(err -> superCall.get());
+    }
+
+    /** Determine READ vs WRITE intent for routing by probing command read-only status. */
+    private ConnectionIntent getConnectionIntent(ProtocolKeyword commandType) {
+        try {
+            RedisCommand probe = new Command(commandType, null);
+            boolean isReadOnly = getStatefulConnection().getOptions().getReadOnlyCommands().isReadOnly(probe);
+            return isReadOnly ? ConnectionIntent.READ : ConnectionIntent.WRITE;
+        } catch (Exception e) {
+            return ConnectionIntent.WRITE;
+        }
     }
 
 }

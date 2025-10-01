@@ -23,6 +23,8 @@ import io.lettuce.core.search.arguments.SugAddArgs
 import io.lettuce.core.search.arguments.SugGetArgs
 import io.lettuce.core.search.arguments.SynUpdateArgs
 
+import io.lettuce.core.search.AggregationReply.Cursor
+
 /**
  * Coroutine executed commands for RediSearch functionality
  *
@@ -1120,16 +1122,16 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see SearchReply
      * @see AggregateArgs
      * @see #ftAggregate(String, Any)
-     * @see #ftCursorread(String, long)
+     * @see #ftCursorread(String, Cursor)
      */
     @Experimental
     suspend fun ftAggregate(index: String, query: V, args: AggregateArgs<K, V>): AggregationReply<K, V>?
 
     /**
-     * Read next results from an existing cursor.
+     * Read next results from an existing cursor and optionally override the batch size.
      *
      * <p>
-     * This command is used to read the next batch of results from a cursor created by
+     * This command is used to read the next batch of results from a cursor that was created by
      * [ftAggregate(String, Any, AggregateArgs)] with the `WITHCURSOR` option. Cursors provide an efficient way
      * to iterate through large result sets without loading all results into memory at once.
      * </p>
@@ -1144,20 +1146,19 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * </p>
      *
      * @param index the index name
-     * @param cursorId the cursor id obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
-     * @param count the number of results to read. This parameter overrides the `COUNT` specified in `FT.AGGREGATE`
-     * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
-     *         [SearchReply]
+     * @param cursor the cursor obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
+     * @param count the number of results to read; overrides the `COUNT` from `FT.AGGREGATE`
+     * @return the next batch of results; see [AggregationReply]
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-read/">FT.CURSOR READ</a>
      * @see <a href=
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
-     * @see SearchReply
+     * @see AggregationReply
      * @see #ftAggregate(String, Any, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: String, cursorId: Long, count: Int): AggregationReply<K, V>?
+    suspend fun ftCursorread(index: String, cursor: Cursor, count: Int): AggregationReply<K, V>?
 
     /**
      * Read next results from an existing cursor using the default batch size.
@@ -1178,19 +1179,18 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * </p>
      *
      * @param index the index name
-     * @param cursorId the cursor id obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
-     * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
-     *         [SearchReply]
+     * @param cursor the cursor obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
+     * @return the next batch of results; see [AggregationReply]
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-read/">FT.CURSOR READ</a>
      * @see <a href=
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
-     * @see SearchReply
+     * @see AggregationReply
      * @see #ftAggregate(String, Any, AggregateArgs)
      */
     @Experimental
-    suspend fun ftCursorread(index: String, cursorId: Long): AggregationReply<K, V>?
+    suspend fun ftCursorread(index: String, cursor: Cursor): AggregationReply<K, V>?
 
     /**
      * Delete a cursor and free its associated resources.
@@ -1202,7 +1202,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * </p>
      *
      * <p>
-     * <strong>Important:</strong> Cursors have a default timeout and will be automatically deleted by Redis if not accessed
+     * <strong>Important:</strong> Cursors have a default timeout and may be automatically deleted by Redis if not accessed
      * within the timeout period. However, it's good practice to explicitly delete cursors when you're finished with them to
      * free up resources immediately.
      * </p>
@@ -1217,7 +1217,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * </p>
      *
      * @param index the index name, as a key
-     * @param cursorId the cursor id obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
+     * @param cursor the cursor obtained from a previous `FT.AGGREGATE` or `FT.CURSOR READ` command
      * @return @code "OK"} if the cursor was successfully deleted
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-del/">FT.CURSOR DEL</a>
@@ -1225,11 +1225,11 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
      * @see #ftAggregate(String, Any, AggregateArgs)
-     * @see #ftCursorread(String, long)
-     * @see #ftCursorread(String, long, Integer)
+     * @see #ftCursorread(String, Cursor)
+     * @see #ftCursorread(String, Cursor, Integer)
      */
     @Experimental
-    suspend fun ftCursordel(index: String, cursorId: Long): String?
+    suspend fun ftCursordel(index: String, cursor: Cursor): String?
 
 }
 
