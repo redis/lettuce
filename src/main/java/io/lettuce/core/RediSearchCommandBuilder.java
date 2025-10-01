@@ -66,11 +66,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param fieldArgs the fieldArgs
      * @return the result of the create command
      */
-    public Command<K, V, String> ftCreate(K index, CreateArgs<K, V> createArgs, List<FieldArgs<K>> fieldArgs) {
-        notNullKey(index);
+    public Command<K, V, String> ftCreate(String index, CreateArgs<K, V> createArgs, List<FieldArgs<K>> fieldArgs) {
+        LettuceAssert.notNull(index, "Index must not be null");
         notEmpty(fieldArgs.toArray());
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
 
         if (createArgs != null) {
             createArgs.build(args);
@@ -94,11 +94,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param searchArgs the search arguments
      * @return the result of the search command
      */
-    public Command<K, V, SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> searchArgs) {
-        notNullKey(index);
-        notNullKey(query);
+    public Command<K, V, SearchReply<K, V>> ftSearch(String index, V query, SearchArgs<K, V> searchArgs) {
+        LettuceAssert.notNull(index, "Index must not be null");
+        LettuceAssert.notNull(query, "Query must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
         args.addValue(query);
 
         if (searchArgs != null) {
@@ -116,11 +116,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param aggregateArgs the aggregate arguments
      * @return the result of the aggregate command
      */
-    public Command<K, V, AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> aggregateArgs) {
-        notNullKey(index);
-        notNullKey(query);
+    public Command<K, V, AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> aggregateArgs) {
+        LettuceAssert.notNull(index, "Index must not be null");
+        LettuceAssert.notNull(query, "Query must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
         args.addValue(query);
 
         boolean withCursor = false;
@@ -142,10 +142,10 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param count the number of results to read
      * @return the result of the cursor read command
      */
-    public Command<K, V, AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
-        notNullKey(index);
+    public Command<K, V, AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count) {
+        LettuceAssert.notNull(index, "Index must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.READ).add(index);
         args.add(cursorId);
 
         if (count >= 0) {
@@ -163,10 +163,10 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param cursorId the cursor id
      * @return the result of the cursor delete command
      */
-    public Command<K, V, String> ftCursordel(K index, long cursorId) {
-        notNullKey(index);
+    public Command<K, V, String> ftCursordel(String index, long cursorId) {
+        LettuceAssert.notNull(index, "Index must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.DEL).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(CommandKeyword.DEL).add(index);
         args.add(cursorId);
 
         return createCommand(FT_CURSOR, new StatusOutput<>(codec), args);
@@ -179,11 +179,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param index the index name
      * @return the result of the alias add command
      */
-    public Command<K, V, String> ftAliasadd(K alias, K index) {
-        notNullKey(alias);
-        notNullKey(index);
+    public Command<K, V, String> ftAliasadd(String alias, String index) {
+        LettuceAssert.notNull(alias, "Alias must not be null");
+        LettuceAssert.notNull(index, "Index must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(alias).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(alias).add(index);
 
         return createCommand(FT_ALIASADD, new StatusOutput<>(codec), args);
     }
@@ -195,11 +195,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param index the index name
      * @return the result of the alias update command
      */
-    public Command<K, V, String> ftAliasupdate(K alias, K index) {
-        notNullKey(alias);
-        notNullKey(index);
+    public Command<K, V, String> ftAliasupdate(String alias, String index) {
+        LettuceAssert.notNull(alias, "Alias must not be null");
+        LettuceAssert.notNull(index, "Index must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(alias).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(alias).add(index);
 
         return createCommand(FT_ALIASUPDATE, new StatusOutput<>(codec), args);
     }
@@ -210,10 +210,10 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param alias the alias name
      * @return the result of the alias delete command
      */
-    public Command<K, V, String> ftAliasdel(K alias) {
-        notNullKey(alias);
+    public Command<K, V, String> ftAliasdel(String alias) {
+        LettuceAssert.notNull(alias, "Alias must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(alias);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(alias);
 
         return createCommand(FT_ALIASDEL, new StatusOutput<>(codec), args);
     }
@@ -226,11 +226,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param fieldArgs the field arguments for the new attributes to add
      * @return the result of the alter command
      */
-    public Command<K, V, String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
-        notNullKey(index);
+    public Command<K, V, String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+        LettuceAssert.notNull(index, "Index must not be null");
         notEmpty(fieldArgs.toArray());
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
 
         if (skipInitialScan) {
             args.add(CommandKeyword.SKIPINITIALSCAN);
@@ -253,11 +253,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param fieldName the name of a Tag field defined in the schema
      * @return the result of the tagvals command
      */
-    public Command<K, V, List<V>> ftTagvals(K index, K fieldName) {
-        notNullKey(index);
-        notNullKey(fieldName);
+    public Command<K, V, List<V>> ftTagvals(String index, String fieldName) {
+        LettuceAssert.notNull(index, "Index must not be null");
+        LettuceAssert.notNull(fieldName, "Field name must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index).addKey(fieldName);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index).add(fieldName);
 
         return createCommand(FT_TAGVALS, new ValueListOutput<>(codec), args);
     }
@@ -269,7 +269,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param query the search query
      * @return the result of the spellcheck command
      */
-    public Command<K, V, SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+    public Command<K, V, SpellCheckResult<V>> ftSpellcheck(String index, V query) {
         return ftSpellcheck(index, query, null);
     }
 
@@ -281,11 +281,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param args the spellcheck arguments
      * @return the result of the spellcheck command
      */
-    public Command<K, V, SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
-        notNullKey(index);
+    public Command<K, V, SpellCheckResult<V>> ftSpellcheck(String index, V query, SpellCheckArgs<K, V> args) {
+        LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(query, "Query must not be null");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index).addValue(query);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).add(index).addValue(query);
 
         if (args != null) {
             args.build(commandArgs);
@@ -303,12 +303,12 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @return the result of the dictadd command
      */
     @SafeVarargs
-    public final Command<K, V, Long> ftDictadd(K dict, V... terms) {
-        notNullKey(dict);
+    public final Command<K, V, Long> ftDictadd(String dict, V... terms) {
+        LettuceAssert.notNull(dict, "Dictionary must not be null");
         LettuceAssert.notNull(terms, "Terms must not be null");
         LettuceAssert.isTrue(terms.length > 0, "At least one term must be provided");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).add(dict);
         for (V term : terms) {
             LettuceAssert.notNull(term, "Term must not be null");
             commandArgs.addValue(term);
@@ -325,12 +325,12 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @return the result of the dictdel command
      */
     @SafeVarargs
-    public final Command<K, V, Long> ftDictdel(K dict, V... terms) {
-        notNullKey(dict);
+    public final Command<K, V, Long> ftDictdel(String dict, V... terms) {
+        LettuceAssert.notNull(dict, "Dictionary must not be null");
         LettuceAssert.notNull(terms, "Terms must not be null");
         LettuceAssert.isTrue(terms.length > 0, "At least one term must be provided");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).add(dict);
         for (V term : terms) {
             LettuceAssert.notNull(term, "Term must not be null");
             commandArgs.addValue(term);
@@ -345,10 +345,10 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param dict the dictionary name
      * @return the result of the dictdump command
      */
-    public Command<K, V, List<V>> ftDictdump(K dict) {
-        notNullKey(dict);
+    public Command<K, V, List<V>> ftDictdump(String dict) {
+        LettuceAssert.notNull(dict, "Dictionary name must not be null");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(dict);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).add(dict);
 
         return createCommand(FT_DICTDUMP, new ValueListOutput<>(codec), commandArgs);
     }
@@ -360,7 +360,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param query the search query
      * @return the execution plan as a string
      */
-    public Command<K, V, String> ftExplain(K index, V query) {
+    public Command<K, V, String> ftExplain(String index, V query) {
         return ftExplain(index, query, null);
     }
 
@@ -372,11 +372,11 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param args the explain arguments
      * @return the execution plan as a string
      */
-    public Command<K, V, String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
-        notNullKey(index);
+    public Command<K, V, String> ftExplain(String index, V query, ExplainArgs<K, V> args) {
+        LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(query, "Query must not be null");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index).addValue(query);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).add(index).addValue(query);
 
         if (args != null) {
             args.build(commandArgs);
@@ -401,10 +401,10 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param index the index name
      * @return a map where keys are synonym terms and values are lists of group IDs containing that synonym
      */
-    public Command<K, V, Map<V, List<V>>> ftSyndump(K index) {
-        notNullKey(index);
+    public Command<K, V, Map<V, List<V>>> ftSyndump(String index) {
+        LettuceAssert.notNull(index, "Index must not be null");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).add(index);
 
         return createCommand(FT_SYNDUMP, new EncodedComplexOutput<>(codec, new SynonymMapParser<>(codec)), commandArgs);
     }
@@ -418,7 +418,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @return the result of the synupdate command
      */
     @SafeVarargs
-    public final Command<K, V, String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+    public final Command<K, V, String> ftSynupdate(String index, V synonymGroupId, V... terms) {
         return ftSynupdate(index, synonymGroupId, null, terms);
     }
 
@@ -432,13 +432,13 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @return the result of the synupdate command
      */
     @SafeVarargs
-    public final Command<K, V, String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
-        notNullKey(index);
+    public final Command<K, V, String> ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+        LettuceAssert.notNull(index, "Index must not be null");
         LettuceAssert.notNull(synonymGroupId, "Synonym group ID must not be null");
         LettuceAssert.notNull(terms, "Terms must not be null");
         LettuceAssert.isTrue(terms.length > 0, "At least one term must be provided");
 
-        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).addKey(index).addValue(synonymGroupId);
+        CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).add(index).addValue(synonymGroupId);
 
         if (args != null) {
             args.build(commandArgs);
@@ -561,10 +561,10 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param deleteDocumentKeys whether to delete the document keys
      * @return the result of the drop command
      */
-    public Command<K, V, String> ftDropindex(K index, boolean deleteDocumentKeys) {
-        notNullKey(index);
+    public Command<K, V, String> ftDropindex(String index, boolean deleteDocumentKeys) {
+        LettuceAssert.notNull(index, "Index must not be null");
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(index);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
 
         if (deleteDocumentKeys) {
             args.add(CommandKeyword.DD);

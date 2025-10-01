@@ -1611,72 +1611,72 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftCreate(K index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftCreate(String index, CreateArgs<K, V> options, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, options, fieldArgs));
     }
 
     @Override
-    public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftCreate(index, null, fieldArgs));
     }
 
     @Override
-    public Mono<String> ftAliasadd(K alias, K index) {
+    public Mono<String> ftAliasadd(String alias, String index) {
         return createMono(() -> searchCommandBuilder.ftAliasadd(alias, index));
     }
 
     @Override
-    public Mono<String> ftAliasupdate(K alias, K index) {
+    public Mono<String> ftAliasupdate(String alias, String index) {
         return createMono(() -> searchCommandBuilder.ftAliasupdate(alias, index));
     }
 
     @Override
-    public Mono<String> ftAliasdel(K alias) {
+    public Mono<String> ftAliasdel(String alias) {
         return createMono(() -> searchCommandBuilder.ftAliasdel(alias));
     }
 
     @Override
-    public Mono<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, skipInitialScan, fieldArgs));
     }
 
     @Override
-    public Flux<V> ftTagvals(K index, K fieldName) {
+    public Flux<V> ftTagvals(String index, String fieldName) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftTagvals(index, fieldName));
     }
 
     @Override
-    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query) {
+    public Mono<SpellCheckResult<V>> ftSpellcheck(String index, V query) {
         return createMono(() -> searchCommandBuilder.ftSpellcheck(index, query));
     }
 
     @Override
-    public Mono<SpellCheckResult<V>> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args) {
+    public Mono<SpellCheckResult<V>> ftSpellcheck(String index, V query, SpellCheckArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftSpellcheck(index, query, args));
     }
 
     @Override
-    public Mono<Long> ftDictadd(K dict, V... terms) {
+    public Mono<Long> ftDictadd(String dict, V... terms) {
         return createMono(() -> searchCommandBuilder.ftDictadd(dict, terms));
     }
 
     @Override
-    public Mono<Long> ftDictdel(K dict, V... terms) {
+    public Mono<Long> ftDictdel(String dict, V... terms) {
         return createMono(() -> searchCommandBuilder.ftDictdel(dict, terms));
     }
 
     @Override
-    public Flux<V> ftDictdump(K dict) {
+    public Flux<V> ftDictdump(String dict) {
         return createDissolvingFlux(() -> searchCommandBuilder.ftDictdump(dict));
     }
 
     @Override
-    public Mono<String> ftExplain(K index, V query) {
+    public Mono<String> ftExplain(String index, V query) {
         return createMono(() -> searchCommandBuilder.ftExplain(index, query));
     }
 
     @Override
-    public Mono<String> ftExplain(K index, V query, ExplainArgs<K, V> args) {
+    public Mono<String> ftExplain(String index, V query, ExplainArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftExplain(index, query, args));
     }
 
@@ -1686,17 +1686,17 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Map<V, List<V>>> ftSyndump(K index) {
+    public Mono<Map<V, List<V>>> ftSyndump(String index) {
         return createMono(() -> searchCommandBuilder.ftSyndump(index));
     }
 
     @Override
-    public Mono<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+    public Mono<String> ftSynupdate(String index, V synonymGroupId, V... terms) {
         return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, terms));
     }
 
     @Override
-    public Mono<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+    public Mono<String> ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
         return createMono(() -> searchCommandBuilder.ftSynupdate(index, synonymGroupId, args, terms));
     }
 
@@ -1731,52 +1731,52 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
         return createMono(() -> searchCommandBuilder.ftAlter(index, false, fieldArgs));
     }
 
     @Override
-    public Mono<String> ftCursordel(K index, long cursorId) {
+    public Mono<String> ftCursordel(String index, long cursorId) {
         return createMono(() -> searchCommandBuilder.ftCursordel(index, cursorId));
     }
 
     @Override
-    public Mono<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+    public Mono<String> ftDropindex(String index, boolean deleteDocumentKeys) {
         return createMono(() -> searchCommandBuilder.ftDropindex(index, deleteDocumentKeys));
     }
 
     @Override
-    public Mono<String> ftDropindex(K index) {
+    public Mono<String> ftDropindex(String index) {
         return createMono(() -> searchCommandBuilder.ftDropindex(index, false));
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(K index, V query, SearchArgs<K, V> args) {
+    public Mono<SearchReply<K, V>> ftSearch(String index, V query, SearchArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftSearch(index, query, args));
     }
 
     @Override
-    public Mono<SearchReply<K, V>> ftSearch(K index, V query) {
+    public Mono<SearchReply<K, V>> ftSearch(String index, V query) {
         return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query, AggregateArgs<K, V> args) {
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, args));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(K index, V query) {
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query) {
         return createMono(() -> searchCommandBuilder.ftAggregate(index, query, null));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId, int count) {
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count) {
         return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, count));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, long cursorId) {
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, long cursorId) {
         return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, -1));
     }
 
