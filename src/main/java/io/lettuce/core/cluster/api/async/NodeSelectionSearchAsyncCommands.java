@@ -50,7 +50,7 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * triggered, where N is the number of keys in the keyspace
      * </p>
      *
-     * @param index the index name, as a key
+     * @param index the index name
      * @param fieldArgs the {@link FieldArgs} list defining the searchable fields and their types
      * @return {@code "OK"} if the index was created successfully
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
@@ -87,7 +87,7 @@ public interface NodeSelectionSearchAsyncCommands<K, V> {
      * triggered, where N is the number of keys in the keyspace
      * </p>
      *
-     * @param index the index name, as a key
+     * @param index the index name
      * @param arguments the index {@link CreateArgs} containing configuration options
      * @param fieldArgs the {@link FieldArgs} list defining the searchable fields and their types
      * @return {@code "OK"} if the index was created successfully
