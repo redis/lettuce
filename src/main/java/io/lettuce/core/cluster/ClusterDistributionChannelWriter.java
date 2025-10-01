@@ -84,6 +84,8 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
     private AsyncClusterConnectionProvider asyncClusterConnectionProvider;
 
+    private final ClusterDistributionRouter router = new ClusterDistributionRouter(this);
+
     private boolean closed = false;
 
     private volatile Partitions partitions;
@@ -118,83 +120,89 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
 
     private <K, V, T> RedisCommand<K, V, T> doWrite(RedisCommand<K, V, T> command) {
 
-        if (command instanceof ClusterCommand && !command.isDone()) {
+        ClusterDistributionStrategy strategy = router.getStrategy(command);
+        return (RedisCommand<K, V, T>) strategy.execute(command);
+    }
 
-            ClusterCommand<K, V, T> clusterCommand = (ClusterCommand<K, V, T>) command;
-            if (clusterCommand.isMoved() || clusterCommand.isAsk()) {
+    // --- Strategy execution helpers (package-private) ---
 
-                HostAndPort target;
-                boolean asking;
-                ByteBuffer firstEncodedKey = clusterCommand.getArgs().getFirstEncodedKey();
-                String keyAsString = null;
-                int slot = -1;
-                if (firstEncodedKey != null) {
-                    firstEncodedKey.mark();
-                    keyAsString = StringCodec.UTF8.decodeKey(firstEncodedKey);
-                    firstEncodedKey.reset();
-                    slot = getSlot(firstEncodedKey);
-                }
-
-                if (clusterCommand.isMoved()) {
-
-                    target = getMoveTarget(partitions, clusterCommand.getError());
-                    clusterEventListener.onMovedRedirection();
-                    asking = false;
-
-                    publish(new MovedRedirectionEvent(clusterCommand.getType().toString(), keyAsString, slot,
-                            clusterCommand.getError()));
-                } else {
-                    target = getAskTarget(clusterCommand.getError());
-                    asking = true;
-                    clusterEventListener.onAskRedirection();
-                    publish(new AskRedirectionEvent(clusterCommand.getType().toString(), keyAsString, slot,
-                            clusterCommand.getError()));
-                }
-
-                command.getOutput().setError((String) null);
-
-                CompletableFuture<StatefulRedisConnection<K, V>> connectFuture = asyncClusterConnectionProvider
-                        .getConnectionAsync(ConnectionIntent.WRITE, target.getHostText(), target.getPort());
-
-                if (isSuccessfullyCompleted(connectFuture)) {
-                    writeCommand(command, asking, connectFuture.join(), null);
-                } else {
-                    connectFuture.whenComplete((connection, throwable) -> writeCommand(command, asking, connection, throwable));
-                }
-
-                return command;
-            }
-        }
-
+    <K, V, T> RedisCommand<K, V, T> executeHashSlot(RedisCommand<K, V, T> command) {
+        ByteBuffer encodedKey = command.getArgs().getFirstEncodedKey();
         ClusterCommand<K, V, T> commandToSend = getCommandToSend(command);
-        CommandArgs<K, V> args = command.getArgs();
-
-        // exclude CLIENT commands from cluster routing
-        if (args != null && !CommandType.CLIENT.equals(commandToSend.getType())) {
-
-            ByteBuffer encodedKey = args.getFirstEncodedKey();
-            if (encodedKey != null) {
-
-                int hash = getSlot(encodedKey);
-                ConnectionIntent connectionIntent = getIntent(command);
-
-                CompletableFuture<StatefulRedisConnection<K, V>> connectFuture = ((AsyncClusterConnectionProvider) clusterConnectionProvider)
-                        .getConnectionAsync(connectionIntent, hash);
-
-                if (isSuccessfullyCompleted(connectFuture)) {
-                    writeCommand(commandToSend, false, connectFuture.join(), null);
-                } else {
-                    connectFuture
-                            .whenComplete((connection, throwable) -> writeCommand(commandToSend, false, connection, throwable));
-                }
-
-                return commandToSend;
-            }
+        ConnectionIntent intent = getIntent(commandToSend);
+        int hash = getSlot(encodedKey);
+        CompletableFuture<StatefulRedisConnection<K, V>> cf = asyncClusterConnectionProvider.getConnectionAsync(intent, hash);
+        if (isSuccessfullyCompleted(cf)) {
+            writeCommand(commandToSend, false, cf.join(), null);
+        } else {
+            cf.whenComplete((connection, throwable) -> writeCommand(commandToSend, false, connection, throwable));
         }
-
-        writeCommand(commandToSend, defaultWriter);
-
         return commandToSend;
+    }
+
+    <K, V, T> RedisCommand<K, V, T> executeKeyless(RedisCommand<K, V, T> command) {
+        ClusterCommand<K, V, T> commandToSend = getCommandToSend(command);
+        ConnectionIntent intent = getIntent(commandToSend);
+        CompletableFuture<StatefulRedisConnection<K, V>> cf = asyncClusterConnectionProvider.getRandomConnectionAsync(intent);
+        if (isSuccessfullyCompleted(cf)) {
+            StatefulRedisConnection<K, V> c = cf.join();
+            if (c == null) {
+                writeCommand(commandToSend, defaultWriter);
+            } else {
+                writeCommand(commandToSend, false, c, null);
+            }
+        } else {
+            cf.whenComplete((connection, throwable) -> {
+                if (throwable != null || connection == null) {
+                    writeCommand(commandToSend, defaultWriter);
+                } else {
+                    writeCommand(commandToSend, false, connection, null);
+                }
+            });
+        }
+        return commandToSend;
+    }
+
+    <K, V, T> RedisCommand<K, V, T> executeDefault(RedisCommand<K, V, T> command) {
+        ClusterCommand<K, V, T> commandToSend = getCommandToSend(command);
+        writeCommand(commandToSend, defaultWriter);
+        return commandToSend;
+    }
+
+    <K, V, T> RedisCommand<K, V, T> executeRedirect(RedisCommand<K, V, T> command) {
+        ClusterCommand<K, V, T> clusterCommand = getCommandToSend(command);
+        HostAndPort target;
+        boolean asking;
+        ByteBuffer firstEncodedKey = clusterCommand.getArgs().getFirstEncodedKey();
+        String keyAsString = null;
+        int slot = -1;
+        if (firstEncodedKey != null) {
+            firstEncodedKey.mark();
+            keyAsString = StringCodec.UTF8.decodeKey(firstEncodedKey);
+            firstEncodedKey.reset();
+            slot = getSlot(firstEncodedKey);
+        }
+        if (clusterCommand.isMoved()) {
+            target = getMoveTarget(partitions, clusterCommand.getError());
+            clusterEventListener.onMovedRedirection();
+            asking = false;
+            publish(new MovedRedirectionEvent(clusterCommand.getType().toString(), keyAsString, slot,
+                    clusterCommand.getError()));
+        } else {
+            target = getAskTarget(clusterCommand.getError());
+            asking = true;
+            clusterEventListener.onAskRedirection();
+            publish(new AskRedirectionEvent(clusterCommand.getType().toString(), keyAsString, slot, clusterCommand.getError()));
+        }
+        clusterCommand.getOutput().setError((String) null);
+        CompletableFuture<StatefulRedisConnection<K, V>> connectFuture = asyncClusterConnectionProvider
+                .getConnectionAsync(ConnectionIntent.WRITE, target.getHostText(), target.getPort());
+        if (isSuccessfullyCompleted(connectFuture)) {
+            writeCommand(clusterCommand, asking, connectFuture.join(), null);
+        } else {
+            connectFuture.whenComplete((connection, throwable) -> writeCommand(clusterCommand, asking, connection, throwable));
+        }
+        return clusterCommand;
     }
 
     private void publish(Event event) {
@@ -210,7 +218,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
     }
 
     @SuppressWarnings("unchecked")
-    private <K, V, T> ClusterCommand<K, V, T> getCommandToSend(RedisCommand<K, V, T> command) {
+    <K, V, T> ClusterCommand<K, V, T> getCommandToSend(RedisCommand<K, V, T> command) {
 
         if (command instanceof ClusterCommand) {
             return (ClusterCommand<K, V, T>) command;
@@ -272,6 +280,65 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         return writerToUse;
     }
 
+    /**
+     * Writes a batch of Redis commands to the cluster, routing each command to the appropriate shard(s).
+     *
+     * <p>
+     * This method implements the cluster command distribution strategy by partitioning commands based on their routing
+     * requirements:
+     *
+     * <h3>Command Routing Strategy:</h3>
+     * <ul>
+     * <li><b>Key-based commands</b>: Routed to the shard responsible for the key's hash slot</li>
+     * <li><b>Keyless commands</b>: Distributed <b>individually</b> through recursive write calls</li>
+     * <li><b>ClusterCommands</b>: Handled individually through recursive write calls</li>
+     * </ul>
+     *
+     * <h3>Batching Behavior:</h3>
+     * <p>
+     * Commands are grouped by their target shard to optimize network efficiency. All commands destined for the same shard are
+     * sent together in a single batch. For keyless commands (e.g.,
+     * {@link io.lettuce.core.api.sync.RediSearchCommands#ftSearch(String, Object) FT.SEARCH},
+     * {@link io.lettuce.core.api.sync.RediSearchCommands#ftAggregate(String, Object) FT.AGGREGATE}), each command is
+     * independently routed to a random node to achieve load balancing across the cluster as specified by the "default(keyless)"
+     * request policy.
+     *
+     * <h3>Order Preservation:</h3>
+     * <p>
+     * <b>Important:</b> Command execution order is preserved <i>within each partition</i> (commands going to the same shard),
+     * but <b>not guaranteed across different shards</b>. Commands sent to different nodes may complete in any order due to
+     * network latency and processing time variations.
+     *
+     * <h3>Connection Intent:</h3>
+     * <p>
+     * A single {@link ConnectionIntent} (READ or WRITE) is determined for the entire batch based on command analysis. This
+     * intent influences replica selection when {@link ReadFrom} policies are configured.
+     *
+     * <h3>Error Handling:</h3>
+     * <ul>
+     * <li>If the writer is closed, all commands are immediately completed exceptionally</li>
+     * <li>Connection failures are propagated to the affected commands</li>
+     * <li>Errors from individual commands do not affect other commands in the batch</li>
+     * </ul>
+     *
+     * <h3>Performance Considerations:</h3>
+     * <ul>
+     * <li>Batching reduces network round-trips by grouping commands per shard</li>
+     * <li>Keyless command distribution prevents hotspots on single nodes</li>
+     * <li>Parallel execution across shards improves throughput for multi-shard batches</li>
+     * </ul>
+     *
+     * @param commands the collection of commands to write; must not be {@code null}
+     * @param <K> the key type
+     * @param <V> the value type
+     * @return the same collection of commands that was passed in, for chaining
+     * @throws IllegalArgumentException if commands is {@code null}
+     *
+     * @see #write(RedisCommand) for single command routing
+     * @see SlotIntent for partition key structure
+     * @see ConnectionIntent for read/write routing
+     * @see ReadFrom for replica selection policies
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands) {
@@ -285,7 +352,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         }
 
         List<ClusterCommand<K, V, ?>> clusterCommands = new ArrayList<>(commands.size());
-        List<ClusterCommand<K, V, ?>> defaultCommands = new ArrayList<>(commands.size());
+        List<RedisCommand<K, V, ?>> keylessCommands = new ArrayList<>(commands.size());
         Map<SlotIntent, List<ClusterCommand<K, V, ?>>> partitions = new HashMap<>();
 
         // TODO: Retain order or retain Intent preference?
@@ -303,7 +370,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
             ByteBuffer firstEncodedKey = args != null ? args.getFirstEncodedKey() : null;
 
             if (firstEncodedKey == null) {
-                defaultCommands.add(new ClusterCommand<>(cmd, this, executionLimit));
+                keylessCommands.add(cmd);
                 continue;
             }
 
@@ -333,7 +400,7 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         }
 
         clusterCommands.forEach(this::write);
-        defaultCommands.forEach(defaultWriter::write);
+        keylessCommands.forEach(this::write);
 
         return (Collection) commands;
     }
