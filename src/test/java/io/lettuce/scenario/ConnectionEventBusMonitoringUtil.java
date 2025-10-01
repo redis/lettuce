@@ -19,7 +19,6 @@ import io.netty.channel.Channel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
-
 public class ConnectionEventBusMonitoringUtil {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(ConnectionEventBusMonitoringUtil.class);
@@ -37,7 +36,6 @@ public class ConnectionEventBusMonitoringUtil {
     private final AtomicBoolean monitoringActive = new AtomicBoolean(true);
 
     private CountDownLatch connectionTransitionLatch;
-
 
     public void setupEventBusMonitoring(RedisClient client) {
         EventBus eventBus = client.getResources().eventBus();
@@ -85,7 +83,6 @@ public class ConnectionEventBusMonitoringUtil {
         log.info("EventBus monitoring setup completed");
     }
 
-
     private String getChannelIdFromEvent(Object event) {
         try {
             Method getChannelIdMethod = event.getClass().getSuperclass().getDeclaredMethod("getChannelId");
@@ -103,11 +100,9 @@ public class ConnectionEventBusMonitoringUtil {
         }
     }
 
-
     public void prepareForConnectionTransition() {
         connectionTransitionLatch = new CountDownLatch(2); // Disconnect + Deactivate
     }
-
 
     public boolean waitForConnectionTransition(Duration timeout) throws InterruptedException {
         if (connectionTransitionLatch == null) {
@@ -116,26 +111,21 @@ public class ConnectionEventBusMonitoringUtil {
         return connectionTransitionLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
     }
 
-
     public String getCurrentChannelId() {
         return currentChannelId.get();
     }
 
- 
     public boolean wasChannelDisconnected(String channelId) {
         return disconnectedChannels.contains(channelId);
     }
-
 
     public boolean wasChannelDeactivated(String channelId) {
         return deactivatedChannels.contains(channelId);
     }
 
-
     public boolean isConnectionProperlyClosedViaEventBus(String channelId) {
         return wasChannelDisconnected(channelId) && wasChannelDeactivated(channelId);
     }
-
 
     public boolean isNettyChannelCleanedUp(Channel channel) {
         if (channel == null)
@@ -148,7 +138,6 @@ public class ConnectionEventBusMonitoringUtil {
 
         return isCleanedUp;
     }
-
 
     public ConnectionAnalysisResult analyzeConnectionClosure(String initialChannelId, Channel initialChannel) {
         log.info("=== Connection Closure Analysis ===");
@@ -180,12 +169,10 @@ public class ConnectionEventBusMonitoringUtil {
         return result;
     }
 
-
     public void stopMonitoring() {
         monitoringActive.set(false);
     }
 
- 
     public static class ConnectionAnalysisResult {
 
         private final boolean wasDisconnected;

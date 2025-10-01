@@ -51,13 +51,17 @@ import reactor.test.StepVerifier;
 import static io.lettuce.TestTags.SCENARIO_TEST;
 
 @Tag(SCENARIO_TEST)
-public class ConnectionHandoffTest {
+public class MaintenanceNotificationConnectionTest {
 
-    private static final Logger log = LoggerFactory.getLogger(ConnectionHandoffTest.class);
+    private static final Logger log = LoggerFactory.getLogger(MaintenanceNotificationConnectionTest.class);
 
     private static final Duration NOTIFICATION_WAIT_TIMEOUT = Duration.ofMinutes(3);
 
     private static final Duration LONG_OPERATION_TIMEOUT = Duration.ofMinutes(5);
+
+    private static final int TRAFFIC_OPERATION_THRESHOLD = 1000;
+
+    private static final Duration TRAFFIC_AWAIT_TIMEOUT = Duration.ofSeconds(5);
 
     private static Endpoint mStandard;
 
@@ -65,7 +69,7 @@ public class ConnectionHandoffTest {
 
     private final FaultInjectionClient faultClient = new FaultInjectionClient();
 
-    private HandoffTestContext currentTestContext;
+    private TestContext currentTestContext;
 
     // Push notification patterns for MOVING messages with different address types
     // Handles both IP:PORT and FQDN formats, with both \n and \r\n line endings
@@ -280,7 +284,7 @@ public class ConnectionHandoffTest {
     }
 
     @AfterEach
-    public void cleanupHandoffTest() {
+    public void cleanupTest() {
         if (currentTestContext != null) {
             if (currentTestContext.connection != null && currentTestContext.connection.isOpen()) {
                 currentTestContext.connection.close();
@@ -292,20 +296,20 @@ public class ConnectionHandoffTest {
         }
     }
 
-    private static class HandoffTestContext {
+    private static class TestContext {
 
         final RedisClient client;
 
         final StatefulRedisConnection<String, String> connection;
 
-        final HandoffCapture capture;
+        final TestCapture capture;
 
         final String bdbId;
 
         final EndpointType expectedEndpointType;
 
-        HandoffTestContext(RedisClient client, StatefulRedisConnection<String, String> connection, HandoffCapture capture,
-                String bdbId, EndpointType expectedEndpointType) {
+        TestContext(RedisClient client, StatefulRedisConnection<String, String> connection, TestCapture capture, String bdbId,
+                EndpointType expectedEndpointType) {
             this.client = client;
             this.connection = connection;
             this.capture = capture;
@@ -315,7 +319,7 @@ public class ConnectionHandoffTest {
 
     }
 
-    public static class HandoffCapture implements MaintenanceNotificationCapture {
+    public static class TestCapture implements MaintenanceNotificationCapture {
 
         private final List<String> receivedNotifications = new CopyOnWriteArrayList<>();
 
@@ -430,6 +434,13 @@ public class ConnectionHandoffTest {
                             handleAsyncResult(future, "GET " + key);
                         }
 
+                        // Throttle traffic to ~1000 ops/sec to avoid memory pressure
+                        Thread.sleep(1);
+
+                    } catch (InterruptedException e) {
+                        log.info("Traffic generator interrupted");
+                        Thread.currentThread().interrupt();
+                        break;
                     } catch (Exception e) {
                         log.warn("Traffic generation error: {}", e.getMessage());
                         failedOperations.incrementAndGet();
@@ -494,7 +505,7 @@ public class ConnectionHandoffTest {
 
     }
 
-    private HandoffTestContext setupHandoffTest(EndpointType addressType) {
+    private TestContext setupTest(EndpointType addressType) {
         RedisURI uri = RedisURI.builder(RedisURI.create(mStandard.getEndpoints().get(0)))
                 .withAuthentication(mStandard.getUsername(), mStandard.getPassword()).build();
 
@@ -506,13 +517,13 @@ public class ConnectionHandoffTest {
 
         StatefulRedisConnection<String, String> connection = client.connect();
 
-        HandoffCapture capture = new HandoffCapture();
+        TestCapture capture = new TestCapture();
 
         MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         String bdbId = String.valueOf(mStandard.getBdbId());
 
-        currentTestContext = new HandoffTestContext(client, connection, capture, bdbId, addressType);
+        currentTestContext = new TestContext(client, connection, capture, bdbId, addressType);
         return currentTestContext;
     }
 
@@ -557,7 +568,7 @@ public class ConnectionHandoffTest {
         }
     }
 
-    private void performHandoffOperation(HandoffTestContext context, String testDescription) throws InterruptedException {
+    private void performRebindOperation(TestContext context, String testDescription) throws InterruptedException {
         String endpointId = clusterConfig.getFirstEndpointId();
         String policy = "single";
 
@@ -629,7 +640,7 @@ public class ConnectionHandoffTest {
         assertThat(context.capture.getReceivedNotifications().stream().anyMatch(n -> n.contains("MOVING"))).isTrue();
     }
 
-    private void reconnectionVerification(HandoffTestContext context, String testDescription) {
+    private void reconnectionVerification(TestContext context, String testDescription) {
         try {
             log.info("=== Reconnection Verification for {} ===", testDescription);
 
@@ -658,7 +669,7 @@ public class ConnectionHandoffTest {
 
             String pingResult = context.connection.sync().ping();
             assertThat(pingResult).isEqualTo("PONG");
-            log.info("✓ Connection still responsive after handoff: {}", pingResult);
+            log.info("✓ Connection still responsive after rebind: {}", pingResult);
 
             if (currentRemoteAddress != null && expectedEndpoint != null) {
                 boolean endpointMatches = verifyEndpointMatch(currentRemoteAddress, expectedEndpoint);
@@ -681,12 +692,12 @@ public class ConnectionHandoffTest {
                         expectedEndpoint);
             }
 
-            context.connection.sync().set("handoff-test-key", "handoff-test-value");
-            String getValue = context.connection.sync().get("handoff-test-key");
-            assertThat(getValue).isEqualTo("handoff-test-value");
-            log.info("✓ Basic operations work after handoff");
+            context.connection.sync().set("test-key", "test-value");
+            String getValue = context.connection.sync().get("test-key");
+            assertThat(getValue).isEqualTo("test-value");
+            log.info("✓ Basic operations work after rebind");
 
-            context.connection.sync().del("handoff-test-key");
+            context.connection.sync().del("test-key");
 
             context.capture.setReconnectionTested(true);
             log.info("✓ Reconnection verification completed successfully for {}", testDescription);
@@ -769,12 +780,13 @@ public class ConnectionHandoffTest {
         return client;
     }
 
-    private void executeBasicHandoffTest(EndpointType endpointType, String testDescription) throws InterruptedException {
+    private void executeEndpointTypeVerificationTest(EndpointType endpointType, String testDescription)
+            throws InterruptedException {
         log.info("test {} started for endpoint type {}", testDescription, endpointType);
 
-        HandoffTestContext context = setupHandoffTest(endpointType);
+        TestContext context = setupTest(endpointType);
 
-        performHandoffOperation(context, testDescription);
+        performRebindOperation(context, testDescription);
         reconnectionVerification(context, testDescription);
 
         // End test phase to prevent capturing cleanup notifications
@@ -800,107 +812,111 @@ public class ConnectionHandoffTest {
 
         log.info("=== Testing {} ===", testDescription);
 
-        String endpointId = clusterConfig.getFirstEndpointId();
-        String policy = "single";
+        try {
+            String endpointId = clusterConfig.getFirstEndpointId();
+            String policy = "single";
 
-        log.info("Starting comprehensive maintenance operations to trigger all notification types...");
+            log.info("Starting comprehensive maintenance operations to trigger all notification types...");
 
-        // This operation will trigger MIGRATING, MIGRATED, and MOVING notifications
-        StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig)).expectNext(true)
-                .expectComplete().verify(LONG_OPERATION_TIMEOUT);
+            // This operation will trigger MIGRATING, MIGRATED, and MOVING notifications
+            StepVerifier.create(faultClient.triggerMovingNotification(bdbId, endpointId, policy, clusterConfig))
+                    .expectNext(true).expectComplete().verify(LONG_OPERATION_TIMEOUT);
 
-        boolean migrationReceived = false;
-        boolean failoverReceived = false;
+            boolean migrationReceived = false;
+            boolean failoverReceived = false;
 
-        if (notificationsEnabled) {
-            migrationReceived = capture.waitForMigrationNotifications(NOTIFICATION_WAIT_TIMEOUT);
-        } else {
-            // For disabled notifications, give a brief moment for any unexpected notifications
-            // then proceed without waiting the full timeout
-            Thread.sleep(Duration.ofSeconds(2).toMillis());
-            log.info("Skipped waiting for migration notifications (disabled test)");
+            if (notificationsEnabled) {
+                migrationReceived = capture.waitForMigrationNotifications(NOTIFICATION_WAIT_TIMEOUT);
+            } else {
+                // For disabled notifications, give a brief moment for any unexpected notifications
+                // then proceed without waiting the full timeout
+                Thread.sleep(Duration.ofSeconds(2).toMillis());
+                log.info("Skipped waiting for migration notifications (disabled test)");
+            }
+
+            // Trigger additional failover operations to get FAILING_OVER and FAILED_OVER
+            clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+            String nodeId = clusterConfig.getNodeWithMasterShards();
+
+            log.info("Triggering failover operations to get FAILING_OVER and FAILED_OVER notifications...");
+            StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true)
+                    .expectComplete().verify(LONG_OPERATION_TIMEOUT);
+
+            if (notificationsEnabled) {
+                failoverReceived = capture.waitForFailoverNotifications(NOTIFICATION_WAIT_TIMEOUT);
+            } else {
+                // For disabled notifications, give a brief moment for any unexpected notifications
+                // then proceed without waiting the full timeout
+                Thread.sleep(Duration.ofSeconds(2).toMillis());
+                log.info("Skipped waiting for failover notifications (disabled test)");
+            }
+
+            capture.endTestPhase();
+
+            log.info("=== Notification Results ===");
+            log.info("Total notifications received: {}", capture.getReceivedNotifications().size());
+            log.info("MOVING notifications: {}", capture.getMovingCount());
+            log.info("MIGRATING notifications: {}", capture.getMigratingCount());
+            log.info("MIGRATED notifications: {}", capture.getMigratedCount());
+            log.info("FAILING_OVER notifications: {}", capture.getFailingOverCount());
+            log.info("FAILED_OVER notifications: {}", capture.getFailedOverCount());
+
+            if (notificationsEnabled) {
+                assertThat(capture.getReceivedNotifications())
+                        .as("Should receive notifications when maintenance events are enabled").isNotEmpty();
+
+                assertThat(migrationReceived).as("Should receive migration notifications").isTrue();
+                assertThat(failoverReceived).as("Should receive failover notifications").isTrue();
+                assertThat(capture.getMovingCount()).as("Should receive MOVING notifications").isGreaterThan(0);
+                assertThat(capture.getMigratingCount()).as("Should receive MIGRATING notifications").isGreaterThan(0);
+                assertThat(capture.getMigratedCount()).as("Should receive MIGRATED notifications").isGreaterThan(0);
+                assertThat(capture.getFailingOverCount()).as("Should receive FAILING_OVER notifications").isGreaterThan(0);
+                assertThat(capture.getFailedOverCount()).as("Should receive FAILED_OVER notifications").isGreaterThan(0);
+
+                log.info("✓ All expected maintenance notifications received and validated successfully");
+            } else {
+                assertThat(capture.getReceivedNotifications())
+                        .as("Should have no notifications when maintenance events are disabled").isEmpty();
+
+                assertThat(capture.getMovingCount()).as("Should have no MOVING notifications").isZero();
+                assertThat(capture.getMigratingCount()).as("Should have no MIGRATING notifications").isZero();
+                assertThat(capture.getMigratedCount()).as("Should have no MIGRATED notifications").isZero();
+                assertThat(capture.getFailingOverCount()).as("Should have no FAILING_OVER notifications").isZero();
+                assertThat(capture.getFailedOverCount()).as("Should have no FAILED_OVER notifications").isZero();
+
+                log.info("✓ Disabled maintenance events correctly prevent notifications");
+            }
+
+        } finally {
+            // Cleanup operations (same for both enabled and disabled tests)
+
+            clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
+            String nodeId = clusterConfig.getNodeWithMasterShards();
+
+            log.info("performing cluster cleanup operation for failover testing");
+            StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true)
+                    .expectComplete().verify(LONG_OPERATION_TIMEOUT);
+
+            if (connection != null && connection.isOpen()) {
+                connection.close();
+            }
+            if (client != null) {
+                client.shutdown();
+            }
+
+            log.info("test {} ended", testDescription);
         }
-
-        // Trigger additional failover operations to get FAILING_OVER and FAILED_OVER
-        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
-        String nodeId = clusterConfig.getNodeWithMasterShards();
-
-        log.info("Triggering failover operations to get FAILING_OVER and FAILED_OVER notifications...");
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
-                .verify(LONG_OPERATION_TIMEOUT);
-
-        if (notificationsEnabled) {
-            failoverReceived = capture.waitForFailoverNotifications(NOTIFICATION_WAIT_TIMEOUT);
-        } else {
-            // For disabled notifications, give a brief moment for any unexpected notifications
-            // then proceed without waiting the full timeout
-            Thread.sleep(Duration.ofSeconds(2).toMillis());
-            log.info("Skipped waiting for failover notifications (disabled test)");
-        }
-
-        capture.endTestPhase();
-
-        log.info("=== Notification Results ===");
-        log.info("Total notifications received: {}", capture.getReceivedNotifications().size());
-        log.info("MOVING notifications: {}", capture.getMovingCount());
-        log.info("MIGRATING notifications: {}", capture.getMigratingCount());
-        log.info("MIGRATED notifications: {}", capture.getMigratedCount());
-        log.info("FAILING_OVER notifications: {}", capture.getFailingOverCount());
-        log.info("FAILED_OVER notifications: {}", capture.getFailedOverCount());
-
-        if (notificationsEnabled) {
-            assertThat(capture.getReceivedNotifications())
-                    .as("Should receive notifications when maintenance events are enabled").isNotEmpty();
-
-            assertThat(migrationReceived).as("Should receive migration notifications").isTrue();
-            assertThat(failoverReceived).as("Should receive failover notifications").isTrue();
-            assertThat(capture.getMovingCount()).as("Should receive MOVING notifications").isGreaterThan(0);
-            assertThat(capture.getMigratingCount()).as("Should receive MIGRATING notifications").isGreaterThan(0);
-            assertThat(capture.getMigratedCount()).as("Should receive MIGRATED notifications").isGreaterThan(0);
-            assertThat(capture.getFailingOverCount()).as("Should receive FAILING_OVER notifications").isGreaterThan(0);
-            assertThat(capture.getFailedOverCount()).as("Should receive FAILED_OVER notifications").isGreaterThan(0);
-
-            log.info("✓ All expected maintenance notifications received and validated successfully");
-        } else {
-            assertThat(capture.getReceivedNotifications())
-                    .as("Should have no notifications when maintenance events are disabled").isEmpty();
-
-            assertThat(capture.getMovingCount()).as("Should have no MOVING notifications").isZero();
-            assertThat(capture.getMigratingCount()).as("Should have no MIGRATING notifications").isZero();
-            assertThat(capture.getMigratedCount()).as("Should have no MIGRATED notifications").isZero();
-            assertThat(capture.getFailingOverCount()).as("Should have no FAILING_OVER notifications").isZero();
-            assertThat(capture.getFailedOverCount()).as("Should have no FAILED_OVER notifications").isZero();
-
-            log.info("✓ Disabled maintenance events correctly prevent notifications");
-        }
-
-        // Cleanup operations (same for both enabled and disabled tests)
-        clusterConfig = RedisEnterpriseConfig.refreshClusterConfig(faultClient, String.valueOf(mStandard.getBdbId()));
-        nodeId = clusterConfig.getNodeWithMasterShards();
-
-        log.info("performing cluster cleanup operation for failover testing");
-        StepVerifier.create(faultClient.triggerShardFailover(bdbId, nodeId, clusterConfig)).expectNext(true).expectComplete()
-                .verify(LONG_OPERATION_TIMEOUT);
-
-        if (connection != null && connection.isOpen()) {
-            connection.close();
-        }
-        if (client != null) {
-            client.shutdown();
-        }
-
-        log.info("test {} ended", testDescription);
     }
 
     public static class DualConnectionCapture implements MaintenanceNotificationCapture {
 
-        private final HandoffCapture firstCapture;
+        private final TestCapture firstCapture;
 
         private final RedisURI uri;
 
         private final StatefulRedisConnection<String, String> firstConnection;
 
-        private final AtomicReference<HandoffCapture> secondCapture = new AtomicReference<>();
+        private final AtomicReference<TestCapture> secondCapture = new AtomicReference<>();
 
         private final AtomicReference<RedisClient> secondClient = new AtomicReference<>();
 
@@ -910,7 +926,7 @@ public class ConnectionHandoffTest {
 
         private final AtomicBoolean testPhaseActive = new AtomicBoolean(true);
 
-        public DualConnectionCapture(HandoffCapture firstCapture, RedisURI uri, String bdbId,
+        public DualConnectionCapture(TestCapture firstCapture, RedisURI uri, String bdbId,
                 StatefulRedisConnection<String, String> firstConnection) {
             this.firstCapture = firstCapture;
             this.uri = uri;
@@ -991,7 +1007,7 @@ public class ConnectionHandoffTest {
                 client.setOptions(options);
 
                 StatefulRedisConnection<String, String> connection = client.connect();
-                HandoffCapture capture = new HandoffCapture() {
+                TestCapture capture = new TestCapture() {
 
                     @Override
                     public void captureNotification(String notification) {
@@ -1022,11 +1038,11 @@ public class ConnectionHandoffTest {
             return secondConnectionMovingLatch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
         }
 
-        public HandoffCapture getFirstCapture() {
+        public TestCapture getFirstCapture() {
             return firstCapture;
         }
 
-        public HandoffCapture getSecondCapture() {
+        public TestCapture getSecondCapture() {
             return secondCapture.get();
         }
 
@@ -1192,16 +1208,16 @@ public class ConnectionHandoffTest {
 
     @ParameterizedTest
     @EnumSource(value = EndpointType.class, names = { "EXTERNAL_IP", "EXTERNAL_FQDN", "NONE" })
-    @DisplayName("Connection handoff with supported endpoint types")
-    public void connectionHandoffWithEndpointTypesTest(EndpointType endpointType) throws InterruptedException {
-        executeBasicHandoffTest(endpointType, endpointType + " Handoff Test");
+    @DisplayName("Connection rebind with supported endpoint types")
+    public void connectionRebindWithEndpointTypesTest(EndpointType endpointType) throws InterruptedException {
+        executeEndpointTypeVerificationTest(endpointType, endpointType + " Rebind Test");
     }
 
     @Test
     @DisplayName("Traffic resumes correctly after MOVING with async GET/SET operations")
     public void trafficResumesAfterMovingTest() throws InterruptedException {
         log.info("test trafficResumesAfterMovingTest started");
-        HandoffTestContext context = setupHandoffTest(EndpointType.EXTERNAL_IP);
+        TestContext context = setupTest(EndpointType.EXTERNAL_IP);
 
         RedisAsyncCommands<String, String> asyncCommands = context.connection.async();
         ContinuousTrafficGenerator trafficGenerator = new ContinuousTrafficGenerator(asyncCommands);
@@ -1209,21 +1225,26 @@ public class ConnectionHandoffTest {
         log.info("=== Starting traffic before MOVING operation ===");
         trafficGenerator.startTraffic();
 
-        await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(5)).until(() -> true);
+        await().atMost(TRAFFIC_AWAIT_TIMEOUT)
+                .until(() -> trafficGenerator.getSuccessfulOperations() > TRAFFIC_OPERATION_THRESHOLD);
         long initialSuccessful = trafficGenerator.getSuccessfulOperations();
         long initialFailed = trafficGenerator.getFailedOperations();
         log.info("Initial traffic stats - Successful: {}, Failed: {}", initialSuccessful, initialFailed);
 
         log.info("=== Performing MOVING operation while traffic is active ===");
-        performHandoffOperation(context, "Traffic Resumption Test");
+        performRebindOperation(context, "Traffic Resumption Test");
 
         log.info("=== Continuing traffic during maintenance ===");
-        await().pollDelay(Duration.ofSeconds(5)).atMost(Duration.ofSeconds(10)).until(() -> true);
+        long midSuccessful = trafficGenerator.getSuccessfulOperations();
+        await().atMost(TRAFFIC_AWAIT_TIMEOUT)
+                .until(() -> trafficGenerator.getSuccessfulOperations() > midSuccessful + TRAFFIC_OPERATION_THRESHOLD);
 
         reconnectionVerification(context, "Traffic Resumption Test");
 
         log.info("=== Allowing traffic to continue after reconnection ===");
-        await().pollDelay(Duration.ofSeconds(3)).atMost(Duration.ofSeconds(6)).until(() -> true);
+        long postReconnectSuccessful = trafficGenerator.getSuccessfulOperations();
+        await().atMost(TRAFFIC_AWAIT_TIMEOUT).until(
+                () -> trafficGenerator.getSuccessfulOperations() > postReconnectSuccessful + TRAFFIC_OPERATION_THRESHOLD);
 
         trafficGenerator.stopTraffic();
 
@@ -1271,7 +1292,7 @@ public class ConnectionHandoffTest {
         firstClient.setOptions(options);
 
         StatefulRedisConnection<String, String> firstConnection = firstClient.connect();
-        HandoffCapture firstCapture = new HandoffCapture();
+        TestCapture firstCapture = new TestCapture();
         String bdbId = String.valueOf(mStandard.getBdbId());
 
         DualConnectionCapture dualCapture = new DualConnectionCapture(firstCapture, uri, bdbId, firstConnection);
@@ -1279,9 +1300,8 @@ public class ConnectionHandoffTest {
         MaintenancePushNotificationMonitor.setupMonitoring(firstConnection, dualCapture);
 
         try {
-            performHandoffOperation(
-                    new HandoffTestContext(firstClient, firstConnection, firstCapture, bdbId, EndpointType.EXTERNAL_IP),
-                    "Dual Connection External IP Handoff Test");
+            performRebindOperation(new TestContext(firstClient, firstConnection, firstCapture, bdbId, EndpointType.EXTERNAL_IP),
+                    "Dual Connection External IP Rebind Test");
 
             log.info("Waiting for second connection to receive MOVING notification...");
             boolean secondMovingReceived = dualCapture.waitForSecondConnectionMoving(NOTIFICATION_WAIT_TIMEOUT);
@@ -1294,14 +1314,14 @@ public class ConnectionHandoffTest {
 
             log.info("Both connections received MOVING notifications successfully");
 
-            reconnectionVerification(new HandoffTestContext(firstClient, firstConnection, dualCapture.getFirstCapture(), bdbId,
-                    EndpointType.EXTERNAL_IP), "First Connection - Dual Connection External IP Handoff Test");
+            reconnectionVerification(new TestContext(firstClient, firstConnection, dualCapture.getFirstCapture(), bdbId,
+                    EndpointType.EXTERNAL_IP), "First Connection - Dual Connection External IP Rebind Test");
 
             if (dualCapture.getSecondConnection() != null) {
                 reconnectionVerification(
-                        new HandoffTestContext(dualCapture.getSecondClient(), dualCapture.getSecondConnection(),
+                        new TestContext(dualCapture.getSecondClient(), dualCapture.getSecondConnection(),
                                 dualCapture.getSecondCapture(), bdbId, EndpointType.EXTERNAL_IP),
-                        "Second Connection - Dual Connection External IP Handoff Test");
+                        "Second Connection - Dual Connection External IP Rebind Test");
             }
 
             dualCapture.endTestPhase();
@@ -1357,16 +1377,19 @@ public class ConnectionHandoffTest {
         MaintenancePushNotificationMonitor.setupMonitoring(connection, capture);
 
         try {
-            await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(100)).until(() -> connection.isOpen());
+
+            String pingResult = connection.sync().ping();
+            assertThat(pingResult).isEqualTo("PONG");
+            String secondPingResult = secondConnection.sync().ping();
+            assertThat(secondPingResult).isEqualTo("PONG");
 
             String initialChannelId = eventBusMonitor.getCurrentChannelId();
             Channel initialChannel = ConnectionTestUtil.getChannel(connection);
 
             log.info("Initial connection established - channelId: {}", initialChannelId);
-            if (initialChannel != null) {
-                log.info("Initial channel state - active: {}, open: {}, registered: {}", initialChannel.isActive(),
-                        initialChannel.isOpen(), initialChannel.isRegistered());
-            }
+
+            log.info("Initial channel state - active: {}, open: {}, registered: {}", initialChannel.isActive(),
+                    initialChannel.isOpen(), initialChannel.isRegistered());
 
             eventBusMonitor.prepareForConnectionTransition();
 
@@ -1389,21 +1412,8 @@ public class ConnectionHandoffTest {
                     .as("Should receive connection transition events (DisconnectedEvent + ConnectionDeactivatedEvent)")
                     .isTrue();
 
-            await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> true); // Allow time for cleanup
-
             ConnectionEventBusMonitoringUtil.ConnectionAnalysisResult result = eventBusMonitor
                     .analyzeConnectionClosure(initialChannelId, initialChannel);
-
-            log.info("=== Combined Test Results ===");
-            log.info("BLPOP unblock test - Completed: {}, Value received: {}", capture.isBlpopCompleted(),
-                    capture.getBlpopResult());
-            log.info("Command stack verification - Performed: {}, Stack size before: {}", capture.isStackVerified(),
-                    capture.getStackSizeBeforeVerification());
-            log.info("EventBus indicators - Disconnected: {}, Deactivated: {}, Cleanup: {}", result.wasDisconnected(),
-                    result.wasDeactivated(), result.isEventBusCleanup());
-            log.info("Netty channel cleanup: {}", result.isNettyCleanup());
-            log.info("Connection handoff - Initial: {}, Current: {}, Handed off: {}", result.getInitialChannelId(),
-                    result.getCurrentChannelId(), result.isConnectionHandedOff());
 
             // VALIDATIONS: BLPOP unblock functionality
             assertThat(capture.isBlpopCompleted()).as("BLPOP should have been unblocked during MOVING").isTrue();
@@ -1508,7 +1518,8 @@ public class ConnectionHandoffTest {
                 startBlpopWithTimeout();
             } else if (notification.contains("MOVING")) {
                 log.info("MOVING notification received - performing command stack verification and LPUSH unblock");
-                performCommandStackVerificationAndUnblock();
+                verifyCommandStackDuringMoving();
+                unblockBlpop();
             }
         }
 
@@ -1542,80 +1553,38 @@ public class ConnectionHandoffTest {
             });
         }
 
-        private void performCommandStackVerificationAndUnblock() {
+        private void verifyCommandStackDuringMoving() {
             try {
-                log.info("Performing command stack verification (without clearing)...");
+                log.info("Verifying command stack during MOVING...");
 
-                // Perform the same verification as clearCommandStack but don't actually clear
                 if (mainConnection != null && mainConnection.isOpen()) {
-                    io.lettuce.core.RedisChannelHandler<?, ?> handler = (io.lettuce.core.RedisChannelHandler<?, ?>) mainConnection;
-                    io.lettuce.core.RedisChannelWriter writer = handler.getChannelWriter();
+                    ConnectionTestUtil.StackVerificationResult result = ConnectionTestUtil
+                            .verifyConnectionAndStackState(mainConnection, "MOVING phase");
 
-                    if (writer instanceof io.lettuce.core.protocol.MaintenanceAwareExpiryWriter) {
-                        java.lang.reflect.Field delegateField = writer.getClass().getDeclaredField("delegate");
-                        delegateField.setAccessible(true);
-                        io.lettuce.core.RedisChannelWriter delegate = (io.lettuce.core.RedisChannelWriter) delegateField
-                                .get(writer);
+                    stackSizeBeforeVerification.set(result.getStackSize());
 
-                        java.lang.reflect.Field channelField = delegate.getClass().getDeclaredField("channel");
-                        channelField.setAccessible(true);
-                        io.netty.channel.Channel channel = (io.netty.channel.Channel) channelField.get(delegate);
+                    assertThat(result.getStackSize()).as("Command stack should have pending commands during MOVING")
+                            .isGreaterThan(0);
 
-                        log.info("=== COMMAND STACK VERIFICATION INFO ===");
-                        log.info("Channel: {}", channel);
-                        log.info("Channel active: {}", channel.isActive());
-                        log.info("Channel registered: {}", channel.isRegistered());
+                    assertThat(result.isChannelActive()).as("Channel should be active during MOVING verification").isTrue();
+                    assertThat(result.isChannelRegistered()).as("Channel should be registered during MOVING verification")
+                            .isTrue();
 
-                        if (channel.hasAttr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE)) {
-                            Object rebindState = channel
-                                    .attr(io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE).get();
-                            log.info("Rebind attribute present: true, state: {}", rebindState);
-                        } else {
-                            log.info("Rebind attribute present: false");
-                        }
-
-                        io.lettuce.core.protocol.CommandHandler commandHandler = channel.pipeline()
-                                .get(io.lettuce.core.protocol.CommandHandler.class);
-                        if (commandHandler != null) {
-                            int stackSize = commandHandler.getStack().size();
-                            stackSizeBeforeVerification.set(stackSize);
-                            log.info("CommandHandler found, stack size: {} (NOT clearing as requested)", stackSize);
-
-                            if (stackSize > 0) {
-                                log.info("Command stack contents:");
-                                int i = 0;
-                                for (Object command : commandHandler.getStack()) {
-                                    log.info("  [{}]: {}", i++, command);
-                                }
-                            }
-
-                            // Command Stack Verification Assertions
-                            assertThat(stackSize).as("Command stack should have pending commands during MOVING")
-                                    .isGreaterThan(0);
-
-                        } else {
-                            log.warn("CommandHandler not found in pipeline");
-                        }
-
-                        // Channel State Assertions - during MOVING
-                        assertThat(channel.isActive()).as("Channel should be active during MOVING verification").isTrue();
-                        assertThat(channel.isRegistered()).as("Channel should be registered during MOVING verification")
-                                .isTrue();
-
-                        log.info("=== END COMMAND STACK VERIFICATION INFO ===");
-
-                        stackVerified.set(true);
-                    }
+                    stackVerified.set(true);
                 }
+            } catch (Exception e) {
+                log.warn("Failed to verify command stack during MOVING: {}", e.getMessage());
+                stackVerified.set(false);
+            }
+        }
 
-                // Now send LPUSH via second connection to unblock the BLPOP
+        private void unblockBlpop() {
+            try {
                 log.info("Sending LPUSH via second connection to unblock BLPOP...");
                 Long pushResult = secondConnection.sync().lpush(BLPOP_QUEUE_KEY, UNBLOCK_VALUE);
                 log.info("LPUSH completed, result: {}", pushResult);
-
             } catch (Exception e) {
-                log.warn("Failed to perform command stack verification and unblock: {}", e.getMessage());
-                stackVerified.set(false);
+                log.warn("Failed to unblock BLPOP: {}", e.getMessage());
             }
         }
 
