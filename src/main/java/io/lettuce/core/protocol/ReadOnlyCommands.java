@@ -29,6 +29,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * Contains all command names that are read-only commands.
  *
  * @author Mark Paluch
+ * @author Mingi Lee
  * @since 6.2.5
  */
 public class ReadOnlyCommands {
@@ -78,6 +79,7 @@ public class ReadOnlyCommands {
         SDIFF, SINTER, SISMEMBER, SMISMEMBER, SMEMBERS, SRANDMEMBER, SSCAN, STRLEN, //
         SUNION, TIME, TTL, TYPE, //
         XINFO, XLEN, XPENDING, XRANGE, XREVRANGE, XREAD, //
+        JSON_ARRINDEX, JSON_ARRLEN, JSON_GET, JSON_MGET, JSON_OBJKEYS, JSON_OBJLEN, JSON_STRLEN, JSON_TYPE, //
         ZCARD, ZCOUNT, ZLEXCOUNT, ZRANGE, //
         ZRANDMEMBER, ZRANGEBYLEX, ZRANGEBYSCORE, ZRANK, ZREVRANGE, ZREVRANGEBYLEX, ZREVRANGEBYSCORE, ZREVRANK, ZSCAN, ZSCORE,
     }
