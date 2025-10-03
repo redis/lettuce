@@ -13,20 +13,23 @@ import io.lettuce.core.protocol.ProtocolKeyword;
  * Tests for {@link ClusterReadOnlyCommands}.
  *
  * @author Mark Paluch
+ * @author Mingi Lee
  */
 @Tag(UNIT_TEST)
 class ClusterReadOnlyCommandsUnitTests {
 
     @Test
     void testCount() {
-        assertThat(ClusterReadOnlyCommands.getReadOnlyCommands()).hasSize(84);
+        assertThat(ClusterReadOnlyCommands.getReadOnlyCommands()).hasSize(92);
     }
 
     @Test
     void testResolvableCommandNames() {
 
         for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
-            assertThat(readOnlyCommand.toString()).isEqualTo(CommandType.valueOf(readOnlyCommand.toString()).name());
+            // Convert command string to enum name format (e.g., "JSON.GET" -> "JSON_GET")
+            String enumName = readOnlyCommand.toString().replace('.', '_');
+            assertThat(readOnlyCommand.toString()).isEqualTo(CommandType.valueOf(enumName).toString());
         }
     }
 

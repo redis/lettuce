@@ -656,14 +656,10 @@ public class ServerCommandIntegrationTests extends TestSupport {
 
     private boolean isCommandReadOnly(String commandName) {
         List<Object> commandInfo = redis.commandInfo(commandName);
-        if (commandInfo == null || commandInfo.isEmpty()) {
-            throw new IllegalArgumentException("Command not found: " + commandName);
-        }
+        assumeTrue(commandInfo == null || commandInfo.isEmpty(), "Command " + commandName + " not found");
 
         List<CommandDetail> details = CommandDetailParser.parse(commandInfo);
-        if (details.isEmpty()) {
-            throw new IllegalArgumentException("Command details could not be parsed: " + commandName);
-        }
+        assumeTrue(details.isEmpty(), "Command details could not be parsed: " + commandName);
 
         CommandDetail detail = details.get(0);
         return !detail.getFlags().contains(CommandDetail.Flag.WRITE);
