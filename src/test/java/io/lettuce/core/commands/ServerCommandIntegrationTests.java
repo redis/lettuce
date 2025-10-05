@@ -643,13 +643,7 @@ public class ServerCommandIntegrationTests extends TestSupport {
     @Test
     void testReadOnlyCommands() {
         for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
-            String name = readOnlyCommand.toString();
-            // Skip commands that are not available on this server (e.g., module not loaded)
-            List<Object> info = redis.commandInfo(name);
-            if (info == null || info.isEmpty()) {
-                continue;
-            }
-            assertThat(isCommandReadOnly(name)).isTrue();
+            assertThat(isCommandReadOnly(readOnlyCommand.toString())).isTrue();
         }
     }
 
