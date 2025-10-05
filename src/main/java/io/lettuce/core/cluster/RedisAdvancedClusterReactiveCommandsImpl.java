@@ -537,9 +537,9 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public Mono<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
         return routeKeyless(() -> super.ftAggregate(index, query, args),
-                (nodeId, conn) -> conn.ftAggregate(index, query, args).map(reply -> {
+                (nodeId, conn) -> conn.ftAggregate(index, query, args).mapNotNull(reply -> {
                     if (reply != null) {
-                        reply.getCursor().ifPresent(c -> c.setNodeId(nodeId));
+                        reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(nodeId));
                     }
                     return reply;
                 }), CommandType.FT_AGGREGATE);
