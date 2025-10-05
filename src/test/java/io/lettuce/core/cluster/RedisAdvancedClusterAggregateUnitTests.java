@@ -65,9 +65,9 @@ class RedisAdvancedClusterAggregateUnitTests {
         when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.WRITE), eq("node-1")))
                 .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
         // Random/intent-based route
-        when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.WRITE)))
+        when(asyncProvider.getRandomConnectionAsync(eq(ConnectionIntent.WRITE)))
                 .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
-        when(asyncProvider.getConnectionAsync(eq(ConnectionIntent.READ)))
+        when(asyncProvider.getRandomConnectionAsync(eq(ConnectionIntent.READ)))
                 .thenReturn((CompletableFuture) CompletableFuture.completedFuture(nodeConn));
 
         when(clusterConn.getPartitions()).thenReturn(partitions);

@@ -639,7 +639,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * via the cluster connection provider.
      */
     private CompletableFuture<StatefulRedisConnection<K, V>> getStatefulConnection(ConnectionIntent intent) {
-        return getConnectionProvider().getConnectionAsync(intent);
+        return getConnectionProvider().getRandomConnectionAsync(intent);
     }
 
     @Override

@@ -156,7 +156,7 @@ class PooledClusterConnectionProvider<K, V>
     }
 
     @Override
-    public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent) {
+    public CompletableFuture<StatefulRedisConnection<K, V>> getRandomConnectionAsync(ConnectionIntent connectionIntent) {
 
         if (debugEnabled) {
             logger.debug("getConnection(" + connectionIntent + ")");

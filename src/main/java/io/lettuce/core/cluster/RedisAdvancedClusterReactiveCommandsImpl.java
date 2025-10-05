@@ -502,7 +502,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * cluster connection provider.
      */
     private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(ConnectionIntent intent) {
-        return getMono(getConnectionProvider().getConnectionAsync(intent));
+        return getMono(getConnectionProvider().getRandomConnectionAsync(intent));
     }
 
     @Override

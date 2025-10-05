@@ -61,7 +61,7 @@ interface AsyncClusterConnectionProvider extends Closeable {
      *
      * @see #getConnectionAsync(ConnectionIntent, int)
      */
-    <K, V> CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync(ConnectionIntent connectionIntent);
+    <K, V> CompletableFuture<StatefulRedisConnection<K, V>> getRandomConnectionAsync(ConnectionIntent connectionIntent);
 
     /**
      * Provide a connection for the connectionIntent and cluster slot. The underlying connection is bound to the nodeId. If the
