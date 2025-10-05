@@ -620,14 +620,6 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
         return getConnectionProvider().getConnectionAsync(ConnectionIntent.WRITE, nodeId);
     }
 
-    /**
-     * Obtain a random node-scoped connection for the given intent (READ/WRITE). Selection honors the current ReadFrom policy
-     * via the cluster connection provider.
-     */
-    private CompletableFuture<StatefulRedisConnection<K, V>> getStatefulConnection(ConnectionIntent intent) {
-        return getConnectionProvider().getConnectionAsync(intent);
-    }
-
     private CompletableFuture<StatefulRedisConnection<K, V>> getStatefulConnection(String host, int port) {
         return getConnectionProvider().getConnectionAsync(ConnectionIntent.WRITE, host, port);
     }
@@ -640,6 +632,14 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
         return (StatefulRedisClusterConnection<K, V>) super.getConnection();
+    }
+
+    /**
+     * Obtain a random node-scoped connection for the given intent (READ/WRITE). Selection honors the current ReadFrom policy
+     * via the cluster connection provider.
+     */
+    private CompletableFuture<StatefulRedisConnection<K, V>> getStatefulConnection(ConnectionIntent intent) {
+        return getConnectionProvider().getConnectionAsync(intent);
     }
 
     @Override
@@ -764,7 +764,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<V>> ftTagvals(String index, K fieldName) {
+    public RedisFuture<List<V>> ftTagvals(String index, String fieldName) {
         return routeKeyless(() -> super.ftTagvals(index, fieldName), (conn) -> conn.ftTagvals(index, fieldName),
                 CommandType.FT_TAGVALS);
     }
@@ -782,12 +782,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<Long> ftDictadd(K dict, V... terms) {
+    public RedisFuture<Long> ftDictadd(String dict, V... terms) {
         return routeKeyless(() -> super.ftDictadd(dict, terms), (conn) -> conn.ftDictadd(dict, terms), CommandType.FT_DICTADD);
     }
 
     @Override
-    public RedisFuture<Long> ftDictdel(K dict, V... terms) {
+    public RedisFuture<Long> ftDictdel(String dict, V... terms) {
         return routeKeyless(() -> super.ftDictdel(dict, terms), (conn) -> conn.ftDictdel(dict, terms), CommandType.FT_DICTDEL);
     }
 
@@ -797,19 +797,19 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<String> ftAliasadd(K alias, K index) {
+    public RedisFuture<String> ftAliasadd(String alias, String index) {
         return routeKeyless(() -> super.ftAliasadd(alias, index), (conn) -> conn.ftAliasadd(alias, index),
                 CommandType.FT_ALIASADD);
     }
 
     @Override
-    public RedisFuture<String> ftAliasupdate(K alias, K index) {
+    public RedisFuture<String> ftAliasupdate(String alias, String index) {
         return routeKeyless(() -> super.ftAliasupdate(alias, index), (conn) -> conn.ftAliasupdate(alias, index),
                 CommandType.FT_ALIASUPDATE);
     }
 
     @Override
-    public RedisFuture<String> ftAliasdel(K alias) {
+    public RedisFuture<String> ftAliasdel(String alias) {
         return routeKeyless(() -> super.ftAliasdel(alias), (conn) -> conn.ftAliasdel(alias), CommandType.FT_ALIASDEL);
     }
 
@@ -819,37 +819,37 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftCreate(index, fieldArgs), (conn) -> conn.ftCreate(index, fieldArgs),
                 CommandType.FT_CREATE);
     }
 
     @Override
-    public RedisFuture<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftCreate(String index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftCreate(index, arguments, fieldArgs),
                 (conn) -> conn.ftCreate(index, arguments, fieldArgs), CommandType.FT_CREATE);
     }
 
     @Override
-    public RedisFuture<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftAlter(index, skipInitialScan, fieldArgs),
                 (conn) -> conn.ftAlter(index, skipInitialScan, fieldArgs), CommandType.FT_ALTER);
     }
 
     @Override
-    public RedisFuture<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs) {
+    public RedisFuture<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftAlter(index, fieldArgs), (conn) -> conn.ftAlter(index, fieldArgs),
                 CommandType.FT_ALTER);
     }
 
     @Override
-    public RedisFuture<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+    public RedisFuture<String> ftDropindex(String index, boolean deleteDocumentKeys) {
         return routeKeyless(() -> super.ftDropindex(index, deleteDocumentKeys),
                 (conn) -> conn.ftDropindex(index, deleteDocumentKeys), CommandType.FT_DROPINDEX);
     }
 
     @Override
-    public RedisFuture<String> ftDropindex(K index) {
+    public RedisFuture<String> ftDropindex(String index) {
         return routeKeyless(() -> super.ftDropindex(index), (conn) -> conn.ftDropindex(index), CommandType.FT_DROPINDEX);
     }
 
@@ -859,19 +859,19 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+    public RedisFuture<String> ftSynupdate(String index, V synonymGroupId, V... terms) {
         return routeKeyless(() -> super.ftSynupdate(index, synonymGroupId, terms),
                 (conn) -> conn.ftSynupdate(index, synonymGroupId, terms), CommandType.FT_SYNUPDATE);
     }
 
     @Override
-    public RedisFuture<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+    public RedisFuture<String> ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
         return routeKeyless(() -> super.ftSynupdate(index, synonymGroupId, args, terms),
                 (conn) -> conn.ftSynupdate(index, synonymGroupId, args, terms), CommandType.FT_SYNUPDATE);
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor, int count) {
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
         if (cursor == null) {
             CompletableFuture<AggregationReply<K, V>> failed = new CompletableFuture<>();
             failed.completeExceptionally(new IllegalArgumentException("cursor must not be null"));
@@ -906,12 +906,12 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor) {
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
         return ftCursorread(index, cursor, -1);
     }
 
     @Override
-    public RedisFuture<String> ftCursordel(K index, Cursor cursor) {
+    public RedisFuture<String> ftCursordel(String index, Cursor cursor) {
         if (cursor == null) {
             CompletableFuture<String> failed = new CompletableFuture<>();
             failed.completeExceptionally(new IllegalArgumentException("cursor must not be null"));

@@ -1727,7 +1727,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
         }
         long cursorId = cursor.getCursorId();
         if (cursorId <= 0) {
-            // idempotent OK for non-existent/finished cursor
             return dispatch(searchCommandBuilder.ftCursordel(index, 0));
         }
         return dispatch(searchCommandBuilder.ftCursordel(index, cursorId));

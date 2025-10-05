@@ -413,17 +413,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
-        return routeKeyless(() -> super.ftAggregate(index, query, args),
-                (nodeId, conn) -> conn.ftAggregate(index, query, args).mapNotNull(reply -> {
-                    if (reply != null) {
-                        reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(nodeId));
-                    }
-                    return reply;
-                }), CommandType.FT_AGGREGATE);
-    }
-
-    @Override
     public Mono<Void> shutdown(boolean save) {
         Map<String, Publisher<Void>> publishers = executeOnNodes(commands -> commands.shutdown(save), ALL_NODES);
         return Flux.merge(publishers.values()).then();
@@ -484,14 +473,6 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
         return getMono(getConnectionProvider().getConnectionAsync(ConnectionIntent.WRITE, nodeId));
     }
 
-    /**
-     * Obtain a node-scoped connection for the given intent (READ/WRITE). Selection honors the current ReadFrom policy via the
-     * cluster connection provider.
-     */
-    private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(ConnectionIntent intent) {
-        return getMono(getConnectionProvider().getConnectionAsync(intent));
-    }
-
     private Mono<RedisClusterReactiveCommands<K, V>> getConnectionReactive(String nodeId) {
         return getMono(getConnectionProvider().<K, V> getConnectionAsync(ConnectionIntent.WRITE, nodeId))
                 .map(StatefulRedisConnection::reactive);
@@ -514,6 +495,14 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     @Override
     public StatefulRedisClusterConnection<K, V> getStatefulConnection() {
         return (StatefulRedisClusterConnection<K, V>) super.getConnection();
+    }
+
+    /**
+     * Obtain a node-scoped connection for the given intent (READ/WRITE). Selection honors the current ReadFrom policy via the
+     * cluster connection provider.
+     */
+    private Mono<StatefulRedisConnection<K, V>> getStatefulConnection(ConnectionIntent intent) {
+        return getMono(getConnectionProvider().getConnectionAsync(intent));
     }
 
     @Override
@@ -563,6 +552,22 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query, AggregateArgs<K, V> args) {
+        return routeKeyless(() -> super.ftAggregate(index, query, args),
+                (nodeId, conn) -> conn.ftAggregate(index, query, args).mapNotNull(reply -> {
+                    if (reply != null) {
+                        reply.getCursor().filter(c -> c.getCursorId() > 0).ifPresent(c -> c.setNodeId(nodeId));
+                    }
+                    return reply;
+                }), CommandType.FT_AGGREGATE);
+    }
+
+    @Override
+    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query) {
+        return ftAggregate(index, query, null);
+    }
+
+    @Override
     public Mono<SearchReply<K, V>> ftSearch(String index, V query, SearchArgs<K, V> args) {
         return routeKeyless(() -> super.ftSearch(index, query, args), conn -> conn.ftSearch(index, query, args),
                 CommandType.FT_SEARCH);
@@ -585,7 +590,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Flux<V> ftTagvals(String index, K fieldName) {
+    public Flux<V> ftTagvals(String index, String fieldName) {
         return routeKeylessMany(() -> super.ftTagvals(index, fieldName), conn -> conn.ftTagvals(index, fieldName),
                 CommandType.FT_TAGVALS);
     }
@@ -603,12 +608,12 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<Long> ftDictadd(K dict, V... terms) {
+    public Mono<Long> ftDictadd(String dict, V... terms) {
         return routeKeyless(() -> super.ftDictadd(dict, terms), conn -> conn.ftDictadd(dict, terms), CommandType.FT_DICTADD);
     }
 
     @Override
-    public Mono<Long> ftDictdel(K dict, V... terms) {
+    public Mono<Long> ftDictdel(String dict, V... terms) {
         return routeKeyless(() -> super.ftDictdel(dict, terms), conn -> conn.ftDictdel(dict, terms), CommandType.FT_DICTDEL);
     }
 
@@ -618,54 +623,54 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<String> ftAliasadd(K alias, K index) {
+    public Mono<String> ftAliasadd(String alias, String index) {
         return routeKeyless(() -> super.ftAliasadd(alias, index), conn -> conn.ftAliasadd(alias, index),
                 CommandType.FT_ALIASADD);
     }
 
     @Override
-    public Mono<String> ftAliasupdate(K alias, K index) {
+    public Mono<String> ftAliasupdate(String alias, String index) {
         return routeKeyless(() -> super.ftAliasupdate(alias, index), conn -> conn.ftAliasupdate(alias, index),
                 CommandType.FT_ALIASUPDATE);
     }
 
     @Override
-    public Mono<String> ftAliasdel(K alias) {
+    public Mono<String> ftAliasdel(String alias) {
         return routeKeyless(() -> super.ftAliasdel(alias), conn -> conn.ftAliasdel(alias), CommandType.FT_ALIASDEL);
     }
 
     @Override
-    public Mono<String> ftCreate(K index, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftCreate(String index, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftCreate(index, fieldArgs), conn -> conn.ftCreate(index, fieldArgs),
                 CommandType.FT_CREATE);
     }
 
     @Override
-    public Mono<String> ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftCreate(String index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftCreate(index, arguments, fieldArgs),
                 conn -> conn.ftCreate(index, arguments, fieldArgs), CommandType.FT_CREATE);
     }
 
     @Override
-    public Mono<String> ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftAlter(index, skipInitialScan, fieldArgs),
                 conn -> conn.ftAlter(index, skipInitialScan, fieldArgs), CommandType.FT_ALTER);
     }
 
     @Override
-    public Mono<String> ftAlter(K index, List<FieldArgs<K>> fieldArgs) {
+    public Mono<String> ftAlter(String index, List<FieldArgs<K>> fieldArgs) {
         return routeKeyless(() -> super.ftAlter(index, fieldArgs), conn -> conn.ftAlter(index, fieldArgs),
                 CommandType.FT_ALTER);
     }
 
     @Override
-    public Mono<String> ftDropindex(K index, boolean deleteDocumentKeys) {
+    public Mono<String> ftDropindex(String index, boolean deleteDocumentKeys) {
         return routeKeyless(() -> super.ftDropindex(index, deleteDocumentKeys),
                 conn -> conn.ftDropindex(index, deleteDocumentKeys), CommandType.FT_DROPINDEX);
     }
 
     @Override
-    public Mono<String> ftDropindex(K index) {
+    public Mono<String> ftDropindex(String index) {
         return routeKeyless(() -> super.ftDropindex(index), conn -> conn.ftDropindex(index), CommandType.FT_DROPINDEX);
     }
 
@@ -675,13 +680,13 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<String> ftSynupdate(K index, V synonymGroupId, V... terms) {
+    public Mono<String> ftSynupdate(String index, V synonymGroupId, V... terms) {
         return routeKeyless(() -> super.ftSynupdate(index, synonymGroupId, terms),
                 conn -> conn.ftSynupdate(index, synonymGroupId, terms), CommandType.FT_SYNUPDATE);
     }
 
     @Override
-    public Mono<String> ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
+    public Mono<String> ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms) {
         return routeKeyless(() -> super.ftSynupdate(index, synonymGroupId, args, terms),
                 conn -> conn.ftSynupdate(index, synonymGroupId, args, terms), CommandType.FT_SYNUPDATE);
     }
@@ -692,12 +697,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftAggregate(String index, V query) {
-        return ftAggregate(index, query, null);
-    }
-
-    @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor, int count) {
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
         if (cursor == null) {
             return Mono.error(new IllegalArgumentException("cursor must not be null"));
         }
@@ -720,12 +720,12 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(K index, Cursor cursor) {
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
         return ftCursorread(index, cursor, -1);
     }
 
     @Override
-    public Mono<String> ftCursordel(K index, Cursor cursor) {
+    public Mono<String> ftCursordel(String index, Cursor cursor) {
         if (cursor == null) {
             return Mono.error(new IllegalArgumentException("cursor must not be null"));
         }
