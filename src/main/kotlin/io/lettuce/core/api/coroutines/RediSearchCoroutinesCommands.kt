@@ -1208,8 +1208,8 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * </p>
      *
      * <p>
-     * Once a cursor is deleted, any subsequent attempts to read from it using [ftCursorread(String, long)] or
-     * [ftCursorread(String, long, Integer)] will result in an error.
+     * Once a cursor is deleted, any subsequent attempts to read from it using [ftCursorread(String, Cursor)] or
+     * [ftCursorread(String, Cursor, Integer)] will result in an error.
      * </p>
      *
      * <p>
