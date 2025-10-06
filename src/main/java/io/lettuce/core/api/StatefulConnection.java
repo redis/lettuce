@@ -82,7 +82,7 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
      * connection will become not usable anymore as soon as this method was called.
      *
      * @return a {@link CompletableFuture} that is notified once the operation completes, either because the operation was
-     * successful or because of an error.
+     *         successful or because of an error.
      * @since 5.1
      */
     @Override
@@ -119,7 +119,7 @@ public interface StatefulConnection<K, V> extends AutoCloseable, AsyncCloseable 
     void flushCommands();
 
     /**
-     * @return the codec used for this connection.
+     * @return the {@link RedisCodec} used by this connection.
      */
     RedisCodec<K, V> getCodec();
 
