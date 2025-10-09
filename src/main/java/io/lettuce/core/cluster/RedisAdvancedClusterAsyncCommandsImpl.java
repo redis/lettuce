@@ -276,9 +276,31 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<List<K>> keys(String pattern) {
+    public RedisFuture<List<String>> keys(String pattern) {
 
-        Map<String, CompletableFuture<List<K>>> executions = executeOnUpstream(commands -> commands.keys(pattern));
+        Map<String, CompletableFuture<List<String>>> executions = executeOnUpstream(commands -> commands.keys(pattern));
+
+        return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
+            List<String> result = new ArrayList<>();
+            for (CompletableFuture<List<String>> future : executions.values()) {
+                result.addAll(MultiNodeExecution.execute(future::get));
+            }
+            return result;
+        });
+    }
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    @Override
+    public RedisFuture<List<K>> keysLegacy(K pattern) {
+
+        Map<String, CompletableFuture<List<K>>> executions = executeOnUpstream(commands -> commands.keysLegacy(pattern));
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
             List<K> result = new ArrayList<>();
@@ -290,9 +312,26 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<Long> keys(KeyStreamingChannel<K> channel, String pattern) {
+    public RedisFuture<Long> keys(KeyStreamingChannel<String> channel, String pattern) {
 
         Map<String, CompletableFuture<Long>> executions = executeOnUpstream(commands -> commands.keys(channel, pattern));
+        return MultiNodeExecution.aggregateAsync(executions);
+    }
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    @Override
+    public RedisFuture<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern) {
+
+        Map<String, CompletableFuture<Long>> executions = executeOnUpstream(commands -> commands.keysLegacy(channel, pattern));
         return MultiNodeExecution.aggregateAsync(executions);
     }
 

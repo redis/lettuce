@@ -217,9 +217,20 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * Find all keys matching the given pattern.
      *
      * @param pattern the pattern type: patternkey (pattern).
-     * @return List<K> array-reply list of keys matching `pattern`.
+     * @return List<String> array-reply list of keys matching `pattern`.
+     * @implNote @code keysLegacy(K)} is deprecated and will be removed in a later version. Prefer [keys(String)].
      */
-    fun keys(pattern: String): Flow<K>
+    fun keys(pattern: String): Flow<String>
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated("Use keys(String) instead. This legacy overload will be removed in a later version.")
+    fun keysLegacy(pattern: K): Flow<K>
 
     /**
      * Atomically transfer a key from a Redis instance to another one.
