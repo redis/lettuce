@@ -1960,8 +1960,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
     Command<K, V, List<K>> keysLegacy(K pattern) {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(pattern);
-        return createCommand(KEYS, new KeyListOutput<>(codec), args);
+        return createCommand(KEYS, new KeyListOutput<>(codec), pattern);
     }
 
     Command<K, V, Long> keys(KeyStreamingChannel<String> channel, String pattern) {
@@ -1986,8 +1985,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
         notNull(channel);
 
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(pattern);
-        return createCommand(KEYS, new KeyStreamingOutput<>(codec, channel), args);
+        return createCommand(KEYS, new KeyStreamingOutput<>(codec, channel), pattern);
     }
 
     Command<K, V, Date> lastsave() {
