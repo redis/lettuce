@@ -638,7 +638,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
      * Obtain a random node-scoped connection for the given intent (READ/WRITE). Selection honors the current ReadFrom policy
      * via the cluster connection provider.
      */
-    private CompletableFuture<StatefulRedisConnection<K, V>> getStatefulConnection(ConnectionIntent intent) {
+    private CompletableFuture<StatefulRedisConnection<K, V>> getRandomStatefulConnection(ConnectionIntent intent) {
         return getConnectionProvider().getRandomConnectionAsync(intent);
     }
 
@@ -889,7 +889,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             return new PipelinedRedisFuture<>(failed);
         }
         String nodeId = nodeIdOpt.get();
-        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.WRITE);
+        StatefulRedisConnection<K, V> byNode = getStatefulConnection().getConnection(nodeId, ConnectionIntent.READ);
         RedisFuture<AggregationReply<K, V>> f = byNode.async().ftCursorread(index, cursor, count);
         CompletableFuture<AggregationReply<K, V>> mapped = new CompletableFuture<>();
         f.whenComplete((reply, err) -> {
@@ -950,7 +950,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         ConnectionIntent intent = getConnectionIntent(commandType);
 
-        CompletableFuture<R> future = getStatefulConnection(intent).thenApply(StatefulRedisConnection::async)
+        CompletableFuture<R> future = getRandomStatefulConnection(intent).thenApply(StatefulRedisConnection::async)
                 .thenCompose(routedCall).handle((res, err) -> {
                     if (err != null) {
                         logger.error("Cluster routing failed for {} - falling back to superCall", commandType, err);
@@ -980,7 +980,7 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
         ConnectionIntent intent = getConnectionIntent(commandType);
 
-        CompletableFuture<R> future = getStatefulConnection(intent).thenCompose(conn -> {
+        CompletableFuture<R> future = getRandomStatefulConnection(intent).thenCompose(conn -> {
             RedisClusterAsyncCommands<K, V> async = conn.async();
             return async.clusterMyId().toCompletableFuture().thenCompose(nodeId -> routedCall.apply(nodeId, async));
         }).handle((res, err) -> {
