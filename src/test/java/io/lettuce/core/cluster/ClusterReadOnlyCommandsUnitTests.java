@@ -20,7 +20,7 @@ class ClusterReadOnlyCommandsUnitTests {
 
     @Test
     void testCount() {
-        assertThat(ClusterReadOnlyCommands.getReadOnlyCommands()).hasSize(92);
+        assertThat(ClusterReadOnlyCommands.getReadOnlyCommands()).hasSize(100);
     }
 
     @Test
@@ -29,6 +29,7 @@ class ClusterReadOnlyCommandsUnitTests {
         for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
             // Convert command string to enum name format (e.g., "JSON.GET" -> "JSON_GET")
             String enumName = readOnlyCommand.toString().replace('.', '_');
+            enumName = enumName.replace("__", "_");
             assertThat(readOnlyCommand.toString()).isEqualTo(CommandType.valueOf(enumName).toString());
         }
     }
