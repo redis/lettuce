@@ -11,6 +11,7 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.protocol.ConnectionFacade;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.core.codec.RedisCodec;
 
 /**
  * @author Mark Paluch
@@ -55,6 +56,11 @@ public class EmptyStatefulRedisConnection extends RedisChannelHandler implements
 
     @Override
     public ClientOptions getOptions() {
+        return null;
+    }
+
+    @Override
+    public RedisCodec getCodec() {
         return null;
     }
 
