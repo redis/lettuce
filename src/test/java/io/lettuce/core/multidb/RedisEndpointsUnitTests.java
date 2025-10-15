@@ -138,15 +138,38 @@ class RedisEndpointsUnitTests {
     }
 
     @Test
-    void shouldClearActiveWhenRemovingActiveEndpoint() {
+    void shouldNotRemoveActiveEndpoint() {
         RedisEndpoints endpoints = RedisEndpoints.create(Arrays.asList(endpoint1, endpoint2));
         endpoints.setActive(endpoint1);
 
-        endpoints.remove(endpoint1);
+        assertThatThrownBy(() -> endpoints.remove(endpoint1)).isInstanceOf(RedisException.class)
+                .hasMessageContaining("Cannot remove the active endpoint");
 
-        assertThat(endpoints.hasActive()).isFalse();
-        assertThatThrownBy(endpoints::getActive).isInstanceOf(RedisException.class)
-                .hasMessageContaining("No active endpoint is set");
+        // Verify endpoint was not removed
+        assertThat(endpoints.contains(endpoint1)).isTrue();
+        assertThat(endpoints.size()).isEqualTo(2);
+        assertThat(endpoints.getActive()).isEqualTo(endpoint1);
+    }
+
+    @Test
+    void shouldRemoveEndpointAfterSwitchingActive() {
+        RedisEndpoints endpoints = RedisEndpoints.create(Arrays.asList(endpoint1, endpoint2, endpoint3));
+        endpoints.setActive(endpoint1);
+
+        // Cannot remove active endpoint
+        assertThatThrownBy(() -> endpoints.remove(endpoint1)).isInstanceOf(RedisException.class)
+                .hasMessageContaining("Cannot remove the active endpoint");
+
+        // Switch to different endpoint
+        endpoints.setActive(endpoint2);
+
+        // Now can remove the previously active endpoint
+        boolean removed = endpoints.remove(endpoint1);
+
+        assertThat(removed).isTrue();
+        assertThat(endpoints.contains(endpoint1)).isFalse();
+        assertThat(endpoints.size()).isEqualTo(2);
+        assertThat(endpoints.getActive()).isEqualTo(endpoint2);
     }
 
     @Test

@@ -114,12 +114,13 @@ public class RedisEndpoints {
     /**
      * Removes an endpoint from the available endpoints.
      * <p>
-     * If the removed endpoint is currently active, the active endpoint will be set to {@code null}.
+     * The active endpoint cannot be removed. To remove the currently active endpoint, first switch to a different endpoint
+     * using {@link #setActive(RedisURI)}.
      * </p>
      *
      * @param endpoint the endpoint to remove, must not be {@code null}
      * @return {@code true} if the endpoint was removed, {@code false} if it didn't exist
-     * @throws RedisException if attempting to remove the last endpoint
+     * @throws RedisException if attempting to remove the last endpoint or the active endpoint
      */
     public boolean remove(RedisURI endpoint) {
         LettuceAssert.notNull(endpoint, "Endpoint must not be null");
@@ -130,13 +131,13 @@ public class RedisEndpoints {
                 throw new RedisException("Cannot remove the last endpoint");
             }
 
-            boolean removed = endpoints.remove(endpoint);
-
-            if (removed && endpoint.equals(activeEndpoint)) {
-                activeEndpoint = null;
+            if (endpoint.equals(activeEndpoint)) {
+                throw new RedisException(String.format(
+                        "Cannot remove the active endpoint %s. Switch to a different endpoint first using setActive()",
+                        endpoint));
             }
 
-            return removed;
+            return endpoints.remove(endpoint);
         } finally {
             writeLock.unlock();
         }

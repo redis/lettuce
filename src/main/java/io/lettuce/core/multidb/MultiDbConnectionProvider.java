@@ -8,7 +8,6 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
 
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.locks.Lock;

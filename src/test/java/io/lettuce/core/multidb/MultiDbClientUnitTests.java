@@ -127,11 +127,17 @@ class MultiDbClientUnitTests {
         Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2);
         multiDbClient = MultiDbClient.create(uris);
 
-        boolean removed = multiDbClient.removeEndpoint(endpoint2);
+        // Get the active endpoint
+        RedisURI active = multiDbClient.getActive();
+
+        // Remove the non-active endpoint
+        RedisURI toRemove = active.equals(endpoint1) ? endpoint2 : endpoint1;
+        boolean removed = multiDbClient.removeEndpoint(toRemove);
 
         assertThat(removed).isTrue();
         assertThat(multiDbClient.getEndpoints().size()).isEqualTo(1);
-        assertThat(multiDbClient.getEndpoints().contains(endpoint2)).isFalse();
+        assertThat(multiDbClient.getEndpoints().contains(toRemove)).isFalse();
+        assertThat(multiDbClient.getActive()).isEqualTo(active); // Active unchanged
     }
 
     @Test
@@ -189,18 +195,19 @@ class MultiDbClientUnitTests {
     }
 
     @Test
-    void shouldHandleRemovingActiveEndpoint() {
+    void shouldNotRemoveActiveEndpoint() {
         Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2);
         multiDbClient = MultiDbClient.create(uris);
         multiDbClient.setActive(endpoint1);
 
-        // Remove the active endpoint
-        multiDbClient.removeEndpoint(endpoint1);
+        // Attempt to remove the active endpoint should fail
+        assertThatThrownBy(() -> multiDbClient.removeEndpoint(endpoint1)).isInstanceOf(RedisException.class)
+                .hasMessageContaining("Cannot remove the active endpoint");
 
-        // Active should be cleared
-        assertThat(multiDbClient.getEndpoints().hasActive()).isFalse();
-        assertThatThrownBy(multiDbClient::getActive).isInstanceOf(RedisException.class)
-                .hasMessageContaining("No active endpoint is set");
+        // Verify endpoint was not removed
+        assertThat(multiDbClient.getEndpoints().contains(endpoint1)).isTrue();
+        assertThat(multiDbClient.getEndpoints().size()).isEqualTo(2);
+        assertThat(multiDbClient.getActive()).isEqualTo(endpoint1);
     }
 
     @Test
