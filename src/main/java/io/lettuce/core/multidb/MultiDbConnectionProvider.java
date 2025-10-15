@@ -2,15 +2,12 @@ package io.lettuce.core.multidb;
 
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
-import io.lettuce.core.internal.Exceptions;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
+
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -26,10 +23,6 @@ import java.util.function.Function;
  */
 // TODO: ggivo How to handle stale connections after removing endpoints?
 class MultiDbConnectionProvider<K, V> {
-
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultiDbConnectionProvider.class);
-
-    private final boolean debugEnabled = logger.isDebugEnabled();
 
     // connection map, contains connections per available endpoint
     private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, CompletionStage<StatefulRedisConnection<K, V>>> connectionProvider;
@@ -48,16 +41,6 @@ class MultiDbConnectionProvider<K, V> {
                 redisClient, redisCodec);
 
         this.connectionProvider = new AsyncConnectionProvider<>(connectionFactory);
-    }
-
-    // TODO : ggivo support intent
-    public StatefulRedisConnection<K, V> getConnection() {
-
-        try {
-            return getConnectionAsync().get();
-        } catch (Exception e) {
-            throw Exceptions.bubble(e);
-        }
     }
 
     public CompletableFuture<StatefulRedisConnection<K, V>> getConnectionAsync() {

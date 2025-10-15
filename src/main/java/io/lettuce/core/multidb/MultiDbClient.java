@@ -86,7 +86,7 @@ public class MultiDbClient extends AbstractRedisClient {
         return connect(newStringStringCodec());
     }
 
-    protected  StringCodec newStringStringCodec(){
+    protected StringCodec newStringStringCodec() {
         return StringCodec.UTF8;
     }
 

@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
 
     private RedisURI east = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd).withDatabase(2).build();
+
     private RedisURI west = RedisURI.Builder.redis(host, TestSettings.port(4)).withPassword(passwd).withDatabase(2).build();
 
     private RedisCommands<String, String> connection1;
@@ -78,8 +79,8 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
     void testMultiDbSwitchActive() {
         Set<RedisURI> availableEndpoints = LettuceSets.unmodifiableSet(east, west);
         MultiDbClient multiDbClient = MultiDbClient.create(availableEndpoints);
-        ClientOptions clientOptions = ClientOptions.builder().socketOptions(
-                SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
+        ClientOptions clientOptions = ClientOptions.builder()
+                .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
         multiDbClient.setOptions(clientOptions);
 
         try (StatefulRedisConnection<String, String> connection = multiDbClient.connect(StringCodec.UTF8)) {
@@ -91,6 +92,59 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
 
             server = connection.sync().info("server");
             assertServerIs(server, west);
+        } finally {
+            multiDbClient.shutdown();
+        }
+    }
+
+    @Test
+    void testMultipleConnectionsSwitchActiveEndpoint() {
+        Set<RedisURI> availableEndpoints = LettuceSets.unmodifiableSet(east, west);
+        MultiDbClient multiDbClient = MultiDbClient.create(availableEndpoints);
+        ClientOptions clientOptions = ClientOptions.builder()
+                .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
+        multiDbClient.setOptions(clientOptions);
+
+        try (StatefulRedisConnection<String, String> connection1 = multiDbClient.connect(StringCodec.UTF8);
+                StatefulRedisConnection<String, String> connection2 = multiDbClient.connect(StringCodec.UTF8);
+                StatefulRedisConnection<String, String> connection3 = multiDbClient.connect(StringCodec.UTF8)) {
+
+            // Initially all connections should route to the first endpoint (east or west)
+            String server1 = connection1.sync().info("server");
+            String server2 = connection2.sync().info("server");
+            String server3 = connection3.sync().info("server");
+
+            // All should be on the same initial endpoint
+            RedisURI initialActive = multiDbClient.getActive();
+            assertServerIs(server1, initialActive);
+            assertServerIs(server2, initialActive);
+            assertServerIs(server3, initialActive);
+
+            // Switch to the other endpoint
+            RedisURI newActive = initialActive.equals(east) ? west : east;
+            multiDbClient.setActive(newActive);
+
+            // All connections should now route to the new active endpoint
+            server1 = connection1.sync().info("server");
+            server2 = connection2.sync().info("server");
+            server3 = connection3.sync().info("server");
+
+            assertServerIs(server1, newActive);
+            assertServerIs(server2, newActive);
+            assertServerIs(server3, newActive);
+
+            // Switch back to the original endpoint
+            multiDbClient.setActive(initialActive);
+
+            // All connections should route back to the original endpoint
+            server1 = connection1.sync().info("server");
+            server2 = connection2.sync().info("server");
+            server3 = connection3.sync().info("server");
+
+            assertServerIs(server1, initialActive);
+            assertServerIs(server2, initialActive);
+            assertServerIs(server3, initialActive);
+
         } finally {
             multiDbClient.shutdown();
         }
