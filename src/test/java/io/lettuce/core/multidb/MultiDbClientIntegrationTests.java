@@ -1,0 +1,100 @@
+package io.lettuce.core.multidb;
+
+import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.internal.LettuceSets;
+import io.lettuce.core.masterreplica.MasterReplica;
+import io.lettuce.test.WithPassword;
+import io.lettuce.test.settings.TestSettings;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static io.lettuce.TestTags.INTEGRATION_TEST;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+/**
+ * Integration tests for master/replica via {@link MasterReplica}.
+ *
+ * @author Mark Paluch
+ */
+@Tag(INTEGRATION_TEST)
+class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
+
+    private RedisURI east = RedisURI.Builder.redis(host, TestSettings.port(3)).withPassword(passwd).withDatabase(2).build();
+    private RedisURI west = RedisURI.Builder.redis(host, TestSettings.port(4)).withPassword(passwd).withDatabase(2).build();
+
+    private RedisCommands<String, String> connection1;
+
+    private RedisCommands<String, String> connection2;
+
+    private static final Pattern pattern = Pattern.compile("tcp_port:(\\d+)");
+
+    @BeforeEach
+    void before() {
+
+        RedisURI node1 = RedisURI.Builder.redis(host, TestSettings.port(3)).withDatabase(2).build();
+        RedisURI node2 = RedisURI.Builder.redis(host, TestSettings.port(4)).withDatabase(2).build();
+
+        connection1 = client.connect(node1).sync();
+        connection2 = client.connect(node2).sync();
+
+
+        WithPassword.enableAuthentication(this.connection1);
+        this.connection1.auth(passwd);
+
+        WithPassword.enableAuthentication(this.connection2);
+        this.connection2.auth(passwd);
+    }
+
+    @AfterEach
+    void after() {
+
+        if (connection1 != null) {
+            WithPassword.disableAuthentication(connection1);
+            connection1.configRewrite();
+            connection1.getStatefulConnection().close();
+        }
+
+        if (connection2 != null) {
+            WithPassword.disableAuthentication(connection2);
+            connection2.configRewrite();
+            connection2.getStatefulConnection().close();
+        }
+
+    }
+
+    @Test
+    void testMultiDbSwitchActive() {
+        Set<RedisURI> availableEndpoints = LettuceSets.unmodifiableSet(east, west);
+        MultiDbClient multiDbClient = MultiDbClient.create(client, availableEndpoints);
+        try (StatefulRedisConnection<String, String> connection = multiDbClient.connect(StringCodec.UTF8)) {
+
+            String server = connection.sync().info("server");
+            assertServerIs(server, east);
+
+            multiDbClient.setActive(west);
+
+            server = connection.sync().info("server");
+            assertServerIs(server, west);
+        }
+    }
+
+    private void assertServerIs(String server, RedisURI endpoint) {
+        Matcher matcher = pattern.matcher(server);
+
+        assertThat(matcher.find()).isTrue();
+        assertThat(matcher.group(1)).isEqualTo("" + endpoint.getPort());
+    }
+
+}
