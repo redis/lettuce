@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.*;
  */
 class MultiDbClientUnitTests {
 
-    private RedisClient redisClient;
+    private MultiDbClient multiDbClient;
 
     private RedisURI endpoint1;
 
@@ -29,11 +29,8 @@ class MultiDbClientUnitTests {
 
     private RedisURI endpoint3;
 
-    private Set<RedisURI> endpoints = LettuceSets.unmodifiableSet(endpoint1, endpoint2, endpoint3);
-
     @BeforeEach
     void setUp() {
-        redisClient = RedisClient.create();
         endpoint1 = RedisURI.create("redis://localhost:6379");
         endpoint2 = RedisURI.create("redis://localhost:6380");
         endpoint3 = RedisURI.create("redis://localhost:6381");
@@ -41,46 +38,45 @@ class MultiDbClientUnitTests {
 
     @AfterEach
     void tearDown() {
-        if (redisClient != null) {
-            redisClient.shutdown();
+        if (multiDbClient != null) {
+            multiDbClient.shutdown();
         }
     }
 
-
     @Test
     void shouldCreateWithMultipleEndpoints() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Arrays.asList(endpoint1, endpoint2, endpoint3));
+        Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2, endpoint3);
+        multiDbClient = MultiDbClient.create(uris);
 
         assertThat(multiDbClient.getEndpoints().size()).isEqualTo(3);
-        assertThat(multiDbClient.getActive()).isEqualTo(endpoint1);
+        assertThat(multiDbClient.getActive()).isIn(endpoint1, endpoint2, endpoint3);
     }
 
     @Test
-    void shouldCreateWithRedisEndpoints() {
-        RedisEndpoints endpoints = RedisEndpoints.create(Arrays.asList(endpoint1, endpoint2));
+    void shouldCreateWithSet() {
+        Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2);
+        multiDbClient = MultiDbClient.create(uris);
 
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, endpoints);
-
-        assertThat(multiDbClient.getEndpoints()).isSameAs(endpoints);
-        assertThat(multiDbClient.getActive()).isEqualTo(endpoint1);
+        assertThat(multiDbClient.getEndpoints().size()).isEqualTo(2);
+        assertThat(multiDbClient.getActive()).isIn(endpoint1, endpoint2);
     }
 
     @Test
-    void shouldRejectNullRedisClient() {
-        assertThatThrownBy(() -> MultiDbClient.create(null, Arrays.asList(endpoint1, endpoint2, endpoint3))).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("RedisClient must not be null");
+    void shouldRejectNullRedisURIs() {
+        assertThatThrownBy(() -> MultiDbClient.create((Set<RedisURI>) null)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("RedisURIs must not be null");
     }
 
-
     @Test
-    void shouldRejectNullRedisEndpoints() {
-        assertThatThrownBy(() -> MultiDbClient.create(redisClient, (RedisEndpoints) null))
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("RedisEndpoints must not be null");
+    void shouldRejectEmptyRedisURIs() {
+        assertThatThrownBy(() -> MultiDbClient.create(Collections.emptySet())).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("RedisURIs must not be empty");
     }
 
     @Test
     void shouldSetActiveEndpoint() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Arrays.asList(endpoint1, endpoint2, endpoint3));
+        Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2, endpoint3);
+        multiDbClient = MultiDbClient.create(uris);
 
         multiDbClient.setActive(endpoint2);
 
@@ -89,7 +85,7 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldRejectSettingNonExistentEndpointAsActive() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Collections.singletonList(endpoint1));
+        multiDbClient = MultiDbClient.create(Collections.singleton(endpoint1));
 
         assertThatThrownBy(() -> multiDbClient.setActive(endpoint2)).isInstanceOf(RedisException.class)
                 .hasMessageContaining("is not available");
@@ -97,16 +93,17 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldGetActiveEndpoint() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Arrays.asList(endpoint1, endpoint2, endpoint3));
+        Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2, endpoint3);
+        multiDbClient = MultiDbClient.create(uris);
 
         RedisURI active = multiDbClient.getActive();
 
-        assertThat(active).isEqualTo(endpoint1);
+        assertThat(active).isIn(endpoint1, endpoint2, endpoint3);
     }
 
     @Test
     void shouldAddEndpoint() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Collections.singletonList(endpoint1));
+        multiDbClient = MultiDbClient.create(Collections.singleton(endpoint1));
 
         boolean added = multiDbClient.addEndpoint(endpoint2);
 
@@ -117,7 +114,7 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldNotAddDuplicateEndpoint() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Collections.singletonList(endpoint1));
+        multiDbClient = MultiDbClient.create(Collections.singleton(endpoint1));
 
         boolean added = multiDbClient.addEndpoint(endpoint1);
 
@@ -127,7 +124,8 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldRemoveEndpoint() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Arrays.asList(endpoint1, endpoint2));
+        Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2);
+        multiDbClient = MultiDbClient.create(uris);
 
         boolean removed = multiDbClient.removeEndpoint(endpoint2);
 
@@ -138,7 +136,7 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldNotRemoveNonExistentEndpoint() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Collections.singletonList(endpoint1));
+        multiDbClient = MultiDbClient.create(Collections.singleton(endpoint1));
 
         boolean removed = multiDbClient.removeEndpoint(endpoint2);
 
@@ -148,7 +146,7 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldNotRemoveLastEndpoint() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Collections.singletonList(endpoint1));
+        multiDbClient = MultiDbClient.create(Collections.singleton(endpoint1));
 
         assertThatThrownBy(() -> multiDbClient.removeEndpoint(endpoint1)).isInstanceOf(RedisException.class)
                 .hasMessageContaining("Cannot remove the last endpoint");
@@ -156,10 +154,12 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldSwitchActiveEndpointDynamically() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Arrays.asList(endpoint1, endpoint2, endpoint3));
+        Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2, endpoint3);
+        multiDbClient = MultiDbClient.create(uris);
 
-        // Initially active is endpoint1
-        assertThat(multiDbClient.getActive()).isEqualTo(endpoint1);
+        // Get initial active
+        RedisURI initialActive = multiDbClient.getActive();
+        assertThat(initialActive).isIn(endpoint1, endpoint2, endpoint3);
 
         // Switch to endpoint2
         multiDbClient.setActive(endpoint2);
@@ -176,7 +176,7 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldAddEndpointAndSetItActive() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Collections.singletonList(endpoint1));
+        multiDbClient = MultiDbClient.create(Collections.singleton(endpoint1));
 
         // Add new endpoint
         multiDbClient.addEndpoint(endpoint2);
@@ -190,7 +190,8 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldHandleRemovingActiveEndpoint() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Arrays.asList(endpoint1, endpoint2));
+        Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2);
+        multiDbClient = MultiDbClient.create(uris);
         multiDbClient.setActive(endpoint1);
 
         // Remove the active endpoint
@@ -204,7 +205,8 @@ class MultiDbClientUnitTests {
 
     @Test
     void shouldGetEndpointsObject() {
-        MultiDbClient multiDbClient = MultiDbClient.create(redisClient, Arrays.asList(endpoint1, endpoint2));
+        Set<RedisURI> uris = LettuceSets.unmodifiableSet(endpoint1, endpoint2);
+        multiDbClient = MultiDbClient.create(uris);
 
         RedisEndpoints endpoints = multiDbClient.getEndpoints();
 

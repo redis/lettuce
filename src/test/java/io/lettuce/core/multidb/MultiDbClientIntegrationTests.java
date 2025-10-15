@@ -1,7 +1,9 @@
 package io.lettuce.core.multidb;
 
 import io.lettuce.core.AbstractRedisClientTest;
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.SocketOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.StringCodec;
@@ -14,14 +16,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Integration tests for master/replica via {@link MasterReplica}.
@@ -48,7 +49,6 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
 
         connection1 = client.connect(node1).sync();
         connection2 = client.connect(node2).sync();
-
 
         WithPassword.enableAuthentication(this.connection1);
         this.connection1.auth(passwd);
@@ -77,7 +77,11 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
     @Test
     void testMultiDbSwitchActive() {
         Set<RedisURI> availableEndpoints = LettuceSets.unmodifiableSet(east, west);
-        MultiDbClient multiDbClient = MultiDbClient.create(client, availableEndpoints);
+        MultiDbClient multiDbClient = MultiDbClient.create(availableEndpoints);
+        ClientOptions clientOptions = ClientOptions.builder().socketOptions(
+                SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
+        multiDbClient.setOptions(clientOptions);
+
         try (StatefulRedisConnection<String, String> connection = multiDbClient.connect(StringCodec.UTF8)) {
 
             String server = connection.sync().info("server");
@@ -87,6 +91,8 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
 
             server = connection.sync().info("server");
             assertServerIs(server, west);
+        } finally {
+            multiDbClient.shutdown();
         }
     }
 
