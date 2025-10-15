@@ -42,27 +42,24 @@ public class MultiDbClient extends AbstractRedisClient {
     // shared across all connections created via this MultiDb client
     private final RedisEndpoints endpoints;
 
-    private final boolean sharedResources;
-
     /**
      * Creates a new {@link MultiDbClient} with the specified client resources and endpoints.
      *
-     * @param clientResources the client resources, must not be {@code null}
+     * @param clientResources the client resources. If {@code null}, the client will create a new dedicated instance of client
+     *        resources and keep track of them.
      * @param endpoints the Redis endpoints, must not be {@code null}
-     * @param sharedResources whether the client resources are shared
      */
-    protected MultiDbClient(ClientResources clientResources, RedisEndpoints endpoints, boolean sharedResources) {
+    protected MultiDbClient(ClientResources clientResources, RedisEndpoints endpoints) {
         super(clientResources);
 
         LettuceAssert.notNull(endpoints, "RedisEndpoints must not be null");
         this.endpoints = endpoints;
-        this.sharedResources = sharedResources;
-        this.redisClient = RedisClient.create(clientResources);
+        this.redisClient = RedisClient.create(getResources());
     }
 
     /**
-     * Create a new {@link MultiDbClient} with the specified set of initial Redis URIs. The first URI in the set will be set as
-     * the active endpoint.
+     * Create a new {@link MultiDbClient} with the specified set of initial Redis URIs and default {@link ClientResources}. The
+     * first URI in the set will be set as the active endpoint.
      *
      * @param redisURIs the set of Redis URIs, must not be {@code null} or empty
      * @return a new instance of {@link MultiDbClient}
@@ -72,8 +69,24 @@ public class MultiDbClient extends AbstractRedisClient {
         LettuceAssert.isTrue(!redisURIs.isEmpty(), "RedisURIs must not be empty");
 
         RedisEndpoints endpoints = RedisEndpoints.create(redisURIs);
-        ClientResources resources = ClientResources.create();
-        return new MultiDbClient(resources, endpoints, false);
+        return new MultiDbClient(null, endpoints);
+    }
+
+    /**
+     * Create a new {@link MultiDbClient} with the specified set of initial Redis URIs and shared {@link ClientResources}. The
+     * first URI in the set will be set as the active endpoint.
+     *
+     * @param clientResources the client resources, must not be {@code null}
+     * @param redisURIs the set of Redis URIs, must not be {@code null} or empty
+     * @return a new instance of {@link MultiDbClient}
+     */
+    public static MultiDbClient create(ClientResources clientResources, Set<RedisURI> redisURIs) {
+        LettuceAssert.notNull(clientResources, "ClientResources must not be null");
+        LettuceAssert.notNull(redisURIs, "RedisURIs must not be null");
+        LettuceAssert.isTrue(!redisURIs.isEmpty(), "RedisURIs must not be empty");
+
+        RedisEndpoints endpoints = RedisEndpoints.create(redisURIs);
+        return new MultiDbClient(clientResources, endpoints);
     }
 
     /**
