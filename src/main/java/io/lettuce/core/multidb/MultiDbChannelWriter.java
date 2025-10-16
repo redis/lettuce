@@ -39,8 +39,7 @@ class MultiDbChannelWriter implements RedisChannelWriter {
 
     private boolean closed = false;
 
-    MultiDbChannelWriter(MultiDbConnectionProvider<?, ?> multiDbConnectionProvider, ClientResources clientResources) {
-        this.multiDbConnectionProvider = multiDbConnectionProvider;
+    MultiDbChannelWriter(ClientResources clientResources) {
         this.clientResources = clientResources;
     }
 
@@ -169,6 +168,10 @@ class MultiDbChannelWriter implements RedisChannelWriter {
 
     private static boolean isSuccessfullyCompleted(CompletableFuture<?> connectFuture) {
         return connectFuture.isDone() && !connectFuture.isCompletedExceptionally();
+    }
+
+    public <V, K> void setMultiDbConnectionProvider(MultiDbConnectionProvider<K, V> connectionProvider) {
+        this.multiDbConnectionProvider = connectionProvider;
     }
 
 }

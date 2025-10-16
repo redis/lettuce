@@ -150,7 +150,8 @@ public class TestSettings {
 
     /**
      *
-     * @return base port of the test proxyused for simulating network issues. Defaults to {@literal 9479}. Can be overriden with {@code -Dport=1234}
+     * @return base port of the test proxyused for simulating network issues. Defaults to {@literal 9479}. Can be overriden with
+     *         {@code -Dport=1234}
      */
     public static int proxyPort() {
         return Integer.parseInt(System.getProperty("proxy.port", "9479"));

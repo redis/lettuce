@@ -2,23 +2,40 @@ package io.lettuce.core.multidb;
 
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.CommandListenerWriter;
+import io.lettuce.core.ConnectionBuilder;
+import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.ConnectionState;
+import io.lettuce.core.RedisChannelHandler;
+import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.SslConnectionBuilder;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.protocol.CommandExpiryWriter;
+import io.lettuce.core.protocol.CommandHandler;
+import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.protocol.PushHandler;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import reactor.core.publisher.Mono;
 
+import java.net.SocketAddress;
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
+
+import static io.lettuce.core.RedisAuthenticationHandler.createHandler;
 
 /**
  * A Redis client that supports multiple database endpoints with dynamic switching between them. This client manages connections
@@ -37,7 +54,7 @@ public class MultiDbClient extends AbstractRedisClient {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultiDbClient.class);
 
     // Internal RedisClient used to create actual connections to individual endpoints
-    private final RedisClient redisClient;
+    // private final RedisClient redisClient;
 
     // shared across all connections created via this MultiDb client
     private final RedisEndpoints endpoints;
@@ -54,7 +71,6 @@ public class MultiDbClient extends AbstractRedisClient {
 
         LettuceAssert.notNull(endpoints, "RedisEndpoints must not be null");
         this.endpoints = endpoints;
-        this.redisClient = RedisClient.create(getResources());
     }
 
     /**
@@ -121,9 +137,10 @@ public class MultiDbClient extends AbstractRedisClient {
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
 
         // Create MultiDb-specific connection provider and channel writer
-        MultiDbConnectionProvider<K, V> connectionProvider = new MultiDbConnectionProvider<>(redisClient, codec, endpoints);
-        MultiDbChannelWriter multiDbWriter = new MultiDbChannelWriter(connectionProvider, getResources());
-
+        MultiDbChannelWriter multiDbWriter = new MultiDbChannelWriter(getResources());
+        MultiDbConnectionProvider<K, V> connectionProvider = new MultiDbConnectionProvider<>(this, codec, endpoints,
+                multiDbWriter);
+        multiDbWriter.setMultiDbConnectionProvider(connectionProvider);
         // Create endpoint for push handler
         // TODO: ggivo How to handle push messages form multiple endpoints?
         PushHandler pushHandler = NoOpPushHandler.INSTANCE;
@@ -162,6 +179,98 @@ public class MultiDbClient extends AbstractRedisClient {
 
             throw RedisConnectionException.create(context.toString(), e);
         }
+    }
+
+    <K, V> ConnectionFuture<StatefulRedisConnection<K, V>> connectToEndpointNodeAsync(RedisCodec<K, V> codec,
+            RedisURI endpointUri, RedisChannelWriter multiDbWriter) {
+
+        assertNotNull(codec);
+        assertNotNull(endpointUri);
+        Mono<SocketAddress> socketAddressSupplier = getSocketAddress(endpointUri);
+
+        LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
+
+        // TODO: ggivo Should we use a multidb specific options endpoint type?
+        MultiDbNodeEndpoint endpoint = new MultiDbNodeEndpoint(getOptions(), getResources(), multiDbWriter);
+
+        RedisChannelWriter writer = endpoint;
+
+        if (CommandExpiryWriter.isSupported(getOptions())) {
+            writer = CommandExpiryWriter.buildCommandExpiryWriter(writer, getOptions(), getResources());
+        }
+
+        if (CommandListenerWriter.isSupported(getCommandListeners())) {
+            writer = new CommandListenerWriter(writer, getCommandListeners());
+        }
+
+        StatefulRedisConnectionImpl<K, V> connection = newStatefulRedisConnection(writer, endpoint, codec,
+                endpointUri.getTimeout(), getOptions().getJsonParser());
+
+        connection
+                .setAuthenticationHandler(createHandler(connection, endpointUri.getCredentialsProvider(), false, getOptions()));
+
+        ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectStatefulAsync(connection, endpoint,
+                endpointUri, socketAddressSupplier, () -> new CommandHandler(getOptions(), getResources(), endpoint));
+
+        return connectionFuture.whenComplete((conn, throwable) -> {
+            if (throwable != null) {
+                connection.closeAsync();
+            }
+        });
+    }
+
+    protected <K, V> StatefulRedisConnectionImpl<K, V> newStatefulRedisConnection(RedisChannelWriter channelWriter,
+            PushHandler pushHandler, RedisCodec<K, V> codec, Duration timeout, Supplier<JsonParser> parser) {
+        return new StatefulRedisConnectionImpl<>(channelWriter, pushHandler, codec, timeout, parser);
+    }
+
+    private <K, V, T extends StatefulRedisConnectionImpl<K, V>, S> ConnectionFuture<S> connectStatefulAsync(T connection,
+            DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
+            Supplier<CommandHandler> commandHandlerSupplier) {
+
+        ConnectionBuilder connectionBuilder = createConnectionBuilder(connection, connection.getConnectionState(), endpoint,
+                connectionSettings, socketAddressSupplier, commandHandlerSupplier);
+
+        ConnectionFuture<RedisChannelHandler<K, V>> future = initializeChannelAsync(connectionBuilder);
+
+        return future.thenApply(channelHandler -> (S) connection);
+    }
+
+    private <K, V> ConnectionBuilder createConnectionBuilder(RedisChannelHandler<K, V> connection, ConnectionState state,
+            DefaultEndpoint endpoint, RedisURI connectionSettings, Mono<SocketAddress> socketAddressSupplier,
+            Supplier<CommandHandler> commandHandlerSupplier) {
+
+        ConnectionBuilder connectionBuilder;
+        if (connectionSettings.isSsl()) {
+            SslConnectionBuilder sslConnectionBuilder = SslConnectionBuilder.sslConnectionBuilder();
+            sslConnectionBuilder.ssl(connectionSettings);
+            connectionBuilder = sslConnectionBuilder;
+        } else {
+            connectionBuilder = ConnectionBuilder.connectionBuilder();
+        }
+
+        state.apply(connectionSettings);
+
+        connectionBuilder.connectionInitializer(createHandshake(state));
+
+        // TODO: ggivo enable reconnect listener for multidb?
+        // connectionBuilder.reconnectionListener(new ReconnectEventListener(topologyRefreshScheduler));
+        connectionBuilder.clientOptions(getOptions());
+        connectionBuilder.connection(connection);
+        connectionBuilder.clientResources(getResources());
+        connectionBuilder.endpoint(endpoint);
+        connectionBuilder.commandHandler(commandHandlerSupplier);
+
+        connectionBuilder(socketAddressSupplier, connectionBuilder, connection.getConnectionEvents(), connectionSettings);
+
+        return connectionBuilder;
+    }
+
+    protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
+
+        return Mono.defer(() -> {
+            return Mono.fromCallable(() -> getResources().socketAddressResolver().resolve((redisURI)));
+        });
     }
 
     /**
@@ -219,15 +328,24 @@ public class MultiDbClient extends AbstractRedisClient {
     @Override
     public void setOptions(ClientOptions options) {
         super.setOptions(options);
-        redisClient.setOptions(options);
     }
 
     @Override
     public void shutdown() {
-        if (redisClient != null) {
-            redisClient.shutdown();
-        }
         super.shutdown();
+    }
+
+    private static <K, V> void assertNotNull(RedisCodec<K, V> codec) {
+        LettuceAssert.notNull(codec, "RedisCodec must not be null");
+    }
+
+    private static void assertNotNull(RedisURI redisURI) {
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+    }
+
+    private static void assertNotEmpty(Iterable<RedisURI> redisURIs) {
+        LettuceAssert.notNull(redisURIs, "RedisURIs must not be null");
+        LettuceAssert.isTrue(redisURIs.iterator().hasNext(), "RedisURIs must not be empty");
     }
 
 }

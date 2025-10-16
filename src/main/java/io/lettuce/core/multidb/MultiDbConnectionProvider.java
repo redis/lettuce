@@ -1,6 +1,7 @@
 package io.lettuce.core.multidb;
 
 import io.lettuce.core.ConnectionFuture;
+import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulConnection;
@@ -32,12 +33,13 @@ class MultiDbConnectionProvider<K, V> {
 
     private final RedisEndpoints endpoints;
 
-    MultiDbConnectionProvider(RedisClient redisClient, RedisCodec<K, V> redisCodec, RedisEndpoints endpoints) {
+    MultiDbConnectionProvider(MultiDbClient redisClient, RedisCodec<K, V> redisCodec, RedisEndpoints endpoints,
+            RedisChannelWriter multiDbWriter) {
 
         this.endpoints = endpoints;
 
         Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> connectionFactory = new DefaultConnectionFactory(
-                redisClient, redisCodec);
+                redisClient, redisCodec, multiDbWriter);
 
         this.connectionProvider = new AsyncConnectionProvider<>(connectionFactory);
     }
@@ -101,22 +103,25 @@ class MultiDbConnectionProvider<K, V> {
 
     class DefaultConnectionFactory implements Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> {
 
-        private final RedisClient redisClient;
+        private final MultiDbClient redisClient;
 
         private final RedisCodec<K, V> redisCodec;
 
-        DefaultConnectionFactory(RedisClient redisClient, RedisCodec<K, V> redisCodec) {
+        private final RedisChannelWriter multiDbWriter;
+
+        DefaultConnectionFactory(MultiDbClient redisClient, RedisCodec<K, V> redisCodec, RedisChannelWriter multiDbWriter) {
             this.redisClient = redisClient;
             this.redisCodec = redisCodec;
+            this.multiDbWriter = multiDbWriter;
         }
 
         @Override
         public ConnectionFuture<StatefulRedisConnection<K, V>> apply(ConnectionKey key) {
 
-            RedisURI.Builder builder = RedisURI.builder(key.endpoint);
+            RedisURI endpointUri = RedisURI.builder(key.endpoint).build();
 
-            ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = redisClient.connectAsync(redisCodec,
-                    builder.build());
+            ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = redisClient
+                    .connectToEndpointNodeAsync(redisCodec, endpointUri, multiDbWriter);
 
             connectionFuture.thenAccept(connection -> {
                 stateLock.lock();

@@ -74,7 +74,6 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
 
     private static Proxy redisProxy2;
 
-
     @BeforeAll
     public static void setupToxiproxy() throws IOException {
         if (tp.getProxyOrNull("redis-1") != null) {
@@ -90,8 +89,10 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
 
     @AfterAll
     public static void cleanupToxiproxy() throws IOException {
-        if (redisProxy1 != null) redisProxy1.delete();
-        if (redisProxy2 != null) redisProxy2.delete();
+        if (redisProxy1 != null)
+            redisProxy1.delete();
+        if (redisProxy2 != null)
+            redisProxy2.delete();
     }
 
     @BeforeEach
