@@ -46,25 +46,25 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
     private static final int redis2_port = TestSettings.port(9);
 
     // Redis Endpoints exposed by toxiproxy
-    private static final RedisURI redis1 = RedisURI.Builder.redis(host, TestSettings.proxyPort()).withPassword(passwd).build();
+    private static final RedisURI redis1ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort()).withPassword(passwd).build();
 
-    private static final RedisURI redis2 = RedisURI.Builder.redis(host, TestSettings.proxyPort(1)).withPassword(passwd).build();
+    private static final RedisURI redis2ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort(1)).withPassword(passwd).build();
 
     // Redis Endpoints directly connecting to the backing redis instances
-    private static final RedisURI redis1Direct = RedisURI.Builder.redis(host, redis1_port).build();
+    private static final RedisURI redis1Uri = RedisURI.Builder.redis(host, redis1_port).build();
 
-    private static final RedisURI redis2Direct = RedisURI.Builder.redis(host, redis2_port).build();
+    private static final RedisURI redis2Uri = RedisURI.Builder.redis(host, redis2_port).build();
 
     // Map of proxy endpoints to backing redis instances
     private static Map<RedisURI, RedisURI> proxyEndpointMap = new HashMap<>();
     {
-        proxyEndpointMap.put(redis1, redis1Direct);
-        proxyEndpointMap.put(redis2, redis2Direct);
+        proxyEndpointMap.put(redis1ProxyUri, redis1Uri);
+        proxyEndpointMap.put(redis2ProxyUri, redis2Uri);
     }
 
-    private RedisCommands<String, String> connection1;
+    private RedisCommands<String, String> redis1Conn;
 
-    private RedisCommands<String, String> connection2;
+    private RedisCommands<String, String> redis2Conn;
 
     private static final Pattern pattern = Pattern.compile("tcp_port:(\\d+)");
 
@@ -73,6 +73,9 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
     private static Proxy redisProxy1;
 
     private static Proxy redisProxy2;
+
+    // Map of proxy endpoints to backing redis instances
+    private Map<RedisURI, RedisCommands<String, String>> commands = new HashMap<>();
 
     @BeforeAll
     public static void setupToxiproxy() throws IOException {
@@ -111,36 +114,39 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
 
     @BeforeEach
     void before() {
-        connection1 = client.connect(redis1Direct).sync();
-        connection2 = client.connect(redis2Direct).sync();
+        redis1Conn = client.connect(redis1Uri).sync();
+        redis2Conn = client.connect(redis2Uri).sync();
 
-        WithPassword.enableAuthentication(this.connection1);
-        this.connection1.auth(passwd);
+        commands.put(redis1Uri, redis1Conn);
+        commands.put(redis2Uri, redis2Conn);
 
-        WithPassword.enableAuthentication(this.connection2);
-        this.connection2.auth(passwd);
+        WithPassword.enableAuthentication(this.redis1Conn);
+        this.redis1Conn.auth(passwd);
+
+        WithPassword.enableAuthentication(this.redis2Conn);
+        this.redis2Conn.auth(passwd);
     }
 
     @AfterEach
     void after() {
 
-        if (connection1 != null) {
-            WithPassword.disableAuthentication(connection1);
-            connection1.configRewrite();
-            connection1.getStatefulConnection().close();
+        if (redis1Conn != null) {
+            WithPassword.disableAuthentication(redis1Conn);
+            redis1Conn.configRewrite();
+            redis1Conn.getStatefulConnection().close();
         }
 
-        if (connection2 != null) {
-            WithPassword.disableAuthentication(connection2);
-            connection2.configRewrite();
-            connection2.getStatefulConnection().close();
+        if (redis2Conn != null) {
+            WithPassword.disableAuthentication(redis2Conn);
+            redis2Conn.configRewrite();
+            redis2Conn.getStatefulConnection().close();
         }
 
     }
 
     @Test
     void testMultiDbSwitchActive() {
-        Set<RedisURI> availableEndpoints = LettuceSets.unmodifiableSet(redis1, redis2);
+        Set<RedisURI> availableEndpoints = LettuceSets.unmodifiableSet(redis1ProxyUri, redis2ProxyUri);
         MultiDbClient multiDbClient = MultiDbClient.create(availableEndpoints);
         ClientOptions clientOptions = ClientOptions.builder()
                 .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
@@ -149,12 +155,12 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
         try (StatefulRedisConnection<String, String> connection = multiDbClient.connect(StringCodec.UTF8)) {
 
             String server = connection.sync().info("server");
-            assertServerIs(server, redis1);
+            assertServerIs(server, redis1ProxyUri);
 
-            multiDbClient.setActive(redis2);
+            multiDbClient.setActive(redis2ProxyUri);
 
             server = connection.sync().info("server");
-            assertServerIs(server, redis2);
+            assertServerIs(server, redis2ProxyUri);
         } finally {
             multiDbClient.shutdown();
         }
@@ -162,7 +168,7 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
 
     @Test
     void testMultipleConnectionsSwitchActiveEndpoint() {
-        Set<RedisURI> availableEndpoints = LettuceSets.unmodifiableSet(redis1, redis2);
+        Set<RedisURI> availableEndpoints = LettuceSets.unmodifiableSet(redis1ProxyUri, redis2ProxyUri);
         MultiDbClient multiDbClient = MultiDbClient.create(availableEndpoints);
         ClientOptions clientOptions = ClientOptions.builder()
                 .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
@@ -184,7 +190,7 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
             assertServerIs(server3, initialActive);
 
             // Switch to the other endpoint
-            RedisURI newActive = initialActive.equals(redis1) ? redis2 : redis1;
+            RedisURI newActive = initialActive.equals(redis1ProxyUri) ? redis2ProxyUri : redis1ProxyUri;
             multiDbClient.setActive(newActive);
 
             // All connections should now route to the new active endpoint
@@ -207,6 +213,53 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
             assertServerIs(server1, initialActive);
             assertServerIs(server2, initialActive);
             assertServerIs(server3, initialActive);
+
+        } finally {
+            multiDbClient.shutdown();
+        }
+    }
+
+    @Test
+    void testPendingCommandsRequeuedAfterEndpointRemoval() {
+        Set<RedisURI> availableEndpoints = LettuceSets.unmodifiableSet(redis1ProxyUri, redis2ProxyUri);
+        MultiDbClient multiDbClient = MultiDbClient.create(availableEndpoints);
+        ClientOptions clientOptions = ClientOptions.builder()
+                .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
+        multiDbClient.setOptions(clientOptions);
+
+        try (StatefulRedisConnection<String, String> connection = multiDbClient.connect(StringCodec.UTF8)) {
+
+            // Get the initial active endpoint
+            RedisURI initialActive = multiDbClient.getActive();
+
+            // Disable auto-flush to buffer commands
+            connection.setAutoFlushCommands(false);
+
+            // Issue a command that will be buffered
+            connection.async().set("testkey", "testvalue");
+
+            // Verify command is not yet executed on the initial endpoint
+            RedisURI initialDirect = proxyEndpointMap.get(initialActive);
+            assertThat(commands.get(initialDirect).get("testkey")).isNull();
+
+            // Switch to the other endpoint
+            RedisURI newActive = initialActive.equals(redis1ProxyUri) ? redis2ProxyUri : redis1ProxyUri;
+            multiDbClient.setActive(newActive);
+
+            // Remove the old active endpoint
+            boolean removed = multiDbClient.removeEndpoint(initialActive);
+            assertThat(removed).isTrue();
+
+            // Flush commands - they should now be sent to the new active endpoint
+            connection.flushCommands();
+
+            // Verify command was executed on the NEW active endpoint
+            RedisCommands<String, String> initial = commands.get(proxyEndpointMap.get(initialActive));
+            RedisCommands<String, String> active = commands.get(proxyEndpointMap.get(newActive));
+            assertThat(active.get("testkey")).isEqualTo("testvalue");
+            active.del("testkey"); // Cleanup
+
+            assertThat(initial.get("testkey")).isNull();
 
         } finally {
             multiDbClient.shutdown();
