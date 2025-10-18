@@ -149,12 +149,28 @@ class DelegateJsonArrayUnitTests {
         DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
         DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
         underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2")).add(parser.createJsonValue("3"));
-        underTest.replace(1, parser.createJsonValue("4"));
+        JsonValue oldValue = underTest.replace(1, parser.createJsonValue("4"));
 
         assertThat(underTest.size()).isEqualTo(3);
         assertThat(underTest.get(0).asNumber()).isEqualTo(1);
         assertThat(underTest.get(1).asNumber()).isEqualTo(4);
         assertThat(underTest.get(2).asNumber()).isEqualTo(3);
+        assertThat(oldValue.asNumber()).isEqualTo(2);
+    }
+
+    @Test
+    void swap() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        DefaultJsonParser parser = new DefaultJsonParser(objectMapper);
+        DelegateJsonArray underTest = new DelegateJsonArray(objectMapper);
+        JsonArray swap = underTest.add(parser.createJsonValue("1")).add(parser.createJsonValue("2"))
+                .add(parser.createJsonValue("3")).swap(1, parser.createJsonValue("4"));
+
+        assertThat(underTest.size()).isEqualTo(3);
+        assertThat(underTest.get(0).asNumber()).isEqualTo(1);
+        assertThat(underTest.get(1).asNumber()).isEqualTo(4);
+        assertThat(underTest.get(2).asNumber()).isEqualTo(3);
+        assertThat(swap).isSameAs(underTest);
     }
 
     @Test

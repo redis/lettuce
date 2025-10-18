@@ -17,6 +17,7 @@ import java.util.List;
  *
  * @see JsonValue
  * @author Tihomir Mateev
+ * @author Ko Su
  * @since 6.5
  */
 public interface JsonArray extends JsonValue {
@@ -81,6 +82,16 @@ public interface JsonArray extends JsonValue {
      * @return the oldValue {@link JsonValue} that was replaced
      */
     JsonValue replace(int index, JsonValue newElement);
+
+    /**
+     * Replace the {@link JsonValue} at the provided index with the given new {@link JsonValue}.
+     *
+     * @param index the index to replace the value for
+     * @param newElement the new value to replace the old one with
+     * @return the updated {@link JsonArray}
+     * @since 7.0
+     */
+    JsonArray swap(int index, JsonValue newElement);
 
     /**
      * @return the number of elements in this {@link JsonArray}
