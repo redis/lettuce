@@ -1942,17 +1942,52 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CommandType.INFO, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, List<K>> keys(K pattern) {
+    Command<K, V, List<String>> keys(String pattern) {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
 
-        return createCommand(KEYS, new KeyListOutput<>(codec), pattern);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(pattern);
+        return createCommand(KEYS, new StringListOutput<>(codec), args);
     }
 
-    Command<K, V, Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    Command<K, V, List<K>> keysLegacy(K pattern) {
+        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(pattern);
+        return createCommand(KEYS, new KeyListOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> keys(KeyStreamingChannel<String> channel, String pattern) {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
         notNull(channel);
 
-        return createCommand(KEYS, new KeyStreamingOutput<>(codec, channel), pattern);
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(pattern);
+        return createCommand(KEYS, new StringStreamingOutput<>(codec, channel), args);
+    }
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    Command<K, V, Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern) {
+        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(pattern);
+        return createCommand(KEYS, new KeyStreamingOutput<>(codec, channel), args);
     }
 
     Command<K, V, Date> lastsave() {
