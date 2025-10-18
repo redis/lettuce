@@ -78,7 +78,7 @@ public interface JsonArray extends JsonValue {
      *
      * @param index the index to replace the value for
      * @param newElement the new value to replace the old one with
-     * @return the updated {@link JsonArray} to allow call chaining
+     * @return the oldValue {@link JsonValue} that was replaced
      */
     JsonValue replace(int index, JsonValue newElement);
 
