@@ -109,7 +109,6 @@ public class StatefulRedisConnectionImpl<K, V> extends RedisChannelHandler<K, V>
         this.reactive = newRedisReactiveCommandsImpl();
     }
 
-    @Override
     public RedisCodec<K, V> getCodec() {
         return codec;
     }

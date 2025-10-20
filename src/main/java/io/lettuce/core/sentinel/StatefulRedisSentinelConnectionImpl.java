@@ -128,11 +128,6 @@ public class StatefulRedisSentinelConnectionImpl<K, V> extends RedisChannelHandl
         return connectionState;
     }
 
-    @Override
-    public RedisCodec<K, V> getCodec() {
-        return codec;
-    }
-
     static class SentinelConnectionState extends ConnectionState {
 
         @Override
