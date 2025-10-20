@@ -47,11 +47,12 @@ public class ValueListOutput<K, V> extends CommandOutput<K, V, List<V>> implemen
 
     @Override
     public void set(ByteBuffer bytes) {
-        // Be tolerant to decoder call order: initialize on first element if needed.
-        if (!initialized) {
-            output = OutputFactory.newList(1);
-            initialized = true;
+
+        // RESP 3 behavior
+        if (bytes == null && !initialized) {
+            return;
         }
+
         subscriber.onNext(output, bytes == null ? null : codec.decodeValue(bytes));
     }
 
