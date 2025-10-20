@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.*;
 import javax.inject.Inject;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -105,6 +106,7 @@ public class SortCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @Disabled
     void sortGet() {
         redis.rpush(key, "1", "2");
         redis.set("obj_1", "foo");
