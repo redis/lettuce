@@ -19,7 +19,6 @@
  */
 package io.lettuce.core.multidb;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -172,6 +171,30 @@ class MultiDbChannelWriter implements RedisChannelWriter {
 
     public <V, K> void setMultiDbConnectionProvider(MultiDbConnectionProvider<K, V> connectionProvider) {
         this.multiDbConnectionProvider = connectionProvider;
+    }
+
+    /**
+     * Set the available endpoints. This will trigger cleanup of stale connections for endpoints that are no longer available.
+     *
+     * @param endpoints the Redis endpoints, must not be {@code null}
+     */
+    public void setEndpoints(RedisEndpoints endpoints) {
+        LettuceAssert.notNull(endpoints, "RedisEndpoints must not be null");
+        if (multiDbConnectionProvider != null) {
+            multiDbConnectionProvider.setEndpoints();
+        }
+    }
+
+    /**
+     * Get the available endpoints.
+     *
+     * @return the Redis endpoints
+     */
+    public RedisEndpoints getEndpoints() {
+        if (multiDbConnectionProvider != null) {
+            return multiDbConnectionProvider.getEndpoints();
+        }
+        return null;
     }
 
 }

@@ -28,11 +28,15 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 import reactor.core.publisher.Mono;
 
+import java.io.Closeable;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static io.lettuce.core.RedisAuthenticationHandler.createHandler;
@@ -109,19 +113,14 @@ public class MultiDbClient extends AbstractRedisClient {
      * Open a new connection to the MultiDb setup that treats keys and values as UTF-8 strings. The connection will route
      * commands to the currently active endpoint.
      *
-     * @return A new stateful Redis connection
+     * @return A new stateful MultiDb connection
      */
-    public StatefulRedisConnection<String, String> connect() {
+    public StatefulMultiDbConnection<String, String> connect() {
         return connect(newStringStringCodec());
     }
 
     protected StringCodec newStringStringCodec() {
         return StringCodec.UTF8;
-    }
-
-    public <K, V> StatefulRedisConnection<K, V> connect(RedisCodec<K, V> codec) {
-
-        return getConnection(connectMultiDbAsync(codec), endpoints);
     }
 
     /**
@@ -131,9 +130,23 @@ public class MultiDbClient extends AbstractRedisClient {
      * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
      * @param <K> Key type
      * @param <V> Value type
-     * @return A new stateful Redis connection
+     * @return A new stateful MultiDb connection
      */
-    public <K, V> CompletableFuture<StatefulRedisConnection<K, V>> connectMultiDbAsync(RedisCodec<K, V> codec) {
+    public <K, V> StatefulMultiDbConnection<K, V> connect(RedisCodec<K, V> codec) {
+
+        return getConnection(connectMultiDbAsync(codec), endpoints);
+    }
+
+    /**
+     * Open a new connection to the MultiDb setup asynchronously. Use the supplied {@link RedisCodec codec} to encode/decode
+     * keys and values. The connection will route commands to the currently active endpoint.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new stateful MultiDb connection
+     */
+    public <K, V> CompletableFuture<StatefulMultiDbConnection<K, V>> connectMultiDbAsync(RedisCodec<K, V> codec) {
         LettuceAssert.notNull(codec, "RedisCodec must not be null");
 
         // Create MultiDb-specific connection provider and channel writer
@@ -141,6 +154,7 @@ public class MultiDbClient extends AbstractRedisClient {
         MultiDbConnectionProvider<K, V> connectionProvider = new MultiDbConnectionProvider<>(this, codec, endpoints,
                 multiDbWriter);
         multiDbWriter.setMultiDbConnectionProvider(connectionProvider);
+
         // Create endpoint for push handler
         // TODO: ggivo How to handle push messages form multiple endpoints?
         PushHandler pushHandler = NoOpPushHandler.INSTANCE;
@@ -149,12 +163,23 @@ public class MultiDbClient extends AbstractRedisClient {
         java.time.Duration timeout = endpoints.getActive().getTimeout();
 
         // Create connection with MultiDbChannelWriter
-        StatefulRedisConnectionImpl<K, V> connection = new StatefulRedisConnectionImpl<>(multiDbWriter, pushHandler, codec,
+        StatefulMultiDbConnectionImpl<K, V> connection = new StatefulMultiDbConnectionImpl<>(multiDbWriter, pushHandler, codec,
                 timeout, getOptions().getJsonParser());
 
         connection.setOptions(getOptions());
 
-        return CompletableFuture.completedFuture(connection);
+        // Register the connection itself in closeableResources so it can be tracked
+        closeableResources.add(connection);
+
+        // Register the connection's closeab     les (writer, provider) so they get closed when the connection closes
+        connection.registerCloseables(closeableResources, multiDbWriter, connectionProvider);
+
+        return CompletableFuture.completedFuture((StatefulMultiDbConnection<K, V>) connection)
+                .whenComplete((c,throwable) -> {
+                    if (throwable == null) {
+                        connection.registerCloseables(closeableResources, connection);
+                    }
+                } );
     }
 
     private static <T> T getConnection(CompletableFuture<T> connectionFuture, Object context) {
@@ -291,6 +316,9 @@ public class MultiDbClient extends AbstractRedisClient {
      */
     public void setActive(RedisURI redisURI) {
         endpoints.setActive(redisURI);
+        // No need to notify connection providers - active endpoint change doesn't affect connections
+        // todo : Gracefully close previous active connecion & notify connection?
+        // Revisit in context of fastFailover?
     }
 
     /**
@@ -310,19 +338,58 @@ public class MultiDbClient extends AbstractRedisClient {
      * @return {@code true} if the endpoint was added, {@code false} if it already exists
      */
     public boolean addEndpoint(RedisURI redisURI) {
-        return endpoints.add(redisURI);
+        boolean added = endpoints.add(redisURI);
+        if (added) {
+            updateEndpointsInConnections();
+        }
+        return added;
     }
 
     /**
-     * Remove an endpoint from the available endpoints. If the removed endpoint is currently active, the active endpoint will be
-     * set to {@code null}.
+     * Remove an endpoint from the available endpoints. The active endpoint cannot be removed. To remove the currently active
+     * endpoint, first switch to a different endpoint using {@link #setActive(RedisURI)}.
      *
      * @param redisURI the Redis URI to remove, must not be {@code null}
      * @return {@code true} if the endpoint was removed, {@code false} if it didn't exist
-     * @throws RedisException if attempting to remove the last endpoint
+     * @throws RedisException if attempting to remove the last endpoint or the active endpoint
      */
     public boolean removeEndpoint(RedisURI redisURI) {
-        return endpoints.remove(redisURI);
+        boolean removed = endpoints.remove(redisURI);
+        if (removed) {
+            updateEndpointsInConnections();
+        }
+        return removed;
+    }
+
+    /**
+     * Update endpoints in all active connections. This triggers cleanup of stale connections.
+     */
+    protected void updateEndpointsInConnections() {
+        forEachMultiDbConnection(connection -> connection.setEndpoints(endpoints));
+    }
+
+    /**
+     * Apply a {@link Consumer} of {@link StatefulMultiDbConnectionImpl} to all active connections.
+     *
+     * @param function the {@link Consumer}.
+     */
+    protected void forEachMultiDbConnection(Consumer<StatefulMultiDbConnectionImpl<?, ?>> function) {
+        forEachCloseable(input -> input instanceof StatefulMultiDbConnectionImpl, function);
+    }
+
+    /**
+     * Apply a {@link Consumer} of {@link Closeable} to all active connections.
+     *
+     * @param <T>
+     * @param function the {@link Consumer}.
+     */
+    @SuppressWarnings("unchecked")
+    protected <T extends Closeable> void forEachCloseable(Predicate<? super Closeable> selector, Consumer<T> function) {
+        for (Closeable c : closeableResources) {
+            if (selector.test(c)) {
+                function.accept((T) c);
+            }
+        }
     }
 
     @Override

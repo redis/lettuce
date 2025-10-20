@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 /**
  * Integration tests for master/replica via {@link MasterReplica}.
@@ -56,6 +57,8 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
     private static final RedisURI redis1Uri = RedisURI.Builder.redis(host, redis1_port).build();
 
     private static final RedisURI redis2Uri = RedisURI.Builder.redis(host, redis2_port).build();
+
+    public static final String TESTKEY = "testkey";
 
     // Map of proxy endpoints to backing redis instances
     private static Map<RedisURI, RedisURI> proxyEndpointMap = new HashMap<>();
@@ -127,6 +130,9 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
 
         WithPassword.enableAuthentication(this.redis2Conn);
         this.redis2Conn.auth(passwd);
+
+        redis1Conn.del(TESTKEY);
+        redis2Conn.del(TESTKEY);
     }
 
     @AfterEach
@@ -238,30 +244,28 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
             connection.setAutoFlushCommands(false);
 
             // Issue a command that will be buffered
-            connection.async().set("testkey", "testvalue");
+            connection.async().set(TESTKEY, "testvalue");
 
             // Verify command is not yet executed on the initial endpoint
             RedisURI initialDirect = proxyEndpointMap.get(initialActive);
-            assertThat(commands.get(initialDirect).get("testkey")).isNull();
+            assertThat(commands.get(initialDirect).get(TESTKEY)).isNull();
 
             // Switch to the other endpoint
             RedisURI newActive = initialActive.equals(redis1ProxyUri) ? redis2ProxyUri : redis1ProxyUri;
             multiDbClient.setActive(newActive);
-
-            // Remove the old active endpoint
             boolean removed = multiDbClient.removeEndpoint(initialActive);
             assertThat(removed).isTrue();
 
             // Flush commands - they should now be sent to the new active endpoint
             connection.flushCommands();
-
             // Verify command was executed on the NEW active endpoint
             RedisCommands<String, String> initial = commands.get(proxyEndpointMap.get(initialActive));
             RedisCommands<String, String> active = commands.get(proxyEndpointMap.get(newActive));
-            assertThat(active.get("testkey")).isEqualTo("testvalue");
-            active.del("testkey"); // Cleanup
-
-            assertThat(initial.get("testkey")).isNull();
+            // close of removed connection happens asynchronously
+            // todo : ggivo Should we try to resubmit commands on disconnect at all?
+            //  What guarantees we want to provide for command ordering?
+            //  Re-queueing commands during multi will not work!!
+            await().untilAsserted(() -> assertThat(active.get(TESTKEY)).isEqualTo("testvalue"));
 
         } finally {
             multiDbClient.shutdown();

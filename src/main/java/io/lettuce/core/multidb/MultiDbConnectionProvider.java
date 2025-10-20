@@ -7,21 +7,31 @@ import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.internal.AsyncConnectionProvider;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
+import java.io.Closeable;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
- * Connection provider for master/replica setups. The connection provider
+ * Connection provider for MultiDb setups. The connection provider manages connections to multiple Redis endpoints and handles
+ * stale connection cleanup when endpoints are removed.
  *
  * @author Mark Paluch
+ * @author Ivo Gaydazhiev
  * @since 4.1
  */
-// TODO: ggivo How to handle stale connections after removing endpoints?
-class MultiDbConnectionProvider<K, V> {
+class MultiDbConnectionProvider<K, V> implements Closeable {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultiDbConnectionProvider.class);
 
     // connection map, contains connections per available endpoint
     private final AsyncConnectionProvider<ConnectionKey, StatefulRedisConnection<K, V>, CompletionStage<StatefulRedisConnection<K, V>>> connectionProvider;
@@ -96,8 +106,75 @@ class MultiDbConnectionProvider<K, V> {
         }
     }
 
+    /**
+     * @return number of connections.
+     */
+    protected long getConnectionCount() {
+        return connectionProvider.getConnectionCount();
+    }
+
+    /**
+     * Retrieve a set of ConnectionKey's for all pooled connections that are within the pool but not within the available
+     * endpoints.
+     *
+     * @return Set of {@link ConnectionKey}s
+     */
+    private Set<ConnectionKey> getStaleConnectionKeys() {
+
+        Map<ConnectionKey, StatefulRedisConnection<K, V>> map = new ConcurrentHashMap<>();
+        connectionProvider.forEach(map::put);
+
+        Set<ConnectionKey> stale = new HashSet<>();
+        Set<RedisURI> availableEndpoints = endpoints.getEndpoints();
+
+        for (ConnectionKey connectionKey : map.keySet()) {
+            if (!availableEndpoints.contains(connectionKey.endpoint)) {
+                stale.add(connectionKey);
+            }
+        }
+        return stale;
+    }
+
+    /**
+     * Close stale connections that are no longer in the available endpoints.
+     */
+    public void closeStaleConnections() {
+
+        logger.debug("closeStaleConnections() count before expiring: {}", getConnectionCount());
+
+        Set<ConnectionKey> stale = getStaleConnectionKeys();
+
+        for (ConnectionKey connectionKey : stale) {
+            connectionProvider.close(connectionKey);
+        }
+
+        logger.debug("closeStaleConnections() count after expiring: {}", getConnectionCount());
+    }
+
+    /**
+     * Notify the connection provider that endpoints have been updated. This will trigger cleanup of stale connections for
+     * endpoints that are no longer available.
+     */
+    public void setEndpoints() {
+        stateLock.lock();
+        try {
+            closeStaleConnections();
+        } finally {
+            stateLock.unlock();
+        }
+    }
+
     public RedisURI getActive() {
         return endpoints.getActive();
+    }
+
+    /**
+     * Get the available endpoints.
+     *
+     * @return the Redis endpoints
+     */
+    public RedisEndpoints getEndpoints() {
+        return endpoints;
     }
 
     class DefaultConnectionFactory implements Function<ConnectionKey, CompletionStage<StatefulRedisConnection<K, V>>> {
