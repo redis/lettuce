@@ -7,8 +7,6 @@
 package io.lettuce.core.search;
 
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.search.AggregationReply.Cursor;
-
 import io.lettuce.core.output.ComplexData;
 import io.lettuce.core.output.ComplexDataParser;
 import io.netty.util.internal.logging.InternalLogger;
@@ -78,8 +76,7 @@ public class AggregateReplyParser<K, V> implements ComplexDataParser<Aggregation
             for (Object aggregateResult : aggregateResults) {
                 if (aggregateResult instanceof Number) {
                     if (replyRead) {
-                        long id = ((Number) aggregateResult).longValue();
-                        reply.setCursor(Cursor.of(id, null));
+                        reply.setCursorId(((Number) aggregateResult).longValue());
                     } else {
                         reply.setGroupCount(((Number) aggregateResult).longValue());
                     }

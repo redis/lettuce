@@ -21,10 +21,7 @@ package io.lettuce.core.cluster;
 
 import java.io.Closeable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 
-import io.lettuce.core.ReadFrom;
-import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.protocol.ConnectionIntent;
@@ -36,20 +33,6 @@ import io.lettuce.core.protocol.ConnectionIntent;
  * @since 4.4
  */
 interface AsyncClusterConnectionProvider extends Closeable {
-
-    /**
-     * Obtain a random node-scoped connection for the given {@link ConnectionIntent}, while taking into account the configured
-     * {@link ReadFrom} policy (including order-sensitivity and replica eligibility)
-     * 
-     * @param connectionIntent the desired {@link ConnectionIntent} (READ or WRITE), used to determine eligibility and routing
-     *        behavior.
-     * @return a {@link CompletableFuture} that completes with a node-scoped {@link StatefulRedisConnection} for the selected
-     *         node.
-     * @throws CompletionException if the connection cannot be obtained. The underlying cause can be a
-     *         {@link PartitionSelectorException} when no eligible partition/slot can be determined, or a
-     *         {@link RedisConnectionException} originating from the connection attempt.
-     */
-    <K, V> CompletableFuture<StatefulRedisConnection<K, V>> getRandomConnectionAsync(ConnectionIntent connectionIntent);
 
     /**
      * Provide a connection for the connectionIntent and cluster slot. The underlying connection is bound to the nodeId. If the

@@ -437,28 +437,4 @@ class PooledClusterConnectionProviderUnitTests {
         verify(clusterEventListener).onUnknownNode();
     }
 
-    @Test
-    void shouldRandomConnectionPickAnUpstreamMasterSlot() {
-
-        when(clientMock.connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any()))
-                .thenReturn(ConnectionFuture.from(socketAddressMock, CompletableFuture.completedFuture(nodeConnectionMock)));
-
-        StatefulRedisConnection<String, String> connection = sut.getRandomConnectionAsync(ConnectionIntent.WRITE).join();
-
-        assertThat(connection).isSameAs(nodeConnectionMock);
-        verify(clientMock).connectToNodeAsync(eq(StringCodec.UTF8), eq("localhost:1"), any(), any());
-    }
-
-    @Test
-    void shouldFallbackToRandomSlotWhenNoMasters() {
-
-        partitions.clear();
-
-        CompletableFuture<StatefulRedisConnection<String, String>> future = sut
-                .getRandomConnectionAsync(ConnectionIntent.WRITE);
-
-        assertThat(future).isCompletedExceptionally();
-        verify(clusterEventListener).onUncoveredSlot(anyInt());
-    }
-
 }

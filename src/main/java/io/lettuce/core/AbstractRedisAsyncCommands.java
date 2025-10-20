@@ -50,8 +50,6 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.protocol.ProtocolKeyword;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.search.AggregationReply;
-import io.lettuce.core.search.AggregationReply.Cursor;
-
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -1707,28 +1705,17 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
-        if (cursor == null) {
-            throw new IllegalArgumentException("cursor must not be null");
-        }
-        long cursorId = cursor.getCursorId();
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count) {
         return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, count));
     }
 
     @Override
-    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
-        return ftCursorread(index, cursor, -1);
+    public RedisFuture<AggregationReply<K, V>> ftCursorread(String index, long cursorId) {
+        return dispatch(searchCommandBuilder.ftCursorread(index, cursorId, -1));
     }
 
     @Override
-    public RedisFuture<String> ftCursordel(String index, Cursor cursor) {
-        if (cursor == null) {
-            throw new IllegalArgumentException("cursor must not be null");
-        }
-        long cursorId = cursor.getCursorId();
-        if (cursorId <= 0) {
-            return dispatch(searchCommandBuilder.ftCursordel(index, 0));
-        }
+    public RedisFuture<String> ftCursordel(String index, long cursorId) {
         return dispatch(searchCommandBuilder.ftCursordel(index, cursorId));
     }
 

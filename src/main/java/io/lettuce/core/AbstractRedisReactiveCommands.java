@@ -51,8 +51,6 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.protocol.TracedCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.search.AggregationReply;
-import io.lettuce.core.search.AggregationReply.Cursor;
-
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -1738,14 +1736,8 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<String> ftCursordel(String index, Cursor cursor) {
-        return createMono(() -> {
-            if (cursor == null) {
-                throw new IllegalArgumentException("cursor must not be null");
-            }
-            long cursorId = cursor.getCursorId();
-            return searchCommandBuilder.ftCursordel(index, cursorId > 0 ? cursorId : 0);
-        });
+    public Mono<String> ftCursordel(String index, long cursorId) {
+        return createMono(() -> searchCommandBuilder.ftCursordel(index, cursorId));
     }
 
     @Override
@@ -1779,19 +1771,13 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor, int count) {
-        return createMono(() -> {
-            if (cursor == null) {
-                throw new IllegalArgumentException("cursor must not be null");
-            }
-            long cursorId = cursor.getCursorId();
-            return searchCommandBuilder.ftCursorread(index, cursorId > 0 ? cursorId : 0, count);
-        });
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, long cursorId, int count) {
+        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, count));
     }
 
     @Override
-    public Mono<AggregationReply<K, V>> ftCursorread(String index, Cursor cursor) {
-        return ftCursorread(index, cursor, -1);
+    public Mono<AggregationReply<K, V>> ftCursorread(String index, long cursorId) {
+        return createMono(() -> searchCommandBuilder.ftCursorread(index, cursorId, -1));
     }
 
     @Override
