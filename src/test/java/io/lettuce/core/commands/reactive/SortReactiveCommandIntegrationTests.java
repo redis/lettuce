@@ -12,12 +12,12 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 /**
  * @author Mark Paluch
  */
-//@Tag(INTEGRATION_TEST)
-//class SortReactiveCommandIntegrationTests extends SortCommandIntegrationTests {
+// @Tag(INTEGRATION_TEST)
+// class SortReactiveCommandIntegrationTests extends SortCommandIntegrationTests {
 //
-//    @Inject
-//    SortReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
-//        super(ReactiveSyncInvocationHandler.sync(connection));
-//    }
+// @Inject
+// SortReactiveCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
+// super(ReactiveSyncInvocationHandler.sync(connection));
+// }
 //
-//}
+// }
