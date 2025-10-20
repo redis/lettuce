@@ -178,6 +178,21 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
     suspend fun jsonArrpop(key: K, jsonPath: JsonPath, index: Int): List<JsonValue>
 
     /**
+     * Remove and return the JSON value at a given index in the array at a given [JsonPath] as raw JSON strings.
+     * <p>
+     * Behaves like [jsonArrpop(Any, JsonPath, Integer)] but returns {@code List<String>} with raw JSON instead of
+     * [JsonValue] wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the array inside the document.
+     * @param index the index of the element to be removed. Default is -1, meaning the last element. Out-of-range indexes round
+     *        to their respective array ends. Popping an empty array returns null.
+     * @return List<String> the removed element, or null if the specified path is not an array.
+     * @since 7.0
+     */
+    suspend fun jsonArrpopRaw(key: K, jsonPath: JsonPath, index: Int): List<String>
+
+    /**
      * Remove and return [JsonValue] at index -1 (last element) in the array at a given [JsonPath]
      *
      * @param key the key holding the JSON document.
@@ -188,6 +203,19 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
     suspend fun jsonArrpop(key: K, jsonPath: JsonPath): List<JsonValue>
 
     /**
+     * Remove and return the JSON value at index -1 (last element) in the array at a given [JsonPath] as raw JSON strings.
+     * <p>
+     * Behaves like [jsonArrpop(Any, JsonPath)] but returns {@code List<String>} with raw JSON instead of
+     * [JsonValue] wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the [JsonPath] pointing to the array inside the document.
+     * @return List<String> the removed element, or null if the specified path is not an array.
+     * @since 7.0
+     */
+    suspend fun jsonArrpopRaw(key: K, jsonPath: JsonPath): List<String>
+
+    /**
      * Remove and return [JsonValue] at index -1 (last element) in the array at the {@link JsonPath#ROOT_PATH}
      *
      * @param key the key holding the JSON document.
@@ -195,6 +223,17 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @since 6.5
      */
     suspend fun jsonArrpop(key: K): List<JsonValue>
+
+    /**
+     * Remove and return the JSON value at index -1 (last element) in the array at the {@link JsonPath#ROOT_PATH} as raw JSON strings.
+     * <p>
+     * Behaves like [jsonArrpop(Any)] but returns {@code List<String>} with raw JSON instead of [JsonValue] wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @return List<String> the removed element, or null if the specified path is not an array.
+     * @since 7.0
+     */
+    suspend fun jsonArrpopRaw(key: K): List<String>
 
     /**
      * Trim an array at a given [JsonPath] so that it contains only the specified inclusive range of elements. All
@@ -273,6 +312,20 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
     suspend fun jsonGet(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<JsonValue>
 
     /**
+     * Return the value at the specified path in JSON serialized form as raw strings.
+     * <p>
+     * Behaves like [jsonGet(Any, JsonGetArgs, JsonPath...)] but returns {@code List<String>} with raw JSON instead of
+     * [JsonValue] wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @param options the [JsonGetArgs] to use.
+     * @param jsonPaths the [JsonPath]s to use to identify the values to get.
+     * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.0
+     */
+    suspend fun jsonGetRaw(key: K, options: JsonGetArgs, vararg jsonPaths: JsonPath): List<String>
+
+    /**
      * Return the value at the specified path in JSON serialized form. Uses defaults for the [JsonGetArgs].
      * <p>
      * When using a single JSONPath, the root of the matching values is a JSON string with a top-level array of serialized JSON
@@ -289,6 +342,19 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @since 6.5
      */
     suspend fun jsonGet(key: K, vararg jsonPaths: JsonPath): List<JsonValue>
+
+    /**
+     * Return the value at the specified path in JSON serialized form as raw strings. Uses defaults for the [JsonGetArgs].
+     * <p>
+     * Behaves like [jsonGet(Any, JsonPath...)] but returns {@code List<String>} with raw JSON instead of
+     * [JsonValue] wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPaths the [JsonPath]s to use to identify the values to get.
+     * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.0
+     */
+    suspend fun jsonGetRaw(key: K, vararg jsonPaths: JsonPath): List<String>
 
     /**
      * Merge a given [JsonValue] with the value matching [JsonPath]. Consequently, JSON values at matching paths are
@@ -334,6 +400,19 @@ interface RedisJsonCoroutinesCommands<K : Any, V : Any> {
      * @since 6.5
      */
     suspend fun jsonMGet(jsonPath: JsonPath, vararg keys: K): List<JsonValue>
+
+    /**
+     * Return the values at the specified path from multiple key arguments as raw JSON strings.
+     * <p>
+     * Behaves like {@link #jsonMGet(JsonPath, Any[])} but returns {@code List<String>} with raw JSON instead of
+     * [JsonValue] wrappers.
+     *
+     * @param jsonPath the [JsonPath] pointing to the value to fetch.
+     * @param keys the keys holding the values to fetch.
+     * @return List<String> the values at path, or null if the path does not exist.
+     * @since 7.0
+     */
+    suspend fun jsonMGetRaw(jsonPath: JsonPath, vararg keys: K): List<String>
 
     /**
      * Set or update one or more JSON values according to the specified [JsonMsetArgs]
