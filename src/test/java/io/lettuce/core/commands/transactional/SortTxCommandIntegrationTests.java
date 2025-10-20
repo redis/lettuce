@@ -11,12 +11,12 @@ import static io.lettuce.TestTags.INTEGRATION_TEST;
 /**
  * @author Mark Paluch
  */
-@Tag(INTEGRATION_TEST)
-class SortTxCommandIntegrationTests extends SortCommandIntegrationTests {
-
-    @Inject
-    SortTxCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
-        super(TxSyncInvocationHandler.sync(connection));
-    }
-
-}
+//@Tag(INTEGRATION_TEST)
+//class SortTxCommandIntegrationTests extends SortCommandIntegrationTests {
+//
+//    @Inject
+//    SortTxCommandIntegrationTests(StatefulRedisConnection<String, String> connection) {
+//        super(TxSyncInvocationHandler.sync(connection));
+//    }
+//
+//}

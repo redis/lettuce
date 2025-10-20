@@ -25,6 +25,10 @@ import static org.assertj.core.api.Assertions.*;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.api.StatefulRedisConnection;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -48,16 +52,28 @@ import io.lettuce.test.condition.EnabledOnCommand;
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
 public class SortCommandIntegrationTests extends TestSupport {
 
-    private final RedisCommands<String, String> redis;
+    private final RedisClient client;
+
+    private StatefulRedisConnection<String, String> connection;
+
+    private RedisCommands<String, String> redis;
 
     @Inject
-    protected SortCommandIntegrationTests(RedisCommands<String, String> redis) {
-        this.redis = redis;
+    protected SortCommandIntegrationTests(RedisClient client) {
+        this.client = client;
     }
 
     @BeforeEach
     void setUp() {
+        this.connection = client.connect();
+        this.redis = connection.sync();
         this.redis.flushall();
+    }
+
+    @AfterEach
+    void tearDown() {
+        this.redis.flushall();
+        connection.close();
     }
 
     @Test
