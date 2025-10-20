@@ -45,7 +45,7 @@ import io.lettuce.test.condition.EnabledOnCommand;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 public class SortCommandIntegrationTests extends TestSupport {
 
     private final RedisCommands<String, String> redis;
