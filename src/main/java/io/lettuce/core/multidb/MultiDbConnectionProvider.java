@@ -2,7 +2,6 @@ package io.lettuce.core.multidb;
 
 import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisChannelWriter;
-import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;

@@ -46,9 +46,11 @@ class MultiDbClientIntegrationTests extends AbstractRedisClientTest {
     private static final int redis2_port = TestSettings.port(9);
 
     // Redis Endpoints exposed by toxiproxy
-    private static final RedisURI redis1ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort()).withPassword(passwd).build();
+    private static final RedisURI redis1ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort()).withPassword(passwd)
+            .build();
 
-    private static final RedisURI redis2ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort(1)).withPassword(passwd).build();
+    private static final RedisURI redis2ProxyUri = RedisURI.Builder.redis(host, TestSettings.proxyPort(1)).withPassword(passwd)
+            .build();
 
     // Redis Endpoints directly connecting to the backing redis instances
     private static final RedisURI redis1Uri = RedisURI.Builder.redis(host, redis1_port).build();
