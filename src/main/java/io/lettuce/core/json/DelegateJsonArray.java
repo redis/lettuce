@@ -22,6 +22,7 @@ import java.util.List;
  *
  * @author Tihomir Mateev
  * @author Steffen Kreutz
+ * @author Ko Su
  */
 class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
 
@@ -95,6 +96,14 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
         JsonNode replaced = ((ArrayNode) node).set(index, replaceWith);
 
         return wrap(replaced, objectMapper);
+    }
+
+    @Override
+    public JsonArray swap(int index, JsonValue newElement) {
+        JsonNode replaceWith = ((DelegateJsonValue) newElement).getNode();
+        ((ArrayNode) node).set(index, replaceWith);
+
+        return this;
     }
 
     @Override
