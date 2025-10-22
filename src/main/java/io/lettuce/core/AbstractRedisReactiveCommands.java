@@ -2192,6 +2192,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> keys(KeyStreamingChannel<String> channel, String pattern) {
+        return createMono(() -> commandBuilder.keys(channel, pattern));
+    }
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    @Override
+    public Mono<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern) {
+        return createMono(() -> commandBuilder.keysLegacy(channel, pattern));
+    }
+
+    @Override
     public Mono<Date> lastsave() {
         return createMono(commandBuilder::lastsave);
     }

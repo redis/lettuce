@@ -244,6 +244,34 @@ public interface RedisKeyReactiveCommands<K, V> {
     Flux<K> keysLegacy(K pattern);
 
     /**
+     * Find all keys matching the given pattern.
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @implNote {@code keysLegacy(KeyStreamingChannel, K)} is deprecated and will be removed in a later version. Prefer
+     *           {@link #keys(KeyStreamingChannel, String)}.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #keys}.
+     */
+    @Deprecated
+    Mono<Long> keys(KeyStreamingChannel<String> channel, String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #keysLegacy}.
+     */
+    @Deprecated
+    Mono<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern);
+
+    /**
      * Atomically transfer a key from a Redis instance to another one.
      *
      * @param host the host.

@@ -195,6 +195,29 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     Flux<K> keysLegacy(K pattern);
 
     /**
+     * Find all keys matching the given pattern on all cluster masters.
+     *
+     * @param channel the channel
+     * @param pattern the pattern
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @see RedisKeyReactiveCommands#keys(KeyStreamingChannel, String)
+     */
+    Mono<Long> keys(KeyStreamingChannel<String> channel, String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    @Override
+    Mono<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern);
+
+    /**
      * Return a random key from the keyspace on a random master.
      *
      * @return K bulk-string-reply the random key, or a {@link Mono} that completes empty when the database is empty.
