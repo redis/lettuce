@@ -1942,11 +1942,11 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CommandType.INFO, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, List<String>> keys(String pattern) {
+    Command<K, V, List<K>> keys(String pattern) {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(pattern);
-        return createCommand(KEYS, new StringListOutput<>(codec), args);
+        return createCommand(KEYS, new KeyListOutput<>(codec), args);
     }
 
     /**
@@ -1963,12 +1963,12 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(KEYS, new KeyListOutput<>(codec), pattern);
     }
 
-    Command<K, V, Long> keys(KeyStreamingChannel<String> channel, String pattern) {
+    Command<K, V, Long> keys(KeyStreamingChannel<K> channel, String pattern) {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
         notNull(channel);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(pattern);
-        return createCommand(KEYS, new StringStreamingOutput<>(codec, channel), args);
+        return createCommand(KEYS, new KeyStreamingOutput<>(codec, channel), args);
     }
 
     /**

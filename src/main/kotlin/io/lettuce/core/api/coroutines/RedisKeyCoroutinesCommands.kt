@@ -220,7 +220,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @return List<String> array-reply list of keys matching `pattern`.
      * @implNote @code keysLegacy(K)} is deprecated and will be removed in a later version. Prefer [keys(String)].
      */
-    fun keys(pattern: String): Flow<String>
+    fun keys(pattern: String): Flow<K>
 
     /**
      * Find all keys matching the given pattern (legacy overload).

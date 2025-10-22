@@ -180,10 +180,10 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * Find all keys matching the given pattern on all cluster masters.
      *
      * @param pattern the pattern type: patternkey (pattern)
-     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @return Flux&lt;K&gt; flux of keys matching {@code pattern}.
      * @see RedisKeyReactiveCommands#keys(String)
      */
-    Flux<String> keys(String pattern);
+    Flux<K> keys(String pattern);
 
     /**
      * Find all keys matching the given pattern (legacy overload).
@@ -202,7 +202,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @return Long array-reply list of keys matching {@code pattern}.
      * @see RedisKeyReactiveCommands#keys(KeyStreamingChannel, String)
      */
-    Mono<Long> keys(KeyStreamingChannel<String> channel, String pattern);
+    Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern);
 
     /**
      * Find all keys matching the given pattern (legacy overload).

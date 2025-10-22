@@ -285,11 +285,11 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Find all keys matching the given pattern on all cluster upstream nodes.
      *
-     * @param pattern the pattern type: patternkey (pattern)
+     * @param pattern the pattern type
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
      * @see RedisKeyAsyncCommands#keys(String)
      */
-    RedisFuture<List<String>> keys(String pattern);
+    RedisFuture<List<K>> keys(String pattern);
 
     /**
      * Find all keys matching the given pattern (legacy overload).
@@ -309,7 +309,7 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @return Long array-reply list of keys matching {@code pattern}.
      * @see RedisKeyAsyncCommands#keys(KeyStreamingChannel, String)
      */
-    RedisFuture<Long> keys(KeyStreamingChannel<String> channel, String pattern);
+    RedisFuture<Long> keys(KeyStreamingChannel<K> channel, String pattern);
 
     /**
      * Find all keys matching the given pattern (legacy overload).

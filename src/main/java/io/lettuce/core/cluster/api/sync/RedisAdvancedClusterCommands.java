@@ -282,11 +282,11 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
     /**
      * Find all keys matching the given pattern on all cluster upstream nodes.
      *
-     * @param pattern the pattern type: patternkey (pattern)
+     * @param pattern the pattern type
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
      * @see RedisKeyCommands#keys(String)
      */
-    List<String> keys(String pattern);
+    List<K> keys(String pattern);
 
     /**
      * Find all keys matching the given pattern (legacy overload).
@@ -306,7 +306,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @return Long array-reply list of keys matching {@code pattern}.
      * @see RedisKeyCommands#keys(KeyStreamingChannel, String)
      */
-    Long keys(KeyStreamingChannel<String> channel, String pattern);
+    Long keys(KeyStreamingChannel<K> channel, String pattern);
 
     /**
      * Find all keys matching the given pattern (legacy overload).

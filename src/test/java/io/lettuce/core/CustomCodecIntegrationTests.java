@@ -130,8 +130,8 @@ class CustomCodecIntegrationTests extends TestSupport {
         connection.set(key.getBytes(), null);
         assertThat(connection.get(key.getBytes())).isEqualTo(new byte[0]);
 
-        List<String> keys = connection.keys(key);
-        assertThat(keys).contains(key);
+        List<byte[]> keys = connection.keys(key);
+        assertThat(keys).contains(key.getBytes());
 
         connection.getStatefulConnection().close();
     }
@@ -146,8 +146,13 @@ class CustomCodecIntegrationTests extends TestSupport {
 
         connection.set(wrap, wrap);
 
-        List<String> keys = connection.keys(value);
-        assertThat(keys).containsExactly(value);
+        List<ByteBuffer> keys = connection.keys(value);
+        assertThat(keys).hasSize(1);
+        ByteBuffer byteBuffer = keys.get(0);
+        byte[] bytes = new byte[byteBuffer.remaining()];
+        byteBuffer.get(bytes);
+
+        assertThat(bytes).isEqualTo(value.getBytes());
 
         connection.getStatefulConnection().close();
     }

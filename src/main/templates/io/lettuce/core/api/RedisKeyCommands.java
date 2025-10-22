@@ -216,11 +216,11 @@ public interface RedisKeyCommands<K, V> {
     /**
      * Find all keys matching the given pattern.
      *
-     * @param pattern the pattern type: patternkey (pattern).
-     * @return List&lt;String&gt; array-reply list of keys matching {@code pattern}.
+     * @param pattern the pattern type.
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
      * @implNote {@code keysLegacy(K)} is deprecated and will be removed in a later version. Prefer {@link #keys(String)}.
      */
-    List<String> keys(String pattern);
+    List<K> keys(String pattern);
 
     /**
      * Find all keys matching the given pattern (legacy overload).
@@ -236,12 +236,12 @@ public interface RedisKeyCommands<K, V> {
      * Find all keys matching the given pattern.
      *
      * @param channel the channel.
-     * @param pattern the pattern.
+     * @param pattern the pattern type.
      * @return Long array-reply list of keys matching {@code pattern}.
      * @implNote {@code keysLegacy(KeyStreamingChannel, K)} is deprecated and will be removed in a later version. Prefer
      *           {@link #keys(KeyStreamingChannel, String)}.
      */
-    Long keys(KeyStreamingChannel<String> channel, String pattern);
+    Long keys(KeyStreamingChannel<K> channel, String pattern);
 
     /**
      * Find all keys matching the given pattern (legacy overload).
