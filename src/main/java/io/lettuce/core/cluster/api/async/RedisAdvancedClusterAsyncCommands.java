@@ -285,11 +285,21 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Find all keys matching the given pattern on all cluster upstream nodes.
      *
-     * @param pattern the pattern type: patternkey (pattern)
+     * @param pattern the pattern type
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyAsyncCommands#keys(Object)
+     * @see RedisKeyAsyncCommands#keys(String)
      */
-    RedisFuture<List<K>> keys(K pattern);
+    RedisFuture<List<K>> keys(String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    RedisFuture<List<K>> keysLegacy(K pattern);
 
     /**
      * Find all keys matching the given pattern on all cluster upstream nodes.
@@ -297,9 +307,21 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyAsyncCommands#keys(KeyStreamingChannel, Object)
+     * @see RedisKeyAsyncCommands#keys(KeyStreamingChannel, String)
      */
-    RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern);
+    RedisFuture<Long> keys(KeyStreamingChannel<K> channel, String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    RedisFuture<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Return a random key from the keyspace on a random master.

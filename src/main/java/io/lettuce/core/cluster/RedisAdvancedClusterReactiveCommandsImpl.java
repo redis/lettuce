@@ -293,16 +293,47 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
-    public Flux<K> keys(K pattern) {
+    public Flux<K> keys(String pattern) {
 
         Map<String, Publisher<K>> publishers = executeOnUpstream(commands -> commands.keys(pattern));
         return Flux.merge(publishers.values());
     }
 
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return K array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
     @Override
-    public Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    public Flux<K> keysLegacy(K pattern) {
+
+        Map<String, Publisher<K>> publishers = executeOnUpstream(commands -> commands.keysLegacy(pattern));
+        return Flux.merge(publishers.values());
+    }
+
+    @Override
+    public Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern) {
 
         Map<String, Publisher<Long>> publishers = executeOnUpstream(commands -> commands.keys(channel, pattern));
+        return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
+    }
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    @Override
+    public Mono<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern) {
+
+        Map<String, Publisher<Long>> publishers = executeOnUpstream(commands -> commands.keysLegacy(channel, pattern));
         return Flux.merge(publishers.values()).reduce((accu, next) -> accu + next);
     }
 
