@@ -332,10 +332,10 @@ class AdvancedClusterReactiveIntegrationTests extends TestSupport {
     void keysStreaming() {
 
         writeKeysToTwoNodes();
+        ListStreamingAdapter<String> result = new ListStreamingAdapter<>();
 
-        Flux<String> result = commands.keys("*");
-        StepVerifier.create(result.count()).expectNext(2L).verifyComplete();
-        assertThat(result.collectList().block()).contains(KEY_ON_NODE_1, KEY_ON_NODE_2);
+        StepVerifier.create(commands.keys(result, "*")).expectNext(2L).verifyComplete();
+        assertThat(result.getList()).contains(KEY_ON_NODE_1, KEY_ON_NODE_2);
     }
 
     @Test
