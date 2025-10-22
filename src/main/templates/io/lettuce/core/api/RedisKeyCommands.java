@@ -218,7 +218,6 @@ public interface RedisKeyCommands<K, V> {
      *
      * @param pattern the pattern type.
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
-     * @implNote {@code keysLegacy(K)} is deprecated and will be removed in a later version. Prefer {@link #keys(String)}.
      */
     List<K> keys(String pattern);
 
@@ -238,8 +237,6 @@ public interface RedisKeyCommands<K, V> {
      * @param channel the channel.
      * @param pattern the pattern type.
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @implNote {@code keysLegacy(KeyStreamingChannel, K)} is deprecated and will be removed in a later version. Prefer
-     *           {@link #keys(KeyStreamingChannel, String)}.
      */
     Long keys(KeyStreamingChannel<K> channel, String pattern);
 

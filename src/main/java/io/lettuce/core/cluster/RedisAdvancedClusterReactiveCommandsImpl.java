@@ -327,8 +327,7 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
      * @param channel the channel.
      * @param pattern the pattern.
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
-     *             version.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
      */
     @Deprecated
     @Override

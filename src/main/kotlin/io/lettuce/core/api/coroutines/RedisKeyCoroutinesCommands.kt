@@ -216,9 +216,8 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
     /**
      * Find all keys matching the given pattern.
      *
-     * @param pattern the pattern type: patternkey (pattern).
-     * @return List<String> array-reply list of keys matching `pattern`.
-     * @implNote @code keysLegacy(K)} is deprecated and will be removed in a later version. Prefer [keys(String)].
+     * @param pattern the pattern type.
+     * @return List<K> array-reply list of keys matching `pattern`.
      */
     fun keys(pattern: String): Flow<K>
 

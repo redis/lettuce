@@ -179,9 +179,8 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     /**
      * Find all keys matching the given pattern on all cluster masters.
      *
-     * @param pattern the pattern type: patternkey (pattern)
+     * @param pattern the pattern type
      * @return Flux&lt;K&gt; flux of keys matching {@code pattern}.
-     * @see RedisKeyReactiveCommands#keys(String)
      */
     Flux<K> keys(String pattern);
 
@@ -200,7 +199,8 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyReactiveCommands#keys(KeyStreamingChannel, String)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #keys(String)}.
      */
     Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern);
 
@@ -210,8 +210,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param channel the channel.
      * @param pattern the pattern.
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
-     *             version.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
      */
     @Deprecated
     @Override

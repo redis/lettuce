@@ -284,7 +284,6 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      *
      * @param pattern the pattern type
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyCommands#keys(String)
      */
     List<K> keys(String pattern);
 
@@ -304,7 +303,6 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyCommands#keys(KeyStreamingChannel, String)
      */
     Long keys(KeyStreamingChannel<K> channel, String pattern);
 

@@ -228,8 +228,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * Find all keys matching the given pattern.
      *
      * @param pattern the pattern type.
-     * @return K array-reply list of keys matching {@code pattern}.
-     * @implNote {@code keysLegacy(K)} is deprecated and will be removed in a later version. Prefer {@link #keys(String)}.
+     * @return K flux of keys matching {@code pattern}.
      */
     Flux<K> keys(String pattern);
 
@@ -249,8 +248,6 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel the channel.
      * @param pattern the pattern type.
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @implNote {@code keysLegacy(KeyStreamingChannel, K)} is deprecated and will be removed in a later version. Prefer
-     *           {@link #keys(KeyStreamingChannel, String)}.
      * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #keys}.
      */
@@ -263,7 +260,7 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @param channel the channel.
      * @param pattern the pattern.
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @deprecated Use {@link #keys} instead. This legacy overload will be removed in a later version.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
      * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #keysLegacy}.
      */
