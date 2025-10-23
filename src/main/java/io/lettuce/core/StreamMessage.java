@@ -46,6 +46,16 @@ public class StreamMessage<K, V> {
         return body;
     }
 
+    /**
+     * Whether this message was reclaimed from the pending entries list (PEL) using XREADGROUP … CLAIM. Default: false.
+     *
+     * Note: When CLAIM is used, servers may attach delivery metadata to all entries in the reply (including fresh ones). Use
+     * this indicator to distinguish actually reclaimed entries (true) from normal entries (false).
+     */
+    public boolean isClaimed() {
+        return false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o)

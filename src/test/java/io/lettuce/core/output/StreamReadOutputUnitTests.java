@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.StreamMessage;
 import io.lettuce.core.codec.StringCodec;
 
+import io.lettuce.core.ClaimedStreamMessage;
+
 /**
  * Unit tests for {@link StreamReadOutput}.
  *
@@ -177,6 +179,182 @@ class StreamReadOutputUnitTests {
         assertThat(streamMessage2.getId()).isEqualTo("1234-22");
         assertThat(streamMessage2.getStream()).isEqualTo("stream2");
         assertThat(streamMessage2.getBody()).hasSize(1).containsEntry("key2", "value2");
+    }
+
+    @Test
+    void shouldDecodeClaimedEntryWithMetadata() {
+
+        // Stream and single claimed entry
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("stream-key".getBytes()));
+        sut.complete(1);
+        sut.multi(1);
+        sut.multi(4);
+        sut.set(ByteBuffer.wrap("1234-12".getBytes()));
+        sut.complete(3);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("key".getBytes()));
+        sut.complete(4);
+        sut.set(ByteBuffer.wrap("value".getBytes()));
+        sut.complete(4);
+        // extras for claimed pending entry
+        sut.set(5000);
+        sut.set(2);
+        sut.complete(3);
+        sut.complete(2);
+        sut.complete(1);
+        sut.complete(0);
+
+        assertThat(sut.get()).hasSize(1);
+        StreamMessage<String, String> streamMessage = sut.get().get(0);
+        assertThat(streamMessage).isInstanceOf(ClaimedStreamMessage.class);
+        ClaimedStreamMessage<String, String> claimed = (ClaimedStreamMessage<String, String>) streamMessage;
+        assertThat(claimed.getMsSinceLastDelivery()).isEqualTo(5000);
+        assertThat(claimed.getRedeliveryCount()).isEqualTo(2);
+        assertThat(claimed.getBody()).hasSize(1).containsEntry("key", "value");
+    }
+
+    @Test
+    void shouldDecodeClaimedEntryWithMetadataAsBulkStrings() {
+
+        // Stream and single claimed entry with extras as bulk strings (RESP2/RESP3 variant)
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("stream-key".getBytes()));
+        sut.complete(1);
+        sut.multi(1);
+        sut.multi(4);
+        sut.set(ByteBuffer.wrap("1234-12".getBytes()));
+        sut.complete(3);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("key".getBytes()));
+        sut.complete(4);
+        sut.set(ByteBuffer.wrap("value".getBytes()));
+        sut.complete(4);
+        // extras for claimed pending entry as bulk strings
+        sut.set(ByteBuffer.wrap("5000".getBytes()));
+        sut.set(ByteBuffer.wrap("2".getBytes()));
+        sut.complete(3);
+        sut.complete(2);
+        sut.complete(1);
+        sut.complete(0);
+
+        assertThat(sut.get()).hasSize(1);
+        StreamMessage<String, String> streamMessage = sut.get().get(0);
+        assertThat(streamMessage).isInstanceOf(ClaimedStreamMessage.class);
+        ClaimedStreamMessage<String, String> claimed = (ClaimedStreamMessage<String, String>) streamMessage;
+        assertThat(claimed.getMsSinceLastDelivery()).isEqualTo(5000);
+        assertThat(claimed.getRedeliveryCount()).isEqualTo(2);
+        assertThat(claimed.getBody()).hasSize(1).containsEntry("key", "value");
+    }
+
+    @Test
+    void shouldDecodeFreshEntryWithZeroRedeliveriesAsNotClaimed() {
+
+        // Stream and single entry that carries extras with redeliveryCount=0
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("stream-key".getBytes()));
+        sut.complete(1);
+        sut.multi(1);
+        sut.multi(4);
+        sut.set(ByteBuffer.wrap("1234-12".getBytes()));
+        sut.complete(3);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("key".getBytes()));
+        sut.complete(4);
+        sut.set(ByteBuffer.wrap("value".getBytes()));
+        sut.complete(4);
+        // extras indicate not previously delivered (redeliveryCount=0)
+        sut.set(1000); // ms since last delivery
+        sut.set(0); // redeliveryCount
+        sut.complete(3);
+        sut.complete(2);
+        sut.complete(1);
+        sut.complete(0);
+
+        assertThat(sut.get()).hasSize(1);
+        StreamMessage<String, String> streamMessage = sut.get().get(0);
+        assertThat(streamMessage).isInstanceOf(ClaimedStreamMessage.class);
+        assertThat(streamMessage.isClaimed()).isFalse();
+        ClaimedStreamMessage<String, String> claimed = (ClaimedStreamMessage<String, String>) streamMessage;
+        assertThat(claimed.getMsSinceLastDelivery()).isEqualTo(1000);
+        assertThat(claimed.getRedeliveryCount()).isEqualTo(0);
+    }
+
+    @Test
+    void shouldDecodeMixedBatchClaimedFirstThenFresh() {
+
+        // One stream with three entries: two claimed (redelivery >= 1) then one fresh (redelivery == 0)
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("stream-key".getBytes()));
+        sut.complete(1);
+        sut.multi(3);
+
+        // Entry #1 (claimed)
+        sut.multi(4);
+        sut.set(ByteBuffer.wrap("1-0".getBytes()));
+        sut.complete(3);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("f1".getBytes()));
+        sut.complete(4);
+        sut.set(ByteBuffer.wrap("v1".getBytes()));
+        sut.complete(4);
+        sut.set(1500); // msSinceLastDelivery
+        sut.set(2); // redeliveryCount
+        sut.complete(3);
+        sut.complete(2);
+
+        // Entry #2 (claimed)
+        sut.multi(4);
+        sut.set(ByteBuffer.wrap("2-0".getBytes()));
+        sut.complete(3);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("f2".getBytes()));
+        sut.complete(4);
+        sut.set(ByteBuffer.wrap("v2".getBytes()));
+        sut.complete(4);
+        sut.set(1200);
+        sut.set(1);
+        sut.complete(3);
+        sut.complete(2);
+
+        // Entry #3 (fresh, still carries metadata with redeliveryCount=0)
+        sut.multi(4);
+        sut.set(ByteBuffer.wrap("3-0".getBytes()));
+        sut.complete(3);
+        sut.multi(2);
+        sut.set(ByteBuffer.wrap("f3".getBytes()));
+        sut.complete(4);
+        sut.set(ByteBuffer.wrap("v3".getBytes()));
+        sut.complete(4);
+        sut.set(10);
+        sut.set(0);
+        sut.complete(3);
+
+        sut.complete(2);
+
+        sut.complete(1);
+        sut.complete(0);
+
+        assertThat(sut.get()).hasSize(3);
+        StreamMessage<String, String> m1 = sut.get().get(0);
+        StreamMessage<String, String> m2 = sut.get().get(1);
+        StreamMessage<String, String> m3 = sut.get().get(2);
+
+        // All entries carry extras => ClaimedStreamMessage type, but isClaimed reflects redeliveryCount >= 1
+        assertThat(m1).isInstanceOf(ClaimedStreamMessage.class);
+        assertThat(m2).isInstanceOf(ClaimedStreamMessage.class);
+        assertThat(m3).isInstanceOf(ClaimedStreamMessage.class);
+
+        assertThat(m1.isClaimed()).isTrue();
+        assertThat(m2.isClaimed()).isTrue();
+        assertThat(m3.isClaimed()).isFalse();
+
+        ClaimedStreamMessage<String, String> c1 = (ClaimedStreamMessage<String, String>) m1;
+        ClaimedStreamMessage<String, String> c2 = (ClaimedStreamMessage<String, String>) m2;
+        ClaimedStreamMessage<String, String> c3 = (ClaimedStreamMessage<String, String>) m3;
+        assertThat(c1.getRedeliveryCount()).isEqualTo(2);
+        assertThat(c2.getRedeliveryCount()).isEqualTo(1);
+        assertThat(c3.getRedeliveryCount()).isEqualTo(0);
     }
 
 }
