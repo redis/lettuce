@@ -23,6 +23,8 @@ public class XReadArgs implements CompositeArgument {
 
     private boolean noack;
 
+    private Long claimMinIdleTime;
+
     /**
      * Builder entry points for {@link XReadArgs}.
      */
@@ -90,6 +92,21 @@ public class XReadArgs implements CompositeArgument {
             return new XReadArgs().noack(noack);
         }
 
+        /**
+         * Create a new {@link XReadArgs} and set CLAIM min-idle-time (milliseconds). Only valid for XREADGROUP.
+         */
+        public static XReadArgs claim(long milliseconds) {
+            return new XReadArgs().claim(milliseconds);
+        }
+
+        /**
+         * Create a new {@link XReadArgs} and set CLAIM min-idle-time. Only valid for XREADGROUP.
+         */
+        public static XReadArgs claim(Duration timeout) {
+            LettuceAssert.notNull(timeout, "Claim timeout must not be null");
+            return claim(timeout.toMillis());
+        }
+
     }
 
     /**
@@ -141,6 +158,29 @@ public class XReadArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Claim idle pending messages first with a minimum idle time (milliseconds). Only valid for XREADGROUP.
+     * 
+     * @since 7.0
+     */
+    public XReadArgs claim(long milliseconds) {
+
+        this.claimMinIdleTime = milliseconds;
+        return this;
+    }
+
+    /**
+     * Claim idle pending messages first with a minimum idle time. Only valid for XREADGROUP.
+     * 
+     * @since 7.0
+     */
+    public XReadArgs claim(Duration timeout) {
+
+        LettuceAssert.notNull(timeout, "Claim timeout must not be null");
+
+        return claim(timeout.toMillis());
+    }
+
     public <K, V> void build(CommandArgs<K, V> args) {
 
         if (block != null) {
@@ -153,6 +193,10 @@ public class XReadArgs implements CompositeArgument {
 
         if (noack) {
             args.add(CommandKeyword.NOACK);
+        }
+
+        if (claimMinIdleTime != null) {
+            args.add("CLAIM").add(claimMinIdleTime);
         }
     }
 
