@@ -12,7 +12,7 @@ Add these lines to file pom.xml:
 <dependency>
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>6.7.0.RELEASE</version>
+    <version>7.0.0.RELEASE</version>
 </dependency>
 ```
 
@@ -23,7 +23,7 @@ Add these lines to file ivy.xml:
 ``` xml
 <ivy-module>
   <dependencies>
-    <dependency org="io.lettuce" name="lettuce-core" rev="6.7.0.RELEASE"/>
+    <dependency org="io.lettuce" name="lettuce-core" rev="7.0.0.RELEASE"/>
   </dependencies>
 </ivy-module>
 ```
@@ -34,7 +34,7 @@ Add these lines to file build.gradle:
 
 ``` groovy
 dependencies {
-  implementation 'io.lettuce:lettuce-core:6.7.0.RELEASE'
+  implementation 'io.lettuce:lettuce-core:7.0.0.RELEASE'
 }
 ```
 
