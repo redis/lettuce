@@ -386,6 +386,9 @@ maintenance windows.</p>
 or use <code>MaintNotificationsConfig.enabled()</code> for
 auto-detection based on connection characteristics. Disable with
 <code>MaintNotificationsConfig.disabled()</code>.</p>
+<p>Use <code>TimeoutOptions.relaxedTimeoutsDuringMaintenance(Duration)</code>
+to set extended timeout during maintenance operations (default: 10
+seconds).</p>
 <p>This feature requires Redis Enterprise or a Redis server that
 supports maintenance event notifications.</p></td>
 </tr>
@@ -514,11 +517,7 @@ store/trust store.</p></td>
 <p>Options to configure command timeouts applied to timeout commands
 after dispatching these (active connections, queued while disconnected,
 batch buffer). By default, the synchronous API times out commands using
-<code>RedisURI.getTimeout()</code>.</p>
-<p>Use <code>relaxedTimeoutsDuringMaintenance(Duration)</code> to set
-extended timeout during server maintenance operations (default: 10
-seconds). This helps prevent command failures when Seamless Connection
-Handover (SCH) is enabled.</p></td>
+<code>RedisURI.getTimeout()</code>.</p></td>
 </tr>
 <tr>
 <td>Publish Reactive Signals on Scheduler</td>
