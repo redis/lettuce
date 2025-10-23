@@ -370,6 +370,26 @@ queued commands.</p>
 refuse commands and cancel these with an exception.</p></td>
 </tr>
 <tr>
+<td>Maintenance Notifications</td>
+<td><code>maintNotificationsConfig</code></td>
+<td><code>enabled()</code></td>
+</tr>
+<tr>
+<td colspan="3"><p>Since: 7.0</p>
+<p>Enables Seamless Connection Handover (SCH) by listening for
+server-side maintenance event notifications. When enabled, the client
+receives push notifications about maintenance operations and can
+proactively reconnect to healthy nodes, reducing failed commands during
+maintenance windows.</p>
+<p>Configure endpoint type for reconnection using
+<code>MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)</code>
+or use <code>MaintNotificationsConfig.enabled()</code> for
+auto-detection based on connection characteristics. Disable with
+<code>MaintNotificationsConfig.disabled()</code>.</p>
+<p>This feature requires Redis Enterprise or a Redis server that
+supports maintenance event notifications.</p></td>
+</tr>
+<tr>
 <td>Replay filter</td>
 <td><code>replayFilter</code></td>
 <td><code>(cmd) -> false</code></td>
@@ -494,7 +514,11 @@ store/trust store.</p></td>
 <p>Options to configure command timeouts applied to timeout commands
 after dispatching these (active connections, queued while disconnected,
 batch buffer). By default, the synchronous API times out commands using
-<code>RedisURI.getTimeout()</code>.</p></td>
+<code>RedisURI.getTimeout()</code>.</p>
+<p>Use <code>relaxedTimeoutsDuringMaintenance(Duration)</code> to set
+extended timeout during server maintenance operations (default: 10
+seconds). This helps prevent command failures when Seamless Connection
+Handover (SCH) is enabled.</p></td>
 </tr>
 <tr>
 <td>Publish Reactive Signals on Scheduler</td>
