@@ -407,13 +407,30 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("EVAL_RO") // Redis 7.0
-    void xgroupCreateEntriesRead() {
+    void xgroupCreateEntriesRead_pre822() {
+        assumeTrue(RedisConditions.of(redis).getRedisVersion().isLessThan(RedisConditions.Version.parse("8.2.2")),
+                "Redis 8.2.2+ has different behavior for entries-read");
 
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.entriesRead(5).mkstream(true));
 
         List<List<Object>> group = (List) redis.xinfoGroups("key");
 
         assertThat(group.get(0)).containsSequence("entries-read", 5L, "lag");
+    }
+
+    @Test
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
+    void xgroupCreateEntriesRead_post822() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.2.2"),
+                "Redis 8.2.2+ has different behavior for entries-read");
+
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.entriesRead(5).mkstream(true));
+
+        List<List<Object>> group = (List) redis.xinfoGroups("key");
+
+        assertThat(group.get(0)).containsSequence("entries-read", 2L, "lag");
     }
 
     @Test
