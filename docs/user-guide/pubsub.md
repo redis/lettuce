@@ -43,7 +43,7 @@ RedisFuture<Void> future = async.subscribe("channel");
 ### Reactive API
 
 The reactive API provides hot `Observable`s to listen on
-`ChannelMessage`s and `PatternMessage`s. The `Observable`s receive all
+`SubscriptionMessage`. The `Observable`s receive all
 inbound messages. You can do filtering using the observable chain if you
 need to filter out the interesting ones, The `Observable` stops
 triggering events when the subscriber unsubscribes from it.
@@ -54,7 +54,14 @@ StatefulRedisPubSubConnection<String, String> connection = client.connectPubSub(
 RedisPubSubReactiveCommands<String, String> reactive = connection.reactive();
 reactive.subscribe("channel").subscribe();
 
-reactive.observeChannels().doOnNext(patternMessage -> {...}).subscribe()
+reactive.observe(sink -> new RedisPubSubAdapter<String, String>() {
+
+    @Override
+    public void message(String channel, String message) {
+        sink.next(new SubscriptionMessage<>(channel, message));
+    }
+
+}).doOnNext(subscriptionMessage -> {...}).subscribe()
 
 // application flow continues
 ```
