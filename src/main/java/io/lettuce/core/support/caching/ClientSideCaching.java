@@ -124,6 +124,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         V value = cacheAccessor.get(key);
 
         if (value == null) {
+            cacheAccessor.setPending(key);
             value = redisCache.get(key);
 
             if (value != null) {
@@ -140,6 +141,7 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
         V value = cacheAccessor.get(key);
 
         if (value == null) {
+            cacheAccessor.setPending(key);
             value = redisCache.get(key);
 
             if (value == null) {
