@@ -42,7 +42,6 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
-@Disabled
 public class RediSearchClusterCursorIntegrationTests extends TestSupport {
 
     private static final String INDEX = "books-cursor-cluster-idx";
