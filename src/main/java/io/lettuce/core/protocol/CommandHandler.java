@@ -42,6 +42,7 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.datastructure.queue.HashIndexedQueue;
+import io.lettuce.core.datastructure.queue.IncompleteQueue;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
@@ -140,9 +141,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions   client options for this connection, must not be {@code null}
+     * @param clientOptions client options for this connection, must not be {@code null}
      * @param clientResources client resources for this connection, must not be {@code null}
-     * @param endpoint        must not be {@code null}.
+     * @param endpoint must not be {@code null}.
      */
     public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Endpoint endpoint) {
 
@@ -156,7 +157,11 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.commandLatencyRecorder = clientResources.commandLatencyRecorder();
         this.latencyMetricsEnabled = commandLatencyRecorder.isEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
-        this.stack = clientOptions.isUseHashIndexedQueue() ? new HashIndexedQueue<>() : new ArrayDeque<>();
+        Queue<RedisCommand<?, ?, ?>> implementation = clientOptions.isUseHashIndexedQueue() ? new HashIndexedQueue<>()
+                : new ArrayDeque<>();
+        this.stack = new IncompleteQueue(implementation);
+
+//        this.stack = clientOptions.isUseHashIndexedQueue() ? new HashIndexedQueue<>() : new ArrayDeque<>();
 
         Tracing tracing = clientResources.tracing();
 
@@ -279,28 +284,17 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         InternalLogLevel logLevel = InternalLogLevel.WARN;
 
         if (!stack.isEmpty()) {
-            // Clean up any encoding failures at head of stack first
-            while (!stack.isEmpty() && stack.peek().hasEncodingError()) {
-                RedisCommand<?, ?, ?> failed = stack.poll();
-                // Encoding failures were already completed exceptionally during encoding
-                if (debugEnabled) {
-                    logger.debug("{} Cleaning up encoding failure command {}", logPrefix(), failed);
-                }
+            RedisCommand<?, ?, ?> command = stack.poll();
+            if (debugEnabled) {
+                logger.debug("{} Storing exception in {}", logPrefix(), command);
             }
+            logLevel = InternalLogLevel.DEBUG;
 
-            if (!stack.isEmpty()) {
-                RedisCommand<?, ?, ?> command = stack.poll();
-                if (debugEnabled) {
-                    logger.debug("{} Storing exception in {}", logPrefix(), command);
-                }
-                logLevel = InternalLogLevel.DEBUG;
-
-                try {
-                    command.completeExceptionally(cause);
-                } catch (Exception ex) {
-                    logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(),
-                            ex);
-                }
+            try {
+                command.completeExceptionally(cause);
+            } catch (Exception ex) {
+                logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(),
+                        ex);
             }
         }
 
@@ -670,18 +664,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             } else {
 
                 RedisCommand<?, ?, ?> command = stack.peek();
-                // Clean up encoding failures before processing valid responses
-                while (!stack.isEmpty() && stack.peek().hasEncodingError()) {
-                    RedisCommand<?, ?, ?> failed = stack.poll();
-                    if (debugEnabled) {
-                        logger.debug("{} Cleaning up encoding failure command {}", logPrefix(), failed);
-                    }
-                    // Encoding failures were already completed exceptionally during encoding
-                    if (!stack.isEmpty()) {
-                        command = stack.peek();
-                    }
-                }
-
                 if (debugEnabled) {
                     logger.debug("{} Stack contains: {} commands", logPrefix(), stack.size());
                 }

@@ -117,14 +117,4 @@ class ClusterCommand<K, V, T> extends CommandWrapper<K, V, T> implements RedisCo
         return sb.toString();
     }
 
-    @Override
-    public void markEncodingError() {
-        command.markEncodingError();
-    }
-
-    @Override
-    public boolean hasEncodingError() {
-        return command.hasEncodingError();
-    }
-
 }

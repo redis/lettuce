@@ -80,24 +80,6 @@ public interface RedisCommand<K, V, T> {
     boolean isDone();
 
     /**
-     * Mark this command as having failed during encoding.
-     * This indicates the command was never successfully sent to Redis.
-     * 
-     * @since 6.2.2-uber-0.5
-     */
-    void markEncodingError();
-
-    /**
-     * Returns {@code true} if this command failed during encoding and was never sent to Redis.
-     * Commands with encoding errors should be cleaned up from the response queue without
-     * waiting for Redis responses.
-     * 
-     * @return {@code true} if this command failed during encoding
-     * @since 6.2.2-uber-0.5
-     */
-    boolean hasEncodingError();
-
-    /**
      * Set a new output. Only possible as long as the command is not completed/cancelled.
      *
      * @param output the new command output

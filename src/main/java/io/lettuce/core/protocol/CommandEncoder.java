@@ -78,7 +78,6 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
             command.encode(out);
         } catch (RuntimeException e) {
             out.resetWriterIndex();
-            command.markEncodingError();
             command.completeExceptionally(new EncoderException(
                     "Cannot encode command. Please close the connection as the connection state may be out of sync.", e));
         }

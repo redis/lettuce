@@ -91,14 +91,4 @@ class PristineFallbackCommand implements RedisCommand<String, String, List<Strin
 
     }
 
-    @Override
-    public void markEncodingError() {
-        // Default implementation - pristine fallback commands don't track encoding errors
-    }
-
-    @Override
-    public boolean hasEncodingError() {
-        return false; // Default implementation - assume no encoding errors
-    }
-
 }

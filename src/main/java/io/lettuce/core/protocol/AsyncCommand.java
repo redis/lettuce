@@ -232,14 +232,4 @@ public class AsyncCommand<K, V, T> extends CompletableFuture<T>
         return toHash != null ? toHash.hashCode() : 0;
     }
 
-    @Override
-    public void markEncodingError() {
-        command.markEncodingError();
-    }
-
-    @Override
-    public boolean hasEncodingError() {
-        return command.hasEncodingError();
-    }
-
 }
