@@ -46,7 +46,6 @@ import java.util.UUID;
  */
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
-@Disabled
 public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
     private static final String INDEX = "books-keyless-routing-idx";
