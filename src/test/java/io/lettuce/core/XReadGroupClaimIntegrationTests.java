@@ -12,7 +12,6 @@ import java.util.UUID;
 import io.lettuce.core.models.stream.PendingMessages;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -48,8 +47,9 @@ class XReadGroupClaimIntegrationTests {
     void setup() {
         connection = client.connect();
         sync = connection.sync();
-        // Require Redis 8.4+ for XREADGROUP CLAIM support
-        assumeTrue(RedisConditions.of(sync).hasVersionGreaterOrEqualsTo("8.4"), "Redis 8.4+ required for XREADGROUP CLAIM");
+        // Require Redis 8.3.224+ (RC1) for XREADGROUP CLAIM support
+        assumeTrue(RedisConditions.of(sync).hasVersionGreaterOrEqualsTo("8.3.224"),
+                "Redis 8.3.224+ required for XREADGROUP CLAIM");
     }
 
     @AfterEach
@@ -192,6 +192,71 @@ class XReadGroupClaimIntegrationTests {
 
             PendingMessages afterAck = sync.xpending(key, group);
             assertThat(afterAck.getCount()).isEqualTo(0);
+        } finally {
+            try {
+                sync.xgroupDestroy(key, group);
+            } catch (Exception ignore) {
+            }
+            sync.del(key);
+        }
+    }
+
+    @Test
+    void claimWithNoackDoesNotCreatePendingAndRemovesClaimedFromPel() throws Exception {
+        String key = "it:stream:claim:noack:" + UUID.randomUUID();
+        String group = "g";
+        String c1 = "c1";
+        String c2 = "c2";
+
+        // Clean slate
+        try {
+            sync.xgroupDestroy(key, group);
+        } catch (Exception ignore) {
+        }
+        sync.del(key);
+
+        // Produce two entries that will become pending for c1
+        Map<String, String> body = new HashMap<>();
+        body.put("f", "v");
+        sync.xadd(key, body);
+        sync.xadd(key, body);
+
+        // Create group at 0-0 and consume with c1 to move entries to PEL
+        sync.xgroupCreate(XReadArgs.StreamOffset.from(key, "0-0"), group);
+        sync.xreadgroup(Consumer.from(group, c1), XReadArgs.Builder.count(10), XReadArgs.StreamOffset.lastConsumed(key));
+
+        // Verify pending belongs to c1
+        PendingMessages before = sync.xpending(key, group);
+        assertThat(before.getCount()).isEqualTo(2);
+        assertThat(before.getConsumerMessageCount().getOrDefault(c1, 0L)).isEqualTo(2);
+
+        // Ensure idle time so entries are claimable
+        Thread.sleep(51);
+
+        // Also produce fresh entries that should not be added to PEL when NOACK is set
+        sync.xadd(key, body);
+        sync.xadd(key, body);
+
+        try {
+            // Claim with NOACK using c2
+            XReadArgs readArgs = XReadArgs.Builder.claim(Duration.ofMillis(50));
+            readArgs.noack(true).count(10);
+            List<StreamMessage<String, String>> res = sync.xreadgroup(Consumer.from(group, c2), readArgs,
+                    XReadArgs.StreamOffset.lastConsumed(key));
+
+            assertThat(res).isNotNull();
+            assertThat(res).isNotEmpty();
+
+            long claimedCount = res.stream().filter(StreamMessage::isClaimed).count();
+            long freshCount = res.size() - claimedCount;
+            assertThat(claimedCount).isEqualTo(2);
+            assertThat(freshCount).isEqualTo(2);
+
+            // After NOACK read, nothing should remain pending in the group
+            PendingMessages afterNoack = sync.xpending(key, group);
+            assertThat(afterNoack.getCount()).isEqualTo(0);
+            assertThat(afterNoack.getConsumerMessageCount().getOrDefault(c1, 0L)).isEqualTo(0);
+            assertThat(afterNoack.getConsumerMessageCount().getOrDefault(c2, 0L)).isEqualTo(0);
         } finally {
             try {
                 sync.xgroupDestroy(key, group);
