@@ -252,11 +252,85 @@ class XReadGroupClaimIntegrationTests {
             assertThat(claimedCount).isEqualTo(2);
             assertThat(freshCount).isEqualTo(2);
 
-            // After NOACK read, nothing should remain pending in the group
+            // After NOACK read, previously pending entries remain pending (NOACK does not remove them)
             PendingMessages afterNoack = sync.xpending(key, group);
-            assertThat(afterNoack.getCount()).isEqualTo(0);
+            assertThat(afterNoack.getCount()).isEqualTo(2);
+            // Claimed entries remain pending and are now owned by c2 (CLAIM reassigns ownership). Fresh entries were not added
+            // to PEL.
             assertThat(afterNoack.getConsumerMessageCount().getOrDefault(c1, 0L)).isEqualTo(0);
-            assertThat(afterNoack.getConsumerMessageCount().getOrDefault(c2, 0L)).isEqualTo(0);
+            assertThat(afterNoack.getConsumerMessageCount().getOrDefault(c2, 0L)).isEqualTo(2);
+        } finally {
+            try {
+                sync.xgroupDestroy(key, group);
+            } catch (Exception ignore) {
+            }
+            sync.del(key);
+        }
+    }
+
+    @Test
+    void claimHonorsMinIdleTimeGatingAndRedeliversAfterDelay() throws Exception {
+        String key = "it:stream:claim:auto:" + UUID.randomUUID();
+        String group = "g";
+        String consumer = "c1";
+
+        // Clean slate
+        try {
+            sync.xgroupDestroy(key, group);
+        } catch (Exception ignore) {
+        }
+        sync.del(key);
+
+        try {
+            // Create group at "$" and create stream if missing
+            sync.xgroupCreate(XReadArgs.StreamOffset.latest(key), group, XGroupCreateArgs.Builder.mkstream());
+
+            // Add entries after group creation so they are delivered as fresh
+            Map<String, String> body = new HashMap<>();
+            body.put("f", "v");
+            sync.xadd(key, body);
+            sync.xadd(key, body);
+
+            // First read with CLAIM(minIdle=100ms); entries should be fresh (not claimed)
+            XReadArgs args = XReadArgs.Builder.claim(Duration.ofMillis(50)).count(10);
+            List<StreamMessage<String, String>> first = sync.xreadgroup(Consumer.from(group, consumer), args,
+                    XReadArgs.StreamOffset.lastConsumed(key));
+
+            assertThat(first).isNotNull();
+            assertThat(first.size()).isEqualTo(2);
+            for (StreamMessage<String, String> m : first) {
+                // With CLAIM present, server attaches extras even for fresh entries (redelivery=0)
+                assertThat(m).isInstanceOf(ClaimedStreamMessage.class);
+                assertThat(m.isClaimed()).isFalse();
+                ClaimedStreamMessage<String, String> cm = (ClaimedStreamMessage<String, String>) m;
+                assertThat(cm.getRedeliveryCount()).isEqualTo(0);
+                assertThat(cm.getMsSinceLastDelivery()).isEqualTo(0);
+            }
+
+            // Immediate repeat: should be empty (idle < minIdle)
+            List<StreamMessage<String, String>> immediate = sync.xreadgroup(Consumer.from(group, consumer), args,
+                    XReadArgs.StreamOffset.lastConsumed(key));
+            assertThat(immediate).isEmpty();
+
+            // After sufficient idle time, entries are claimed/redelivered with redeliveryCount >= 1
+            Thread.sleep(51);
+            List<StreamMessage<String, String>> afterIdle = sync.xreadgroup(Consumer.from(group, consumer), args,
+                    XReadArgs.StreamOffset.lastConsumed(key));
+
+            assertThat(afterIdle).isNotNull();
+            assertThat(afterIdle.size()).isEqualTo(2);
+            for (StreamMessage<String, String> m : afterIdle) {
+                assertThat(m).isInstanceOf(ClaimedStreamMessage.class);
+                assertThat(m.isClaimed()).isTrue();
+                ClaimedStreamMessage<String, String> cm = (ClaimedStreamMessage<String, String>) m;
+                assertThat(cm.getRedeliveryCount()).isGreaterThanOrEqualTo(1);
+                assertThat(cm.getMsSinceLastDelivery()).isGreaterThanOrEqualTo(51);
+            }
+
+            // PEL remains assigned to the consumer until XACK
+            PendingMessages pel = sync.xpending(key, group);
+            assertThat(pel.getCount()).isEqualTo(2);
+            assertThat(pel.getConsumerMessageCount().getOrDefault(consumer, 0L)).isEqualTo(2);
         } finally {
             try {
                 sync.xgroupDestroy(key, group);
