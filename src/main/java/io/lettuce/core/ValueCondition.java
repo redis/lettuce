@@ -68,6 +68,7 @@ public final class ValueCondition<V> {
         public Param param() {
             return param;
         }
+
     }
 
     /** Parameter kind for condition arguments. */
