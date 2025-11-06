@@ -812,6 +812,16 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Long> delex(K key) {
+        return createMono(() -> commandBuilder.delex(key));
+    }
+
+    @Override
+    public Mono<Long> delex(K key, ValueCondition<V> condition) {
+        return createMono(() -> commandBuilder.delex(key, condition));
+    }
+
+    @Override
     public String digest(String script) {
         return digest(encodeScript(script));
     }
@@ -1324,6 +1334,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<V> get(K key) {
         return createMono(() -> commandBuilder.get(key));
+    }
+
+    @Override
+    public Mono<String> digestKey(K key) {
+        return createMono(() -> commandBuilder.digestKey(key));
     }
 
     public StatefulConnection<K, V> getConnection() {
@@ -2756,6 +2771,26 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<String> set(K key, V value, SetArgs setArgs) {
         return createMono(() -> commandBuilder.set(key, value, setArgs));
+    }
+
+    @Override
+    public Mono<String> set(K key, V value, ValueCondition<V> condition) {
+        return createMono(() -> commandBuilder.set(key, value, condition));
+    }
+
+    @Override
+    public Mono<String> set(K key, V value, SetArgs setArgs, ValueCondition<V> condition) {
+        return createMono(() -> commandBuilder.set(key, value, setArgs, condition));
+    }
+
+    @Override
+    public Mono<V> setGet(K key, V value, ValueCondition<V> condition) {
+        return createMono(() -> commandBuilder.setGet(key, value, condition));
+    }
+
+    @Override
+    public Mono<V> setGet(K key, V value, SetArgs setArgs, ValueCondition<V> condition) {
+        return createMono(() -> commandBuilder.setGet(key, value, setArgs, condition));
     }
 
     @Override

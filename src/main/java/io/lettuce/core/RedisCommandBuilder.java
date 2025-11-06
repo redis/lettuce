@@ -940,6 +940,22 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEL, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, Long> delex(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(DELEX, new IntegerOutput<>(codec), args);
+    }
+
+    Command<K, V, Long> delex(K key, ValueCondition<V> condition) {
+        notNullKey(key);
+        LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        buildConditionArgs(args, condition);
+        return createCommand(DELEX, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, String> discard() {
         return createCommand(DISCARD, new StatusOutput<>(codec));
     }
@@ -2700,6 +2716,55 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
         setArgs.build(args);
         return createCommand(SET, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> digestKey(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(DIGEST, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> set(K key, V value, ValueCondition<V> condition) {
+        notNullKey(key);
+        LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+        buildConditionArgs(args, condition);
+        return createCommand(SET, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> set(K key, V value, SetArgs setArgs, ValueCondition<V> condition) {
+        notNullKey(key);
+        LettuceAssert.notNull(setArgs, "SetArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+        setArgs.build(args);
+        buildConditionArgs(args, condition);
+        return createCommand(SET, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, V> setGet(K key, V value, ValueCondition<V> condition) {
+        notNullKey(key);
+        LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+        buildConditionArgs(args, condition);
+        args.add(GET);
+        return createCommand(SET, new ValueOutput<>(codec), args);
+    }
+
+    Command<K, V, V> setGet(K key, V value, SetArgs setArgs, ValueCondition<V> condition) {
+        notNullKey(key);
+        LettuceAssert.notNull(setArgs, "SetArgs " + MUST_NOT_BE_NULL);
+        LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
+        setArgs.build(args);
+        buildConditionArgs(args, condition);
+        args.add(GET);
+        return createCommand(SET, new ValueOutput<>(codec), args);
     }
 
     Command<K, V, V> setGet(K key, V value) {
@@ -4562,6 +4627,33 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNull(channel);
 
         return zscanStreaming(channel, key, ScanCursor.INITIAL, scanArgs);
+    }
+
+    private void buildConditionArgs(CommandArgs<K, V> args, ValueCondition<V> condition) {
+        switch (condition.kind()) {
+            case EXISTS:
+                args.add(XX);
+                break;
+            case NOT_EXISTS:
+                args.add(NX);
+                break;
+            case EQUAL:
+                args.add(IFEQ).addValue(condition.value());
+                break;
+            case NOT_EQUAL:
+                args.add(IFNE).addValue(condition.value());
+                break;
+            case DIGEST_EQUAL:
+                args.add(IFDEQ).add(condition.digestHex());
+                break;
+            case DIGEST_NOT_EQUAL:
+                args.add(IFDNE).add(condition.digestHex());
+                break;
+            case ALWAYS:
+            default:
+                // no additional args
+                break;
+        }
     }
 
     Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,

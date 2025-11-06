@@ -20,7 +20,14 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.*
+import io.lettuce.core.BitFieldArgs
+import io.lettuce.core.GetExArgs
+import io.lettuce.core.KeyValue
+import io.lettuce.core.LcsArgs
+import io.lettuce.core.SetArgs
+import io.lettuce.core.StringMatchResult
+import io.lettuce.core.ValueCondition
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -202,6 +209,14 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
     suspend fun get(key: K): V?
 
     /**
+     * Return the XXH3 64-bit digest of the string value stored at a key as a 16-character hex string.
+     *
+     * @param key the key.
+     * @return String bulk-string-reply the hex digest of the key's value, or `null` when `key` does not exist.
+     */
+    suspend fun digestKey(key: K): String?
+
+    /**
      * Returns the bit value at offset in the string value stored at key.
      *
      * @param key the key.
@@ -308,6 +323,48 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @return String simple-string-reply `OK` if `SET` was executed correctly.
      */
     suspend fun set(key: K, value: V): String?
+
+    /**
+     * Set the string value of a key with a compare condition.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @param condition the compare condition, must not be `null`.
+     * @return String simple-string-reply `OK` if `SET` was executed; `null` if the operation was aborted.
+     */
+    suspend fun set(key: K, value: V, condition: ValueCondition<V>): String?
+
+    /**
+     * Set the string value of a key with a compare condition.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @param setArgs the setArgs.
+     * @param condition the compare condition, must not be `null`.
+     * @return String simple-string-reply `OK` if `SET` was executed; `null` if the operation was aborted.
+     */
+    suspend fun set(key: K, value: V, setArgs: SetArgs, condition: ValueCondition<V>): String?
+
+    /**
+     * Set the string value of a key with a compare condition and return its old value.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @param condition the compare condition, must not be `null`.
+     * @return V bulk-string-reply the previous value if the key existed, or `null` when `key` did not exist.
+     */
+    suspend fun setGet(key: K, value: V, condition: ValueCondition<V>): V?
+
+    /**
+     * Set the string value of a key with a compare condition and return its old value.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @param setArgs the command arguments.
+     * @param condition the compare condition, must not be `null`.
+     * @return V bulk-string-reply the previous value if the key existed, or `null` when `key` did not exist.
+     */
+    suspend fun setGet(key: K, value: V, setArgs: SetArgs, condition: ValueCondition<V>): V?
 
     /**
      * Set the string value of a key.

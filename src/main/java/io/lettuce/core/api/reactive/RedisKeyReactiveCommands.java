@@ -19,12 +19,10 @@
  */
 package io.lettuce.core.api.reactive;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Date;
+import java.time.Instant;
+import java.time.Duration;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.CopyArgs;
 import io.lettuce.core.ExpireArgs;
 import io.lettuce.core.KeyScanArgs;
@@ -35,8 +33,11 @@ import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ScanCursor;
 import io.lettuce.core.SortArgs;
 import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.ValueCondition;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Reactive executed commands for Keys (Key manipulation/querying).
@@ -77,6 +78,23 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @return Long integer-reply The number of keys that were removed.
      */
     Mono<Long> del(K... keys);
+
+    /**
+     * Delete the specified key conditionally.
+     *
+     * @param key the key.
+     * @return Long integer-reply the number of keys that were removed.
+     */
+    Mono<Long> delex(K key);
+
+    /**
+     * Delete the specified key if the compare condition matches.
+     *
+     * @param key the key.
+     * @param condition the compare condition, must not be {@code null}.
+     * @return Long integer-reply the number of keys that were removed.
+     */
+    Mono<Long> delex(K key, ValueCondition<V> condition);
 
     /**
      * Unlink one or more keys (non blocking DEL).

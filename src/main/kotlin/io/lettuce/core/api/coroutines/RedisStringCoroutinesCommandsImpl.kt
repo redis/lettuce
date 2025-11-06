@@ -70,6 +70,9 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun get(key: K): V? = ops.get(key).awaitFirstOrNull()
 
+    override suspend fun digestKey(key: K): String? =
+        ops.digestKey(key).awaitFirstOrNull()
+
     override suspend fun getbit(key: K, offset: Long): Long? =
         ops.getbit(key, offset).awaitFirstOrNull()
 
@@ -97,6 +100,26 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
     override suspend fun mset(map: Map<K, V>): String? = ops.mset(map).awaitFirstOrNull()
 
     override suspend fun msetnx(map: Map<K, V>): Boolean? = ops.msetnx(map).awaitFirstOrNull()
+
+    override suspend fun set(key: K, value: V, condition: ValueCondition<V>): String? =
+        ops.set(key, value, condition).awaitFirstOrNull()
+
+    override suspend fun set(
+        key: K,
+        value: V,
+        setArgs: SetArgs,
+        condition: ValueCondition<V>
+    ): String? = ops.set(key, value, setArgs, condition).awaitFirstOrNull()
+
+    override suspend fun setGet(key: K, value: V, condition: ValueCondition<V>): V? =
+        ops.setGet(key, value, condition).awaitFirstOrNull()
+
+    override suspend fun setGet(
+        key: K,
+        value: V,
+        setArgs: SetArgs,
+        condition: ValueCondition<V>
+    ): V? = ops.setGet(key, value, setArgs, condition).awaitFirstOrNull()
 
     override suspend fun set(key: K, value: V): String? = ops.set(key, value).awaitFirstOrNull()
 

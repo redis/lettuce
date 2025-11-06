@@ -742,6 +742,16 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> delex(K key) {
+        return dispatch(commandBuilder.delex(key));
+    }
+
+    @Override
+    public RedisFuture<Long> delex(K key, ValueCondition<V> condition) {
+        return dispatch(commandBuilder.delex(key, condition));
+    }
+
+    @Override
     public String digest(String script) {
         return digest(encodeScript(script));
     }
@@ -1263,6 +1273,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<V> get(K key) {
         return dispatch(commandBuilder.get(key));
+    }
+
+    @Override
+    public RedisFuture<String> digestKey(K key) {
+        return dispatch(commandBuilder.digestKey(key));
     }
 
     public StatefulConnection<K, V> getConnection() {
@@ -2673,6 +2688,26 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<String> set(K key, V value, SetArgs setArgs) {
         return dispatch(commandBuilder.set(key, value, setArgs));
+    }
+
+    @Override
+    public RedisFuture<String> set(K key, V value, ValueCondition<V> condition) {
+        return dispatch(commandBuilder.set(key, value, condition));
+    }
+
+    @Override
+    public RedisFuture<String> set(K key, V value, SetArgs setArgs, ValueCondition<V> condition) {
+        return dispatch(commandBuilder.set(key, value, setArgs, condition));
+    }
+
+    @Override
+    public RedisFuture<V> setGet(K key, V value, ValueCondition<V> condition) {
+        return dispatch(commandBuilder.setGet(key, value, condition));
+    }
+
+    @Override
+    public RedisFuture<V> setGet(K key, V value, SetArgs setArgs, ValueCondition<V> condition) {
+        return dispatch(commandBuilder.setGet(key, value, setArgs, condition));
     }
 
     @Override

@@ -19,18 +19,19 @@
  */
 package io.lettuce.core.api.async;
 
-import java.util.List;
 import java.util.Map;
+import java.util.List;
 
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.GetExArgs;
 import io.lettuce.core.KeyValue;
-import io.lettuce.core.RedisFuture;
-import io.lettuce.core.SetArgs;
 import io.lettuce.core.LcsArgs;
+import io.lettuce.core.SetArgs;
 import io.lettuce.core.StrAlgoArgs;
 import io.lettuce.core.StringMatchResult;
+import io.lettuce.core.ValueCondition;
 import io.lettuce.core.output.KeyValueStreamingChannel;
+import io.lettuce.core.RedisFuture;
 
 /**
  * Asynchronous executed commands for Strings.
@@ -257,6 +258,14 @@ public interface RedisStringAsyncCommands<K, V> {
     RedisFuture<V> get(K key);
 
     /**
+     * Return the XXH3 64-bit digest of the string value stored at a key as a 16-character hex string.
+     *
+     * @param key the key.
+     * @return String bulk-string-reply the hex digest of the key's value, or {@code null} when {@code key} does not exist.
+     */
+    RedisFuture<String> digestKey(K key);
+
+    /**
      * Returns the bit value at offset in the string value stored at key.
      *
      * @param key the key.
@@ -372,6 +381,48 @@ public interface RedisStringAsyncCommands<K, V> {
      * @return String simple-string-reply {@code OK} if {@code SET} was executed correctly.
      */
     RedisFuture<String> set(K key, V value);
+
+    /**
+     * Set the string value of a key with a compare condition.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @param condition the compare condition, must not be {@code null}.
+     * @return String simple-string-reply {@code OK} if {@code SET} was executed; {@code null} if the operation was aborted.
+     */
+    RedisFuture<String> set(K key, V value, ValueCondition<V> condition);
+
+    /**
+     * Set the string value of a key with a compare condition.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @param setArgs the setArgs.
+     * @param condition the compare condition, must not be {@code null}.
+     * @return String simple-string-reply {@code OK} if {@code SET} was executed; {@code null} if the operation was aborted.
+     */
+    RedisFuture<String> set(K key, V value, SetArgs setArgs, ValueCondition<V> condition);
+
+    /**
+     * Set the string value of a key with a compare condition and return its old value.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @param condition the compare condition, must not be {@code null}.
+     * @return V bulk-string-reply the previous value if the key existed, or {@code null} when {@code key} did not exist.
+     */
+    RedisFuture<V> setGet(K key, V value, ValueCondition<V> condition);
+
+    /**
+     * Set the string value of a key with a compare condition and return its old value.
+     *
+     * @param key the key.
+     * @param value the value.
+     * @param setArgs the command arguments.
+     * @param condition the compare condition, must not be {@code null}.
+     * @return V bulk-string-reply the previous value if the key existed, or {@code null} when {@code key} did not exist.
+     */
+    RedisFuture<V> setGet(K key, V value, SetArgs setArgs, ValueCondition<V> condition);
 
     /**
      * Set the string value of a key.
