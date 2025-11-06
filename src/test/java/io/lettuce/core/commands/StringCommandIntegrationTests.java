@@ -25,12 +25,13 @@ import static io.lettuce.core.StringMatchResult.Position;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import io.lettuce.test.condition.RedisConditions;
 
 import javax.inject.Inject;
 
@@ -42,13 +43,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import io.lettuce.core.*;
-import io.lettuce.core.api.StatefulConnection;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.dynamic.Commands;
-import io.lettuce.core.dynamic.RedisCommandFactory;
-import io.lettuce.core.dynamic.annotation.Command;
-import io.lettuce.core.dynamic.annotation.Param;
 import io.lettuce.test.KeyValueStreamingAdapter;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.condition.EnabledOnCommand;
@@ -485,6 +480,161 @@ public class StringCommandIntegrationTests extends TestSupport {
         assertThat(matchResult.getLen()).isEqualTo(6);
 
         assertThat(matchResult.getMatchString()).isNullOrEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("DIGEST")
+    void digestKey_returnsHex_and_changesOnValueChange() {
+
+        assertThat(redis.digestKey("d")).isNull();
+        redis.set("d", "v1");
+        String d1 = redis.digestKey("d");
+        assertThat(d1).isNotNull().matches("[0-9a-f]{16}");
+        assertThat(redis.digestKey("d")).isEqualTo(d1);
+        redis.set("d", "v2");
+        assertThat(redis.digestKey("d")).isNotEqualTo(d1);
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void set_with_ValueCondition_exists_notExists() {
+
+        String k = "k:nx-xx";
+        // key does not exist: EXISTS/XX should abort
+        assertThat(redis.set(k, "v", ValueCondition.<String> exists())).isNull();
+        // NOT_EXISTS/NX should succeed
+        assertThat(redis.set(k, "v", ValueCondition.<String> notExists())).isEqualTo("OK");
+        // NOT_EXISTS/NX should now abort
+        assertThat(redis.set(k, "v2", ValueCondition.<String> notExists())).isNull();
+        // EXISTS/XX should succeed
+        assertThat(redis.set(k, "v2", ValueCondition.<String> exists())).isEqualTo("OK");
+        assertThat(redis.get(k)).isEqualTo("v2");
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void set_with_ValueCondition_equal_notEqual() {
+
+        String k = "k:ifeq-ifne";
+        redis.set(k, "v1");
+        // wrong equality value -> abort
+        assertThat(redis.set(k, "v2", ValueCondition.equal("nope"))).isNull();
+        assertThat(redis.get(k)).isEqualTo("v1");
+        // correct equality value -> success
+        assertThat(redis.set(k, "v2", ValueCondition.equal("v1"))).isEqualTo("OK");
+        assertThat(redis.get(k)).isEqualTo("v2");
+        // not-equal that fails (current is v2)
+        assertThat(redis.set(k, "v3", ValueCondition.notEqual("v2"))).isNull();
+        assertThat(redis.get(k)).isEqualTo("v2");
+        // not-equal that succeeds
+        assertThat(redis.set(k, "v3", ValueCondition.notEqual("other"))).isEqualTo("OK");
+        assertThat(redis.get(k)).isEqualTo("v3");
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void setget_with_ValueCondition_returnsPreviousValue() {
+
+        String k = "k:setget";
+        redis.set(k, "A");
+        // condition mismatch -> server returns previous value, value unchanged
+        assertThat(redis.setGet(k, "B", ValueCondition.equal("X"))).isEqualTo("A");
+        assertThat(redis.get(k)).isEqualTo("A");
+        // condition match -> returns previous and updates
+        assertThat(redis.setGet(k, "C", ValueCondition.equal("A"))).isEqualTo("A");
+        assertThat(redis.get(k)).isEqualTo("C");
+    }
+
+    @Test
+    @EnabledOnCommand("DIGEST")
+    void set_with_digest_conditions() {
+
+        String k = "k:digest";
+        redis.set(k, "C");
+        String d = redis.digestKey(k);
+        assertThat(d).isNotNull();
+        // digest equal -> success
+        assertThat(redis.set(k, "D", ValueCondition.<String> digestEqualHex(d))).isEqualTo("OK");
+        // reusing old digest equal -> abort
+        assertThat(redis.set(k, "E", ValueCondition.<String> digestEqualHex(d))).isNull();
+        // digest not equal (against old digest) -> success
+        assertThat(redis.set(k, "F", ValueCondition.<String> digestNotEqualHex(d))).isEqualTo("OK");
+    }
+
+    @Test
+    @EnabledOnCommand("DIGEST")
+    void set_with_digestNotEqual_fails_when_equal() {
+        String k = "k:dig-not-eq-fail";
+
+        redis.set(k, "X");
+        String d = redis.digestKey(k);
+        assertThat(redis.set(k, "Y", ValueCondition.<String> digestNotEqualHex(d))).isNull();
+        assertThat(redis.get(k)).isEqualTo("X");
+    }
+
+    @Test
+    @EnabledOnCommand("DIGEST")
+    void setget_with_digest_conditions() {
+        String k = "k:setget-dig";
+
+        redis.set(k, "A");
+        String dA = redis.digestKey(k);
+        // match -> returns previous and updates
+        assertThat(redis.setGet(k, "B", ValueCondition.<String> digestEqualHex(dA))).isEqualTo("A");
+        assertThat(redis.get(k)).isEqualTo("B");
+        // mismatch (using old digest) -> returns previous and does not update
+        assertThat(redis.setGet(k, "C", ValueCondition.<String> digestEqualHex(dA))).isEqualTo("B");
+        assertThat(redis.get(k)).isEqualTo("B");
+    }
+
+    @Test
+    @EnabledOnCommand("DIGEST")
+    void digestKey_emptyValue() {
+        String k = "k:empty";
+        redis.set(k, "");
+        String d = redis.digestKey(k);
+
+        assertThat(d).isNotNull().matches("[0-9a-f]{16}");
+        assertThat(redis.digestKey(k)).isEqualTo(d);
+    }
+
+    @Test
+    void setget_with_exists_notExists_conditions() {
+        Assumptions.assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.3.224"));
+
+        String k1 = "k:setget-nx";
+        // NX when missing -> perform set, returns previous (null)
+        assertThat(redis.setGet(k1, "A", ValueCondition.notExists())).isNull();
+        assertThat(redis.get(k1)).isEqualTo("A");
+        // NX when present -> no set, returns previous
+        assertThat(redis.setGet(k1, "B", ValueCondition.notExists())).isEqualTo("A");
+        assertThat(redis.get(k1)).isEqualTo("A");
+
+        String k2 = "k:setget-xx";
+        // XX when missing -> no-op, returns previous (null)
+        redis.del(k2);
+        assertThat(redis.setGet(k2, "X", ValueCondition.exists())).isNull();
+        assertThat(redis.get(k2)).isNull();
+        // XX when present -> set, returns previous
+        redis.set(k2, "Y");
+        assertThat(redis.setGet(k2, "Z", ValueCondition.exists())).isEqualTo("Y");
+        assertThat(redis.get(k2)).isEqualTo("Z");
+    }
+
+    @Test
+    void set_with_SetArgs_and_ValueCondition_combination() {
+        String k = "k:set-args-cond";
+        // NX + EX should set with TTL
+        Assumptions.assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.3.224"));
+
+        assertThat(redis.set(k, "v1", ex(100), ValueCondition.notExists())).isEqualTo("OK");
+        assertThat(redis.ttl(k)).isGreaterThan(0);
+        // NX when present should abort and keep value/ttl
+        Long ttlBefore = redis.ttl(k);
+        assertThat(redis.set(k, "v2", ex(100), ValueCondition.notExists())).isNull();
+        assertThat(redis.get(k)).isEqualTo("v1");
+        assertThat(redis.ttl(k)).isGreaterThan(0);
+        assertThat(redis.ttl(k)).isLessThanOrEqualTo(ttlBefore);
     }
 
 }

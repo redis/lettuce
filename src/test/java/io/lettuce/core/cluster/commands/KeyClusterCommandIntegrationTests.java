@@ -16,6 +16,11 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.ClusterTestUtil;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.core.ValueCondition;
+
+import io.lettuce.test.condition.RedisConditions;
+import org.junit.jupiter.api.Assumptions;
+
 import io.lettuce.test.condition.EnabledOnCommand;
 
 /**
@@ -90,6 +95,53 @@ class KeyClusterCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.unlink(key, "a", "b")).isEqualTo(3);
         assertThat(redis.exists(key)).isEqualTo(0);
+
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void delex_unconditional_and_digest_guarded_cluster() {
+        String k = "k:delex";
+        // unconditional delete
+
+        redis.set(k, "v");
+        assertThat(redis.delex(k)).isEqualTo(1);
+        assertThat(redis.exists(k)).isEqualTo(0);
+
+        // digest-guarded delete
+        redis.set(k, "bar");
+        String d = redis.digestKey(k);
+        // wrong condition: digestNotEqualHex (should abort)
+        assertThat(redis.delex(k, ValueCondition.<String> digestNotEqualHex(d))).isEqualTo(0);
+        assertThat(redis.exists(k)).isEqualTo(1);
+        // right condition: digestEqualHex (should delete)
+        assertThat(redis.delex(k, ValueCondition.<String> digestEqualHex(d))).isEqualTo(1);
+        assertThat(redis.exists(k)).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void delex_missing_cluster_returns_0() {
+
+        String k = "k:missing-cluster";
+        assertThat(redis.delex(k)).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void delex_value_equal_notEqual_cluster() {
+
+        String k = "k:delex-eq-cluster";
+        redis.set(k, "v1");
+        // wrong equality -> abort
+        assertThat(redis.delex(k, ValueCondition.equal("nope"))).isEqualTo(0);
+        // correct equality -> delete
+        assertThat(redis.delex(k, ValueCondition.equal("v1"))).isEqualTo(1);
+        // not-equal that fails (after deletion, recreate)
+        redis.set(k, "v2");
+        assertThat(redis.delex(k, ValueCondition.notEqual("v2"))).isEqualTo(0);
+        // not-equal that succeeds
+        assertThat(redis.delex(k, ValueCondition.notEqual("other"))).isEqualTo(1);
     }
 
 }

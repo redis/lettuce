@@ -33,9 +33,11 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import io.lettuce.test.condition.RedisConditions;
+import org.junit.jupiter.api.Assumptions;
 
 import io.lettuce.core.CopyArgs;
 import io.lettuce.core.ExpireArgs;
@@ -46,6 +48,8 @@ import io.lettuce.core.RestoreArgs;
 import io.lettuce.core.ScanCursor;
 import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.TestSupport;
+import io.lettuce.core.ValueCondition;
+
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.ListStreamingAdapter;
@@ -610,6 +614,55 @@ public class KeyCommandIntegrationTests extends TestSupport {
             redis.set(key + i, value + i);
             expect.add(key + i);
         }
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void delex_unconditional_and_digest_guarded() {
+        String k = "k:delex";
+        // unconditional delete
+
+        redis.set(k, value);
+        assertThat(redis.delex(k)).isEqualTo(1);
+        assertThat(redis.exists(k)).isEqualTo(0);
+
+        // digest-guarded delete
+        redis.set(k, "bar");
+        String d = redis.digestKey(k); // new DIGEST command
+        // wrong condition: digestNotEqualHex (should abort)
+        assertThat(redis.delex(k, ValueCondition.<String> digestNotEqualHex(d))).isEqualTo(0);
+        assertThat(redis.exists(k)).isEqualTo(1);
+        // right condition: digestEqualHex (should delete)
+        assertThat(redis.delex(k, ValueCondition.<String> digestEqualHex(d))).isEqualTo(1);
+        assertThat(redis.exists(k)).isEqualTo(0);
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void delex_with_value_equal_notEqual() {
+
+        String k = "k:delex-eq";
+        redis.set(k, "v1");
+        // wrong equality -> abort
+        assertThat(redis.delex(k, ValueCondition.equal("nope"))).isEqualTo(0);
+        // correct equality -> delete
+        assertThat(redis.delex(k, ValueCondition.equal("v1"))).isEqualTo(1);
+        // not-equal that fails (after deletion, recreate)
+        redis.set(k, "v2");
+        assertThat(redis.delex(k, ValueCondition.notEqual("v2"))).isEqualTo(0);
+        // not-equal that succeeds
+        assertThat(redis.delex(k, ValueCondition.notEqual("other"))).isEqualTo(1);
+    }
+
+    @Test
+    @EnabledOnCommand("DELEX")
+    void delex_on_missing_returns_0_for_any_condition() {
+        String k = "k:missing";
+        assertThat(redis.delex(k)).isEqualTo(0);
+
+        assertThat(redis.delex(k, ValueCondition.exists())).isEqualTo(0);
+        assertThat(redis.delex(k, ValueCondition.equal("x"))).isEqualTo(0);
+        assertThat(redis.delex(k, ValueCondition.<String> digestEqualHex("0000000000000000"))).isEqualTo(0);
     }
 
 }
