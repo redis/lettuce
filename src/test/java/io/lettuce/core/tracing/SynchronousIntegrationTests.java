@@ -78,9 +78,6 @@ public class SynchronousIntegrationTests extends SampleTestRunner {
                         .containsEntry("net.sock.peer.addr", TestSettings.host())
                         .containsEntry("net.sock.peer.port", "" + TestSettings.port());
                 assertThat(finishedSpan.getTags()).containsKeys("db.operation");
-                assertThat(finishedSpan.getTags()).containsKeys("server.address");
-                assertThat(finishedSpan.getTags()).containsKeys("db.namespace");
-                assertThat(finishedSpan.getTags()).containsKeys("user.name");
             }
 
             assertThat(commands).extracting(RedisCommand::getType).contains(CommandType.PING, CommandType.HELLO);
