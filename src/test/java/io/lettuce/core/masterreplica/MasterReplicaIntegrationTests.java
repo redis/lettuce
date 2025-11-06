@@ -153,6 +153,31 @@ class MasterReplicaIntegrationTests extends AbstractRedisClientTest {
     }
 
     @Test
+    @EnabledOnCommand("DIGEST")
+    void digestKey_reads_from_replica() {
+
+        RedisCommands<String, String> commands = connection.sync();
+        String k = "k:digest-replica";
+        String v = "replica-value";
+
+        // Write to upstream and wait for replica to catch up
+        commands.set(k, v);
+        commands.waitForReplication(1, 1000);
+
+        // Compute digest on upstream
+        connection.setReadFrom(ReadFrom.UPSTREAM);
+        String digestUpstream = commands.digestKey(k);
+
+        // Read digest from replica (read-only)
+        connection.setReadFrom(ReadFrom.REPLICA);
+        String digestReplica = commands.digestKey(k);
+
+        assertThat(digestReplica).isNotNull();
+        assertThat(digestReplica).hasSize(16);
+        assertThat(digestReplica).isEqualTo(digestUpstream);
+    }
+
+    @Test
     void noReplicaForRead() {
 
         connection.setReadFrom(new ReadFrom() {

@@ -20,6 +20,8 @@
 package io.lettuce.core;
 
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
 
 /**
  * A compare condition to be used with commands that support conditional value checks (e.g. SET with IFEQ/IFNE/IFDEQ/IFDNE and
@@ -38,20 +40,39 @@ public final class ValueCondition<V> {
      * The kind of condition represented by this instance.
      */
     public enum Kind {
-        /** unconditional */
-        ALWAYS,
-        /** key must exist */
-        EXISTS,
-        /** key must not exist */
-        NOT_EXISTS,
+
         /** current value must equal provided value */
-        EQUAL,
+        EQUAL(CommandKeyword.IFEQ, Param.VALUE),
         /** current value must not equal provided value */
-        NOT_EQUAL,
+        NOT_EQUAL(CommandKeyword.IFNE, Param.VALUE),
         /** current value's digest must equal provided digest */
-        DIGEST_EQUAL,
+        DIGEST_EQUAL(CommandKeyword.IFDEQ, Param.DIGEST),
         /** current value's digest must not equal provided digest */
-        DIGEST_NOT_EQUAL
+        DIGEST_NOT_EQUAL(CommandKeyword.IFDNE, Param.DIGEST);
+
+        private final CommandKeyword keyword;
+
+        private final Param param;
+
+        Kind(CommandKeyword keyword, Param param) {
+            this.keyword = keyword;
+            this.param = param;
+        }
+
+        /** The protocol keyword to emit for this condition. */
+        public CommandKeyword keyword() {
+            return keyword;
+        }
+
+        /** Indicates whether this condition uses a value or a digest parameter. */
+        public Param param() {
+            return param;
+        }
+    }
+
+    /** Parameter kind for condition arguments. */
+    enum Param {
+        VALUE, DIGEST
     }
 
     private final Kind kind;
@@ -66,45 +87,53 @@ public final class ValueCondition<V> {
         this.digestHex = digestHex;
     }
 
-    /** A condition that always applies (no comparison). */
-    public static <V> ValueCondition<V> always() {
-        return new ValueCondition<>(Kind.ALWAYS, null, null);
-
+    /**
+     * Append this condition's protocol arguments to the given args.
+     */
+    public <K> void build(CommandArgs<K, V> args) {
+        args.add(kind.keyword());
+        switch (kind.param()) {
+            case VALUE:
+                args.addValue(value);
+                break;
+            case DIGEST:
+                args.add(digestHex);
+                break;
+            default:
+                break;
+        }
     }
 
-    /** A condition that requires the key to exist (equivalent to XX in SET). */
-    public static <V> ValueCondition<V> exists() {
-        return new ValueCondition<>(Kind.EXISTS, null, null);
-    }
-
-    /** A condition that requires the key to not exist (equivalent to NX in SET). */
-    public static <V> ValueCondition<V> notExists() {
-        return new ValueCondition<>(Kind.NOT_EXISTS, null, null);
-    }
-
-    /** A value-based comparison: set/delete only if the current value equals {@code value}. */
-    public static <V> ValueCondition<V> equal(V value) {
+    // Factory methods for creating value- and digest-based conditions
+    /** Create a value-based equality condition; succeeds only if the current value equals the given value. */
+    public static <V> ValueCondition<V> valueEq(V value) {
         if (value == null)
             throw new IllegalArgumentException("value must not be null");
         return new ValueCondition<>(Kind.EQUAL, value, null);
     }
 
-    /** A value-based comparison: set/delete only if the current value does not equal {@code value}. */
-    public static <V> ValueCondition<V> notEqual(V value) {
+    /** Create a value-based inequality condition; succeeds only if the current value does not equal the given value. */
+    public static <V> ValueCondition<V> valueNe(V value) {
         if (value == null)
             throw new IllegalArgumentException("value must not be null");
         return new ValueCondition<>(Kind.NOT_EQUAL, value, null);
     }
 
-    /** A digest-based comparison: set/delete only if the current value's digest equals {@code hex16Digest}. */
-    public static <V> ValueCondition<V> digestEqualHex(String hex16Digest) {
+    /**
+     * Create a digest-based equality condition; succeeds only if the current value's digest matches the given 16-character
+     * lower-case hex digest.
+     */
+    public static <V> ValueCondition<V> digestEq(String hex16Digest) {
         if (hex16Digest == null)
             throw new IllegalArgumentException("digest must not be null");
         return new ValueCondition<>(Kind.DIGEST_EQUAL, null, hex16Digest);
     }
 
-    /** A digest-based comparison: set/delete only if the current value's digest does not equal {@code hex16Digest}. */
-    public static <V> ValueCondition<V> digestNotEqualHex(String hex16Digest) {
+    /**
+     * Create a digest-based inequality condition; succeeds only if the current value's digest does not match the given
+     * 16-character lower-case hex digest.
+     */
+    public static <V> ValueCondition<V> digestNe(String hex16Digest) {
         if (hex16Digest == null)
             throw new IllegalArgumentException("digest must not be null");
         return new ValueCondition<>(Kind.DIGEST_NOT_EQUAL, null, hex16Digest);

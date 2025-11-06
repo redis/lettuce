@@ -945,7 +945,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        buildConditionArgs(args, condition);
+        condition.build(args);
         return createCommand(DELEX, new IntegerOutput<>(codec), args);
     }
 
@@ -2723,7 +2723,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
-        buildConditionArgs(args, condition);
+        condition.build(args);
         return createCommand(SET, new StatusOutput<>(codec), args);
     }
 
@@ -2734,7 +2734,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
         setArgs.build(args);
-        buildConditionArgs(args, condition);
+        condition.build(args);
         return createCommand(SET, new StatusOutput<>(codec), args);
     }
 
@@ -2743,7 +2743,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
-        buildConditionArgs(args, condition);
+        condition.build(args);
         args.add(GET);
         return createCommand(SET, new ValueOutput<>(codec), args);
     }
@@ -2755,7 +2755,7 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
         setArgs.build(args);
-        buildConditionArgs(args, condition);
+        condition.build(args);
         args.add(GET);
         return createCommand(SET, new ValueOutput<>(codec), args);
     }
@@ -4620,33 +4620,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         notNull(channel);
 
         return zscanStreaming(channel, key, ScanCursor.INITIAL, scanArgs);
-    }
-
-    private void buildConditionArgs(CommandArgs<K, V> args, ValueCondition<V> condition) {
-        switch (condition.kind()) {
-            case EXISTS:
-                args.add(XX);
-                break;
-            case NOT_EXISTS:
-                args.add(NX);
-                break;
-            case EQUAL:
-                args.add(IFEQ).addValue(condition.value());
-                break;
-            case NOT_EQUAL:
-                args.add(IFNE).addValue(condition.value());
-                break;
-            case DIGEST_EQUAL:
-                args.add(IFDEQ).add(condition.digestHex());
-                break;
-            case DIGEST_NOT_EQUAL:
-                args.add(IFDNE).add(condition.digestHex());
-                break;
-            case ALWAYS:
-            default:
-                // no additional args
-                break;
-        }
     }
 
     Command<K, V, StreamScanCursor> zscanStreaming(ScoredValueStreamingChannel<V> channel, K key, ScanCursor scanCursor,

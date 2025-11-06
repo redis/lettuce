@@ -630,10 +630,10 @@ public class KeyCommandIntegrationTests extends TestSupport {
         redis.set(k, "bar");
         String d = redis.digestKey(k); // new DIGEST command
         // wrong condition: digestNotEqualHex (should abort)
-        assertThat(redis.delex(k, ValueCondition.<String> digestNotEqualHex(d))).isEqualTo(0);
+        assertThat(redis.delex(k, ValueCondition.digestNe(d))).isEqualTo(0);
         assertThat(redis.exists(k)).isEqualTo(1);
         // right condition: digestEqualHex (should delete)
-        assertThat(redis.delex(k, ValueCondition.<String> digestEqualHex(d))).isEqualTo(1);
+        assertThat(redis.delex(k, ValueCondition.digestEq(d))).isEqualTo(1);
         assertThat(redis.exists(k)).isEqualTo(0);
     }
 
@@ -644,14 +644,14 @@ public class KeyCommandIntegrationTests extends TestSupport {
         String k = "k:delex-eq";
         redis.set(k, "v1");
         // wrong equality -> abort
-        assertThat(redis.delex(k, ValueCondition.equal("nope"))).isEqualTo(0);
+        assertThat(redis.delex(k, ValueCondition.valueEq("nope"))).isEqualTo(0);
         // correct equality -> delete
-        assertThat(redis.delex(k, ValueCondition.equal("v1"))).isEqualTo(1);
+        assertThat(redis.delex(k, ValueCondition.valueEq("v1"))).isEqualTo(1);
         // not-equal that fails (after deletion, recreate)
         redis.set(k, "v2");
-        assertThat(redis.delex(k, ValueCondition.notEqual("v2"))).isEqualTo(0);
+        assertThat(redis.delex(k, ValueCondition.valueNe("v2"))).isEqualTo(0);
         // not-equal that succeeds
-        assertThat(redis.delex(k, ValueCondition.notEqual("other"))).isEqualTo(1);
+        assertThat(redis.delex(k, ValueCondition.valueNe("other"))).isEqualTo(1);
     }
 
     @Test
@@ -660,9 +660,8 @@ public class KeyCommandIntegrationTests extends TestSupport {
         String k = "k:missing";
         assertThat(redis.del(k)).isEqualTo(0);
 
-        assertThat(redis.delex(k, ValueCondition.exists())).isEqualTo(0);
-        assertThat(redis.delex(k, ValueCondition.equal("x"))).isEqualTo(0);
-        assertThat(redis.delex(k, ValueCondition.<String> digestEqualHex("0000000000000000"))).isEqualTo(0);
+        assertThat(redis.delex(k, ValueCondition.valueEq("x"))).isEqualTo(0);
+        assertThat(redis.delex(k, ValueCondition.digestEq("0000000000000000"))).isEqualTo(0);
     }
 
 }
