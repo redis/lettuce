@@ -19,14 +19,12 @@
  */
 package io.lettuce.core.cluster.api.async;
 
-import java.util.List;
-import java.util.Date;
-import java.time.Instant;
 import java.time.Duration;
-
+import java.time.Instant;
+import java.util.Date;
+import java.util.List;
 import io.lettuce.core.CopyArgs;
 import io.lettuce.core.ExpireArgs;
-import io.lettuce.core.KeyScanArgs;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.MigrateArgs;
 import io.lettuce.core.RestoreArgs;
@@ -77,14 +75,6 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
      * @return Long integer-reply The number of keys that were removed.
      */
     AsyncExecutions<Long> del(K... keys);
-
-    /**
-     * Delete the specified key conditionally.
-     *
-     * @param key the key.
-     * @return Long integer-reply the number of keys that were removed.
-     */
-    AsyncExecutions<Long> delex(K key);
 
     /**
      * Delete the specified key if the compare condition matches.

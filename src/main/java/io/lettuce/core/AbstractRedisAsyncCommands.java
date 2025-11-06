@@ -742,11 +742,6 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Long> delex(K key) {
-        return dispatch(commandBuilder.delex(key));
-    }
-
-    @Override
     public RedisFuture<Long> delex(K key, ValueCondition<V> condition) {
         return dispatch(commandBuilder.delex(key, condition));
     }

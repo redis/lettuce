@@ -623,7 +623,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
         // unconditional delete
 
         redis.set(k, value);
-        assertThat(redis.delex(k)).isEqualTo(1);
+        assertThat(redis.del(k)).isEqualTo(1);
         assertThat(redis.exists(k)).isEqualTo(0);
 
         // digest-guarded delete
@@ -658,7 +658,7 @@ public class KeyCommandIntegrationTests extends TestSupport {
     @EnabledOnCommand("DELEX")
     void delex_on_missing_returns_0_for_any_condition() {
         String k = "k:missing";
-        assertThat(redis.delex(k)).isEqualTo(0);
+        assertThat(redis.del(k)).isEqualTo(0);
 
         assertThat(redis.delex(k, ValueCondition.exists())).isEqualTo(0);
         assertThat(redis.delex(k, ValueCondition.equal("x"))).isEqualTo(0);

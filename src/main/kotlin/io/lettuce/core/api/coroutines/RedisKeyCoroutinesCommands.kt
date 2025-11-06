@@ -79,14 +79,6 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
     suspend fun del(vararg keys: K): Long?
 
     /**
-     * Delete the specified key conditionally.
-     *
-     * @param key the key.
-     * @return Long integer-reply the number of keys that were removed.
-     */
-    suspend fun delex(key: K): Long?
-
-    /**
      * Delete the specified key if the compare condition matches.
      *
      * @param key the key.

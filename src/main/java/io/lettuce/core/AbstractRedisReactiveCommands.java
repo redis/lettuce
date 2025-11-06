@@ -812,11 +812,6 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<Long> delex(K key) {
-        return createMono(() -> commandBuilder.delex(key));
-    }
-
-    @Override
     public Mono<Long> delex(K key, ValueCondition<V> condition) {
         return createMono(() -> commandBuilder.delex(key, condition));
     }

@@ -79,14 +79,6 @@ public interface RedisKeyCommands<K, V> {
     Long del(K... keys);
 
     /**
-     * Delete the specified key conditionally.
-     *
-     * @param key the key.
-     * @return Long integer-reply the number of keys that were removed.
-     */
-    Long delex(K key);
-
-    /**
      * Delete the specified key if the compare condition matches.
      *
      * @param key the key.

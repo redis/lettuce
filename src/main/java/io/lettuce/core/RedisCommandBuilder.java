@@ -940,13 +940,6 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEL, new IntegerOutput<>(codec), args);
     }
 
-    Command<K, V, Long> delex(K key) {
-        notNullKey(key);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
-        return createCommand(DELEX, new IntegerOutput<>(codec), args);
-    }
-
     Command<K, V, Long> delex(K key, ValueCondition<V> condition) {
         notNullKey(key);
         LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);

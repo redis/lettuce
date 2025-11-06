@@ -95,7 +95,6 @@ class KeyClusterCommandIntegrationTests extends TestSupport {
 
         assertThat(redis.unlink(key, "a", "b")).isEqualTo(3);
         assertThat(redis.exists(key)).isEqualTo(0);
-
     }
 
     @Test
@@ -105,7 +104,7 @@ class KeyClusterCommandIntegrationTests extends TestSupport {
         // unconditional delete
 
         redis.set(k, "v");
-        assertThat(redis.delex(k)).isEqualTo(1);
+        assertThat(redis.del(k)).isEqualTo(1);
         assertThat(redis.exists(k)).isEqualTo(0);
 
         // digest-guarded delete
@@ -124,7 +123,7 @@ class KeyClusterCommandIntegrationTests extends TestSupport {
     void delex_missing_cluster_returns_0() {
 
         String k = "k:missing-cluster";
-        assertThat(redis.delex(k)).isEqualTo(0);
+        assertThat(redis.del(k)).isEqualTo(0);
     }
 
     @Test
