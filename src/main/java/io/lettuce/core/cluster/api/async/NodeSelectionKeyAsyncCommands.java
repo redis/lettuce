@@ -33,6 +33,8 @@ import io.lettuce.core.ScanCursor;
 import io.lettuce.core.SortArgs;
 import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.ValueCondition;
+import io.lettuce.core.KeyScanArgs;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 
@@ -83,6 +85,7 @@ public interface NodeSelectionKeyAsyncCommands<K, V> {
      * @param condition the compare condition, must not be {@code null}.
      * @return Long integer-reply the number of keys that were removed.
      */
+    @Experimental
     AsyncExecutions<Long> delex(K key, ValueCondition<V> condition);
 
     /**

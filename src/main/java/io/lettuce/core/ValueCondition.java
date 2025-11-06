@@ -19,6 +19,8 @@
  */
 package io.lettuce.core;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * A compare condition to be used with commands that support conditional value checks (e.g. SET with IFEQ/IFNE/IFDEQ/IFDNE and
  * DELEX). This abstraction lets callers express value-based or digest-based comparisons without exploding method overloads.
@@ -28,8 +30,8 @@ package io.lettuce.core;
  * </p>
  *
  * @param <V> value type used for value-based comparisons
- * @since 8.x
  */
+@Experimental
 public final class ValueCondition<V> {
 
     /**

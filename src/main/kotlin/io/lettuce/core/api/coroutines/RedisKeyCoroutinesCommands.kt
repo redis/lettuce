@@ -35,6 +35,7 @@ import io.lettuce.core.ScanCursor
 import io.lettuce.core.SortArgs
 import io.lettuce.core.ValueCondition
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.annotations.Experimental
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -85,6 +86,7 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @param condition the compare condition, must not be `null`.
      * @return Long integer-reply the number of keys that were removed.
      */
+    @Experimental
     suspend fun delex(key: K, condition: ValueCondition<V>): Long?
 
     /**

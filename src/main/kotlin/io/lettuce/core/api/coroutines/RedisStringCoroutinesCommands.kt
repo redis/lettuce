@@ -28,6 +28,7 @@ import io.lettuce.core.SetArgs
 import io.lettuce.core.StringMatchResult
 import io.lettuce.core.ValueCondition
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.annotations.Experimental
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -214,6 +215,7 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @param key the key.
      * @return String bulk-string-reply the hex digest of the key's value, or `null` when `key` does not exist.
      */
+    @Experimental
     suspend fun digestKey(key: K): String?
 
     /**
@@ -332,6 +334,7 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @param condition the compare condition, must not be `null`.
      * @return String simple-string-reply `OK` if `SET` was executed; `null` if the operation was aborted.
      */
+    @Experimental
     suspend fun set(key: K, value: V, condition: ValueCondition<V>): String?
 
     /**
@@ -343,6 +346,7 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @param condition the compare condition, must not be `null`.
      * @return String simple-string-reply `OK` if `SET` was executed; `null` if the operation was aborted.
      */
+    @Experimental
     suspend fun set(key: K, value: V, setArgs: SetArgs, condition: ValueCondition<V>): String?
 
     /**
@@ -353,6 +357,7 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @param condition the compare condition, must not be `null`.
      * @return V bulk-string-reply the previous value if the key existed, or `null` when `key` did not exist.
      */
+    @Experimental
     suspend fun setGet(key: K, value: V, condition: ValueCondition<V>): V?
 
     /**
@@ -364,6 +369,7 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * @param condition the compare condition, must not be `null`.
      * @return V bulk-string-reply the previous value if the key existed, or `null` when `key` did not exist.
      */
+    @Experimental
     suspend fun setGet(key: K, value: V, setArgs: SetArgs, condition: ValueCondition<V>): V?
 
     /**

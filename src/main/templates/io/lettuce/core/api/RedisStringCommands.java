@@ -30,6 +30,7 @@ import io.lettuce.core.SetArgs;
 import io.lettuce.core.StrAlgoArgs;
 import io.lettuce.core.StringMatchResult;
 import io.lettuce.core.ValueCondition;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.output.KeyValueStreamingChannel;
 
 /**
@@ -261,6 +262,7 @@ public interface RedisStringCommands<K, V> {
      * @param key the key.
      * @return String bulk-string-reply the hex digest of the key's value, or {@code null} when {@code key} does not exist.
      */
+    @Experimental
     String digestKey(K key);
 
     /**
@@ -388,6 +390,7 @@ public interface RedisStringCommands<K, V> {
      * @param condition the compare condition, must not be {@code null}.
      * @return String simple-string-reply {@code OK} if {@code SET} was executed; {@code null} if the operation was aborted.
      */
+    @Experimental
     String set(K key, V value, ValueCondition<V> condition);
 
     /**
@@ -399,6 +402,7 @@ public interface RedisStringCommands<K, V> {
      * @param condition the compare condition, must not be {@code null}.
      * @return String simple-string-reply {@code OK} if {@code SET} was executed; {@code null} if the operation was aborted.
      */
+    @Experimental
     String set(K key, V value, SetArgs setArgs, ValueCondition<V> condition);
 
     /**
@@ -409,6 +413,7 @@ public interface RedisStringCommands<K, V> {
      * @param condition the compare condition, must not be {@code null}.
      * @return V bulk-string-reply the previous value if the key existed, or {@code null} when {@code key} did not exist.
      */
+    @Experimental
     V setGet(K key, V value, ValueCondition<V> condition);
 
     /**
@@ -420,6 +425,7 @@ public interface RedisStringCommands<K, V> {
      * @param condition the compare condition, must not be {@code null}.
      * @return V bulk-string-reply the previous value if the key existed, or {@code null} when {@code key} did not exist.
      */
+    @Experimental
     V setGet(K key, V value, SetArgs setArgs, ValueCondition<V> condition);
 
     /**
