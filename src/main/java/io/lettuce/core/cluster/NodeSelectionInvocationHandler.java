@@ -178,7 +178,7 @@ class NodeSelectionInvocationHandler extends AbstractInvocationHandler {
 
         if (executionModel == ExecutionModel.REACTIVE) {
             Map<RedisClusterNode, CompletionStage<? extends Publisher<?>>> reactiveExecutions = (Map) executions;
-            return new ReactiveExecutionsImpl<>(reactiveExecutions);
+            return new ReactiveExecutionsImpl<>((Map) reactiveExecutions);
         }
 
         Map<RedisClusterNode, CompletionStage<?>> asyncExecutions = (Map) executions;
