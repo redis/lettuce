@@ -63,6 +63,11 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
     private final TimeWindowBucket[] ringBuffer;
 
     /**
+     * Clock for obtaining current time. Allows for testable time-dependent behavior.
+     */
+    private final Clock clock;
+
+    /**
      * Create a new lock-free sliding window metrics with default configuration (2 seconds, 1 second buckets).
      */
     public LockFreeSlidingWindowMetrics() {
@@ -77,6 +82,18 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
      * @throws IllegalArgumentException if configuration is invalid
      */
     public LockFreeSlidingWindowMetrics(long windowDurationMs, long bucketDurationMs) {
+        this(windowDurationMs, bucketDurationMs, Clock.SYSTEM);
+    }
+
+    /**
+     * Create a new lock-free sliding window metrics with custom configuration and clock.
+     *
+     * @param windowDurationMs the window duration in milliseconds (must be >= bucketDurationMs)
+     * @param bucketDurationMs the bucket duration in milliseconds (must be >= 1000)
+     * @param clock the clock to use for obtaining current time
+     * @throws IllegalArgumentException if configuration is invalid
+     */
+    public LockFreeSlidingWindowMetrics(long windowDurationMs, long bucketDurationMs, Clock clock) {
         if (bucketDurationMs < MIN_BUCKET_DURATION_MS) {
             throw new IllegalArgumentException(
                     "Bucket duration must be at least " + MIN_BUCKET_DURATION_MS + "ms, got: " + bucketDurationMs);
@@ -88,11 +105,12 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
 
         this.windowDurationMs = windowDurationMs;
         this.bucketDurationMs = bucketDurationMs;
+        this.clock = clock;
         this.bucketCount = (int) (windowDurationMs / bucketDurationMs);
         this.ringBuffer = new TimeWindowBucket[bucketCount];
 
         // Initialize all buckets
-        long currentTime = System.currentTimeMillis();
+        long currentTime = clock.currentTimeMillis();
         for (int i = 0; i < bucketCount; i++) {
             ringBuffer[i] = new TimeWindowBucket(currentTime);
         }
@@ -114,7 +132,7 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
      * @param isSuccess true for success, false for failure
      */
     private void recordEvent(boolean isSuccess) {
-        long currentTimeMs = System.currentTimeMillis();
+        long currentTimeMs = clock.currentTimeMillis();
         TimeWindowBucket bucket = getCurrentBucket(currentTimeMs);
 
         if (isSuccess) {
@@ -127,7 +145,7 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
     /**
      * Get the current bucket for the given time, rotating if necessary. Lock-free operation.
      *
-     * @param currentTimeMs the current time in milliseconds
+     * @param currentTimeNanos the current time in nanoseconds
      * @return the current bucket
      */
     private TimeWindowBucket getCurrentBucket(long currentTimeMs) {
@@ -149,7 +167,7 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
 
     @Override
     public MetricsSnapshot getSnapshot() {
-        long currentTimeMs = System.currentTimeMillis();
+        long currentTimeMs = clock.currentTimeMillis();
         long windowStart = currentTimeMs - windowDurationMs;
 
         long totalSuccess = 0;
@@ -171,7 +189,7 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
     public void reset() {
         for (TimeWindowBucket bucket : ringBuffer) {
             bucket.reset();
-            bucket.setTimestamp(System.currentTimeMillis());
+            bucket.setTimestamp(clock.currentTimeMillis());
         }
     }
 
