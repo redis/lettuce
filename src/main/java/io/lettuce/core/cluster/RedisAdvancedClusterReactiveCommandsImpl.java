@@ -411,6 +411,18 @@ public class RedisAdvancedClusterReactiveCommandsImpl<K, V> extends AbstractRedi
     }
 
     @Override
+    public Mono<Boolean> msetex(Map<K, V> map) {
+        return pipeliningWithMap(map, kvMap -> RedisAdvancedClusterReactiveCommandsImpl.super.msetex(kvMap).flux(),
+                booleanFlux -> booleanFlux).reduce((accu, next) -> accu && next);
+    }
+
+    @Override
+    public Mono<Boolean> msetex(Map<K, V> map, MSetExArgs args) {
+        return pipeliningWithMap(map, kvMap -> RedisAdvancedClusterReactiveCommandsImpl.super.msetex(kvMap, args).flux(),
+                booleanFlux -> booleanFlux).reduce((accu, next) -> accu && next);
+    }
+
+    @Override
     public Mono<K> randomkey() {
 
         Partitions partitions = getStatefulConnection().getPartitions();

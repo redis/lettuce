@@ -482,4 +482,167 @@ class RedisCommandBuilderUnitTests {
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Key must not be null");
     }
 
+    @Test
+    void msetex_nxThenEx_seconds_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        MSetExArgs a = MSetExArgs.builder().nx().ex(5).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> NX EX 5");
+    }
+
+    @Test
+    void msetex_xxThenKeepTtl_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        MSetExArgs a = MSetExArgs.builder().xx().keepttl().build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> XX KEEPTTL");
+    }
+
+    @Test
+    void msetex_noConditionThenPx_millis_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        MSetExArgs a = MSetExArgs.builder().noCondition().px(500).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> PX 500");
+    }
+
+    @Test
+    void msetex_noConditionThenPx_duration_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        MSetExArgs a = MSetExArgs.builder().noCondition().px(Duration.ofMillis(1234)).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> PX 1234");
+    }
+
+    @Test
+    void msetex_exAt_withInstant_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        java.time.Instant t = java.time.Instant.ofEpochSecond(1_234_567_890L);
+        MSetExArgs a = MSetExArgs.builder().noCondition().exAt(t).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> EXAT 1234567890");
+    }
+
+    @Test
+    void msetex_pxAt_withInstant_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        java.time.Instant t = java.time.Instant.ofEpochMilli(4_000L);
+        MSetExArgs a = MSetExArgs.builder().noCondition().pxAt(t).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> PXAT 4000");
+    }
+
+    @Test
+    void msetex_exAt_withLong_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        long epochSeconds = 1_234_567_890L;
+        MSetExArgs a = MSetExArgs.builder().noCondition().exAt(epochSeconds).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> EXAT 1234567890");
+    }
+
+    @Test
+    void msetex_pxAt_withLong_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        long epochMillis = 4_567L;
+        MSetExArgs a = MSetExArgs.builder().noCondition().pxAt(epochMillis).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> PXAT 4567");
+    }
+
+    @Test
+    void msetex_nxThenExAt_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        java.time.Instant t = java.time.Instant.ofEpochSecond(42L);
+        MSetExArgs a = MSetExArgs.builder().nx().exAt(t).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> NX EXAT 42");
+    }
+
+    @Test
+    void msetex_xxThenPxAt_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        java.time.Instant t = java.time.Instant.ofEpochMilli(314L);
+        MSetExArgs a = MSetExArgs.builder().xx().pxAt(t).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> XX PXAT 314");
+    }
+
+    @Test
+    void msetex_exAt_withDate_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        java.util.Date ts = new java.util.Date(1_234_567_890L * 1000L);
+        MSetExArgs a = MSetExArgs.builder().noCondition().exAt(ts).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> EXAT 1234567890");
+    }
+
+    @Test
+    void msetex_pxAt_withDate_emissionOrder() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        java.util.Date ts = new java.util.Date(9_999L);
+        MSetExArgs a = MSetExArgs.builder().noCondition().pxAt(ts).build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v> PXAT 9999");
+    }
+
+    @Test
+    void msetex_noCondition_noExpiration_onlyMapAndCount() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k", "v");
+        MSetExArgs a = MSetExArgs.builder().noCondition().noExpiration().build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("1 key<k> value<v>");
+    }
+
+    @Test
+    void msetex_twoPairs_keepttl_orderAndCount() {
+        Map<String, String> map = new java.util.LinkedHashMap<>();
+        map.put("k1", "v1");
+        map.put("k2", "v2");
+        MSetExArgs a = MSetExArgs.builder().noCondition().keepttl().build();
+
+        Command<String, String, Boolean> cmd = sut.msetex(map, a);
+        String s = cmd.getArgs().toCommandString();
+        assertThat(s).isEqualTo("2 key<k1> value<v1> key<k2> value<v2> KEEPTTL");
+    }
+
 }

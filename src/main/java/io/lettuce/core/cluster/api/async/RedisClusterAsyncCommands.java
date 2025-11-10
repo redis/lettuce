@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.Range;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.api.async.*;
@@ -366,6 +367,25 @@ public interface RedisClusterAsyncCommands<K, V> extends BaseRedisAsyncCommands<
      *         {@code 1} if the all the keys were set. {@code 0} if no key was set (at least one key already existed).
      */
     RedisFuture<Boolean> msetnx(Map<K, V> map);
+
+    /**
+     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
+     * of [EX|PX|EXAT|PXAT|KEEPTTL]. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param map the map of keys and values.
+     * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
+     */
+    RedisFuture<Boolean> msetex(Map<K, V> map);
+
+    /**
+     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
+     * of [EX|PX|EXAT|PXAT|KEEPTTL]. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param map the map of keys and values.
+     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
+     * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
+     */
+    RedisFuture<Boolean> msetex(Map<K, V> map, MSetExArgs args);
 
     /**
      * Tells a Redis cluster replica node that the client is ok reading possibly stale data and is not interested in running
