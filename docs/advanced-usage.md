@@ -370,6 +370,29 @@ queued commands.</p>
 refuse commands and cancel these with an exception.</p></td>
 </tr>
 <tr>
+<td>Maintenance Notifications</td>
+<td><code>maintNotificationsConfig</code></td>
+<td><code>enabled()</code></td>
+</tr>
+<tr>
+<td colspan="3"><p>Since: 7.0</p>
+<p>Enables Seamless Connection Handover (SCH) by listening for
+server-side maintenance event notifications. When enabled, the client
+receives push notifications about maintenance operations and can
+proactively reconnect to healthy nodes, reducing failed commands during
+maintenance windows.</p>
+<p>Configure endpoint type for reconnection using
+<code>MaintNotificationsConfig.enabled(EndpointType.EXTERNAL_IP)</code>
+or use <code>MaintNotificationsConfig.enabled()</code> for
+auto-detection based on connection characteristics. Disable with
+<code>MaintNotificationsConfig.disabled()</code>.</p>
+<p>Use <code>TimeoutOptions.relaxedTimeoutsDuringMaintenance(Duration)</code>
+to set extended timeout during maintenance operations (default: 10
+seconds).</p>
+<p>This feature requires Redis Enterprise or a Redis server that
+supports maintenance event notifications.</p></td>
+</tr>
+<tr>
 <td>Replay filter</td>
 <td><code>replayFilter</code></td>
 <td><code>(cmd) -> false</code></td>
