@@ -27,7 +27,6 @@ class RedisMultiDbClientFactoryUnitTests {
         FastShutdown.shutdown(MultiDbClient.create(MultiDbTestSupport.DBs));
     }
 
-
     @Test
     void withUri() {
         FastShutdown.shutdown(MultiDbClient.create(MultiDbTestSupport.DBs));
