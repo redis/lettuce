@@ -27,10 +27,6 @@ class RedisMultiDbClientFactoryUnitTests {
         FastShutdown.shutdown(MultiDbClient.create(MultiDbTestSupport.DBs));
     }
 
-    // @Test
-    // void withStringUriNull() {
-    // assertThatThrownBy(() -> RedisFailoverClient.create((String) null)).isInstanceOf(IllegalArgumentException.class);
-    // }
 
     @Test
     void withUri() {
@@ -42,33 +38,6 @@ class RedisMultiDbClientFactoryUnitTests {
         assertThatThrownBy(() -> MultiDbClient.create(Collections.singletonList((DatabaseConfig) null)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
-
-    // @Test
-    // void clientResources() {
-    // FastShutdown.shutdown(RedisFailoverClient.create(TestClientResources.get()));
-    // }
-
-    // @Test
-    // void clientResourcesNull() {
-    // assertThatThrownBy(() -> RedisFailoverClient.create((ClientResources) null))
-    // .isInstanceOf(IllegalArgumentException.class);
-    // }
-
-    // @Test
-    // void clientResourcesWithStringUri() {
-    // FastShutdown.shutdown(RedisFailoverClient.create(TestClientResources.get(), URI));
-    // }
-
-    // @Test
-    // void clientResourcesWithStringUriNull() {
-    // assertThatThrownBy(() -> RedisFailoverClient.create(TestClientResources.get(), (String) null))
-    // .isInstanceOf(IllegalArgumentException.class);
-    // }
-
-    // @Test
-    // void clientResourcesNullWithStringUri() {
-    // assertThatThrownBy(() -> RedisFailoverClient.create(null, URI)).isInstanceOf(IllegalArgumentException.class);
-    // }
 
     @Test
     void clientResourcesWithUri() {
