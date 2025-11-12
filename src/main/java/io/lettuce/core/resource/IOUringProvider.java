@@ -64,7 +64,7 @@ public class IOUringProvider {
 
         boolean availability;
         try {
-            Class.forName("io.netty.incubator.channel.uring.IOUring");
+            Class.forName("io.netty.channel.uring.IoUring");
             availability = IoUring.isAvailable();
         } catch (ClassNotFoundException e) {
             availability = false;
