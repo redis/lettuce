@@ -36,10 +36,12 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
+import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.test.LettuceExtension;
 
 /**
@@ -284,51 +286,47 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
     @Test
     void shouldNotReceiveMessagesFromOldEndpointAfterSwitch() throws Exception {
-        StatefulRedisMultiDbPubSubConnection<String, String> pubsub = multiDbClient.connectPubSub();
-        BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
+        try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
+            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
 
-        pubsub.addListener(new RedisPubSubAdapter<String, String>() {
+            multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
-            @Override
-            public void message(String channel, String message) {
-                messages.add(message);
+                @Override
+                public void message(String channel, String message) {
+                    messages.add(message);
+                }
+
+            });
+
+            // Get the endpoints
+            RedisURI firstDb = multiDbConn.getCurrentEndpoint();
+            RedisURI secondDb = StreamSupport.stream(multiDbConn.getEndpoints().spliterator(), false)
+                    .filter(uri -> !uri.equals(firstDb)).findFirst().get();
+
+            // Subscribe on first database
+            multiDbConn.sync().subscribe("isolationtest");
+
+            // Switch to second database
+            multiDbConn.switchToDatabase(secondDb);
+
+            // Publish on the OLD endpoint (firstDb) - should NOT be received
+            try (StatefulRedisPubSubConnection<String, String> conn1 = RedisClient.create(firstDb).connectPubSub()) {
+                try (StatefulRedisPubSubConnection<String, String> conn2 = RedisClient.create(secondDb).connectPubSub()) {
+
+                    conn1.sync().publish("isolationtest", "Message from first db");
+
+                    conn2.sync().publish("isolationtest", "Message from second db");
+
+                    // We should only receive the message from the new endpoint
+                    String message = messages.poll(1, TimeUnit.SECONDS);
+                    assertEquals("Message from second db", message);
+
+                    // Verify no additional messages are received (old endpoint message should not arrive)
+                    String unexpectedMessage = messages.poll(500, TimeUnit.MILLISECONDS);
+                    assertThat(unexpectedMessage).isNull();
+                }
             }
-
-        });
-
-        // Get the endpoints
-        RedisURI firstDb = pubsub.getCurrentEndpoint();
-        RedisURI secondDb = StreamSupport.stream(pubsub.getEndpoints().spliterator(), false).filter(uri -> !uri.equals(firstDb))
-                .findFirst().get();
-
-        // Subscribe on first database
-        pubsub.sync().subscribe("isolationtest");
-
-        // Switch to second database
-        pubsub.switchToDatabase(secondDb);
-
-        // Publish on the OLD endpoint (firstDb) - should NOT be received
-        StatefulRedisMultiDbPubSubConnection<String, String> oldPublisher = multiDbClient.connectPubSub();
-        oldPublisher.sync().publish("isolationtest", "Message from old endpoint");
-
-        // Publish on the NEW endpoint (secondDb) - should be received
-        StatefulRedisMultiDbPubSubConnection<String, String> newPublisher = multiDbClient.connectPubSub();
-        newPublisher.switchToDatabase(secondDb);
-
-        Thread.sleep(1000);
-        newPublisher.sync().publish("isolationtest", "Message from new endpoint");
-
-        // We should only receive the message from the new endpoint
-        String message = messages.poll(1, TimeUnit.SECONDS);
-        assertEquals("Message from new endpoint", message);
-
-        // Verify no additional messages are received (old endpoint message should not arrive)
-        String unexpectedMessage = messages.poll(500, TimeUnit.MILLISECONDS);
-        assertThat(unexpectedMessage).isNull();
-
-        pubsub.close();
-        oldPublisher.close();
-        newPublisher.close();
+        }
     }
 
     @Test
