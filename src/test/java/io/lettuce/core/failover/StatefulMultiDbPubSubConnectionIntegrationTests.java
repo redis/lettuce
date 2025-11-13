@@ -26,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
@@ -43,6 +44,7 @@ import io.lettuce.core.internal.LettuceFactories;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.Wait;
 
 /**
  * Integration tests for {@link StatefulRedisMultiDbPubSubConnection} with pubsub functionality and database switching.
@@ -287,8 +289,13 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
     @Test
     void shouldNotReceiveMessagesFromOldEndpointAfterSwitch() throws Exception {
         try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
-            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
 
+            // Get the endpoints
+            RedisURI firstDb = multiDbConn.getCurrentEndpoint();
+            RedisURI secondDb = StreamSupport.stream(multiDbConn.getEndpoints().spliterator(), false)
+                    .filter(uri -> !uri.equals(firstDb)).findFirst().get();
+
+            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
             multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
                 @Override
@@ -298,26 +305,39 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
             });
 
-            // Get the endpoints
-            RedisURI firstDb = multiDbConn.getCurrentEndpoint();
-            RedisURI secondDb = StreamSupport.stream(multiDbConn.getEndpoints().spliterator(), false)
-                    .filter(uri -> !uri.equals(firstDb)).findFirst().get();
-
-            // Subscribe on first database
-            multiDbConn.sync().subscribe("isolationtest");
-
-            // Switch to second database
-            multiDbConn.switchToDatabase(secondDb);
-
-            // Publish on the OLD endpoint (firstDb) - should NOT be received
             try (StatefulRedisPubSubConnection<String, String> conn1 = RedisClient.create(firstDb).connectPubSub()) {
                 try (StatefulRedisPubSubConnection<String, String> conn2 = RedisClient.create(secondDb).connectPubSub()) {
 
+                    // Subscribe on first database
+                    multiDbConn.sync().subscribe("isolationtest");
+
+                    // Wait for subscription to be established
+                    Wait.untilTrue(() -> {
+                        AtomicInteger msgId = new AtomicInteger(0);
+                        try {
+                            String msg = "Initial message " + msgId.incrementAndGet();
+                            conn1.sync().publish("isolationtest", "Initial message");
+                            String received = messages.poll(1, TimeUnit.SECONDS);
+                            return msg.equals(received);
+                        } catch (InterruptedException e) {
+                        }
+                        return false;
+                    });
+
+                    // Switch to second database
+                    multiDbConn.switchToDatabase(secondDb);
+
+                    Wait.untilTrue(() -> conn2.sync().pubsubChannels().contains("isolationtest"));
+                    assertThat(conn2.sync().pubsubChannels()).contains("isolationtest");
+
+                    assertThat(conn1.sync().pubsubChannels()).doesNotContain("isolationtest");
+
+                    // Publish on the OLD endpoint (firstDb) - should NOT be received
                     conn1.sync().publish("isolationtest", "Message from first db");
 
                     conn2.sync().publish("isolationtest", "Message from second db");
 
-                    // We should only receive the message from the new endpoint
+                    // We should only receive the message from the second endpoint
                     String message = messages.poll(1, TimeUnit.SECONDS);
                     assertEquals("Message from second db", message);
 
