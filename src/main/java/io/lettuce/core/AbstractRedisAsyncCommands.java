@@ -742,6 +742,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
+    public RedisFuture<Long> delex(K key, CompareCondition<V> condition) {
+        return dispatch(commandBuilder.delex(key, condition));
+    }
+
+    @Override
     public String digest(String script) {
         return digest(encodeScript(script));
     }
@@ -1263,6 +1268,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<V> get(K key) {
         return dispatch(commandBuilder.get(key));
+    }
+
+    @Override
+    public RedisFuture<String> digestKey(K key) {
+        return dispatch(commandBuilder.digestKey(key));
     }
 
     public StatefulConnection<K, V> getConnection() {
