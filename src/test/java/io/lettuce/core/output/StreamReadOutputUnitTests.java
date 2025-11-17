@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.StreamMessage;
 import io.lettuce.core.codec.StringCodec;
 
-import io.lettuce.core.ClaimedStreamMessage;
-
 /**
  * Unit tests for {@link StreamReadOutput}.
  *
@@ -207,44 +205,9 @@ class StreamReadOutputUnitTests {
 
         assertThat(sut.get()).hasSize(1);
         StreamMessage<String, String> streamMessage = sut.get().get(0);
-        assertThat(streamMessage).isInstanceOf(ClaimedStreamMessage.class);
-        ClaimedStreamMessage<String, String> claimed = (ClaimedStreamMessage<String, String>) streamMessage;
-        assertThat(claimed.getMsSinceLastDelivery()).isEqualTo(5000);
-        assertThat(claimed.getRedeliveryCount()).isEqualTo(2);
-        assertThat(claimed.getBody()).hasSize(1).containsEntry("key", "value");
-    }
-
-    @Test
-    void shouldDecodeClaimedEntryWithMetadataAsBulkStrings() {
-
-        // Stream and single claimed entry with extras as bulk strings (RESP2/RESP3 variant)
-        sut.multi(2);
-        sut.set(ByteBuffer.wrap("stream-key".getBytes()));
-        sut.complete(1);
-        sut.multi(1);
-        sut.multi(4);
-        sut.set(ByteBuffer.wrap("1234-12".getBytes()));
-        sut.complete(3);
-        sut.multi(2);
-        sut.set(ByteBuffer.wrap("key".getBytes()));
-        sut.complete(4);
-        sut.set(ByteBuffer.wrap("value".getBytes()));
-        sut.complete(4);
-        // extras for claimed pending entry as bulk strings
-        sut.set(ByteBuffer.wrap("5000".getBytes()));
-        sut.set(ByteBuffer.wrap("2".getBytes()));
-        sut.complete(3);
-        sut.complete(2);
-        sut.complete(1);
-        sut.complete(0);
-
-        assertThat(sut.get()).hasSize(1);
-        StreamMessage<String, String> streamMessage = sut.get().get(0);
-        assertThat(streamMessage).isInstanceOf(ClaimedStreamMessage.class);
-        ClaimedStreamMessage<String, String> claimed = (ClaimedStreamMessage<String, String>) streamMessage;
-        assertThat(claimed.getMsSinceLastDelivery()).isEqualTo(5000);
-        assertThat(claimed.getRedeliveryCount()).isEqualTo(2);
-        assertThat(claimed.getBody()).hasSize(1).containsEntry("key", "value");
+        assertThat(streamMessage.getMsSinceLastDelivery()).isEqualTo(5000);
+        assertThat(streamMessage.getRedeliveryCount()).isEqualTo(2);
+        assertThat(streamMessage.getBody()).hasSize(1).containsEntry("key", "value");
     }
 
     @Test
@@ -273,11 +236,9 @@ class StreamReadOutputUnitTests {
 
         assertThat(sut.get()).hasSize(1);
         StreamMessage<String, String> streamMessage = sut.get().get(0);
-        assertThat(streamMessage).isInstanceOf(ClaimedStreamMessage.class);
         assertThat(streamMessage.isClaimed()).isFalse();
-        ClaimedStreamMessage<String, String> claimed = (ClaimedStreamMessage<String, String>) streamMessage;
-        assertThat(claimed.getMsSinceLastDelivery()).isEqualTo(1000);
-        assertThat(claimed.getRedeliveryCount()).isEqualTo(0);
+        assertThat(streamMessage.getMsSinceLastDelivery()).isEqualTo(1000);
+        assertThat(streamMessage.getRedeliveryCount()).isEqualTo(0);
     }
 
     @Test
@@ -340,21 +301,13 @@ class StreamReadOutputUnitTests {
         StreamMessage<String, String> m2 = sut.get().get(1);
         StreamMessage<String, String> m3 = sut.get().get(2);
 
-        // All entries carry extras => ClaimedStreamMessage type, but isClaimed reflects redeliveryCount >= 1
-        assertThat(m1).isInstanceOf(ClaimedStreamMessage.class);
-        assertThat(m2).isInstanceOf(ClaimedStreamMessage.class);
-        assertThat(m3).isInstanceOf(ClaimedStreamMessage.class);
-
         assertThat(m1.isClaimed()).isTrue();
         assertThat(m2.isClaimed()).isTrue();
         assertThat(m3.isClaimed()).isFalse();
 
-        ClaimedStreamMessage<String, String> c1 = (ClaimedStreamMessage<String, String>) m1;
-        ClaimedStreamMessage<String, String> c2 = (ClaimedStreamMessage<String, String>) m2;
-        ClaimedStreamMessage<String, String> c3 = (ClaimedStreamMessage<String, String>) m3;
-        assertThat(c1.getRedeliveryCount()).isEqualTo(2);
-        assertThat(c2.getRedeliveryCount()).isEqualTo(1);
-        assertThat(c3.getRedeliveryCount()).isEqualTo(0);
+        assertThat(m1.getRedeliveryCount()).isEqualTo(2);
+        assertThat(m2.getRedeliveryCount()).isEqualTo(1);
+        assertThat(m3.getRedeliveryCount()).isEqualTo(0);
     }
 
 }

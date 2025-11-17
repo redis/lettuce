@@ -17,6 +17,10 @@ public class StreamMessage<K, V> {
 
     private final Map<K, V> body;
 
+    private final Long msSinceLastDelivery;
+
+    private final Long redeliveryCount;
+
     /**
      * Create a new {@link StreamMessage}.
      *
@@ -29,6 +33,26 @@ public class StreamMessage<K, V> {
         this.stream = stream;
         this.id = id;
         this.body = body;
+        this.msSinceLastDelivery = null;
+        this.redeliveryCount = null;
+    }
+
+    /**
+     * Create a new {@link StreamMessage}.
+     *
+     * @param stream the stream.
+     * @param id the message id.
+     * @param msSinceLastDelivery the milliseconds since last delivery when CLAIM was used.
+     * @param redeliveryCount the number of prior deliveries when CLAIM was used.
+     * @param body map containing the message body.
+     */
+    public StreamMessage(K stream, String id, Map<K, V> body, long msSinceLastDelivery, long redeliveryCount) {
+
+        this.stream = stream;
+        this.id = id;
+        this.body = body;
+        this.msSinceLastDelivery = msSinceLastDelivery;
+        this.redeliveryCount = redeliveryCount;
     }
 
     public K getStream() {
@@ -47,13 +71,34 @@ public class StreamMessage<K, V> {
     }
 
     /**
-     * Whether this message was reclaimed from the pending entries list (PEL) using XREADGROUP … CLAIM. Default: false.
-     *
-     * Note: When CLAIM is used, servers may attach delivery metadata to all entries in the reply (including fresh ones). Use
-     * this indicator to distinguish actually reclaimed entries (true) from normal entries (false).
+     * @return the milliseconds since the last delivery of this message when CLAIM was used. Default: 0. ul>
+     *         <li>{@code null} when not applicable</li>
+     *         <li>{@code 0} means not claimed from the pending entries list (PEL)</li>
+     *         <li>{@code > 0} means claimed from the PEL</li>
+     *         </ul>
+     * @since 7.1
      */
+    public Long getMsSinceLastDelivery() {
+        return msSinceLastDelivery;
+    }
+
+    /**
+     * /**
+     * 
+     * @return the number of prior deliveries of this message when CLAIM was used:
+     *         <ul>
+     *         <li>{@code null} when not applicable</li>
+     *         <li>{@code 0} means not claimed from the pending entries list (PEL)</li>
+     *         <li>{@code > 0} means claimed from the PEL</li>
+     *         </ul>
+     * @since 7.1
+     */
+    public Long getRedeliveryCount() {
+        return redeliveryCount;
+    }
+
     public boolean isClaimed() {
-        return false;
+        return redeliveryCount != null && redeliveryCount > 0;
     }
 
     @Override

@@ -8,7 +8,6 @@ import java.util.Map;
 
 import io.lettuce.core.StreamMessage;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.ClaimedStreamMessage;
 
 import io.lettuce.core.internal.LettuceAssert;
 
@@ -55,20 +54,6 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
             stream = codec.decodeKey(bytes);
             skipStreamKeyReset = true;
             return;
-        }
-
-        // Handle extra metadata for claimed entries that may arrive as bulk strings (RESP2/RESP3)
-        if (id != null && bodyReceived && key == null && bytes != null) {
-            // Use a duplicate so decoding doesn't advance the original buffer position.
-            String s = decodeString(bytes.duplicate());
-            if (msSinceLastDelivery == null && isDigits(s)) {
-                msSinceLastDelivery = Long.parseLong(s);
-                return;
-            }
-            if (redeliveryCount == null && isDigits(s)) {
-                redeliveryCount = Long.parseLong(s);
-                return;
-            }
         }
 
         if (id == null) {
@@ -131,10 +116,8 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
         // Emit the message when the entry array (id/body[/extras]) completes.
         if (depth == 2 && bodyReceived) {
             Map<K, V> map = body == null ? Collections.emptyMap() : body;
-            if (msSinceLastDelivery != null || redeliveryCount != null) {
-                subscriber.onNext(output,
-                        new ClaimedStreamMessage<>(stream, id, map, msSinceLastDelivery == null ? 0L : msSinceLastDelivery,
-                                redeliveryCount == null ? 0L : redeliveryCount));
+            if (msSinceLastDelivery != null && redeliveryCount != null) {
+                subscriber.onNext(output, new StreamMessage<>(stream, id, map, msSinceLastDelivery, redeliveryCount));
             } else {
                 subscriber.onNext(output, new StreamMessage<>(stream, id, map));
             }
@@ -146,7 +129,7 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
             redeliveryCount = null;
         }
 
-        // RESP2/RESP3 compat for stream key reset upon finishing the outer array element
+        // RESP2/RESP3 compat
         if (depth == 2 && skipStreamKeyReset) {
             skipStreamKeyReset = false;
         }
@@ -158,17 +141,6 @@ public class StreamReadOutput<K, V> extends CommandOutput<K, V, List<StreamMessa
                 stream = null;
             }
         }
-    }
-
-    private static boolean isDigits(String s) {
-        if (s == null || s.isEmpty())
-            return false;
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (c < '0' || c > '9')
-                return false;
-        }
-        return true;
     }
 
     @Override
