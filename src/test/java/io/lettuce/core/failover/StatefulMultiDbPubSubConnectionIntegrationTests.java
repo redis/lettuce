@@ -174,11 +174,17 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
         try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
 
             BlockingQueue<String> channels = LettuceFactories.newBlockingQueue();
+            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
             multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
                 @Override
                 public void subscribed(String channel, long count) {
                     channels.add(channel);
+                }
+
+                @Override
+                public void message(String channel, String message) {
+                    messages.add(message);
                 }
 
             });
@@ -188,11 +194,13 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
             String channel = channels.take();
             assertEquals("channel1", channel);
 
+            waitForSubscription(conn1, messages, "channel1");
+
             // Switch to second database
             multiDbConn.switchToDatabase(secondEndpoint);
 
             // Verify subscription is re-established on second database
-            Wait.untilTrue(() -> conn2.sync().pubsubChannels().contains("channel1"));
+            waitForSubscription(conn2, messages, "channel1");
 
             assertThat(conn2.sync().pubsubChannels()).contains("channel1");
         }
