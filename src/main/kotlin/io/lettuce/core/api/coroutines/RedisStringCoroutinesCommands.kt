@@ -305,19 +305,11 @@ interface RedisStringCoroutinesCommands<K : Any, V : Any> {
      * of [EX|PX|EXAT|PXAT|KEEPTTL].
      *
      * @param map the map of keys and values.
+     * @param args the [SetArgs] specifying NX/XX and expiration.
      * @return Boolean from integer-reply: `1` if all keys were set, `0` otherwise.
+     * @since 7.1
      */
-    suspend fun msetex(map: Map<K, V>): Boolean?
-
-    /**
-     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
-     * of [EX|PX|EXAT|PXAT|KEEPTTL].
-     *
-     * @param map the map of keys and values.
-     * @param args the [MSetExArgs] specifying NX/XX and expiration.
-     * @return Boolean from integer-reply: `1` if all keys were set, `0` otherwise.
-     */
-    suspend fun msetex(map: Map<K, V>, args: MSetExArgs): Boolean?
+    suspend fun msetex(map: Map<K, V>, args: SetArgs): Boolean?
 
     /**
      * Set the string value of a key.

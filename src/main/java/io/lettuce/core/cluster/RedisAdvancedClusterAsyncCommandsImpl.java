@@ -517,13 +517,8 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     }
 
     @Override
-    public RedisFuture<Boolean> msetex(Map<K, V> map, MSetExArgs args) {
+    public RedisFuture<Boolean> msetex(Map<K, V> map, SetArgs args) {
         return executePartitionedBoolean(map, op -> super.msetex(op, args));
-    }
-
-    @Override
-    public RedisFuture<Boolean> msetex(Map<K, V> map) {
-        return executePartitionedBoolean(map, super::msetex);
     }
 
     private RedisFuture<Boolean> executePartitionedBoolean(Map<K, V> map, Function<Map<K, V>, RedisFuture<Boolean>> operation) {

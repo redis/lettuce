@@ -23,9 +23,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.Range;
-import io.lettuce.core.RedisFuture;
+import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.reactive.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -384,18 +383,10 @@ public interface RedisClusterReactiveCommands<K, V> extends BaseRedisReactiveCom
      * of [EX|PX|EXAT|PXAT|KEEPTTL]. Cross-slot keys will result in multiple calls to the particular cluster nodes.
      *
      * @param map the map of keys and values.
+     * @param args the {@link SetArgs} specifying NX/XX and expiration.
      * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
+     * @since 7.1
      */
-    Mono<Boolean> msetex(Map<K, V> map);
-
-    /**
-     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
-     * of [EX|PX|EXAT|PXAT|KEEPTTL]. Cross-slot keys will result in multiple calls to the particular cluster nodes.
-     *
-     * @param map the map of keys and values.
-     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
-     * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
-     */
-    Mono<Boolean> msetex(Map<K, V> map, MSetExArgs args);
+    Mono<Boolean> msetex(Map<K, V> map, SetArgs args);
 
 }

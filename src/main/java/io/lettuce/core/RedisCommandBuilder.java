@@ -2240,21 +2240,14 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(MSETNX, new BooleanOutput<>(codec), args);
     }
 
-    Command<K, V, Boolean> msetex(Map<K, V> map) {
+    Command<K, V, Boolean> msetex(Map<K, V> map, SetArgs setArgs) {
         LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);
         LettuceAssert.isTrue(!map.isEmpty(), "Map " + MUST_NOT_BE_EMPTY);
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(map.size()).add(map);
-        return createCommand(MSETEX, new BooleanOutput<>(codec), args);
-    }
-
-    Command<K, V, Boolean> msetex(Map<K, V> map, MSetExArgs msetExArgs) {
-        LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);
-        LettuceAssert.isTrue(!map.isEmpty(), "Map " + MUST_NOT_BE_EMPTY);
-        LettuceAssert.notNull(msetExArgs, "MSetExArgs " + MUST_NOT_BE_NULL);
-
-        CommandArgs<K, V> args = new CommandArgs<>(codec).add(map.size()).add(map);
-        msetExArgs.build(args);
+        if (setArgs != null) {
+            setArgs.build(args);
+        }
         return createCommand(MSETEX, new BooleanOutput<>(codec), args);
     }
 

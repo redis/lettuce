@@ -181,7 +181,7 @@ public class StringCommandIntegrationTests extends TestSupport {
     @ParameterizedTest(name = "MSETEX NX + {0} with cross-slot keys")
     @MethodSource("msetexNxArgsProvider")
     @EnabledOnCommand("MSETEX")
-    protected void msetexNxWithCrossSlotKeys_parametrized(String optionLabel, MSetExArgs args) {
+    protected void msetexNxWithCrossSlotKeys_parametrized(String optionLabel, SetArgs args) {
 
         // Build 16 keys with distinct hash tags so they map across 16 evenly-partitioned buckets over 16000 slots
         final int buckets = 16;
@@ -216,11 +216,10 @@ public class StringCommandIntegrationTests extends TestSupport {
     }
 
     static Stream<Arguments> msetexNxArgsProvider() {
-        return Stream.of(Arguments.of("EX", MSetExArgs.builder().nx().ex(5).build()),
-                Arguments.of("PX", MSetExArgs.builder().nx().px(5000).build()),
-                Arguments.of("EXAT", MSetExArgs.builder().nx().exAt(Instant.now().plusSeconds(5)).build()),
-                Arguments.of("PXAT", MSetExArgs.builder().nx().pxAt(Instant.now().plusSeconds(5)).build()),
-                Arguments.of("KEEPTTL", MSetExArgs.builder().nx().keepttl().build()));
+        return Stream.of(Arguments.of("EX", SetArgs.Builder.nx().ex(5)), Arguments.of("PX", SetArgs.Builder.nx().px(5000)),
+                Arguments.of("EXAT", SetArgs.Builder.nx().exAt(Instant.now().plusSeconds(5))),
+                Arguments.of("PXAT", SetArgs.Builder.nx().pxAt(Instant.now().plusSeconds(5))),
+                Arguments.of("KEEPTTL", SetArgs.Builder.nx().keepttl()));
     }
 
     @Test
