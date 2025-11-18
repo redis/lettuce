@@ -5,8 +5,8 @@ package io.lettuce.core.failover.metrics;
  * failures within a configurable time period.
  *
  * <p>
- * This implementation uses a lock-free sliding window mechanism to track metrics over a configurable time period (default: 2
- * seconds). Old data outside the window is automatically expired and cleaned up.
+ * This implementation uses a lock-free sliding window mechanism to track metrics over a configurable time period (default: 10
+ * seconds). Old data outside the window is automatically expired and cleaned up. Bucket duration is fixed at 200ms.
  * </p>
  *
  * @author Ali Takavci
@@ -15,14 +15,9 @@ package io.lettuce.core.failover.metrics;
 public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
 
     /**
-     * Default window duration: 2 seconds.
+     * Default window duration: 10 seconds.
      */
-    private static final long DEFAULT_WINDOW_DURATION_MS = 2_000;
-
-    /**
-     * Default bucket duration: 1 second.
-     */
-    private static final long DEFAULT_BUCKET_DURATION_MS = 1_000;
+    private static final int DEFAULT_WINDOW_DURATION_SECONDS = 2;
 
     /**
      * Lock-free sliding window metrics implementation.
@@ -30,20 +25,20 @@ public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
     private final SlidingWindowMetrics slidingWindow;
 
     /**
-     * Create metrics instance with default configuration (2 second window, 1 second buckets).
+     * Create metrics instance with default configuration 2 second window).
      */
     public CircuitBreakerMetricsImpl() {
-        this(DEFAULT_WINDOW_DURATION_MS, DEFAULT_BUCKET_DURATION_MS);
+        this(DEFAULT_WINDOW_DURATION_SECONDS);
     }
 
     /**
-     * Create metrics instance with custom window configuration.
+     * Create metrics instance with custom window duration in seconds.
      *
-     * @param windowDurationMs the window duration in milliseconds
-     * @param bucketDurationMs the bucket duration in milliseconds
+     * @param windowDurationSeconds the window duration in seconds (must be >= 1)
+     * @throws IllegalArgumentException if windowDurationSeconds < 1
      */
-    public CircuitBreakerMetricsImpl(long windowDurationMs, long bucketDurationMs) {
-        this.slidingWindow = new LockFreeSlidingWindowMetrics(windowDurationMs, bucketDurationMs);
+    public CircuitBreakerMetricsImpl(int windowDurationSeconds) {
+        this.slidingWindow = new LockFreeSlidingWindowMetrics(windowDurationSeconds);
     }
 
     /**

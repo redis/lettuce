@@ -1,6 +1,7 @@
 package io.lettuce.core.failover.metrics;
 
 import java.time.Duration;
+import java.time.Instant;
 
 /**
  * Controllable clock implementation for testing time-dependent behavior.
@@ -28,27 +29,27 @@ import java.time.Duration;
  */
 public class TestClock implements Clock {
 
-    private long currentTimeMillis;
+    private long currentTimeMs;
 
     /**
      * Create a new test clock starting at time 0.
      */
     public TestClock() {
-        this(0);
+        this(0L);
     }
 
     /**
-     * Create a new test clock starting at the specified time in milliseconds.
+     * Create a new test clock starting at the specified time in nanoseconds.
      *
-     * @param initialTimeNanos the initial time in milliseconds
+     * @param currentTimeMs the initial time
      */
-    public TestClock(long initialTimeMillis) {
-        this.currentTimeMillis = initialTimeMillis;
+    public TestClock(long currentTimeMs) {
+        this.currentTimeMs = currentTimeMs;
     }
 
     @Override
     public long currentTimeMillis() {
-        return currentTimeMillis;
+        return currentTimeMs;
     }
 
     /**
@@ -58,29 +59,19 @@ public class TestClock implements Clock {
      * @return this clock for method chaining
      */
     public TestClock advance(Duration duration) {
-        this.currentTimeMillis += duration.toMillis();
+        this.currentTimeMs += duration.toMillis();
         return this;
     }
 
-    /**
-     * Advance the clock by the specified duration in milliseconds.
-     *
-     * @param durationMs the duration to advance in milliseconds
-     * @return this clock for method chaining
-     */
-    public TestClock advance(long durationMs) {
-        this.currentTimeMillis += durationMs;
-        return this;
-    }
 
     /**
      * Set the clock to a specific time in milliseconds.
      *
-     * @param timeMs the time to set in milliseconds
+     * @param time the time to set in milliseconds
      * @return this clock for method chaining
      */
-    public TestClock setTime(long timeMs) {
-        this.currentTimeMillis = timeMs;
+    public TestClock setTime(Instant time) {
+        this.currentTimeMs = time.toEpochMilli();
         return this;
     }
 

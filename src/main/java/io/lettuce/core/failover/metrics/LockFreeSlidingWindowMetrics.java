@@ -28,19 +28,15 @@ package io.lettuce.core.failover.metrics;
 public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
 
     /**
+     * Fixed bucket duration.
+     * This is NOT configurable to ensure consistent behavior and even bucket distribution.
+     */
+    static final long BUCKET_DURATION_MS = 1_000;
+
+    /**
      * Default window duration: 2 seconds.
      */
-    private static final long DEFAULT_WINDOW_DURATION_MS = 2_000;
-
-    /**
-     * Default bucket duration: 1 second.
-     */
-    private static final long DEFAULT_BUCKET_DURATION_MS = 1_000;
-
-    /**
-     * Minimum bucket duration: 1 second.
-     */
-    private static final long MIN_BUCKET_DURATION_MS = 1_000;
+    static final int DEFAULT_WINDOW_DURATION_SECONDS = 2;
 
     /**
      * Window duration in milliseconds.
@@ -63,49 +59,49 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
     private final TimeWindowBucket[] ringBuffer;
 
     /**
-     * Clock for obtaining current time. Allows for testable time-dependent behavior.
+     * Clock for getting current time. Allows for testable time-dependent behavior.
      */
     private final Clock clock;
 
     /**
-     * Create a new lock-free sliding window metrics with default configuration (2 seconds, 1 second buckets).
+     * Create a new lock-free sliding window metrics with default configuration (60 seconds window, 200ms buckets).
      */
     public LockFreeSlidingWindowMetrics() {
-        this(DEFAULT_WINDOW_DURATION_MS, DEFAULT_BUCKET_DURATION_MS);
+        this(DEFAULT_WINDOW_DURATION_SECONDS);
     }
 
     /**
-     * Create a new lock-free sliding window metrics with custom configuration.
+     * Create a new lock-free sliding window metrics with custom window duration.
      *
-     * @param windowDurationMs the window duration in milliseconds (must be >= bucketDurationMs)
-     * @param bucketDurationMs the bucket duration in milliseconds (must be >= 1000)
-     * @throws IllegalArgumentException if configuration is invalid
+     * @param windowDurationSeconds the window duration in seconds (must be >= 1)
+     * @throws IllegalArgumentException if windowDurationSeconds < 1
      */
-    public LockFreeSlidingWindowMetrics(long windowDurationMs, long bucketDurationMs) {
-        this(windowDurationMs, bucketDurationMs, Clock.SYSTEM);
+    public LockFreeSlidingWindowMetrics(int windowDurationSeconds) {
+        this(windowDurationSeconds, Clock.SYSTEM);
     }
 
     /**
-     * Create a new lock-free sliding window metrics with custom configuration and clock.
+     * Create a new lock-free sliding window metrics with custom window duration and clock.
      *
-     * @param windowDurationMs the window duration in milliseconds (must be >= bucketDurationMs)
-     * @param bucketDurationMs the bucket duration in milliseconds (must be >= 1000)
-     * @param clock the clock to use for obtaining current time
-     * @throws IllegalArgumentException if configuration is invalid
+     * @param windowDurationSeconds the window duration in seconds (must be >= 1)
+     * @param clock the clock to use for getting current time
+     * @throws IllegalArgumentException if windowDurationSeconds < 1
      */
-    public LockFreeSlidingWindowMetrics(long windowDurationMs, long bucketDurationMs, Clock clock) {
-        if (bucketDurationMs < MIN_BUCKET_DURATION_MS) {
-            throw new IllegalArgumentException(
-                    "Bucket duration must be at least " + MIN_BUCKET_DURATION_MS + "ms, got: " + bucketDurationMs);
-        }
-        if (windowDurationMs < bucketDurationMs) {
-            throw new IllegalArgumentException("Window duration must be >= bucket duration. Window: " + windowDurationMs
-                    + "ms, Bucket: " + bucketDurationMs + "ms");
+    public LockFreeSlidingWindowMetrics(int windowDurationSeconds, Clock clock) {
+        if (windowDurationSeconds < 1) {
+            throw new IllegalArgumentException("Window duration must be at least 1 second, got: " + windowDurationSeconds);
         }
 
-        this.windowDurationMs = windowDurationMs;
-        this.bucketDurationMs = bucketDurationMs;
+        this.windowDurationMs = windowDurationSeconds * 1000L;
+        this.bucketDurationMs = BUCKET_DURATION_MS;
         this.clock = clock;
+
+        // Enforce that window size is evenly divisible by bucket size
+        if (windowDurationMs % bucketDurationMs != 0) {
+            throw new IllegalArgumentException("Window duration (" + windowDurationMs + "ms) must be evenly divisible by bucket duration ("
+                    + bucketDurationMs + "ms). Window: " + windowDurationSeconds + "s");
+        }
+
         this.bucketCount = (int) (windowDurationMs / bucketDurationMs);
         this.ringBuffer = new TimeWindowBucket[bucketCount];
 
@@ -113,6 +109,7 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
         long currentTime = clock.currentTimeMillis();
         for (int i = 0; i < bucketCount; i++) {
             ringBuffer[i] = new TimeWindowBucket(currentTime);
+            currentTime += bucketDurationMs;
         }
     }
 
@@ -145,7 +142,7 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
     /**
      * Get the current bucket for the given time, rotating if necessary. Lock-free operation.
      *
-     * @param currentTimeNanos the current time in nanoseconds
+     * @param currentTimeMs the current time in milliseconds
      * @return the current bucket
      */
     private TimeWindowBucket getCurrentBucket(long currentTimeMs) {
@@ -176,7 +173,7 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
         // Iterate through all buckets and sum valid ones
         for (TimeWindowBucket bucket : ringBuffer) {
             // Only include buckets within the current window
-            if (bucket.getTimestamp() >= windowStart) {
+            if (bucket.getTimestamp() > windowStart) {
                 totalSuccess += bucket.getSuccessCount();
                 totalFailure += bucket.getFailureCount();
             }

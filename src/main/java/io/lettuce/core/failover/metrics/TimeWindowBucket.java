@@ -7,8 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * second) and holds atomic counters for success and failure counts.
  *
  * <p>
- * This class is designed for lock-free, thread-safe operation with minimal memory overhead. The timestamp is immutable, while
- * the counters are atomic for thread-safe updates without locks.
+ * This class is designed for lock-free, thread-safe operation with minimal memory overhead.
  * </p>
  *
  * @author Ali Takavci
@@ -17,7 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class TimeWindowBucket {
 
     /**
-     * Timestamp (milliseconds) when this bucket was created or reset. Immutable after construction.
+     * Timestamp (milliseconds) when this bucket was created or reset.
      */
     private volatile long timestamp;
 

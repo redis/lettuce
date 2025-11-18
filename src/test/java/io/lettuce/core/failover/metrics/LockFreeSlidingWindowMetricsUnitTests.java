@@ -1,4 +1,4 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.metrics;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -9,8 +9,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.failover.metrics.LockFreeSlidingWindowMetrics;
-import io.lettuce.core.failover.metrics.MetricsSnapshot;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Unit tests for lock-free sliding window metrics implementation.
@@ -22,11 +22,16 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
 @DisplayName("Lock-Free Sliding Window Metrics")
 class LockFreeSlidingWindowMetricsUnitTests {
 
+    private static final Duration BUCKET_SIZE_DURATION = Duration.ofMillis(LockFreeSlidingWindowMetrics.BUCKET_DURATION_MS);
+    private static final int BUCKET_SIZE = toSeconds(BUCKET_SIZE_DURATION);
+
     private LockFreeSlidingWindowMetrics metrics;
+    TestClock clock;
 
     @BeforeEach
     void setUp() {
-        metrics = new LockFreeSlidingWindowMetrics();
+        clock = new TestClock();
+        metrics = new LockFreeSlidingWindowMetrics(LockFreeSlidingWindowMetrics.DEFAULT_WINDOW_DURATION_SECONDS, clock );
     }
 
     @Test
@@ -145,11 +150,12 @@ class LockFreeSlidingWindowMetricsUnitTests {
     @Test
     @DisplayName("should validate configuration")
     void shouldValidateConfiguration() {
-        assertThatThrownBy(() -> new LockFreeSlidingWindowMetrics(60_000, 500)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Bucket duration must be at least");
+        // Window duration must be at least 1 second
+        assertThatThrownBy(() -> new LockFreeSlidingWindowMetrics(0)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Window duration must be at least 1 second");
 
-        assertThatThrownBy(() -> new LockFreeSlidingWindowMetrics(1_000, 2_000)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Window duration must be >= bucket duration");
+        assertThatThrownBy(() -> new LockFreeSlidingWindowMetrics(-5)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Window duration must be at least 1 second");
     }
 
     @Test
@@ -200,4 +206,136 @@ class LockFreeSlidingWindowMetricsUnitTests {
         assertThat(snapshot.getTotalCount()).isEqualTo(threadCount * eventsPerThread);
     }
 
+    @Test
+    @DisplayName("should track events on window with single bucket")
+    void shouldTrackEventsOnWindowWithSingleBucket() {
+        int windowSize = BUCKET_SIZE * 1;
+        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics(windowSize, clock);
+        metrics.recordSuccess();
+        metrics.recordFailure();
+        MetricsSnapshot snapshot = metrics.getSnapshot();
+        assertThat(snapshot.getSuccessCount()).isEqualTo(1);
+        assertThat(snapshot.getFailureCount()).isEqualTo(1);
+
+        // advance one bucket
+        clock.advance(BUCKET_SIZE_DURATION);
+        assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(0);
+        assertThat(metrics.getSnapshot().getFailureCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("should track events on bucket boundary")
+    void shouldTrackEventsAcrossMultipleBuckets() {
+
+        // 2 second window with 1s buckets = 2 buckets
+        int windowSize = BUCKET_SIZE * 2;
+        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics(windowSize, clock);
+
+        // Record events at specific times
+        // bucket 0
+        metrics.recordSuccess();
+        metrics.recordFailure();
+        MetricsSnapshot snapshot = metrics.getSnapshot();
+        assertThat(snapshot.getSuccessCount()).isEqualTo(1);
+        assertThat(snapshot.getFailureCount()).isEqualTo(1);
+
+        // bucket 0
+        clock.advance(BUCKET_SIZE_DURATION.minus(1, ChronoUnit.MILLIS));
+        metrics.recordSuccess();
+        metrics.recordFailure();
+        snapshot = metrics.getSnapshot();
+        assertThat(snapshot.getSuccessCount()).isEqualTo(2);
+        assertThat(snapshot.getFailureCount()).isEqualTo(2);
+
+        // bucket 1
+        clock.advance(Duration.of(1, ChronoUnit.MILLIS));
+        metrics.recordSuccess();
+        metrics.recordFailure();
+        snapshot = metrics.getSnapshot();
+        assertThat(snapshot.getSuccessCount()).isEqualTo(3);
+        assertThat(snapshot.getFailureCount()).isEqualTo(3);
+
+        // bucket 2 // drop bucket 0 from window
+        clock.advance(BUCKET_SIZE_DURATION);
+        snapshot = metrics.getSnapshot();
+        assertThat(snapshot.getSuccessCount()).isEqualTo(1);
+        assertThat(snapshot.getFailureCount()).isEqualTo(1);
+    }
+
+
+
+    @Test
+    @DisplayName("should track events across multiple buckets")
+    void shouldAggregateEventsFromMultipleBuckets() {
+
+        int windowSize = BUCKET_SIZE * 2;
+        TestClock clock = new TestClock(0);
+        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics(windowSize, clock);
+
+        // bucket 0
+        clock.advance(Duration.ZERO.plusMillis(1));
+        metrics.recordSuccess();
+        MetricsSnapshot snapshot = metrics.getSnapshot();
+        assertThat(snapshot.getSuccessCount()).isEqualTo(1);
+
+        // bucket 1
+        clock.advance(BUCKET_SIZE_DURATION);
+        metrics.recordSuccess();
+        MetricsSnapshot snapshot2 = metrics.getSnapshot();
+        assertThat(snapshot2.getSuccessCount()).isEqualTo(2);
+    }
+
+
+
+    @Test
+    @DisplayName("should aggregate events from non-sequential buckets")
+    void shouldAggregateEventsFromNonSequentialBuckets() {
+
+        int windowSize = BUCKET_SIZE * 3;
+        TestClock clock = new TestClock(0);
+        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics(windowSize, clock);
+
+        //bucket 0
+        clock.advance(Duration.ZERO.plusMillis(1));
+        metrics.recordSuccess();
+        MetricsSnapshot snapshot = metrics.getSnapshot();
+        assertThat(snapshot.getSuccessCount()).isEqualTo(1);
+
+        //bucket 1. - no events
+        clock.advance(BUCKET_SIZE_DURATION);
+        MetricsSnapshot snapshot2 = metrics.getSnapshot();
+        assertThat(snapshot2.getSuccessCount()).isEqualTo(1);
+
+        //bucket 2
+        clock.advance(BUCKET_SIZE_DURATION);
+        metrics.recordSuccess();
+        MetricsSnapshot snapshot3 = metrics.getSnapshot();
+        assertThat(snapshot3.getSuccessCount()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("should return correct event count after window advances")
+    void shouldAggregateEventsAfterBucketRotation() {
+
+        int windowSize = BUCKET_SIZE * 3;
+        TestClock clock = new TestClock(0);
+        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics(windowSize, clock);
+
+        // bucket 0
+        clock.advance(Duration.ZERO.plusMillis(1));
+        metrics.recordSuccess();
+        for (int i = 1; i <= 2; i++) {
+            // one success per bucket
+            clock.advance(BUCKET_SIZE_DURATION);
+            metrics.recordSuccess();
+            assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(i+1);
+        }
+        //drop bucket 0 from moving window
+        clock.advance(BUCKET_SIZE_DURATION);
+        assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(2);
+    }
+
+    static private int toSeconds(Duration seconds) {
+        return Math.toIntExact(seconds.getSeconds());
+    }
 }
