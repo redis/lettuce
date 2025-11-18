@@ -1,4 +1,4 @@
-package io.lettuce.core.failover.api;
+package io.lettuce.core.api;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;

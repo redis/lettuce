@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
+import io.lettuce.core.api.BaseRedisClient;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
@@ -82,7 +83,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @see ClientResources
  * @see DefaultClientResources
  */
-public abstract class AbstractRedisClient implements AutoCloseable {
+public abstract class AbstractRedisClient implements BaseRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractRedisClient.class);
 
