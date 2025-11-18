@@ -205,8 +205,8 @@ class StreamReadOutputUnitTests {
 
         assertThat(sut.get()).hasSize(1);
         StreamMessage<String, String> streamMessage = sut.get().get(0);
-        assertThat(streamMessage.getMsSinceLastDelivery()).isEqualTo(5000);
-        assertThat(streamMessage.getRedeliveryCount()).isEqualTo(2);
+        assertThat(streamMessage.getMillisElapsedFromDelivery()).isEqualTo(5000);
+        assertThat(streamMessage.getDeliveredCount()).isEqualTo(2);
         assertThat(streamMessage.getBody()).hasSize(1).containsEntry("key", "value");
     }
 
@@ -237,8 +237,8 @@ class StreamReadOutputUnitTests {
         assertThat(sut.get()).hasSize(1);
         StreamMessage<String, String> streamMessage = sut.get().get(0);
         assertThat(streamMessage.isClaimed()).isFalse();
-        assertThat(streamMessage.getMsSinceLastDelivery()).isEqualTo(1000);
-        assertThat(streamMessage.getRedeliveryCount()).isEqualTo(0);
+        assertThat(streamMessage.getMillisElapsedFromDelivery()).isEqualTo(1000);
+        assertThat(streamMessage.getDeliveredCount()).isEqualTo(0);
     }
 
     @Test
@@ -305,9 +305,9 @@ class StreamReadOutputUnitTests {
         assertThat(m2.isClaimed()).isTrue();
         assertThat(m3.isClaimed()).isFalse();
 
-        assertThat(m1.getRedeliveryCount()).isEqualTo(2);
-        assertThat(m2.getRedeliveryCount()).isEqualTo(1);
-        assertThat(m3.getRedeliveryCount()).isEqualTo(0);
+        assertThat(m1.getDeliveredCount()).isEqualTo(2);
+        assertThat(m2.getDeliveredCount()).isEqualTo(1);
+        assertThat(m3.getDeliveredCount()).isEqualTo(0);
     }
 
 }

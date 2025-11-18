@@ -17,9 +17,9 @@ public class StreamMessage<K, V> {
 
     private final Map<K, V> body;
 
-    private final Long msSinceLastDelivery;
+    private final Long millisElapsedFromDelivery;
 
-    private final Long redeliveryCount;
+    private final Long deliveredCount;
 
     /**
      * Create a new {@link StreamMessage}.
@@ -33,8 +33,8 @@ public class StreamMessage<K, V> {
         this.stream = stream;
         this.id = id;
         this.body = body;
-        this.msSinceLastDelivery = null;
-        this.redeliveryCount = null;
+        this.millisElapsedFromDelivery = null;
+        this.deliveredCount = null;
     }
 
     /**
@@ -42,17 +42,18 @@ public class StreamMessage<K, V> {
      *
      * @param stream the stream.
      * @param id the message id.
-     * @param msSinceLastDelivery the milliseconds since last delivery when CLAIM was used.
-     * @param redeliveryCount the number of prior deliveries when CLAIM was used.
+     * @param millisElapsedFromDelivery the milliseconds since last delivery when CLAIM was used.
+     * @param deliveredCount the number of prior deliveries when CLAIM was used.
      * @param body map containing the message body.
+     * @since 7.1
      */
-    public StreamMessage(K stream, String id, Map<K, V> body, long msSinceLastDelivery, long redeliveryCount) {
+    public StreamMessage(K stream, String id, Map<K, V> body, long millisElapsedFromDelivery, long deliveredCount) {
 
         this.stream = stream;
         this.id = id;
         this.body = body;
-        this.msSinceLastDelivery = msSinceLastDelivery;
-        this.redeliveryCount = redeliveryCount;
+        this.millisElapsedFromDelivery = millisElapsedFromDelivery;
+        this.deliveredCount = deliveredCount;
     }
 
     public K getStream() {
@@ -71,20 +72,19 @@ public class StreamMessage<K, V> {
     }
 
     /**
-     * @return the milliseconds since the last delivery of this message when CLAIM was used. Default: 0. ul>
+     * @return the milliseconds since the last delivery of this message when CLAIM was used.
+     *         <ul>
      *         <li>{@code null} when not applicable</li>
      *         <li>{@code 0} means not claimed from the pending entries list (PEL)</li>
      *         <li>{@code > 0} means claimed from the PEL</li>
      *         </ul>
      * @since 7.1
      */
-    public Long getMsSinceLastDelivery() {
-        return msSinceLastDelivery;
+    public Long getMillisElapsedFromDelivery() {
+        return millisElapsedFromDelivery;
     }
 
     /**
-     * /**
-     * 
      * @return the number of prior deliveries of this message when CLAIM was used:
      *         <ul>
      *         <li>{@code null} when not applicable</li>
@@ -93,12 +93,12 @@ public class StreamMessage<K, V> {
      *         </ul>
      * @since 7.1
      */
-    public Long getRedeliveryCount() {
-        return redeliveryCount;
+    public Long getDeliveredCount() {
+        return deliveredCount;
     }
 
     public boolean isClaimed() {
-        return redeliveryCount != null && redeliveryCount > 0;
+        return deliveredCount != null && deliveredCount > 0;
     }
 
     @Override

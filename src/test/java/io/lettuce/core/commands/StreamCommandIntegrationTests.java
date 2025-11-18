@@ -47,7 +47,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
@@ -276,8 +275,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(firstMessage.getStream()).isEqualTo("stream-1");
         assertThat(firstMessage.getBody()).hasSize(1).containsEntry("key1", "value1");
-        assertThat(firstMessage.getMsSinceLastDelivery()).isNull();
-        assertThat(firstMessage.getRedeliveryCount()).isNull();
+        assertThat(firstMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(firstMessage.getDeliveredCount()).isNull();
 
         StreamMessage<String, String> nextMessage = messages.get(1);
 
@@ -307,16 +306,16 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(firstMessage.getId()).isEqualTo(initial1);
         assertThat(firstMessage.getStream()).isEqualTo("{s1}stream-1");
         assertThat(firstMessage.getBody()).hasSize(1).containsEntry("key1", "value1");
-        assertThat(firstMessage.getMsSinceLastDelivery()).isNull();
-        assertThat(firstMessage.getRedeliveryCount()).isNull();
+        assertThat(firstMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(firstMessage.getDeliveredCount()).isNull();
 
         StreamMessage<String, String> secondMessage = messages.get(3);
 
         assertThat(secondMessage.getId()).isEqualTo(message2);
         assertThat(secondMessage.getStream()).isEqualTo("{s1}stream-2");
         assertThat(secondMessage.getBody()).hasSize(2).containsEntry("key4", "value4");
-        assertThat(secondMessage.getMsSinceLastDelivery()).isNull();
-        assertThat(secondMessage.getRedeliveryCount()).isNull();
+        assertThat(secondMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(secondMessage.getDeliveredCount()).isNull();
     }
 
     @Test
@@ -341,16 +340,16 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(firstMessage.getId()).isEqualTo(message1);
         assertThat(firstMessage.getStream()).isEqualTo("stream-1");
         assertThat(firstMessage.getBody()).containsEntry("key3", "value3");
-        assertThat(firstMessage.getMsSinceLastDelivery()).isNull();
-        assertThat(firstMessage.getRedeliveryCount()).isNull();
+        assertThat(firstMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(firstMessage.getDeliveredCount()).isNull();
 
         StreamMessage<String, String> secondMessage = messages.get(1);
 
         assertThat(secondMessage.getId()).isEqualTo(message2);
         assertThat(secondMessage.getStream()).isEqualTo("stream-2");
         assertThat(secondMessage.getBody()).containsEntry("key4", "value4");
-        assertThat(secondMessage.getMsSinceLastDelivery()).isNull();
-        assertThat(secondMessage.getRedeliveryCount()).isNull();
+        assertThat(secondMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(secondMessage.getDeliveredCount()).isNull();
     }
 
     @Test
@@ -369,8 +368,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(lastMessage.getStream()).isEqualTo("stream-1");
         assertThat(lastMessage.getBody()).hasSize(1).containsEntry("key2", "value2");
-        assertThat(lastMessage.getMsSinceLastDelivery()).isNull();
-        assertThat(lastMessage.getRedeliveryCount()).isNull();
+        assertThat(lastMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(lastMessage.getDeliveredCount()).isNull();
 
         assertThat(latestMessages).isEmpty();
     }
@@ -1163,11 +1162,11 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(fourth.isClaimed()).isFalse();
 
         // Assert claimed message structure
-        assertThat(first.getMsSinceLastDelivery()).isGreaterThanOrEqualTo(5);
-        assertThat(first.getRedeliveryCount()).isGreaterThanOrEqualTo(1);
+        assertThat(first.getMillisElapsedFromDelivery()).isGreaterThanOrEqualTo(5);
+        assertThat(first.getDeliveredCount()).isGreaterThanOrEqualTo(1);
         assertThat(first.getBody()).containsEntry("f", "v");
-        assertThat(fourth.getMsSinceLastDelivery()).isEqualTo(0);
-        assertThat(fourth.getRedeliveryCount()).isEqualTo(0);
+        assertThat(fourth.getMillisElapsedFromDelivery()).isEqualTo(0);
+        assertThat(fourth.getDeliveredCount()).isEqualTo(0);
         assertThat(fourth.getBody()).containsEntry("f", "v");
     }
 
