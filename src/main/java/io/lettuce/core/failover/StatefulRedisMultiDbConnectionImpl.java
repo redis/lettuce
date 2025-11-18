@@ -86,7 +86,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     }
 
     private void failoverFrom(RedisDatabase<C> fromDb) {
-        RedisDatabase<C> healthyDatabase = getHealthyDatabase(fromDb);
+        RedisDatabase<C> healthyDatabase = getNextHealthyDatabase(fromDb);
         if (healthyDatabase != null) {
             switchToDatabase(healthyDatabase.getRedisURI());
         } else {
@@ -95,10 +95,9 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         }
     }
 
-    private RedisDatabase<C> getHealthyDatabase(RedisDatabase<C> current) {
-        return databases.values().stream().filter(db -> db != current)
-                .filter(db -> db.getCircuitBreaker().getCurrentState() == CircuitBreaker.State.CLOSED)
-                .max(Comparator.comparingDouble(RedisDatabase::getWeight)).get();
+    private RedisDatabase<C> getNextHealthyDatabase(RedisDatabase<C> current) {
+        return databases.values().stream().filter(db -> db.getHealthStatus() == HealthStatus.HEALTHY)
+                .filter(db -> !db.equals(current)).max(Comparator.comparingDouble(RedisDatabase::getWeight)).orElse(null);
     }
 
     @Override

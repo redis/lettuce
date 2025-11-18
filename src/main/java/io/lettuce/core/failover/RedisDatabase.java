@@ -24,12 +24,14 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> {
 
     private final CircuitBreaker circuitBreaker;
 
-    public RedisDatabase(RedisDatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint) {
-        this.redisURI = config.redisURI;
-        this.weight = config.weight;
+    private HealthStatus healthStatus = HealthStatus.UNKNOWN;
+
+    public RedisDatabase(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint) {
+        this.redisURI = config.getRedisURI();
+        this.weight = config.getWeight();
         this.connection = connection;
         this.databaseEndpoint = databaseEndpoint;
-        this.circuitBreaker = new CircuitBreaker(config.circuitBreakerConfig);
+        this.circuitBreaker = new CircuitBreaker(config.getCircuitBreakerConfig());
         databaseEndpoint.setCircuitBreaker(circuitBreaker);
     }
 
@@ -53,26 +55,8 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> {
         return circuitBreaker;
     }
 
-    public static class RedisDatabaseConfig {
-
-        private RedisURI redisURI;
-
-        private float weight;
-
-        private CircuitBreakerConfig circuitBreakerConfig;
-
-        public RedisDatabaseConfig(RedisURI redisURI, float weight) {
-            this.redisURI = redisURI;
-            this.weight = weight;
-            this.circuitBreakerConfig = CircuitBreakerConfig.DEFAULT;
-        }
-
-        public RedisDatabaseConfig(RedisURI redisURI, float weight, CircuitBreakerConfig circuitBreakerConfig) {
-            this.redisURI = redisURI;
-            this.weight = weight;
-            this.circuitBreakerConfig = circuitBreakerConfig;
-        }
-
+    public HealthStatus getHealthStatus() {
+        return healthStatus;
     }
 
 }
