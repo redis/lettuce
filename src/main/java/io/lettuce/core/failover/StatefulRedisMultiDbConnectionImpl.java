@@ -61,6 +61,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     protected final DatabaseConnectionFactory<C, K, V> connectionFactory;
 
+    private final Object databasesLock = new Object();
+
     public StatefulRedisMultiDbConnectionImpl(Map<RedisURI, RedisDatabase<C>> connections, ClientResources resources,
             RedisCodec<K, V> codec, Supplier<JsonParser> parser, DatabaseConnectionFactory<C, K, V> connectionFactory) {
         if (connections == null || connections.isEmpty()) {
@@ -294,16 +296,19 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         }
 
         RedisURI redisURI = databaseConfig.getRedisURI();
-        if (databases.containsKey(redisURI)) {
-            throw new IllegalArgumentException("Database already exists: " + redisURI);
+        RedisDatabase<C> database = null;
+        synchronized (databasesLock) {
+            if (databases.containsKey(redisURI)) {
+                throw new IllegalArgumentException("Database already exists: " + redisURI);
+            }
+
+            // Create new database connection using the factory
+            database = connectionFactory.createDatabase(databaseConfig, codec);
+
+            // Add listeners to the new connection if it's the current one
+            // (though it won't be current initially since we're just adding it)
+            databases.put(redisURI, database);
         }
-
-        // Create new database connection using the factory
-        RedisDatabase<C> database = connectionFactory.createDatabase(databaseConfig, codec);
-
-        // Add listeners to the new connection if it's the current one
-        // (though it won't be current initially since we're just adding it)
-        databases.put(redisURI, database);
 
         database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
     }
@@ -314,17 +319,20 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             throw new IllegalArgumentException("RedisURI must not be null");
         }
 
-        RedisDatabase<C> database = databases.get(redisURI);
-        if (database == null) {
-            throw new IllegalArgumentException("Database not found: " + redisURI);
-        }
+        RedisDatabase<C> database = null;
+        synchronized (databasesLock) {
+            database = databases.get(redisURI);
+            if (database == null) {
+                throw new IllegalArgumentException("Database not found: " + redisURI);
+            }
 
-        if (current.getRedisURI().equals(redisURI)) {
-            throw new UnsupportedOperationException("Cannot remove the currently active database: " + redisURI);
-        }
+            if (current.getRedisURI().equals(redisURI)) {
+                throw new UnsupportedOperationException("Cannot remove the currently active database: " + redisURI);
+            }
 
-        // Remove the database and close its connection
-        databases.remove(redisURI);
+            // Remove the database and close its connection
+            databases.remove(redisURI);
+        }
         database.getConnection().close();
         database.getCircuitBreaker().removeListener(this::onCircuitBreakerStateChange);
     }
