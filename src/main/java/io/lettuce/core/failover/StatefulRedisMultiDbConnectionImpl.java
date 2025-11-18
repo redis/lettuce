@@ -253,21 +253,23 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     @Override
     public void switchToDatabase(RedisURI redisURI) {
-        RedisDatabase<C> fromDb = current;
-        RedisDatabase<C> toDb = databases.get(redisURI);
-        if (fromDb == null || toDb == null) {
-            throw new UnsupportedOperationException("Cannot initiate switch without a current and target database!");
+        synchronized (databasesLock) {
+            RedisDatabase<C> fromDb = current;
+            RedisDatabase<C> toDb = databases.get(redisURI);
+            if (fromDb == null || toDb == null) {
+                throw new UnsupportedOperationException("Cannot initiate switch without a current and target database!");
+            }
+            current = toDb;
+            connectionStateListeners.forEach(listener -> {
+                toDb.getConnection().addListener(listener);
+                fromDb.getConnection().removeListener(listener);
+            });
+            pushListeners.forEach(listener -> {
+                toDb.getConnection().addListener(listener);
+                fromDb.getConnection().removeListener(listener);
+            });
+            fromDb.getDatabaseEndpoint().handOverCommandQueue(toDb.getDatabaseEndpoint());
         }
-        current = toDb;
-        connectionStateListeners.forEach(listener -> {
-            toDb.getConnection().addListener(listener);
-            fromDb.getConnection().removeListener(listener);
-        });
-        pushListeners.forEach(listener -> {
-            toDb.getConnection().addListener(listener);
-            fromDb.getConnection().removeListener(listener);
-        });
-        fromDb.getDatabaseEndpoint().handOverCommandQueue(toDb.getDatabaseEndpoint());
     }
 
     @Override
