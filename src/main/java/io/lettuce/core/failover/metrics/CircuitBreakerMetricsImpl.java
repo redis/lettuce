@@ -67,17 +67,9 @@ public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
         return slidingWindow.getSnapshot();
     }
 
-    /**
-     * Reset all metrics to zero.
-     */
-    @Override
-    public void reset() {
-        slidingWindow.reset();
-    }
 
     @Override
     public String toString() {
         return "CircuitBreakerMetrics{" + slidingWindow.getSnapshot() + '}';
     }
-
 }

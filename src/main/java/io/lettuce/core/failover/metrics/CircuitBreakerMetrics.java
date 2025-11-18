@@ -32,9 +32,4 @@ public interface CircuitBreakerMetrics {
      */
     MetricsSnapshot getSnapshot();
 
-    /**
-     * Reset all metrics to zero.
-     */
-    void reset();
-
 }
