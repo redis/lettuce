@@ -67,7 +67,6 @@ public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
         return slidingWindow.getSnapshot();
     }
 
-
     @Override
     public String toString() {
         return "CircuitBreakerMetrics{" + slidingWindow.getSnapshot() + '}';

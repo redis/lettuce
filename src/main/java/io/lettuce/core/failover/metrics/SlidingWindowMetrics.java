@@ -37,9 +37,4 @@ public interface SlidingWindowMetrics {
      */
     MetricsSnapshot getSnapshot();
 
-    /**
-     * Reset all metrics to zero. This clears all buckets and counters.
-     */
-    void reset();
-
 }

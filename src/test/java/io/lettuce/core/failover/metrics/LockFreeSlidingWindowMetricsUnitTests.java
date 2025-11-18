@@ -37,7 +37,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
     @Test
     @DisplayName("should initialize with default configuration")
     void shouldInitializeWithDefaults() {
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(0);
         assertThat(snapshot.getFailureCount()).isEqualTo(0);
     }
@@ -49,7 +49,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
         metrics.recordSuccess();
         metrics.recordSuccess();
 
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(3);
         assertThat(snapshot.getFailureCount()).isEqualTo(0);
     }
@@ -60,7 +60,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
         metrics.recordFailure();
         metrics.recordFailure();
 
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(0);
         assertThat(snapshot.getFailureCount()).isEqualTo(2);
     }
@@ -74,7 +74,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
         metrics.recordSuccess();
         metrics.recordFailure();
 
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(3);
         assertThat(snapshot.getFailureCount()).isEqualTo(2);
         assertThat(snapshot.getTotalCount()).isEqualTo(5);
@@ -87,7 +87,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
         metrics.recordSuccess();
         metrics.recordFailure();
 
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         double failureRate = snapshot.getFailureRate();
         assertThat(failureRate).isCloseTo(33.33, offset(0.1));
     }
@@ -95,7 +95,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
     @Test
     @DisplayName("should return zero failure rate when no events")
     void shouldReturnZeroFailureRateWhenNoEvents() {
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getFailureRate()).isEqualTo(0.0);
     }
 
@@ -105,23 +105,8 @@ class LockFreeSlidingWindowMetricsUnitTests {
         metrics.recordFailure();
         metrics.recordFailure();
 
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getFailureRate()).isEqualTo(100.0);
-    }
-
-    @Test
-    @DisplayName("should reset all metrics")
-    void shouldResetAllMetrics() {
-        metrics.recordSuccess();
-        metrics.recordSuccess();
-        metrics.recordFailure();
-
-        metrics.reset();
-
-        MetricsSnapshot snapshot = metrics.getSnapshot();
-        assertThat(snapshot.getSuccessCount()).isEqualTo(0);
-        assertThat(snapshot.getFailureCount()).isEqualTo(0);
-        assertThat(snapshot.getTotalCount()).isEqualTo(0);
     }
 
     @Test
@@ -131,7 +116,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
         metrics.recordSuccess();
         metrics.recordFailure();
 
-        MetricsSnapshot snapshot1 = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot1 = metrics.getSnapshot();
         assertThat(snapshot1.getSuccessCount()).isEqualTo(2);
         assertThat(snapshot1.getFailureCount()).isEqualTo(1);
 
@@ -143,7 +128,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
         assertThat(snapshot1.getFailureCount()).isEqualTo(1);
 
         // New snapshot should reflect new state
-        MetricsSnapshot snapshot2 = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot2 = metrics.getSnapshot();
         assertThat(snapshot2.getSuccessCount()).isEqualTo(3);
     }
 
@@ -171,7 +156,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
             }
         }
 
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getTotalCount()).isEqualTo(eventCount);
         assertThat(snapshot.getSuccessCount()).isEqualTo(eventCount / 2);
         assertThat(snapshot.getFailureCount()).isEqualTo(eventCount / 2);
@@ -202,7 +187,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
             thread.join();
         }
 
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getTotalCount()).isEqualTo(threadCount * eventsPerThread);
     }
 
@@ -213,7 +198,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
         LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics(windowSize, clock);
         metrics.recordSuccess();
         metrics.recordFailure();
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(1);
         assertThat(snapshot.getFailureCount()).isEqualTo(1);
 
@@ -235,7 +220,7 @@ class LockFreeSlidingWindowMetricsUnitTests {
         // bucket 0
         metrics.recordSuccess();
         metrics.recordFailure();
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(1);
         assertThat(snapshot.getFailureCount()).isEqualTo(1);
 
@@ -275,13 +260,13 @@ class LockFreeSlidingWindowMetricsUnitTests {
         // bucket 0
         clock.advance(Duration.ZERO.plusMillis(1));
         metrics.recordSuccess();
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(1);
 
         // bucket 1
         clock.advance(BUCKET_SIZE_DURATION);
         metrics.recordSuccess();
-        MetricsSnapshot snapshot2 = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot2 = metrics.getSnapshot();
         assertThat(snapshot2.getSuccessCount()).isEqualTo(2);
     }
 
@@ -298,18 +283,18 @@ class LockFreeSlidingWindowMetricsUnitTests {
         //bucket 0
         clock.advance(Duration.ZERO.plusMillis(1));
         metrics.recordSuccess();
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(1);
 
         //bucket 1. - no events
         clock.advance(BUCKET_SIZE_DURATION);
-        MetricsSnapshot snapshot2 = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot2 = metrics.getSnapshot();
         assertThat(snapshot2.getSuccessCount()).isEqualTo(1);
 
         //bucket 2
         clock.advance(BUCKET_SIZE_DURATION);
         metrics.recordSuccess();
-        MetricsSnapshot snapshot3 = metrics.getSnapshot();
+        MetricsSnapshotImpl snapshot3 = metrics.getSnapshot();
         assertThat(snapshot3.getSuccessCount()).isEqualTo(2);
     }
 

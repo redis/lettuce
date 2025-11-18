@@ -163,7 +163,7 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
     }
 
     @Override
-    public MetricsSnapshot getSnapshot() {
+    public MetricsSnapshotImpl getSnapshot() {
         long currentTimeMs = clock.currentTimeMillis();
         long windowStart = currentTimeMs - windowDurationMs;
 
@@ -179,20 +179,12 @@ public class LockFreeSlidingWindowMetrics implements SlidingWindowMetrics {
             }
         }
 
-        return new MetricsSnapshot(totalSuccess, totalFailure, currentTimeMs);
-    }
-
-    @Override
-    public void reset() {
-        for (TimeWindowBucket bucket : ringBuffer) {
-            bucket.reset();
-            bucket.setTimestamp(clock.currentTimeMillis());
-        }
+        return new MetricsSnapshotImpl(totalSuccess, totalFailure);
     }
 
     @Override
     public String toString() {
-        MetricsSnapshot snapshot = getSnapshot();
+        MetricsSnapshotImpl snapshot = getSnapshot();
         return "LockFreeSlidingWindowMetrics{" + "window=" + windowDurationMs + "ms, bucket=" + bucketDurationMs
                 + "ms, buckets=" + bucketCount + ", " + snapshot + '}';
     }
