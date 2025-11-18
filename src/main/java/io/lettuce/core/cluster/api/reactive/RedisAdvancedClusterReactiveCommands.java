@@ -347,7 +347,7 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     Mono<StreamScanCursor> scan(KeyStreamingChannel<K> channel, ScanCursor scanCursor);
 
     /**
-     * Touch one or more keys with pipelining. Touch sets the last accessed time for a key. Non-exsitent keys wont get created.
+     * Touch one or more keys with pipelining. Touch sets the last accessed time for a key. Non-exsitent keys won't get created.
      * Cross-slot keys will result in multiple calls to the particular cluster nodes.
      *
      * @param keys the keys
