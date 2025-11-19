@@ -1,12 +1,10 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.metrics;
 
 import java.lang.management.ManagementFactory;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-
-import io.lettuce.core.failover.metrics.LockFreeSlidingWindowMetrics;
 
 /**
  * Performance tests for lock-free sliding window metrics.
@@ -16,7 +14,7 @@ import io.lettuce.core.failover.metrics.LockFreeSlidingWindowMetrics;
  */
 @Tag("performance")
 @DisplayName("Sliding Window Metrics Performance")
-class SlidingWindowMetricsPerformanceTests {
+class LockFreeSlidingWindowMetricsPerformanceTests {
 
     @Test
     @DisplayName("should record 1M events with minimal overhead")
