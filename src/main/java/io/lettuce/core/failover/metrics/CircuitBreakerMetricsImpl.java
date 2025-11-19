@@ -5,8 +5,8 @@ package io.lettuce.core.failover.metrics;
  * failures within a configurable time period.
  *
  * <p>
- * This implementation uses a lock-free sliding window mechanism to track metrics over a configurable time period (default: 10
- * seconds). Old data outside the window is automatically expired and cleaned up. Bucket duration is fixed at 200ms.
+ * This implementation uses a lock-free sliding window mechanism to track metrics over a configurable time period (default: 2
+ * seconds). Old data outside the window is automatically expired and cleaned up.
  * </p>
  *
  * @author Ali Takavci
@@ -15,7 +15,7 @@ package io.lettuce.core.failover.metrics;
 public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
 
     /**
-     * Default window duration: 10 seconds.
+     * Default window duration: 2 seconds.
      */
     private static final int DEFAULT_WINDOW_DURATION_SECONDS = 2;
 
@@ -25,7 +25,7 @@ public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
     private final SlidingWindowMetrics slidingWindow;
 
     /**
-     * Create metrics instance with default configuration 2 second window).
+     * Create metrics instance with default configuration (2 second window, 1 second buckets).
      */
     public CircuitBreakerMetricsImpl() {
         this(DEFAULT_WINDOW_DURATION_SECONDS);

@@ -35,41 +35,21 @@ public class MetricsSnapshotImpl implements MetricsSnapshot {
         this.failureCount = failureCount;
     }
 
-    /**
-     * Get the number of successful command executions in the time window.
-     *
-     * @return the success count
-     */
     @Override
     public long getSuccessCount() {
         return successCount;
     }
 
-    /**
-     * Get the number of failed command executions in the time window.
-     *
-     * @return the failure count
-     */
     @Override
     public long getFailureCount() {
         return failureCount;
     }
 
-    /**
-     * Get the total number of commands (success + failure) in the time window.
-     *
-     * @return the total count
-     */
     @Override
     public long getTotalCount() {
         return successCount + failureCount;
     }
 
-    /**
-     * Get the failure rate as a percentage (0-100).
-     *
-     * @return the failure rate, or 0 if no commands have been executed
-     */
     @Override
     public double getFailureRate() {
         long total = getTotalCount();
@@ -79,11 +59,6 @@ public class MetricsSnapshotImpl implements MetricsSnapshot {
         return (failureCount * 100.0) / total;
     }
 
-    /**
-     * Get the success rate as a percentage (0-100).
-     *
-     * @return the success rate, or 0 if no commands have been executed
-     */
     @Override
     public double getSuccessRate() {
         return 100.0 - getFailureRate();
