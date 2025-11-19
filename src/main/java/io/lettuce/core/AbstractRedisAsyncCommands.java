@@ -2319,7 +2319,7 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     }
 
     @Override
-    public RedisFuture<Boolean> msetex(Map<K, V> map, SetArgs args) {
+    public RedisFuture<Boolean> msetex(Map<K, V> map, MSetExArgs args) {
         return dispatch(commandBuilder.msetex(map, args));
     }
 

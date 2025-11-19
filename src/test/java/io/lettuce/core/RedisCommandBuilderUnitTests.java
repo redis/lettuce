@@ -489,7 +489,7 @@ class RedisCommandBuilderUnitTests {
     void msetex_nxThenEx_seconds_emissionOrder() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
-        SetArgs a = SetArgs.Builder.nx().ex(5);
+        MSetExArgs a = MSetExArgs.Builder.nx().ex(5);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -500,7 +500,7 @@ class RedisCommandBuilderUnitTests {
     void msetex_xxThenKeepTtl_emissionOrder() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
-        SetArgs a = SetArgs.Builder.xx().keepttl();
+        MSetExArgs a = MSetExArgs.Builder.xx().keepttl();
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -511,7 +511,7 @@ class RedisCommandBuilderUnitTests {
     void msetex_noConditionThenPx_millis_emissionOrder() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
-        SetArgs a = SetArgs.Builder.px(500);
+        MSetExArgs a = MSetExArgs.Builder.px(500);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -522,7 +522,7 @@ class RedisCommandBuilderUnitTests {
     void msetex_noConditionThenPx_duration_emissionOrder() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
-        SetArgs a = SetArgs.Builder.px(Duration.ofMillis(1234));
+        MSetExArgs a = MSetExArgs.Builder.px(Duration.ofMillis(1234));
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -534,7 +534,7 @@ class RedisCommandBuilderUnitTests {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
         Instant t = Instant.ofEpochSecond(1_234_567_890L);
-        SetArgs a = SetArgs.Builder.exAt(t);
+        MSetExArgs a = MSetExArgs.Builder.exAt(t);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -546,7 +546,7 @@ class RedisCommandBuilderUnitTests {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
         Instant t = Instant.ofEpochMilli(4_000L);
-        SetArgs a = SetArgs.Builder.pxAt(t);
+        MSetExArgs a = MSetExArgs.Builder.pxAt(t);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -558,7 +558,7 @@ class RedisCommandBuilderUnitTests {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
         long epochSeconds = 1_234_567_890L;
-        SetArgs a = SetArgs.Builder.exAt(epochSeconds);
+        MSetExArgs a = MSetExArgs.Builder.exAt(epochSeconds);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -570,7 +570,7 @@ class RedisCommandBuilderUnitTests {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
         long epochMillis = 4_567L;
-        SetArgs a = SetArgs.Builder.pxAt(epochMillis);
+        MSetExArgs a = MSetExArgs.Builder.pxAt(epochMillis);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -582,7 +582,7 @@ class RedisCommandBuilderUnitTests {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
         Instant t = Instant.ofEpochSecond(42L);
-        SetArgs a = SetArgs.Builder.nx().exAt(t);
+        MSetExArgs a = MSetExArgs.Builder.nx().exAt(t);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -594,7 +594,7 @@ class RedisCommandBuilderUnitTests {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
         Instant t = Instant.ofEpochMilli(314L);
-        SetArgs a = SetArgs.Builder.xx().pxAt(t);
+        MSetExArgs a = MSetExArgs.Builder.xx().pxAt(t);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -606,7 +606,7 @@ class RedisCommandBuilderUnitTests {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
         Date ts = new Date(1_234_567_890L * 1000L);
-        SetArgs a = SetArgs.Builder.exAt(ts);
+        MSetExArgs a = MSetExArgs.Builder.exAt(ts);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -618,7 +618,7 @@ class RedisCommandBuilderUnitTests {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k", "v");
         Date ts = new Date(9_999L);
-        SetArgs a = SetArgs.Builder.pxAt(ts);
+        MSetExArgs a = MSetExArgs.Builder.pxAt(ts);
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();
@@ -640,7 +640,7 @@ class RedisCommandBuilderUnitTests {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("k1", "v1");
         map.put("k2", "v2");
-        SetArgs a = SetArgs.Builder.keepttl();
+        MSetExArgs a = MSetExArgs.Builder.keepttl();
 
         Command<String, String, Boolean> cmd = sut.msetex(map, a);
         String s = cmd.getArgs().toCommandString();

@@ -21,6 +21,7 @@ package io.lettuce.core.api.reactive;
 
 import java.util.Map;
 
+import io.lettuce.core.MSetExArgs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.BitFieldArgs;
@@ -374,11 +375,11 @@ public interface RedisStringReactiveCommands<K, V> {
      * of [EX|PX|EXAT|PXAT|KEEPTTL].
      *
      * @param map the map of keys and values.
-     * @param args the {@link SetArgs} specifying NX/XX and expiration.
+     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
      * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
      * @since 7.1
      */
-    Mono<Boolean> msetex(Map<K, V> map, SetArgs args);
+    Mono<Boolean> msetex(Map<K, V> map, MSetExArgs args);
 
     /**
      * Set the string value of a key.

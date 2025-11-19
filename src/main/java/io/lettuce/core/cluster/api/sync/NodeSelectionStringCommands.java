@@ -25,6 +25,7 @@ import java.util.Map;
 import io.lettuce.core.BitFieldArgs;
 import io.lettuce.core.GetExArgs;
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.SetArgs;
 import io.lettuce.core.StrAlgoArgs;
 import io.lettuce.core.StringMatchResult;
@@ -368,11 +369,11 @@ public interface NodeSelectionStringCommands<K, V> {
      * of [EX|PX|EXAT|PXAT|KEEPTTL].
      *
      * @param map the map of keys and values.
-     * @param args the {@link SetArgs} specifying NX/XX and expiration.
+     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
      * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
      * @since 7.1
      */
-    Executions<Boolean> msetex(Map<K, V> map, SetArgs args);
+    Executions<Boolean> msetex(Map<K, V> map, MSetExArgs args);
 
     /**
      * Set the string value of a key.
