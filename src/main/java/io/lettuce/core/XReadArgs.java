@@ -93,14 +93,24 @@ public class XReadArgs implements CompositeArgument {
         }
 
         /**
-         * Create a new {@link XReadArgs} and set CLAIM min-idle-time (milliseconds). Only valid for XREADGROUP.
+         * Create a new {@link XReadArgs} and set CLAIM min-idle-time.
+         * 
+         * @implNote Only valid for XREADGROUP.
+         * @param milliseconds minimum idle time.
+         * @return new {@link XReadArgs} with CLAIM set
+         * @since 7.1
          */
         public static XReadArgs claim(long milliseconds) {
             return new XReadArgs().claim(milliseconds);
         }
 
         /**
-         * Create a new {@link XReadArgs} and set CLAIM min-idle-time. Only valid for XREADGROUP.
+         * Create a new {@link XReadArgs} and set CLAIM min-idle-time.
+         * 
+         * @implNote Only valid for XREADGROUP.
+         * @param timeout minimum idle time.
+         * @return new {@link XReadArgs} with CLAIM set
+         * @since 7.1
          */
         public static XReadArgs claim(Duration timeout) {
             LettuceAssert.notNull(timeout, "Claim timeout must not be null");
@@ -159,9 +169,12 @@ public class XReadArgs implements CompositeArgument {
     }
 
     /**
-     * Claim idle pending messages first with a minimum idle time (milliseconds). Only valid for XREADGROUP.
+     * Claim idle pending messages first with a minimum idle time (milliseconds).
      * 
-     * @since 7.0
+     * @implNote Only valid for XREADGROUP.
+     * @param milliseconds minimum idle time.
+     * @return {@code this}.
+     * @since 7.1
      */
     public XReadArgs claim(long milliseconds) {
 
@@ -170,9 +183,12 @@ public class XReadArgs implements CompositeArgument {
     }
 
     /**
-     * Claim idle pending messages first with a minimum idle time. Only valid for XREADGROUP.
+     * Claim idle pending messages first with a minimum idle time (milliseconds).
      * 
-     * @since 7.0
+     * @implNote Only valid for XREADGROUP.
+     * @param timeout minimum idle time.
+     * @return {@code this}.
+     * @since 7.1
      */
     public XReadArgs claim(Duration timeout) {
 
@@ -196,7 +212,7 @@ public class XReadArgs implements CompositeArgument {
         }
 
         if (claimMinIdleTime != null) {
-            args.add("CLAIM").add(claimMinIdleTime);
+            args.add(CommandKeyword.CLAIM).add(claimMinIdleTime);
         }
     }
 

@@ -1117,8 +1117,7 @@ public class StreamCommandIntegrationTests extends TestSupport {
     private static final long IDLE_TIME_MS = 5;
 
     private void beforeEachClaimTest() throws InterruptedException {
-        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.3.224"),
-                "Redis 8.3.224+ required for XREADGROUP CLAIM");
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.4"), "Redis 8.4+ required for XREADGROUP CLAIM");
 
         // Produce two entries
         redis.xadd(KEY, BODY);
