@@ -23,15 +23,17 @@ import static org.assertj.core.api.Assertions.offset;
 class SlidingWindowMetricsUnitTests {
 
     private static final Duration BUCKET_SIZE_DURATION = Duration.ofSeconds(1);
+
     private static final int BUCKET_SIZE = toSeconds(BUCKET_SIZE_DURATION);
 
     private LockFreeSlidingTimeWindowMetrics metrics;
+
     TestClock clock;
 
     @BeforeEach
     void setUp() {
         clock = new TestClock();
-        metrics = new LockFreeSlidingTimeWindowMetrics(LockFreeSlidingTimeWindowMetrics.DEFAULT_WINDOW_DURATION_SECONDS, clock );
+        metrics = new LockFreeSlidingTimeWindowMetrics(LockFreeSlidingTimeWindowMetrics.DEFAULT_WINDOW_DURATION_SECONDS, clock);
     }
 
     @Test
@@ -247,8 +249,6 @@ class SlidingWindowMetricsUnitTests {
         assertThat(snapshot.getFailureCount()).isEqualTo(1);
     }
 
-
-
     @Test
     @DisplayName("should track events across multiple buckets")
     void shouldAggregateEventsFromMultipleBuckets() {
@@ -270,8 +270,6 @@ class SlidingWindowMetricsUnitTests {
         assertThat(snapshot2.getSuccessCount()).isEqualTo(2);
     }
 
-
-
     @Test
     @DisplayName("should aggregate events from non-sequential buckets")
     void shouldAggregateEventsFromNonSequentialBuckets() {
@@ -280,18 +278,18 @@ class SlidingWindowMetricsUnitTests {
         TestClock clock = new TestClock(0);
         LockFreeSlidingTimeWindowMetrics metrics = new LockFreeSlidingTimeWindowMetrics(windowSize, clock);
 
-        //bucket 0
+        // bucket 0
         clock.advance(Duration.ZERO.plusMillis(1));
         metrics.recordSuccess();
         MetricsSnapshot snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(1);
 
-        //bucket 1. - no events
+        // bucket 1. - no events
         clock.advance(BUCKET_SIZE_DURATION);
         MetricsSnapshot snapshot2 = metrics.getSnapshot();
         assertThat(snapshot2.getSuccessCount()).isEqualTo(1);
 
-        //bucket 2
+        // bucket 2
         clock.advance(BUCKET_SIZE_DURATION);
         metrics.recordSuccess();
         MetricsSnapshot snapshot3 = metrics.getSnapshot();
@@ -313,9 +311,9 @@ class SlidingWindowMetricsUnitTests {
             // one success per bucket
             clock.advance(BUCKET_SIZE_DURATION);
             metrics.recordSuccess();
-            assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(i+1);
+            assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(i + 1);
         }
-        //drop bucket 0 from moving window
+        // drop bucket 0 from moving window
         clock.advance(BUCKET_SIZE_DURATION);
         assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(2);
     }
@@ -323,4 +321,5 @@ class SlidingWindowMetricsUnitTests {
     static private int toSeconds(Duration seconds) {
         return Math.toIntExact(seconds.getSeconds());
     }
+
 }

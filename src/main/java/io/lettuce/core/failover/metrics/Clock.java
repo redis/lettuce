@@ -23,4 +23,3 @@ public interface Clock {
     long monotonicTime();
 
 }
-

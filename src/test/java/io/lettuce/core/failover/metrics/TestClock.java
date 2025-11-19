@@ -5,22 +5,27 @@ import java.time.Duration;
 /**
  * Controllable clock implementation for testing time-dependent behavior.
  * <p>
- * This clock allows tests to control the passage of time by manually advancing the clock.
- * Supports both {@link Duration} and millisecond-based time advancement.
+ * This clock allows tests to control the passage of time by manually advancing the clock. Supports both {@link Duration} and
+ * millisecond-based time advancement.
  * </p>
  * <p>
  * Example usage:
- * <pre>{@code
- * TestClock clock = new TestClock();
- * LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics(2000, 1000, clock);
+ * 
+ * <pre>
+ * 
+ * {
+ *     &#64;code
+ *     TestClock clock = new TestClock();
+ *     LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics(2000, 1000, clock);
  *
- * metrics.recordSuccess();
- * clock.advance(Duration.ofSeconds(1));  // Advance by 1 second
- * metrics.recordSuccess();
- * clock.advance(500);  // Advance by 500 milliseconds
+ *     metrics.recordSuccess();
+ *     clock.advance(Duration.ofSeconds(1)); // Advance by 1 second
+ *     metrics.recordSuccess();
+ *     clock.advance(500); // Advance by 500 milliseconds
  *
- * MetricsSnapshot snapshot = metrics.getSnapshot();
- * }</pre>
+ *     MetricsSnapshot snapshot = metrics.getSnapshot();
+ * }
+ * </pre>
  * </p>
  *
  * @author Ali Takavci
@@ -62,17 +67,15 @@ public class TestClock implements Clock {
         return this;
     }
 
-
     /**
      * Set the clock to a specific time in nanoseconds.
      *
      * @param time the time to set in nanoseconds
      * @return this clock for method chaining
      */
-    public TestClock setTime( long currentTime ) {
+    public TestClock setTime(long currentTime) {
         this.currentTimeNs = currentTime;
         return this;
     }
 
 }
-

@@ -36,21 +36,22 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 /**
  * Implements a lock-free time sliding window using a single linked list, represented by a head and a tail reference.
  * <p>
- * Each node of the sliding window represents the aggregated stats across 1 second (time slice). During a time slice,
- * the algorithm is very simple consisting of a classical CAS-loop, in which the stats are copied, incremented, and
- * a swap is attempted.
+ * Each node of the sliding window represents the aggregated stats across 1 second (time slice). During a time slice, the
+ * algorithm is very simple consisting of a classical CAS-loop, in which the stats are copied, incremented, and a swap is
+ * attempted.
  * <p>
- * The complexity of the algorithm comes when the time slice is advanced. The algorithm needs to ensure that only
- * one thread succeeds in advancing the time slice, i.e. a single time slice is advanced not multiple. This is achieved
- * via an extra check when adding a new entry to the window, which guarantees that it is added only if it
- * respects the time order, i.e. ith time slice is added only if it is preceded by the (i-1)th time slice.
+ * The complexity of the algorithm comes when the time slice is advanced. The algorithm needs to ensure that only one thread
+ * succeeds in advancing the time slice, i.e. a single time slice is advanced not multiple. This is achieved via an extra check
+ * when adding a new entry to the window, which guarantees that it is added only if it respects the time order, i.e. ith time
+ * slice is added only if it is preceded by the (i-1)th time slice.
  * <p>
- * It also needs to ensure that no stats updates are lost by updating a time slice in the past. This is accounted via
- * a processed flag in the time slice, which marks that no further increments should happen for it.
+ * It also needs to ensure that no stats updates are lost by updating a time slice in the past. This is accounted via a
+ * processed flag in the time slice, which marks that no further increments should happen for it.
  * <p>
  *
  */
 public class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
+
     /**
      * Default window duration: 60 seconds.
      */
@@ -58,21 +59,24 @@ public class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
 
     private static final long TIME_SLICE_DURATION_IN_NANOS = TimeUnit.SECONDS.toNanos(1);
 
-    private static final AtomicReferenceFieldUpdater<LockFreeSlidingTimeWindowMetrics, Node> HEAD
-            = AtomicReferenceFieldUpdater.newUpdater(LockFreeSlidingTimeWindowMetrics.class, Node.class, "headRef");
-    private static final AtomicReferenceFieldUpdater<LockFreeSlidingTimeWindowMetrics, Node> TAIL
-            = AtomicReferenceFieldUpdater.newUpdater(LockFreeSlidingTimeWindowMetrics.class, Node.class, "tailRef");
+    private static final AtomicReferenceFieldUpdater<LockFreeSlidingTimeWindowMetrics, Node> HEAD = AtomicReferenceFieldUpdater
+            .newUpdater(LockFreeSlidingTimeWindowMetrics.class, Node.class, "headRef");
 
-    private static final AtomicReferenceFieldUpdater<Node, TimeSlice> TIME_SLICE
-            = AtomicReferenceFieldUpdater.newUpdater(Node.class, TimeSlice.class, "timeSlice");
-    private static final AtomicReferenceFieldUpdater<Node, Node> NEXT
-            = AtomicReferenceFieldUpdater.newUpdater(Node.class, Node.class, "next");
+    private static final AtomicReferenceFieldUpdater<LockFreeSlidingTimeWindowMetrics, Node> TAIL = AtomicReferenceFieldUpdater
+            .newUpdater(LockFreeSlidingTimeWindowMetrics.class, Node.class, "tailRef");
 
+    private static final AtomicReferenceFieldUpdater<Node, TimeSlice> TIME_SLICE = AtomicReferenceFieldUpdater
+            .newUpdater(Node.class, TimeSlice.class, "timeSlice");
+
+    private static final AtomicReferenceFieldUpdater<Node, Node> NEXT = AtomicReferenceFieldUpdater.newUpdater(Node.class,
+            Node.class, "next");
 
     private final Clock clock;
+
     private final int windowSize;
 
     private volatile Node headRef;
+
     private volatile Node tailRef;
 
     public LockFreeSlidingTimeWindowMetrics() {
@@ -103,7 +107,6 @@ public class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
             tailRef = newNode;
         }
     }
-
 
     private MetricsSnapshot record(Outcome outcome) {
         while (true) {
@@ -247,9 +250,13 @@ public class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
     }
 
     public static class TimeSlice {
+
         final int second;
+
         final long time;
+
         final PackedAggregation stats;
+
         final boolean processed;
 
         public TimeSlice(int second, long time, PackedAggregation stats, boolean processed) {
@@ -266,20 +273,25 @@ public class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
         public void record(Outcome outcome) {
             stats.record(outcome);
         }
+
     }
 
     private static class Node {
+
         volatile TimeSlice timeSlice;
+
         volatile Node next;
 
         Node(TimeSlice timeSlice, Node next) {
             TIME_SLICE.set(this, timeSlice);
             NEXT.set(this, next);
         }
+
     }
 
     private MetricsSnapshot snapshot(TimeSlice slice) {
         long successCalls = slice.stats.getNumberOfCalls() - slice.stats.getNumberOfFailedCalls();
         return new MetricsSnapshotImpl(successCalls, slice.stats.getNumberOfFailedCalls());
     }
+
 }

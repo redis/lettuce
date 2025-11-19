@@ -33,23 +33,27 @@ package io.lettuce.core.failover.metrics;
 import java.util.Arrays;
 
 /**
- * A measurement implementation used in sliding windows to track the total duration and the number of calls in the
- * window, along with the duration and number of calls of the current entry/bucket.
+ * A measurement implementation used in sliding windows to track the total duration and the number of calls in the window, along
+ * with the duration and number of calls of the current entry/bucket.
  *
- * <p>This implementation has the advantage of being cache friendly, benefiting from cache locality when
- * counting/discarding the tracked metrics.
+ * <p>
+ * This implementation has the advantage of being cache friendly, benefiting from cache locality when counting/discarding the
+ * tracked metrics.
  *
- * <p>Besides this, metrics can also be quickly cloned, which is important for the lock-free algorithms which
- * are operating with immutable objects.
+ * <p>
+ * Besides this, metrics can also be quickly cloned, which is important for the lock-free algorithms which are operating with
+ * immutable objects.
  */
 public class PackedAggregation implements CumulativeMeasurement {
+
     private int[] counts = new int[4];
 
-
     private static final int TOTAL_FAILED_CALLS_INDEX = 0;
+
     private static final int TOTAL_CALLS_INDEX = 1;
 
     private static final int FAILED_CALLS_INDEX = 2;
+
     private static final int CALLS_INDEX = 3;
 
     public PackedAggregation() {
@@ -96,8 +100,7 @@ public class PackedAggregation implements CumulativeMeasurement {
 
     @Override
     public String toString() {
-        return "PackedAggregation{" +
-            "counts=" + Arrays.toString(counts) +
-            '}';
+        return "PackedAggregation{" + "counts=" + Arrays.toString(counts) + '}';
     }
+
 }

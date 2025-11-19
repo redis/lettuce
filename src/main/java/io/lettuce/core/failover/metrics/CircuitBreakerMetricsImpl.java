@@ -71,4 +71,5 @@ public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
     public String toString() {
         return "CircuitBreakerMetrics{" + slidingWindow.getSnapshot() + '}';
     }
+
 }
