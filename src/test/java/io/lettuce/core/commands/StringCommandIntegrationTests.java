@@ -216,7 +216,8 @@ public class StringCommandIntegrationTests extends TestSupport {
     }
 
     static Stream<Arguments> msetexNxArgsProvider() {
-        return Stream.of(Arguments.of("EX", MSetExArgs.Builder.nx().ex(5)), Arguments.of("PX", MSetExArgs.Builder.nx().px(5000)),
+        return Stream.of(Arguments.of("EX", MSetExArgs.Builder.nx().ex(5)),
+                Arguments.of("PX", MSetExArgs.Builder.nx().px(5000)),
                 Arguments.of("EXAT", MSetExArgs.Builder.nx().exAt(Instant.now().plusSeconds(5))),
                 Arguments.of("PXAT", MSetExArgs.Builder.nx().pxAt(Instant.now().plusSeconds(5))),
                 Arguments.of("KEEPTTL", MSetExArgs.Builder.nx().keepttl()));
