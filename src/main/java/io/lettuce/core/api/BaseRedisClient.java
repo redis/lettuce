@@ -77,9 +77,6 @@ public interface BaseRedisClient extends AutoCloseable {
      */
     void shutdown();
 
-    @Override
-    void close();
-
     /**
      * Shutdown this client and close all open connections once this method is called. Once all connections are closed, the
      * associated {@link ClientResources} are shut down/released gracefully considering quiet time and the shutdown timeout. The
