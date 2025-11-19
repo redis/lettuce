@@ -3,7 +3,7 @@ PATH := ./work/redis-git/src:${PATH}
 ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PROFILE ?= ci
 SUPPORTED_TEST_ENV_VERSIONS := 8.4 8.2 8.0 7.4 7.2
-DEFAULT_TEST_ENV_VERSION := 8.2
+DEFAULT_TEST_ENV_VERSION := 8.4
 REDIS_ENV_WORK_DIR := $(or ${REDIS_ENV_WORK_DIR},$(ROOT_DIR)/work)
 
 start:
