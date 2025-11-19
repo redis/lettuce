@@ -1,7 +1,6 @@
 package io.lettuce.core.failover.metrics;
 
 import java.time.Duration;
-import java.time.Instant;
 
 /**
  * Controllable clock implementation for testing time-dependent behavior.
@@ -29,7 +28,7 @@ import java.time.Instant;
  */
 public class TestClock implements Clock {
 
-    private long currentTimeMs;
+    private long currentTimeNs;
 
     /**
      * Create a new test clock starting at time 0.
@@ -41,15 +40,15 @@ public class TestClock implements Clock {
     /**
      * Create a new test clock starting at the specified time in nanoseconds.
      *
-     * @param currentTimeMs the initial time
+     * @param currentTime the initial time
      */
-    public TestClock(long currentTimeMs) {
-        this.currentTimeMs = currentTimeMs;
+    public TestClock(long currentTime) {
+        this.currentTimeNs = currentTime;
     }
 
     @Override
-    public long currentTimeMillis() {
-        return currentTimeMs;
+    public long monotonicTime() {
+        return currentTimeNs;
     }
 
     /**
@@ -59,19 +58,19 @@ public class TestClock implements Clock {
      * @return this clock for method chaining
      */
     public TestClock advance(Duration duration) {
-        this.currentTimeMs += duration.toMillis();
+        this.currentTimeNs += duration.toNanos();
         return this;
     }
 
 
     /**
-     * Set the clock to a specific time in milliseconds.
+     * Set the clock to a specific time in nanoseconds.
      *
-     * @param time the time to set in milliseconds
+     * @param time the time to set in nanoseconds
      * @return this clock for method chaining
      */
-    public TestClock setTime(Instant time) {
-        this.currentTimeMs = time.toEpochMilli();
+    public TestClock setTime( long currentTime ) {
+        this.currentTimeNs = currentTime;
         return this;
     }
 

@@ -8,20 +8,19 @@ package io.lettuce.core.failover.metrics;
  *
  * @since 7.1
  */
-@FunctionalInterface
 public interface Clock {
 
     /**
-     * System clock implementation using {@link System#currentTimeMillis()}.
+     * System clock implementation using {@link System#nanoTime()}.
      */
-    Clock SYSTEM = System::currentTimeMillis;
+    Clock SYSTEM = System::nanoTime;
 
     /**
      * Get the current time in milliseconds.
      *
      * @return the current time in milliseconds
      */
-    long currentTimeMillis();
+    long monotonicTime();
 
 }
 

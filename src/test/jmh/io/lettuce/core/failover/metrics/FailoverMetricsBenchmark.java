@@ -23,8 +23,8 @@ public class FailoverMetricsBenchmark {
         @Setup(Level.Iteration)
         public void setup() {
             switch (implementation) {
-                case "LockFreeSlidingWindowMetrics":
-                    metrics = new LockFreeSlidingWindowMetrics(windowSize);
+                case "SlidingTimeWindowMetrics":
+                    metrics = new LockFreeSlidingTimeWindowMetrics(windowSize);
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown impl: " + implementation);

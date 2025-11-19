@@ -38,7 +38,7 @@ public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
      * @throws IllegalArgumentException if windowDurationSeconds < 1
      */
     public CircuitBreakerMetricsImpl(int windowDurationSeconds) {
-        this.slidingWindow = new LockFreeSlidingWindowMetrics(windowDurationSeconds);
+        this.slidingWindow = new LockFreeSlidingTimeWindowMetrics(windowDurationSeconds);
     }
 
     /**
