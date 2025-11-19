@@ -2,7 +2,6 @@ package io.lettuce.core.failover;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
 
 /**
  * Represents a Redis database with a weight and a connection.
@@ -24,7 +23,7 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> {
 
     private final CircuitBreaker circuitBreaker;
 
-    private HealthStatus healthStatus = HealthStatus.UNKNOWN;
+    private HealthStatus healthStatus = HealthStatus.HEALTHY;
 
     public RedisDatabase(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint) {
         this.redisURI = config.getRedisURI();

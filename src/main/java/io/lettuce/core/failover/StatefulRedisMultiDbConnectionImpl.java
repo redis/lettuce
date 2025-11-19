@@ -70,7 +70,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         this.codec = codec;
         this.parser = parser;
         this.connectionFactory = connectionFactory;
-        this.current = connections.values().stream().max(Comparator.comparingDouble(RedisDatabase::getWeight)).get();
+        this.current = getNextHealthyDatabase(null);
 
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
