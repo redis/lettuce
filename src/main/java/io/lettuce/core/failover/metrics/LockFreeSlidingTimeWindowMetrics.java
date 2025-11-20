@@ -52,9 +52,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  */
 public class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
 
-    /**
-     * Default window duration: 60 seconds.
-     */
     static final int DEFAULT_WINDOW_DURATION_SECONDS = 2;
 
     private static final long TIME_SLICE_DURATION_IN_NANOS = TimeUnit.SECONDS.toNanos(1);

@@ -25,7 +25,7 @@ public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
     private final SlidingWindowMetrics slidingWindow;
 
     /**
-     * Create metrics instance with default configuration (2 second window, 1 second buckets).
+     * Create metrics instance with default configuration (2 second window).
      */
     public CircuitBreakerMetricsImpl() {
         this(DEFAULT_WINDOW_DURATION_SECONDS);

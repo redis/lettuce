@@ -12,18 +12,17 @@ public class FailoverMetricsBenchmark {
     public static class FailoverMetricsBenchmarkState {
         public SlidingWindowMetrics metrics;
 
-        @Param({"LockFreeSlidingWindowMetrics"})
+        @Param({"LockFreeSlidingTimeWindowMetrics"})
         public String implementation;
 
         // Window size in seconds
-        // Note: SlidingTimeWindowMetrics requires windowSize >= 2
-        @Param({ "2", "10", "60","180", "300", "600" })
+        @Param({ "2", "10", "60", "180", "300", "600" })
         private int windowSize;
 
         @Setup(Level.Iteration)
         public void setup() {
             switch (implementation) {
-                case "SlidingTimeWindowMetrics":
+                case "LockFreeSlidingTimeWindowMetrics":
                     metrics = new LockFreeSlidingTimeWindowMetrics(windowSize);
                     break;
                 default:

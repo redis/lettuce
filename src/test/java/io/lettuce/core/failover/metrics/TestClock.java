@@ -5,8 +5,7 @@ import java.time.Duration;
 /**
  * Controllable clock implementation for testing time-dependent behavior.
  * <p>
- * This clock allows tests to control the passage of time by manually advancing the clock. Supports both {@link Duration} and
- * millisecond-based time advancement.
+ * This clock allows tests to control the passage of time by manually advancing the clock. Supports {@link Duration} time advancement.
  * </p>
  * <p>
  * Example usage:
@@ -16,20 +15,18 @@ import java.time.Duration;
  * {
  *     &#64;code
  *     TestClock clock = new TestClock();
- *     LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics(2000, 1000, clock);
+ *     LockFreeSlidingTimeWindowMetrics metrics = new LockFreeSlidingTimeWindowMetrics(2000, 1000, clock);
  *
  *     metrics.recordSuccess();
  *     clock.advance(Duration.ofSeconds(1)); // Advance by 1 second
  *     metrics.recordSuccess();
- *     clock.advance(500); // Advance by 500 milliseconds
  *
  *     MetricsSnapshot snapshot = metrics.getSnapshot();
  * }
  * </pre>
  * </p>
  *
- * @author Ali Takavci
- * @since 7.1
+ * @author Ivo Gaydajiev
  */
 public class TestClock implements Clock {
 
@@ -70,7 +67,7 @@ public class TestClock implements Clock {
     /**
      * Set the clock to a specific time in nanoseconds.
      *
-     * @param time the time to set in nanoseconds
+     * @param currentTime the time to set in nanoseconds
      * @return this clock for method chaining
      */
     public TestClock setTime(long currentTime) {
