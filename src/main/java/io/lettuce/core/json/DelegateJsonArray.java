@@ -60,7 +60,7 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
         List<JsonValue> result = new ArrayList<>();
 
         for (JsonNode jsonNode : node) {
-            result.add(new DelegateJsonValue(jsonNode, objectMapper));
+            result.add(wrap(jsonNode, objectMapper));
         }
 
         return result;
