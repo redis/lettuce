@@ -96,9 +96,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         RedisURI uri = config.getRedisURI();
         StatefulRedisConnection<K, V> connection = connect(codec, uri);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-        RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(
-                new RedisDatabase.RedisDatabaseConfig(uri, config.getWeight(), config.getCircuitBreakerConfig()), connection,
-                databaseEndpoint);
+        RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint);
 
         return database;
     }
@@ -138,9 +136,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         RedisURI uri = config.getRedisURI();
         StatefulRedisPubSubConnection<K, V> connection = connectPubSub(codec, uri);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-        RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(
-                new RedisDatabase.RedisDatabaseConfig(uri, config.getWeight(), config.getCircuitBreakerConfig()), connection,
-                databaseEndpoint);
+        RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint);
         return database;
     }
 
