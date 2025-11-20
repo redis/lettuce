@@ -1,4 +1,4 @@
-package io.lettuce.core.failover.api;
+package io.lettuce.core.api;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
@@ -76,9 +76,6 @@ public interface BaseRedisClient extends AutoCloseable {
      * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
     void shutdown();
-
-    @Override
-    void close();
 
     /**
      * Shutdown this client and close all open connections once this method is called. Once all connections are closed, the
