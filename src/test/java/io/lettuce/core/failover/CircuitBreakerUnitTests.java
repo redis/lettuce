@@ -470,13 +470,13 @@ class CircuitBreakerUnitTests {
         @Test
         @DisplayName("Should handle large number of operations within window")
         void shouldHandleLargeNumberOfOperations() {
-            CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(1.0f, 1000,
+            CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(0.99f, 1000,
                     CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
             CircuitBreaker circuitBreaker = new CircuitBreaker(config);
 
-            // Record 10,000 successes and 1,000 failures (9.1% failure rate, but meets count threshold)
+            // Record 100,000 successes and 1,000 failures (0.99% failure rate and meets count threshold)
             // Keep the number reasonable to stay within the sliding window
-            for (int i = 0; i < 10_000; i++) {
+            for (int i = 0; i < 100_000; i++) {
                 circuitBreaker.getMetrics().recordSuccess();
             }
             for (int i = 0; i < 1_000; i++) {
