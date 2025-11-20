@@ -23,7 +23,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.Range;
+import io.lettuce.core.SetArgs;
 import io.lettuce.core.api.sync.*;
 import io.lettuce.core.json.JsonParser;
 
@@ -384,5 +386,16 @@ public interface RedisClusterCommands<K, V> extends BaseRedisCommands<K, V>, Red
      * @since 6.5
      */
     JsonParser getJsonParser();
+
+    /**
+     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
+     * of [EX|PX|EXAT|PXAT|KEEPTTL]. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param map the map of keys and values.
+     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
+     * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
+     * @since 7.1
+     */
+    Boolean msetex(Map<K, V> map, MSetExArgs args);
 
 }

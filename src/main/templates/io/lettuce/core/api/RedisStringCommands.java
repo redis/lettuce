@@ -357,6 +357,17 @@ public interface RedisStringCommands<K, V> {
     Boolean msetnx(Map<K, V> map);
 
     /**
+     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
+     * of [EX|PX|EXAT|PXAT|KEEPTTL].
+     *
+     * @param map the map of keys and values.
+     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
+     * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
+     * @since 7.1
+     */
+    Boolean msetex(Map<K, V> map, MSetExArgs args);
+
+    /**
      * Set the string value of a key.
      *
      * @param key the key.

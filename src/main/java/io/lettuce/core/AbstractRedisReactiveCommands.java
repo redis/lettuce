@@ -2400,6 +2400,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
+    public Mono<Boolean> msetex(Map<K, V> map, MSetExArgs args) {
+        return createMono(() -> commandBuilder.msetex(map, args));
+    }
+
+    @Override
     public Mono<String> multi() {
         return createMono(commandBuilder::multi);
     }

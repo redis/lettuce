@@ -513,11 +513,20 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Boolean> msetnx(Map<K, V> map) {
+        return executePartitionedBoolean(map, super::msetnx);
+    }
+
+    @Override
+    public RedisFuture<Boolean> msetex(Map<K, V> map, MSetExArgs args) {
+        return executePartitionedBoolean(map, op -> super.msetex(op, args));
+    }
+
+    private RedisFuture<Boolean> executePartitionedBoolean(Map<K, V> map, Function<Map<K, V>, RedisFuture<Boolean>> operation) {
 
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
 
         if (partitioned.size() < 2) {
-            return super.msetnx(map);
+            return operation.apply(map);
         }
 
         Map<Integer, RedisFuture<Boolean>> executions = new HashMap<>();
@@ -527,14 +536,14 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             Map<K, V> op = new HashMap<>();
             entry.getValue().forEach(k -> op.put(k, map.get(k)));
 
-            RedisFuture<Boolean> msetnx = super.msetnx(op);
-            executions.put(entry.getKey(), msetnx);
+            RedisFuture<Boolean> future = operation.apply(op);
+            executions.put(entry.getKey(), future);
         }
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
 
-            for (RedisFuture<Boolean> listRedisFuture : executions.values()) {
-                Boolean b = MultiNodeExecution.execute(() -> listRedisFuture.get());
+            for (RedisFuture<Boolean> f : executions.values()) {
+                Boolean b = MultiNodeExecution.execute(f::get);
                 if (b == null || !b) {
                     return false;
                 }
