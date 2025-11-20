@@ -482,4 +482,81 @@ class RedisCommandBuilderUnitTests {
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Key must not be null");
     }
 
+    @Test
+    void shouldCorrectlyConstructSetWithExAndIfeq() {
+        Command<String, String, ?> command = sut.set("mykey", "myvalue",
+                SetArgs.Builder.ex(100).compareCondition(CompareCondition.valueEq("oldvalue")));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$3\r\n" + "SET\r\n" + "$5\r\n" + "mykey\r\n" + "$7\r\n" + "myvalue\r\n" + "$2\r\n"
+                        + "EX\r\n" + "$3\r\n" + "100\r\n" + "$4\r\n" + "IFEQ\r\n" + "$8\r\n" + "oldvalue\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSetWithExAtAndIfne() {
+        Command<String, String, ?> command = sut.set("mykey", "myvalue",
+                SetArgs.Builder.exAt(1234567890).compareCondition(CompareCondition.valueNe("wrongvalue")));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8))
+                .isEqualTo("*7\r\n" + "$3\r\n" + "SET\r\n" + "$5\r\n" + "mykey\r\n" + "$7\r\n" + "myvalue\r\n" + "$4\r\n"
+                        + "EXAT\r\n" + "$10\r\n" + "1234567890\r\n" + "$4\r\n" + "IFNE\r\n" + "$10\r\n" + "wrongvalue\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSetGetWithPxAndIfdne() {
+        Command<String, String, ?> command = sut.setGet("mykey", "myvalue",
+                SetArgs.Builder.px(50000).compareCondition(CompareCondition.digestNe("0123456789abcdef")));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" + "$3\r\n" + "SET\r\n" + "$5\r\n" + "mykey\r\n"
+                + "$7\r\n" + "myvalue\r\n" + "$2\r\n" + "PX\r\n" + "$5\r\n" + "50000\r\n" + "$5\r\n" + "IFDNE\r\n" + "$16\r\n"
+                + "0123456789abcdef\r\n" + "$3\r\n" + "GET\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructSetGetWithPxAtAndIfdeq() {
+        Command<String, String, ?> command = sut.setGet("mykey", "myvalue",
+                SetArgs.Builder.pxAt(1234567890123L).compareCondition(CompareCondition.digestEq("fedcba9876543210")));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*8\r\n" + "$3\r\n" + "SET\r\n" + "$5\r\n" + "mykey\r\n"
+                + "$7\r\n" + "myvalue\r\n" + "$4\r\n" + "PXAT\r\n" + "$13\r\n" + "1234567890123\r\n" + "$5\r\n" + "IFDEQ\r\n"
+                + "$16\r\n" + "fedcba9876543210\r\n" + "$3\r\n" + "GET\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructDelexWithValueEq() {
+        Command<String, String, ?> command = sut.delex("mykey", CompareCondition.valueEq("expectedvalue"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$5\r\n" + "DELEX\r\n" + "$5\r\n" + "mykey\r\n"
+                + "$4\r\n" + "IFEQ\r\n" + "$13\r\n" + "expectedvalue\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructDelexWithDigestNe() {
+        Command<String, String, ?> command = sut.delex("mykey", CompareCondition.digestNe("0011223344556677"));
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$5\r\n" + "DELEX\r\n" + "$5\r\n" + "mykey\r\n"
+                + "$5\r\n" + "IFDNE\r\n" + "$16\r\n" + "0011223344556677\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructDigestKey() {
+        Command<String, String, ?> command = sut.digestKey("mykey");
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*2\r\n" + "$6\r\n" + "DIGEST\r\n" + "$5\r\n" + "mykey\r\n");
+    }
+
 }

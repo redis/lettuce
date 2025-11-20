@@ -52,6 +52,12 @@ internal class RedisKeyCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops
     override suspend fun unlink(vararg keys: K): Long? =
         ops.unlink(*keys).awaitFirstOrNull()
 
+    override suspend fun delex(key: K, condition: CompareCondition<V>): Long? =
+        ops.delex(key, condition).awaitFirstOrNull()
+
+    override suspend fun digestKey(key: K): String? =
+        ops.digestKey(key).awaitFirstOrNull()
+
     override suspend fun dump(key: K): ByteArray? = ops.dump(key).awaitFirstOrNull()
 
     override suspend fun exists(vararg keys: K): Long? =
