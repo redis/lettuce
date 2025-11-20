@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.protocol.CommandType.XINFO;
@@ -274,6 +275,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(firstMessage.getStream()).isEqualTo("stream-1");
         assertThat(firstMessage.getBody()).hasSize(1).containsEntry("key1", "value1");
+        assertThat(firstMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(firstMessage.getDeliveredCount()).isNull();
 
         StreamMessage<String, String> nextMessage = messages.get(1);
 
@@ -303,12 +306,16 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(firstMessage.getId()).isEqualTo(initial1);
         assertThat(firstMessage.getStream()).isEqualTo("{s1}stream-1");
         assertThat(firstMessage.getBody()).hasSize(1).containsEntry("key1", "value1");
+        assertThat(firstMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(firstMessage.getDeliveredCount()).isNull();
 
         StreamMessage<String, String> secondMessage = messages.get(3);
 
         assertThat(secondMessage.getId()).isEqualTo(message2);
         assertThat(secondMessage.getStream()).isEqualTo("{s1}stream-2");
         assertThat(secondMessage.getBody()).hasSize(2).containsEntry("key4", "value4");
+        assertThat(secondMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(secondMessage.getDeliveredCount()).isNull();
     }
 
     @Test
@@ -333,12 +340,16 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(firstMessage.getId()).isEqualTo(message1);
         assertThat(firstMessage.getStream()).isEqualTo("stream-1");
         assertThat(firstMessage.getBody()).containsEntry("key3", "value3");
+        assertThat(firstMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(firstMessage.getDeliveredCount()).isNull();
 
         StreamMessage<String, String> secondMessage = messages.get(1);
 
         assertThat(secondMessage.getId()).isEqualTo(message2);
         assertThat(secondMessage.getStream()).isEqualTo("stream-2");
         assertThat(secondMessage.getBody()).containsEntry("key4", "value4");
+        assertThat(secondMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(secondMessage.getDeliveredCount()).isNull();
     }
 
     @Test
@@ -357,6 +368,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(lastMessage.getStream()).isEqualTo("stream-1");
         assertThat(lastMessage.getBody()).hasSize(1).containsEntry("key2", "value2");
+        assertThat(lastMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(lastMessage.getDeliveredCount()).isNull();
 
         assertThat(latestMessages).isEmpty();
     }
@@ -1080,6 +1093,149 @@ public class StreamCommandIntegrationTests extends TestSupport {
         // PEL should have fewer references due to DELREF policy
         PendingMessages pending = redis.xpending(key, "test-group");
         assertThat(pending.getCount()).isLessThan(3L);
+    }
+
+    // XREADGORUP CLAIM Tests - 8.4 OSS
+    // since: 7.1
+
+    private static final String KEY = "it:stream:claim:move:" + UUID.randomUUID();
+
+    private static final String GROUP = "g";
+
+    private static final String C1 = "c1";
+
+    private static final String C2 = "c2";
+
+    private static final Map<String, String> BODY = new HashMap<String, String>() {
+
+        {
+            put("f", "v");
+        }
+
+    };
+
+    private static final long IDLE_TIME_MS = 5;
+
+    private void beforeEachClaimTest() throws InterruptedException {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.4"), "Redis 8.4+ required for XREADGROUP CLAIM");
+
+        // Produce two entries
+        redis.xadd(KEY, BODY);
+        redis.xadd(KEY, BODY);
+
+        // Create group and consume with c1 so entries become pending for c1
+        redis.xgroupCreate(XReadArgs.StreamOffset.from(KEY, "0-0"), GROUP);
+        redis.xreadgroup(Consumer.from(GROUP, C1), XReadArgs.Builder.count(10), XReadArgs.StreamOffset.lastConsumed(KEY));
+
+        // Ensure idle time so entries are claimable
+        Thread.sleep(IDLE_TIME_MS);
+    }
+
+    @Test
+    void xreadgroupClaim_returnsMetadataOrdered() throws Exception {
+        beforeEachClaimTest();
+
+        // Produce fresh entries that are NOT claimed (not pending)
+        redis.xadd(KEY, BODY);
+        redis.xadd(KEY, BODY);
+
+        List<StreamMessage<String, String>> consumer2 = redis.xreadgroup(Consumer.from(GROUP, C2),
+                XReadArgs.Builder.claim(Duration.ofMillis(IDLE_TIME_MS)).count(10), XReadArgs.StreamOffset.lastConsumed(KEY));
+        long claimedCount = consumer2.stream().filter(StreamMessage::isClaimed).count();
+        long freshCount = consumer2.size() - claimedCount;
+        StreamMessage<String, String> first = consumer2.get(0);
+        StreamMessage<String, String> second = consumer2.get(1);
+        StreamMessage<String, String> third = consumer2.get(2);
+        StreamMessage<String, String> fourth = consumer2.get(3);
+
+        // Assertions
+        assertThat(consumer2).isNotNull();
+        assertThat(consumer2).isNotEmpty();
+        assertThat(claimedCount).isEqualTo(2);
+        assertThat(freshCount).isEqualTo(2);
+
+        // Assert order: pending entries are first
+        assertThat(first.isClaimed()).isTrue();
+        assertThat(second.isClaimed()).isTrue();
+        assertThat(third.isClaimed()).isFalse();
+        assertThat(fourth.isClaimed()).isFalse();
+
+        // Assert claimed message structure
+        assertThat(first.getMillisElapsedFromDelivery()).isGreaterThanOrEqualTo(5);
+        assertThat(first.getDeliveredCount()).isGreaterThanOrEqualTo(1);
+        assertThat(first.getBody()).containsEntry("f", "v");
+        assertThat(fourth.getMillisElapsedFromDelivery()).isEqualTo(0);
+        assertThat(fourth.getDeliveredCount()).isEqualTo(0);
+        assertThat(fourth.getBody()).containsEntry("f", "v");
+    }
+
+    @Test
+    void xreadgroupClaim_movesPendingFromC1ToC2AndRemainsPendingUntilAck() throws Exception {
+        beforeEachClaimTest();
+
+        PendingMessages before = redis.xpending(KEY, GROUP);
+        List<StreamMessage<String, String>> res = redis.xreadgroup(Consumer.from(GROUP, C2),
+                XReadArgs.Builder.claim(Duration.ofMillis(IDLE_TIME_MS)).count(10), XReadArgs.StreamOffset.lastConsumed(KEY));
+        PendingMessages afterClaim = redis.xpending(KEY, GROUP);
+        long acked = redis.xack(KEY, GROUP, res.get(0).getId(), res.get(1).getId());
+        PendingMessages afterAck = redis.xpending(KEY, GROUP);
+
+        // Verify pending belongs to c1
+        assertThat(before.getCount()).isEqualTo(2);
+        assertThat(before.getConsumerMessageCount().getOrDefault(C1, 0L)).isEqualTo(2);
+
+        // Verify claim withv c2
+        assertThat(res).isNotNull();
+        assertThat(res).isNotEmpty();
+        long claimed = res.stream().filter(StreamMessage::isClaimed).count();
+        assertThat(claimed).isEqualTo(2);
+
+        // After claim: entries are pending for c2 (moved), not acked yet
+        assertThat(afterClaim.getCount()).isEqualTo(2);
+        assertThat(afterClaim.getConsumerMessageCount().getOrDefault(C1, 0L)).isEqualTo(0);
+        assertThat(afterClaim.getConsumerMessageCount().getOrDefault(C2, 0L)).isEqualTo(2);
+
+        // XACK the claimed entries -> PEL should become empty
+        assertThat(acked).isEqualTo(2);
+        assertThat(afterAck.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    void xreadgroupClaim_claimWithNoackDoesNotCreatePendingAndRemovesClaimedFromPel() throws Exception {
+        beforeEachClaimTest();
+
+        PendingMessages before = redis.xpending(KEY, GROUP);
+
+        // Also produce fresh entries that should not be added to PEL when NOACK is set
+        redis.xadd(KEY, BODY);
+        redis.xadd(KEY, BODY);
+
+        // Claim with NOACK using c2
+        List<StreamMessage<String, String>> res = redis.xreadgroup(Consumer.from(GROUP, C2),
+                XReadArgs.Builder.claim(Duration.ofMillis(IDLE_TIME_MS)).noack(true).count(10),
+                XReadArgs.StreamOffset.lastConsumed(KEY));
+        PendingMessages afterNoack = redis.xpending(KEY, GROUP);
+
+        assertThat(res).isNotNull();
+        assertThat(res).isNotEmpty();
+
+        long claimedCount = res.stream().filter(StreamMessage::isClaimed).count();
+        long freshCount = res.size() - claimedCount;
+        assertThat(claimedCount).isEqualTo(2);
+        assertThat(freshCount).isEqualTo(2);
+
+        // After NOACK read, previously pending entries remain pending (NOACK does not remove them)
+        assertThat(afterNoack.getCount()).isEqualTo(2);
+
+        // Before claim: entries are pending for c1
+        assertThat(before.getCount()).isEqualTo(2);
+        assertThat(before.getConsumerMessageCount().getOrDefault(C1, 0L)).isEqualTo(2);
+        assertThat(before.getConsumerMessageCount().getOrDefault(C2, 0L)).isEqualTo(0);
+
+        // Claimed entries remain pending and are now owned by c2 (CLAIM reassigns ownership). Fresh entries were not added
+        // to PEL.
+        assertThat(afterNoack.getConsumerMessageCount().getOrDefault(C1, 0L)).isEqualTo(0);
+        assertThat(afterNoack.getConsumerMessageCount().getOrDefault(C2, 0L)).isEqualTo(2);
     }
 
 }

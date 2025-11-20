@@ -68,6 +68,29 @@ public interface RedisKeyCommands<K, V> {
     Long del(K... keys);
 
     /**
+     * Delete the specified key if the compare condition matches.
+     *
+     * @param key the key.
+     * @param compareCondition the compare condition, must not be {@code null}.
+     * @return Long integer-reply the number of keys that were removed.
+     *
+     * @since 7.1
+     */
+    @Experimental
+    Long delex(K key, CompareCondition<V> compareCondition);
+
+    /**
+     * Return the XXH3 64-bit digest of the string value stored at a key as a 16-character hex string.
+     *
+     * @param key the key.
+     * @return String bulk-string-reply the hex digest of the key's value, or {@code null} when {@code key} does not exist.
+     *
+     * @since 7.1
+     */
+    @Experimental
+    String digestKey(K key);
+
+    /**
      * Unlink one or more keys (non blocking DEL).
      *
      * @param keys the keys.
