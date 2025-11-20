@@ -35,9 +35,9 @@ public class CircuitBreaker {
 
     private volatile State currentState = State.CLOSED;
 
-    private Predicate<Throwable> exceptionsPredicate;
-
     private final Set<CircuitBreakerStateListener> listeners = ConcurrentHashMap.newKeySet();
+
+    private final Set<Class<? extends Throwable>> trackedExceptions;
 
     /**
      * Create a circuit breaker instance.
@@ -45,7 +45,7 @@ public class CircuitBreaker {
     public CircuitBreaker(CircuitBreakerConfig config) {
         this.metrics = new CircuitBreakerMetricsImpl();
         this.config = config;
-        this.exceptionsPredicate = createExceptionsPredicate(config.trackedExceptions);
+        this.trackedExceptions = new HashSet<>(config.trackedExceptions);
     }
 
     /**
@@ -62,20 +62,14 @@ public class CircuitBreaker {
         return "CircuitBreaker{" + "metrics=" + metrics + ", config=" + config + '}';
     }
 
-    public boolean isCircuitBreakerTrackedException(Throwable error) {
-        return exceptionsPredicate.test(error);
-    }
-
-    private static Predicate<Throwable> createExceptionsPredicate(Set<Class<? extends Throwable>> trackedExceptions) {
-        return throwable -> {
-            Class<? extends Throwable> errorClass = throwable.getClass();
-            for (Class<? extends Throwable> trackedException : trackedExceptions) {
-                if (trackedException.isAssignableFrom(errorClass)) {
-                    return true;
-                }
+    public boolean isCircuitBreakerTrackedException(Throwable throwable) {
+        Class<? extends Throwable> errorClass = throwable.getClass();
+        for (Class<? extends Throwable> trackedException : trackedExceptions) {
+            if (trackedException.isAssignableFrom(errorClass)) {
+                return true;
             }
-            return false;
-        };
+        }
+        return false;
     }
 
     public void evaluateMetrics() {
