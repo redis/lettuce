@@ -33,7 +33,7 @@ package io.lettuce.core.failover.metrics;
 /**
  * Represents a data structure that holds the results of a measurement.
  */
-public interface MeasurementData {
+interface MeasurementData {
 
     /**
      * Returns the number of failed calls in this measurement.

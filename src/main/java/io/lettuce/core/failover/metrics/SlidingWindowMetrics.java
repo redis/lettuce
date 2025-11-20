@@ -17,7 +17,7 @@ package io.lettuce.core.failover.metrics;
  * @author Ali Takavci
  * @since 7.1
  */
-public interface SlidingWindowMetrics {
+interface SlidingWindowMetrics {
 
     /**
      * Record a successful command execution. Lock-free operation.

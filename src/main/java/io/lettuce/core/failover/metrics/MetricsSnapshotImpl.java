@@ -12,7 +12,7 @@ package io.lettuce.core.failover.metrics;
  * @author Ali Takavci
  * @since 7.1
  */
-public class MetricsSnapshotImpl implements MetricsSnapshot {
+class MetricsSnapshotImpl implements MetricsSnapshot {
 
     /**
      * Number of successful command executions in the time window.

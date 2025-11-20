@@ -31,6 +31,6 @@
 
 package io.lettuce.core.failover.metrics;
 
-public enum Outcome {
+enum Outcome {
     SUCCESS, FAILURE
 }

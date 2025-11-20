@@ -44,7 +44,7 @@ import java.util.Arrays;
  * Besides this, metrics can also be quickly cloned, which is important for the lock-free algorithms which are operating with
  * immutable objects.
  */
-public class PackedAggregation implements CumulativeMeasurement {
+class PackedAggregation implements CumulativeMeasurement {
 
     private int[] counts = new int[4];
 

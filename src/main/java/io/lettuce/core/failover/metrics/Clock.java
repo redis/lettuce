@@ -8,7 +8,7 @@ package io.lettuce.core.failover.metrics;
  *
  * @since 7.1
  */
-public interface Clock {
+interface Clock {
 
     /**
      * System clock implementation using {@link System#nanoTime()}.

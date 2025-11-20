@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.offset;
  */
 @Tag("unit")
 @DisplayName("Lock-Free Sliding Window Metrics")
-class SlidingWindowMetricsUnitTests {
+class LockFreeSlidingTimeWindowMetricsUnitTests {
 
     private static final Duration BUCKET_SIZE_DURATION = Duration.ofSeconds(1);
 

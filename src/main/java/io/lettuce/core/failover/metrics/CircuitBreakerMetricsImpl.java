@@ -12,7 +12,7 @@ package io.lettuce.core.failover.metrics;
  * @author Ali Takavci
  * @since 7.1
  */
-public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
+class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
 
     /**
      * Default window duration: 2 seconds.
@@ -27,7 +27,7 @@ public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
     /**
      * Create metrics instance with default configuration (2 second window).
      */
-    public CircuitBreakerMetricsImpl() {
+    CircuitBreakerMetricsImpl() {
         this(DEFAULT_WINDOW_DURATION_SECONDS);
     }
 
@@ -37,7 +37,7 @@ public class CircuitBreakerMetricsImpl implements CircuitBreakerMetrics {
      * @param windowDurationSeconds the window duration in seconds (must be >= 1)
      * @throws IllegalArgumentException if windowDurationSeconds < 1
      */
-    public CircuitBreakerMetricsImpl(int windowDurationSeconds) {
+    CircuitBreakerMetricsImpl(int windowDurationSeconds) {
         this.slidingWindow = new LockFreeSlidingTimeWindowMetrics(windowDurationSeconds);
     }
 

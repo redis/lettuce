@@ -5,7 +5,8 @@ import java.time.Duration;
 /**
  * Controllable clock implementation for testing time-dependent behavior.
  * <p>
- * This clock allows tests to control the passage of time by manually advancing the clock. Supports {@link Duration} time advancement.
+ * This clock allows tests to control the passage of time by manually advancing the clock. Supports {@link Duration} time
+ * advancement.
  * </p>
  * <p>
  * Example usage:

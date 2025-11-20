@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  * <p>
  *
  */
-public class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
+class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
 
     static final int DEFAULT_WINDOW_DURATION_SECONDS = 2;
 
@@ -76,15 +76,15 @@ public class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
 
     private volatile Node tailRef;
 
-    public LockFreeSlidingTimeWindowMetrics() {
+    LockFreeSlidingTimeWindowMetrics() {
         this(DEFAULT_WINDOW_DURATION_SECONDS, Clock.SYSTEM);
     }
 
-    public LockFreeSlidingTimeWindowMetrics(int windowSize) {
+    LockFreeSlidingTimeWindowMetrics(int windowSize) {
         this(windowSize, Clock.SYSTEM);
     }
 
-    public LockFreeSlidingTimeWindowMetrics(int windowSize, Clock clock) {
+    LockFreeSlidingTimeWindowMetrics(int windowSize, Clock clock) {
         if (windowSize < 1) {
             throw new IllegalArgumentException("Window duration must be at least 1 second, got: " + windowSize);
         }

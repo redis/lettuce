@@ -9,14 +9,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 
+import io.lettuce.core.failover.metrics.CircuitBreakerMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
-import io.lettuce.core.failover.metrics.CircuitBreakerMetrics;
-import io.lettuce.core.failover.metrics.CircuitBreakerMetricsImpl;
+import io.lettuce.core.failover.metrics.CircuitBreakerMetricsFactory;
 
 /**
  * Circuit breaker for tracking command metrics and managing circuit breaker state. Wraps CircuitBreakerMetrics and exposes it
@@ -43,7 +43,7 @@ public class CircuitBreaker {
      * Create a circuit breaker instance.
      */
     public CircuitBreaker(CircuitBreakerConfig config) {
-        this.metrics = new CircuitBreakerMetricsImpl();
+        this.metrics = CircuitBreakerMetricsFactory.createLockFree();
         this.config = config;
         this.exceptionsPredicate = createExceptionsPredicate(config.trackedExceptions);
     }
