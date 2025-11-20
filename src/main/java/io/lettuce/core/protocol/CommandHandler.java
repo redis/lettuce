@@ -140,9 +140,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
     /**
      * Initialize a new instance that handles commands from the supplied queue.
      *
-     * @param clientOptions client options for this connection, must not be {@code null}
+     * @param clientOptions   client options for this connection, must not be {@code null}
      * @param clientResources client resources for this connection, must not be {@code null}
-     * @param endpoint must not be {@code null}.
+     * @param endpoint        must not be {@code null}.
      */
     public CommandHandler(ClientOptions clientOptions, ClientResources clientResources, Endpoint endpoint) {
 
@@ -279,17 +279,28 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         InternalLogLevel logLevel = InternalLogLevel.WARN;
 
         if (!stack.isEmpty()) {
-            RedisCommand<?, ?, ?> command = stack.poll();
-            if (debugEnabled) {
-                logger.debug("{} Storing exception in {}", logPrefix(), command);
+            // Clean up any encoding failures at head of stack first
+            while (!stack.isEmpty() && stack.peek().hasEncodingError()) {
+                RedisCommand<?, ?, ?> failed = stack.poll();
+                // Encoding failures were already completed exceptionally during encoding
+                if (debugEnabled) {
+                    logger.debug("{} Cleaning up encoding failure command {}", logPrefix(), failed);
+                }
             }
-            logLevel = InternalLogLevel.DEBUG;
 
-            try {
-                command.completeExceptionally(cause);
-            } catch (Exception ex) {
-                logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(),
-                        ex);
+            if (!stack.isEmpty()) {
+                RedisCommand<?, ?, ?> command = stack.poll();
+                if (debugEnabled) {
+                    logger.debug("{} Storing exception in {}", logPrefix(), command);
+                }
+                logLevel = InternalLogLevel.DEBUG;
+
+                try {
+                    command.completeExceptionally(cause);
+                } catch (Exception ex) {
+                    logger.warn("{} Unexpected exception during command completion exceptionally: {}", logPrefix, ex.toString(),
+                            ex);
+                }
             }
         }
 
@@ -659,6 +670,18 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             } else {
 
                 RedisCommand<?, ?, ?> command = stack.peek();
+                // Clean up encoding failures before processing valid responses
+                while (!stack.isEmpty() && stack.peek().hasEncodingError()) {
+                    RedisCommand<?, ?, ?> failed = stack.poll();
+                    if (debugEnabled) {
+                        logger.debug("{} Cleaning up encoding failure command {}", logPrefix(), failed);
+                    }
+                    // Encoding failures were already completed exceptionally during encoding
+                    if (!stack.isEmpty()) {
+                        command = stack.peek();
+                    }
+                }
+
                 if (debugEnabled) {
                     logger.debug("{} Stack contains: {} commands", logPrefix(), stack.size());
                 }
