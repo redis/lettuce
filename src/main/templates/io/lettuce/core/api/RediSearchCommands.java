@@ -1228,4 +1228,18 @@ public interface RediSearchCommands<K, V> {
     @Experimental
     String ftCursordel(String index, Cursor cursor);
 
+    /**
+     * Execute a hybrid query combining text search and vector similarity.
+     *
+     * @param index the index name
+     * @param args the hybrid query arguments
+     * @return the hybrid search results
+     * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
+     * @see HybridArgs
+     * @see HybridReply
+     * @since 7.2
+     */
+    @Experimental
+    HybridReply<K, V> ftHybrid(String index, HybridArgs<K, V> args);
+
 }

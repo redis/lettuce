@@ -39,6 +39,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.search.HybridReply;
+import io.lettuce.core.search.arguments.HybridArgs;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -797,6 +799,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<SearchReply<K, V>> ftSearch(String index, V query) {
         return ftSearch(index, query, SearchArgs.<K, V> builder().build());
+    }
+
+    @Override
+    public RedisFuture<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args) {
+        return routeKeyless(() -> super.ftHybrid(index, args), (conn) -> conn.ftHybrid(index, args), CommandType.FT_HYBRID);
     }
 
     @Override

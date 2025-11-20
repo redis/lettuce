@@ -24,6 +24,8 @@ import io.lettuce.core.search.arguments.SugGetArgs
 import io.lettuce.core.search.arguments.SynUpdateArgs
 
 import io.lettuce.core.search.AggregationReply.Cursor
+import io.lettuce.core.search.HybridReply
+import io.lettuce.core.search.arguments.HybridArgs
 
 /**
  * Coroutine executed commands for RediSearch functionality
@@ -1230,6 +1232,20 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      */
     @Experimental
     suspend fun ftCursordel(index: String, cursor: Cursor): String?
+
+    /**
+     * Execute a hybrid query combining text search and vector similarity.
+     *
+     * @param index the index name
+     * @param args the hybrid query arguments
+     * @return the hybrid search results
+     * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
+     * @see HybridArgs
+     * @see HybridReply
+     * @since 7.2
+     */
+    @Experimental
+    suspend fun ftHybrid(index: String, args: HybridArgs<K, V>): HybridReply<K, V>?
 
 }
 

@@ -53,6 +53,7 @@ import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.AggregationReply.Cursor;
 
+import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -60,6 +61,7 @@ import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.HybridArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
@@ -1776,6 +1778,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Mono<SearchReply<K, V>> ftSearch(String index, V query) {
         return createMono(() -> searchCommandBuilder.ftSearch(index, query, SearchArgs.<K, V> builder().build()));
+    }
+
+    @Override
+    public Mono<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args) {
+        return createMono(() -> searchCommandBuilder.ftHybrid(index, args));
     }
 
     @Override

@@ -11,6 +11,7 @@ import java.util.List;
 
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -18,6 +19,7 @@ import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.HybridArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
@@ -1229,5 +1231,19 @@ public interface NodeSelectionSearchCommands<K, V> {
      */
     @Experimental
     Executions<String> ftCursordel(String index, Cursor cursor);
+
+    /**
+     * Execute a hybrid query combining text search and vector similarity.
+     *
+     * @param index the index name
+     * @param args the hybrid query arguments
+     * @return the hybrid search results
+     * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
+     * @see HybridArgs
+     * @see HybridReply
+     * @since 7.2
+     */
+    @Experimental
+    Executions<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args);
 
 }

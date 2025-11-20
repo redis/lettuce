@@ -23,6 +23,8 @@ import io.lettuce.core.search.arguments.SugAddArgs
 import io.lettuce.core.search.arguments.SugGetArgs
 import io.lettuce.core.search.arguments.SynUpdateArgs
 import io.lettuce.core.search.AggregationReply.Cursor
+import io.lettuce.core.search.HybridReply
+import io.lettuce.core.search.arguments.HybridArgs
 
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
@@ -90,6 +92,9 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
 
     override suspend fun ftCursordel(index: String, cursor: Cursor): String? =
         ops.ftCursordel(index, cursor).awaitFirstOrNull()
+
+    override suspend fun ftHybrid(index: String, args: HybridArgs<K, V>): HybridReply<K, V>? =
+        ops.ftHybrid(index, args).awaitFirstOrNull()
 
     override suspend fun ftDictadd(dict: String, vararg terms: V): Long? =
         ops.ftDictadd(dict, *terms).awaitFirstOrNull()
