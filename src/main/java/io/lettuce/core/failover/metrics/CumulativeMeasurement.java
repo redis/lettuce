@@ -31,12 +31,12 @@
 package io.lettuce.core.failover.metrics;
 
 /**
- * Interface for measurement implementations that accumulate calls durations and outcomes.
+ * Interface for measurement implementations that accumulate calls and outcomes.
  */
 interface CumulativeMeasurement extends MeasurementData {
 
     /**
-     * Records a call duration and its outcome.
+     * Records the outcome of a call.
      *
      * @param outcome the outcome of the call
      */

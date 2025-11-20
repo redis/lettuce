@@ -1,7 +1,7 @@
 package io.lettuce.core.failover.metrics;
 
 /**
- * Clock abstraction for obtaining the current time in milliseconds.
+ * Clock abstraction for obtaining the current time in nanoseconds.
  * <p>
  * This interface allows for testable time-dependent code by enabling injection of custom clock implementations.
  * </p>

@@ -33,8 +33,8 @@ package io.lettuce.core.failover.metrics;
 import java.util.Arrays;
 
 /**
- * A measurement implementation used in sliding windows to track the total duration and the number of calls in the window, along
- * with the duration and number of calls of the current entry/bucket.
+ * A measurement implementation used in sliding windows to track the total number of calls and failed calls in the window,
+ * along with the number of calls and failed calls of the current entry/bucket.
  *
  * <p>
  * This implementation has the advantage of being cache friendly, benefiting from cache locality when counting/discarding the
