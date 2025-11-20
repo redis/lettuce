@@ -68,18 +68,6 @@ public class MSetExArgs implements CompositeArgument {
         /**
          * Creates new {@link MSetExArgs} and enable {@literal EX}.
          *
-         * @param timeout expire time in seconds.
-         * @return new {@link MSetExArgs} with {@literal EX} enabled.
-         * @see MSetExArgs#ex(long)
-         * @since 7.1
-         */
-        public static MSetExArgs ex(long timeout) {
-            return new MSetExArgs().ex(timeout);
-        }
-
-        /**
-         * Creates new {@link MSetExArgs} and enable {@literal EX}.
-         *
          * @param timeout expire time as duration.
          * @return new {@link MSetExArgs} with {@literal EX} enabled.
          * @see MSetExArgs#ex(long)
@@ -87,30 +75,6 @@ public class MSetExArgs implements CompositeArgument {
          */
         public static MSetExArgs ex(Duration timeout) {
             return new MSetExArgs().ex(timeout);
-        }
-
-        /**
-         * Creates new {@link MSetExArgs} and enable {@literal EXAT}.
-         *
-         * @param timestamp the timestamp type: posix time in seconds.
-         * @return new {@link MSetExArgs} with {@literal EXAT} enabled.
-         * @see MSetExArgs#exAt(long)
-         * @since 7.1
-         */
-        public static MSetExArgs exAt(long timestamp) {
-            return new MSetExArgs().exAt(timestamp);
-        }
-
-        /**
-         * Creates new {@link MSetExArgs} and enable {@literal EXAT}.
-         *
-         * @param timestamp the timestamp type: posix time in seconds.
-         * @return new {@link MSetExArgs} with {@literal EXAT} enabled.
-         * @see MSetExArgs#exAt(Date)
-         * @since 7.1
-         */
-        public static MSetExArgs exAt(Date timestamp) {
-            return new MSetExArgs().exAt(timestamp);
         }
 
         /**
@@ -133,44 +97,8 @@ public class MSetExArgs implements CompositeArgument {
          * @see MSetExArgs#px(long)
          * @since 7.1
          */
-        public static MSetExArgs px(long timeout) {
-            return new MSetExArgs().px(timeout);
-        }
-
-        /**
-         * Creates new {@link MSetExArgs} and enable {@literal PX}.
-         *
-         * @param timeout expire time in milliseconds.
-         * @return new {@link MSetExArgs} with {@literal PX} enabled.
-         * @see MSetExArgs#px(long)
-         * @since 7.1
-         */
         public static MSetExArgs px(Duration timeout) {
             return new MSetExArgs().px(timeout);
-        }
-
-        /**
-         * Creates new {@link MSetExArgs} and enable {@literal PXAT}.
-         *
-         * @param timestamp the timestamp type: posix time.
-         * @return new {@link MSetExArgs} with {@literal PXAT} enabled.
-         * @see MSetExArgs#pxAt(long)
-         * @since 7.1
-         */
-        public static MSetExArgs pxAt(long timestamp) {
-            return new MSetExArgs().pxAt(timestamp);
-        }
-
-        /**
-         * Creates new {@link MSetExArgs} and enable {@literal PXAT}.
-         *
-         * @param timestamp the timestamp type: posix time.
-         * @return new {@link MSetExArgs} with {@literal PXAT} enabled.
-         * @see MSetExArgs#pxAt(Date)
-         * @since 7.1
-         */
-        public static MSetExArgs pxAt(Date timestamp) {
-            return new MSetExArgs().pxAt(timestamp);
         }
 
         /**
@@ -226,19 +154,6 @@ public class MSetExArgs implements CompositeArgument {
      * @return {@code this} {@link MSetExArgs}.
      * @since 7.1
      */
-    public MSetExArgs ex(long timeout) {
-
-        this.ex = timeout;
-        return this;
-    }
-
-    /**
-     * Set the specified expire time, in seconds.
-     *
-     * @param timeout expire time in seconds.
-     * @return {@code this} {@link MSetExArgs}.
-     * @since 7.1
-     */
     public MSetExArgs ex(Duration timeout) {
 
         LettuceAssert.notNull(timeout, "Timeout must not be null");
@@ -254,50 +169,11 @@ public class MSetExArgs implements CompositeArgument {
      * @return {@code this} {@link MSetExArgs}.
      * @since 7.1
      */
-    public MSetExArgs exAt(long timestamp) {
-
-        this.exAt = timestamp;
-        return this;
-    }
-
-    /**
-     * Set the specified expire at time using a posix {@code timestamp}.
-     *
-     * @param timestamp the timestamp type: posix time in seconds.
-     * @return {@code this} {@link MSetExArgs}.
-     * @since 7.1
-     */
-    public MSetExArgs exAt(Date timestamp) {
-
-        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
-
-        return exAt(timestamp.getTime() / 1000);
-    }
-
-    /**
-     * Set the specified expire at time using a posix {@code timestamp}.
-     *
-     * @param timestamp the timestamp type: posix time in seconds.
-     * @return {@code this} {@link MSetExArgs}.
-     * @since 7.1
-     */
     public MSetExArgs exAt(Instant timestamp) {
 
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
 
-        return exAt(timestamp.toEpochMilli() / 1000);
-    }
-
-    /**
-     * Set the specified expire time, in milliseconds.
-     *
-     * @param timeout expire time in milliseconds.
-     * @return {@code this} {@link MSetExArgs}.
-     * @since 7.1
-     */
-    public MSetExArgs px(long timeout) {
-
-        this.px = timeout;
+        this.exAt = timestamp.toEpochMilli() / 1000;
         return this;
     }
 
@@ -323,38 +199,12 @@ public class MSetExArgs implements CompositeArgument {
      * @return {@code this} {@link MSetExArgs}.
      * @since 7.1
      */
-    public MSetExArgs pxAt(long timestamp) {
-
-        this.pxAt = timestamp;
-        return this;
-    }
-
-    /**
-     * Set the specified expire at time using a posix {@code timestamp}.
-     *
-     * @param timestamp the timestamp type: posix time in milliseconds.
-     * @return {@code this} {@link MSetExArgs}.
-     * @since 7.1
-     */
-    public MSetExArgs pxAt(Date timestamp) {
-
-        LettuceAssert.notNull(timestamp, "Timestamp must not be null");
-
-        return pxAt(timestamp.getTime());
-    }
-
-    /**
-     * Set the specified expire at time using a posix {@code timestamp}.
-     *
-     * @param timestamp the timestamp type: posix time in milliseconds.
-     * @return {@code this} {@link MSetExArgs}.
-     * @since 7.1
-     */
     public MSetExArgs pxAt(Instant timestamp) {
 
         LettuceAssert.notNull(timestamp, "Timestamp must not be null");
 
-        return pxAt(timestamp.toEpochMilli());
+        this.pxAt = timestamp.toEpochMilli();
+        return this;
     }
 
     /**
