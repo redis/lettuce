@@ -1,12 +1,10 @@
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.metrics;
 
 import java.lang.management.ManagementFactory;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-
-import io.lettuce.core.failover.metrics.LockFreeSlidingWindowMetrics;
 
 /**
  * Performance tests for lock-free sliding window metrics.
@@ -16,12 +14,12 @@ import io.lettuce.core.failover.metrics.LockFreeSlidingWindowMetrics;
  */
 @Tag("performance")
 @DisplayName("Sliding Window Metrics Performance")
-class SlidingWindowMetricsPerformanceTests {
+class MetricsPerformanceTests {
 
     @Test
     @DisplayName("should record 1M events with minimal overhead")
     void shouldRecord1MEventsWithMinimalOverhead() {
-        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics();
+        CircuitBreakerMetrics metrics = new LockFreeSlidingTimeWindowMetrics();
         int eventCount = 1_000_000;
 
         long startTime = System.nanoTime();
@@ -47,7 +45,7 @@ class SlidingWindowMetricsPerformanceTests {
     @Test
     @DisplayName("should query metrics with minimal overhead")
     void shouldQueryMetricsWithMinimalOverhead() {
-        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics();
+        CircuitBreakerMetrics metrics = new LockFreeSlidingTimeWindowMetrics();
 
         // Record some events
         for (int i = 0; i < 10_000; i++) {
@@ -74,7 +72,7 @@ class SlidingWindowMetricsPerformanceTests {
     @Test
     @DisplayName("should handle concurrent recording and querying")
     void shouldHandleConcurrentRecordingAndQuerying() throws InterruptedException {
-        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics();
+        CircuitBreakerMetrics metrics = new LockFreeSlidingTimeWindowMetrics();
         int threadCount = 8;
         int operationsPerThread = 100_000;
 
@@ -117,7 +115,7 @@ class SlidingWindowMetricsPerformanceTests {
         Runtime runtime = Runtime.getRuntime();
         long beforeMemory = runtime.totalMemory() - runtime.freeMemory();
 
-        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics();
+        CircuitBreakerMetrics metrics = new LockFreeSlidingTimeWindowMetrics();
 
         long afterMemory = runtime.totalMemory() - runtime.freeMemory();
         long memoryUsed = afterMemory - beforeMemory;
@@ -133,7 +131,7 @@ class SlidingWindowMetricsPerformanceTests {
         long gcCountBefore = ManagementFactory.getGarbageCollectorMXBeans().stream().mapToLong(b -> b.getCollectionCount())
                 .sum();
 
-        LockFreeSlidingWindowMetrics metrics = new LockFreeSlidingWindowMetrics();
+        CircuitBreakerMetrics metrics = new LockFreeSlidingTimeWindowMetrics();
 
         // Record many events
         for (int i = 0; i < 10_000_000; i++) {
