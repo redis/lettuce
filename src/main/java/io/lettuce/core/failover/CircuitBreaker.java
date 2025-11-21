@@ -1,5 +1,6 @@
 package io.lettuce.core.failover;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.util.Arrays;
@@ -25,7 +26,7 @@ import io.lettuce.core.failover.metrics.CircuitBreakerMetricsImpl;
  * @author Ali Takavci
  * @since 7.1
  */
-public class CircuitBreaker {
+public class CircuitBreaker implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(CircuitBreaker.class);
 
@@ -132,6 +133,11 @@ public class CircuitBreaker {
                 log.error("Error notifying listener " + listener + " of state change " + event, e);
             }
         }
+    }
+
+    @Override
+    public void close() {
+        listeners.clear();
     }
 
     public static enum State {

@@ -43,14 +43,18 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
 
     @Override
     public void addListener(RedisPubSubListener<K, V> listener) {
-        pubSubListeners.add(listener);
-        current.getConnection().addListener(listener);
+        doBySharedLock(() -> {
+            pubSubListeners.add(listener);
+            current.getConnection().addListener(listener);
+        });
     }
 
     @Override
     public void removeListener(RedisPubSubListener<K, V> listener) {
-        pubSubListeners.remove(listener);
-        current.getConnection().removeListener(listener);
+        doBySharedLock(() -> {
+            pubSubListeners.remove(listener);
+            current.getConnection().removeListener(listener);
+        });
     }
 
     @Override
@@ -87,13 +91,15 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     public void switchToDatabase(RedisURI redisURI) {
 
         RedisDatabase<StatefulRedisPubSubConnection<K, V>> fromDb = current;
-        super.switchToDatabase(redisURI);
-        pubSubListeners.forEach(listener -> {
-            current.getConnection().addListener(listener);
-            fromDb.getConnection().removeListener(listener);
-        });
+        doByExclusiveLock(() -> {
+            super.switchToDatabase(redisURI);
+            pubSubListeners.forEach(listener -> {
+                current.getConnection().addListener(listener);
+                fromDb.getConnection().removeListener(listener);
+            });
 
-        moveSubscriptions(fromDb, current);
+            moveSubscriptions(fromDb, current);
+        });
     }
 
     @SuppressWarnings("unchecked")

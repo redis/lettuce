@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -274,6 +275,29 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         connection.close();
     }
 
+    @Test
+    void shouldHandleSwitchToSameDatabase() {
+        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        RedisURI currentDb = connection.getCurrentEndpoint();
+
+        // Set a value
+        connection.sync().set("sameDbKey", "testValue");
+        assertEquals("testValue", connection.sync().get("sameDbKey"));
+
+        // Switch to the same database (should be a no-op)
+        connection.switchToDatabase(currentDb);
+
+        // Verify we're still on the same database and value is intact
+        assertEquals(currentDb, connection.getCurrentEndpoint());
+        assertEquals("testValue", connection.sync().get("sameDbKey"));
+
+        // Verify commands still work after no-op switch
+        connection.sync().set("anotherKey", "anotherValue");
+        assertEquals("anotherValue", connection.sync().get("anotherKey"));
+
+        connection.close();
+    }
+
     // ============ List Operations Tests ============
 
     @Test
@@ -447,6 +471,98 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
 
         // Note: Current implementation throws UnsupportedOperationException for non-existent endpoints
         assertThatThrownBy(() -> connection.switchToDatabase(nonExistentUri)).isInstanceOf(UnsupportedOperationException.class);
+
+        connection.close();
+    }
+
+    // ========== Add/Remove Thread Safety Tests =========
+
+    @Test
+    void shouldHandleConcurrentAddsAndRemovesOnMultipleUris() throws Exception {
+        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        int initialEndpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false).collect(Collectors.toList())
+                .size();
+        // Create multiple URIs
+        RedisURI[] uris = new RedisURI[5];
+        AtomicInteger[] addCounts = new AtomicInteger[5];
+        AtomicInteger[] removeCount = new AtomicInteger[5];
+        for (int i = 0; i < 5; i++) {
+            uris[i] = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(5 + i))
+                    .withPassword(TestSettings.password()).build();
+            addCounts[i] = new AtomicInteger(0);
+            removeCount[i] = new AtomicInteger(0);
+        }
+
+        int threadCount = 20;
+        Thread[] threads = new Thread[threadCount];
+
+        // Half threads add URIs, half remove URIs
+        for (int i = 0; i < threadCount; i++) {
+            final int index = i;
+            threads[i] = new Thread(() -> {
+                int uriIndex = index % uris.length;
+                if (index % 2 == 0) {
+                    // Add operation
+                    RedisURI uri = uris[uriIndex];
+                    try {
+                        connection.addDatabase(uri, 1.0f);
+                        addCounts[uriIndex].incrementAndGet();
+                    } catch (IllegalArgumentException e) {
+                        // Expected: "Database already exists"
+                    }
+                } else {
+                    // Remove operation
+                    RedisURI uri = uris[uriIndex];
+                    try {
+                        // Switch away if it's current
+                        if (connection.getCurrentEndpoint().equals(uri)) {
+                            RedisURI other = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
+                                    .filter(u -> !u.equals(uri)).findFirst().orElse(null);
+                            if (other != null) {
+                                connection.switchToDatabase(other);
+                            }
+                        }
+                        connection.removeDatabase(uri);
+                        removeCount[uriIndex].incrementAndGet();
+                    } catch (IllegalArgumentException | UnsupportedOperationException e) {
+                        // Expected: "Database not found" or "Cannot remove active database"
+                    }
+                }
+            });
+        }
+
+        for (Thread t : threads) {
+            t.start();
+        }
+        for (Thread t : threads) {
+            t.join();
+        }
+
+        // Verify: Each URI should appear at most once (no duplicates)
+        List<RedisURI> endpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
+                .collect(Collectors.toList());
+        for (RedisURI uri : uris) {
+            long count = endpoints.stream().filter(u -> u.equals(uri)).count();
+            assertThat(count).isLessThanOrEqualTo(1);
+        }
+
+        // Verify: Add and remove counts match
+        int totalRemaniningEndpoints = initialEndpoints;
+        for (int i = 0; i < uris.length; i++) {
+            int netCount = addCounts[i].get() - removeCount[i].get();
+            if (netCount == 1) {
+                assertThat(endpoints).contains(uris[i]);
+                totalRemaniningEndpoints++;
+            } else {
+                assertThat(endpoints).doesNotContain(uris[i]);
+            }
+        }
+        // Verify: Total remaining endpoints match
+        assertThat(endpoints).hasSize(totalRemaniningEndpoints);
+
+        // Verify connection is still functional
+        connection.sync().set("thread-safety-test", "success");
+        assertThat(connection.sync().get("thread-safety-test")).isEqualTo("success");
 
         connection.close();
     }
