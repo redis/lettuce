@@ -275,6 +275,29 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         connection.close();
     }
 
+    @Test
+    void shouldHandleSwitchToSameDatabase() {
+        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        RedisURI currentDb = connection.getCurrentEndpoint();
+
+        // Set a value
+        connection.sync().set("sameDbKey", "testValue");
+        assertEquals("testValue", connection.sync().get("sameDbKey"));
+
+        // Switch to the same database (should be a no-op)
+        connection.switchToDatabase(currentDb);
+
+        // Verify we're still on the same database and value is intact
+        assertEquals(currentDb, connection.getCurrentEndpoint());
+        assertEquals("testValue", connection.sync().get("sameDbKey"));
+
+        // Verify commands still work after no-op switch
+        connection.sync().set("anotherKey", "anotherValue");
+        assertEquals("anotherValue", connection.sync().get("anotherKey"));
+
+        connection.close();
+    }
+
     // ============ List Operations Tests ============
 
     @Test
