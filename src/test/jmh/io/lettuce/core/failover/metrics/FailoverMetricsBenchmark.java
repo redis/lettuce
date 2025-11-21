@@ -10,7 +10,7 @@ public class FailoverMetricsBenchmark {
 
     @State(Scope.Benchmark)  // shared across all threads
     public static class FailoverMetricsBenchmarkState {
-        public SlidingWindowMetrics metrics;
+        public CircuitBreakerMetrics metrics;
 
         @Param({"LockFreeSlidingTimeWindowMetrics"})
         public String implementation;

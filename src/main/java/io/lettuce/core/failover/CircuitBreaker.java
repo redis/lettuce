@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
-import io.lettuce.core.failover.metrics.CircuitBreakerMetricsFactory;
+import io.lettuce.core.failover.metrics.MetricsFactory;
 
 /**
  * Circuit breaker for tracking command metrics and managing circuit breaker state. Wraps CircuitBreakerMetrics and exposes it
@@ -43,7 +43,7 @@ public class CircuitBreaker {
      * Create a circuit breaker instance.
      */
     public CircuitBreaker(CircuitBreakerConfig config) {
-        this.metrics = CircuitBreakerMetricsFactory.createDefaultMetrics();
+        this.metrics = MetricsFactory.createDefaultMetrics();
         this.config = config;
         this.exceptionsPredicate = createExceptionsPredicate(config.trackedExceptions);
     }

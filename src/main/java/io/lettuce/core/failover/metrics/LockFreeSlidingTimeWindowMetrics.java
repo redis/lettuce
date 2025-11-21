@@ -50,7 +50,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  * <p>
  *
  */
-class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
+class LockFreeSlidingTimeWindowMetrics implements CircuitBreakerMetrics {
 
     static final int DEFAULT_WINDOW_DURATION_SECONDS = 2;
 
@@ -246,7 +246,7 @@ class LockFreeSlidingTimeWindowMetrics implements SlidingWindowMetrics {
         }
     }
 
-    public static class TimeSlice {
+    static class TimeSlice {
 
         final int second;
 
