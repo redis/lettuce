@@ -44,7 +44,6 @@ class CircuitBreakerUnitTests {
             // When: record 1 success and 1 failure (50% failure rate, but only 1 failure)
             circuitBreaker.recordSuccess();
             circuitBreaker.recordFailure();
-            circuitBreaker.evaluateMetrics();
 
             // Then: circuit should open because percentage threshold is met (minimumNumberOfFailures=0 means ignore count)
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
@@ -60,7 +59,6 @@ class CircuitBreakerUnitTests {
 
             // When: record only 1 failure (100% failure rate)
             circuitBreaker.recordFailure();
-            circuitBreaker.evaluateMetrics();
 
             // Then: circuit should open
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
@@ -81,7 +79,6 @@ class CircuitBreakerUnitTests {
             for (int i = 0; i < 5; i++) {
                 circuitBreaker.recordFailure();
             }
-            circuitBreaker.evaluateMetrics();
 
             // Then: circuit should open because failure count threshold is met (failureRateThreshold=0.0 means ignore
             // percentage)
@@ -101,7 +98,6 @@ class CircuitBreakerUnitTests {
                 circuitBreaker.recordFailure();
                 circuitBreaker.recordSuccess();
             }
-            circuitBreaker.evaluateMetrics();
 
             // Then: circuit should remain closed (percentage met but count not met)
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
@@ -110,7 +106,6 @@ class CircuitBreakerUnitTests {
             for (int i = 0; i < 5; i++) {
                 circuitBreaker.recordFailure();
             }
-            circuitBreaker.evaluateMetrics();
 
             // Then: circuit should open (both conditions met)
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
@@ -129,7 +124,6 @@ class CircuitBreakerUnitTests {
                 circuitBreaker.recordFailure();
             }
             circuitBreaker.recordSuccess();
-            circuitBreaker.evaluateMetrics();
 
             // Then: circuit should remain closed
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
@@ -143,14 +137,13 @@ class CircuitBreakerUnitTests {
                     CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
             CircuitBreaker circuitBreaker = new CircuitBreaker(config);
 
-            // When: record 10 failures and 100 successes (9.1% rate with 10 failures)
-            for (int i = 0; i < 10; i++) {
-                circuitBreaker.recordFailure();
-            }
+            // When: record 100 successes and 10 failures (9.1% rate with 10 failures)
             for (int i = 0; i < 100; i++) {
                 circuitBreaker.recordSuccess();
             }
-            circuitBreaker.evaluateMetrics();
+            for (int i = 0; i < 10; i++) {
+                circuitBreaker.recordFailure();
+            }
 
             // Then: circuit should remain closed
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
@@ -216,7 +209,6 @@ class CircuitBreakerUnitTests {
             for (int i = 0; i < 10; i++) {
                 circuitBreaker.recordFailure();
             }
-            circuitBreaker.evaluateMetrics();
 
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
         }
@@ -228,7 +220,6 @@ class CircuitBreakerUnitTests {
             for (int i = 0; i < 4; i++) {
                 circuitBreaker.recordFailure();
             }
-            circuitBreaker.evaluateMetrics();
 
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
         }
@@ -240,7 +231,6 @@ class CircuitBreakerUnitTests {
             for (int i = 0; i < 10; i++) {
                 circuitBreaker.recordFailure();
             }
-            circuitBreaker.evaluateMetrics();
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
 
             // Evaluate again - should remain OPEN without triggering another transition
@@ -392,7 +382,6 @@ class CircuitBreakerUnitTests {
                 circuitBreaker.recordFailure();
                 circuitBreaker.recordSuccess();
             }
-            circuitBreaker.evaluateMetrics();
 
             // Should open because both thresholds are met (>= comparison)
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
@@ -423,7 +412,6 @@ class CircuitBreakerUnitTests {
             for (int i = 0; i < 10; i++) {
                 circuitBreaker.recordFailure();
             }
-            circuitBreaker.evaluateMetrics();
 
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
             assertThat(circuitBreaker.getSnapshot().getFailureRate()).isEqualTo(100.0f);
@@ -461,7 +449,6 @@ class CircuitBreakerUnitTests {
             for (int i = 0; i < 1_000; i++) {
                 circuitBreaker.recordFailure();
             }
-            circuitBreaker.evaluateMetrics();
 
             // Should open because failure count >= 1000 and failure rate >= 1.0%
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);

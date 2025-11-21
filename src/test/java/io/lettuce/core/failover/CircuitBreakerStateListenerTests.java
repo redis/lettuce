@@ -40,7 +40,6 @@ class CircuitBreakerStateListenerTests {
         for (int i = 0; i < 10; i++) {
             circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
 
         // Then
         assertThat(listener.events).hasSize(1);
@@ -63,7 +62,6 @@ class CircuitBreakerStateListenerTests {
         for (int i = 0; i < 10; i++) {
             circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
 
         // Then
         assertThat(listener1.events).hasSize(1);
@@ -81,7 +79,6 @@ class CircuitBreakerStateListenerTests {
         for (int i = 0; i < 10; i++) {
             circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
 
         // Then
         assertThat(listener.events).isEmpty();
@@ -113,7 +110,6 @@ class CircuitBreakerStateListenerTests {
         for (int i = 0; i < 10; i++) {
             circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
 
         // Then - normal listener should still receive the event
         assertThat(normalListener.events).hasSize(1);
@@ -131,7 +127,6 @@ class CircuitBreakerStateListenerTests {
         for (int i = 0; i < 10; i++) {
             circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
         long afterTimestamp = System.currentTimeMillis();
 
         // Then
