@@ -1,8 +1,8 @@
 package io.lettuce.core.failover.metrics;
 
 /**
- * Interface for sliding window metrics. Provides thread-safe tracking of success and failure counts within a
- * configurable window.
+ * Interface for sliding window metrics. Provides thread-safe tracking of success and failure counts within a configurable
+ * window.
  *
  * <p>
  * Implementations must be:
