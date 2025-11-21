@@ -38,9 +38,8 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change by recording failures
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
 
         // Then
         assertThat(listener.events).hasSize(1);
@@ -61,9 +60,8 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
 
         // Then
         assertThat(listener1.events).hasSize(1);
@@ -79,9 +77,8 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
 
         // Then
         assertThat(listener.events).isEmpty();
@@ -94,7 +91,7 @@ class CircuitBreakerStateListenerTests {
         circuitBreaker.addListener(listener);
 
         // When - evaluate without enough failures
-        circuitBreaker.getMetrics().recordSuccess();
+        circuitBreaker.recordSuccess();
         circuitBreaker.evaluateMetrics();
 
         // Then
@@ -111,9 +108,8 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
 
         // Then - normal listener should still receive the event
         assertThat(normalListener.events).hasSize(1);
@@ -129,9 +125,8 @@ class CircuitBreakerStateListenerTests {
         // When
         Thread.sleep(10); // Small delay to ensure timestamp difference
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
-        circuitBreaker.evaluateMetrics();
         long afterTimestamp = System.currentTimeMillis();
 
         // Then

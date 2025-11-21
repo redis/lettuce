@@ -44,8 +44,8 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         // Get metrics
         CircuitBreaker cb = connection.getCircuitBreaker(endpoint);
         assertNotNull(cb);
-        assertThat(cb.getMetrics().getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(1);
-        assertThat(cb.getMetrics().getSnapshot().getFailureCount()).isEqualTo(0);
+        assertThat(cb.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(1);
+        assertThat(cb.getSnapshot().getFailureCount()).isEqualTo(0);
 
         connection.close();
     }
@@ -62,8 +62,8 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
 
         // Get metrics
         CircuitBreaker cb = connection.getCircuitBreaker(endpoint);
-        assertThat(cb.getMetrics().getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(3);
-        assertThat(cb.getMetrics().getSnapshot().getFailureCount()).isEqualTo(0);
+        assertThat(cb.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(3);
+        assertThat(cb.getSnapshot().getFailureCount()).isEqualTo(0);
 
         connection.close();
     }
@@ -91,8 +91,8 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         CircuitBreaker cb2 = connection.getCircuitBreaker(secondEndpoint);
 
         // Verify isolation - each endpoint has its own metrics
-        assertThat(cb1.getMetrics().getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(1);
-        assertThat(cb2.getMetrics().getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(1);
+        assertThat(cb1.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(1);
+        assertThat(cb2.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(1);
 
         connection.close();
     }
@@ -117,7 +117,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         // Execute command on first endpoint
         connection.sync().set("key1", "value1");
         CircuitBreaker cb1Before = connection.getCircuitBreaker(firstEndpoint);
-        long successes1Before = cb1Before.getMetrics().getSnapshot().getSuccessCount();
+        long successes1Before = cb1Before.getSnapshot().getSuccessCount();
 
         // Switch to second endpoint
         List<RedisURI> endpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
@@ -134,7 +134,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
 
         // Verify metrics for first endpoint are unchanged
         CircuitBreaker cb1After = connection.getCircuitBreaker(firstEndpoint);
-        assertThat(cb1After.getMetrics().getSnapshot().getSuccessCount()).isEqualTo(successes1Before);
+        assertThat(cb1After.getSnapshot().getSuccessCount()).isEqualTo(successes1Before);
 
         connection.close();
     }
@@ -151,8 +151,8 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         // Get circuit breaker and verify metrics are accessible
         CircuitBreaker cb = connection.getCircuitBreaker(endpoint);
         assertNotNull(cb);
-        assertNotNull(cb.getMetrics());
-        assertThat(cb.getMetrics().getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(2);
+        assertNotNull(cb.getSnapshot());
+        assertThat(cb.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(2);
 
         connection.close();
     }
