@@ -275,6 +275,9 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
                 throw new UnsupportedOperationException(
                         "Unable to switch between endpoints - the driver was not able to locate the source or destination endpoint.");
             }
+            if (fromDb.equals(toDb)) {
+                return;
+            }
             current = toDb;
             connectionStateListeners.forEach(listener -> {
                 toDb.getConnection().addListener(listener);
@@ -368,8 +371,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
             // Remove the database and close its connection
             databases.remove(redisURI);
-            database.getConnection().close();
-            database.getCircuitBreaker().removeListener(this::onCircuitBreakerStateChange);
+            database.close();
         });
     }
 
