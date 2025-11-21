@@ -13,7 +13,7 @@ public final class CircuitBreakerMetricsFactory {
      *
      * @return the default {@link CircuitBreakerMetrics} implementation
      */
-    public static CircuitBreakerMetrics createLockFree() {
+    public static CircuitBreakerMetrics createDefaultMetrics() {
         return new CircuitBreakerMetricsImpl();
     }
 

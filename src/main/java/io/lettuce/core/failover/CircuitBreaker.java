@@ -43,7 +43,7 @@ public class CircuitBreaker {
      * Create a circuit breaker instance.
      */
     public CircuitBreaker(CircuitBreakerConfig config) {
-        this.metrics = CircuitBreakerMetricsFactory.createLockFree();
+        this.metrics = CircuitBreakerMetricsFactory.createDefaultMetrics();
         this.config = config;
         this.exceptionsPredicate = createExceptionsPredicate(config.trackedExceptions);
     }
