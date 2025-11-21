@@ -17,6 +17,7 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.CircuitBreakerMetrics;
 import io.lettuce.core.failover.metrics.CircuitBreakerMetricsImpl;
+import io.lettuce.core.failover.metrics.MetricsSnapshot;
 
 /**
  * Circuit breaker for tracking command metrics and managing circuit breaker state. Wraps CircuitBreakerMetrics and exposes it
@@ -50,11 +51,23 @@ public class CircuitBreaker {
 
     /**
      * Get the metrics tracked by this circuit breaker.
-     *
+     * <p>
+     * This is only for internal use and testing purposes.
+     * 
      * @return the circuit breaker metrics
      */
-    public CircuitBreakerMetrics getMetrics() {
+    CircuitBreakerMetrics getMetrics() {
         return metrics;
+    }
+
+    /**
+     * Get a snapshot of the current metrics within the time window. Use the snapshot to access success count, failure count,
+     * total count, and failure rate.
+     *
+     * @return an immutable snapshot of current metrics
+     */
+    public MetricsSnapshot getSnapshot() {
+        return metrics.getSnapshot();
     }
 
     @Override
@@ -72,12 +85,31 @@ public class CircuitBreaker {
         return false;
     }
 
-    public void evaluateMetrics() {
-        boolean evaluationResult = metrics.getSnapshot().getFailureRate() >= config.getFailureRateThreshold()
-                && metrics.getSnapshot().getFailureCount() >= config.getMinimumNumberOfFailures();
+    public void recordResult(Throwable error) {
+        if (error != null && isCircuitBreakerTrackedException(error)) {
+            recordFailure();
+        } else {
+            recordSuccess();
+        }
+    }
+
+    public void recordFailure() {
+        metrics.recordFailure();
+        evaluateMetrics();
+    }
+
+    public void recordSuccess() {
+        metrics.recordSuccess();
+    }
+
+    public MetricsSnapshot evaluateMetrics() {
+        MetricsSnapshot snapshot = metrics.getSnapshot();
+        boolean evaluationResult = snapshot.getFailureRate() >= config.getFailureRateThreshold()
+                && snapshot.getFailureCount() >= config.getMinimumNumberOfFailures();
         if (evaluationResult) {
             stateTransitionTo(State.OPEN);
         }
+        return snapshot;
     }
 
     private void stateTransitionTo(State newState) {

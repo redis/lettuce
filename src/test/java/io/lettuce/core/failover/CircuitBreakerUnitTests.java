@@ -42,8 +42,8 @@ class CircuitBreakerUnitTests {
             CircuitBreaker circuitBreaker = new CircuitBreaker(config);
 
             // When: record 1 success and 1 failure (50% failure rate, but only 1 failure)
-            circuitBreaker.getMetrics().recordSuccess();
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordSuccess();
+            circuitBreaker.recordFailure();
             circuitBreaker.evaluateMetrics();
 
             // Then: circuit should open because percentage threshold is met (minimumNumberOfFailures=0 means ignore count)
@@ -59,7 +59,7 @@ class CircuitBreakerUnitTests {
             CircuitBreaker circuitBreaker = new CircuitBreaker(config);
 
             // When: record only 1 failure (100% failure rate)
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
             circuitBreaker.evaluateMetrics();
 
             // Then: circuit should open
@@ -76,36 +76,15 @@ class CircuitBreakerUnitTests {
 
             // When: record 100 successes and 5 failures (very low percentage but meets count)
             for (int i = 0; i < 100; i++) {
-                circuitBreaker.getMetrics().recordSuccess();
+                circuitBreaker.recordSuccess();
             }
             for (int i = 0; i < 5; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
             circuitBreaker.evaluateMetrics();
 
             // Then: circuit should open because failure count threshold is met (failureRateThreshold=0.0 means ignore
             // percentage)
-            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
-        }
-
-        @Test
-        @DisplayName("When failureRateThreshold=0.0, circuit opens as soon as minimum count is reached")
-        void shouldOpenImmediatelyWhenMinimumCountReachedAndRateIsZero() {
-            // Given: config with failureRateThreshold=0.0 and minimumNumberOfFailures=3
-            CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(0.0f, 3,
-                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
-            CircuitBreaker circuitBreaker = new CircuitBreaker(config);
-
-            // When: record 1000 successes and exactly 3 failures (0.3% failure rate)
-            for (int i = 0; i < 1000; i++) {
-                circuitBreaker.getMetrics().recordSuccess();
-            }
-            for (int i = 0; i < 3; i++) {
-                circuitBreaker.getMetrics().recordFailure();
-            }
-            circuitBreaker.evaluateMetrics();
-
-            // Then: circuit should open despite very low percentage
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
         }
 
@@ -119,8 +98,8 @@ class CircuitBreakerUnitTests {
 
             // When: record 5 failures and 5 successes (50% rate but only 5 failures)
             for (int i = 0; i < 5; i++) {
-                circuitBreaker.getMetrics().recordFailure();
-                circuitBreaker.getMetrics().recordSuccess();
+                circuitBreaker.recordFailure();
+                circuitBreaker.recordSuccess();
             }
             circuitBreaker.evaluateMetrics();
 
@@ -129,7 +108,7 @@ class CircuitBreakerUnitTests {
 
             // When: add 5 more failures (now 10 failures, 5 successes = 66.7% rate)
             for (int i = 0; i < 5; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
             circuitBreaker.evaluateMetrics();
 
@@ -147,9 +126,9 @@ class CircuitBreakerUnitTests {
 
             // When: record 9 failures and 1 success (90% rate but only 9 failures)
             for (int i = 0; i < 9; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
-            circuitBreaker.getMetrics().recordSuccess();
+            circuitBreaker.recordSuccess();
             circuitBreaker.evaluateMetrics();
 
             // Then: circuit should remain closed
@@ -166,10 +145,10 @@ class CircuitBreakerUnitTests {
 
             // When: record 10 failures and 100 successes (9.1% rate with 10 failures)
             for (int i = 0; i < 10; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
             for (int i = 0; i < 100; i++) {
-                circuitBreaker.getMetrics().recordSuccess();
+                circuitBreaker.recordSuccess();
             }
             circuitBreaker.evaluateMetrics();
 
@@ -201,8 +180,8 @@ class CircuitBreakerUnitTests {
         @Test
         @DisplayName("Should expose metrics")
         void shouldExposeMetrics() {
-            assertThat(circuitBreaker.getMetrics()).isNotNull();
-            MetricsSnapshot snapshot = circuitBreaker.getMetrics().getSnapshot();
+            assertThat(circuitBreaker.getSnapshot()).isNotNull();
+            MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getSuccessCount()).isEqualTo(0);
             assertThat(snapshot.getFailureCount()).isEqualTo(0);
         }
@@ -210,11 +189,11 @@ class CircuitBreakerUnitTests {
         @Test
         @DisplayName("Should track successes in metrics")
         void shouldTrackSuccesses() {
-            circuitBreaker.getMetrics().recordSuccess();
-            circuitBreaker.getMetrics().recordSuccess();
-            circuitBreaker.getMetrics().recordSuccess();
+            circuitBreaker.recordSuccess();
+            circuitBreaker.recordSuccess();
+            circuitBreaker.recordSuccess();
 
-            MetricsSnapshot snapshot = circuitBreaker.getMetrics().getSnapshot();
+            MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getSuccessCount()).isEqualTo(3);
             assertThat(snapshot.getFailureCount()).isEqualTo(0);
         }
@@ -222,10 +201,10 @@ class CircuitBreakerUnitTests {
         @Test
         @DisplayName("Should track failures in metrics")
         void shouldTrackFailures() {
-            circuitBreaker.getMetrics().recordFailure();
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
+            circuitBreaker.recordFailure();
 
-            MetricsSnapshot snapshot = circuitBreaker.getMetrics().getSnapshot();
+            MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getSuccessCount()).isEqualTo(0);
             assertThat(snapshot.getFailureCount()).isEqualTo(2);
         }
@@ -235,7 +214,7 @@ class CircuitBreakerUnitTests {
         void shouldTransitionToOpenWhenThresholdsExceeded() {
             // Record 10 failures (100% failure rate, 10 failures)
             for (int i = 0; i < 10; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
             circuitBreaker.evaluateMetrics();
 
@@ -247,7 +226,7 @@ class CircuitBreakerUnitTests {
         void shouldRemainClosedWhenThresholdsNotExceeded() {
             // Record 4 failures (below minimum count)
             for (int i = 0; i < 4; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
             circuitBreaker.evaluateMetrics();
 
@@ -259,7 +238,7 @@ class CircuitBreakerUnitTests {
         void shouldNotTransitionWhenAlreadyInTargetState() {
             // First transition to OPEN
             for (int i = 0; i < 10; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
             circuitBreaker.evaluateMetrics();
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
@@ -410,8 +389,8 @@ class CircuitBreakerUnitTests {
 
             // Exactly 50% failure rate with exactly 10 failures
             for (int i = 0; i < 10; i++) {
-                circuitBreaker.getMetrics().recordFailure();
-                circuitBreaker.getMetrics().recordSuccess();
+                circuitBreaker.recordFailure();
+                circuitBreaker.recordSuccess();
             }
             circuitBreaker.evaluateMetrics();
 
@@ -442,12 +421,12 @@ class CircuitBreakerUnitTests {
 
             // 100% failure rate
             for (int i = 0; i < 10; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
             circuitBreaker.evaluateMetrics();
 
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
-            assertThat(circuitBreaker.getMetrics().getSnapshot().getFailureRate()).isEqualTo(100.0f);
+            assertThat(circuitBreaker.getSnapshot().getFailureRate()).isEqualTo(100.0f);
         }
 
         @Test
@@ -459,12 +438,12 @@ class CircuitBreakerUnitTests {
 
             // 0% failure rate
             for (int i = 0; i < 100; i++) {
-                circuitBreaker.getMetrics().recordSuccess();
+                circuitBreaker.recordSuccess();
             }
             circuitBreaker.evaluateMetrics();
 
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
-            assertThat(circuitBreaker.getMetrics().getSnapshot().getFailureRate()).isEqualTo(0.0f);
+            assertThat(circuitBreaker.getSnapshot().getFailureRate()).isEqualTo(0.0f);
         }
 
         @Test
@@ -477,16 +456,16 @@ class CircuitBreakerUnitTests {
             // Record 100,000 successes and 1,000 failures (0.99% failure rate and meets count threshold)
             // Keep the number reasonable to stay within the sliding window
             for (int i = 0; i < 100_000; i++) {
-                circuitBreaker.getMetrics().recordSuccess();
+                circuitBreaker.recordSuccess();
             }
             for (int i = 0; i < 1_000; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
             circuitBreaker.evaluateMetrics();
 
             // Should open because failure count >= 1000 and failure rate >= 1.0%
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
-            assertThat(circuitBreaker.getMetrics().getSnapshot().getFailureCount()).isGreaterThanOrEqualTo(1000);
+            assertThat(circuitBreaker.getSnapshot().getFailureCount()).isGreaterThanOrEqualTo(1000);
         }
 
         @Test
@@ -498,13 +477,13 @@ class CircuitBreakerUnitTests {
 
             // Record failures
             for (int i = 0; i < 10; i++) {
-                circuitBreaker.getMetrics().recordFailure();
+                circuitBreaker.recordFailure();
             }
 
             // Reset metrics
             circuitBreaker.getMetrics().reset();
 
-            MetricsSnapshot snapshot = circuitBreaker.getMetrics().getSnapshot();
+            MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getSuccessCount()).isEqualTo(0);
             assertThat(snapshot.getFailureCount()).isEqualTo(0);
             assertThat(snapshot.getFailureRate()).isEqualTo(0.0f);

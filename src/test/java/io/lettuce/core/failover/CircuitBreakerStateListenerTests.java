@@ -38,7 +38,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change by recording failures
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
         circuitBreaker.evaluateMetrics();
 
@@ -61,7 +61,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
         circuitBreaker.evaluateMetrics();
 
@@ -79,7 +79,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
         circuitBreaker.evaluateMetrics();
 
@@ -94,7 +94,7 @@ class CircuitBreakerStateListenerTests {
         circuitBreaker.addListener(listener);
 
         // When - evaluate without enough failures
-        circuitBreaker.getMetrics().recordSuccess();
+        circuitBreaker.recordSuccess();
         circuitBreaker.evaluateMetrics();
 
         // Then
@@ -111,7 +111,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
         circuitBreaker.evaluateMetrics();
 
@@ -129,7 +129,7 @@ class CircuitBreakerStateListenerTests {
         // When
         Thread.sleep(10); // Small delay to ensure timestamp difference
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getMetrics().recordFailure();
+            circuitBreaker.recordFailure();
         }
         circuitBreaker.evaluateMetrics();
         long afterTimestamp = System.currentTimeMillis();
