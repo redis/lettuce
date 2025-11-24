@@ -17,38 +17,26 @@ import java.util.concurrent.TimeUnit;
 public class JmhMain {
 
     public static void main(String... args) throws RunnerException {
-        runFailoverMetricsBenchmark();
+        runSlidingTimeWindowMetricsBenchmark();
+        runSlidingTimeWindowMetricsBenchmarkThrpt();
     }
 
-    private static void runFailoverMetricsBenchmark() throws RunnerException {
+
+    private static void runSlidingTimeWindowMetricsBenchmark() throws RunnerException {
 
         // measure time-per-op
         new Runner(prepareOptions().mode(Mode.AverageTime)
-                .threads(1)
                 .timeUnit(TimeUnit.NANOSECONDS)
-                .operationsPerInvocation(1_000_000)
-                .include(".*FailoverMetricsBenchmark.*")
-                //.addProfiler("gc")
+                .addProfiler("gc")
                 .build()).run();
+    }
 
+
+    private static void runSlidingTimeWindowMetricsBenchmarkThrpt() throws RunnerException {
         // measure thrpt (ops/sec)
         new Runner(prepareOptions().mode(Mode.Throughput)
-                .threads(1)
                 .timeUnit(TimeUnit.SECONDS)
-                //.addProfiler("gc")
-                .build()).run();
-
-        new Runner(prepareOptions().mode(Mode.AverageTime)
-                .threads(4)
-                .timeUnit(TimeUnit.NANOSECONDS)
-                //.addProfiler("gc")
-                .build()).run();
-
-        // measure thrpt (ops/sec)
-        new Runner(prepareOptions().mode(Mode.Throughput)
-                .threads(4)
-                .timeUnit(TimeUnit.SECONDS)
-                //.addProfiler("gc")
+                .addProfiler("gc")
                 .build()).run();
     }
 
@@ -56,11 +44,10 @@ public class JmhMain {
 
         return new OptionsBuilder()//
                 .forks(1) //
-                .warmupIterations(1)//
-                .warmupTime(TimeValue.seconds(1))
-                .operationsPerInvocation(1_000_000)
-                .include(".*FailoverMetricsBenchmark.*")
-                .measurementIterations(1) //
-                .timeout(TimeValue.seconds(2));
+                .warmupIterations(5)//
+                .warmupTime(TimeValue.seconds(5))
+                .include(".*SlidingTimeWindowMetricsBenchmark.*")
+                .measurementIterations(3) //
+                .timeout(TimeValue.seconds(5));
     }
 }
