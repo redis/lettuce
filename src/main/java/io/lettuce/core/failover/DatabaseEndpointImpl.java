@@ -77,12 +77,7 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
     }
 
     private void handleFailure(Object output, Throwable error) {
-        if (error != null && circuitBreaker.isCircuitBreakerTrackedException(error)) {
-            circuitBreaker.getMetrics().recordFailure();
-            circuitBreaker.evaluateMetrics();
-        } else {
-            circuitBreaker.getMetrics().recordSuccess();
-        }
+        circuitBreaker.recordResult(error);
     }
 
     @Override
