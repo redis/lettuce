@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -61,6 +64,12 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     protected final Set<RedisConnectionStateListener> connectionStateListeners = ConcurrentHashMap.newKeySet();
 
     protected final DatabaseConnectionFactory<C, K, V> connectionFactory;
+
+    private final ReadWriteLock multiDbLock = new ReentrantReadWriteLock();
+
+    private final Lock readLock = multiDbLock.readLock();
+
+    private final Lock writeLock = multiDbLock.writeLock();
 
     public StatefulRedisMultiDbConnectionImpl(Map<RedisURI, RedisDatabase<C>> connections, ClientResources resources,
             RedisCodec<K, V> codec, Supplier<JsonParser> parser, DatabaseConnectionFactory<C, K, V> connectionFactory) {
@@ -167,14 +176,18 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     @Override
     public void addListener(RedisConnectionStateListener listener) {
-        connectionStateListeners.add(listener);
-        current.getConnection().addListener(listener);
+        doBySharedLock(() -> {
+            connectionStateListeners.add(listener);
+            current.getConnection().addListener(listener);
+        });
     }
 
     @Override
     public void removeListener(RedisConnectionStateListener listener) {
-        connectionStateListeners.remove(listener);
-        current.getConnection().removeListener(listener);
+        doBySharedLock(() -> {
+            connectionStateListeners.remove(listener);
+            current.getConnection().removeListener(listener);
+        });
     }
 
     @Override
@@ -240,14 +253,18 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     @Override
     public void addListener(PushListener listener) {
-        pushListeners.add(listener);
-        current.getConnection().addListener(listener);
+        doBySharedLock(() -> {
+            pushListeners.add(listener);
+            current.getConnection().addListener(listener);
+        });
     }
 
     @Override
     public void removeListener(PushListener listener) {
-        pushListeners.remove(listener);
-        current.getConnection().removeListener(listener);
+        doBySharedLock(() -> {
+            pushListeners.remove(listener);
+            current.getConnection().removeListener(listener);
+        });
     }
 
     @Override
@@ -267,21 +284,45 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     @Override
     public void switchToDatabase(RedisURI redisURI) {
-        RedisDatabase<C> fromDb = current;
-        RedisDatabase<C> toDb = databases.get(redisURI);
-        if (fromDb == null || toDb == null) {
-            throw new UnsupportedOperationException("Cannot initiate switch without a current and target database!");
+        doByExclusiveLock(() -> {
+            RedisDatabase<C> fromDb = current;
+            RedisDatabase<C> toDb = databases.get(redisURI);
+            if (fromDb == null || toDb == null) {
+                throw new UnsupportedOperationException(
+                        "Unable to switch between endpoints - the driver was not able to locate the source or destination endpoint.");
+            }
+            if (fromDb.equals(toDb)) {
+                return;
+            }
+            current = toDb;
+            connectionStateListeners.forEach(listener -> {
+                toDb.getConnection().addListener(listener);
+                fromDb.getConnection().removeListener(listener);
+            });
+            pushListeners.forEach(listener -> {
+                toDb.getConnection().addListener(listener);
+                fromDb.getConnection().removeListener(listener);
+            });
+            fromDb.getDatabaseEndpoint().handOverCommandQueue(toDb.getDatabaseEndpoint());
+        });
+    }
+
+    protected void doBySharedLock(Runnable operation) {
+        readLock.lock();
+        try {
+            operation.run();
+        } finally {
+            readLock.unlock();
         }
-        current = toDb;
-        connectionStateListeners.forEach(listener -> {
-            toDb.getConnection().addListener(listener);
-            fromDb.getConnection().removeListener(listener);
-        });
-        pushListeners.forEach(listener -> {
-            toDb.getConnection().addListener(listener);
-            fromDb.getConnection().removeListener(listener);
-        });
-        fromDb.getDatabaseEndpoint().handOverCommandQueue(toDb.getDatabaseEndpoint());
+    }
+
+    protected void doByExclusiveLock(Runnable operation) {
+        writeLock.lock();
+        try {
+            operation.run();
+        } finally {
+            writeLock.unlock();
+        }
     }
 
     @Override
@@ -310,18 +351,22 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         }
 
         RedisURI redisURI = databaseConfig.getRedisURI();
-        if (databases.containsKey(redisURI)) {
-            throw new IllegalArgumentException("Database already exists: " + redisURI);
-        }
 
-        // Create new database connection using the factory
-        RedisDatabase<C> database = connectionFactory.createDatabase(databaseConfig, codec);
+        doByExclusiveLock(() -> {
+            if (databases.containsKey(redisURI)) {
+                throw new IllegalArgumentException("Database already exists: " + redisURI);
+            }
 
-        // Add listeners to the new connection if it's the current one
-        // (though it won't be current initially since we're just adding it)
-        databases.put(redisURI, database);
+            // Create new database connection using the factory
+            RedisDatabase<C> database = connectionFactory.createDatabase(databaseConfig, codec);
 
-        database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
+            // Add listeners to the new connection if it's the current one
+            // (though it won't be current initially since we're just adding it)
+            databases.put(redisURI, database);
+
+            database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
+        });
+
     }
 
     @Override
@@ -329,20 +374,21 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         if (redisURI == null) {
             throw new IllegalArgumentException("RedisURI must not be null");
         }
+        doByExclusiveLock(() -> {
+            RedisDatabase<C> database = null;
+            database = databases.get(redisURI);
+            if (database == null) {
+                throw new IllegalArgumentException("Database not found: " + redisURI);
+            }
 
-        RedisDatabase<C> database = databases.get(redisURI);
-        if (database == null) {
-            throw new IllegalArgumentException("Database not found: " + redisURI);
-        }
+            if (current.getRedisURI().equals(redisURI)) {
+                throw new UnsupportedOperationException("Cannot remove the currently active database: " + redisURI);
+            }
 
-        if (current.getRedisURI().equals(redisURI)) {
-            throw new UnsupportedOperationException("Cannot remove the currently active database: " + redisURI);
-        }
-
-        // Remove the database and close its connection
-        databases.remove(redisURI);
-        database.getConnection().close();
-        database.getCircuitBreaker().removeListener(this::onCircuitBreakerStateChange);
+            // Remove the database and close its connection
+            databases.remove(redisURI);
+            database.close();
+        });
     }
 
 }

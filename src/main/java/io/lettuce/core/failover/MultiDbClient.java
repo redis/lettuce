@@ -2,8 +2,8 @@ package io.lettuce.core.failover;
 
 import java.util.Collection;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.BaseRedisClient;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.failover.api.BaseRedisClient;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.resource.ClientResources;
