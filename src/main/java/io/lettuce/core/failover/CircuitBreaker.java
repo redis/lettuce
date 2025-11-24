@@ -18,6 +18,7 @@ import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.CircuitBreakerMetrics;
 import io.lettuce.core.failover.metrics.CircuitBreakerMetricsImpl;
+import io.lettuce.core.failover.metrics.MetricsSnapshot;
 
 /**
  * Circuit breaker for tracking command metrics and managing circuit breaker state. Wraps CircuitBreakerMetrics and exposes it
@@ -36,9 +37,9 @@ public class CircuitBreaker implements Closeable {
 
     private volatile State currentState = State.CLOSED;
 
-    private Predicate<Throwable> exceptionsPredicate;
-
     private final Set<CircuitBreakerStateListener> listeners = ConcurrentHashMap.newKeySet();
+
+    private final Set<Class<? extends Throwable>> trackedExceptions;
 
     /**
      * Create a circuit breaker instance.
@@ -46,16 +47,28 @@ public class CircuitBreaker implements Closeable {
     public CircuitBreaker(CircuitBreakerConfig config) {
         this.metrics = new CircuitBreakerMetricsImpl();
         this.config = config;
-        this.exceptionsPredicate = createExceptionsPredicate(config.trackedExceptions);
+        this.trackedExceptions = new HashSet<>(config.trackedExceptions);
     }
 
     /**
      * Get the metrics tracked by this circuit breaker.
-     *
+     * <p>
+     * This is only for internal use and testing purposes.
+     * 
      * @return the circuit breaker metrics
      */
-    public CircuitBreakerMetrics getMetrics() {
+    CircuitBreakerMetrics getMetrics() {
         return metrics;
+    }
+
+    /**
+     * Get a snapshot of the current metrics within the time window. Use the snapshot to access success count, failure count,
+     * total count, and failure rate.
+     *
+     * @return an immutable snapshot of current metrics
+     */
+    public MetricsSnapshot getSnapshot() {
+        return metrics.getSnapshot();
     }
 
     @Override
@@ -63,28 +76,41 @@ public class CircuitBreaker implements Closeable {
         return "CircuitBreaker{" + "metrics=" + metrics + ", config=" + config + '}';
     }
 
-    public boolean isCircuitBreakerTrackedException(Throwable error) {
-        return exceptionsPredicate.test(error);
-    }
-
-    private static Predicate<Throwable> createExceptionsPredicate(Set<Class<? extends Throwable>> trackedExceptions) {
-        return throwable -> {
-            Class<? extends Throwable> errorClass = throwable.getClass();
-            for (Class<? extends Throwable> trackedException : trackedExceptions) {
-                if (trackedException.isAssignableFrom(errorClass)) {
-                    return true;
-                }
+    public boolean isCircuitBreakerTrackedException(Throwable throwable) {
+        Class<? extends Throwable> errorClass = throwable.getClass();
+        for (Class<? extends Throwable> trackedException : trackedExceptions) {
+            if (trackedException.isAssignableFrom(errorClass)) {
+                return true;
             }
-            return false;
-        };
+        }
+        return false;
     }
 
-    public void evaluateMetrics() {
-        boolean evaluationResult = metrics.getSnapshot().getFailureRate() >= config.getFailureRateThreshold()
-                && metrics.getSnapshot().getFailureCount() >= config.getMinimumNumberOfFailures();
+    public void recordResult(Throwable error) {
+        if (error != null && isCircuitBreakerTrackedException(error)) {
+            recordFailure();
+        } else {
+            recordSuccess();
+        }
+    }
+
+    public void recordFailure() {
+        metrics.recordFailure();
+        evaluateMetrics();
+    }
+
+    public void recordSuccess() {
+        metrics.recordSuccess();
+    }
+
+    public MetricsSnapshot evaluateMetrics() {
+        MetricsSnapshot snapshot = metrics.getSnapshot();
+        boolean evaluationResult = snapshot.getFailureRate() >= config.getFailureRateThreshold()
+                && snapshot.getFailureCount() >= config.getMinimumNumberOfFailures();
         if (evaluationResult) {
             stateTransitionTo(State.OPEN);
         }
+        return snapshot;
     }
 
     private void stateTransitionTo(State newState) {
