@@ -47,6 +47,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     protected final Map<RedisURI, RedisDatabase<C>> databases;
 
+    // this should not be null ever after succesfull initialization
     protected RedisDatabase<C> current;
 
     protected final RedisCommands<K, V> sync;
@@ -80,6 +81,10 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         this.codec = codec;
         this.parser = parser;
         this.connectionFactory = connectionFactory;
+        // TODO: Current implementation forces all database connections to be created and established (at least once before this
+        // constructor called).
+        // This is suboptimal and should be replaced with a logic that uses async connection creation and state management,
+        // which safely starts with at least one healthy connection.
         this.current = getNextHealthyDatabase(null);
 
         this.async = newRedisAsyncCommandsImpl();
@@ -105,8 +110,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         }
     }
 
-    private RedisDatabase<C> getNextHealthyDatabase(RedisDatabase<C> current) {
-        return databases.values().stream().filter(DatabasePredicates.isHealthy).filter(DatabasePredicates.isNotCurrent(current))
+    private RedisDatabase<C> getNextHealthyDatabase(RedisDatabase<C> dbToExclude) {
+        return databases.values().stream().filter(DatabasePredicates.isHealthy).filter(DatabasePredicates.isNot(dbToExclude))
                 .max(DatabaseComparators.byWeight).orElse(null);
     }
 
@@ -120,8 +125,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
         public static final Predicate<RedisDatabase<?>> isHealthy = db -> db.getHealthStatus() == HealthStatus.HEALTHY;
 
-        public static Predicate<RedisDatabase<?>> isNotCurrent(RedisDatabase<?> current) {
-            return db -> !db.equals(current);
+        public static Predicate<RedisDatabase<?>> isNot(RedisDatabase<?> dbInstance) {
+            return db -> !db.equals(dbInstance);
         }
 
     }
