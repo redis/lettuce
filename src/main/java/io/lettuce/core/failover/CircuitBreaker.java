@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Predicate;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +23,9 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
 /**
  * Circuit breaker for tracking command metrics and managing circuit breaker state. Wraps CircuitBreakerMetrics and exposes it
  * via {@link #getMetrics()}.
+ * <p>
+ * State transitions and metrics replacement are atomic and lock-free using {@link AtomicReference}. When the circuit breaker
+ * transitions to a new state, a fresh metrics instance is created atomically.
  *
  * @author Ali Takavci
  * @since 7.1
@@ -31,11 +34,9 @@ public class CircuitBreaker implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(CircuitBreaker.class);
 
-    private final CircuitBreakerMetrics metrics;
-
     private final CircuitBreakerConfig config;
 
-    private volatile State currentState = State.CLOSED;
+    private final AtomicReference<CircuitBreakerStateHolder> stateRef;
 
     private final Set<CircuitBreakerStateListener> listeners = ConcurrentHashMap.newKeySet();
 
@@ -45,9 +46,10 @@ public class CircuitBreaker implements Closeable {
      * Create a circuit breaker instance.
      */
     public CircuitBreaker(CircuitBreakerConfig config) {
-        this.metrics = MetricsFactory.createDefaultMetrics();
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.trackedExceptions);
+        this.stateRef = new AtomicReference<>(
+                new CircuitBreakerStateHolder(State.CLOSED, MetricsFactory.createDefaultMetrics()));
     }
 
     /**
@@ -58,7 +60,7 @@ public class CircuitBreaker implements Closeable {
      * @return the circuit breaker metrics
      */
     CircuitBreakerMetrics getMetrics() {
-        return metrics;
+        return stateRef.get().metrics;
     }
 
     /**
@@ -68,12 +70,13 @@ public class CircuitBreaker implements Closeable {
      * @return an immutable snapshot of current metrics
      */
     public MetricsSnapshot getSnapshot() {
-        return metrics.getSnapshot();
+        return stateRef.get().metrics.getSnapshot();
     }
 
     @Override
     public String toString() {
-        return "CircuitBreaker{" + "metrics=" + metrics + ", config=" + config + '}';
+        CircuitBreakerStateHolder current = stateRef.get();
+        return "CircuitBreaker{" + "state=" + current.state + ", metrics=" + current.metrics + ", config=" + config + '}';
     }
 
     public boolean isCircuitBreakerTrackedException(Throwable throwable) {
@@ -95,16 +98,17 @@ public class CircuitBreaker implements Closeable {
     }
 
     public void recordFailure() {
-        metrics.recordFailure();
+        stateRef.get().metrics.recordFailure();
         evaluateMetrics();
     }
 
     public void recordSuccess() {
-        metrics.recordSuccess();
+        stateRef.get().metrics.recordSuccess();
     }
 
     public MetricsSnapshot evaluateMetrics() {
-        MetricsSnapshot snapshot = metrics.getSnapshot();
+        CircuitBreakerStateHolder current = stateRef.get();
+        MetricsSnapshot snapshot = current.metrics.getSnapshot();
         boolean evaluationResult = snapshot.getFailureRate() >= config.getFailureRateThreshold()
                 && snapshot.getFailureCount() >= config.getMinimumNumberOfFailures();
         if (evaluationResult) {
@@ -113,16 +117,56 @@ public class CircuitBreaker implements Closeable {
         return snapshot;
     }
 
+    /**
+     * Switch the circuit breaker to the specified state. This method is used to force the circuit breaker to a specific state.
+     *
+     * <p>
+     * This method does not evaluate the metrics to determine if the state transition is valid. It simply transitions to the
+     * specified state. Metrics are reset when the state changes.
+     * </p>
+     *
+     * @param newState the target state
+     */
+    public void transitionTo(State newState) {
+        stateTransitionTo(newState);
+    }
+
+    /**
+     * Atomically transition to a new state with fresh metrics.
+     * <p>
+     * This method uses lock-free CAS to ensure that state change and metrics reset happen atomically. Whenever the circuit
+     * breaker transitions to a new state, a fresh metrics instance is created, providing a clean slate for tracking metrics in
+     * the new state.
+     * <p>
+     * If the state is already the target state, no transition occurs.
+     *
+     * @param newState the target state
+     */
     private void stateTransitionTo(State newState) {
-        State previousState = this.currentState;
-        if (previousState != newState) {
-            this.currentState = newState;
-            fireStateChanged(previousState, newState);
+        while (true) {
+            CircuitBreakerStateHolder current = stateRef.get();
+
+            // No transition needed if already in target state
+            if (current.state == newState) {
+                return;
+            }
+
+            // Always create fresh metrics on state transition
+            CircuitBreakerMetrics nextMetrics = MetricsFactory.createDefaultMetrics();
+
+            CircuitBreakerStateHolder next = new CircuitBreakerStateHolder(newState, nextMetrics);
+
+            // Atomically swap if current state hasn't changed
+            if (stateRef.compareAndSet(current, next)) {
+                fireStateChanged(current.state, newState);
+                return;
+            }
+            // CAS failed, retry with updated current state
         }
     }
 
     public State getCurrentState() {
-        return currentState;
+        return stateRef.get().state;
     }
 
     /**
@@ -168,6 +212,25 @@ public class CircuitBreaker implements Closeable {
 
     public static enum State {
         CLOSED, OPEN
+    }
+
+    /**
+     * Immutable holder for circuit breaker state and metrics.
+     * <p>
+     * This class enables atomic updates of both state and metrics using {@link AtomicReference}. When a state transition
+     * occurs, a new instance is created with fresh metrics.
+     */
+    private static final class CircuitBreakerStateHolder {
+
+        final State state;
+
+        final CircuitBreakerMetrics metrics;
+
+        CircuitBreakerStateHolder(State state, CircuitBreakerMetrics metrics) {
+            this.state = state;
+            this.metrics = metrics;
+        }
+
     }
 
     public static class CircuitBreakerConfig {

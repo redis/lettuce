@@ -23,6 +23,7 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
  * Comprehensive unit tests for {@link CircuitBreaker} functionality.
  *
  * @author Ali Takavci
+ * @author Ivo Gaydajiev
  * @since 7.1
  */
 @Tag(UNIT_TEST)
@@ -236,6 +237,50 @@ class CircuitBreakerUnitTests {
             // Evaluate again - should remain OPEN without triggering another transition
             circuitBreaker.evaluateMetrics();
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+        }
+
+        @Test
+        @DisplayName("Should reset metrics on forceful state transition")
+        void shouldResetMetricsOnStateTransition() {
+            // Given: some recorded events
+            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
+            circuitBreaker.recordSuccess();
+            circuitBreaker.recordFailure();
+
+            // When: force transition to OPEN
+            circuitBreaker.transitionTo(CircuitBreaker.State.OPEN);
+            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+
+            // Then: metrics should be reset
+            assertThat(circuitBreaker.getSnapshot().getSuccessCount()).isEqualTo(0);
+            assertThat(circuitBreaker.getSnapshot().getFailureCount()).isEqualTo(0);
+
+            // When: record some more successes and failures
+            circuitBreaker.recordSuccess();
+            circuitBreaker.recordFailure();
+
+            // Then: metrics should reflect the new events
+            assertThat(circuitBreaker.getSnapshot().getSuccessCount()).isEqualTo(1);
+            assertThat(circuitBreaker.getSnapshot().getFailureCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("Should reset metrics on automatic state transition")
+        void shouldResetMetricsOnAutomaticStateTransition() {
+            // Given: some recorded events
+            for (int i = 0; i < 4; i++) {
+                circuitBreaker.recordSuccess();
+                circuitBreaker.recordFailure();
+            }
+            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
+
+            // When: record 1 more failures to meet the minimumNumberOfFailures threshold
+            circuitBreaker.recordFailure();
+            assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+
+            // Then: metrics should be reset
+            assertThat(circuitBreaker.getSnapshot().getSuccessCount()).isEqualTo(0);
+            assertThat(circuitBreaker.getSnapshot().getFailureCount()).isEqualTo(0);
         }
 
     }
@@ -452,7 +497,9 @@ class CircuitBreakerUnitTests {
 
             // Should open because failure count >= 1000 and failure rate >= 1.0%
             assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
-            assertThat(circuitBreaker.getSnapshot().getFailureCount()).isGreaterThanOrEqualTo(1000);
+            // After state transition, metrics are reset to fresh instance
+            assertThat(circuitBreaker.getSnapshot().getFailureCount()).isEqualTo(0);
+            assertThat(circuitBreaker.getSnapshot().getSuccessCount()).isEqualTo(0);
         }
 
     }
