@@ -1,5 +1,7 @@
 package io.lettuce.core.failover;
 
+import java.io.Closeable;
+
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
@@ -12,7 +14,7 @@ import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
  * @author Ali Takavci
  * @since 7.1
  */
-public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> {
+public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements Closeable {
 
     private final float weight;
 
@@ -51,6 +53,12 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> {
 
     public CircuitBreaker getCircuitBreaker() {
         return circuitBreaker;
+    }
+
+    @Override
+    public void close() {
+        connection.close();
+        circuitBreaker.close();
     }
 
     public static class RedisDatabaseConfig {
