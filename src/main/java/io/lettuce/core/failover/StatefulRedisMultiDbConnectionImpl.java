@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import io.lettuce.core.AbstractRedisClient;
@@ -96,8 +97,24 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     }
 
     private RedisDatabase<C> getNextHealthyDatabase(RedisDatabase<C> current) {
-        return databases.values().stream().filter(db -> db.getHealthStatus() == HealthStatus.HEALTHY)
-                .filter(db -> !db.equals(current)).max(Comparator.comparingDouble(RedisDatabase::getWeight)).orElse(null);
+        return databases.values().stream().filter(DatabasePredicates.isHealthy).filter(DatabasePredicates.isNotCurrent(current))
+                .max(DatabaseComparators.byWeight).orElse(null);
+    }
+
+    static class DatabaseComparators {
+
+        public static final Comparator<RedisDatabase<?>> byWeight = Comparator.comparingDouble(RedisDatabase::getWeight);
+
+    }
+
+    static class DatabasePredicates {
+
+        public static final Predicate<RedisDatabase<?>> isHealthy = db -> db.getHealthStatus() == HealthStatus.HEALTHY;
+
+        public static Predicate<RedisDatabase<?>> isNotCurrent(RedisDatabase<?> current) {
+            return db -> !db.equals(current);
+        }
+
     }
 
     @Override
