@@ -137,12 +137,12 @@ class LockFreeSlidingTimeWindowMetricsUnitTests {
     @Test
     @DisplayName("should validate configuration")
     void shouldValidateConfiguration() {
-        // Window duration must be at least 1 second
+        // Window duration must be at least 2 second
         assertThatThrownBy(() -> new LockFreeSlidingTimeWindowMetrics(0)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Window duration must be at least 1 second");
+                .hasMessageContaining("Window duration must be at least 2 second");
 
         assertThatThrownBy(() -> new LockFreeSlidingTimeWindowMetrics(-5)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Window duration must be at least 1 second");
+                .hasMessageContaining("Window duration must be at least 2 second");
     }
 
     @Test
@@ -193,21 +193,45 @@ class LockFreeSlidingTimeWindowMetricsUnitTests {
         assertThat(snapshot.getTotalCount()).isEqualTo(threadCount * eventsPerThread);
     }
 
+    /**
+     * Current implementation does not support single bucket window. This test ensures proper tracking with minimum window size
+     * (2 buckets). NPE will be thrown if used with windowSize=1, after second full window rotation.
+     */
     @Test
-    @DisplayName("should track events on window with single bucket")
-    void shouldTrackEventsOnWindowWithSingleBucket() {
-        int windowSize = BUCKET_SIZE * 1;
+    @DisplayName("should track events with minimum window size (2*buckets)")
+    void shouldTrackEventsOnMinimumWindowSize() {
+        int windowSize = BUCKET_SIZE * 2;
         LockFreeSlidingTimeWindowMetrics metrics = new LockFreeSlidingTimeWindowMetrics(windowSize, clock);
-        metrics.recordSuccess();
-        metrics.recordFailure();
-        MetricsSnapshot snapshot = metrics.getSnapshot();
-        assertThat(snapshot.getSuccessCount()).isEqualTo(1);
-        assertThat(snapshot.getFailureCount()).isEqualTo(1);
 
-        // advance one bucket
-        clock.advance(BUCKET_SIZE_DURATION);
+        clock.advance(Duration.ofMillis(100));
+        // metrics.recordSuccess();
         assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(0);
-        assertThat(metrics.getSnapshot().getFailureCount()).isEqualTo(0);
+
+        clock.advance(Duration.ofSeconds(1));
+        clock.advance(Duration.ofMillis(1));
+        assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(0);
+
+        metrics.recordSuccess();
+        assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(1);
+
+        // Create metrics with window size 1 - creates single node with next=null
+        LockFreeSlidingTimeWindowMetrics metrics1 = new LockFreeSlidingTimeWindowMetrics(windowSize, clock);
+
+        // Record an event in the first second
+        metrics1.recordSuccess();
+        assertThat(metrics1.getSnapshot().getSuccessCount()).isEqualTo(1);
+
+        // Advance time by 1 second - triggers first window advancement
+        clock.advance(Duration.ofSeconds(windowSize));
+        metrics1.recordSuccess();
+        assertThat(metrics1.getSnapshot().getSuccessCount()).isEqualTo(1);
+
+        // Advance time by another second
+        clock.advance(Duration.ofSeconds(windowSize));
+
+        // Record another event
+        metrics1.recordSuccess();
+        assertThat(metrics1.getSnapshot().getSuccessCount()).isEqualTo(1);
     }
 
     @Test

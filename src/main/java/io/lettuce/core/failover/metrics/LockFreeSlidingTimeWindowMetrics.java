@@ -85,8 +85,8 @@ class LockFreeSlidingTimeWindowMetrics implements CircuitBreakerMetrics {
     }
 
     LockFreeSlidingTimeWindowMetrics(int windowSize, Clock clock) {
-        if (windowSize < 1) {
-            throw new IllegalArgumentException("Window duration must be at least 1 second, got: " + windowSize);
+        if (windowSize < 2) {
+            throw new IllegalArgumentException("Window duration must be at least 2 second, got: " + windowSize);
         }
 
         long time = clock.monotonicTime();
