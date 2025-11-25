@@ -11,6 +11,7 @@ import static io.lettuce.core.search.arguments.AggregateArgs.*;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
+import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.arguments.AggregateArgs;
@@ -755,6 +756,18 @@ class RediSearchCommandBuilderUnitTests {
 
         assertThat(command.getType()).isEqualTo(FT_CURSOR);
         assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo(result);
+    }
+
+    @Test
+    void returnFieldsWithAlias() {
+        SearchArgs<String, String> options = SearchArgs.<String, String> builder().returnField("as_is")
+                .returnField("$.field", "alias").build();
+
+        CommandArgs<String, String> args = new CommandArgs<>(new StringCodec());
+        options.build(args);
+
+        // buggy implementation returns "RETURN 2 key<as_is> key<$.field> key<alias> DIALECT "
+        assertThat("RETURN 4 key<as_is> key<$.field> AS key<alias> DIALECT 2").isEqualTo(args.toCommandString());
     }
 
 }
