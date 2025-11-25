@@ -70,4 +70,20 @@ class MetricsSnapshotImpl implements MetricsSnapshot {
                 + ", failureRate=" + String.format("%.2f", getFailureRate()) + "%" + '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        MetricsSnapshotImpl that = (MetricsSnapshotImpl) o;
+
+        if (successCount != that.successCount) {
+            return false;
+        }
+        return failureCount == that.failureCount;
+    }
 }
