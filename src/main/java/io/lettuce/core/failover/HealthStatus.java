@@ -40,7 +40,8 @@ public enum HealthStatus {
     HEALTHY,
 
     /**
-     * The endpoint is unhealthy and experiencing failures. Possible issues with health checks or the circuit breaker is in the OPEN state.
+     * The endpoint is unhealthy and experiencing failures. Possible issues with health checks or the circuit breaker is in the
+     * OPEN state.
      */
     UNHEALTHY
 
