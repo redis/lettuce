@@ -116,7 +116,7 @@ public class CircuitBreaker implements Closeable {
      *
      * @return an immutable snapshot of current metrics
      */
-     MetricsSnapshot evaluateMetrics() {
+    MetricsSnapshot evaluateMetrics() {
         CircuitBreakerStateHolder current = stateRef.get();
         MetricsSnapshot snapshot = current.metrics.getSnapshot();
         boolean evaluationResult = snapshot.getFailureRate() >= config.getFailureRateThreshold()
