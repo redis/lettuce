@@ -106,7 +106,17 @@ public class CircuitBreaker implements Closeable {
         stateRef.get().metrics.recordSuccess();
     }
 
-    public MetricsSnapshot evaluateMetrics() {
+    /**
+     * Evaluate the current metrics to determine if the circuit breaker should transition to a new state.
+     *
+     * <p>
+     * This method checks the failure rate and failure count against the configured thresholds. If the thresholds are met, the
+     * circuit breaker transitions to the OPEN state. Metrics are reset when the state changes.
+     * </p>
+     *
+     * @return an immutable snapshot of current metrics
+     */
+     MetricsSnapshot evaluateMetrics() {
         CircuitBreakerStateHolder current = stateRef.get();
         MetricsSnapshot snapshot = current.metrics.getSnapshot();
         boolean evaluationResult = snapshot.getFailureRate() >= config.getFailureRateThreshold()
@@ -210,7 +220,7 @@ public class CircuitBreaker implements Closeable {
         listeners.clear();
     }
 
-    public static enum State {
+    public enum State {
         CLOSED, OPEN
     }
 
