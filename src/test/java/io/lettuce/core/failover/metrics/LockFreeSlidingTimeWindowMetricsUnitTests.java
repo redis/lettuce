@@ -266,7 +266,7 @@ class LockFreeSlidingTimeWindowMetricsUnitTests {
         assertThat(snapshot.getSuccessCount()).isEqualTo(3);
         assertThat(snapshot.getFailureCount()).isEqualTo(3);
 
-        // bucket 2 // drop bucket 0 from window
+        // advance to next time slice, dropping bucket 0 from the 2-second window
         clock.advance(BUCKET_SIZE_DURATION);
         snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(1);
