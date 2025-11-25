@@ -86,4 +86,5 @@ class MetricsSnapshotImpl implements MetricsSnapshot {
         }
         return failureCount == that.failureCount;
     }
+
 }

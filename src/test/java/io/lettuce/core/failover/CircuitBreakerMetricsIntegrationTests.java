@@ -145,8 +145,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
      * Helper method to record a successful command and wait for metrics to update.
      *
      * <p>
-     *     Metrics are updated asynchronously post command completion,
-     *     we need to wait for the metrics to update before proceeding.
+     * Metrics are updated asynchronously post command completion, we need to wait for the metrics to update before proceeding.
      * </p>
      *
      * @param connection
@@ -154,14 +153,13 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
      * @param value
      * @return final success count
      */
-    private MetricsSnapshot recordSuccessfulCommand(StatefulRedisMultiDbConnection<String, String> connection, String key, String value) {
+    private MetricsSnapshot recordSuccessfulCommand(StatefulRedisMultiDbConnection<String, String> connection, String key,
+            String value) {
         CircuitBreaker cb = connection.getCircuitBreaker(connection.getCurrentEndpoint());
         MetricsSnapshot metrics = cb.getSnapshot();
         connection.sync().set(key, value);
-        return await().until(cb::getSnapshot, snapshot -> snapshot.getSuccessCount() > metrics.getSuccessCount()
-        );
+        return await().until(cb::getSnapshot, snapshot -> snapshot.getSuccessCount() > metrics.getSuccessCount());
     }
-
 
     @Test
     void shouldExposeMetricsViaCircuitBreaker() {
