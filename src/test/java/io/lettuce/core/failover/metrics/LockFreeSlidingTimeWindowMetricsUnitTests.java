@@ -214,7 +214,7 @@ class LockFreeSlidingTimeWindowMetricsUnitTests {
         metrics.recordSuccess();
         assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(1);
 
-        // Create metrics with window size 1 - creates single node with next=null
+        // Create metrics with window size **2** - creates single node with next=null
         LockFreeSlidingTimeWindowMetrics metrics1 = new LockFreeSlidingTimeWindowMetrics(windowSize, clock);
 
         // Record an event in the first second
