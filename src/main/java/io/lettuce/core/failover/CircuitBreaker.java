@@ -17,7 +17,7 @@ import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.CircuitBreakerMetrics;
-import io.lettuce.core.failover.metrics.CircuitBreakerMetricsImpl;
+import io.lettuce.core.failover.metrics.MetricsFactory;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
 
 /**
@@ -45,7 +45,7 @@ public class CircuitBreaker implements Closeable {
      * Create a circuit breaker instance.
      */
     public CircuitBreaker(CircuitBreakerConfig config) {
-        this.metrics = new CircuitBreakerMetricsImpl();
+        this.metrics = MetricsFactory.createDefaultMetrics();
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.trackedExceptions);
     }
@@ -54,7 +54,7 @@ public class CircuitBreaker implements Closeable {
      * Get the metrics tracked by this circuit breaker.
      * <p>
      * This is only for internal use and testing purposes.
-     * 
+     *
      * @return the circuit breaker metrics
      */
     CircuitBreakerMetrics getMetrics() {

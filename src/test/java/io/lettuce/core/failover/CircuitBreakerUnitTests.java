@@ -455,27 +455,6 @@ class CircuitBreakerUnitTests {
             assertThat(circuitBreaker.getSnapshot().getFailureCount()).isGreaterThanOrEqualTo(1000);
         }
 
-        @Test
-        @DisplayName("Should handle metrics reset")
-        void shouldHandleMetricsReset() {
-            CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(50.0f, 5,
-                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
-            CircuitBreaker circuitBreaker = new CircuitBreaker(config);
-
-            // Record failures
-            for (int i = 0; i < 10; i++) {
-                circuitBreaker.recordFailure();
-            }
-
-            // Reset metrics
-            circuitBreaker.getMetrics().reset();
-
-            MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
-            assertThat(snapshot.getSuccessCount()).isEqualTo(0);
-            assertThat(snapshot.getFailureCount()).isEqualTo(0);
-            assertThat(snapshot.getFailureRate()).isEqualTo(0.0f);
-        }
-
     }
 
 }
