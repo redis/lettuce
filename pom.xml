@@ -68,7 +68,7 @@
         <micrometer.version>1.14.2</micrometer.version>
         <micrometer-tracing.version>1.2.4</micrometer-tracing.version>
         <mockito.version>4.9.0</mockito.version>
-        <netty.version>4.2.4.Final</netty.version>
+        <netty.version>4.2.5.Final</netty.version>
         <openwebbeans.version>2.0.27</openwebbeans.version>
         <reactor.version>3.6.6</reactor.version>
         <rxjava.version>1.3.8</rxjava.version>
