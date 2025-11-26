@@ -27,13 +27,12 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
 
     private HealthStatus healthStatus = HealthStatus.HEALTHY;
 
-    public RedisDatabase(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint) {
+    public RedisDatabase(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint, CircuitBreaker circuitBreaker) {
         this.redisURI = config.getRedisURI();
         this.weight = config.getWeight();
         this.connection = connection;
         this.databaseEndpoint = databaseEndpoint;
-        this.circuitBreaker = new CircuitBreaker(config.getCircuitBreakerConfig());
-        databaseEndpoint.setCircuitBreaker(circuitBreaker);
+        this.circuitBreaker = circuitBreaker;
     }
 
     public float getWeight() {

@@ -25,12 +25,12 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
     }
 
     /**
-     * Set the circuit breaker for this endpoint. Must be called before any commands are written.
+     * Initialize this endpoint. Must be called before any commands are written.
      *
      * @param circuitBreaker the circuit breaker instance
      */
     @Override
-    public void setCircuitBreaker(CircuitBreaker circuitBreaker) {
+    public void init(CircuitBreaker circuitBreaker) {
         this.circuitBreaker = circuitBreaker;
     }
 

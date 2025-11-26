@@ -18,11 +18,11 @@ interface DatabaseEndpoint {
     <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
 
     /**
-     * Set the circuit breaker for this endpoint. Must be called before any commands are written.
+     * Initialize this endpoint. Must be called before any commands are written.
      *
      * @param circuitBreaker the circuit breaker instance
      */
-    void setCircuitBreaker(CircuitBreaker circuitBreaker);
+    void init(CircuitBreaker circuitBreaker);
 
     default void handOverCommandQueue(DatabaseEndpoint target) {
         Collection<RedisCommand<?, ?, ?>> commands = this.drainCommands();
