@@ -20,9 +20,12 @@
 package io.lettuce.core.failover;
 
 /**
- * Enumeration representing the health status of a database endpoint.
+ * Enumeration representing the health status of a database endpoint as determined by the health check service.
  * <p>
- * Used by the {@link RedisDatabase} to track and report the current health state of database connections.
+ * This status reflects the results from active health checks performed by the health check service. Health checks
+ * periodically probes endpoints to verify their availability and responsiveness, updating this status accordingly.
+ * <p>
+ * Used by the {@link RedisDatabase} to track and report health check results from the health check API.
  *
  * @author Ali Takavci
  * @since 7.1
@@ -30,18 +33,20 @@ package io.lettuce.core.failover;
 public enum HealthStatus {
 
     /**
-     * Health status is unknown. This is the initial state before any health checks and/or any organic load have been performed.
+     * Health status is unknown. This is the initial state before any health checks have been performed by the health check
+     * service.
      */
     UNKNOWN,
 
     /**
-     * The endpoint is healthy and operating normally. Health checks are passing and the circuit breaker is in the CLOSED state.
+     * The endpoint is healthy and operating normally according to health check probes. Health checks are passing and
+     * the endpoint is responding as expected.
      */
     HEALTHY,
 
     /**
-     * The endpoint is unhealthy and experiencing failures. Possible issues with health checks or the circuit breaker is in the
-     * OPEN state.
+     * The endpoint is unhealthy according to health check probes. Health checks are failing, indicating the endpoint is
+     * not responding or not meeting health criteria.
      */
     UNHEALTHY
 
