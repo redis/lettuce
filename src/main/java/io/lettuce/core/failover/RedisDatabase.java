@@ -4,6 +4,10 @@ import java.io.Closeable;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.failover.health.HealthCheck;
+import io.lettuce.core.failover.health.HealthStatus;
+import io.lettuce.core.failover.health.HealthStatusManager;
+import io.lettuce.core.failover.health.HealthCheckStrategy;
 
 /**
  * Represents a Redis database with a weight and a connection.
@@ -25,15 +29,22 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
 
     private final CircuitBreaker circuitBreaker;
 
-    private HealthStatus healthStatus = HealthStatus.HEALTHY;
+    private final HealthCheck healthCheck;
 
-    public RedisDatabase(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint) {
+    public RedisDatabase(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint, HealthStatusManager healthStatusManager) {
         this.redisURI = config.getRedisURI();
         this.weight = config.getWeight();
         this.connection = connection;
         this.databaseEndpoint = databaseEndpoint;
         this.circuitBreaker = new CircuitBreaker(config.getCircuitBreakerConfig());
         databaseEndpoint.setCircuitBreaker(circuitBreaker);
+
+        if ( config.getHealthCheckStrategySupplier() != null) {
+            HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(), connection.getOptions());
+            healthCheck = healthStatusManager.add(redisURI, hcStrategy);
+        } else {
+            healthCheck = null;
+        }
     }
 
     public float getWeight() {
@@ -63,7 +74,7 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
     }
 
     public HealthStatus getHealthStatus() {
-        return healthStatus;
+        return healthCheck.getStatus();
     }
 
 }

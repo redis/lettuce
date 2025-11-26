@@ -29,10 +29,15 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.failover.health.HealthStatus;
+import io.lettuce.core.failover.health.HealthStatusChangeEvent;
+import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Stateful connection wrapper that holds multiple underlying connections and delegates to the currently active one. Command
@@ -45,7 +50,11 @@ import io.lettuce.core.resource.ClientResources;
 public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
         implements StatefulRedisMultiDbConnection<K, V> {
 
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(StatefulRedisMultiDbConnectionImpl.class);
+
     protected final Map<RedisURI, RedisDatabase<C>> databases;
+
+    protected final HealthStatusManager healthStatusManager;
 
     // this should not be null ever after succesfull initialization
     protected RedisDatabase<C> current;
@@ -73,7 +82,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     private final Lock writeLock = multiDbLock.writeLock();
 
     public StatefulRedisMultiDbConnectionImpl(Map<RedisURI, RedisDatabase<C>> connections, ClientResources resources,
-            RedisCodec<K, V> codec, Supplier<JsonParser> parser, DatabaseConnectionFactory<C, K, V> connectionFactory) {
+            RedisCodec<K, V> codec, Supplier<JsonParser> parser, DatabaseConnectionFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager) {
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
         }
@@ -81,6 +90,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         this.codec = codec;
         this.parser = parser;
         this.connectionFactory = connectionFactory;
+        this.healthStatusManager = healthStatusManager;
         // TODO: Current implementation forces all database connections to be created and established (at least once before this
         // constructor called).
         // This is suboptimal and should be replaced with a logic that uses async connection creation and state management,
@@ -92,12 +102,33 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         this.reactive = newRedisReactiveCommandsImpl();
 
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
+        if (healthStatusManager != null) {
+            healthStatusManager.registerListener(this::onHealthStatusChange);
+        }
     }
 
     private void onCircuitBreakerStateChange(CircuitBreakerStateChangeEvent event) {
         if (event.getCircuitBreaker() == current.getCircuitBreaker() && event.getNewState() == CircuitBreaker.State.OPEN) {
             failoverFrom(current);
         }
+    }
+
+    private void onHealthStatusChange(HealthStatusChangeEvent event) {
+        logger.debug("Health status changed for {} from {} to {}", event.getEndpoint(), event.getOldStatus(), event.getNewStatus());
+
+        RedisDatabase<C> database = databases.get(event.getEndpoint());
+
+        if (database == null) {
+            return;
+        }
+
+        if ( isCurrent(database) && event.getNewStatus() == HealthStatus.UNHEALTHY) {
+            failoverFrom(database);
+        }
+    }
+
+    private boolean isCurrent(RedisDatabase<C> database) {
+        return database == current;
     }
 
     private void failoverFrom(RedisDatabase<C> fromDb) {
@@ -128,7 +159,6 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         public static Predicate<RedisDatabase<?>> isNot(RedisDatabase<?> dbInstance) {
             return db -> !db.equals(dbInstance);
         }
-
     }
 
     @Override
@@ -217,6 +247,9 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     @Override
     public void close() {
+        if (healthStatusManager != null) {
+            healthStatusManager.unregisterListener(this::onHealthStatusChange);
+        }
         databases.values().forEach(db -> db.getConnection().close());
     }
 
@@ -363,7 +396,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             }
 
             // Create new database connection using the factory
-            RedisDatabase<C> database = connectionFactory.createDatabase(databaseConfig, codec);
+            RedisDatabase<C> database = connectionFactory.createDatabase(databaseConfig, codec, healthStatusManager);
 
             // Add listeners to the new connection if it's the current one
             // (though it won't be current initially since we're just adding it)

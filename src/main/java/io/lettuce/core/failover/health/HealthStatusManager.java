@@ -1,91 +1,63 @@
 package io.lettuce.core.failover.health;
 
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import io.lettuce.core.RedisURI;
 
-public class HealthStatusManager {
+public interface HealthStatusManager {
 
-  private final HealthCheckCollection healthChecks = new HealthCheckCollection();
-  private final List<HealthStatusListener> listeners = new CopyOnWriteArrayList<>();
-  private final Map<Endpoint, List<HealthStatusListener>> endpointListeners = new ConcurrentHashMap<Endpoint, List<HealthStatusListener>>();
+    /**
+     * Create and register a health check for the given endpoint.
+     *
+     * @param endpoint the endpoint to check
+     * @param strategy the health check strategy
+     * @return the health check
+     */
+    HealthCheck add(RedisURI endpoint, HealthCheckStrategy strategy);
 
-  public void registerListener(HealthStatusListener listener) {
-    listeners.add(listener);
-  }
+    /**
+     * Unregister the health check for the given endpoint.
+     *
+     * @param endpoint the endpoint to check
+     */
+    void remove(RedisURI endpoint);
 
-  public void unregisterListener(HealthStatusListener listener) {
-    listeners.remove(listener);
-  }
+    /**
+     * Get the health status for the given endpoint.
+     *
+     * @param endpoint the endpoint to check
+     * @return the health status
+     */
+    HealthStatus getHealthStatus(RedisURI endpoint);
 
-  public void registerListener(Endpoint endpoint, HealthStatusListener listener) {
-    endpointListeners.computeIfAbsent(endpoint, k -> new CopyOnWriteArrayList<>()).add(listener);
-  }
 
-  public void unregisterListener(Endpoint endpoint, HealthStatusListener listener) {
-    endpointListeners.computeIfPresent(endpoint, (k, v) -> {
-      v.remove(listener);
-      return v;
-    });
-  }
+    /**
+     * Register a global listener to be notified when the health status of any endpoint changes.
+     *
+     * @param listener the listener to add, must not be {@code null}
+     */
+    void registerListener(HealthStatusListener listener);
 
-  public void notifyListeners(HealthStatusChangeEvent eventArgs) {
-    endpointListeners.computeIfPresent(eventArgs.getEndpoint(), (k, v) -> {
-      for (HealthStatusListener listener : v) {
-        listener.onStatusChange(eventArgs);
-      }
-      return v;
-    });
-    for (HealthStatusListener listener : listeners) {
-      listener.onStatusChange(eventArgs);
-    }
-  }
+    /**
+     * Unregister a previously registered global listener.
+     *
+     * @param listener the listener to remove, must not be {@code null}
+     */
+    void unregisterListener(HealthStatusListener listener);
 
-  public HealthCheck add(Endpoint endpoint, HealthCheckStrategy strategy) {
-    HealthCheck hc = new HealthCheckImpl(endpoint, strategy, this::notifyListeners);
-    HealthCheck old = healthChecks.add(hc);
-    hc.start();
-    if (old != null) {
-      old.stop();
-    }
-    return hc;
-  }
+    /**
+     * Register a listener to be notified when the health status of the given endpoint changes.
+     *
+     * @param endpoint the endpoint to check
+     * @param listener the listener to add, must not be {@code null}
+     */
+    void registerListener(RedisURI endpoint, HealthStatusListener listener);
 
-  public void addAll(Endpoint[] endpoints, HealthCheckStrategy strategy) {
-    for (Endpoint endpoint : endpoints) {
-      add(endpoint, strategy);
-    }
-  }
+    /**
+     * Unregister a previously registered listener for the given endpoint.
+     *
+     * @param endpoint the endpoint to check
+     * @param listener the listener to remove, must not be {@code null}
+     */
+    void unregisterListener(RedisURI endpoint, HealthStatusListener listener);
 
-  public void remove(Endpoint endpoint) {
-    HealthCheck old = healthChecks.remove(endpoint);
-    if (old != null) {
-      old.stop();
-    }
-  }
 
-  public void removeAll(Endpoint[] endpoints) {
-    for (Endpoint endpoint : endpoints) {
-      remove(endpoint);
-    }
-  }
-
-  public HealthStatus getHealthStatus(Endpoint endpoint) {
-    HealthCheck healthCheck = healthChecks.get(endpoint);
-    return healthCheck != null ? healthCheck.getStatus() : HealthStatus.UNKNOWN;
-  }
-
-  public boolean hasHealthCheck(Endpoint endpoint) {
-    return healthChecks.get(endpoint) != null;
-  }
-
-  public long getMaxWaitFor(Endpoint endpoint) {
-    HealthCheck healthCheck = healthChecks.get(endpoint);
-    return healthCheck != null ? healthCheck.getMaxWaitFor() : 0;
-  }
-
-  public void close() {
-    healthChecks.close();
-  }
 }

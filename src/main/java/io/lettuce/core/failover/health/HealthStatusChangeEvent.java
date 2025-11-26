@@ -1,27 +1,31 @@
 package io.lettuce.core.failover.health;
 
+import io.lettuce.core.RedisURI;
+
 public class HealthStatusChangeEvent {
 
-  private final Endpoint endpoint;
-  private final HealthStatus oldStatus;
-  private final HealthStatus newStatus;
+    private final RedisURI endpoint;
 
-  public HealthStatusChangeEvent(Endpoint endpoint, HealthStatus oldStatus,
-      HealthStatus newStatus) {
-    this.endpoint = endpoint;
-    this.oldStatus = oldStatus;
-    this.newStatus = newStatus;
-  }
+    private final HealthStatus oldStatus;
 
-  public Endpoint getEndpoint() {
-    return endpoint;
-  }
+    private final HealthStatus newStatus;
 
-  public HealthStatus getOldStatus() {
-    return oldStatus;
-  }
+    public HealthStatusChangeEvent(RedisURI endpoint, HealthStatus oldStatus, HealthStatus newStatus) {
+        this.endpoint = endpoint;
+        this.oldStatus = oldStatus;
+        this.newStatus = newStatus;
+    }
 
-  public HealthStatus getNewStatus() {
-    return newStatus;
-  }
+    public RedisURI getEndpoint() {
+        return endpoint;
+    }
+
+    public HealthStatus getOldStatus() {
+        return oldStatus;
+    }
+
+    public HealthStatus getNewStatus() {
+        return newStatus;
+    }
+
 }

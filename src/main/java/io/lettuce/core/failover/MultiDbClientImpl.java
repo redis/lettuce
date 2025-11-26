@@ -13,6 +13,9 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
+import io.lettuce.core.failover.health.HealthStatusManager;
+import io.lettuce.core.failover.health.HealthCheckStrategy;
+import io.lettuce.core.failover.health.HealthStatusManagerImpl;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.pubsub.PubSubEndpoint;
@@ -73,6 +76,8 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
+        HealthStatusManager healthStatusManager = createHealthStatusManager();
+
         Map<RedisURI, RedisDatabase<StatefulRedisConnection<K, V>>> databases = new ConcurrentHashMap<>(databaseConfigs.size());
         for (Map.Entry<RedisURI, DatabaseConfig> entry : databaseConfigs.entrySet()) {
             RedisURI uri = entry.getKey();
@@ -81,22 +86,27 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             // HACK: looks like repeating the implementation all around 'RedisClient.connect' is an overkill.
             // connections.put(uri, connect(codec, uri));
             // Instead we will use it from delegate
-            RedisDatabase<StatefulRedisConnection<K, V>> database = createRedisDatabase(config, codec);
+            RedisDatabase<StatefulRedisConnection<K, V>> database = createRedisDatabase(config, codec, healthStatusManager);
 
             databases.put(uri, database);
         }
 
         // Provide a connection factory for dynamic database addition
         return new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(databases, getResources(), codec,
-                getOptions().getJsonParser(), this::createRedisDatabase);
+                getOptions().getJsonParser(), this::createRedisDatabase, healthStatusManager);
+    }
+
+    protected HealthStatusManager createHealthStatusManager() {
+        return new HealthStatusManagerImpl();
     }
 
     private <K, V> RedisDatabase<StatefulRedisConnection<K, V>> createRedisDatabase(DatabaseConfig config,
-            RedisCodec<K, V> codec) {
+            RedisCodec<K, V> codec, HealthStatusManager healthStatusManager) {
         RedisURI uri = config.getRedisURI();
         StatefulRedisConnection<K, V> connection = connect(codec, uri);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-        RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint);
+
+        RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint, healthStatusManager);
 
         return database;
     }
@@ -116,27 +126,30 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
+        HealthStatusManager healthStatusManager = createHealthStatusManager();
+
         Map<RedisURI, RedisDatabase<StatefulRedisPubSubConnection<K, V>>> databases = new ConcurrentHashMap<>(
                 databaseConfigs.size());
         for (Map.Entry<RedisURI, DatabaseConfig> entry : databaseConfigs.entrySet()) {
             RedisURI uri = entry.getKey();
             DatabaseConfig config = entry.getValue();
 
-            RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = createRedisDatabaseWithPubSub(config, codec);
+            RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = createRedisDatabaseWithPubSub(config, codec, healthStatusManager);
             databases.put(uri, database);
         }
 
         // Provide a connection factory for dynamic database addition
         return new StatefulRedisMultiDbPubSubConnectionImpl<K, V>(databases, getResources(), codec,
-                getOptions().getJsonParser(), this::createRedisDatabaseWithPubSub);
+                getOptions().getJsonParser(), this::createRedisDatabaseWithPubSub, healthStatusManager);
     }
 
     private <K, V> RedisDatabase<StatefulRedisPubSubConnection<K, V>> createRedisDatabaseWithPubSub(DatabaseConfig config,
-            RedisCodec<K, V> codec) {
+            RedisCodec<K, V> codec, HealthStatusManager healthStatusManager) {
         RedisURI uri = config.getRedisURI();
         StatefulRedisPubSubConnection<K, V> connection = connectPubSub(codec, uri);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-        RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint);
+
+        RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint, healthStatusManager);
         return database;
     }
 
