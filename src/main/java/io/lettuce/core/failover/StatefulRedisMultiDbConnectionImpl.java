@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import io.lettuce.core.AbstractRedisClient;
@@ -46,6 +47,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     protected final Map<RedisURI, RedisDatabase<C>> databases;
 
+    // this should not be null ever after succesfull initialization
     protected RedisDatabase<C> current;
 
     protected final RedisCommands<K, V> sync;
@@ -79,7 +81,11 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         this.codec = codec;
         this.parser = parser;
         this.connectionFactory = connectionFactory;
-        this.current = connections.values().stream().max(Comparator.comparingDouble(RedisDatabase::getWeight)).get();
+        // TODO: Current implementation forces all database connections to be created and established (at least once before this
+        // constructor called).
+        // This is suboptimal and should be replaced with a logic that uses async connection creation and state management,
+        // which safely starts with at least one healthy connection.
+        this.current = getNextHealthyDatabase(null);
 
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
@@ -95,7 +101,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     }
 
     private void failoverFrom(RedisDatabase<C> fromDb) {
-        RedisDatabase<C> healthyDatabase = getHealthyDatabase(fromDb);
+        RedisDatabase<C> healthyDatabase = getNextHealthyDatabase(fromDb);
         if (healthyDatabase != null) {
             switchToDatabase(healthyDatabase.getRedisURI());
         } else {
@@ -104,10 +110,25 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         }
     }
 
-    private RedisDatabase<C> getHealthyDatabase(RedisDatabase<C> current) {
-        return databases.values().stream().filter(db -> db != current)
-                .filter(db -> db.getCircuitBreaker().getCurrentState() == CircuitBreaker.State.CLOSED)
-                .max(Comparator.comparingDouble(RedisDatabase::getWeight)).get();
+    private RedisDatabase<C> getNextHealthyDatabase(RedisDatabase<C> dbToExclude) {
+        return databases.values().stream().filter(DatabasePredicates.isHealthy).filter(DatabasePredicates.isNot(dbToExclude))
+                .max(DatabaseComparators.byWeight).orElse(null);
+    }
+
+    static class DatabaseComparators {
+
+        public static final Comparator<RedisDatabase<?>> byWeight = Comparator.comparingDouble(RedisDatabase::getWeight);
+
+    }
+
+    static class DatabasePredicates {
+
+        public static final Predicate<RedisDatabase<?>> isHealthy = db -> db.getHealthStatus() == HealthStatus.HEALTHY;
+
+        public static Predicate<RedisDatabase<?>> isNot(RedisDatabase<?> dbInstance) {
+            return db -> !db.equals(dbInstance);
+        }
+
     }
 
     @Override
