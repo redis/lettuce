@@ -1038,6 +1038,90 @@ public class RediSearchIntegrationTests {
     }
 
     /**
+     * Test field aliases in RETURN clause to rename fields in search results.
+     */
+    @Test
+    void testSearchWithFieldAliases() {
+        String testIndex = "alias-field-idx";
+
+        // Create index with multiple fields
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> authorField = TextFieldArgs.<String> builder().name("author").build();
+        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").build();
+
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("book:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, authorField, priceField))).isEqualTo("OK");
+
+        // Add sample books
+        Map<String, String> book1 = new HashMap<>();
+        book1.put("title", "Redis in Action");
+        book1.put("author", "Josiah Carlson");
+        book1.put("price", "39.99");
+        redis.hmset("book:1", book1);
+
+        Map<String, String> book2 = new HashMap<>();
+        book2.put("title", "Redis Essentials");
+        book2.put("author", "Maxwell Dayvson");
+        book2.put("price", "29.99");
+        redis.hmset("book:2", book2);
+
+        // Test 1: Search with field alias - rename single field
+        SearchArgs<String, String> aliasArgs = SearchArgs.<String, String> builder().returnField("title", "book_title").build();
+        SearchReply<String, String> results = redis.ftSearch(testIndex, "Redis", aliasArgs);
+
+        assertThat(results.getCount()).isEqualTo(2);
+        assertThat(results.getResults()).hasSize(2);
+
+        // Verify that the field is returned with the alias name
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+            assertThat(result.getFields()).containsKey("book_title");
+            assertThat(result.getFields()).doesNotContainKey("title");
+            assertThat(result.getFields().get("book_title")).contains("Redis");
+        }
+
+        // Test 2: Search with multiple field aliases
+        SearchArgs<String, String> multiAliasArgs = SearchArgs.<String, String> builder().returnField("title", "book_title")
+                .returnField("author", "writer").returnField("price", "cost").build();
+        results = redis.ftSearch(testIndex, "Redis", multiAliasArgs);
+
+        assertThat(results.getCount()).isEqualTo(2);
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+            // Verify aliased fields are present
+            assertThat(result.getFields()).containsKey("book_title");
+            assertThat(result.getFields()).containsKey("writer");
+            assertThat(result.getFields()).containsKey("cost");
+
+            // Verify original field names are not present
+            assertThat(result.getFields()).doesNotContainKey("title");
+            assertThat(result.getFields()).doesNotContainKey("author");
+            assertThat(result.getFields()).doesNotContainKey("price");
+        }
+
+        // Test 3: Mix of aliased and non-aliased fields
+        SearchArgs<String, String> mixedArgs = SearchArgs.<String, String> builder().returnField("title", "book_title")
+                .returnField("author").build();
+        results = redis.ftSearch(testIndex, "Redis", mixedArgs);
+
+        assertThat(results.getCount()).isEqualTo(2);
+        for (SearchReply.SearchResult<String, String> result : results.getResults()) {
+            // Verify aliased field
+            assertThat(result.getFields()).containsKey("book_title");
+            assertThat(result.getFields()).doesNotContainKey("title");
+
+            // Verify non-aliased field
+            assertThat(result.getFields()).containsKey("author");
+
+            // Verify price is not returned
+            assertThat(result.getFields()).doesNotContainKey("price");
+        }
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
      * Test FT.SYNDUMP and FT.SYNUPDATE commands for synonym management.
      */
     @Test
