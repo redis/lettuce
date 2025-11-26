@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Manual JMH Test Launcher.
  *
- * @author Mark Paluch
+ * @author Ivo Gaydajiev
  */
 public class JmhMain {
 

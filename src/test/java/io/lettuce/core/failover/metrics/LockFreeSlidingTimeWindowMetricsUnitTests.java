@@ -214,7 +214,7 @@ class LockFreeSlidingTimeWindowMetricsUnitTests {
         metrics.recordSuccess();
         assertThat(metrics.getSnapshot().getSuccessCount()).isEqualTo(1);
 
-        // Create metrics with window size 1 - creates single node with next=null
+        // Create metrics with window size **2** - creates single node with next=null
         LockFreeSlidingTimeWindowMetrics metrics1 = new LockFreeSlidingTimeWindowMetrics(windowSize, clock);
 
         // Record an event in the first second
@@ -266,7 +266,7 @@ class LockFreeSlidingTimeWindowMetricsUnitTests {
         assertThat(snapshot.getSuccessCount()).isEqualTo(3);
         assertThat(snapshot.getFailureCount()).isEqualTo(3);
 
-        // bucket 2 // drop bucket 0 from window
+        // advance to next time slice, dropping bucket 0 from the 2-second window
         clock.advance(BUCKET_SIZE_DURATION);
         snapshot = metrics.getSnapshot();
         assertThat(snapshot.getSuccessCount()).isEqualTo(1);
