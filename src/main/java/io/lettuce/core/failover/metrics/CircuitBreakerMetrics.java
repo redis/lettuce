@@ -1,12 +1,15 @@
 package io.lettuce.core.failover.metrics;
 
 /**
- * Interface for circuit breaker metrics tracking successes and failures within a time-based sliding window. Thread-safe and
- * lock-free using atomic operations.
+ * Interface for sliding window metrics. Allows tracking of success and failure counts within a configurable window.
  *
  * <p>
- * This interface defines the contract for tracking metrics over a configurable time period. Old data outside the window is
- * automatically expired and cleaned up.
+ * Implementations must be:
+ * <ul>
+ * <li>Thread-safe: Safe for concurrent access from multiple threads</li>
+ * <li>Efficient: Minimal memory overhead and fast operations</li>
+ * <li>Time-based: Automatic expiration of old data outside the window</li>
+ * </ul>
  * </p>
  *
  * @author Ali Takavci
@@ -15,26 +18,21 @@ package io.lettuce.core.failover.metrics;
 public interface CircuitBreakerMetrics {
 
     /**
-     * Record a successful command execution. Lock-free operation.
+     * Record a successful command execution.
      */
     void recordSuccess();
 
     /**
-     * Record a failed command execution. Lock-free operation.
+     * Record a failed command execution.
      */
     void recordFailure();
 
     /**
-     * Get a snapshot of the current metrics within the time window. Use the snapshot to access success count, failure count,
-     * total count, and failure rate.
+     * Get a snapshot of the current metrics within the time window. This is a point-in-time view and does not change after
+     * being returned. Use the snapshot to access success count, failure count, total count, and failure rate.
      *
      * @return an immutable snapshot of current metrics
      */
     MetricsSnapshot getSnapshot();
-
-    /**
-     * Reset all metrics to zero.
-     */
-    void reset();
 
 }
