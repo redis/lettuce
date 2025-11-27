@@ -8,6 +8,7 @@ import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusListener;
+import io.lettuce.core.failover.health.ProbingPolicy;
 import io.lettuce.test.LettuceExtension;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,7 +18,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import javax.inject.Inject;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
@@ -79,12 +85,46 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
         @Test
         @DisplayName("Should create MultiDbClient with custom health check strategy supplier")
         void shouldCreateClientWithCustomHealthCheckSupplier() {
-            // TODO: Implement test
-            // - Create custom HealthCheckStrategySupplier
-            // - Create DatabaseConfig with the supplier
-            // - Create MultiDbClient and connect
-            // - Verify health checks are created and running
-            // - Verify custom strategy is being used
+            // Given: Custom HealthCheckStrategySupplier with minimal delays for fast testing
+            HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms for fast testing
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+
+            TestHealthCheckStrategy testHealthCheckStrategy = new TestHealthCheckStrategy(config);
+            HealthCheckStrategySupplier supplier = (uri, options) -> testHealthCheckStrategy;
+
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+
+            // When: Create MultiDbClient and connect
+            MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // Then: Connection should work
+                assertThat(connection).isNotNull();
+                assertThat(connection.sync().ping()).isEqualTo("PONG");
+
+                // And: Health checks should be created and running
+                // Wait for health status to transition from UNKNOWN to HEALTHY
+                await().untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // When: Change health status to UNHEALTHY
+                testHealthCheckStrategy.setHealthStatus(uri1, HealthStatus.UNHEALTHY);
+                testHealthCheckStrategy.setHealthStatus(uri2, HealthStatus.UNHEALTHY);
+
+                // Then: Verify health status reflects the change
+                await().untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNHEALTHY);
+                });
+
+            } finally {
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
         @Test
@@ -351,6 +391,67 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             // - Connect
             // - Remove a database
             // - Verify health check is stopped and cleaned up
+        }
+
+    }
+
+    /**
+     * Test implementation of HealthCheckStrategy with controllable health status. Used for testing health check configuration,
+     * lifecycle, and status transitions.
+     * <p>
+     * By default, returns HEALTHY for all endpoints. Use {@link #setHealthStatus(RedisURI, HealthStatus)} to control the health
+     * status returned for specific endpoints.
+     * </p>
+     */
+    static class TestHealthCheckStrategy implements HealthCheckStrategy {
+
+        private final Config config;
+
+        private final Map<RedisURI, AtomicReference<HealthStatus>> endpointHealth = new HashMap<>();
+
+        TestHealthCheckStrategy(Config config) {
+            this.config = config;
+        }
+
+        @Override
+        public int getInterval() {
+            return config.getInterval();
+        }
+
+        @Override
+        public int getTimeout() {
+            return config.getTimeout();
+        }
+
+        @Override
+        public HealthStatus doHealthCheck(RedisURI endpoint) {
+            // Return the current health status for the endpoint (default: HEALTHY)
+            return endpointHealth.computeIfAbsent(endpoint, k -> new AtomicReference<>(HealthStatus.HEALTHY)).get();
+        }
+
+        @Override
+        public int getNumProbes() {
+            return config.getNumProbes();
+        }
+
+        @Override
+        public ProbingPolicy getPolicy() {
+            return config.getPolicy();
+        }
+
+        @Override
+        public int getDelayInBetweenProbes() {
+            return config.getDelayInBetweenProbes();
+        }
+
+        /**
+         * Set the health status for a specific endpoint. This allows controlled testing of health status transitions.
+         *
+         * @param endpoint the endpoint URI
+         * @param status the health status to return for this endpoint
+         */
+        public void setHealthStatus(RedisURI endpoint, HealthStatus status) {
+            endpointHealth.computeIfAbsent(endpoint, k -> new AtomicReference<>(HealthStatus.HEALTHY)).set(status);
         }
 
     }
