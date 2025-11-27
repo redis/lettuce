@@ -151,10 +151,67 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
         @Test
         @DisplayName("Should use different health check strategies for different endpoints")
         void shouldUseDifferentStrategiesPerEndpoint() {
-            // TODO: Implement test
-            // - Create two DatabaseConfigs with different HealthCheckStrategySuppliers
-            // - Create MultiDbClient with both configs
-            // - Connect and verify each endpoint has its own health check strategy
+            // Given: Two independent health check strategies
+            HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms for fast testing
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+
+            TestHealthCheckStrategy strategy1 = new TestHealthCheckStrategy(config);
+            TestHealthCheckStrategy strategy2 = new TestHealthCheckStrategy(config);
+
+            // Different suppliers for each endpoint
+            HealthCheckStrategySupplier supplier1 = (uri, options) -> strategy1;
+            HealthCheckStrategySupplier supplier2 = (uri, options) -> strategy2;
+
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier1);
+            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier2);
+
+            // When: Create MultiDbClient with different strategies per endpoint
+            MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // Then: Connection should work
+                assertThat(connection).isNotNull();
+                assertThat(connection.sync().ping()).isEqualTo("PONG");
+
+                // And: Both endpoints should become HEALTHY
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // When: Set different health statuses for each endpoint
+                strategy1.setHealthStatus(uri1, HealthStatus.UNHEALTHY);
+                strategy2.setHealthStatus(uri2, HealthStatus.HEALTHY);
+
+                // Then: Each endpoint should reflect its own strategy's status
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // When: Change strategy2's status to UNHEALTHY
+                strategy2.setHealthStatus(uri2, HealthStatus.UNHEALTHY);
+
+                // Then: uri2 should become UNHEALTHY while uri1 remains UNHEALTHY
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNHEALTHY);
+                });
+
+                // When: Restore uri1 to HEALTHY
+                strategy1.setHealthStatus(uri1, HealthStatus.HEALTHY);
+
+                // Then: uri1 should become HEALTHY while uri2 remains UNHEALTHY
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNHEALTHY);
+                });
+
+            } finally {
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
         @Test
