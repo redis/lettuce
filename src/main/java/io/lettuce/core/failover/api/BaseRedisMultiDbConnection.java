@@ -3,6 +3,7 @@ package io.lettuce.core.failover.api;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.CircuitBreaker;
 import io.lettuce.core.failover.DatabaseConfig;
+import io.lettuce.core.failover.health.HealthStatus;
 
 /**
  * @author Ali Takavci
@@ -40,6 +41,19 @@ public interface BaseRedisMultiDbConnection {
      * @throws IllegalArgumentException if the endpoint is not known
      */
     CircuitBreaker getCircuitBreaker(RedisURI endpoint);
+
+    /**
+     * Get the health status for a specific endpoint.
+     * <p>
+     * If health checks are not configured for the endpoint, returns {@link HealthStatus#HEALTHY} as the database is assumed to
+     * be healthy when not actively monitored.
+     * </p>
+     *
+     * @param endpoint the Redis endpoint URI
+     * @return the health status (HEALTHY, UNHEALTHY, or UNKNOWN)
+     * @throws IllegalArgumentException if the endpoint is not known
+     */
+    HealthStatus getHealthStatus(RedisURI endpoint);
 
     /**
      * Add a new database to the multi-database connection.

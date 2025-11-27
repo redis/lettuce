@@ -376,6 +376,15 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     }
 
     @Override
+    public HealthStatus getHealthStatus(RedisURI endpoint) {
+        RedisDatabase<C> database = databases.get(endpoint);
+        if (database == null) {
+            throw new IllegalArgumentException("Unknown endpoint: " + endpoint);
+        }
+        return database.getHealthStatus();
+    }
+
+    @Override
     public void addDatabase(RedisURI redisURI, float weight) {
         addDatabase(new DatabaseConfig(redisURI, weight));
     }

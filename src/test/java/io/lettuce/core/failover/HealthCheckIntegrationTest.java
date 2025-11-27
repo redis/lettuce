@@ -43,11 +43,37 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
         @Test
         @DisplayName("Should create MultiDbClient without health checks when supplier is null")
         void shouldCreateClientWithoutHealthChecks() {
-            // TODO: Implement test
-            // - Create DatabaseConfig with null HealthCheckStrategySupplier
-            // - Create MultiDbClient with the config
-            // - Connect and verify connection works
-            // - Verify no health checks are running
+            // Given: DatabaseConfigs without HealthCheckStrategySupplier (null)
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, null);
+            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, null);
+
+            // When: Create MultiDbClient and connect
+            MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // Then: Connection should work normally
+                assertThat(connection).isNotNull();
+                assertThat(connection.sync().ping()).isEqualTo("PONG");
+
+                // And: Verify we can execute commands on both endpoints
+                connection.switchToDatabase(uri1);
+                connection.sync().set("test-key", "test-value");
+                assertThat(connection.sync().get("test-key")).isEqualTo("test-value");
+
+                connection.switchToDatabase(uri2);
+                connection.sync().set("test-key2", "test-value2");
+                assertThat(connection.sync().get("test-key2")).isEqualTo("test-value2");
+
+                // And: Verify health status returns HEALTHY when health checks are not configured
+                // (When no health check supplier is provided, the database is assumed healthy)
+                assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+
+            } finally {
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
         @Test
