@@ -113,12 +113,29 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // When: Change health status to UNHEALTHY
                 testHealthCheckStrategy.setHealthStatus(uri1, HealthStatus.UNHEALTHY);
-                testHealthCheckStrategy.setHealthStatus(uri2, HealthStatus.UNHEALTHY);
 
                 // Then: Verify health status reflects the change
                 await().untilAsserted(() -> {
                     assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                });
+
+                // Then: connection should failover to uri2
+                await().untilAsserted(() -> {
+                    assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
+                });
+
+                // When: Change health status to UNHEALTHY
+                testHealthCheckStrategy.setHealthStatus(uri2, HealthStatus.UNHEALTHY);
+
+                // Then: Verify health status reflects the change
+                await().untilAsserted(() -> {
                     assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNHEALTHY);
+                });
+
+                // And: when all endpoints are unhealthy
+                // Then: connection should stay on the current endpoint
+                await().untilAsserted(() -> {
+                    assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
                 });
 
             } finally {
