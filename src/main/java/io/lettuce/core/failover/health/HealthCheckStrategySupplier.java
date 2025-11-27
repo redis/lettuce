@@ -13,4 +13,5 @@ public interface HealthCheckStrategySupplier {
      * @return the health check strategy
      */
     HealthCheckStrategy get(RedisURI redisURI, ClientOptions clientOptions);
+
 }

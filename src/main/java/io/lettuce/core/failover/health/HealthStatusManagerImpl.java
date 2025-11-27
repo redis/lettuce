@@ -60,7 +60,6 @@ public class HealthStatusManagerImpl implements HealthStatusManager, AutoCloseab
         return hc;
     }
 
-
     public void remove(RedisURI endpoint) {
         HealthCheck old = healthChecks.remove(endpoint);
         if (old != null) {

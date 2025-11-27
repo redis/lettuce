@@ -267,7 +267,7 @@ public class HealthCheckImpl implements HealthCheck {
     }
 
     private void notifyListeners(HealthStatus oldStatus, HealthStatus newStatus) {
-        if  (listeners!=null && listeners.size()>0) {
+        if (listeners != null && listeners.size() > 0) {
             HealthStatusChangeEvent event = new HealthStatusChangeEvent(endpoint, oldStatus, newStatus);
 
             // Notify all registered listeners

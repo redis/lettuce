@@ -31,7 +31,8 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
 
     private final HealthCheck healthCheck;
 
-    public RedisDatabase(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint, HealthStatusManager healthStatusManager) {
+    public RedisDatabase(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint,
+            HealthStatusManager healthStatusManager) {
         this.redisURI = config.getRedisURI();
         this.weight = config.getWeight();
         this.connection = connection;
@@ -39,8 +40,9 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
         this.circuitBreaker = new CircuitBreaker(config.getCircuitBreakerConfig());
         databaseEndpoint.setCircuitBreaker(circuitBreaker);
 
-        if ( config.getHealthCheckStrategySupplier() != null) {
-            HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(), connection.getOptions());
+        if (config.getHealthCheckStrategySupplier() != null) {
+            HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
+                    connection.getOptions());
             healthCheck = healthStatusManager.add(redisURI, hcStrategy);
         } else {
             healthCheck = null;

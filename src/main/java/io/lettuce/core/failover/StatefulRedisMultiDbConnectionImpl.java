@@ -82,7 +82,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     private final Lock writeLock = multiDbLock.writeLock();
 
     public StatefulRedisMultiDbConnectionImpl(Map<RedisURI, RedisDatabase<C>> connections, ClientResources resources,
-            RedisCodec<K, V> codec, Supplier<JsonParser> parser, DatabaseConnectionFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager) {
+            RedisCodec<K, V> codec, Supplier<JsonParser> parser, DatabaseConnectionFactory<C, K, V> connectionFactory,
+            HealthStatusManager healthStatusManager) {
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
         }
@@ -114,7 +115,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     }
 
     private void onHealthStatusChange(HealthStatusChangeEvent event) {
-        logger.debug("Health status changed for {} from {} to {}", event.getEndpoint(), event.getOldStatus(), event.getNewStatus());
+        logger.debug("Health status changed for {} from {} to {}", event.getEndpoint(), event.getOldStatus(),
+                event.getNewStatus());
 
         RedisDatabase<C> database = databases.get(event.getEndpoint());
 
@@ -122,7 +124,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             return;
         }
 
-        if ( isCurrent(database) && event.getNewStatus() == HealthStatus.UNHEALTHY) {
+        if (isCurrent(database) && event.getNewStatus() == HealthStatus.UNHEALTHY) {
             failoverFrom(database);
         }
     }
@@ -159,6 +161,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         public static Predicate<RedisDatabase<?>> isNot(RedisDatabase<?> dbInstance) {
             return db -> !db.equals(dbInstance);
         }
+
     }
 
     @Override

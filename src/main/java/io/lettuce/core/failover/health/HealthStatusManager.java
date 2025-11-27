@@ -28,7 +28,6 @@ public interface HealthStatusManager {
      */
     HealthStatus getHealthStatus(RedisURI endpoint);
 
-
     /**
      * Register a global listener to be notified when the health status of any endpoint changes.
      *
@@ -58,6 +57,5 @@ public interface HealthStatusManager {
      * @param listener the listener to remove, must not be {@code null}
      */
     void unregisterListener(RedisURI endpoint, HealthStatusListener listener);
-
 
 }
