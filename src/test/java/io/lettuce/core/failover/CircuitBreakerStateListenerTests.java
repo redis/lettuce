@@ -21,13 +21,13 @@ import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 @Tag(TestTags.UNIT_TEST)
 class CircuitBreakerStateListenerTests {
 
-    private CircuitBreaker circuitBreaker;
+    private CircuitBreakerImpl circuitBreaker;
 
     @BeforeEach
     void setUp() {
         CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(50.0f, 5,
                 CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
-        circuitBreaker = new CircuitBreaker(config);
+        circuitBreaker = new CircuitBreakerImpl(config);
     }
 
     @Test
