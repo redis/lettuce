@@ -6,13 +6,14 @@ import io.lettuce.core.failover.health.HealthCheckStrategy;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.ProbingPolicy;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.test.LettuceExtension;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.C;
 
 import javax.inject.Inject;
 
@@ -42,9 +43,27 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
     /** Default timeout for waitAtMost() calls in this test - 100ms for fast test execution */
     private static final Duration AWAIT_TIMEOUT = Duration.ofMillis(500);
 
+    /** Expected run_id for uri1 Redis instance - used to verify we are connected to the correct endpoint */
+    private String expectedRunIdUri1;
+
+    /** Expected run_id for uri2 Redis instance - used to verify we are connected to the correct endpoint */
+    private String expectedRunIdUri2;
+
     @Inject
     HealthCheckIntegrationTest(MultiDbClient client) {
         super(client);
+    }
+
+    @BeforeEach
+    void extractRunIds() {
+        try (StatefulRedisConnection<String, String> conn1 = directClient1.connect()) {
+            expectedRunIdUri1 = extractRunId(conn1.sync().info("server"));
+        }
+        try (StatefulRedisConnection<String, String> conn2 = directClient2.connect()) {
+            expectedRunIdUri2 = extractRunId(conn2.sync().info("server"));
+        }
+        assertThat(expectedRunIdUri1).isNotEmpty();
+        assertThat(expectedRunIdUri2).isNotEmpty().isNotEqualTo(expectedRunIdUri1);
     }
 
     @Nested
@@ -438,13 +457,63 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
         @Test
         @DisplayName("Should trigger failover when health check detects unhealthy endpoint")
         void shouldTriggerFailoverOnUnhealthyStatus() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier and multiple endpoints
-            // - Connect
-            // - Wait for all endpoints to be HEALTHY
-            // - Simulate failure of current active endpoint
-            // - Wait for health check to detect failure
-            // - Verify failover to another healthy endpoint
+            // Given: MultiDbClient with health check supplier and multiple endpoints
+            HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms for fast testing
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+
+            TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
+            HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
+
+            // uri1 has higher weight (1.0) than uri2 (0.5), so uri1 should be selected initially
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+
+            // When: Create MultiDbClient and connect
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // Then: Wait for all endpoints to be HEALTHY
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // And: Verify current endpoint is uri1 (higher weight)
+                assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
+
+                // And: Verify we're connected to uri1 by comparing run_id
+                String actualRunIdBeforeFailover = extractRunId(connection.sync().info("server"));
+                assertThat(actualRunIdBeforeFailover).isEqualTo(expectedRunIdUri1);
+
+                // When: Simulate failure of current active endpoint (uri1)
+                testStrategy.setHealthStatus(uri1, HealthStatus.UNHEALTHY);
+
+                // Then: Wait for health check to detect failure
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                });
+
+                // And: Verify failover to another healthy endpoint (uri2)
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
+                });
+
+                // And: Verify we're actually connected to uri2 by comparing run_id (proves TCP connection switched)
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    String actualRunIdAfterFailover = extractRunId(connection.sync().info("server"));
+                    assertThat(actualRunIdAfterFailover).isEqualTo(expectedRunIdUri2);
+                });
+
+                // And: Verify connection still works on uri2
+                assertThat(connection.sync().ping()).isEqualTo("PONG");
+                connection.sync().set("failover-test", "success");
+                assertThat(connection.sync().get("failover-test")).isEqualTo("success");
+
+            } finally {
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
         @Test
@@ -469,6 +538,21 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             // - Verify failover is triggered
         }
 
+    }
+
+    /**
+     * Extract run_id from INFO SERVER output. The run_id is a unique identifier for each Redis server instance.
+     *
+     * @param info the INFO SERVER output
+     * @return the run_id value, or empty string if not found
+     */
+    private static String extractRunId(String info) {
+        for (String line : info.split("\r?\n")) {
+            if (line.startsWith("run_id:")) {
+                return line.substring("run_id:".length()).trim();
+            }
+        }
+        return "";
     }
 
     @Nested
@@ -514,6 +598,14 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
      * By default, returns HEALTHY for all endpoints. Use {@link #setHealthStatus(RedisURI, HealthStatus)} to control the health
      * status returned for specific endpoints.
      * </p>
+     * <p>
+     * Supports:
+     * <ul>
+     * <li>simulating timeouts by introducing delays longer than the configured timeout.</li>
+     * <li>health check call count and last call time per endpoint for verification.</li>
+     * </ul>
+     * </p>
+     *
      */
     static class TestHealthCheckStrategy implements HealthCheckStrategy {
 
