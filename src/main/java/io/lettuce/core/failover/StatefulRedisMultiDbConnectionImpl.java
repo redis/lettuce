@@ -104,7 +104,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
         if (healthStatusManager != null) {
-            healthStatusManager.registerListener(this::onHealthStatusChange);
+            databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
         }
     }
 
@@ -251,8 +251,9 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     @Override
     public void close() {
         if (healthStatusManager != null) {
-            healthStatusManager.unregisterListener(this::onHealthStatusChange);
+            healthStatusManager.close();
         }
+
         databases.values().forEach(db -> db.getConnection().close());
     }
 
@@ -415,6 +416,9 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             databases.put(redisURI, database);
 
             database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
+            if (healthStatusManager != null) {
+                healthStatusManager.registerListener(database.getRedisURI(), this::onHealthStatusChange);
+            }
         });
 
     }
@@ -435,8 +439,12 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
                 throw new UnsupportedOperationException("Cannot remove the currently active database: " + redisURI);
             }
 
+            if (healthStatusManager != null) {
+                healthStatusManager.unregisterListener(redisURI, this::onHealthStatusChange);
+                healthStatusManager.remove(redisURI);
+            }
+
             // Remove the database and close its connection
-            healthStatusManager.remove(redisURI);
             databases.remove(redisURI);
             database.close();
         });

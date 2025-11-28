@@ -66,4 +66,9 @@ public interface HealthStatusManager {
      */
     long getMaxWaitFor(RedisURI endpoint);
 
+    /**
+     * Close the health status manager and stop all health checks.
+     */
+    void close();
+
 }

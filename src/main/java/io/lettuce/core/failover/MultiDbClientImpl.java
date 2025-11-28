@@ -17,6 +17,8 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
+import io.lettuce.core.failover.health.HealthCheck;
+import io.lettuce.core.failover.health.HealthCheckStrategy;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.failover.health.HealthStatusManagerImpl;
@@ -118,8 +120,17 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         StatefulRedisConnection<K, V> connection = connect(codec, uri);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
 
+        HealthCheck healthCheck;
+        if (config.getHealthCheckStrategySupplier() != null) {
+            HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
+                    connection.getOptions());
+            healthCheck = healthStatusManager.add(uri, hcStrategy);
+        } else {
+            healthCheck = null;
+        }
+
         RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
-                healthStatusManager);
+                healthCheck);
 
         return database;
     }
@@ -152,6 +163,10 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             databases.put(uri, database);
         }
 
+        StatusTracker statusTracker = new StatusTracker(healthStatusManager);
+        // Wait for health checks to complete if configured
+        waitForInitialHealthyDatabase(statusTracker, databases);
+
         // Provide a connection factory for dynamic database addition
         return new StatefulRedisMultiDbPubSubConnectionImpl<K, V>(databases, getResources(), codec,
                 getOptions().getJsonParser(), this::createRedisDatabaseWithPubSub, healthStatusManager);
@@ -162,8 +177,18 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         RedisURI uri = config.getRedisURI();
         StatefulRedisPubSubConnection<K, V> connection = connectPubSub(codec, uri);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
+        
+        HealthCheck healthCheck;
+        if (config.getHealthCheckStrategySupplier() != null) {
+            HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
+                    connection.getOptions());
+            healthCheck = healthStatusManager.add(uri, hcStrategy);
+        } else {
+            healthCheck = null;
+        }
+        
         RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
-                healthStatusManager);
+                healthCheck);
         return database;
     }
 

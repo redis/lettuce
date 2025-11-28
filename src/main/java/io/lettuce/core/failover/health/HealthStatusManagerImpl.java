@@ -15,18 +15,22 @@ public class HealthStatusManagerImpl implements HealthStatusManager, AutoCloseab
 
     private final Map<RedisURI, List<HealthStatusListener>> endpointListeners = new ConcurrentHashMap<RedisURI, List<HealthStatusListener>>();
 
+    @Override
     public void registerListener(HealthStatusListener listener) {
         listeners.add(listener);
     }
 
+    @Override
     public void unregisterListener(HealthStatusListener listener) {
         listeners.remove(listener);
     }
 
+    @Override
     public void registerListener(RedisURI endpoint, HealthStatusListener listener) {
         endpointListeners.computeIfAbsent(endpoint, k -> new CopyOnWriteArrayList<>()).add(listener);
     }
 
+    @Override
     public void unregisterListener(RedisURI endpoint, HealthStatusListener listener) {
         endpointListeners.computeIfPresent(endpoint, (k, v) -> {
             v.remove(listener);
@@ -46,6 +50,7 @@ public class HealthStatusManagerImpl implements HealthStatusManager, AutoCloseab
         }
     }
 
+    @Override
     public HealthCheck add(RedisURI endpoint, HealthCheckStrategy strategy) {
         HealthCheck hc = new HealthCheckImpl(endpoint, strategy);
 
@@ -60,6 +65,7 @@ public class HealthStatusManagerImpl implements HealthStatusManager, AutoCloseab
         return hc;
     }
 
+    @Override
     public void remove(RedisURI endpoint) {
         HealthCheck old = healthChecks.remove(endpoint);
         if (old != null) {
@@ -67,18 +73,21 @@ public class HealthStatusManagerImpl implements HealthStatusManager, AutoCloseab
         }
     }
 
+    @Override
     public HealthStatus getHealthStatus(RedisURI endpoint) {
         HealthCheck healthCheck = healthChecks.get(endpoint);
         return healthCheck != null ? healthCheck.getStatus() : HealthStatus.UNKNOWN;
     }
 
-    public void close() {
-        healthChecks.close();
-    }
-
+    @Override
     public long getMaxWaitFor(RedisURI endpoint) {
         HealthCheck healthCheck = healthChecks.get(endpoint);
         return healthCheck != null ? healthCheck.getMaxWaitFor() : 0;
+    }
+
+    @Override
+    public void close() {
+        healthChecks.close();
     }
 
 }
