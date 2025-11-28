@@ -464,63 +464,6 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
     }
 
     @Nested
-    @DisplayName("Health Status Listeners")
-    class HealthStatusListenerTests {
-
-        @Test
-        @DisplayName("Should notify listeners on status change")
-        @Disabled("Not implemented yet")
-        void shouldNotifyListenersOnStatusChange() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Register HealthStatusListener
-            // - Trigger status change (e.g., stop Redis)
-            // - Verify listener is notified with correct event
-        }
-
-        @Test
-        @DisplayName("Should notify multiple listeners on status change")
-        @Disabled("Not implemented yet")
-        void shouldNotifyMultipleListeners() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Register multiple HealthStatusListeners
-            // - Trigger status change
-            // - Verify all listeners are notified
-        }
-
-        @Test
-        @DisplayName("Should not notify removed listeners")
-        @Disabled("Not implemented yet")
-        void shouldNotNotifyRemovedListeners() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Register HealthStatusListener
-            // - Remove the listener
-            // - Trigger status change
-            // - Verify listener is not notified
-        }
-
-        @Test
-        @DisplayName("Should handle listener exceptions gracefully")
-        @Disabled("Not implemented yet")
-        void shouldHandleListenerExceptions() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Register listener that throws exception
-            // - Register another normal listener
-            // - Trigger status change
-            // - Verify exception doesn't prevent other listeners from being notified
-            // - Verify health check continues to work
-        }
-
-    }
-
-    @Nested
     @DisplayName("Failover Integration")
     class FailoverIntegrationTests {
 
