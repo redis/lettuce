@@ -8,6 +8,7 @@ import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.ProbingPolicy;
 import io.lettuce.test.LettuceExtension;
+import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +24,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -275,12 +279,15 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
                 assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
 
                 // And: Simulate timeout by introducing delay longer than timeout
-                testStrategy.setHealthCheckDelay(uri1, customTimeout + 5); // 15ms delay > 10ms timeout
+                CountDownLatch timeoutLatch = new java.util.concurrent.CountDownLatch(1);
+                testStrategy.setHealthCheckDelay(uri1, TestHealthCheckStrategy.Delay.Await(timeoutLatch)); // 15ms delay > 10ms
+                                                                                                           // timeout
 
                 // When health check times out, it should be recorded as failed and status becomes UNHEALTHY
-                with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(50)).await().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
-                });
+                with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(customTimeout + 50)).await()
+                        .untilAsserted(() -> {
+                            assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                        });
 
             } finally {
                 connection.close();
@@ -350,70 +357,60 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             // - Verify old health check is stopped and new one is started
         }
 
-    }
-
-    @Nested
-    @DisplayName("Health Status Monitoring")
-    class HealthStatusMonitoringTests {
-
-        @Test
-        @DisplayName("Should report HEALTHY status for healthy endpoint")
-        @Disabled("Not implemented yet")
-        void shouldReportHealthyStatus() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect to healthy Redis instance
-            // - Wait for health check to complete
-            // - Verify status is HEALTHY
-        }
-
-        @Test
-        @DisplayName("Should report UNHEALTHY status for unreachable endpoint")
-        @Disabled("Not implemented yet")
-        void shouldReportUnhealthyStatus() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Add database with unreachable endpoint
-            // - Wait for health check to complete
-            // - Verify status is UNHEALTHY
-        }
-
         @Test
         @DisplayName("Should transition from UNKNOWN to HEALTHY")
-        @Disabled("Not implemented yet")
         void shouldTransitionFromUnknownToHealthy() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Verify initial status is UNKNOWN
-            // - Wait for health check to complete
-            // - Verify status transitions to HEALTHY
-        }
+            // Given: Health check strategy with fast interval for testing
+            HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms interval
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
 
-        @Test
-        @DisplayName("Should transition from HEALTHY to UNHEALTHY when endpoint fails")
-        @Disabled("Not implemented yet")
-        void shouldTransitionFromHealthyToUnhealthy() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect to healthy endpoint
-            // - Wait for HEALTHY status
-            // - Simulate endpoint failure (stop Redis or block connection)
-            // - Wait for health check to detect failure
-            // - Verify status transitions to UNHEALTHY
-        }
+            TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
+            HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
-        @Test
-        @DisplayName("Should transition from UNHEALTHY to HEALTHY when endpoint recovers")
-        @Disabled("Not implemented yet")
-        void shouldTransitionFromUnhealthyToHealthy() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Start with unhealthy endpoint
-            // - Wait for UNHEALTHY status
-            // - Restore endpoint (start Redis or unblock connection)
-            // - Wait for health check to detect recovery
-            // - Verify status transitions to HEALTHY
+            // Block health check for uri2 initially to ensure we can verify UNKNOWN state
+            // uri1 will become healthy immediately, allowing the connection to be created
+            // At leasst one healhty endpoint is required to establish connection,
+            // block health check for uri2 only
+            CountDownLatch healthCheckUri2Latch = new CountDownLatch(1);
+            testStrategy.setHealthCheckDelay(uri2, TestHealthCheckStrategy.Delay.Await(healthCheckUri2Latch));
+
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+
+            // When: Create MultiDbClient and connect
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // Then: uri1 should become HEALTHY (allowing connection to be created)
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // And: uri2 should be UNKNOWN (health check is blocked)
+                assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNKNOWN);
+
+                // And: Verify health check was called for uri2 but is blocked
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(testStrategy.getHealthCheckCallCount(uri2)).isGreaterThan(0);
+                });
+
+                // And: Status should still be UNKNOWN while blocked
+                assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNKNOWN);
+
+                // When: Unblock health check to allow it to complete
+                healthCheckUri2Latch.countDown();
+
+                // Then: Wait for uri2 status to transition to HEALTHY
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+            } finally {
+                healthCheckUri2Latch.countDown(); // Ensure cleanup
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
     }
@@ -746,7 +743,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
      *
      * @return Awaitility condition builder configured with AWAIT_TIMEOUT and POLL_INTERVAL
      */
-    private static org.awaitility.core.ConditionFactory awaitAtMost() {
+    private static ConditionFactory awaitAtMost() {
         return await().atMost(AWAIT_TIMEOUT).pollInterval(POLL_INTERVAL);
     }
 
@@ -772,11 +769,44 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         private final Map<RedisURI, AtomicReference<HealthStatus>> endpointHealth = new HashMap<>();
 
-        private final Map<RedisURI, java.util.concurrent.atomic.AtomicInteger> healthCheckCallCount = new HashMap<>();
+        private final Map<RedisURI, AtomicInteger> healthCheckCallCount = new HashMap<>();
 
-        private final Map<RedisURI, java.util.concurrent.atomic.AtomicLong> lastHealthCheckTime = new HashMap<>();
+        private final Map<RedisURI, AtomicLong> lastHealthCheckTime = new HashMap<>();
 
-        private final Map<RedisURI, java.util.concurrent.atomic.AtomicInteger> healthCheckDelayMs = new HashMap<>();
+        private final Map<RedisURI, AtomicReference<Delay>> healthCheckDelayMs = new HashMap<>();
+
+        interface Delay {
+
+            void delay();
+
+            static Delay None() {
+                return () -> {
+                };
+            };
+
+            static Delay Fixed(int delayMs) {
+                return () -> {
+                    try {
+                        Thread.sleep(delayMs);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Health check interrupted", e);
+                    }
+                };
+            }
+
+            static Delay Await(CountDownLatch latch) {
+                return () -> {
+                    try {
+                        latch.await();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Health check interrupted", e);
+                    }
+                };
+            }
+
+        }
 
         TestHealthCheckStrategy(Config config) {
             this.config = config;
@@ -795,21 +825,12 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
         @Override
         public HealthStatus doHealthCheck(RedisURI endpoint) {
             // Record the health check call
-            healthCheckCallCount.computeIfAbsent(endpoint, k -> new java.util.concurrent.atomic.AtomicInteger(0))
-                    .incrementAndGet();
-            lastHealthCheckTime.computeIfAbsent(endpoint, k -> new java.util.concurrent.atomic.AtomicLong(0))
-                    .set(System.currentTimeMillis());
+            healthCheckCallCount.computeIfAbsent(endpoint, k -> new AtomicInteger(0)).incrementAndGet();
+            lastHealthCheckTime.computeIfAbsent(endpoint, k -> new AtomicLong(0)).set(System.currentTimeMillis());
 
             // Simulate delay if configured (for timeout testing)
-            int delayMs = healthCheckDelayMs.getOrDefault(endpoint, new java.util.concurrent.atomic.AtomicInteger(0)).get();
-            if (delayMs > 0) {
-                try {
-                    Thread.sleep(delayMs);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("Health check interrupted", e);
-                }
-            }
+            Delay delay = healthCheckDelayMs.getOrDefault(endpoint, new AtomicReference<>(Delay.None())).get();
+            delay.delay();
 
             // Return the current health status for the endpoint (default: HEALTHY)
             return endpointHealth.computeIfAbsent(endpoint, k -> new AtomicReference<>(HealthStatus.HEALTHY)).get();
@@ -866,10 +887,16 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
          * Set a delay to simulate slow health checks (for timeout testing).
          *
          * @param endpoint the endpoint URI
-         * @param delayMs the delay in milliseconds to introduce in doHealthCheck
+         * @param delay the delay to apply
          */
-        public void setHealthCheckDelay(RedisURI endpoint, int delayMs) {
-            healthCheckDelayMs.computeIfAbsent(endpoint, k -> new java.util.concurrent.atomic.AtomicInteger(0)).set(delayMs);
+        public void setHealthCheckDelay(RedisURI endpoint, Delay delay) {
+            healthCheckDelayMs.compute(endpoint, (k, v) -> {
+                if (v == null) {
+                    v = new AtomicReference<>();
+                }
+                v.set(delay);
+                return v;
+            });
         }
 
     }
