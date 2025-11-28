@@ -28,6 +28,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -703,25 +705,40 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
     class DynamicDatabaseManagementTests {
 
         @Test
-        @DisplayName("Should create health check when adding new database with supplier")
-        @Disabled("Not implemented yet")
+        @DisplayName("Should create health check when adding new database")
         void shouldCreateHealthCheckOnAddDatabase() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Add new database dynamically
-            // - Verify health check is created and started for new database
-        }
+            // Given: MultiDbClient with health check supplier for initial database
+            HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms interval
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
 
-        @Test
-        @DisplayName("Should not create health check when adding database without supplier")
-        @Disabled("Not implemented yet")
-        void shouldNotCreateHealthCheckWithoutSupplier() {
-            // TODO: Implement test
-            // - Create MultiDbClient
-            // - Connect
-            // - Add new database with null HealthCheckStrategySupplier
-            // - Verify no health check is created for new database
+            TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
+            HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
+
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+
+            MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(config1));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // When: Add a new database dynamically with health check supplier
+                DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+                connection.addDatabase(config2);
+
+                // Then: Health check should be created and started for the new database
+                // Wait for health check to run and status to become HEALTHY
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // And: Verify health check was actually called for the new database
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(testStrategy.getHealthCheckCallCount(uri2)).isGreaterThan(0);
+                });
+
+            } finally {
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
         @Test
