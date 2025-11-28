@@ -58,4 +58,12 @@ public interface HealthStatusManager {
      */
     void unregisterListener(RedisURI endpoint, HealthStatusListener listener);
 
+    /**
+     * Get the maximum wait time for the health check to complete.
+     *
+     * @param endpoint the endpoint to check
+     * @return the maximum wait time in milliseconds
+     */
+    long getMaxWaitFor(RedisURI endpoint);
+
 }

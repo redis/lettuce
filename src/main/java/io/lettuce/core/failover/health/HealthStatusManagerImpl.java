@@ -76,4 +76,9 @@ public class HealthStatusManagerImpl implements HealthStatusManager, AutoCloseab
         healthChecks.close();
     }
 
+    public long getMaxWaitFor(RedisURI endpoint) {
+        HealthCheck healthCheck = healthChecks.get(endpoint);
+        return healthCheck != null ? healthCheck.getMaxWaitFor() : 0;
+    }
+
 }

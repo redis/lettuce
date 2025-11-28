@@ -76,6 +76,15 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
     }
 
     /**
+     * Get the health check for this database.
+     *
+     * @return the health check, or null if health checks are not configured
+     */
+    public HealthCheck getHealthCheck() {
+        return healthCheck;
+    }
+
+    /**
      * Get the health status of this database.
      * <p>
      * If health checks are not configured (healthCheck is null), returns {@link HealthStatus#HEALTHY} as the database is
