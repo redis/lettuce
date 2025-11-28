@@ -9,6 +9,7 @@ import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.ProbingPolicy;
 import io.lettuce.test.LettuceExtension;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -289,6 +290,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should configure health check probing policy")
+        @Disabled("Not implemented yet")
         void shouldConfigureHealthCheckProbingPolicy() {
             // TODO: Implement test
             // - Create HealthCheckStrategy.Config with custom ProbingPolicy
@@ -299,6 +301,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should configure number of probes and delay between probes")
+        @Disabled("Not implemented yet")
         void shouldConfigureProbesAndDelay() {
             // TODO: Implement test
             // - Create HealthCheckStrategy.Config with custom numProbes and delayInBetweenProbes
@@ -315,6 +318,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should start health checks automatically when connection is created")
+        @Disabled("Not implemented yet")
         void shouldStartHealthChecksOnConnect() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -325,6 +329,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should stop health checks when connection is closed")
+        @Disabled("Not implemented yet")
         void shouldStopHealthChecksOnClose() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -335,6 +340,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should restart health check when database is re-added")
+        @Disabled("Not implemented yet")
         void shouldRestartHealthCheckOnDatabaseReAdd() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -352,6 +358,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should report HEALTHY status for healthy endpoint")
+        @Disabled("Not implemented yet")
         void shouldReportHealthyStatus() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -362,6 +369,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should report UNHEALTHY status for unreachable endpoint")
+        @Disabled("Not implemented yet")
         void shouldReportUnhealthyStatus() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -372,6 +380,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should transition from UNKNOWN to HEALTHY")
+        @Disabled("Not implemented yet")
         void shouldTransitionFromUnknownToHealthy() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -383,6 +392,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should transition from HEALTHY to UNHEALTHY when endpoint fails")
+        @Disabled("Not implemented yet")
         void shouldTransitionFromHealthyToUnhealthy() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -395,6 +405,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should transition from UNHEALTHY to HEALTHY when endpoint recovers")
+        @Disabled("Not implemented yet")
         void shouldTransitionFromUnhealthyToHealthy() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -413,6 +424,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should notify listeners on status change")
+        @Disabled("Not implemented yet")
         void shouldNotifyListenersOnStatusChange() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -424,6 +436,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should notify multiple listeners on status change")
+        @Disabled("Not implemented yet")
         void shouldNotifyMultipleListeners() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -435,6 +448,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should not notify removed listeners")
+        @Disabled("Not implemented yet")
         void shouldNotNotifyRemovedListeners() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -447,6 +461,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should handle listener exceptions gracefully")
+        @Disabled("Not implemented yet")
         void shouldHandleListenerExceptions() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -692,6 +707,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should create health check when adding new database with supplier")
+        @Disabled("Not implemented yet")
         void shouldCreateHealthCheckOnAddDatabase() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
@@ -702,6 +718,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should not create health check when adding database without supplier")
+        @Disabled("Not implemented yet")
         void shouldNotCreateHealthCheckWithoutSupplier() {
             // TODO: Implement test
             // - Create MultiDbClient
@@ -712,6 +729,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should stop health check when removing database")
+        @Disabled("Not implemented yet")
         void shouldStopHealthCheckOnRemoveDatabase() {
             // TODO: Implement test
             // - Create MultiDbClient with health check supplier
