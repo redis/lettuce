@@ -743,13 +743,48 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should stop health check when removing database")
-        @Disabled("Not implemented yet")
-        void shouldStopHealthCheckOnRemoveDatabase() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Remove a database
-            // - Verify health check is stopped and cleaned up
+        void shouldStopHealthCheckOnRemoveDatabase() throws InterruptedException {
+            // Given: MultiDbClient with 2 databases, both with health checks
+            int healthCheckInterval = 1;
+            HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(healthCheckInterval) // 1ms
+                                                                                                                   // interval
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+
+            TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
+            HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
+
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // Wait for both databases to become HEALTHY
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // Verify health checks are running for both databases
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(testStrategy.getHealthCheckCallCount(uri1)).isGreaterThan(0);
+                    assertThat(testStrategy.getHealthCheckCallCount(uri2)).isGreaterThan(0);
+                });
+
+                // When: Remove uri2 (make sure we're on uri1 first)
+                connection.removeDatabase(uri2);
+
+                // Record the call count for uri2 after removal
+                int callCountAfterRemoval = testStrategy.getHealthCheckCallCount(uri2);
+
+                // verify Await for 5 intervals (5ms) to allow for any potential health check calls there is no health check
+                Thread.sleep(5 * healthCheckInterval);
+                assertThat(testStrategy.getHealthCheckCallCount(uri2)).isEqualTo(callCountAfterRemoval);
+            } finally {
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
     }
