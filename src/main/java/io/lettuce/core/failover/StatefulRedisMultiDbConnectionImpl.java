@@ -104,7 +104,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
         if (healthStatusManager != null) {
-            databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
+            databases.values()
+                    .forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
         }
     }
 

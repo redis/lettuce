@@ -177,7 +177,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         RedisURI uri = config.getRedisURI();
         StatefulRedisPubSubConnection<K, V> connection = connectPubSub(codec, uri);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-        
+
         HealthCheck healthCheck;
         if (config.getHealthCheckStrategySupplier() != null) {
             HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
@@ -186,7 +186,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         } else {
             healthCheck = null;
         }
-        
+
         RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
                 healthCheck);
         return database;
