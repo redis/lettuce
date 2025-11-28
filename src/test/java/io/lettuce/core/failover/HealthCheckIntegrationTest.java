@@ -1,12 +1,12 @@
 package io.lettuce.core.failover;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.ProbingPolicy;
-import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.test.LettuceExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,6 +49,9 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
     /** Expected run_id for uri2 Redis instance - used to verify we are connected to the correct endpoint */
     private String expectedRunIdUri2;
 
+    /** Expected run_id for uri3 Redis instance - used to verify we are connected to the correct endpoint */
+    private String expectedRunIdUri3;
+
     @Inject
     HealthCheckIntegrationTest(MultiDbClient client) {
         super(client);
@@ -62,8 +65,12 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
         try (StatefulRedisConnection<String, String> conn2 = directClient2.connect()) {
             expectedRunIdUri2 = extractRunId(conn2.sync().info("server"));
         }
+        try (StatefulRedisConnection<String, String> conn3 = directClient3.connect()) {
+            expectedRunIdUri3 = extractRunId(conn3.sync().info("server"));
+        }
         assertThat(expectedRunIdUri1).isNotEmpty();
         assertThat(expectedRunIdUri2).isNotEmpty().isNotEqualTo(expectedRunIdUri1);
+        assertThat(expectedRunIdUri3).isNotEmpty().isNotEqualTo(expectedRunIdUri1).isNotEqualTo(expectedRunIdUri2);
     }
 
     @Nested
@@ -519,12 +526,68 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
         @Test
         @DisplayName("Should not failover to unhealthy endpoints")
         void shouldNotFailoverToUnhealthyEndpoints() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier and multiple endpoints
-            // - Connect
-            // - Mark some endpoints as UNHEALTHY
-            // - Trigger failover from current endpoint
-            // - Verify failover only considers HEALTHY endpoints
+            // Given: MultiDbClient with health check supplier and multiple endpoints
+            HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms for fast testing
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+
+            TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
+            HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
+
+            // Create 3 endpoints: uri1 (weight 1.0), uri2 (weight 0.5), uri3 (weight 0.25)
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+            DatabaseConfig config3 = new DatabaseConfig(uri3, 0.25f, null, null, supplier);
+
+            // When: Create MultiDbClient and connect
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+
+                // Then: Verify current endpoint is uri1 (highest weight)
+                assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
+
+                // And: Verify health status for all endpoints to be HEALTHY
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.getHealthStatus(uri3)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // When: Mark uri2 as UNHEALTHY (second highest weight)
+                testStrategy.setHealthStatus(uri2, HealthStatus.UNHEALTHY);
+
+                // Then: Wait for health status to update
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNHEALTHY);
+                });
+
+                // When: Trigger failover from uri1 by marking it UNHEALTHY
+                testStrategy.setHealthStatus(uri1, HealthStatus.UNHEALTHY);
+
+                // Then: Wait for health check to detect failure
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                });
+
+                // And: Verify failover skips UNHEALTHY uri2 and goes to HEALTHY uri3
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getCurrentEndpoint()).isEqualTo(uri3);
+                });
+
+                // And: Verify we're actually connected to uri3 by comparing run_id
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    String actualRunId = extractRunId(connection.sync().info("server"));
+                    assertThat(actualRunId).isEqualTo(expectedRunIdUri3);
+                });
+
+                // And: Verify connection still works on uri3
+                assertThat(connection.sync().ping()).isEqualTo("PONG");
+
+            } finally {
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
         @Test
