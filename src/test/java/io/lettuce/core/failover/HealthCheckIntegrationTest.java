@@ -417,7 +417,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
             // Block health check for uri2 initially to ensure we can verify UNKNOWN state
             // uri1 will become healthy immediately, allowing the connection to be created
-            // At leasst one healhty endpoint is required to establish connection,
+            // At least one healthy endpoint is required to establish connection,
             // block health check for uri2 only
             CountDownLatch healthCheckUri2Latch = new CountDownLatch(1);
             testStrategy.setHealthCheckDelay(uri2, TestHealthCheckStrategy.Delay.Await(healthCheckUri2Latch));
@@ -767,7 +767,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
                 // Record the call count for uri2 after removal
                 int callCountAfterRemoval = testStrategy.getHealthCheckCallCount(uri2);
 
-                // verify Await for 5 intervals (5ms) to allow for any potential health check calls there is no health check
+                // Wait for 5 intervals (5ms) to verify that no additional health check calls occur.
                 Thread.sleep(5 * healthCheckInterval);
                 assertThat(testStrategy.getHealthCheckCallCount(uri2)).isEqualTo(callCountAfterRemoval);
             } finally {

@@ -4,6 +4,22 @@ import io.lettuce.core.RedisURI;
 
 import java.io.Closeable;
 
+/**
+ * Interface for health check strategies.
+ *
+ * <p>
+ * A health check strategy defines how to check the health of a Redis endpoint. It includes configuration for the check
+ * interval, timeout, number of probes, delay between probes, and probing policy.
+ * </p>
+ * <p>
+ * A health check strategy also provides the logic for performing the actual health check. This is done by implementing the
+ * {@link #doHealthCheck(RedisURI)} method.
+ * </p>
+ *
+ * @author Ali Takavci
+ * @author Ivo Gaydazhiev
+ * @since 7.1
+ */
 public interface HealthCheckStrategy extends Closeable {
 
     /**
@@ -31,6 +47,7 @@ public interface HealthCheckStrategy extends Closeable {
     /**
      * Close any resources used by the health check strategy.
      */
+    @Override
     default void close() {
     }
 
@@ -55,7 +72,7 @@ public interface HealthCheckStrategy extends Closeable {
      */
     int getDelayInBetweenProbes();
 
-    public static class Config {
+    class Config {
 
         private static final int INTERVAL_DEFAULT = 5000;
 
@@ -150,7 +167,7 @@ public interface HealthCheckStrategy extends Closeable {
             /**
              * Set the interval between health checks in milliseconds.
              * 
-             * @param interval the interval in milliseconds (default: 1000)
+             * @param interval the interval in milliseconds (default: 5000)
              * @return this builder
              */
             @SuppressWarnings("unchecked")
@@ -174,7 +191,7 @@ public interface HealthCheckStrategy extends Closeable {
             /**
              * Set the number of probes for health check.
              * 
-             * @param numProbes the number of repeats (default: 3)
+             * @param numProbes the number of probes to perform (default: 3)
              * @return this builder
              */
             @SuppressWarnings("unchecked")

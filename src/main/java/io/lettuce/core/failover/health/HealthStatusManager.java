@@ -2,6 +2,24 @@ package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
 
+/**
+ * Manager for health status of Redis endpoints.
+ * <p>
+ * The health status manager coordinates health checks for multiple endpoints and provides a unified view of their health
+ * statuses. It also allows registering listeners to be notified when the health status of any endpoint changes.
+ * </p>
+ * <p>
+ * The health status manager is responsible for:
+ * <ul>
+ * <li>Creating and managing health checks for each endpoint</li>
+ * <li>Notifying listeners when the health status of any endpoint changes</li>
+ * <li>Providing a unified view of the health statuses of all endpoints</li>
+ * </ul>
+ *
+ * @author Ali Takavci
+ * @author Ivo Gaydazhiev
+ * @since 7.1
+ */
 public interface HealthStatusManager {
 
     /**

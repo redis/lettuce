@@ -19,6 +19,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Implementation of the {@link HealthCheck} interface.
+ * <p>
+ * This class is responsible for periodically checking the health of a Redis endpoint and updating the health status
+ * accordingly.
+ * </p>
+ *
+ * @author Ali Takavci
+ * @author Ivo Gaydazhiev
+ */
 public class HealthCheckImpl implements HealthCheck {
 
     static class HealthProbeContext implements ProbingPolicy.ProbeContext {
@@ -55,14 +65,17 @@ public class HealthCheckImpl implements HealthCheck {
             }
         }
 
+        @Override
         public int getRemainingProbes() {
             return remainingProbes;
         }
 
+        @Override
         public int getSuccesses() {
             return successes;
         }
 
+        @Override
         public int getFails() {
             return fails;
         }
@@ -105,19 +118,19 @@ public class HealthCheckImpl implements HealthCheck {
 
     private static final Logger log = LoggerFactory.getLogger(HealthCheckImpl.class);
 
-    private static AtomicInteger workerCounter = new AtomicInteger(1);
+    private static final AtomicInteger workerCounter = new AtomicInteger(1);
 
     private static ExecutorService workers = Executors.newCachedThreadPool(r -> {
-        Thread t = new Thread(r, "jedis-healthcheck-worker-" + workerCounter.getAndIncrement());
+        Thread t = new Thread(r, "lettuce-healthcheck-worker-" + workerCounter.getAndIncrement());
         t.setDaemon(true);
         return t;
     });
 
-    private RedisURI endpoint;
+    private final RedisURI endpoint;
 
-    private HealthCheckStrategy strategy;
+    private final HealthCheckStrategy strategy;
 
-    private AtomicReference<HealthCheckResult> resultRef = new AtomicReference<HealthCheckResult>();
+    private final AtomicReference<HealthCheckResult> resultRef = new AtomicReference<>();
 
     private final List<HealthStatusListener> listeners = new CopyOnWriteArrayList<>();
 
@@ -131,24 +144,28 @@ public class HealthCheckImpl implements HealthCheck {
         resultRef.set(new HealthCheckResult(0L, HealthStatus.UNKNOWN));
 
         scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "jedis-healthcheck-" + this.endpoint);
+            Thread t = new Thread(r, "lettuce-healthcheck-" + this.endpoint);
             t.setDaemon(true);
             return t;
         });
     }
 
+    @Override
     public RedisURI getEndpoint() {
         return endpoint;
     }
 
+    @Override
     public HealthStatus getStatus() {
         return resultRef.get().getStatus();
     }
 
+    @Override
     public void start() {
         scheduler.scheduleAtFixedRate(this::healthCheck, 0, strategy.getInterval(), TimeUnit.MILLISECONDS);
     }
 
+    @Override
     public void stop() {
         strategy.close();
         this.listeners.clear();
@@ -188,7 +205,7 @@ public class HealthCheckImpl implements HealthCheck {
                     log.warn(String.format("Health check timed out or failed for %s.", endpoint), e);
                 }
                 probeContext.record(false);
-            } catch (InterruptedException e) {// Health check thread was interrupted
+            } catch (InterruptedException e) { // Health check thread was interrupted
                 future.cancel(true);
                 Thread.currentThread().interrupt(); // Restore interrupted status
                 log.warn(String.format("Health check interrupted for %s.", endpoint), e);
@@ -267,7 +284,7 @@ public class HealthCheckImpl implements HealthCheck {
     }
 
     private void notifyListeners(HealthStatus oldStatus, HealthStatus newStatus) {
-        if (listeners != null && listeners.size() > 0) {
+        if (!listeners.isEmpty()) {
             HealthStatusChangeEvent event = new HealthStatusChangeEvent(endpoint, oldStatus, newStatus);
 
             // Notify all registered listeners
@@ -283,7 +300,7 @@ public class HealthCheckImpl implements HealthCheck {
 
     @Override
     public long getMaxWaitFor() {
-        return (strategy.getTimeout() + strategy.getDelayInBetweenProbes()) * strategy.getNumProbes();
+        return (long) (strategy.getTimeout() + strategy.getDelayInBetweenProbes()) * strategy.getNumProbes();
     }
 
     @Override

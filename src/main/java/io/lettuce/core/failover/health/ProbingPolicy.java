@@ -1,5 +1,20 @@
 package io.lettuce.core.failover.health;
 
+/**
+ * Interface for probing policies.
+ *
+ * <p>
+ * A probing policy determines when to stop probing based on the results of previous probes.
+ * </p>
+ * <p>
+ * The policy is evaluated after each probe, and the decision to continue, succeed, or fail is based on the number of remaining
+ * probes, successes, and failures.
+ * </p>
+ *
+ * @author Ali Takavci
+ * @author Ivo Gaydazhiev
+ * @since 7.1
+ */
 public interface ProbingPolicy {
 
     enum Decision {

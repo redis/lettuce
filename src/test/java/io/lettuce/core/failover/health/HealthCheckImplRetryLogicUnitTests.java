@@ -180,6 +180,7 @@ class HealthCheckImplRetryLogicUnitTests {
                         .policy(ProbingPolicy.BuiltIn.ANY_SUCCESS).delayInBetweenProbes(10).build(),
                 healthCheckOperation) {
 
+            @Override
             public ProbingPolicy getPolicy() {
                 schedulerThread[0] = Thread.currentThread();
                 schedulerTaskStarted.countDown();

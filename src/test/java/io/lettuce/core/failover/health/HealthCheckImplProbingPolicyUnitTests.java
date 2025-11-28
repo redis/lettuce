@@ -15,6 +15,7 @@ import io.lettuce.core.RedisURI;
 /**
  * Unit tests for {@link HealthCheckImpl} {@link ProbingPolicy} functionality.
  *
+ * @author Ali Takavci
  * @author Ivo Gaydazhiev
  */
 class HealthCheckImplProbingPolicyUnitTests {

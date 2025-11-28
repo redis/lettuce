@@ -29,7 +29,7 @@ public class StatusTracker {
      * 
      * @param endpoint the endpoint to wait for
      * @return the determined health status (HEALTHY or UNHEALTHY)
-     * @throws IllegalStateException if interrupted while waiting
+     * @throws RedisConnectionException if interrupted while waiting or if a timeout occurs
      */
     public HealthStatus waitForHealthStatus(RedisURI endpoint) {
         // First check if status is already determined

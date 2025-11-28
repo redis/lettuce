@@ -2,6 +2,13 @@ package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
 
+/**
+ * Event arguments for health status change events.
+ *
+ * @author Ali Takavci
+ * @author Ivo Gaydazhiev
+ * @since 7.1
+ */
 public class HealthStatusChangeEvent {
 
     private final RedisURI endpoint;

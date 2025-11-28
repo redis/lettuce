@@ -10,6 +10,7 @@ import io.lettuce.core.RedisURI;
  * changes.
  * </p>
  *
+ * @author Ali Takavci
  * @author Ivo Gaydazhiev
  * @since 7.1
  */

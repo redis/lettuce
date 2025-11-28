@@ -7,13 +7,32 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Implementation of the {@link HealthStatusManager} interface.
+ *
+ * <p>
+ * This class coordinates health checks for multiple endpoints and provides a unified view of their health statuses. It also
+ * allows registering listeners to be notified when the health status of any endpoint changes.
+ * </p>
+ * <p>
+ * The health status manager is responsible for:
+ * <ul>
+ * <li>Creating and managing health checks for each endpoint</li>
+ * <li>Notifying listeners when the health status of any endpoint changes</li>
+ * <li>Providing a unified view of the health statuses of all endpoints</li>
+ * </ul>
+ * </p>
+ *
+ * @author Ali Takavci
+ * @author Ivo Gaydazhiev
+ */
 public class HealthStatusManagerImpl implements HealthStatusManager, AutoCloseable {
 
     private final HealthCheckCollection healthChecks = new HealthCheckCollection();
 
     private final List<HealthStatusListener> listeners = new CopyOnWriteArrayList<>();
 
-    private final Map<RedisURI, List<HealthStatusListener>> endpointListeners = new ConcurrentHashMap<RedisURI, List<HealthStatusListener>>();
+    private final Map<RedisURI, List<HealthStatusListener>> endpointListeners = new ConcurrentHashMap<>();
 
     @Override
     public void registerListener(HealthStatusListener listener) {
