@@ -436,6 +436,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             }
 
             // Remove the database and close its connection
+            healthStatusManager.remove(redisURI);
             databases.remove(redisURI);
             database.close();
         });
