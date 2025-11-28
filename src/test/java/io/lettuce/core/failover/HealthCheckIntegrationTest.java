@@ -28,8 +28,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -327,36 +325,84 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
         @Test
         @DisplayName("Should start health checks automatically when connection is created")
-        @Disabled("Not implemented yet")
         void shouldStartHealthChecksOnConnect() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Verify health checks are started for all endpoints
-            // - Verify initial status is UNKNOWN
+            // Given: MultiDbClient with health check supplier
+            HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms interval
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+
+            TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
+            HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
+
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+
+            MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(config1));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // Then: Verify health check is started and running
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // And: Verify health check was actually called
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(testStrategy.getHealthCheckCallCount(uri1)).isGreaterThan(0);
+                });
+
+            } finally {
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
         @Test
         @DisplayName("Should stop health checks when connection is closed")
-        @Disabled("Not implemented yet")
-        void shouldStopHealthChecksOnClose() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Close connection
-            // - Verify health checks are stopped
-        }
+        void shouldStopHealthChecksOnClose() throws InterruptedException {
+            // Given: MultiDbClient with health check supplier
+            int healthCheckInterval = 1;
+            HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(healthCheckInterval) // 1ms
+                                                                                                                   // interval
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
 
-        @Test
-        @DisplayName("Should restart health check when database is re-added")
-        @Disabled("Not implemented yet")
-        void shouldRestartHealthCheckOnDatabaseReAdd() {
-            // TODO: Implement test
-            // - Create MultiDbClient with health check supplier
-            // - Connect
-            // - Remove a database
-            // - Re-add the same database
-            // - Verify old health check is stopped and new one is started
+            TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
+            HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
+
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+
+            MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(config1));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // Wait for health check to start running
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                awaitAtMost().untilAsserted(() -> {
+                    assertThat(testStrategy.getHealthCheckCallCount(uri1)).isGreaterThan(0);
+                });
+
+                // When: Close the connection
+                connection.close();
+                testClient.shutdown();
+
+                // Record the call count after closing
+                int callCountAfterClose = testStrategy.getHealthCheckCallCount(uri1);
+
+                // Then: Wait a bit to ensure health checks would have run if they were still active
+                Thread.sleep(10 * healthCheckInterval); // Wait 10ms (10 health check intervals)
+
+                // And: Verify health check call count has not increased at all
+                int finalCallCount = testStrategy.getHealthCheckCallCount(uri1);
+                assertThat(finalCallCount).isEqualTo(callCountAfterClose);
+
+            } finally {
+                // Ensure cleanup even if test fails
+                if (connection.isOpen()) {
+                    connection.close();
+                }
+                testClient.shutdown();
+            }
         }
 
         @Test
