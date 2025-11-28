@@ -45,40 +45,48 @@ class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements D
 
     @Override
     public <K1, V1, T> RedisCommand<K1, V1, T> write(RedisCommand<K1, V1, T> command) {
+        if (circuitBreaker == null) {
+            return super.write(command);
+        }
+        if (!circuitBreaker.isClosed()) {
+            command.completeExceptionally(RedisCircuitBreakerException.INSTANCE);
+            return command;
+        }
         // Delegate to parent
         RedisCommand<K1, V1, T> result = super.write(command);
 
         // Attach completion callback to track success/failure
-        if (circuitBreaker != null && result instanceof CompleteableCommand) {
+        if (result instanceof CompleteableCommand) {
+            CircuitBreakerGeneration generation = circuitBreaker.getGeneration();
             @SuppressWarnings("unchecked")
             CompleteableCommand<T> completeable = (CompleteableCommand<T>) result;
-            completeable.onComplete(this::handleFailure);
+            completeable.onComplete(generation::recordResult);
         }
-
         return result;
     }
 
     @Override
     public <K1, V1> Collection<RedisCommand<K1, V1, ?>> write(Collection<? extends RedisCommand<K1, V1, ?>> commands) {
+        if (circuitBreaker == null) {
+            return super.write(commands);
+        }
+        if (!circuitBreaker.isClosed()) {
+            commands.forEach(c -> c.completeExceptionally(RedisCircuitBreakerException.INSTANCE));
+            return (Collection) commands;
+        }
         // Delegate to parent
         Collection<RedisCommand<K1, V1, ?>> result = super.write(commands);
 
         // Attach completion callbacks to track success/failure for each command
-        if (circuitBreaker != null) {
-            for (RedisCommand<K1, V1, ?> command : result) {
-                if (command instanceof CompleteableCommand) {
-                    @SuppressWarnings("unchecked")
-                    CompleteableCommand<Object> completeable = (CompleteableCommand<Object>) command;
-                    completeable.onComplete(this::handleFailure);
-                }
+        CircuitBreakerGeneration generation = circuitBreaker.getGeneration();
+        for (RedisCommand<K1, V1, ?> command : result) {
+            if (command instanceof CompleteableCommand) {
+                @SuppressWarnings("unchecked")
+                CompleteableCommand<Object> completeable = (CompleteableCommand<Object>) command;
+                completeable.onComplete(generation::recordResult);
             }
         }
-
         return result;
-    }
-
-    private void handleFailure(Object output, Throwable error) {
-        circuitBreaker.recordResult(error);
     }
 
     @Override

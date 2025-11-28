@@ -42,7 +42,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
         this.stateRef = new AtomicReference<>(
-                new CircuitBreakerStateHolder(State.CLOSED, MetricsFactory.createDefaultMetrics()));
+                new CircuitBreakerStateHolder(null, MetricsFactory.createDefaultMetrics(), State.CLOSED));
     }
 
     /**
@@ -64,6 +64,11 @@ class CircuitBreakerImpl implements CircuitBreaker {
      */
     public MetricsSnapshot getSnapshot() {
         return stateRef.get().metrics.getSnapshot();
+    }
+
+    @Override
+    public CircuitBreakerGeneration getGeneration() {
+        return stateRef.get();
     }
 
     @Override
@@ -90,13 +95,29 @@ class CircuitBreakerImpl implements CircuitBreaker {
         }
     }
 
+    void recordResult(CircuitBreakerStateHolder generation, Throwable error) {
+        if (error != null && isCircuitBreakerTrackedException(error)) {
+            recordFailure(generation);
+        } else {
+            recordSuccess(generation);
+        }
+    }
+
     public void recordFailure() {
-        stateRef.get().metrics.recordFailure();
-        evaluateMetrics();
+        recordFailure(stateRef.get());
+    }
+
+    void recordFailure(CircuitBreakerStateHolder state) {
+        state.metrics.recordFailure();
+        evaluateMetrics(state);
     }
 
     public void recordSuccess() {
-        stateRef.get().metrics.recordSuccess();
+        recordSuccess(stateRef.get());
+    }
+
+    void recordSuccess(CircuitBreakerStateHolder state) {
+        state.metrics.recordSuccess();
     }
 
     /**
@@ -110,7 +131,10 @@ class CircuitBreakerImpl implements CircuitBreaker {
      * @return an immutable snapshot of current metrics
      */
     MetricsSnapshot evaluateMetrics() {
-        CircuitBreakerStateHolder current = stateRef.get();
+        return evaluateMetrics(stateRef.get());
+    }
+
+    MetricsSnapshot evaluateMetrics(CircuitBreakerImpl.CircuitBreakerStateHolder current) {
         MetricsSnapshot snapshot = current.metrics.getSnapshot();
         boolean evaluationResult = snapshot.getFailureRate() >= config.getFailureRateThreshold()
                 && snapshot.getFailureCount() >= config.getMinimumNumberOfFailures();
@@ -157,7 +181,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
             // Always create fresh metrics on state transition
             CircuitBreakerMetrics nextMetrics = MetricsFactory.createDefaultMetrics();
 
-            CircuitBreakerStateHolder next = new CircuitBreakerStateHolder(newState, nextMetrics);
+            CircuitBreakerStateHolder next = new CircuitBreakerStateHolder(this, nextMetrics, newState);
 
             // Atomically swap if current state hasn't changed
             if (stateRef.compareAndSet(current, next)) {
@@ -168,8 +192,17 @@ class CircuitBreakerImpl implements CircuitBreaker {
         }
     }
 
+    /**
+     * Get the current state of the circuit breaker.
+     *
+     * @return the current state
+     */
     public State getCurrentState() {
         return stateRef.get().state;
+    }
+
+    public boolean isClosed() {
+        return getCurrentState() == State.CLOSED;
     }
 
     /**
@@ -219,15 +252,27 @@ class CircuitBreakerImpl implements CircuitBreaker {
      * This class enables atomic updates of both state and metrics using {@link AtomicReference}. When a state transition
      * occurs, a new instance is created with fresh metrics.
      */
-    private static final class CircuitBreakerStateHolder {
+    private static final class CircuitBreakerStateHolder implements CircuitBreakerGeneration {
 
         final State state;
 
         final CircuitBreakerMetrics metrics;
 
-        CircuitBreakerStateHolder(State state, CircuitBreakerMetrics metrics) {
+        final CircuitBreakerImpl circuitBreaker;
+
+        CircuitBreakerStateHolder(CircuitBreakerImpl circuitBreaker, CircuitBreakerMetrics metrics, State state) {
             this.state = state;
             this.metrics = metrics;
+            this.circuitBreaker = circuitBreaker;
+        }
+
+        @Override
+        public void recordResult(Object output, Throwable error) {
+            CircuitBreakerGeneration current = circuitBreaker.getGeneration();
+            if (current != this) {
+                return;
+            }
+            circuitBreaker.recordResult(this, error);
         }
 
     }

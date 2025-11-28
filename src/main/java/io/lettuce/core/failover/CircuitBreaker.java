@@ -34,13 +34,45 @@ public interface CircuitBreaker extends Closeable {
      */
     public MetricsSnapshot getSnapshot();
 
+    /**
+     * Get the current generation of the circuit breaker. This is used to track the state and metrics of the circuit breaker at
+     * the time of command execution.
+     *
+     * @return the current generation of the circuit breaker
+     */
+    public CircuitBreakerGeneration getGeneration();
+
+    /**
+     * Record the result of a command execution. This is used to track the success/failure of commands for metrics and circuit
+     * breaker state evaluation.
+     *
+     * @param error the error, if any
+     */
     public void recordResult(Throwable error);
 
+    /**
+     * Record a failure. This is used to track the failure of commands for metrics and circuit breaker state evaluation.
+     */
     public void recordFailure();
 
+    /**
+     * Record a success. This is used to track the success of commands for metrics and circuit breaker state evaluation.
+     */
     public void recordSuccess();
 
+    /**
+     * Get the current state of the circuit breaker.
+     *
+     * @return the current state
+     */
     public State getCurrentState();
+
+    /**
+     * Check if the circuit breaker is in the closed state.
+     *
+     * @return {@code true} if the circuit breaker is in the closed state
+     */
+    public boolean isClosed();
 
     /**
      * Add a listener for circuit breaker state change events.
