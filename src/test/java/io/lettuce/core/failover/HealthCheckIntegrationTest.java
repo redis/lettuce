@@ -591,14 +591,79 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
         }
 
         @Test
-        @DisplayName("Should coordinate health check and circuit breaker for failover")
+        @DisplayName("Should trigger failover via circuit breaker even when health check returns HEALTHY")
         void shouldCoordinateHealthCheckAndCircuitBreaker() {
-            // TODO: Implement test
-            // - Create MultiDbClient with both health check and circuit breaker
-            // - Connect
-            // - Trigger circuit breaker to open (record failures)
-            // - Verify health check also detects unhealthy status
-            // - Verify failover is triggered
+            // Given: MultiDbClient with both health check and circuit breaker configured
+            // Configure health check with fast intervals
+            HealthCheckStrategy.Config healthCheckConfig = HealthCheckStrategy.Config.builder().interval(1) // 1ms
+                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+
+            TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(healthCheckConfig);
+            HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
+
+            // Configure circuit breaker with low thresholds for fast testing
+            CircuitBreaker.CircuitBreakerConfig cbConfig = new CircuitBreaker.CircuitBreakerConfig(50.0f, // 50% failure rate
+                                                                                                          // threshold
+                    2, // minimum 2 failures
+                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
+
+            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, cbConfig, supplier);
+            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, cbConfig, supplier);
+
+            // When: Create MultiDbClient and connect
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+            StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+            try {
+                // Then: Wait for all endpoints to be HEALTHY
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                });
+
+                // And: Verify current endpoint is uri1 (higher weight)
+                assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
+
+                // And: Verify we're connected to uri1 by comparing run_id
+                String actualRunIdBeforeFailover = extractRunId(connection.sync().info("server"));
+                assertThat(actualRunIdBeforeFailover).isEqualTo(expectedRunIdUri1);
+
+                // And: Verify circuit breaker is CLOSED initially
+                CircuitBreaker cb1 = connection.getCircuitBreaker(uri1);
+                assertThat(cb1.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
+
+                // When: Record failures to trigger circuit breaker (need 2 failures with 50% rate)
+                // Record 2 failures and 1 success = 66% failure rate, which exceeds 50% threshold
+                cb1.recordFailure();
+                cb1.recordFailure();
+                cb1.recordSuccess();
+
+                // Then: Circuit breaker should transition to OPEN
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(cb1.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+                });
+
+                // And: Health check still returns HEALTHY (this is the key test point)
+                assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+
+                // And: Failover should still be triggered by circuit breaker (not health check)
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
+                });
+
+                // And: Verify we're actually connected to uri2 by comparing run_id
+                waitAtMost(AWAIT_TIMEOUT).untilAsserted(() -> {
+                    String actualRunIdAfterFailover = extractRunId(connection.sync().info("server"));
+                    assertThat(actualRunIdAfterFailover).isEqualTo(expectedRunIdUri2);
+                });
+
+                // And: Verify connection still works on uri2
+                assertThat(connection.sync().ping()).isEqualTo("PONG");
+
+            } finally {
+                connection.close();
+                testClient.shutdown();
+            }
         }
 
     }
