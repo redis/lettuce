@@ -13,28 +13,19 @@ import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
-import io.lettuce.core.search.arguments.Apply;
 import io.lettuce.core.search.arguments.CombineArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
-import io.lettuce.core.search.arguments.Filter;
-import io.lettuce.core.search.arguments.GroupBy;
 import io.lettuce.core.search.arguments.HybridArgs;
 import io.lettuce.core.search.arguments.HybridSearchArgs;
 import io.lettuce.core.search.arguments.HybridVectorArgs;
-import io.lettuce.core.search.arguments.Limit;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.PostProcessingArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
-import io.lettuce.core.search.arguments.ReduceFunction;
-import io.lettuce.core.search.arguments.Reducer;
 import io.lettuce.core.search.arguments.ScoringFunction;
 import io.lettuce.core.search.arguments.SearchArgs;
-import io.lettuce.core.search.arguments.SortBy;
 import io.lettuce.core.search.arguments.SortByArgs;
-import io.lettuce.core.search.arguments.SortDirection;
-import io.lettuce.core.search.arguments.SortProperty;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
 import io.lettuce.core.search.arguments.SugGetArgs;
@@ -1269,13 +1260,17 @@ public class RediSearchIntegrationTests {
                         .scoreAlias("vector_score").build())
                 .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
-                        .addOperation(GroupBy.<String, String> of("@brand")
-                                .reduce(Reducer.<String, String> of(ReduceFunction.SUM, "@price").as("sum"))
-                                .reduce(Reducer.<String, String> of(ReduceFunction.COUNT).as("count")))
-                        .addOperation(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC),
-                                new SortProperty<>("@count", SortDirection.DESC)))
-                        .addOperation(Apply.of("@sum * 0.9", "discounted_price")).addOperation(Filter.of("@sum > 700"))
-                        .addOperation(Limit.of(0, 20)).build())
+                        .addOperation(PostProcessingArgs.GroupBy.<String, String> of("@brand")
+                                .reduce(PostProcessingArgs.Reducer
+                                        .<String, String> of(PostProcessingArgs.ReduceFunction.SUM, "@price").as("sum"))
+                                .reduce(PostProcessingArgs.Reducer.<String, String> of(PostProcessingArgs.ReduceFunction.COUNT)
+                                        .as("count")))
+                        .addOperation(PostProcessingArgs.SortBy.of(
+                                new PostProcessingArgs.SortProperty<>("@sum", PostProcessingArgs.SortDirection.ASC),
+                                new PostProcessingArgs.SortProperty<>("@count", PostProcessingArgs.SortDirection.DESC)))
+                        .addOperation(PostProcessingArgs.Apply.of("@sum * 0.9", "discounted_price"))
+                        .addOperation(PostProcessingArgs.Filter.of("@sum > 700"))
+                        .addOperation(PostProcessingArgs.Limit.of(0, 20)).build())
                 .param("discount_rate", "0.9").param("$vector", new String(queryVector)).build();
 
         HybridReply<String, String> reply = redis.ftHybrid(indexName, hybridArgs);
