@@ -607,6 +607,9 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
 
             cancelBufferedCommands("Close");
 
+            // Clean up ThreadLocal state to prevent memory leaks in thread pools
+            sharedLock.cleanup();
+
             Channel channel = getOpenChannel();
 
             if (channel != null) {

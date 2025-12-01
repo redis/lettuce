@@ -152,4 +152,15 @@ class SharedLock {
         }
     }
 
+    /**
+     * Clean up thread-local state for the current thread. This should be called when the endpoint is being closed to prevent
+     * memory leaks in long-lived thread pools (e.g., Netty event loops).
+     * <p>
+     * This method removes the ThreadLocal entry for the current thread, preventing the SharedLock instance from being retained
+     * in the thread's ThreadLocalMap after the endpoint is closed.
+     */
+    void cleanup() {
+        threadWriters.remove();
+    }
+
 }
