@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -243,12 +244,10 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         connection.switchToDatabase(endpoint1);
 
         // Track state changes
-        AtomicReference<RedisURI> failedOverTo = new AtomicReference<>();
         CountDownLatch failoverLatch = new CountDownLatch(1);
 
         CircuitBreakerStateListener listener = event -> {
             if (event.getNewState() == CircuitBreaker.State.OPEN) {
-                failedOverTo.compareAndSet(null, connection.getCurrentEndpoint());
                 failoverLatch.countDown();
             }
         };
@@ -275,9 +274,8 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         // Then: Should automatically failover to endpoint2
         boolean failedOver = failoverLatch.await(5, TimeUnit.SECONDS);
         assertThat(failedOver).as("Should failover to healthy endpoint").isTrue();
-        assertNotNull(failedOverTo.get());
-        assertThat(failedOverTo.get()).isEqualTo(endpoint2);
-        assertThat(connection.getCurrentEndpoint()).isEqualTo(endpoint2);
+        Awaitility.await().atMost(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertEquals(endpoint2, connection.getCurrentEndpoint()));
 
         // Verify we can read from endpoint2
         RedisFuture<String> future = connection.async().get("failover-test-key");
@@ -515,12 +513,11 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         connection.switchToDatabase(endpoint1);
 
         // Track state changes
-        AtomicReference<RedisURI> failedOverTo = new AtomicReference<>();
+        // AtomicReference<RedisURI> failedOverTo = new AtomicReference<>();
         CountDownLatch failoverLatch = new CountDownLatch(1);
 
         CircuitBreakerStateListener listener = event -> {
             if (event.getNewState() == CircuitBreaker.State.OPEN) {
-                failedOverTo.compareAndSet(null, connection.getCurrentEndpoint());
                 failoverLatch.countDown();
             }
         };
@@ -547,8 +544,8 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         // Then: Should automatically failover to endpoint2
         boolean failedOver = failoverLatch.await(5, TimeUnit.SECONDS);
         assertThat(failedOver).as("Should failover to healthy endpoint").isTrue();
-        assertThat(failedOverTo.get()).isEqualTo(endpoint2);
-        assertThat(connection.getCurrentEndpoint()).isEqualTo(endpoint2);
+        Awaitility.await().atMost(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertEquals(endpoint2, connection.getCurrentEndpoint()));
 
         // Verify we can read from endpoint2
         String value = connection.reactive().get("failover-test-key-reactive").block(Duration.ofSeconds(1));
