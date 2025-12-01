@@ -33,7 +33,7 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -67,7 +67,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         directClient2.connect().sync().flushall();
     }
 
-    @After
+    @AfterEach
     void tearDownAfter() {
         directClient1.shutdown();
         directClient2.shutdown();
@@ -487,7 +487,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         AtomicInteger[] addCounts = new AtomicInteger[5];
         AtomicInteger[] removeCount = new AtomicInteger[5];
         for (int i = 0; i < 5; i++) {
-            uris[i] = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(5 + i))
+            uris[i] = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(6 + i))
                     .withPassword(TestSettings.password()).build();
             addCounts[i] = new AtomicInteger(0);
             removeCount[i] = new AtomicInteger(0);

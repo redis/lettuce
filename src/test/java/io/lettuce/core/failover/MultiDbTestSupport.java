@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.lettuce.core.RedisClient;
@@ -52,7 +52,7 @@ public class MultiDbTestSupport extends TestSupport {
         directClient3.connect().sync().flushall();
     }
 
-    @After
+    @AfterEach
     public void tearDownMultiDb() {
         directClient1.shutdown();
         directClient2.shutdown();
@@ -63,7 +63,7 @@ public class MultiDbTestSupport extends TestSupport {
 
     public static final RedisURI URI2 = RedisURI.create(TestSettings.host(), TestSettings.port(1));
 
-    public static final RedisURI URI3 = RedisURI.create(TestSettings.host(), TestSettings.port(2));
+    public static final RedisURI URI3 = RedisURI.create(TestSettings.host(), TestSettings.port(5));
 
     public static final DatabaseConfig DB1 = new DatabaseConfig(URI1, 1.0f);
 
