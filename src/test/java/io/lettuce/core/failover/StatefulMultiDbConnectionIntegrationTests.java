@@ -593,30 +593,32 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
             // Disable auto-flush to buffer commands
             connection.setAutoFlushCommands(false);
 
-            // Issue a command that will be buffered
-            connection.async().set(TESTKEY, "testvalue");
+            try {
+                // Issue a command that will be buffered
+                connection.async().set(TESTKEY, "testvalue");
 
-            // Verify command is not yet executed on the initial endpoint
-            RedisCommands<String, String> oldDirect = uri1.equals(initialActive) ? directClient1.connect().sync()
-                    : directClient2.connect().sync();
-            RedisCommands<String, String> newDirect = uri1.equals(initialActive) ? directClient2.connect().sync()
-                    : directClient1.connect().sync();
-            assertThat(oldDirect.get(TESTKEY)).isNull();
+                // Verify command is not yet executed on the initial endpoint
+                RedisCommands<String, String> oldDirect = uri1.equals(initialActive) ? directClient1.connect().sync()
+                        : directClient2.connect().sync();
+                RedisCommands<String, String> newDirect = uri1.equals(initialActive) ? directClient2.connect().sync()
+                        : directClient1.connect().sync();
+                assertThat(oldDirect.get(TESTKEY)).isNull();
 
-            // Switch to the other endpoint
-            RedisURI newActive = initialActive.equals(uri1) ? uri2 : uri1;
-            connection.switchToDatabase(newActive);
-            connection.removeDatabase(initialActive);
+                // Switch to the other endpoint
+                RedisURI newActive = initialActive.equals(uri1) ? uri2 : uri1;
+                connection.switchToDatabase(newActive);
+                connection.removeDatabase(initialActive);
 
-            // Flush commands - they should now be sent to the new active endpoint
-            connection.flushCommands();
-            // Verify command was executed on the NEW active endpoint
-            // close of removed connection happens asynchronously
-            await().untilAsserted(() -> assertThat(newDirect.get(TESTKEY)).isEqualTo("testvalue"));
-            assertThat(oldDirect.get(TESTKEY)).isNull();
+                // Flush commands - they should now be sent to the new active endpoint
+                connection.flushCommands();
+                // Verify command was executed on the NEW active endpoint
+                // close of removed connection happens asynchronously
+                await().untilAsserted(() -> assertThat(newDirect.get(TESTKEY)).isEqualTo("testvalue"));
+                assertThat(oldDirect.get(TESTKEY)).isNull();
 
-        } finally {
-            multiDbClient.shutdown();
+            } finally {
+                connection.setAutoFlushCommands(true);
+            }
         }
     }
 
