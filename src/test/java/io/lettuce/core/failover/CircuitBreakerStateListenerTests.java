@@ -26,7 +26,8 @@ class CircuitBreakerStateListenerTests {
     @BeforeEach
     void setUp() {
         CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(50.0f, 5,
-                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
+                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions(),
+                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
         circuitBreaker = new CircuitBreakerImpl(config);
     }
 

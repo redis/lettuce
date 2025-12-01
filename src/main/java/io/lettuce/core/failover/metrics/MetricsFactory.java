@@ -17,4 +17,8 @@ public final class MetricsFactory {
         return new LockFreeSlidingTimeWindowMetrics();
     }
 
+    public static CircuitBreakerMetrics createDefaultMetrics(int windowSize) {
+        return new LockFreeSlidingTimeWindowMetrics(windowSize);
+    }
+
 }

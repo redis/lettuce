@@ -41,8 +41,8 @@ class CircuitBreakerImpl implements CircuitBreaker {
     public CircuitBreakerImpl(CircuitBreakerConfig config) {
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
-        this.stateRef = new AtomicReference<>(
-                new CircuitBreakerStateHolder(this, MetricsFactory.createDefaultMetrics(), State.CLOSED));
+        this.stateRef = new AtomicReference<>(new CircuitBreakerStateHolder(this,
+                MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
     }
 
     /**

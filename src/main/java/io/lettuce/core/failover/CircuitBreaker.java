@@ -101,6 +101,8 @@ public interface CircuitBreaker extends Closeable {
 
         private final static int DEFAULT_MINIMUM_NUMBER_OF_FAILURES = 1000;
 
+        private final static int DEFAULT_METRICS_WINDOW_SIZE = 2;
+
         private final static Set<Class<? extends Throwable>> DEFAULT_TRACKED_EXCEPTIONS = new HashSet<>(Arrays.asList(
 
                 // Connection failures
@@ -122,15 +124,19 @@ public interface CircuitBreaker extends Closeable {
 
         private final int minimumNumberOfFailures;
 
+        private int metricsWindowSize;
+
         private CircuitBreakerConfig() {
-            this(DEFAULT_FAILURE_RATE_THRESHOLD, DEFAULT_MINIMUM_NUMBER_OF_FAILURES, DEFAULT_TRACKED_EXCEPTIONS);
+            this(DEFAULT_FAILURE_RATE_THRESHOLD, DEFAULT_MINIMUM_NUMBER_OF_FAILURES, DEFAULT_TRACKED_EXCEPTIONS,
+                    DEFAULT_METRICS_WINDOW_SIZE);
         }
 
         public CircuitBreakerConfig(float failureThreshold, int minimumNumberOfFailures,
-                Set<Class<? extends Throwable>> trackedExceptions) {
+                Set<Class<? extends Throwable>> trackedExceptions, int metricsWindowSize) {
             this.trackedExceptions = trackedExceptions;
             this.failureThreshold = failureThreshold;
             this.minimumNumberOfFailures = minimumNumberOfFailures;
+            this.metricsWindowSize = metricsWindowSize;
         }
 
         public Set<Class<? extends Throwable>> getTrackedExceptions() {
@@ -143,6 +149,10 @@ public interface CircuitBreaker extends Closeable {
 
         public int getMinimumNumberOfFailures() {
             return minimumNumberOfFailures;
+        }
+
+        public int getMetricsWindowSize() {
+            return metricsWindowSize;
         }
 
     }

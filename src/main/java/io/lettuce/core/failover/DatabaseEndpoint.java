@@ -13,17 +13,36 @@ import io.lettuce.core.protocol.RedisCommand;
  */
 interface DatabaseEndpoint {
 
-    Collection<RedisCommand<?, ?, ?>> drainCommands();
-
-    <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
-
     /**
-     * Initialize this endpoint. Must be called before any commands are written.
+     * Bind a circuit breaker to this endpoint. There is 1-1 relationship between a database endpoint and a circuit breaker.
+     * Must be called before any commands are written.
      *
      * @param circuitBreaker the circuit breaker instance
      */
-    void init(CircuitBreaker circuitBreaker);
+    void bind(CircuitBreaker circuitBreaker);
 
+    /**
+     * Drains the command queue.
+     *
+     * @return the drained commands
+     */
+    Collection<RedisCommand<?, ?, ?>> drainCommands();
+
+    /**
+     * Write a command on the channel. The command may be changed/wrapped during write and the written instance is returned
+     * after the call.
+     *
+     * @param command the Redis command.
+     * @param <T> result type
+     * @return the written Redis command.
+     */
+    <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command);
+
+    /**
+     * Hand over the command queue to the target endpoint.
+     *
+     * @param target the target endpoint
+     */
     default void handOverCommandQueue(DatabaseEndpoint target) {
         Collection<RedisCommand<?, ?, ?>> commands = this.drainCommands();
 
