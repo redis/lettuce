@@ -801,7 +801,7 @@ class RediSearchCommandBuilderUnitTests {
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
                         .method(VectorSearchMethod.knn(20, 150)).filter("@brand:{apple|samsung|google}")
                         .scoreAlias("vector_score").build())
-                .combine(CombineArgs.linear(0.7, 0.3))
+                .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
                         .addOperation(GroupBy.<String, String> of("@brand")
                                 .reduce(Reducer.<String, String> of(ReduceFunction.SUM, "@price").as("sum"))

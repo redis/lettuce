@@ -25,14 +25,14 @@ import java.util.Optional;
  * <h3>Basic Usage:</h3>
  *
  * <pre>
- * 
+ *
  * {
  *     &#64;code
  *     HybridArgs<String, String> args = HybridArgs.<String, String> builder()
  *             .search(HybridSearchArgs.<String, String> builder().query("comfortable shoes").build())
  *             .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector(vectorBlob)
  *                     .method(VectorSearchMethod.knn(10)).build())
- *             .combine(CombineArgs.rrf()).build();
+ *             .combine(CombineArgs.of(new CombineArgs.RRF<>())).build();
  * }
  * </pre>
  *

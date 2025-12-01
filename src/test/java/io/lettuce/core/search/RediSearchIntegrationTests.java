@@ -1256,6 +1256,9 @@ public class RediSearchIntegrationTests {
         createProduct("9", "Best punching bag", "sports", "lonsdale", "733", "4.6",
                 new float[] { 0.11f, 0.21f, 0.31f, 0.41f, 0.51f, 0.61f, 0.71f, 0.81f, 0.91f, 0.95f });
 
+        createProduct("10", "Apple iPhone 15 Pro smartphone camera", "electronics", "apple", "999", "4.8",
+                new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
+
         byte[] queryVector = floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
 
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
@@ -1264,12 +1267,13 @@ public class RediSearchIntegrationTests {
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
                         .method(VectorSearchMethod.knn(20, 150)).filter("@brand:{apple|samsung|google}")
                         .scoreAlias("vector_score").build())
-                .combine(CombineArgs.linear(0.7, 0.3))
+                .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
                         .addOperation(GroupBy.<String, String> of("@brand")
                                 .reduce(Reducer.<String, String> of(ReduceFunction.SUM, "@price").as("sum"))
                                 .reduce(Reducer.<String, String> of(ReduceFunction.COUNT).as("count")))
-                        .addOperation(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC)))
+                        .addOperation(SortBy.of(new SortProperty<>("@sum", SortDirection.ASC),
+                                new SortProperty<>("@count", SortDirection.DESC)))
                         .addOperation(Apply.of("@sum * 0.9", "discounted_price")).addOperation(Filter.of("@sum > 700"))
                         .addOperation(Limit.of(0, 20)).build())
                 .param("discount_rate", "0.9").param("$vector", new String(queryVector)).build();
@@ -1281,7 +1285,7 @@ public class RediSearchIntegrationTests {
         assertThat(reply.getResults()).isNotEmpty();
         assertThat(reply.getTotalResults()).isEqualTo(3);
 
-        redis.ftDropindex(indexName);
+        // redis.ftDropindex(indexName);
     }
 
     private void createProduct(String id, String title, String category, String brand, String price, String rating,

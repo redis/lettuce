@@ -17,156 +17,102 @@ import io.lettuce.core.protocol.CommandArgs;
  * @author Aleksandar Todorov
  * @since 7.2
  * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
+ * @see RRF
+ * @see Linear
  */
 public class CombineArgs<K> {
 
-    private final CombineMethod method;
-
-    private final Integer window;
-
-    private final Double constant;
-
-    private final Double alpha;
-
-    private final Double beta;
+    private final CombineMethod<K> method;
 
     private K scoreAlias;
 
-    private CombineArgs(CombineMethod method, Integer window, Double constant, Double alpha, Double beta) {
+    private CombineArgs(CombineMethod<K> method) {
         this.method = method;
-        this.window = window;
-        this.constant = constant;
-        this.alpha = alpha;
-        this.beta = beta;
-    }
-
-    private enum CombineMethod {
-        RRF, LINEAR
     }
 
     /**
-     * Create CombineArgs with Reciprocal Rank Fusion (RRF) combiner with default parameters.
-     * <p>
-     * RRF is the default combination method. It combines rankings from text and vector search using reciprocal rank fusion with
-     * default WINDOW=20 and CONSTANT=60.
-     * </p>
-     * <p>
-     * RRF formula: score = 1 / (CONSTANT + rank_in_window)
-     * </p>
+     * Create CombineArgs with the specified combine method.
      *
+     * @param method the combine method (RRF or Linear)
      * @param <K> Key type
      * @return CombineArgs instance
      */
-    public static <K> CombineArgs<K> rrf() {
-        return new CombineArgs<>(CombineMethod.RRF, null, null, null, null);
+    public static <K> CombineArgs<K> of(CombineMethod<K> method) {
+        return new CombineArgs<>(method);
     }
 
     /**
-     * Create CombineArgs with Reciprocal Rank Fusion (RRF) combiner with custom window parameter.
-     * <p>
-     * RRF formula: score = 1 / (CONSTANT + rank_in_window)
-     * </p>
-     *
-     * @param <K> Key type
-     * @param window number of top results to consider from each ranking (default: 20)
-     * @return CombineArgs instance
-     */
-    public static <K> CombineArgs<K> rrf(int window) {
-        LettuceAssert.isTrue(window > 0, "Window must be positive");
-        return new CombineArgs<>(CombineMethod.RRF, window, null, null, null);
-    }
-
-    /**
-     * Create CombineArgs with Reciprocal Rank Fusion (RRF) combiner with custom parameters.
-     * <p>
-     * RRF formula: score = 1 / (CONSTANT + rank_in_window)
-     * </p>
-     *
-     * @param <K> Key type
-     * @param window number of top results to consider from each ranking (default: 20)
-     * @param constant constant added to rank to prevent division by zero (default: 60)
-     * @return CombineArgs instance
-     */
-    public static <K> CombineArgs<K> rrf(int window, double constant) {
-        LettuceAssert.isTrue(window > 0, "Window must be positive");
-        LettuceAssert.isTrue(constant > 0, "Constant must be positive");
-        return new CombineArgs<>(CombineMethod.RRF, window, constant, null, null);
-    }
-
-    /**
-     * Create CombineArgs with Linear combiner using default weights.
-     * <p>
-     * Combines text and vector scores using weighted average with default ALPHA=0.3 and BETA=0.7.
-     * </p>
-     * <p>
-     * Formula: combined_score = ALPHA * text_score + BETA * vector_score
-     * </p>
-     *
-     * @param <K> Key type
-     * @return CombineArgs instance with defaults (alpha=0.3, beta=0.7)
-     */
-    public static <K> CombineArgs<K> linear() {
-        return new CombineArgs<>(CombineMethod.LINEAR, null, null, null, null);
-    }
-
-    /**
-     * Create CombineArgs with Linear combiner using custom alpha weight.
-     * <p>
-     * Formula: combined_score = alpha * text_score + beta * vector_score
-     * </p>
-     * <p>
-     * Note: alpha + beta should typically equal 1.0 for normalized scores, but this is not enforced.
-     * </p>
-     *
-     * @param <K> Key type
-     * @param alpha weight for text search score (default: 0.3)
-     * @return CombineArgs instance
-     */
-    public static <K> CombineArgs<K> linear(double alpha) {
-        LettuceAssert.isTrue(alpha >= 0, "Alpha must be non-negative");
-        return new CombineArgs<>(CombineMethod.LINEAR, null, null, alpha, null);
-    }
-
-    /**
-     * Create CombineArgs with Linear combiner using custom weights.
-     * <p>
-     * Formula: combined_score = alpha * text_score + beta * vector_score
-     * </p>
-     * <p>
-     * Note: alpha + beta should typically equal 1.0 for normalized scores, but this is not enforced.
-     * </p>
-     *
-     * @param <K> Key type
-     * @param alpha weight for text search score (default: 0.3)
-     * @param beta weight for vector search score (default: 0.7)
-     * @return CombineArgs instance
-     */
-    public static <K> CombineArgs<K> linear(double alpha, double beta) {
-        LettuceAssert.isTrue(alpha >= 0, "Alpha must be non-negative");
-        LettuceAssert.isTrue(beta >= 0, "Beta must be non-negative");
-        return new CombineArgs<>(CombineMethod.LINEAR, null, null, alpha, beta);
-    }
-
-    /**
-     * Set an alias for the combined score field.
+     * Set an alias for the combined score field using YIELD_SCORE_AS.
      *
      * @param alias the field name to use for the combined score
      * @return this instance
      */
-    public CombineArgs<K> scoreAlias(K alias) {
-        LettuceAssert.notNull(alias, "Score alias must not be null");
+    public CombineArgs<K> as(K alias) {
+        LettuceAssert.notNull(alias, "Alias must not be null");
         this.scoreAlias = alias;
         return this;
     }
 
     /**
-     * Build the COMBINE clause arguments.
+     * Interface for combine methods (RRF or LINEAR).
      *
-     * @param args the {@link CommandArgs} to append to
-     * @param <V> value type
+     * @param <K> Key type
      */
-    public <V> void build(CommandArgs<K, V> args) {
-        if (method == CombineMethod.RRF) {
+    public interface CombineMethod<K> {
+
+        /**
+         * Build the combine method arguments.
+         *
+         * @param args the {@link CommandArgs} to append to
+         * @param <V> value type
+         */
+        <V> void build(CommandArgs<K, V> args);
+
+    }
+
+    /**
+     * Reciprocal Rank Fusion (RRF) combine method. Combines rankings from text and vector search using reciprocal rank fusion.
+     * <p>
+     * RRF formula: score = 1 / (CONSTANT + rank_in_window)
+     * </p>
+     * <p>
+     * Default parameters: WINDOW=20, CONSTANT=60
+     * </p>
+     *
+     * @param <K> Key type
+     */
+    public static class RRF<K> implements CombineMethod<K> {
+
+        private Integer window;
+
+        private Double constant;
+
+        /**
+         * Set the WINDOW parameter - number of top results to consider from each ranking.
+         *
+         * @param window number of top results (default: 20)
+         * @return this instance
+         */
+        public RRF<K> window(int window) {
+            LettuceAssert.isTrue(window > 0, "Window must be positive");
+            this.window = window;
+            return this;
+        }
+
+        /**
+         * Set the CONSTANT parameter - constant added to rank to prevent division by zero.
+         *
+         * @param constant constant value (default: 60)
+         * @return this instance
+         */
+        public RRF<K> constant(double constant) {
+            LettuceAssert.isTrue(constant > 0, "Constant must be positive");
+            this.constant = constant;
+            return this;
+        }
+
+        @Override
+        public <V> void build(CommandArgs<K, V> args) {
             args.add("RRF");
             // Count of total items (not pairs): WINDOW, value, CONSTANT, value = 4 items
             int itemCount = 0;
@@ -187,7 +133,53 @@ public class CombineArgs<K> {
                 args.add("CONSTANT");
                 args.add(constant);
             }
-        } else if (method == CombineMethod.LINEAR) {
+        }
+
+    }
+
+    /**
+     * Linear combine method. Combines text and vector scores using weighted average.
+     * <p>
+     * Formula: combined_score = ALPHA * text_score + BETA * vector_score
+     * </p>
+     * <p>
+     * Default parameters: ALPHA=0.3, BETA=0.7
+     * </p>
+     *
+     * @param <K> Key type
+     */
+    public static class Linear<K> implements CombineMethod<K> {
+
+        private Double alpha;
+
+        private Double beta;
+
+        /**
+         * Set the ALPHA parameter - weight for text search score.
+         *
+         * @param alpha weight for text score (default: 0.3)
+         * @return this instance
+         */
+        public Linear<K> alpha(double alpha) {
+            LettuceAssert.isTrue(alpha >= 0, "Alpha must be non-negative");
+            this.alpha = alpha;
+            return this;
+        }
+
+        /**
+         * Set the BETA parameter - weight for vector search score.
+         *
+         * @param beta weight for vector score (default: 0.7)
+         * @return this instance
+         */
+        public Linear<K> beta(double beta) {
+            LettuceAssert.isTrue(beta >= 0, "Beta must be non-negative");
+            this.beta = beta;
+            return this;
+        }
+
+        @Override
+        public <V> void build(CommandArgs<K, V> args) {
             args.add("LINEAR");
             // Count of total items (not pairs): ALPHA, value, BETA, value = 4 items
             int itemCount = 0;
@@ -209,6 +201,17 @@ public class CombineArgs<K> {
                 args.add(beta);
             }
         }
+
+    }
+
+    /**
+     * Build the COMBINE clause arguments.
+     *
+     * @param args the {@link CommandArgs} to append to
+     * @param <V> value type
+     */
+    public <V> void build(CommandArgs<K, V> args) {
+        method.build(args);
 
         // YIELD_SCORE_AS for COMBINE
         if (scoreAlias != null) {
