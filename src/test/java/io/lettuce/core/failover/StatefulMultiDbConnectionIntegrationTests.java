@@ -330,7 +330,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         int initialCount = initialEndpoints.size();
 
         // Add a new database (using port(2) which should be available in test environment)
-        RedisURI newUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(5))
+        RedisURI newUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(6))
                 .withPassword(TestSettings.password()).build();
         connection.addDatabase(newUri, 1.0f);
 
@@ -362,7 +362,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
 
         // Add a new database
-        RedisURI newUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(5))
+        RedisURI newUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(6))
                 .withPassword(TestSettings.password()).build();
         connection.addDatabase(newUri, 1.0f);
 
@@ -432,7 +432,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
 
         // Add a new database
-        RedisURI newUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(5))
+        RedisURI newUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(6))
                 .withPassword(TestSettings.password()).build();
         connection.addDatabase(newUri, 1.0f);
 
