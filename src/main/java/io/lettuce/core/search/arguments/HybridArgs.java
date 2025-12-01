@@ -31,7 +31,7 @@ import java.util.Optional;
  *     HybridArgs<String, String> args = HybridArgs.<String, String> builder()
  *             .search(HybridSearchArgs.<String, String> builder().query("comfortable shoes").build())
  *             .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector(vectorBlob)
- *                     .method(VectorSearchMethod.knn(10)).build())
+ *                     .method(HybridVectorArgs.Knn.of(10)).build())
  *             .combine(CombineArgs.of(new CombineArgs.RRF<>())).build();
  * }
  * </pre>

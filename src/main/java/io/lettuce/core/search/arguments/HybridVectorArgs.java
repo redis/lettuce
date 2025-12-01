@@ -14,7 +14,6 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.protocol.CommandType;
-import io.lettuce.core.search.VectorSearchMethod;
 
 /**
  * Arguments for the VSIM clause in FT.HYBRID command. Configures vector similarity search including field, vector data, search
@@ -25,6 +24,8 @@ import io.lettuce.core.search.VectorSearchMethod;
  * @author Aleksandar Todorov
  * @since 7.2
  * @see VectorSearchMethod
+ * @see Knn
+ * @see Range
  */
 public class HybridVectorArgs<K, V> {
 
@@ -127,6 +128,8 @@ public class HybridVectorArgs<K, V> {
          *
          * @param method the search method
          * @return this builder
+         * @see Knn
+         * @see Range
          */
         public Builder<K, V> method(VectorSearchMethod method) {
             LettuceAssert.notNull(method, "Vector search method must not be null");
@@ -203,6 +206,153 @@ public class HybridVectorArgs<K, V> {
             args.add("YIELD_SCORE_AS");
             args.addKey(scoreAlias);
         }
+    }
+
+    /**
+     * Interface for vector search methods used in VSIM clause.
+     * <p>
+     * Defines how vector similarity search is performed - either by finding K nearest neighbors (KNN) or by finding all vectors
+     * within a certain distance range.
+     * </p>
+     */
+    public interface VectorSearchMethod {
+
+        /**
+         * Build the method arguments into the command.
+         *
+         * @param args command arguments
+         * @param <K> key type
+         * @param <V> value type
+         */
+        <K, V> void build(CommandArgs<K, V> args);
+
+    }
+
+    /**
+     * KNN (K-Nearest Neighbors) search method implementation.
+     * <p>
+     * Finds the K most similar vectors to the query vector. This is the default and most common vector search method.
+     * </p>
+     */
+    public static class Knn implements VectorSearchMethod {
+
+        private final int k;
+
+        private Integer efRuntime;
+
+        /**
+         * Creates a new KNN search method.
+         *
+         * @param k number of nearest neighbors to return
+         */
+        private Knn(int k) {
+            LettuceAssert.isTrue(k > 0, "K must be positive");
+            this.k = k;
+        }
+
+        /**
+         * Static factory method to create a KNN search method.
+         *
+         * @param k number of nearest neighbors to return
+         * @return new KNN search method
+         */
+        public static Knn of(int k) {
+            return new Knn(k);
+        }
+
+        /**
+         * Set the EF_RUNTIME parameter for HNSW search.
+         * <p>
+         * The EF_RUNTIME parameter controls the size of the dynamic candidate list during HNSW search. Higher values improve
+         * recall but increase search time.
+         * </p>
+         *
+         * @param efRuntime size of the dynamic candidate list for HNSW algorithm
+         * @return this KNN search method
+         */
+        public Knn efRuntime(int efRuntime) {
+            LettuceAssert.isTrue(efRuntime > 0, "EF_RUNTIME must be positive");
+            this.efRuntime = efRuntime;
+            return this;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(CommandKeyword.KNN);
+            // Count of total items: K + value, optionally EF_RUNTIME + value
+            int itemCount = efRuntime != null ? 4 : 2;
+            args.add(itemCount);
+            args.add("K");
+            args.add(k);
+            if (efRuntime != null) {
+                args.add("EF_RUNTIME");
+                args.add(efRuntime);
+            }
+        }
+
+    }
+
+    /**
+     * Range-based search method implementation.
+     * <p>
+     * Finds all vectors within a specified distance radius from the query vector.
+     * </p>
+     */
+    public static class Range implements VectorSearchMethod {
+
+        private final double radius;
+
+        private Double epsilon;
+
+        /**
+         * Creates a new Range search method.
+         *
+         * @param radius maximum distance from query vector
+         */
+        private Range(double radius) {
+            LettuceAssert.isTrue(radius > 0, "Radius must be positive");
+            this.radius = radius;
+        }
+
+        /**
+         * Static factory method to create a Range search method.
+         *
+         * @param radius maximum distance from query vector
+         * @return new Range search method
+         */
+        public static Range of(double radius) {
+            return new Range(radius);
+        }
+
+        /**
+         * Set the epsilon parameter for distance calculation tolerance.
+         * <p>
+         * The epsilon parameter provides a tolerance for the distance calculation.
+         * </p>
+         *
+         * @param epsilon tolerance for distance calculation
+         * @return this Range search method
+         */
+        public Range epsilon(double epsilon) {
+            LettuceAssert.isTrue(epsilon > 0, "Epsilon must be positive");
+            this.epsilon = epsilon;
+            return this;
+        }
+
+        @Override
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add("RANGE");
+            // Count of key-value pairs: 1 for RADIUS, +1 if EPSILON is present
+            int pairCount = epsilon != null ? 2 : 1;
+            args.add(pairCount);
+            args.add("RADIUS");
+            args.add(radius);
+            if (epsilon != null) {
+                args.add("EPSILON");
+                args.add(epsilon);
+            }
+        }
+
     }
 
 }

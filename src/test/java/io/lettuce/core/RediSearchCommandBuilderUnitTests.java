@@ -16,7 +16,6 @@ import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
-import io.lettuce.core.search.VectorSearchMethod;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CombineArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
@@ -790,7 +789,7 @@ class RediSearchCommandBuilderUnitTests {
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
                         .scorer(ScoringFunction.TF_IDF_NORMALIZED).scoreAlias("text_score").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
-                        .method(VectorSearchMethod.knn(20, 150)).filter("@brand:{apple|samsung|google}")
+                        .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
                         .scoreAlias("vector_score").build())
                 .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
                 .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")

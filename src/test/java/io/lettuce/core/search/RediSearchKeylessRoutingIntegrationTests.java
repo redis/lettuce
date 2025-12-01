@@ -387,7 +387,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         return HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics}").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding")
-                        .vector(floatArrayToByteArray(queryVector)).method(VectorSearchMethod.knn(5)).build())
+                        .vector(floatArrayToByteArray(queryVector)).method(HybridVectorArgs.Knn.of(5)).build())
                 .build();
     }
 
