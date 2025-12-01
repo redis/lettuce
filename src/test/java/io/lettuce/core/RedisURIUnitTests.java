@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.cluster.ClusterTestSettings;
-import io.lettuce.test.settings.TestSettings;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -382,6 +380,115 @@ class RedisURIUnitTests {
             assertThat(credentials.getPassword()).isEqualTo("suppliedPassword".toCharArray());
         }).verifyComplete();
         assertThat(sourceCp.getCredentialsProvider()).isEqualTo(targetCp.getCredentialsProvider());
+    }
+
+    @Test
+    void addUpstreamDriverSingleDriver() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        redisURI.setLibraryName("lettuce");
+        redisURI.addUpstreamDriver("spring-data-redis", "3.2.0");
+
+        assertThat(redisURI.getLibraryName()).isEqualTo("lettuce(spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void addUpstreamDriverMultipleDrivers() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        redisURI.setLibraryName("lettuce");
+        redisURI.addUpstreamDriver("spring-data-redis", "3.2.0");
+        redisURI.addUpstreamDriver("spring-boot", "3.3.0");
+
+        // Most recently added driver should appear first (prepend behavior)
+        assertThat(redisURI.getLibraryName()).isEqualTo("lettuce(spring-boot_v3.3.0;spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void addUpstreamDriverNullNameShouldFail() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver(null, "1.0.0")).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void addUpstreamDriverNullVersionShouldFail() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("example-driver", null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void addUpstreamDriverNameWithSpacesShouldFail() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("spring data", "1.0.0"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void addUpstreamDriverVersionWithSpacesShouldFail() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("example-driver", "1.0 beta"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void addUpstreamDriverInvalidNameFormatShouldFail() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        // Name starting with a number
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("123driver", "1.0.0")).isInstanceOf(IllegalArgumentException.class);
+        // Name with @ symbol
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("driver@name", "1.0.0"))
+                .isInstanceOf(IllegalArgumentException.class);
+        // Name with dots (not allowed in Maven artifactId)
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("com.example.driver", "1.0.0"))
+                .isInstanceOf(IllegalArgumentException.class);
+        // Name starting with hyphen
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("-spring-data", "1.0.0"))
+                .isInstanceOf(IllegalArgumentException.class);
+        // Name with uppercase letters
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("Spring-Data-Redis", "1.0.0"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void addUpstreamDriverInvalidVersionFormatShouldFail() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        // Version without patch number
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("example-driver", "1.0"))
+                .isInstanceOf(IllegalArgumentException.class);
+        // Version with leading zeros
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("example-driver", "01.0.0"))
+                .isInstanceOf(IllegalArgumentException.class);
+        // Version with invalid characters
+        assertThatThrownBy(() -> redisURI.addUpstreamDriver("example-driver", "1.0.0@beta"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void addUpstreamDriverValidFormats() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        redisURI.setLibraryName("lettuce");
+
+        // Valid Maven artifactId formats (lowercase letters, digits, hyphens)
+        redisURI.addUpstreamDriver("spring-data-redis", "1.0.0");
+        redisURI.addUpstreamDriver("lettuce-core", "2.0.0");
+        redisURI.addUpstreamDriver("commons-math", "3.0.0");
+        redisURI.addUpstreamDriver("guava", "4.0.0");
+        redisURI.addUpstreamDriver("jedis", "5.0.0");
+
+        // Valid semantic versions with pre-release and build metadata
+        RedisURI redisURI2 = RedisURI.create("redis://localhost");
+        redisURI2.addUpstreamDriver("example-lib", "1.0.0-alpha");
+        redisURI2.addUpstreamDriver("example-lib", "1.0.0-beta.1");
+        redisURI2.addUpstreamDriver("example-lib", "1.0.0+build.123");
+        redisURI2.addUpstreamDriver("example-lib", "1.0.0-rc.1+build.456");
+    }
+
+    @Test
+    void getLibraryNameWithoutUpstreamDrivers() {
+        RedisURI redisURI = RedisURI.create("redis://localhost");
+        redisURI.setLibraryName("lettuce");
+
+        // Without upstream drivers, should return just the library name
+        assertThat(redisURI.getLibraryName()).isEqualTo("lettuce");
     }
 
 }
