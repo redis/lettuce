@@ -1281,6 +1281,30 @@ public class RediSearchIntegrationTests {
         assertThat(reply).isNotNull();
         assertThat(reply.getResults()).isNotEmpty();
         assertThat(reply.getTotalResults()).isEqualTo(3);
+        assertThat(reply.getResults()).isNotEmpty();
+        assertThat(reply.getWarnings().size()).isGreaterThanOrEqualTo(0);
+        assertThat(reply.getExecutionTime()).isGreaterThan(0L);
+
+        // Verify first result (google)
+        Map<String, String> r1 = reply.getResults().get(0).getFields();
+        assertThat(r1.get("brand")).isEqualTo("google");
+        assertThat(r1.get("count")).isEqualTo("2");
+        assertThat(r1.get("sum")).isEqualTo("1398");
+        assertThat(r1.get("discounted_price")).isEqualTo("1258.2");
+
+        // Verify second result (samsung)
+        Map<String, String> r2 = reply.getResults().get(1).getFields();
+        assertThat(r2.get("brand")).isEqualTo("samsung");
+        assertThat(r2.get("count")).isEqualTo("2");
+        assertThat(r2.get("sum")).isEqualTo("1598");
+        assertThat(r2.get("discounted_price")).isEqualTo("1438.2");
+
+        // Verify third result (apple)
+        Map<String, String> r3 = reply.getResults().get(2).getFields();
+        assertThat(r3.get("brand")).isEqualTo("apple");
+        assertThat(r3.get("count")).isEqualTo("3");
+        assertThat(r3.get("sum")).isEqualTo("2997");
+        assertThat(r3.get("discounted_price")).isEqualTo("2697.3");
 
         redis.ftDropindex(indexName);
     }
