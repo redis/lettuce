@@ -8,6 +8,7 @@ package io.lettuce.core.search.arguments;
 
 import java.util.Optional;
 
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
@@ -21,6 +22,7 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @since 7.2
  * @see ScoringFunction
  */
+@Experimental
 public class HybridSearchArgs<K, V> {
 
     private final V query;

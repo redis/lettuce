@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.search;
 
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.output.ComplexData;
@@ -25,6 +26,7 @@ import java.util.Map;
  * @author Aleksandar Todorov
  * @since 7.2
  */
+@Experimental
 public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K, V>> {
 
     private static final InternalLogger LOG = InternalLoggerFactory.getInstance(HybridReplyParser.class);

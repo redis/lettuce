@@ -7,6 +7,7 @@
 
 package io.lettuce.core.search.arguments;
 
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
@@ -27,8 +28,7 @@ import java.util.Optional;
  *
  * <pre>
  *
- * {
- *     &#64;code
+ * {@code
  *     PostProcessingArgs<String, String> args = PostProcessingArgs.<String, String> builder().load("@price", "@category")
  *             .addOperation(GroupBy.of("@category").reduce(Reducer.of(ReduceFunction.COUNT).as("total")))
  *             .addOperation(Apply.of("@price * 0.9", "discounted_price"))
@@ -47,6 +47,7 @@ import java.util.Optional;
  * @see Filter
  * @see Limit
  */
+@Experimental
 public class PostProcessingArgs<K, V> {
 
     // private boolean loadAll = false;

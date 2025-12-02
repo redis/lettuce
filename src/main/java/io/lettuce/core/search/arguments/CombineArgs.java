@@ -6,6 +6,7 @@
  */
 package io.lettuce.core.search.arguments;
 
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 
@@ -20,6 +21,7 @@ import io.lettuce.core.protocol.CommandArgs;
  * @see RRF
  * @see Linear
  */
+@Experimental
 public class CombineArgs<K> {
 
     private final CombineMethod<K> method;

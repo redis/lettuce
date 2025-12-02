@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
@@ -27,6 +28,7 @@ import io.lettuce.core.protocol.CommandType;
  * @see Knn
  * @see Range
  */
+@Experimental
 public class HybridVectorArgs<K, V> {
 
     private final K fieldName;

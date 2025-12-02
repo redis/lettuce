@@ -6,6 +6,8 @@
  */
 package io.lettuce.core.search;
 
+import io.lettuce.core.annotations.Experimental;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -21,6 +23,7 @@ import java.util.Map;
  * @author Aleksandar Todorov
  * @since 7.2
  */
+@Experimental
 public class HybridReply<K, V> {
 
     private long totalResults;
