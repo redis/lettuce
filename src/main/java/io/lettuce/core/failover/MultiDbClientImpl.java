@@ -100,16 +100,12 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         // Ugly hack : apply client options from DatabaseConfig to test the behavior with custom client options
         ClientOptions originalOptions = getOptions();
         setOptions(config.getClientOptions());
-        withClientOptions(config.getClientOptions());
         StatefulRedisConnection<K, V> connection = connect(codec, uri);
         setOptions(originalOptions);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
         RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint);
 
         return database;
-    }
-
-    private void withClientOptions(ClientOptions clientOptions) {
     }
 
     /**

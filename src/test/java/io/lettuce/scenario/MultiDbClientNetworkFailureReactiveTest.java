@@ -91,7 +91,7 @@ public class MultiDbClientNetworkFailureReactiveTest {
                 // Disable auto-reconnect to test failover behavior
                 // when auto-reconnect is enabled, commands are retransmitted automatically
                 // and failover is not triggered until command timeout
-                .autoReconnect(false)
+                .autoReconnect(true)
                 // .socketOptions(connectionInterruptionSocketOptions())
                 .build();
 
