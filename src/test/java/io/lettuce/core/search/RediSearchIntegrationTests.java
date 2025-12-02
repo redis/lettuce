@@ -1282,7 +1282,7 @@ public class RediSearchIntegrationTests {
         assertThat(reply.getResults()).isNotEmpty();
         assertThat(reply.getTotalResults()).isEqualTo(3);
 
-         redis.ftDropindex(indexName);
+        redis.ftDropindex(indexName);
     }
 
     private void createProduct(String id, String title, String category, String brand, String price, String rating,
