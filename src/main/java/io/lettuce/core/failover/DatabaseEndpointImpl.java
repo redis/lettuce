@@ -45,7 +45,13 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
 
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
-        RedisCommand<K, V, T> result = super.write(command);
+        RedisCommand<K, V, T> result;
+        try {
+            result = super.write(command);
+        } catch (Exception e) {
+            circuitBreaker.recordResult(e);
+            throw e;
+        }
 
         // Attach completion callback to track success/failure
         if (circuitBreaker != null && result instanceof CompleteableCommand) {
@@ -60,7 +66,13 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
     @Override
     public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands) {
         // Delegate to parent
-        Collection<RedisCommand<K, V, ?>> result = super.write(commands);
+        Collection<RedisCommand<K, V, ?>> result;
+        try {
+            result = super.write(commands);
+        } catch (Exception e) {
+            circuitBreaker.recordResult(e);
+            throw e;
+        }
 
         // Attach completion callbacks to track success/failure for each command
         if (circuitBreaker != null) {

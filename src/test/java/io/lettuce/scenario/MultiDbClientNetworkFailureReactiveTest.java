@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.lettuce.core.failover.CircuitBreaker;
@@ -53,6 +55,10 @@ public class MultiDbClientNetworkFailureReactiveTest {
 
     private static final Duration NETWORK_FAILURE_INTERVAL = Duration.ofSeconds(60);
 
+    private static final int MINIMUM_NUMBER_OF_FAILURES = 5;
+
+    private static final float FAILURE_RATE_THRESHOLD = 5.0f;
+
     private static Endpoint activeActiveEndpoint;
 
     private final FaultInjectionClient faultClient = new FaultInjectionClient();
@@ -81,13 +87,20 @@ public class MultiDbClientNetworkFailureReactiveTest {
     @Test
     @DisplayName("MultiDbClient with reactive commands should handle network failures gracefully")
     public void testMultiDbClientWithReactiveCommandsDuringNetworkFailure() {
-        // Setup: Configure MultiDbClient with endpoints from the active-active configuration
-        // Pass recommended options for connection interruption through DatabaseConfig
-        List<DatabaseConfig> databaseConfigs = createDatabaseConfigs(activeActiveEndpoint,
-                RecommendedSettingsProvider.forConnectionInterruption());
+        ClientOptions clientOptions = ClientOptions.builder()
+                // Disable auto-reconnect to test failover behavior
+                // when auto-reconnect is enabled, commands are retransmitted automatically
+                // and failover is not triggered until command timeout
+                .autoReconnect(false)
+                // .socketOptions(connectionInterruptionSocketOptions())
+                .build();
+
+        List<DatabaseConfig> databaseConfigs = createDatabaseConfigs(activeActiveEndpoint, clientOptions);
         client = MultiDbClient.create(databaseConfigs);
 
         // Connect to the MultiDbClient
+        // Issue 1 (TBD): DatabaseConfig.clientOptions not considered, and there is no API to configure custom one on
+        // MultiDbClient
         connection = client.connect();
 
         // Get reactive commands interface
@@ -99,58 +112,92 @@ public class MultiDbClientNetworkFailureReactiveTest {
         StepVerifier.create(reactive.set(keyName, "0")).expectNext("OK").verifyComplete();
 
         AtomicLong commandsSubmitted = new AtomicLong();
+
+        // Number of commands that completed with error.
+        // Based on CircuitBreakerConfig we exe expect at least (minimumNumberOfFailures or failureThreshold)
+        // for example (failureThreshold=5% or minimumNumberOfFailures=5) we expect at least 5 failures to trigger failover
+        AtomicLong failureCount = new AtomicLong();
+
+        // track number of cancelled commands
+        AtomicLong cancelledCommands = new AtomicLong();
+
         List<Throwable> capturedExceptions = new CopyOnWriteArrayList<>();
 
-        // Start a flux that imitates an application using the client
-        // This follows the exact pattern from ConnectionInterruptionReactiveTest#testWithReactiveCommands
-        Disposable subscription = Flux.interval(Duration.ofMillis(100)).flatMap(i -> reactive.incr(keyName)
-                // We should count all attempts, because Lettuce retransmits failed commands
-                .doFinally(value -> {
-                    commandsSubmitted.incrementAndGet();
-                    log.info("Commands submitted {}", commandsSubmitted.get());
-                }).onErrorResume(e -> {
-                    //log.warn("Error executing command", e);
-                    capturedExceptions.add(e);
-                    return Mono.empty();
-                })).subscribe();
+        AtomicBoolean faultTriggered = new AtomicBoolean(false);
 
-        // Wait for some commands to be executed before triggering the fault
-        Wait.untilTrue(() -> commandsSubmitted.get() > 10).waitOrTimeout();
+        // Create the command flux that will run until we have 1000 successful commands
+        Flux<Long> commandFlux = Flux.interval(Duration.ofMillis(100)).flatMap(i -> {
+            // Count the attempt BEFORE executing the command
+            long attemptNumber = commandsSubmitted.incrementAndGet();
 
-        // Trigger the fault injection: network_failure action
+            // Trigger fault injection after 10 commands (only once)
+            if (attemptNumber > 10 && !faultTriggered.getAndSet(true)) {
+                triggerNetworkFailure();
+            }
+
+            return reactive.incr(keyName).doOnNext(
+                    (v) -> log.info("Command submitted: {}, counter: {}, failures: {}", attemptNumber, v, failureCount.get()))
+                    .doOnCancel(cancelledCommands::incrementAndGet).onErrorResume(e -> {
+                        log.error("Error executing command: {}", e.getMessage());
+                        failureCount.incrementAndGet();
+                        capturedExceptions.add(e);
+                        return Mono.empty(); // Return empty to filter out failed commands
+                    });
+        }).filter(Objects::nonNull) // Filter out empty results from errors
+                .take(1000); // Take exactly 1000 successful results
+
+        // Execute the flux and wait for completion
+        StepVerifier.create(commandFlux).thenConsumeWhile(result -> {
+            if (commandsSubmitted.get() % 100 == 0) {
+                log.info("Commands submitted: {}, successful: {}, failures: {}", commandsSubmitted.get(), result,
+                        failureCount.get());
+            }
+            return true;
+        }).verifyComplete(); // All elements consumed and stream completed
+
+        log.info("Command execution completed. Total submitted: {}, failures: {}, cancelled: {}", commandsSubmitted.get(),
+                failureCount.get(), cancelledCommands.get());
+        log.info("Captured exceptions: {}", capturedExceptions);
+
+        // verify that initial endpoint CB is OPEN
+        CircuitBreaker circuitBreaker = connection.getCircuitBreaker(databaseConfigs.get(0).getRedisURI());
+        assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+
+        // verify that active-active failover happened
+        assertThat(connection.getCurrentEndpoint()).isNotEqualTo(databaseConfigs.get(0).getRedisURI());
+        assertThat(connection.getCurrentEndpoint()).isEqualTo(databaseConfigs.get(1).getRedisURI());
+
+        // verify that counter equals to number of commands submitted plus the number of failures,
+        // If auto-reconnect is disabled, commands are not retried
+        // If auto-reconnect is enabled, commands are retried until timeout.
+        // Issue 2 (TBD): CB errors counted on command level not per attempt, and missing retry attempts
+        // Issue 3 (TBD): If auto-reconnect is disabled, commands are rejected and errors are not counted!
+        StepVerifier.create(reactive.get(keyName).map(Long::parseLong)).consumeNextWith(value -> {
+            log.info("Final commands processed: submitted: {}, counter value: {},  commands failed: {}, cancelled: {}",
+                    commandsSubmitted.get(), value, failureCount.get(), cancelledCommands.get());
+            assertThat(value + failureCount.get()).isEqualTo(commandsSubmitted.get());
+        }).verifyComplete();
+
+        // verify that number of failures is equal to minimumNumberOfFailures with some margin
+        // existing implementation will count all failed attempts in async mode on command completion,
+        // meaning that some commands may continue to be sent to the failed endpoint before failover is triggered
+        assertThat(failureCount.get()).isEqualTo(MINIMUM_NUMBER_OF_FAILURES);
+
+        log.info("Test completed successfully. MultiDbClient handled network failure with reactive commands.");
+    }
+
+    private void triggerNetworkFailure() {
+        log.info("Triggering network_failure for bdb_id: {}, delay: {}", activeActiveEndpoint.getBdbId(),
+                NETWORK_FAILURE_INTERVAL);
+
         Map<String, Object> params = new HashMap<>();
         params.put("bdb_id", activeActiveEndpoint.getBdbId());
         params.put("delay", NETWORK_FAILURE_INTERVAL.getSeconds());
 
-        log.info("Triggering network_failure for bdb_id: {}, delay: {}", activeActiveEndpoint.getBdbId(),
-                NETWORK_FAILURE_INTERVAL);
-
-        Mono<Boolean> actionCompleted = faultClient.triggerActionAndWait("network_failure", params, CHECK_INTERVAL, DELAY_AFTER,
-                Duration.ofSeconds(120));
-
-        StepVerifier.create(actionCompleted).expectNext(true).verifyComplete();
-
-        // Wait a bit more to allow recovery
-        Wait.untilTrue(() -> commandsSubmitted.get() > 1000).waitOrTimeout();
-
-        // Stop the command execution
-        subscription.dispose();
-
-        // Verify results
-        StepVerifier.create(reactive.get(keyName).map(Long::parseLong)).consumeNextWith(value -> {
-            log.info("Final counter value: {}, commands submitted: {}", value, commandsSubmitted.get());
-            // The counter should have incremented, showing that commands were executed
-            assertThat(value).isGreaterThan(0);
-        }).verifyComplete();
-
-        log.info("Captured exceptions: {}", capturedExceptions);
-
-        // verify that counter equals to number of commands submitted
-        StepVerifier.create(reactive.get(keyName).map(Long::parseLong)).consumeNextWith(value -> {
-            assertThat(value).isEqualTo(commandsSubmitted.get());
-        }).verifyComplete();
-
-        log.info("Test completed successfully. MultiDbClient handled network failure with reactive commands.");
+        // Trigger fault injection asynchronously (don't block the flux)
+        faultClient.triggerActionAndWait("network_failure", params, CHECK_INTERVAL, DELAY_AFTER, Duration.ofSeconds(120))
+                .subscribe(success -> log.info("Network failure triggered successfully: {}", success),
+                        error -> log.error("Failed to trigger network failure", error));
     }
 
     /**
@@ -164,7 +211,8 @@ public class MultiDbClientNetworkFailureReactiveTest {
     private List<DatabaseConfig> createDatabaseConfigs(Endpoint endpoint, io.lettuce.core.ClientOptions clientOptions) {
         List<DatabaseConfig> configs = new ArrayList<>();
 
-        CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig = new CircuitBreaker.CircuitBreakerConfig(5.0f, 5,
+        CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig = new CircuitBreaker.CircuitBreakerConfig(
+                FAILURE_RATE_THRESHOLD, MINIMUM_NUMBER_OF_FAILURES,
                 CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
 
         List<String> endpoints = endpoint.getEndpoints();
@@ -176,8 +224,8 @@ public class MultiDbClientNetworkFailureReactiveTest {
         float weight = 1.0f;
         for (String endpointUri : endpoints) {
             RedisURI uri = RedisURI.builder(RedisURI.create(endpointUri))
-                    .withAuthentication(endpoint.getUsername(), endpoint.getPassword())
-                    .withTimeout(Duration.ofSeconds(5)).build();
+                    .withAuthentication(endpoint.getUsername(), endpoint.getPassword()).withTimeout(Duration.ofSeconds(5))
+                    .build();
 
             configs.add(new DatabaseConfig(uri, weight, clientOptions, circuitBreakerConfig));
             weight /= 2; // Decrease weight for subsequent endpoints

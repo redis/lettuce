@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.Delegating;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
@@ -94,11 +95,21 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     private <K, V> RedisDatabase<StatefulRedisConnection<K, V>> createRedisDatabase(DatabaseConfig config,
             RedisCodec<K, V> codec) {
         RedisURI uri = config.getRedisURI();
+
+        // Issue : DatabaseConfig.clientOptions not applied
+        // Ugly hack : apply client options from DatabaseConfig to test the behavior with custom client options
+        ClientOptions originalOptions = getOptions();
+        setOptions(config.getClientOptions());
+        withClientOptions(config.getClientOptions());
         StatefulRedisConnection<K, V> connection = connect(codec, uri);
+        setOptions(originalOptions);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
         RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint);
 
         return database;
+    }
+
+    private void withClientOptions(ClientOptions clientOptions) {
     }
 
     /**
