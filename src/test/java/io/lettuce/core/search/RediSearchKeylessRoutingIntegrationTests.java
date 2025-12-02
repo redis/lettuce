@@ -419,6 +419,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
     @Test
     void hybrid_routesRandomly_acrossReplicas_whenReadFromAnyReplica() {
+        prepareHybrid();
         long replicas = connection.getPartitions().stream().filter(n -> n.is(RedisClusterNode.NodeFlag.REPLICA)).count();
         assumeTrue(replicas >= 1, "requires >= 1 replica node");
 
