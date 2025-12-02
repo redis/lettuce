@@ -33,6 +33,7 @@ import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 import io.lettuce.core.search.arguments.VectorFieldArgs;
+import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -1200,6 +1201,7 @@ public class RediSearchIntegrationTests {
     }
 
     @Test
+    @EnabledOnCommand("FT.HYBRID")
     void ftHybridAdvancedMultiQueryWithPostProcessing() {
         String indexName = "idx:ecommerce";
 

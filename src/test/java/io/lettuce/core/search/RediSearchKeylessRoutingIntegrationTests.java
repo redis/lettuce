@@ -29,6 +29,7 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.core.metrics.CommandLatencyId;
 import io.lettuce.core.metrics.CommandMetrics;
 
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -120,33 +121,6 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
             doc.put("year", books[i][2]);
             doc.put("rating", books[i][3]);
             connection.sync().hmset(PREFIX + i, doc);
-        }
-
-        // Schema for hybrid search tests
-        FieldArgs<String> category = TagFieldArgs.<String> builder().name("category").build();
-        FieldArgs<String> price = NumericFieldArgs.<String> builder().name("price").sortable().build();
-        FieldArgs<String> embedding = VectorFieldArgs.<String> builder().name("embedding").hnsw()
-                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
-                .build();
-
-        CreateArgs<String, String> hybridCreateArgs = CreateArgs.<String, String> builder().withPrefix(HYBRID_PREFIX)
-                .on(CreateArgs.TargetType.HASH).build();
-        assertThat(connection.sync().ftCreate(HYBRID_INDEX, hybridCreateArgs, Arrays.asList(category, price, embedding)))
-                .isEqualTo("OK");
-
-        // Add hybrid search data
-        String[] categories = { "electronics", "clothing", "electronics", "clothing" };
-        String[] prices = { "29.99", "49.99", "39.99", "59.99" };
-        float[][] vectors = { { 0.1f, 0.2f, 0.3f, 0.4f }, { 0.5f, 0.6f, 0.7f, 0.8f }, { 0.2f, 0.3f, 0.4f, 0.5f },
-                { 0.6f, 0.7f, 0.8f, 0.9f } };
-
-        for (int i = 0; i < categories.length; i++) {
-            Map<String, String> doc = new HashMap<>();
-            doc.put("category", categories[i]);
-            doc.put("price", prices[i]);
-            connection.sync().hmset(HYBRID_PREFIX + i, doc);
-            binaryConnection.sync().hset((HYBRID_PREFIX + i).getBytes(), "embedding".getBytes(),
-                    floatArrayToByteArray(vectors[i]));
         }
     }
 
@@ -391,8 +365,39 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
                 .build();
     }
 
+    private void prepareHybrid() {
+        // Schema for hybrid search tests
+        FieldArgs<String> category = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs<String> price = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs<String> embedding = VectorFieldArgs.<String> builder().name("embedding").hnsw()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
+                .build();
+
+        CreateArgs<String, String> hybridCreateArgs = CreateArgs.<String, String> builder().withPrefix(HYBRID_PREFIX)
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(connection.sync().ftCreate(HYBRID_INDEX, hybridCreateArgs, Arrays.asList(category, price, embedding)))
+                .isEqualTo("OK");
+
+        // Add hybrid search data
+        String[] categories = { "electronics", "clothing", "electronics", "clothing" };
+        String[] prices = { "29.99", "49.99", "39.99", "59.99" };
+        float[][] vectors = { { 0.1f, 0.2f, 0.3f, 0.4f }, { 0.5f, 0.6f, 0.7f, 0.8f }, { 0.2f, 0.3f, 0.4f, 0.5f },
+                { 0.6f, 0.7f, 0.8f, 0.9f } };
+
+        for (int i = 0; i < categories.length; i++) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("category", categories[i]);
+            doc.put("price", prices[i]);
+            connection.sync().hmset(HYBRID_PREFIX + i, doc);
+            binaryConnection.sync().hset((HYBRID_PREFIX + i).getBytes(), "embedding".getBytes(),
+                    floatArrayToByteArray(vectors[i]));
+        }
+    }
+
     @Test
+    @EnabledOnCommand("FT.HYBRID")
     void hybrid_routesRandomly_acrossUpstreams_whenReadFromUpstream() {
+        prepareHybrid();
         long upstreams = connection.getPartitions().stream().filter(n -> n.is(RedisClusterNode.NodeFlag.UPSTREAM)).count();
         assumeTrue(upstreams >= 2, "requires >= 2 upstream nodes");
 
