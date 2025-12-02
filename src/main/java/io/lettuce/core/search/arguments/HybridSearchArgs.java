@@ -21,13 +21,14 @@ import io.lettuce.core.protocol.CommandKeyword;
  * @author Aleksandar Todorov
  * @since 7.2
  * @see ScoringFunction
+ * @see Scorer
  */
 @Experimental
 public class HybridSearchArgs<K, V> {
 
     private final V query;
 
-    private final ScoringFunction scorer;
+    private final Scorer scorer;
 
     private final K scoreAlias;
 
@@ -45,7 +46,7 @@ public class HybridSearchArgs<K, V> {
         return query;
     }
 
-    public Optional<ScoringFunction> getScorer() {
+    public Optional<Scorer> getScorer() {
         return Optional.ofNullable(scorer);
     }
 
@@ -57,7 +58,7 @@ public class HybridSearchArgs<K, V> {
 
         private V query;
 
-        private ScoringFunction scorer;
+        private Scorer scorer;
 
         private K scoreAlias;
 
@@ -74,12 +75,12 @@ public class HybridSearchArgs<K, V> {
         }
 
         /**
-         * Set the scoring algorithm.
+         * Set the scoring algorithm with optional parameters.
          *
          * @param scorer the scorer to use
          * @return this builder
          */
-        public Builder<K, V> scorer(ScoringFunction scorer) {
+        public Builder<K, V> scorer(Scorer scorer) {
             LettuceAssert.notNull(scorer, "Scorer must not be null");
             this.scorer = scorer;
             return this;
@@ -120,8 +121,7 @@ public class HybridSearchArgs<K, V> {
 
         // SCORER inside SEARCH
         if (scorer != null) {
-            args.add(CommandKeyword.SCORER);
-            args.add(scorer.toString());
+            scorer.build(args);
         }
 
         // YIELD_SCORE_AS for SEARCH
@@ -129,6 +129,56 @@ public class HybridSearchArgs<K, V> {
             args.add("YIELD_SCORE_AS");
             args.addKey(scoreAlias);
         }
+    }
+
+    /**
+     * Scoring configuration for text search. Specifies the scoring algorithm.
+     * <p>
+     * Note: Parameter support will be added in a future release when the Redis server supports it.
+     * </p>
+     *
+     * <h3>Example:</h3>
+     *
+     * <pre>
+     * Scorer.of(ScoringFunction.BM25)
+     * // Output: SCORER BM25
+     * </pre>
+     *
+     * @author Aleksandar Todorov
+     * @since 7.2
+     * @see ScoringFunction
+     */
+    public static class Scorer {
+
+        private final ScoringFunction algorithm;
+
+        private Scorer(ScoringFunction algorithm) {
+            this.algorithm = algorithm;
+        }
+
+        /**
+         * Create a scorer with the specified algorithm.
+         *
+         * @param algorithm the scoring algorithm
+         * @return a new {@link Scorer} instance
+         */
+        public static Scorer of(ScoringFunction algorithm) {
+            LettuceAssert.notNull(algorithm, "Algorithm must not be null");
+            return new Scorer(algorithm);
+        }
+
+        /**
+         * Build the SCORER arguments.
+         *
+         * @param args the {@link CommandArgs} to append to
+         * @param <K> key type
+         * @param <V> value type
+         */
+        public <K, V> void build(CommandArgs<K, V> args) {
+            args.add(CommandKeyword.SCORER);
+            args.add(algorithm.toString());
+        }
+
     }
 
 }

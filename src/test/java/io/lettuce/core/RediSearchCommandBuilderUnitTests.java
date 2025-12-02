@@ -787,7 +787,7 @@ class RediSearchCommandBuilderUnitTests {
 
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
-                        .scorer(ScoringFunction.TF_IDF_NORMALIZED).scoreAlias("text_score").build())
+                        .scorer(HybridSearchArgs.Scorer.of(ScoringFunction.TF_IDF_NORMALIZED)).scoreAlias("text_score").build())
                 .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
                         .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
                         .scoreAlias("vector_score").build())
