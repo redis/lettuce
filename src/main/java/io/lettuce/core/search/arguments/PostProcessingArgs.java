@@ -28,7 +28,8 @@ import java.util.Optional;
  *
  * <pre>
  *
- * {@code
+ * {
+ *     &#64;code
  *     PostProcessingArgs<String, String> args = PostProcessingArgs.<String, String> builder().load("@price", "@category")
  *             .addOperation(GroupBy.of("@category").reduce(Reducer.of(ReduceFunction.COUNT).as("total")))
  *             .addOperation(Apply.of("@price * 0.9", "discounted_price"))

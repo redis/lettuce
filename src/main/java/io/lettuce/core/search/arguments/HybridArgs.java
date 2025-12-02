@@ -26,7 +26,8 @@ import java.util.Optional;
  *
  * <pre>
  *
- * {@code
+ * {
+ *     &#64;code
  *     HybridArgs<String, String> args = HybridArgs.<String, String> builder()
  *             .search(HybridSearchArgs.<String, String> builder().query("comfortable shoes").build())
  *             .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector(vectorBlob)
