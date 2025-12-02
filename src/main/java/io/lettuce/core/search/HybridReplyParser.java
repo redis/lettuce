@@ -68,30 +68,64 @@ public class HybridReplyParser<K, V> implements ComplexDataParser<HybridReply<K,
         if (list == null || list.isEmpty()) {
             return;
         }
-
-        // RESP2: [total, id1, [field, value...], id2, [field, value...], ...]
-        parseResp2FlatResults(list, reply);
+        parseResp2(list, reply);
     }
 
-    private void parseResp2FlatResults(List<Object> list, HybridReply<K, V> reply) {
-        if (list.isEmpty()) {
-            return;
-        }
+    private void parseResp2(List<Object> list, HybridReply<K, V> reply) {
+        // RESP2 format: ["key1", value1, "key2", value2, ...]
+        // Parse as key-value pairs
+        for (int i = 0; i + 1 < list.size(); i += 2) {
+            Object keyObj = list.get(i);
+            Object valueObj = list.get(i + 1);
 
-        Object first = list.get(0);
-        if (first instanceof Long) {
-            reply.setTotalResults((Long) first);
-        }
-
-        for (int i = 1; i < list.size();) {
-            if (i >= list.size() || !(list.get(i) instanceof ComplexData)) {
-                break;
+            if (!(keyObj instanceof ByteBuffer)) {
+                continue;
             }
 
-            ComplexData fieldsData = (ComplexData) list.get(i++);
-            HybridReply.Result<K, V> result = new HybridReply.Result<>();
-            addFieldsFromComplexData(fieldsData, result);
-            reply.addResult(result);
+            ByteBuffer keyBuffer = (ByteBuffer) keyObj;
+
+            if (keyBuffer.equals(TOTAL_RESULTS_KEY)) {
+                if (valueObj instanceof Long) {
+                    reply.setTotalResults((Long) valueObj);
+                }
+            } else if (keyBuffer.equals(EXECUTION_TIME_KEY)) {
+                if (valueObj instanceof ByteBuffer) {
+                    try {
+                        String asString = StringCodec.UTF8.decodeKey((ByteBuffer) valueObj);
+                        reply.setExecutionTime(Double.parseDouble(asString));
+                    } catch (NumberFormatException ignore) {
+                        // leave default
+                    }
+                } else if (valueObj instanceof Double) {
+                    reply.setExecutionTime((Double) valueObj);
+                }
+            } else if (keyBuffer.equals(WARNINGS_KEY)) {
+                if (valueObj instanceof ComplexData) {
+                    ComplexData warningData = (ComplexData) valueObj;
+                    List<Object> warnList = warningData.getDynamicList();
+                    if (warnList != null) {
+                        for (Object o : warnList) {
+                            if (o instanceof ByteBuffer) {
+                                reply.addWarning(codec.decodeValue((ByteBuffer) o));
+                            }
+                        }
+                    }
+                }
+            } else if (keyBuffer.equals(RESULTS_KEY)) {
+                if (valueObj instanceof ComplexData) {
+                    ComplexData resultsData = (ComplexData) valueObj;
+                    List<Object> resultsList = resultsData.getDynamicList();
+                    if (resultsList != null) {
+                        for (Object resultObj : resultsList) {
+                            if (resultObj instanceof ComplexData) {
+                                HybridReply.Result<K, V> result = new HybridReply.Result<>();
+                                addFieldsFromComplexData((ComplexData) resultObj, result);
+                                reply.addResult(result);
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
