@@ -345,7 +345,7 @@ public class HybridVectorArgs<K, V> {
         public <K, V> void build(CommandArgs<K, V> args) {
             args.add(CommandKeyword.RANGE);
             // Count of key-value pairs: 1 for RADIUS, +1 if EPSILON is present
-            int pairCount = epsilon != null ? 2 : 1;
+            int pairCount = epsilon != null ? 4 : 2;
             args.add(pairCount);
             args.add(CommandKeyword.RADIUS);
             args.add(radius);
