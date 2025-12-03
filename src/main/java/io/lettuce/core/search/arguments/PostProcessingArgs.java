@@ -51,8 +51,6 @@ import java.util.Optional;
 @Experimental
 public class PostProcessingArgs<K, V> {
 
-    // private boolean loadAll = false;
-
     private final List<K> loadFields = new ArrayList<>();
 
     /**
@@ -78,17 +76,6 @@ public class PostProcessingArgs<K, V> {
 
         private final PostProcessingArgs<K, V> instance = new PostProcessingArgs<>();
 
-        // /**
-        // * Request loading all document attributes.
-        // *
-        // * @return this builder
-        // */
-        // public Builder<K, V> loadAll() {
-        // instance.loadAll = true;
-        // instance.loadFields.clear();
-        // return this;
-        // }
-
         /**
          * Request loading of document attributes.
          *
@@ -102,7 +89,6 @@ public class PostProcessingArgs<K, V> {
                 LettuceAssert.notNull(field, "Field must not be null");
                 instance.loadFields.add(field);
             }
-            // instance.loadAll = false;
             return this;
         }
 
@@ -160,18 +146,11 @@ public class PostProcessingArgs<K, V> {
      * @param args the {@link CommandArgs} to append to
      */
     public void build(CommandArgs<K, V> args) {
-        // LOAD clause (always first, not part of pipeline)
-        // if (loadAll) {
-        // args.add(CommandKeyword.LOAD);
-        // args.add("*");
-        // }
-        // else if (!loadFields.isEmpty()) {
+
         args.add(CommandKeyword.LOAD);
         args.add(loadFields.size()); // Count prefix required
         loadFields.forEach(args::addKey);
-        // }
 
-        // Add pipeline operations in user-specified order
         for (PostProcessingOperation<K, ?> operation : postProcessingOperations) {
             // Cast is safe because all operations can build with CommandArgs<K, V>
             @SuppressWarnings("unchecked")
