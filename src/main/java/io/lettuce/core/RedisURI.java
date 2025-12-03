@@ -225,24 +225,6 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     public static final Duration DEFAULT_TIMEOUT_DURATION = Duration.ofSeconds(DEFAULT_TIMEOUT);
 
-    /**
-     * Regex pattern for driver name validation. The name must start with a lowercase letter and contain only lowercase letters,
-     * digits, hyphens, and underscores. Mostly follows Maven artifactId naming conventions but also allows underscores.
-     *
-     * @see <a href="https://maven.apache.org/guides/mini/guide-naming-conventions.html">Maven Naming Conventions</a>
-     */
-    private static final String DRIVER_NAME_PATTERN = "^[a-z][a-z0-9_-]*$";
-
-    /**
-     * Official semver.org regex pattern for semantic versioning validation.
-     *
-     * @see <a href="https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string">semver.org
-     *      regex</a>
-     */
-    private static final String SEMVER_PATTERN = "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
-            + "(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
-            + "(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$";
-
     private String host;
 
     private String socket;
@@ -255,9 +237,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     private String clientName;
 
-    private String libraryName = LettuceVersion.getName();
-
-    private String upstreamDrivers;
+    private DriverInfo driverInfo = DriverInfo.builder().build();
 
     private String libraryVersion = LettuceVersion.getVersion();
 
@@ -628,103 +608,33 @@ public class RedisURI implements Serializable, ConnectionPoint {
     /**
      * Returns the library name to be sent via {@code CLIENT SETINFO}.
      * <p>
-     * If upstream drivers have been added via {@link #addUpstreamDriver(String, String)}, the returned value will include them
-     * in the format: {@code libraryName(driver1_v1.0.0;driver2_v2.0.0)}. Otherwise, returns just the library name.
+     * If upstream drivers have been added via {@link DriverInfo}, the returned value will include them in the format:
+     * {@code libraryName(driver1_v1.0.0;driver2_v2.0.0)}. Otherwise, returns just the library name.
      *
      * @return the library name, potentially including upstream driver information.
      * @since 6.3
+     * @see #getDriverInfo()
+     * @see DriverInfo#getFormattedName()
      */
     public String getLibraryName() {
-        if (upstreamDrivers == null) {
-            return libraryName;
-        }
-        return libraryName + "(" + upstreamDrivers + ")";
+        return driverInfo.getFormattedName();
     }
 
     /**
      * Sets the library name to be applied on Redis connections.
+     * <p>
+     * This method creates a new {@link DriverInfo} with only the specified name, clearing any previously set upstream drivers.
+     * If you want to preserve upstream drivers, use {@link #setDriverInfo(DriverInfo)} instead.
      *
-     * @param libraryName the library name.
+     * @param libraryName the library name, must not contain spaces.
      * @since 6.3
+     * @see #setDriverInfo(DriverInfo)
      */
     public void setLibraryName(String libraryName) {
         if (libraryName != null && libraryName.indexOf(' ') != -1) {
             throw new IllegalArgumentException("Library name must not contain spaces");
         }
-        this.libraryName = libraryName;
-    }
-
-    /**
-     * Adds an upstream driver to be appended to the library name when sent via {@code CLIENT SETINFO}.
-     * <p>
-     * This method allows upstream libraries (e.g., Spring Data Redis) that use Lettuce as their Redis driver to identify
-     * themselves. Multiple upstream drivers can be added and will be formatted according to the Redis CLIENT SETINFO format:
-     * {@code lettuce(driver1_v1.0.0;driver2_v2.0.0)}.
-     * <p>
-     * Each newly added upstream driver is prepended to the list, so the most recently added driver appears first. For example,
-     * if you call {@code addUpstreamDriver("spring-data-redis", "3.2.0")} followed by
-     * {@code addUpstreamDriver("spring-boot", "3.3.0")}, the resulting library name will be
-     * {@code lettuce(spring-boot_v3.3.0;spring-data-redis_v3.2.0)}.
-     * <p>
-     * The driver name must follow <a href="https://maven.apache.org/guides/mini/guide-naming-conventions.html">Maven artifactId
-     * naming conventions</a>: lowercase letters, digits, hyphens, and underscores only, starting with a lowercase letter (e.g.,
-     * {@code spring-data-redis}, {@code lettuce-core}, {@code akka-redis_2.13}).
-     * <p>
-     * The driver version must follow <a href="https://semver.org/">semantic versioning</a> (e.g., {@code 1.0.0},
-     * {@code 2.1.3-beta}, {@code 1.0.0-alpha.1}, {@code 1.0.0+build.123}).
-     *
-     * @param driverName the name of the upstream driver (e.g., "spring-data-redis"), must not be {@code null} and must follow
-     *        <a href="https://maven.apache.org/guides/mini/guide-naming-conventions.html">Maven artifactId naming
-     *        conventions</a>
-     * @param driverVersion the version of the upstream driver (e.g., "3.2.0"), must not be {@code null} and must follow
-     *        <a href="https://semver.org/">semantic versioning</a>
-     * @throws IllegalArgumentException if the driver name or version format is invalid
-     * @since 6.5
-     * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
-     */
-    public void addUpstreamDriver(String driverName, String driverVersion) {
-
-        LettuceAssert.notNull(driverName, "Upstream driver name must not be null");
-        LettuceAssert.notNull(driverVersion, "Upstream driver version must not be null");
-        validateDriverName(driverName);
-        validateDriverVersion(driverVersion);
-
-        String driver = driverName + "_v" + driverVersion;
-        this.upstreamDrivers = this.upstreamDrivers == null ? driver : driver + ";" + this.upstreamDrivers;
-    }
-
-    /**
-     * Validates that the driver name follows Maven artifactId naming conventions: lowercase letters, digits, hyphens, and
-     * underscores only, starting with a lowercase letter (e.g., {@code spring-data-redis}, {@code lettuce-core},
-     * {@code akka-redis_2.13}).
-     *
-     * @param driverName the driver name to validate
-     * @throws IllegalArgumentException if the driver name does not follow the expected naming conventions
-     * @see <a href="https://maven.apache.org/guides/mini/guide-naming-conventions.html">Maven Naming Conventions</a>
-     */
-    private static void validateDriverName(String driverName) {
-        if (!driverName.matches(DRIVER_NAME_PATTERN)) {
-            throw new IllegalArgumentException(
-                    "Upstream driver name must follow Maven artifactId naming conventions: lowercase letters, digits, hyphens, and underscores only (e.g., 'spring-data-redis', 'lettuce-core')");
-        }
-    }
-
-    /**
-     * Validates that the driver version follows semantic versioning (semver.org). The version must be in the format
-     * {@code MAJOR.MINOR.PATCH} with optional pre-release and build metadata suffixes.
-     * <p>
-     * Examples of valid versions: {@code 1.0.0}, {@code 2.1.3}, {@code 1.0.0-alpha}, {@code 1.0.0-alpha.1},
-     * {@code 1.0.0-0.3.7}, {@code 1.0.0-x.7.z.92}, {@code 1.0.0+20130313144700}, {@code 1.0.0-beta+exp.sha.5114f85}
-     *
-     * @param driverVersion the driver version to validate
-     * @throws IllegalArgumentException if the driver version does not follow semantic versioning
-     * @see <a href="https://semver.org/">Semantic Versioning 2.0.0</a>
-     */
-    private static void validateDriverVersion(String driverVersion) {
-        if (!driverVersion.matches(SEMVER_PATTERN)) {
-            throw new IllegalArgumentException(
-                    "Upstream driver version must follow semantic versioning (e.g., '1.0.0', '2.1.3-beta', '1.0.0+build.123')");
-        }
+        this.driverInfo = DriverInfo.builder().name(libraryName).build();
     }
 
     /**
@@ -735,6 +645,32 @@ public class RedisURI implements Serializable, ConnectionPoint {
      */
     public String getLibraryVersion() {
         return libraryVersion;
+    }
+
+    /**
+     * Returns the driver information containing the library name and upstream drivers.
+     *
+     * @return the driver information, never {@code null}
+     * @since 6.5
+     * @see DriverInfo
+     */
+    public DriverInfo getDriverInfo() {
+        return driverInfo;
+    }
+
+    /**
+     * Sets the driver information containing the library name and upstream drivers.
+     * <p>
+     * This method replaces any previously set driver information or library name. Use this method when you want structured
+     * control over the library identification sent via {@code CLIENT SETINFO}.
+     *
+     * @param driverInfo the driver information to set
+     * @since 6.5
+     * @see DriverInfo
+     * @see #setLibraryName(String)
+     */
+    public void setDriverInfo(DriverInfo driverInfo) {
+        this.driverInfo = driverInfo;
     }
 
     /**
@@ -1046,8 +982,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
             queryPairs.add(PARAMETER_NAME_CLIENT_NAME + "=" + urlEncode(clientName));
         }
 
-        if (libraryName != null && !libraryName.equals(LettuceVersion.getName())) {
-            queryPairs.add(PARAMETER_NAME_LIBRARY_NAME + "=" + urlEncode(libraryName));
+        if (driverInfo.getName() != null && !driverInfo.getName().equals(LettuceVersion.getName())) {
+            queryPairs.add(PARAMETER_NAME_LIBRARY_NAME + "=" + urlEncode(driverInfo.getName()));
         }
 
         if (libraryVersion != null && !libraryVersion.equals(LettuceVersion.getVersion())) {
@@ -1390,11 +1326,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         private String clientName;
 
-        private String libraryName = LettuceVersion.getName();
-
         private String libraryVersion = LettuceVersion.getVersion();
 
-        private String upstreamDrivers;
+        private DriverInfo driverInfo = DriverInfo.builder().build();
 
         private RedisCredentialsProvider credentialsProvider;
 
@@ -1726,52 +1660,35 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 throw new IllegalArgumentException("Library name must not contain spaces");
             }
 
-            this.libraryName = libraryName;
+            this.driverInfo = DriverInfo.builder().name(libraryName).build();
             this.sentinels.forEach(it -> it.setLibraryName(libraryName));
             return this;
         }
 
         /**
-         * Adds an upstream driver to be appended to the library name when sent via {@code CLIENT SETINFO}.
+         * Configures driver information containing the library name and upstream drivers.
          * <p>
          * This method allows upstream libraries (e.g., Spring Data Redis) that use Lettuce as their Redis driver to identify
-         * themselves. Multiple upstream drivers can be added and will be formatted according to the Redis CLIENT SETINFO
-         * format: {@code lettuce(driver1_v1.0.0;driver2_v2.0.0)}.
+         * themselves. The driver information is sent via the {@code CLIENT SETINFO} command.
          * <p>
-         * Each newly added upstream driver is prepended to the list, so the most recently added driver appears first. For
-         * example, if you call {@code addUpstreamDriver("spring-data-redis", "3.2.0")} followed by
-         * {@code addUpstreamDriver("spring-boot", "3.3.0")}, the resulting library name will be
-         * {@code lettuce(spring-boot_v3.3.0;spring-data-redis_v3.2.0)}.
+         * If both {@link #withLibraryName(String)} and this method are called, the last call wins. When {@code driverInfo} is
+         * set, it takes precedence over {@code libraryName} in the built {@link RedisURI}.
          * <p>
-         * The driver name must follow <a href="https://maven.apache.org/guides/mini/guide-naming-conventions.html">Maven
-         * artifactId naming conventions</a>: lowercase letters, digits, hyphens, and underscores only, starting with a
-         * lowercase letter (e.g., {@code spring-data-redis}, {@code lettuce-core}, {@code akka-redis_2.13}).
-         * <p>
-         * The driver version must follow <a href="https://semver.org/">semantic versioning</a> (e.g., {@code 1.0.0},
-         * {@code 2.1.3-beta}, {@code 1.0.0-alpha.1}, {@code 1.0.0+build.123}).
-         * <p>
-         * Also sets upstream driver for already configured Redis Sentinel nodes.
+         * Also sets driver info for already configured Redis Sentinel nodes.
          *
-         * @param driverName the name of the upstream driver (e.g., "spring-data-redis"), must not be {@code null} and must
-         *        follow <a href="https://maven.apache.org/guides/mini/guide-naming-conventions.html">Maven artifactId naming
-         *        conventions</a>
-         * @param driverVersion the version of the upstream driver (e.g., "3.2.0"), must not be {@code null} and must follow
-         *        <a href="https://semver.org/">semantic versioning</a>
+         * @param driverInfo the driver information, must not be {@code null}
          * @return the builder
-         * @throws IllegalArgumentException if the driver name or version format is invalid
-         * @since 6.5
+         * @throws IllegalArgumentException if driverInfo is {@code null}
+         * @see DriverInfo
          * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
+         * @since 6.5
          */
-        public Builder addUpstreamDriver(String driverName, String driverVersion) {
+        public Builder withDriverInfo(DriverInfo driverInfo) {
 
-            LettuceAssert.notNull(driverName, "Upstream driver name must not be null");
-            LettuceAssert.notNull(driverVersion, "Upstream driver version must not be null");
-            validateDriverName(driverName);
-            validateDriverVersion(driverVersion);
+            LettuceAssert.notNull(driverInfo, "DriverInfo must not be null");
 
-            String driver = driverName + "_v" + driverVersion;
-            this.upstreamDrivers = this.upstreamDrivers == null ? driver : driver + ";" + this.upstreamDrivers;
-            this.sentinels.forEach(it -> it.addUpstreamDriver(driverName, driverVersion));
+            this.driverInfo = driverInfo;
+            this.sentinels.forEach(it -> it.setDriverInfo(driverInfo));
             return this;
         }
 
@@ -1933,9 +1850,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             redisURI.setDatabase(database);
             redisURI.setClientName(clientName);
-            redisURI.setLibraryName(libraryName);
+            redisURI.setDriverInfo(driverInfo);
             redisURI.setLibraryVersion(libraryVersion);
-            redisURI.upstreamDrivers = upstreamDrivers;
 
             redisURI.setSentinelMasterId(sentinelMasterId);
 
