@@ -116,7 +116,7 @@ public class HybridSearchArgs<K, V> {
      * @param args the {@link CommandArgs} to append to
      */
     public void build(CommandArgs<K, V> args) {
-        args.add("SEARCH");
+        args.add(CommandKeyword.SEARCH);
         args.addValue(query);
 
         // SCORER inside SEARCH
@@ -126,7 +126,7 @@ public class HybridSearchArgs<K, V> {
 
         // YIELD_SCORE_AS for SEARCH
         if (scoreAlias != null) {
-            args.add("YIELD_SCORE_AS");
+            args.add(CommandKeyword.YIELD_SCORE_AS);
             args.addKey(scoreAlias);
         }
     }

@@ -185,7 +185,7 @@ public class HybridArgs<K, V> {
 
         // COMBINE clause
         if (combineArgs.isPresent()) {
-            args.add("COMBINE");
+            args.add(CommandKeyword.COMBINE);
             combineArgs.get().build(args);
         }
 

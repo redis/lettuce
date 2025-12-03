@@ -205,7 +205,7 @@ public class HybridVectorArgs<K, V> {
 
         // YIELD_SCORE_AS for VSIM (normalized vector distance)
         if (scoreAlias != null) {
-            args.add("YIELD_SCORE_AS");
+            args.add(CommandKeyword.YIELD_SCORE_AS);
             args.addKey(scoreAlias);
         }
     }
@@ -284,10 +284,10 @@ public class HybridVectorArgs<K, V> {
             // Count of total items: K + value, optionally EF_RUNTIME + value
             int itemCount = efRuntime != null ? 4 : 2;
             args.add(itemCount);
-            args.add("K");
+            args.add(CommandKeyword.K);
             args.add(k);
             if (efRuntime != null) {
-                args.add("EF_RUNTIME");
+                args.add(CommandKeyword.EF_RUNTIME);
                 args.add(efRuntime);
             }
         }
@@ -343,14 +343,14 @@ public class HybridVectorArgs<K, V> {
 
         @Override
         public <K, V> void build(CommandArgs<K, V> args) {
-            args.add("RANGE");
+            args.add(CommandKeyword.RANGE);
             // Count of key-value pairs: 1 for RADIUS, +1 if EPSILON is present
             int pairCount = epsilon != null ? 2 : 1;
             args.add(pairCount);
-            args.add("RADIUS");
+            args.add(CommandKeyword.RADIUS);
             args.add(radius);
             if (epsilon != null) {
-                args.add("EPSILON");
+                args.add(CommandKeyword.EPSILON);
                 args.add(epsilon);
             }
         }

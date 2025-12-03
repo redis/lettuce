@@ -9,6 +9,7 @@ package io.lettuce.core.search.arguments;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
+import io.lettuce.core.protocol.CommandKeyword;
 
 /**
  * Arguments for the COMBINE clause in FT.HYBRID command. Defines how text search scores and vector similarity scores are
@@ -115,7 +116,7 @@ public class CombineArgs<K> {
 
         @Override
         public <V> void build(CommandArgs<K, V> args) {
-            args.add("RRF");
+            args.add(CommandKeyword.RRF);
             // Count of total items (not pairs): WINDOW, value, CONSTANT, value = 4 items
             int itemCount = 0;
             if (window != null) {
@@ -128,11 +129,11 @@ public class CombineArgs<K> {
             // Always add count, even if 0
             args.add(itemCount);
             if (window != null) {
-                args.add("WINDOW");
+                args.add(CommandKeyword.WINDOW);
                 args.add(window);
             }
             if (constant != null) {
-                args.add("CONSTANT");
+                args.add(CommandKeyword.CONSTANT);
                 args.add(constant);
             }
         }
@@ -182,7 +183,7 @@ public class CombineArgs<K> {
 
         @Override
         public <V> void build(CommandArgs<K, V> args) {
-            args.add("LINEAR");
+            args.add(CommandKeyword.LINEAR);
             // Count of total items (not pairs): ALPHA, value, BETA, value = 4 items
             int itemCount = 0;
             if (alpha != null) {
@@ -195,11 +196,11 @@ public class CombineArgs<K> {
             // Always add count, even if 0
             args.add(itemCount);
             if (alpha != null) {
-                args.add("ALPHA");
+                args.add(CommandKeyword.ALPHA);
                 args.add(alpha);
             }
             if (beta != null) {
-                args.add("BETA");
+                args.add(CommandKeyword.BETA);
                 args.add(beta);
             }
         }
@@ -217,7 +218,7 @@ public class CombineArgs<K> {
 
         // YIELD_SCORE_AS for COMBINE
         if (scoreAlias != null) {
-            args.add("YIELD_SCORE_AS");
+            args.add(CommandKeyword.YIELD_SCORE_AS);
             args.addKey(scoreAlias);
         }
     }
