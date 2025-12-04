@@ -295,28 +295,6 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             }
         }
 
-        @Test
-        @DisplayName("Should configure health check probing policy")
-        @Disabled("Not implemented yet")
-        void shouldConfigureHealthCheckProbingPolicy() {
-            // TODO: Implement test
-            // - Create HealthCheckStrategy.Config with custom ProbingPolicy
-            // - Create HealthCheckStrategySupplier using the config
-            // - Create MultiDbClient and connect
-            // - Verify health checks use the configured probing policy
-        }
-
-        @Test
-        @DisplayName("Should configure number of probes and delay between probes")
-        @Disabled("Not implemented yet")
-        void shouldConfigureProbesAndDelay() {
-            // TODO: Implement test
-            // - Create HealthCheckStrategy.Config with custom numProbes and delayInBetweenProbes
-            // - Create HealthCheckStrategySupplier using the config
-            // - Create MultiDbClient and connect
-            // - Verify health checks use the configured probe settings
-        }
-
     }
 
     @Nested
