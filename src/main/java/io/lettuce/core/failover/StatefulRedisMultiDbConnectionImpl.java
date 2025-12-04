@@ -33,6 +33,7 @@ import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -87,6 +88,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
         }
+        LettuceAssert.notNull(healthStatusManager, "healthStatusManager must not be null");
+
         this.databases = new ConcurrentHashMap<>(connections);
         this.codec = codec;
         this.parser = parser;
@@ -103,10 +106,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         this.reactive = newRedisReactiveCommandsImpl();
 
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
-        if (healthStatusManager != null) {
-            databases.values()
-                    .forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
-        }
+        databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
+
     }
 
     private void onCircuitBreakerStateChange(CircuitBreakerStateChangeEvent event) {
@@ -251,10 +252,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     @Override
     public void close() {
-        if (healthStatusManager != null) {
-            healthStatusManager.close();
-        }
-
+        healthStatusManager.close();
         databases.values().forEach(db -> db.getConnection().close());
     }
 
@@ -417,9 +415,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             databases.put(redisURI, database);
 
             database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
-            if (healthStatusManager != null) {
-                healthStatusManager.registerListener(database.getRedisURI(), this::onHealthStatusChange);
-            }
+            healthStatusManager.registerListener(database.getRedisURI(), this::onHealthStatusChange);
         });
 
     }
@@ -440,10 +436,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
                 throw new UnsupportedOperationException("Cannot remove the currently active database: " + redisURI);
             }
 
-            if (healthStatusManager != null) {
-                healthStatusManager.unregisterListener(redisURI, this::onHealthStatusChange);
-                healthStatusManager.remove(redisURI);
-            }
+            healthStatusManager.unregisterListener(redisURI, this::onHealthStatusChange);
+            healthStatusManager.remove(redisURI);
 
             // Remove the database and close its connection
             databases.remove(redisURI);
