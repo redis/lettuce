@@ -78,9 +78,6 @@ public class CombineArgs<K> {
      * <p>
      * RRF formula: score = 1 / (CONSTANT + rank_in_window)
      * </p>
-     * <p>
-     * Default parameters: WINDOW=20, CONSTANT=60
-     * </p>
      *
      * @param <K> Key type
      */
@@ -93,7 +90,7 @@ public class CombineArgs<K> {
         /**
          * Set the WINDOW parameter - number of top results to consider from each ranking.
          *
-         * @param window number of top results (default: 20)
+         * @param window number of top results
          * @return this instance
          */
         public RRF<K> window(int window) {
@@ -105,7 +102,7 @@ public class CombineArgs<K> {
         /**
          * Set the CONSTANT parameter - constant added to rank to prevent division by zero.
          *
-         * @param constant constant value (default: 60)
+         * @param constant constant value
          * @return this instance
          */
         public RRF<K> constant(double constant) {
@@ -145,9 +142,6 @@ public class CombineArgs<K> {
      * <p>
      * Formula: combined_score = ALPHA * text_score + BETA * vector_score
      * </p>
-     * <p>
-     * Default parameters: ALPHA=0.3, BETA=0.7
-     * </p>
      *
      * @param <K> Key type
      */
@@ -160,7 +154,7 @@ public class CombineArgs<K> {
         /**
          * Set the ALPHA parameter - weight for text search score.
          *
-         * @param alpha weight for text score (default: 0.3)
+         * @param alpha weight for text score
          * @return this instance
          */
         public Linear<K> alpha(double alpha) {
@@ -172,7 +166,7 @@ public class CombineArgs<K> {
         /**
          * Set the BETA parameter - weight for vector search score.
          *
-         * @param beta weight for vector score (default: 0.7)
+         * @param beta weight for vector score
          * @return this instance
          */
         public Linear<K> beta(double beta) {
