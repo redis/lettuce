@@ -12,10 +12,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
+ * Utility class for tracking health status changes for specific endpoints.
+ *
  * StatusTracker is responsible for tracking and waiting for health status changes for specific endpoints. It provides an
  * event-driven approach to wait for health status transitions from UNKNOWN to either HEALTHY or UNHEALTHY.
  */
-public class StatusTracker {
+class StatusTracker {
 
     private final HealthStatusManager healthStatusManager;
 
