@@ -25,7 +25,7 @@ import java.util.Set;
  * The formatted name follows the pattern: {@code name(driver1_vVersion1;driver2_vVersion2)}
  *
  * @author Viktoriya Kutsarova
- * @since 7.3
+ * @since 7.2
  * @see RedisURI#setDriverInfo(DriverInfo)
  * @see RedisURI#getDriverInfo()
  * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
