@@ -28,6 +28,9 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.json.JsonObject;
+import io.lettuce.core.json.JsonParser;
+import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.AggregateArgs.GroupBy;
 import io.lettuce.core.search.arguments.AggregateArgs.Reducer;
@@ -35,6 +38,7 @@ import io.lettuce.core.search.arguments.AggregateArgs.SortDirection;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
+import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
 
@@ -110,9 +114,12 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // If documents are indexed, we should have 1 aggregation group (no grouping)
         // If no documents, we should have 0 aggregation groups
         if (searchResult.getCount() > 0) {
-            assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
-            assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
-            assertThat(result.getReplies().get(0).getResults()).hasSize(4); // Should have 4 documents in the single reply
+            assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no
+                                                                    // grouping)
+            assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all
+                                                        // documents
+            assertThat(result.getReplies().get(0).getResults()).hasSize(4); // Should have 4 documents in
+                                                                            // the single reply
 
             // Each result should be empty since no LOAD was specified
             for (SearchReply.SearchResult<String, String> aggregateResult : result.getReplies().get(0).getResults()) {
@@ -247,7 +254,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
         assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
         SearchReply<String, String> searchReply = result.getReplies().get(0);
-        assertThat(searchReply.getResults()).hasSize(2); // Should have 2 documents (only doc:1 and doc:2 added in this test)
+        assertThat(searchReply.getResults()).hasSize(2); // Should have 2 documents (only doc:1 and doc:2 added
+                                                         // in this test)
 
         // Check that all fields are loaded
         for (SearchReply.SearchResult<String, String> aggregateResult : searchReply.getResults()) {
@@ -274,8 +282,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregationReply<String, String> result = redis.ftAggregate("empty-test-idx", "*");
 
         assertThat(result).isNotNull();
-        assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 0 aggregation groups for empty index
-        assertThat(result.getReplies().get(0).getResults()).isEmpty(); // Should have no SearchReply objects for empty results
+        assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 0 aggregation groups for empty
+                                                                // index
+        assertThat(result.getReplies().get(0).getResults()).isEmpty(); // Should have no SearchReply objects for
+                                                                       // empty results
 
         assertThat(redis.ftDropindex("empty-test-idx")).isEqualTo("OK");
     }
@@ -983,7 +993,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Verify we got the correct subset - let's check what we actually get
         List<SearchReply.SearchResult<String, String>> results = searchReply.getResults();
-        // The results should be sorted in descending order and limited to 3 items starting from offset 2
+        // The results should be sorted in descending order and limited to 3 items
+        // starting from offset 2
         // So we should get items with scores: 80, 70, 60 (3rd, 4th, 5th highest)
         // But let's verify what we actually get and adjust accordingly
         assertThat(results.get(0).getFields().get("score")).isIn("80", "70"); // Could be 3rd or 4th highest
@@ -1131,7 +1142,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
         assertThat(nextSearchReply.getResults()).hasSize(5); // Should return 5 results as specified
         assertThat(nextResult.getCursor()).isPresent();
-        assertThat(nextResult.getCursor().get().getCursorId()).isNotEqualTo(0L); // Should still have more results
+        assertThat(nextResult.getCursor().get().getCursorId()).isNotEqualTo(0L); // Should still have more
+                                                                                 // results
 
         // Read final page
         AggregationReply<String, String> finalResult = redis.ftCursorread("cursor-count-test-idx",
@@ -1349,7 +1361,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(nextResult.getReplies()).hasSize(1); // Should have 1 SearchReply
         SearchReply<String, String> nextSearchReply = nextResult.getReplies().get(0);
         assertThat(nextSearchReply.getResults()).hasSize(1); // Should return second group
-        // RediSearch may either omit the cursor on the final page, or return a non-zero cursor
+        // RediSearch may either omit the cursor on the final page, or return a non-zero
+        // cursor
         // that requires one more empty READ to return 0. Be tolerant across versions.
         long effective = nextResult.getCursor().map(AggregationReply.Cursor::getCursorId).orElse(0L);
         if (effective != 0L) {
@@ -1386,8 +1399,10 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         AggregationReply<String, String> result = redis.ftAggregate("cursor-empty-test-idx", "*", args);
 
         assertThat(result).isNotNull();
-        assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 0 aggregation groups for empty index
-        assertThat(result.getReplies().get(0).getResults()).isEmpty(); // Should have no SearchReply objects for empty results
+        assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 0 aggregation groups for empty
+                                                                // index
+        assertThat(result.getReplies().get(0).getResults()).isEmpty(); // Should have no SearchReply objects for
+                                                                       // empty results
         assertThat(result.getCursor()).isPresent();
         assertThat(result.getCursor().get().getCursorId()).isEqualTo(0L); // Should indicate no more results
 
@@ -1495,14 +1510,16 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(multiGroupResult.getReplies()).hasSize(1);
         SearchReply<String, String> multiGroupReply = multiGroupResult.getReplies().get(0);
 
-        // Should have 4 groups: Engineering-Senior, Engineering-Junior, Marketing-Senior, Marketing-Junior
+        // Should have 4 groups: Engineering-Senior, Engineering-Junior,
+        // Marketing-Senior, Marketing-Junior
         assertThat(multiGroupReply.getResults()).hasSize(4);
 
         // Verify each group has the expected fields
         for (SearchReply.SearchResult<String, String> group : multiGroupReply.getResults()) {
             assertThat(group.getFields()).containsKeys("department", "role", "count", "avg_salary", "avg_performance");
 
-            // Verify department and role combinations are valid (Redis may normalize to lowercase)
+            // Verify department and role combinations are valid (Redis may normalize to
+            // lowercase)
             String dept = group.getFields().get("department");
             String role = group.getFields().get("role");
             assertThat(dept.toLowerCase()).isIn("engineering", "marketing");
@@ -1514,7 +1531,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
     @Test
     void shouldPerformAggregationWithSortByAndMaxOptimization() {
-        // Create an index with sortable numeric fields for testing sorting functionality
+        // Create an index with sortable numeric fields for testing sorting
+        // functionality
         List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("product_name").build(),
                 TextFieldArgs.<String> builder().name("category").sortable().build(),
                 NumericFieldArgs.<String> builder().name("price").sortable().build(),
@@ -1536,7 +1554,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         // Test 1: Basic sorting (should return results in correct order)
         AggregateArgs<String, String> basicSortArgs = AggregateArgs.<String, String> builder().loadAll()
-                .sortBy(AggregateArgs.SortBy.of("price", SortDirection.ASC)).limit(0, 5) // Only get top 5 results
+                .sortBy(AggregateArgs.SortBy.of("price", SortDirection.ASC)).limit(0, 5) // Only get top
+                                                                                         // 5 results
                 .build();
 
         AggregationReply<String, String> basicSortResult = redis.ftAggregate("sortby-max-test-idx", "*", basicSortArgs);
@@ -1553,7 +1572,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // Check that we have the expected number of results
         assertThat(sortedResults).hasSize(5);
 
-        // Verify sorting: first result should have highest price, last should have lowest
+        // Verify sorting: first result should have highest price, last should have
+        // lowest
         double firstPrice = Double.parseDouble(sortedResults.get(0).getFields().get("price"));
         double lastPrice = Double.parseDouble(sortedResults.get(sortedResults.size() - 1).getFields().get("price"));
         assertThat(firstPrice).isLessThanOrEqualTo(lastPrice);
@@ -1611,7 +1631,9 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                     salesRecord.put("product_type", productType);
                     salesRecord.put("revenue", String.valueOf(1000 + recordId * 100));
                     salesRecord.put("units_sold", String.valueOf(50 + recordId * 5));
-                    salesRecord.put("profit_margin", String.valueOf(0.15 + (recordId % 3) * 0.05)); // 0.15, 0.20, 0.25
+                    salesRecord.put("profit_margin", String.valueOf(0.15 + (recordId % 3) * 0.05)); // 0.15,
+                                                                                                    // 0.20,
+                                                                                                    // 0.25
                     assertThat(redis.hmset("sales:" + recordId, salesRecord)).isEqualTo("OK");
                     recordId++;
                 }
@@ -1801,9 +1823,11 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         // This specific order: APPLY -> FILTER -> GROUPBY -> LIMIT -> SORTBY
         // should work correctly and produce meaningful results
         AggregateArgs<String, String> args = AggregateArgs.<String, String> builder().load("title").load("price")
-                .load("quantity").load("category").apply("@price * @quantity", "total_value") // Calculate total
+                .load("quantity").load("category").apply("@price * @quantity", "total_value") // Calculate
+                                                                                              // total
                 // value first
-                .filter("@total_value > 550") // Filter by total value (should keep only products 1 and 2, both electronics)
+                .filter("@total_value > 550") // Filter by total value (should keep only products 1 and
+                                              // 2, both electronics)
                 .groupBy(GroupBy.<String, String> of("category").reduce(Reducer.<String, String> count().as("product_count"))
                         .reduce(Reducer.<String, String> sum("@total_value").as("category_total")))
                 .limit(0, 10) // Limit results
@@ -1816,7 +1840,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         assertThat(result.getReplies()).hasSize(1);
         SearchReply<String, String> searchReply = result.getReplies().get(0);
 
-        // Should have only electronics category since books total_value (50*10=500) < 550
+        // Should have only electronics category since books total_value (50*10=500) <
+        // 550
         // but electronics products (100*5=500, 200*3=600) both > 550
         assertThat(searchReply.getResults()).hasSize(1);
 
@@ -1910,7 +1935,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldSupportMultipleRepeatedOperations() {
         // Test that operations can be repeated multiple times in the pipeline
-        // This demonstrates the re-entrant nature where each operation can appear multiple times
+        // This demonstrates the re-entrant nature where each operation can appear
+        // multiple times
 
         List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("employee_name").build(),
                 TagFieldArgs.<String> builder().name("department").sortable().build(),
@@ -1942,7 +1968,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
         }
 
         // Pipeline with repeated operations demonstrating re-entrant nature:
-        // Multiple APPLY operations, multiple FILTER operations, multiple GROUPBY operations
+        // Multiple APPLY operations, multiple FILTER operations, multiple GROUPBY
+        // operations
         AggregateArgs<String, String> repeatedOpsArgs = AggregateArgs.<String, String> builder().load("department")
                 .load("level").load("salary").load("experience").load("performance_score")
                 // First APPLY: Calculate salary per experience year
@@ -2009,7 +2036,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
 
         assertThat(redis.ftCreate("interleaved-ops-idx", fields)).isEqualTo("OK");
 
-        // Add transaction data representing different customer segments, regions, and categories
+        // Add transaction data representing different customer segments, regions, and
+        // categories
         String[][] transactions = { { "txn:1", "T001", "premium", "electronics", "north", "1500", "2", "5" },
                 { "txn:2", "T002", "premium", "electronics", "south", "1200", "1", "10" },
                 { "txn:3", "T003", "standard", "electronics", "north", "800", "3", "0" },
@@ -2046,7 +2074,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
                 // Apply transformation to calculate revenue per transaction
                 .apply("@segment_revenue / @segment_transactions", "revenue_per_transaction")
                 // Sort by group size (segment_transactions) and limit to top results
-                .sortBy("segment_transactions", SortDirection.DESC).limit(0, 10) // Top 10 segments by transaction count
+                .sortBy("segment_transactions", SortDirection.DESC).limit(0, 10) // Top 10 segments by
+                                                                                 // transaction count
                 // Filter segments with significant revenue
                 .filter("@segment_revenue > 500")
                 // Apply value score calculation
@@ -2085,7 +2114,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldSupportPipelineWithMultipleFiltersAndSorts() {
         // Test pipeline with multiple FILTER and SORTBY operations at different stages
-        // This demonstrates that operations can be repeated and applied at various pipeline stages
+        // This demonstrates that operations can be repeated and applied at various
+        // pipeline stages
 
         List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("product_id").build(),
                 TagFieldArgs.<String> builder().name("category").sortable().build(),
@@ -2188,7 +2218,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
     @Test
     void shouldSupportAdvancedDynamicPipelineWithConditionalLogic() {
         // Test the most advanced scenario: dynamic pipeline with conditional logic,
-        // multiple re-entrant operations, and complex transformations that build upon each other
+        // multiple re-entrant operations, and complex transformations that build upon
+        // each other
         // This represents a real-world business intelligence scenario
 
         List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("order_id").build(),
@@ -2229,7 +2260,8 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             assertThat(redis.hmset(order[0], doc)).isEqualTo("OK");
         }
 
-        // Advanced dynamic pipeline with conditional logic and multiple re-entrant operations:
+        // Advanced dynamic pipeline with conditional logic and multiple re-entrant
+        // operations:
         AggregateArgs<String, String> advancedArgs = AggregateArgs.<String, String> builder().load("customer_type")
                 .load("product_line").load("sales_channel").load("season").load("order_value").load("cost")
                 .load("shipping_cost").load("customer_satisfaction")
@@ -2319,6 +2351,118 @@ class RediSearchAggregateIntegrationTests extends TestSupport {
             int segmentCount = Integer.parseInt(impactGroup.getFields().get("impact_segment_count"));
             assertThat(segmentCount).isGreaterThan(0);
         }
+    }
+
+    @Test
+    void shouldPerformAggregationOnJson() {
+        // Create an index
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("$.country").as("country").build(),
+                TextFieldArgs.<String> builder().name("$.city").as("city").build(),
+                TextFieldArgs.<String> builder().name("$.office").as("office").build(),
+                TextFieldArgs.<String> builder().name("$.code").as("code").build());
+        CreateArgs<String, String> args = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON)
+                .withPrefix("doc:").build();
+
+        assertThat(redis.ftCreate("args-test-idx", args, fields)).isEqualTo("OK");
+
+        JsonParser parser = redis.getJsonParser();
+
+        // Add some test documents
+        JsonObject doc1 = parser.createJsonObject();
+        doc1.put("country", parser.createJsonValue("\"SE\""));
+        doc1.put("city", parser.createJsonValue("\"Stockholm\""));
+        doc1.put("office", parser.createJsonValue("\"HQ\""));
+        doc1.put("code", parser.createJsonValue("\"S1\""));
+        assertThat(redis.jsonSet("doc:1", JsonPath.ROOT_PATH, doc1)).isEqualTo("OK");
+
+        JsonObject doc2 = parser.createJsonObject();
+        doc2.put("country", parser.createJsonValue("\"FI\""));
+        doc2.put("city", parser.createJsonValue("\"Åbo\""));
+        doc2.put("office", parser.createJsonValue("\"Office2\""));
+        doc2.put("code", parser.createJsonValue("\"S2\""));
+        assertThat(redis.jsonSet("doc:2", JsonPath.ROOT_PATH, doc2)).isEqualTo("OK");
+
+        // Perform aggregation with arguments - LOAD fields
+        AggregateArgs.GroupBy<String, String> groupBy = AggregateArgs.GroupBy
+                .<String, String> of("country", "city", "office", "code")
+                .reduce(AggregateArgs.Reducer.<String, String> count().as("__count"));
+
+        AggregateArgs<String, String> aggargs = AggregateArgs.<String, String> builder().loadAll().groupBy(groupBy)
+                .dialect(QueryDialects.DIALECT2).build();
+
+        AggregationReply<String, String> result = redis.ftAggregate("args-test-idx", "*", aggargs);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
+        assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
+        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        assertThat(searchReply.getResults()).hasSize(2); // Should have 2 documents (doc:1, doc:2)
+
+        // Check that loaded fields are present in results
+        for (SearchReply.SearchResult<String, String> aggregateResult : searchReply.getResults()) {
+            assertThat(aggregateResult.getFields().containsKey("country")).isTrue();
+            assertThat(aggregateResult.getFields().containsKey("city")).isTrue();
+            assertThat(aggregateResult.getFields().containsKey("office")).isTrue();
+            assertThat(aggregateResult.getFields().containsKey("code")).isTrue();
+            assertThat(aggregateResult.getFields().get("country")).isNotNull();
+            assertThat(aggregateResult.getFields().get("city")).isNotNull();
+            assertThat(aggregateResult.getFields().get("office")).isNotNull();
+            assertThat(aggregateResult.getFields().get("code")).isNotNull();
+        }
+
+        assertThat(redis.ftDropindex("args-test-idx")).isEqualTo("OK");
+    }
+
+    @Test
+    void shouldPerformAggregationOnJsonWithNulls() {
+        // Create an index
+        List<FieldArgs<String>> fields = Arrays.asList(TextFieldArgs.<String> builder().name("$.country").as("country").build(),
+                TextFieldArgs.<String> builder().name("$.city").as("city").build(),
+                TextFieldArgs.<String> builder().name("$.office").as("office").build(),
+                TextFieldArgs.<String> builder().name("$.code").as("code").build());
+        CreateArgs<String, String> args = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON)
+                .withPrefix("doc:").build();
+
+        assertThat(redis.ftCreate("args-test-idx", args, fields)).isEqualTo("OK");
+
+        JsonParser parser = redis.getJsonParser();
+
+        // Add some test documents
+        JsonObject doc1 = parser.createJsonObject();
+        doc1.put("country", parser.createJsonValue("\"SE\""));
+        doc1.put("city", parser.createJsonValue("null"));
+        doc1.put("office", parser.createJsonValue("\"HQ\""));
+        doc1.put("code", parser.createJsonValue("\"S1\""));
+        assertThat(redis.jsonSet("doc:1", JsonPath.ROOT_PATH, doc1)).isEqualTo("OK");
+
+        // Perform aggregation with arguments - LOAD fields
+        AggregateArgs.GroupBy<String, String> groupBy = AggregateArgs.GroupBy
+                .<String, String> of("country", "city", "office", "code")
+                .reduce(AggregateArgs.Reducer.<String, String> count().as("__count"));
+
+        AggregateArgs<String, String> aggArgs = AggregateArgs.<String, String> builder().loadAll().groupBy(groupBy)
+                .dialect(QueryDialects.DIALECT2).build();
+
+        AggregationReply<String, String> result = redis.ftAggregate("args-test-idx", "*", aggArgs);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getAggregationGroups()).isEqualTo(1); // Should have 1 aggregation group (no grouping)
+        assertThat(result.getReplies()).hasSize(1); // Should have 1 SearchReply containing all documents
+        SearchReply<String, String> searchReply = result.getReplies().get(0);
+        assertThat(searchReply.getResults()).hasSize(1); // Should have 1 documents (doc:1)
+
+        // Check that loaded fields are present in results
+        SearchReply.SearchResult<String, String> aggregateResult = searchReply.getResults().get(0);
+        assertThat(aggregateResult.getFields().containsKey("country")).isTrue();
+        assertThat(aggregateResult.getFields().containsKey("city")).isTrue();
+        assertThat(aggregateResult.getFields().containsKey("office")).isTrue();
+        assertThat(aggregateResult.getFields().containsKey("code")).isTrue();
+        assertThat(aggregateResult.getFields().get("country")).isEqualTo("SE");
+        assertThat(aggregateResult.getFields().get("city")).isNull();
+        assertThat(aggregateResult.getFields().get("office")).isEqualTo("HQ");
+        assertThat(aggregateResult.getFields().get("code")).isEqualTo("S1");
+
+        assertThat(redis.ftDropindex("args-test-idx")).isEqualTo("OK");
     }
 
 }
