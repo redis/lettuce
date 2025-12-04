@@ -1,22 +1,31 @@
+/*
+ * Copyright 2025, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
+
 package io.lettuce.core;
 
 import io.lettuce.core.internal.LettuceAssert;
+import io.lettuce.core.internal.LettuceSets;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Immutable class representing driver information for Redis client identification.
  * <p>
- * This class is used to identify the client library and any upstream drivers (such as Spring Data Redis or Spring Session)
- * when connecting to Redis. The information is sent via the {@code CLIENT SETINFO} command.
+ * This class is used to identify the client library and any upstream drivers (such as Spring Data Redis or Spring Session) when
+ * connecting to Redis. The information is sent via the {@code CLIENT SETINFO} command.
  * <p>
  * The formatted name follows the pattern: {@code name(driver1_vVersion1;driver2_vVersion2)}
  *
  * @author Viktoriya Kutsarova
- * @since 6.5
+ * @since 7.3
  * @see RedisURI#setDriverInfo(DriverInfo)
  * @see RedisURI#getDriverInfo()
  * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
@@ -32,14 +41,10 @@ public final class DriverInfo implements Serializable {
     private static final String DRIVER_NAME_PATTERN = "^[a-z][a-z0-9_-]*$";
 
     /**
-     * Official semver.org regex pattern for semantic versioning validation.
-     *
-     * @see <a href="https://semver.org/#is-there-a-suggested-regular-expression-regex-to-check-a-semver-string">semver.org
-     *      regex</a>
+     * Set of brace characters that are not allowed in driver names or versions. These characters are used to delimit the driver
+     * information in the formatted output and would break parsing.
      */
-    private static final String SEMVER_PATTERN = "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
-            + "(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
-            + "(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$";
+    private static final Set<Character> BRACES = LettuceSets.unmodifiableSet('(', ')', '[', ']', '{', '}');
 
     private final String name;
 
@@ -92,7 +97,7 @@ public final class DriverInfo implements Serializable {
         if (upstreamDrivers.isEmpty()) {
             return name;
         }
-        return name + "(" + String.join(";", upstreamDrivers) + ")";
+        return String.format("%s(%s)", name, String.join(";", upstreamDrivers));
     }
 
     /**
@@ -152,14 +157,15 @@ public final class DriverInfo implements Serializable {
          * The driver name must follow Maven artifactId naming conventions: lowercase letters, digits, hyphens, and underscores
          * only, starting with a lowercase letter.
          * <p>
-         * The driver version must follow semantic versioning (semver.org).
+         * Both values must not contain spaces, newlines, non-printable characters, or brace characters as these would violate
+         * the format of the Redis CLIENT LIST reply.
          *
          * @param driverName the name of the upstream driver (e.g., "spring-data-redis"), must not be {@code null}
          * @param driverVersion the version of the upstream driver (e.g., "3.2.0"), must not be {@code null}
          * @return this builder
          * @throws IllegalArgumentException if the driver name or version is {@code null} or has invalid format
          * @see <a href="https://maven.apache.org/guides/mini/guide-naming-conventions.html">Maven Naming Conventions</a>
-         * @see <a href="https://semver.org/">Semantic Versioning</a>
+         * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
          */
         public Builder addUpstreamDriver(String driverName, String driverVersion) {
             LettuceAssert.notNull(driverName, "Driver name must not be null");
@@ -186,12 +192,16 @@ public final class DriverInfo implements Serializable {
      * Validates that the driver name follows Maven artifactId naming conventions: lowercase letters, digits, hyphens, and
      * underscores only, starting with a lowercase letter (e.g., {@code spring-data-redis}, {@code lettuce-core},
      * {@code akka-redis_2.13}).
+     * <p>
+     * Additionally validates Redis CLIENT LIST constraints: no spaces, newlines, non-printable characters, or braces.
      *
      * @param driverName the driver name to validate
      * @throws IllegalArgumentException if the driver name does not follow the expected naming conventions
      * @see <a href="https://maven.apache.org/guides/mini/guide-naming-conventions.html">Maven Naming Conventions</a>
+     * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
      */
     private static void validateDriverName(String driverName) {
+        validateNoInvalidCharacters(driverName, "Driver name");
         if (!driverName.matches(DRIVER_NAME_PATTERN)) {
             throw new IllegalArgumentException(
                     "Upstream driver name must follow Maven artifactId naming conventions: lowercase letters, digits, hyphens, and underscores only (e.g., 'spring-data-redis', 'lettuce-core')");
@@ -199,20 +209,35 @@ public final class DriverInfo implements Serializable {
     }
 
     /**
-     * Validates that the driver version follows semantic versioning (semver.org). The version must be in the format
-     * {@code MAJOR.MINOR.PATCH} with optional pre-release and build metadata suffixes.
-     * <p>
-     * Examples of valid versions: {@code 1.0.0}, {@code 2.1.3}, {@code 1.0.0-alpha}, {@code 1.0.0-alpha.1},
-     * {@code 1.0.0-0.3.7}, {@code 1.0.0-x.7.z.92}, {@code 1.0.0+20130313144700}, {@code 1.0.0-beta+exp.sha.5114f85}
+     * Validates that the driver version does not contain characters that would violate the format of the Redis CLIENT LIST
+     * reply: spaces, newlines, non-printable characters, or brace characters.
      *
      * @param driverVersion the driver version to validate
-     * @throws IllegalArgumentException if the driver version does not follow semantic versioning
-     * @see <a href="https://semver.org/">Semantic Versioning 2.0.0</a>
+     * @throws IllegalArgumentException if the driver version contains invalid characters
+     * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
      */
     private static void validateDriverVersion(String driverVersion) {
-        if (!driverVersion.matches(SEMVER_PATTERN)) {
-            throw new IllegalArgumentException(
-                    "Upstream driver version must follow semantic versioning (e.g., '1.0.0', '2.1.3-beta', '1.0.0+build.123')");
+        validateNoInvalidCharacters(driverVersion, "Driver version");
+    }
+
+    /**
+     * Validates that the value does not contain characters that would violate the format of the Redis CLIENT LIST reply:
+     * non-printable characters, spaces, or brace characters.
+     * <p>
+     * Only printable ASCII characters (0x21-0x7E, i.e., '!' to '~') are allowed, excluding braces.
+     *
+     * @param value the value to validate
+     * @param fieldName the name of the field for error messages
+     * @throws IllegalArgumentException if the value contains invalid characters
+     * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
+     */
+    private static void validateNoInvalidCharacters(String value, String fieldName) {
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c < '!' || c > '~' || BRACES.contains(c)) {
+                throw new IllegalArgumentException(
+                        fieldName + " must not contain spaces, newlines, non-printable characters, or braces");
+            }
         }
     }
 

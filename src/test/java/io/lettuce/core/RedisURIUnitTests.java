@@ -441,22 +441,6 @@ class RedisURIUnitTests {
     }
 
     @Test
-    void driverInfoBuilderInvalidVersionShouldFail() {
-        // Version without patch number
-        assertThatThrownBy(() -> DriverInfo.builder().addUpstreamDriver("example-driver", "1.0"))
-                .isInstanceOf(IllegalArgumentException.class);
-        // Version with leading zeros
-        assertThatThrownBy(() -> DriverInfo.builder().addUpstreamDriver("example-driver", "01.0.0"))
-                .isInstanceOf(IllegalArgumentException.class);
-        // Version with invalid characters
-        assertThatThrownBy(() -> DriverInfo.builder().addUpstreamDriver("example-driver", "1.0.0@beta"))
-                .isInstanceOf(IllegalArgumentException.class);
-        // Version with spaces
-        assertThatThrownBy(() -> DriverInfo.builder().addUpstreamDriver("example-driver", "1.0 beta"))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
     void driverInfoBuilderValidFormats() {
         // Valid Maven artifactId formats (lowercase letters, digits, hyphens)
         DriverInfo.builder().addUpstreamDriver("spring-data-redis", "1.0.0").addUpstreamDriver("lettuce-core", "2.0.0")
