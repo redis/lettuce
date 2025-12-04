@@ -29,6 +29,7 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
@@ -146,8 +147,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     }
 
     private RedisDatabase<C> getNextHealthyDatabase(RedisDatabase<C> dbToExclude) {
-        return databases.values().stream().filter(DatabasePredicates.isHealthy).filter(DatabasePredicates.isNot(dbToExclude))
-                .max(DatabaseComparators.byWeight).orElse(null);
+        return databases.values().stream().filter(DatabasePredicates.isHealthyAndCbClosed)
+                .filter(DatabasePredicates.isNot(dbToExclude)).max(DatabaseComparators.byWeight).orElse(null);
     }
 
     static class DatabaseComparators {
@@ -158,7 +159,19 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     static class DatabasePredicates {
 
-        public static final Predicate<RedisDatabase<?>> isHealthy = db -> db.getHealthStatus() == HealthStatus.HEALTHY;
+        public static final Predicate<RedisDatabase<?>> isHealthCheckHealthy = db -> {
+            HealthCheck healthCheck = db.getHealthCheck();
+            // If no health check configured, assume healthy
+            if (healthCheck == null) {
+                return true;
+            }
+            return healthCheck.getStatus() == HealthStatus.HEALTHY;
+        };
+
+        public static final Predicate<RedisDatabase<?>> isCbClosed = db -> db.getCircuitBreaker()
+                .getCurrentState() == CircuitBreaker.State.CLOSED;
+
+        public static final Predicate<RedisDatabase<?>> isHealthyAndCbClosed = isHealthCheckHealthy.and(isCbClosed);
 
         public static Predicate<RedisDatabase<?>> isNot(RedisDatabase<?> dbInstance) {
             return db -> !db.equals(dbInstance);
@@ -376,12 +389,13 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     }
 
     @Override
-    public HealthStatus getHealthStatus(RedisURI endpoint) {
+    public boolean isHealthy(RedisURI endpoint) {
         RedisDatabase<C> database = databases.get(endpoint);
         if (database == null) {
             throw new IllegalArgumentException("Unknown endpoint: " + endpoint);
         }
-        return database.getHealthStatus();
+
+        return DatabasePredicates.isHealthyAndCbClosed.test(database);
     }
 
     @Override

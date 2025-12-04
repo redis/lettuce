@@ -34,6 +34,15 @@ public interface BaseRedisMultiDbConnection {
     Iterable<RedisURI> getEndpoints();
 
     /**
+     * Check if an endpoint is healthy (health status is HEALTHY and circuit breaker is CLOSED).
+     *
+     * @param endpoint the Redis endpoint URI
+     * @return true if the endpoint is healthy (HEALTHY status and CLOSED circuit breaker), false otherwise
+     * @throws IllegalArgumentException if the endpoint is not known
+     */
+    boolean isHealthy(RedisURI endpoint);
+
+    /**
      * Get the circuit breaker for a specific endpoint.
      *
      * @param endpoint the Redis endpoint URI
@@ -41,19 +50,6 @@ public interface BaseRedisMultiDbConnection {
      * @throws IllegalArgumentException if the endpoint is not known
      */
     CircuitBreaker getCircuitBreaker(RedisURI endpoint);
-
-    /**
-     * Get the health status for a specific endpoint.
-     * <p>
-     * If health checks are not configured for the endpoint, returns {@link HealthStatus#HEALTHY} as the database is assumed to
-     * be healthy when not actively monitored.
-     * </p>
-     *
-     * @param endpoint the Redis endpoint URI
-     * @return the health status (HEALTHY, UNHEALTHY, or UNKNOWN)
-     * @throws IllegalArgumentException if the endpoint is not known
-     */
-    HealthStatus getHealthStatus(RedisURI endpoint);
 
     /**
      * Add a new database to the multi-database connection.

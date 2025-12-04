@@ -10,7 +10,6 @@ import io.lettuce.core.failover.health.ProbingPolicy;
 import io.lettuce.test.LettuceExtension;
 import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
@@ -112,8 +111,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // And: Verify health status returns HEALTHY when health checks are not configured
                 // (When no health check supplier is provided, the database is assumed healthy)
-                assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
-                assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                assertThat(connection.isHealthy(uri1)).isTrue();
+                assertThat(connection.isHealthy(uri2)).isTrue();
 
             } finally {
                 connection.close();
@@ -146,8 +145,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
                 // And: Health checks should be created and running
                 // Wait for health status to transition from UNKNOWN to HEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
+                    assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
                 // When: Change health status to UNHEALTHY
@@ -155,7 +154,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // Then: Verify health status reflects the change
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isFalse();
                 });
 
                 // Then: connection should failover to uri2
@@ -168,7 +167,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // Then: Verify health status reflects the change
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.isHealthy(uri2)).isFalse();
                 });
 
                 // And: when all endpoints are unhealthy
@@ -211,8 +210,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // And: Both endpoints should become HEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
+                    assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
                 // When: Set different health statuses for each endpoint
@@ -221,8 +220,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // Then: Each endpoint should reflect its own strategy's status
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isFalse();
+                    assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
                 // When: Change strategy2's status to UNHEALTHY
@@ -230,8 +229,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // Then: uri2 should become UNHEALTHY while uri1 remains UNHEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isFalse();
+                    assertThat(connection.isHealthy(uri2)).isFalse();
                 });
 
                 // When: Restore uri1 to HEALTHY
@@ -239,8 +238,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // Then: uri1 should become HEALTHY while uri2 remains UNHEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
+                    assertThat(connection.isHealthy(uri2)).isFalse();
                 });
 
             } finally {
@@ -276,7 +275,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
                         .until(() -> testStrategy.getHealthCheckCallCount(uri1) >= expectedMinimumCalls);
 
                 // And: Verify health status is HEALTHY
-                assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                assertThat(connection.isHealthy(uri1)).isTrue();
 
                 // And: Simulate timeout by introducing delay longer than timeout
                 CountDownLatch timeoutLatch = new java.util.concurrent.CountDownLatch(1);
@@ -286,7 +285,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
                 // When health check times out, it should be recorded as failed and status becomes UNHEALTHY
                 with().pollInterval(5, MILLISECONDS).timeout(Duration.ofMillis(customTimeout + 50)).await()
                         .untilAsserted(() -> {
-                            assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                            assertThat(connection.isHealthy(uri1)).isFalse();
                         });
 
             } finally {
@@ -319,7 +318,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             try {
                 // Then: Verify health check is started and running
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
                 });
 
                 // And: Verify health check was actually called
@@ -353,7 +352,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             try {
                 // Wait for health check to start running
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
                 });
 
                 awaitAtMost().untilAsserted(() -> {
@@ -410,11 +409,11 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             try {
                 // Then: uri1 should become HEALTHY (allowing connection to be created)
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
                 });
 
                 // And: uri2 should be UNKNOWN (health check is blocked)
-                assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNKNOWN);
+                assertThat(getHealthCheckStatus(connection, uri2)).isEqualTo(HealthStatus.UNKNOWN);
 
                 // And: Verify health check was called for uri2 but is blocked
                 awaitAtMost().untilAsserted(() -> {
@@ -422,14 +421,14 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
                 });
 
                 // And: Status should still be UNKNOWN while blocked
-                assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNKNOWN);
+                assertThat(getHealthCheckStatus(connection, uri2)).isEqualTo(HealthStatus.UNKNOWN);
 
                 // When: Unblock health check to allow it to complete
                 healthCheckUri2Latch.countDown();
 
                 // Then: Wait for uri2 status to transition to HEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
             } finally {
@@ -466,8 +465,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             try {
                 // Then: Wait for all endpoints to be HEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
+                    assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
                 // And: Verify current endpoint is uri1 (higher weight)
@@ -482,7 +481,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // Then: Wait for health check to detect failure
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isFalse();
                 });
 
                 // And: Verify failover to another healthy endpoint (uri2)
@@ -533,9 +532,9 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // And: Verify health status for all endpoints to be HEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
-                    assertThat(connection.getHealthStatus(uri3)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
+                    assertThat(connection.isHealthy(uri2)).isTrue();
+                    assertThat(connection.isHealthy(uri3)).isTrue();
                 });
 
                 // When: Mark uri2 as UNHEALTHY (second highest weight)
@@ -543,7 +542,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // Then: Wait for health status to update
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.isHealthy(uri2)).isFalse();
                 });
 
                 // When: Trigger failover from uri1 by marking it UNHEALTHY
@@ -551,7 +550,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // Then: Wait for health check to detect failure
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.UNHEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isFalse();
                 });
 
                 // And: Verify failover skips UNHEALTHY uri2 and goes to HEALTHY uri3
@@ -601,8 +600,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             try {
                 // Then: Wait for all endpoints to be HEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
+                    assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
                 // And: Verify current endpoint is uri1 (higher weight)
@@ -628,7 +627,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
                 });
 
                 // And: Health check still returns HEALTHY (this is the key test point)
-                assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
+                assertThat(getHealthCheckStatus(connection, uri1)).isEqualTo(HealthStatus.HEALTHY);
 
                 // And: Failover should still be triggered by circuit breaker (not health check)
                 awaitAtMost().untilAsserted(() -> {
@@ -694,7 +693,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
                 // Then: Health check should be created and started for the new database
                 // Wait for health check to run and status to become HEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
                 // And: Verify health check was actually called for the new database
@@ -729,8 +728,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             try {
                 // Wait for both databases to become HEALTHY
                 awaitAtMost().untilAsserted(() -> {
-                    assertThat(connection.getHealthStatus(uri1)).isEqualTo(HealthStatus.HEALTHY);
-                    assertThat(connection.getHealthStatus(uri2)).isEqualTo(HealthStatus.HEALTHY);
+                    assertThat(connection.isHealthy(uri1)).isTrue();
+                    assertThat(connection.isHealthy(uri2)).isTrue();
                 });
 
                 // Verify health checks are running for both databases
@@ -764,6 +763,20 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
      */
     private static ConditionFactory awaitAtMost() {
         return await().atMost(AWAIT_TIMEOUT).pollInterval(POLL_INTERVAL);
+    }
+
+    /**
+     * Helper method to get the health status directly from the HealthCheck for testing. This accesses the internal
+     * HealthStatusManager to get the status of an endpoint.
+     * <p>
+     * Used to verify health status independently of circuit breaker state (e.g., checking for UNKNOWN status or verifying that
+     * health status is HEALTHY while circuit breaker is OPEN).
+     * </p>
+     */
+    private <K, V> HealthStatus getHealthCheckStatus(StatefulRedisMultiDbConnection<K, V> connection, RedisURI endpoint) {
+        StatefulRedisMultiDbConnectionImpl<?, K, V> impl = (StatefulRedisMultiDbConnectionImpl<?, K, V>) connection;
+
+        return impl.healthStatusManager.getHealthStatus(endpoint);
     }
 
     /**

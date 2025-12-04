@@ -62,12 +62,6 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
         return circuitBreaker;
     }
 
-    @Override
-    public void close() {
-        connection.close();
-        circuitBreaker.close();
-    }
-
     /**
      * Get the health check for this database.
      *
@@ -77,17 +71,10 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
         return healthCheck;
     }
 
-    /**
-     * Get the health status of this database.
-     * <p>
-     * If health checks are not configured (healthCheck is null), returns {@link HealthStatus#HEALTHY} as the database is
-     * assumed to be healthy when not actively monitored.
-     * </p>
-     *
-     * @return the health status (HEALTHY if health checks are not configured)
-     */
-    public HealthStatus getHealthStatus() {
-        return healthCheck == null ? HealthStatus.HEALTHY : healthCheck.getStatus();
+    @Override
+    public void close() {
+        connection.close();
+        circuitBreaker.close();
     }
 
 }
