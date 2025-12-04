@@ -25,16 +25,12 @@ public class EncodedComplexOutput<K, V, T> extends ComplexOutput<K, V, T> {
 
     @Override
     public void set(ByteBuffer bytes) {
-        if (bytes != null) {
-            data.storeObject(bytes.asReadOnlyBuffer());
-        }
+        data.storeObject(bytes == null ? null : bytes.asReadOnlyBuffer());
     }
 
     @Override
     public void setSingle(ByteBuffer bytes) {
-        if (bytes != null) {
-            data.storeObject(bytes.asReadOnlyBuffer());
-        }
+        data.storeObject(bytes == null ? null : bytes.asReadOnlyBuffer());
     }
 
 }
