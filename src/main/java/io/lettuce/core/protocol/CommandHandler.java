@@ -42,7 +42,6 @@ import io.lettuce.core.RedisException;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.datastructure.queue.HashIndexedQueue;
-import io.lettuce.core.datastructure.queue.IncompleteQueue;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
 import io.lettuce.core.metrics.CommandLatencyRecorder;
@@ -66,6 +65,7 @@ import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import net.bytebuddy.implementation.bytecode.Throw;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
@@ -157,11 +157,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
         this.commandLatencyRecorder = clientResources.commandLatencyRecorder();
         this.latencyMetricsEnabled = commandLatencyRecorder.isEnabled();
         this.boundedQueues = clientOptions.getRequestQueueSize() != Integer.MAX_VALUE;
-        Queue<RedisCommand<?, ?, ?>> implementation = clientOptions.isUseHashIndexedQueue() ? new HashIndexedQueue<>()
-                : new ArrayDeque<>();
-        this.stack = new IncompleteQueue(implementation);
-
-//        this.stack = clientOptions.isUseHashIndexedQueue() ? new HashIndexedQueue<>() : new ArrayDeque<>();
+        this.stack = clientOptions.isUseHashIndexedQueue() ? new HashIndexedQueue<>() : new ArrayDeque<>();
 
         Tracing tracing = clientResources.tracing();
 
@@ -651,8 +647,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                         return;
                     }
 
-                } catch (Exception e) {
-
+                } catch (Throwable e) {
                     ctx.close();
                     throw e;
                 }
@@ -677,8 +672,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                         decodeBufferPolicy.afterPartialDecode(buffer);
                         return;
                     }
-                } catch (Exception e) {
-
+                } catch (Throwable e) {
                     ctx.close();
                     throw e;
                 }
@@ -696,8 +690,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                                 logger.debug("{} Completing command {}", logPrefix(), command);
                             }
                             complete(command);
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                            command.completeExceptionally(e);
                         }
                     }
                 }
