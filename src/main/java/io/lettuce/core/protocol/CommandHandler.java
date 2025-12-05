@@ -65,7 +65,6 @@ import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.internal.logging.InternalLogLevel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import net.bytebuddy.implementation.bytecode.Throw;
 
 /**
  * A netty {@link ChannelHandler} responsible for writing redis commands and reading responses from the server.
@@ -77,6 +76,7 @@ import net.bytebuddy.implementation.bytecode.Throw;
  * @author Daniel Albuquerque
  * @author Gavin Cook
  * @author Anuraag Agrawal
+ * @author Tihomir Mateev
  */
 public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCommands {
 

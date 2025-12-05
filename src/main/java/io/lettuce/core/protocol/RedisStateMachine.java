@@ -42,6 +42,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @author Helly Guo
  * @author shikharid
+ * @author Tihomir Mateev
  */
 public class RedisStateMachine {
 
