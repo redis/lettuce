@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
 
-import org.junit.After;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -77,7 +77,7 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
         directClient2.connect().sync().flushall();
     }
 
-    @After
+    @AfterEach
     void tearDown() {
         directClient1.shutdown();
         directClient2.shutdown();

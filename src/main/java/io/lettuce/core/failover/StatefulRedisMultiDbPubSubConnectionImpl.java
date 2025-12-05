@@ -12,6 +12,7 @@ import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
+import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
@@ -37,8 +38,9 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     public StatefulRedisMultiDbPubSubConnectionImpl(
             Map<RedisURI, RedisDatabase<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
             RedisCodec<K, V> codec, Supplier<JsonParser> parser,
-            DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory) {
-        super(connections, resources, codec, parser, connectionFactory);
+            DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
+            HealthStatusManager healthStatusManager) {
+        super(connections, resources, codec, parser, connectionFactory, healthStatusManager);
     }
 
     @Override

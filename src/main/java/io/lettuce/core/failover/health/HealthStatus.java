@@ -17,7 +17,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.lettuce.core.failover;
+package io.lettuce.core.failover.health;
+
+import io.lettuce.core.failover.RedisDatabase;
 
 /**
  * Enumeration representing the health status of a database endpoint as determined by the health check service.

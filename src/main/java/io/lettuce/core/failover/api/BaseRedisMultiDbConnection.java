@@ -3,6 +3,7 @@ package io.lettuce.core.failover.api;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.CircuitBreaker;
 import io.lettuce.core.failover.DatabaseConfig;
+import io.lettuce.core.failover.health.HealthStatus;
 
 /**
  * @author Ali Takavci
@@ -31,6 +32,15 @@ public interface BaseRedisMultiDbConnection {
      * @return an iterable of all database endpoints
      */
     Iterable<RedisURI> getEndpoints();
+
+    /**
+     * Check if an endpoint is healthy (health status is HEALTHY and circuit breaker is CLOSED).
+     *
+     * @param endpoint the Redis endpoint URI
+     * @return true if the endpoint is healthy (HEALTHY status and CLOSED circuit breaker), false otherwise
+     * @throws IllegalArgumentException if the endpoint is not known
+     */
+    boolean isHealthy(RedisURI endpoint);
 
     /**
      * Get the circuit breaker for a specific endpoint.

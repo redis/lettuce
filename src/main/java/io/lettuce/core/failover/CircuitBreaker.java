@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,8 @@ public class CircuitBreaker implements Closeable {
      * Create a circuit breaker instance.
      */
     public CircuitBreaker(CircuitBreakerConfig config) {
+        LettuceAssert.notNull(config, "CircuitBreakerConfig must not be null");
+
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.trackedExceptions);
         this.stateRef = new AtomicReference<>(
