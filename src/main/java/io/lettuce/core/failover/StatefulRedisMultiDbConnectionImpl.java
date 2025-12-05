@@ -96,6 +96,10 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         this.parser = parser;
         this.connectionFactory = connectionFactory;
         this.healthStatusManager = healthStatusManager;
+
+        databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
+        databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
+
         // TODO: Current implementation forces all database connections to be created and established (at least once before this
         // constructor called).
         // This is suboptimal and should be replaced with a logic that uses async connection creation and state management,
@@ -105,10 +109,6 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
-
-        databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
-        databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
-
     }
 
     private void onCircuitBreakerStateChange(CircuitBreakerStateChangeEvent event) {
@@ -421,6 +421,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
                 throw new IllegalArgumentException("Database already exists: " + redisURI);
             }
 
+            healthStatusManager.registerListener(redisURI, this::onHealthStatusChange);
+
             // Create new database connection using the factory
             RedisDatabase<C> database = connectionFactory.createDatabase(databaseConfig, codec, healthStatusManager);
 
@@ -429,7 +431,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             databases.put(redisURI, database);
 
             database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
-            healthStatusManager.registerListener(database.getRedisURI(), this::onHealthStatusChange);
+
         });
 
     }
