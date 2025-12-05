@@ -78,8 +78,10 @@ public class CommandEncoder extends MessageToByteEncoder<Object> {
             command.encode(out);
         } catch (Throwable e) {
             ctx.close();
-            logger.error("{} Cannot encode command. Closing the connection as the connection state may be out of sync.", logPrefix(ctx.channel()), e);
-            throw new EncoderException("Cannot encode command. Closing the connection as the connection state may be out of sync.", e);
+            logger.error("{} Cannot encode command. Closing the connection as the connection state may be out of sync.",
+                    logPrefix(ctx.channel()), e);
+            throw new EncoderException(
+                    "Cannot encode command. Closing the connection as the connection state may be out of sync.", e);
         }
 
         if (debugEnabled) {
