@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -468,12 +470,18 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         StatefulRedisMultiDbPubSubConnection<String, String> multiDbPubSub = multiDbClient.connectPubSub();
 
         // Add listener to collect messages
+        CountDownLatch latch = new CountDownLatch(1);
         multiDbPubSub.addListener(new RedisPubSubAdapter<String, String>() {
 
             @Override
             public void message(String channel, String message) {
                 receivedMessages.add(message);
                 messageCount.incrementAndGet();
+            }
+
+            @Override
+            public void subscribed(String channel, long count) {
+                latch.countDown();
             }
 
         });
@@ -483,8 +491,8 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         multiDbPubSub.sync().subscribe(testChannel);
 
         // Give subscription time to establish
-        Thread.sleep(100);
-
+        latch.await(1, TimeUnit.SECONDS);
+        
         // Create direct PubSub connections for publishing
         StatefulRedisPubSubConnection<String, String> publisher1 = directClient1.connectPubSub();
         StatefulRedisPubSubConnection<String, String> publisher2 = directClient2.connectPubSub();

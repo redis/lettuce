@@ -42,8 +42,8 @@ class CircuitBreakerUnitTests {
             CircuitBreakerConfig config = getTestConfig(50.0f, 0);
             try (CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config)) {
                 // When: record 1 success and 1 failure (50% failure rate, but only 1 failure)
-                circuitBreaker.recordSuccess();
-                circuitBreaker.recordFailure();
+                ((CircuitBreakerImpl) circuitBreaker).recordSuccess();
+                ((CircuitBreakerImpl) circuitBreaker).recordFailure();
 
                 // Then: circuit should open because percentage threshold is met (minimumNumberOfFailures=0 means ignore count)
                 assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
@@ -57,7 +57,7 @@ class CircuitBreakerUnitTests {
             CircuitBreaker.CircuitBreakerConfig config = getTestConfig(100.0f, 0);
             try (CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config)) {
                 // When: record only 1 failure (100% failure rate)
-                circuitBreaker.recordFailure();
+                ((CircuitBreakerImpl) circuitBreaker).recordFailure();
 
                 // Then: circuit should open
                 assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
@@ -72,10 +72,10 @@ class CircuitBreakerUnitTests {
             try (CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config)) {
                 // When: record 100 successes and 5 failures (very low percentage but meets count)
                 for (int i = 0; i < 100; i++) {
-                    circuitBreaker.recordSuccess();
+                    ((CircuitBreakerImpl) circuitBreaker).recordSuccess();
                 }
                 for (int i = 0; i < 5; i++) {
-                    circuitBreaker.recordFailure();
+                    ((CircuitBreakerImpl) circuitBreaker).recordFailure();
                 }
 
                 // Then: circuit should open because failure count threshold is met (failureRateThreshold=0.0 means ignore
@@ -92,8 +92,8 @@ class CircuitBreakerUnitTests {
             try (CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config)) {
                 // When: record 5 failures and 5 successes (50% rate but only 5 failures)
                 for (int i = 0; i < 5; i++) {
-                    circuitBreaker.recordFailure();
-                    circuitBreaker.recordSuccess();
+                    ((CircuitBreakerImpl) circuitBreaker).recordFailure();
+                    ((CircuitBreakerImpl) circuitBreaker).recordSuccess();
                 }
 
                 // Then: circuit should remain closed (percentage met but count not met)
@@ -101,7 +101,7 @@ class CircuitBreakerUnitTests {
 
                 // When: add 5 more failures (now 10 failures, 5 successes = 66.7% rate)
                 for (int i = 0; i < 5; i++) {
-                    circuitBreaker.recordFailure();
+                    ((CircuitBreakerImpl) circuitBreaker).recordFailure();
                 }
 
                 // Then: circuit should open (both conditions met)
@@ -117,9 +117,9 @@ class CircuitBreakerUnitTests {
             try (CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config)) {
                 // When: record 9 failures and 1 success (90% rate but only 9 failures)
                 for (int i = 0; i < 9; i++) {
-                    circuitBreaker.recordFailure();
+                    ((CircuitBreakerImpl) circuitBreaker).recordFailure();
                 }
-                circuitBreaker.recordSuccess();
+                ((CircuitBreakerImpl) circuitBreaker).recordSuccess();
 
                 // Then: circuit should remain closed
                 assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
@@ -134,10 +134,10 @@ class CircuitBreakerUnitTests {
             try (CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config)) {
                 // When: record 100 successes and 10 failures (9.1% rate with 10 failures)
                 for (int i = 0; i < 100; i++) {
-                    circuitBreaker.recordSuccess();
+                    ((CircuitBreakerImpl) circuitBreaker).recordSuccess();
                 }
                 for (int i = 0; i < 10; i++) {
-                    circuitBreaker.recordFailure();
+                    ((CircuitBreakerImpl) circuitBreaker).recordFailure();
                 }
 
                 // Then: circuit should remain closed
@@ -412,8 +412,8 @@ class CircuitBreakerUnitTests {
             try (CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config)) {
                 // Exactly 50% failure rate with exactly 10 failures
                 for (int i = 0; i < 10; i++) {
-                    circuitBreaker.recordFailure();
-                    circuitBreaker.recordSuccess();
+                    ((CircuitBreakerImpl) circuitBreaker).recordFailure();
+                    ((CircuitBreakerImpl) circuitBreaker).recordSuccess();
                 }
 
                 // Should open because both thresholds are met (>= comparison)
@@ -441,7 +441,7 @@ class CircuitBreakerUnitTests {
             try (CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config)) {
                 // 100% failure rate
                 for (int i = 0; i < 10; i++) {
-                    circuitBreaker.recordFailure();
+                    ((CircuitBreakerImpl) circuitBreaker).recordFailure();
                 }
 
                 assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
@@ -473,10 +473,10 @@ class CircuitBreakerUnitTests {
                 // Record 100,000 successes and 1,000 failures (0.99% failure rate and meets count threshold)
                 // Keep the number reasonable to stay within the sliding window
                 for (int i = 0; i < 100_000; i++) {
-                    circuitBreaker.recordSuccess();
+                    ((CircuitBreakerImpl) circuitBreaker).recordSuccess();
                 }
                 for (int i = 0; i < 1_000; i++) {
-                    circuitBreaker.recordFailure();
+                    ((CircuitBreakerImpl) circuitBreaker).recordFailure();
                 }
 
                 // Should open because failure count >= 1000 and failure rate >= 1.0%

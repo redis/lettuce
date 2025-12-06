@@ -53,8 +53,14 @@ class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements D
             command.completeExceptionally(RedisCircuitBreakerException.INSTANCE);
             return command;
         }
-        // Delegate to parent
-        RedisCommand<K1, V1, T> result = super.write(command);
+        RedisCommand<K1, V1, T> result;
+        try {
+            // Delegate to parent
+            result = super.write(command);
+        } catch (Exception e) {
+            circuitBreaker.getGeneration().recordResult(null, e);
+            throw e;
+        }
 
         // Attach completion callback to track success/failure
         if (result instanceof CompleteableCommand) {
@@ -75,8 +81,15 @@ class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements D
             commands.forEach(c -> c.completeExceptionally(RedisCircuitBreakerException.INSTANCE));
             return (Collection) commands;
         }
-        // Delegate to parent
-        Collection<RedisCommand<K1, V1, ?>> result = super.write(commands);
+        Collection<RedisCommand<K1, V1, ?>> result;
+        try {
+            // Delegate to parent
+            result = super.write(commands);
+        } catch (Exception e) {
+            // TODO: here not sure we should record exception for each command or just once for the batch
+            circuitBreaker.getGeneration().recordResult(null, e);
+            throw e;
+        }
 
         // Attach completion callbacks to track success/failure for each command
         CircuitBreakerGeneration generation = circuitBreaker.getGeneration();

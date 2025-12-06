@@ -43,24 +43,6 @@ public interface CircuitBreaker extends Closeable {
     public CircuitBreakerGeneration getGeneration();
 
     /**
-     * Record the result of a command execution. This is used to track the success/failure of commands for metrics and circuit
-     * breaker state evaluation.
-     *
-     * @param error the error, if any
-     */
-    public void recordResult(Throwable error);
-
-    /**
-     * Record a failure. This is used to track the failure of commands for metrics and circuit breaker state evaluation.
-     */
-    public void recordFailure();
-
-    /**
-     * Record a success. This is used to track the success of commands for metrics and circuit breaker state evaluation.
-     */
-    public void recordSuccess();
-
-    /**
      * Get the current state of the circuit breaker.
      *
      * @return the current state
@@ -124,7 +106,7 @@ public interface CircuitBreaker extends Closeable {
 
         private final int minimumNumberOfFailures;
 
-        private int metricsWindowSize;
+        private final int metricsWindowSize;
 
         private CircuitBreakerConfig() {
             this(DEFAULT_FAILURE_RATE_THRESHOLD, DEFAULT_MINIMUM_NUMBER_OF_FAILURES, DEFAULT_TRACKED_EXCEPTIONS,
@@ -153,6 +135,12 @@ public interface CircuitBreaker extends Closeable {
 
         public int getMetricsWindowSize() {
             return metricsWindowSize;
+        }
+
+        @Override
+        public String toString() {
+            return "CircuitBreakerConfig{" + "trackedExceptions=" + trackedExceptions + ", failureThreshold=" + failureThreshold
+                    + ", minimumNumberOfFailures=" + minimumNumberOfFailures + ", metricsWindowSize=" + metricsWindowSize + '}';
         }
 
     }

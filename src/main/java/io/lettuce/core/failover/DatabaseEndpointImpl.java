@@ -46,6 +46,7 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
 
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
+
         if (circuitBreaker == null) {
             return super.write(command);
         }
@@ -53,8 +54,15 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
             command.completeExceptionally(RedisCircuitBreakerException.INSTANCE);
             return command;
         }
-        // Delegate to parent
-        RedisCommand<K, V, T> result = super.write(command);
+
+        RedisCommand<K, V, T> result;
+        try {
+            // Delegate to parent
+            result = super.write(command);
+        } catch (Exception e) {
+            circuitBreaker.getGeneration().recordResult(null, e);
+            throw e;
+        }
 
         // Attach completion callback to track success/failure
         if (result instanceof CompleteableCommand) {
@@ -75,8 +83,15 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
             commands.forEach(c -> c.completeExceptionally(RedisCircuitBreakerException.INSTANCE));
             return (Collection) commands;
         }
-        // Delegate to parent
-        Collection<RedisCommand<K, V, ?>> result = super.write(commands);
+        Collection<RedisCommand<K, V, ?>> result;
+        try {
+            // Delegate to parent
+            result = super.write(commands);
+        } catch (Exception e) {
+            // TODO: here not sure we should record exception for each command or just once for the batch
+            circuitBreaker.getGeneration().recordResult(null, e);
+            throw e;
+        }
 
         // Attach completion callbacks to track success/failure for each command
         CircuitBreakerGeneration generation = circuitBreaker.getGeneration();

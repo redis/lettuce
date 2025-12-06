@@ -205,19 +205,21 @@ class MultiDbClientIntegrationTests {
         // API CHANGE: Original used multiDbClient.getActive()
         assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
-        String initialServerId = extractServerId(connection.sync().info("server"));
-        String serverId = extractServerId(RedisClient.create().connect(uri1).sync().info("server"));
-        assertThat(serverId).isEqualTo(initialServerId);
+        try (RedisClient c = RedisClient.create()) {
+            String initialServerId = extractServerId(connection.sync().info("server"));
+            String serverId = extractServerId(c.connect(uri1).sync().info("server"));
+            assertThat(serverId).isEqualTo(initialServerId);
 
-        // API CHANGE: Original used multiDbClient.setActive(uri2)
-        connection.switchToDatabase(uri2);
-        // API CHANGE: Original used multiDbClient.getActive()
-        assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
+            // API CHANGE: Original used multiDbClient.setActive(uri2)
+            connection.switchToDatabase(uri2);
+            // API CHANGE: Original used multiDbClient.getActive()
+            assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
 
-        String newServerId = extractServerId(connection.sync().info("server"));
-        String secondServerId = extractServerId(RedisClient.create().connect(uri2).sync().info("server"));
-        assertThat(secondServerId).isEqualTo(newServerId);
-        assertThat(newServerId).isNotEqualTo(initialServerId);
+            String newServerId = extractServerId(connection.sync().info("server"));
+            String secondServerId = extractServerId(c.connect(uri2).sync().info("server"));
+            assertThat(secondServerId).isEqualTo(newServerId);
+            assertThat(newServerId).isNotEqualTo(initialServerId);
+        }
     }
 
     private String extractServerId(String info) {

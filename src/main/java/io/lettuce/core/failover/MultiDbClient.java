@@ -44,7 +44,7 @@ public interface MultiDbClient extends BaseRedisClient {
      * Set the {@link ClientOptions} for the client.
      *
      * @param clientOptions the new client options
-     * @throws IllegalArgumentException if {@literal clientOptions} is null
+     * @throws IllegalArgumentException if {@param clientOptions} is null
      */
     public void setOptions(ClientOptions clientOptions);
 

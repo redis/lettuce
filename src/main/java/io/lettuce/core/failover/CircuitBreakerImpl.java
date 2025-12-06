@@ -46,22 +46,12 @@ class CircuitBreakerImpl implements CircuitBreaker {
     }
 
     /**
-     * Get the metrics tracked by this circuit breaker.
-     * <p>
-     * This is only for internal use and testing purposes.
-     *
-     * @return the circuit breaker metrics
-     */
-    CircuitBreakerMetrics getMetrics() {
-        return stateRef.get().metrics;
-    }
-
-    /**
      * Get a snapshot of the current metrics within the time window. Use the snapshot to access success count, failure count,
      * total count, and failure rate.
      *
      * @return an immutable snapshot of current metrics
      */
+    @Override
     public MetricsSnapshot getSnapshot() {
         return stateRef.get().metrics.getSnapshot();
     }
@@ -87,15 +77,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
         return false;
     }
 
-    public void recordResult(Throwable error) {
-        if (error != null && isCircuitBreakerTrackedException(error)) {
-            recordFailure();
-        } else {
-            recordSuccess();
-        }
-    }
-
-    void recordResult(CircuitBreakerStateHolder generation, Throwable error) {
+    public void recordResult(CircuitBreakerStateHolder generation, Throwable error) {
         if (error != null && isCircuitBreakerTrackedException(error)) {
             recordFailure(generation);
         } else {
@@ -112,7 +94,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
         evaluateMetrics(state);
     }
 
-    public void recordSuccess() {
+    void recordSuccess() {
         recordSuccess(stateRef.get());
     }
 
@@ -179,7 +161,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
             }
 
             // Always create fresh metrics on state transition
-            CircuitBreakerMetrics nextMetrics = MetricsFactory.createDefaultMetrics();
+            CircuitBreakerMetrics nextMetrics = MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize());
 
             CircuitBreakerStateHolder next = new CircuitBreakerStateHolder(this, nextMetrics, newState);
 
@@ -197,10 +179,12 @@ class CircuitBreakerImpl implements CircuitBreaker {
      *
      * @return the current state
      */
+    @Override
     public State getCurrentState() {
         return stateRef.get().state;
     }
 
+    @Override
     public boolean isClosed() {
         return getCurrentState() == State.CLOSED;
     }
@@ -210,6 +194,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
      *
      * @param listener the listener to add, must not be {@code null}
      */
+    @Override
     public void addListener(CircuitBreakerStateListener listener) {
         listeners.add(listener);
     }
@@ -219,6 +204,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
      *
      * @param listener the listener to remove, must not be {@code null}
      */
+    @Override
     public void removeListener(CircuitBreakerStateListener listener) {
         listeners.remove(listener);
     }

@@ -2,6 +2,7 @@ package io.lettuce.core.failover;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
@@ -10,6 +11,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.awaitility.Durations;
 import org.junit.jupiter.api.*;
 import io.lettuce.core.*;
 import io.lettuce.core.codec.StringCodec;
@@ -137,9 +140,6 @@ class DatabaseEndpointCallbackTests {
             // Complete command with timeout exception
             asyncCommand.completeExceptionally(new RedisCommandTimeoutException("Command timed out"));
 
-            // Wait a bit for callback to execute
-            Thread.sleep(100);
-
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getFailureCount()).isEqualTo(1);
             assertThat(snapshot.getSuccessCount()).isEqualTo(0);
@@ -159,8 +159,6 @@ class DatabaseEndpointCallbackTests {
             // Complete command with connection exception
             asyncCommand.completeExceptionally(new RedisConnectionException("Connection failed"));
 
-            Thread.sleep(100);
-
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getFailureCount()).isEqualTo(1);
         }
@@ -178,8 +176,6 @@ class DatabaseEndpointCallbackTests {
 
             // Complete command with IOException
             asyncCommand.completeExceptionally(new IOException("Network error"));
-
-            Thread.sleep(100);
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getFailureCount()).isEqualTo(1);
@@ -199,8 +195,6 @@ class DatabaseEndpointCallbackTests {
             // Complete command with ClosedChannelException (subclass of IOException)
             asyncCommand.completeExceptionally(new ClosedChannelException());
 
-            Thread.sleep(100);
-
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getFailureCount()).isEqualTo(1);
         }
@@ -219,8 +213,6 @@ class DatabaseEndpointCallbackTests {
             // Complete command with generic TimeoutException
             asyncCommand.completeExceptionally(new TimeoutException("Timeout"));
 
-            Thread.sleep(100);
-
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getFailureCount()).isEqualTo(1);
         }
@@ -238,8 +230,6 @@ class DatabaseEndpointCallbackTests {
 
             // Complete command successfully
             asyncCommand.complete();
-
-            Thread.sleep(100);
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getSuccessCount()).isEqualTo(1);
@@ -268,12 +258,12 @@ class DatabaseEndpointCallbackTests {
             // Simulate delayed completion (e.g., timeout after failover)
             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
             try {
-                executor.schedule(() -> {
+                @SuppressWarnings("rawtypes")
+                Future future = executor.schedule(() -> {
                     asyncCommand.completeExceptionally(new RedisCommandTimeoutException("Delayed timeout"));
                 }, 500, TimeUnit.MILLISECONDS);
 
-                // Wait for delayed completion
-                Thread.sleep(1000);
+                future.get(); // Wait for completion
 
                 MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
                 assertThat(snapshot.getFailureCount()).isEqualTo(1);
@@ -307,7 +297,8 @@ class DatabaseEndpointCallbackTests {
                         TimeUnit.MILLISECONDS);
                 executor.schedule(() -> commands.get(4).complete(), 500, TimeUnit.MILLISECONDS);
 
-                Thread.sleep(1000);
+                await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS).atMost(Durations.ONE_SECOND)
+                        .untilAsserted(() -> assertThat(circuitBreaker.getSnapshot().getTotalCount()).isEqualTo(5));
 
                 MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
                 assertThat(snapshot.getSuccessCount()).isEqualTo(3);
@@ -350,8 +341,6 @@ class DatabaseEndpointCallbackTests {
 
                 // Command completes with timeout AFTER failover
                 asyncCommand.completeExceptionally(new RedisCommandTimeoutException("Timeout after failover"));
-
-                Thread.sleep(100);
 
                 // Failure should be recorded in endpoint1's circuit breaker (where command was issued)
                 MetricsSnapshot snapshot1 = cb1.getSnapshot();
@@ -399,7 +388,6 @@ class DatabaseEndpointCallbackTests {
                 }
 
                 latch.await(5, TimeUnit.SECONDS);
-                Thread.sleep(200); // Allow callbacks to complete
 
                 MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
                 assertThat(snapshot.getFailureCount()).isEqualTo(20);
@@ -451,7 +439,6 @@ class DatabaseEndpointCallbackTests {
                 }
 
                 latch.await(5, TimeUnit.SECONDS);
-                Thread.sleep(200);
 
                 MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
                 assertThat(snapshot.getSuccessCount()).isEqualTo(6);
@@ -519,7 +506,6 @@ class DatabaseEndpointCallbackTests {
                 }
 
                 completeLatch.await(5, TimeUnit.SECONDS);
-                Thread.sleep(500); // Allow all callbacks to complete
 
                 MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
                 assertThat(snapshot.getTotalCount()).isEqualTo(commandCount);
@@ -562,7 +548,6 @@ class DatabaseEndpointCallbackTests {
                 }
 
                 latch.await(5, TimeUnit.SECONDS);
-                Thread.sleep(500);
 
                 // Circuit should have opened
                 assertThat(circuitBreaker.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
@@ -594,12 +579,12 @@ class DatabaseEndpointCallbackTests {
             // Simulate very long delay (e.g., 2 seconds - simulating stuck connection that eventually times out)
             ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
             try {
-                executor.schedule(() -> {
+                @SuppressWarnings("rawtypes")
+                Future future = executor.schedule(() -> {
                     asyncCommand.completeExceptionally(new RedisCommandTimeoutException("Timeout after very long delay"));
                 }, 2, TimeUnit.SECONDS);
 
-                // Wait for completion
-                Thread.sleep(2500);
+                future.get(); // Wait for completion
 
                 MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
                 assertThat(snapshot.getFailureCount()).isEqualTo(1);
@@ -623,8 +608,6 @@ class DatabaseEndpointCallbackTests {
             // Write already-completed command
             endpoint.write(asyncCommand);
 
-            Thread.sleep(100);
-
             // Should still record the success
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             // Note: Depending on implementation, this might be 0 or 1
@@ -646,7 +629,7 @@ class DatabaseEndpointCallbackTests {
             // Complete successfully (error will be null in callback)
             asyncCommand.complete();
 
-            Thread.sleep(100);
+            // Thread.sleep(100);
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getSuccessCount()).isEqualTo(1);
@@ -668,8 +651,6 @@ class DatabaseEndpointCallbackTests {
 
             asyncCommand.completeExceptionally(new RedisCommandTimeoutException("Timeout"));
 
-            Thread.sleep(100);
-
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             // Should record failure (possibly multiple times depending on implementation)
             assertThat(snapshot.getFailureCount()).isGreaterThanOrEqualTo(1);
@@ -683,7 +664,16 @@ class DatabaseEndpointCallbackTests {
             CircuitBreaker circuitBreaker = spy(new CircuitBreakerImpl(getCBConfig(50.0f, 100)));
 
             // Make recordResult throw exception
-            doThrow(new RuntimeException("Simulated callback exception")).when(circuitBreaker).recordResult(any());
+            CircuitBreakerGeneration generation = new CircuitBreakerGeneration() {
+
+                @Override
+                public void recordResult(Object output, Throwable error) {
+                    throw new RuntimeException("Simulated callback exception");
+                }
+
+            };
+
+            doReturn(generation).when(circuitBreaker).getGeneration();
 
             endpoint.bind(circuitBreaker);
 
@@ -720,8 +710,6 @@ class DatabaseEndpointCallbackTests {
             commands.get(3).completeExceptionally(new ClosedChannelException());
             commands.get(4).completeExceptionally(new TimeoutException("Generic timeout"));
             commands.get(5).complete(); // Success
-
-            Thread.sleep(200);
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getFailureCount()).isEqualTo(5); // All tracked exceptions

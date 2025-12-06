@@ -2,8 +2,8 @@ package io.lettuce.core.failover;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -14,15 +14,14 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.testcontainers.shaded.org.awaitility.Durations;
 
 import eu.rekawek.toxiproxy.Proxy;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
@@ -142,9 +141,6 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
     private void enableAllToxiproxy() throws IOException {
         tp.getProxies().forEach(proxy -> {
             try {
-                for (Toxic toxic : proxy.toxics().getAll()) {
-                    toxic.remove();
-                }
                 proxy.enable();
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -154,6 +150,8 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
     @AfterEach
     void tearDown() {
+        clearToxics();
+
         if (connection != null && connection.isOpen()) {
             connection.close();
         }
@@ -172,6 +170,23 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
             WithPassword.disableAuthentication(redis2Conn);
             redis2Conn.configRewrite();
             redis2Conn.getStatefulConnection().close();
+        }
+    }
+
+    private void clearToxics() {
+        for (RedisURI endpoint : proxyMap.keySet()) {
+
+            try {
+                Proxy proxy = proxyMap.get(endpoint);
+                if (proxy != null) {
+                    // Remove the latency toxic to restore connectivity
+                    for (Toxic toxic : proxy.toxics().getAll()) {
+                        toxic.remove();
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to clear toxics on ToxiProxy", e);
+            }
         }
     }
 
@@ -199,16 +214,8 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
         // Execute commands that will fail using ASYNC API
         for (int i = 0; i < 20; i++) {
-            try {
-                RedisFuture<String> future = connection.async().get("key" + i);
-                future.get(1, TimeUnit.SECONDS); // Wait for completion
-            } catch (Exception e) {
-                // Expected - connection failures or timeouts
-            }
+            connection.async().get("key" + i);
         }
-
-        // Force evaluation
-        ((CircuitBreakerImpl) cb).evaluateMetrics();
 
         // Then: Should receive state change event
         boolean received = latch.await(5, TimeUnit.SECONDS);
@@ -226,7 +233,6 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
         // Cleanup
         cb.removeListener(listener);
-        restartRedisInstance(failingEndpoint);
     }
 
     @Test
@@ -260,31 +266,20 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
         // Execute commands that will fail on endpoint1 using ASYNC API
         for (int i = 0; i < 20; i++) {
-            try {
-                RedisFuture<String> future = connection.async().get("key" + i);
-                future.get(1, TimeUnit.SECONDS); // Wait for completion
-            } catch (Exception e) {
-                // Expected - connection failures or timeouts
-            }
+            connection.async().get("key" + i);
         }
-
-        // Force evaluation
-        ((CircuitBreakerImpl) cb1).evaluateMetrics();
 
         // Then: Should automatically failover to endpoint2
         boolean failedOver = failoverLatch.await(5, TimeUnit.SECONDS);
         assertThat(failedOver).as("Should failover to healthy endpoint").isTrue();
-        Awaitility.await().atMost(1, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertEquals(endpoint2, connection.getCurrentEndpoint()));
+        await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> assertEquals(endpoint2, connection.getCurrentEndpoint()));
 
         // Verify we can read from endpoint2
         RedisFuture<String> future = connection.async().get("failover-test-key");
         String value = future.get(1, TimeUnit.SECONDS);
         assertThat(value).isEqualTo("endpoint2-value");
 
-        // Cleanup
         cb1.removeListener(listener);
-        restartRedisInstance(endpoint1);
     }
 
     @Test
@@ -299,24 +294,20 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         shutdownRedisInstance(currentEndpoint);
 
         int aimedFailureCount = cbConfig.getMinimumNumberOfFailures() - 1;
+        AtomicInteger failureCounter = new AtomicInteger();
         // Execute commands that will fail using ASYNC API
-        int failureCount = 0;
         for (int i = 0; i < aimedFailureCount; i++) {
-            try {
-                RedisFuture<String> future = connection.async().get("key" + i);
-                future.get(1, TimeUnit.SECONDS); // Wait for completion
-            } catch (Exception e) {
-                failureCount++;
-            }
+            connection.async().get("key" + i).whenComplete((o, e) -> {
+                if (e != null) {
+                    failureCounter.incrementAndGet();
+                }
+            });
         }
 
         // Then: Metrics should track failures
-        long finalFailures = cb.getSnapshot().getFailureCount();
-        assertEquals(aimedFailureCount, failureCount);
-        assertEquals(aimedFailureCount, finalFailures);
-
-        // Cleanup
-        restartRedisInstance(currentEndpoint);
+        await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS).atMost(Durations.FIVE_SECONDS)
+                .untilAsserted(() -> assertEquals(aimedFailureCount, failureCounter.get()));
+        assertEquals(aimedFailureCount, cb.getSnapshot().getFailureCount());
     }
 
     @Test
@@ -331,22 +322,13 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         shutdownRedisInstance(currentEndpoint);
 
         for (int i = 0; i < 20; i++) {
-            try {
-                RedisFuture<String> future = connection.async().get("key" + i);
-                future.get(1, TimeUnit.SECONDS); // Wait for completion
-            } catch (Exception e) {
-                // Expected
-            }
+            connection.async().get("key" + i);
         }
 
-        // Force evaluation
-        ((CircuitBreakerImpl) cb).evaluateMetrics();
-
         // Then: Circuit breaker should open
-        assertThat(cb.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
-
-        // Cleanup
-        restartRedisInstance(currentEndpoint);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(cb.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+        });
     }
 
     @Test
@@ -379,15 +361,8 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         shutdownRedisInstance(currentEndpoint);
 
         for (int i = 0; i < 20; i++) {
-            try {
-                RedisFuture<String> future = connection.async().get("key" + i);
-                future.get(1, TimeUnit.SECONDS); // Wait for completion
-            } catch (Exception e) {
-                // Expected
-            }
+            connection.async().get("key" + i);
         }
-
-        ((CircuitBreakerImpl) cb).evaluateMetrics();
 
         // Then: Both listeners should be notified
         boolean notified = latch.await(5, TimeUnit.SECONDS);
@@ -398,7 +373,6 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         // Cleanup
         cb.removeListener(listener1);
         cb.removeListener(listener2);
-        restartRedisInstance(currentEndpoint);
     }
 
     /**
@@ -417,27 +391,6 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to shutdown Redis instance via ToxiProxy", e);
-        }
-    }
-
-    /**
-     * Simulates restarting a Redis instance by removing the latency toxic. This restores connectivity to the Redis instance.
-     *
-     * @param endpoint the endpoint to simulate restart for
-     */
-    private void restartRedisInstance(RedisURI endpoint) {
-        try {
-            Proxy proxy = proxyMap.get(endpoint);
-            if (proxy != null) {
-                // Remove the latency toxic to restore connectivity
-                String toxicName = "latency_" + endpoint.getPort();
-                Toxic toxic = proxy.toxics().get(toxicName);
-                if (toxic != null) {
-                    toxic.remove();
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to restart Redis instance via ToxiProxy", e);
         }
     }
 
@@ -469,15 +422,8 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
         // Execute commands that will fail using REACTIVE API
         for (int i = 0; i < 20; i++) {
-            try {
-                connection.reactive().get("key" + i).block(Duration.ofSeconds(1));
-            } catch (Exception e) {
-                // Expected - connection failures or timeouts
-            }
+            connection.reactive().get("key" + i).subscribe();
         }
-
-        // Force evaluation
-        ((CircuitBreakerImpl) cb).evaluateMetrics();
 
         // Then: Should receive state change event
         boolean received = latch.await(5, TimeUnit.SECONDS);
@@ -495,7 +441,6 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
         // Cleanup
         cb.removeListener(listener);
-        restartRedisInstance(failingEndpoint);
     }
 
     @Test
@@ -513,7 +458,6 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         connection.switchToDatabase(endpoint1);
 
         // Track state changes
-        // AtomicReference<RedisURI> failedOverTo = new AtomicReference<>();
         CountDownLatch failoverLatch = new CountDownLatch(1);
 
         CircuitBreakerStateListener listener = event -> {
@@ -531,21 +475,13 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         int aimedFailureCount = cbConfig.getMinimumNumberOfFailures();
         // Execute commands that will fail on endpoint1 using REACTIVE API
         for (int i = 0; i < aimedFailureCount; i++) {
-            try {
-                connection.reactive().get("key" + i).block(Duration.ofSeconds(1));
-            } catch (Exception e) {
-                // Expected - connection failures or timeouts
-            }
+            connection.reactive().get("key" + i).subscribe();
         }
-
-        // Force evaluation
-        ((CircuitBreakerImpl) cb1).evaluateMetrics();
 
         // Then: Should automatically failover to endpoint2
         boolean failedOver = failoverLatch.await(5, TimeUnit.SECONDS);
         assertThat(failedOver).as("Should failover to healthy endpoint").isTrue();
-        Awaitility.await().atMost(1, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertEquals(endpoint2, connection.getCurrentEndpoint()));
+        await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> assertEquals(endpoint2, connection.getCurrentEndpoint()));
 
         // Verify we can read from endpoint2
         String value = connection.reactive().get("failover-test-key-reactive").block(Duration.ofSeconds(1));
@@ -553,7 +489,6 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
 
         // Cleanup
         cb1.removeListener(listener);
-        restartRedisInstance(endpoint1);
     }
 
     @Test
@@ -568,23 +503,16 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         shutdownRedisInstance(currentEndpoint);
 
         // Execute commands that will fail using REACTIVE API
-        int failureCount = 0;
+        AtomicInteger failureConter = new AtomicInteger();
         int aimedFailureCount = cbConfig.getMinimumNumberOfFailures() - 1;
         for (int i = 0; i < aimedFailureCount; i++) {
-            try {
-                connection.reactive().get("key" + i).block(Duration.ofSeconds(1));
-            } catch (Exception e) {
-                failureCount++;
-            }
+            connection.reactive().get("key" + i).doOnError(e -> failureConter.incrementAndGet()).subscribe();
         }
 
         // Then: Metrics should track failures
-        long finalFailures = cb.getSnapshot().getFailureCount();
-        assertEquals(aimedFailureCount, failureCount);
-        assertEquals(aimedFailureCount, finalFailures);
-
-        // Cleanup
-        restartRedisInstance(currentEndpoint);
+        await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS).atMost(Durations.FIVE_SECONDS)
+                .untilAsserted(() -> assertEquals(aimedFailureCount, failureConter.get()));
+        assertEquals(aimedFailureCount, cb.getSnapshot().getFailureCount());
     }
 
     @Test
@@ -599,21 +527,13 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         shutdownRedisInstance(currentEndpoint);
 
         for (int i = 0; i < 20; i++) {
-            try {
-                connection.reactive().get("key" + i).block(Duration.ofSeconds(1));
-            } catch (Exception e) {
-                // Expected
-            }
+            connection.reactive().get("key" + i).subscribe();
         }
 
-        // Force evaluation
-        ((CircuitBreakerImpl) cb).evaluateMetrics();
-
         // Then: Circuit breaker should open
-        assertThat(cb.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
-
-        // Cleanup
-        restartRedisInstance(currentEndpoint);
+        await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(cb.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+        });
     }
 
     @Test
@@ -646,14 +566,8 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         shutdownRedisInstance(currentEndpoint);
 
         for (int i = 0; i < 20; i++) {
-            try {
-                connection.reactive().get("key" + i).block(Duration.ofSeconds(1));
-            } catch (Exception e) {
-                // Expected
-            }
+            connection.reactive().get("key" + i).subscribe();
         }
-
-        ((CircuitBreakerImpl) cb).evaluateMetrics();
 
         // Then: Both listeners should be notified
         boolean notified = latch.await(5, TimeUnit.SECONDS);
@@ -664,7 +578,6 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         // Cleanup
         cb.removeListener(listener1);
         cb.removeListener(listener2);
-        restartRedisInstance(currentEndpoint);
     }
 
 }
