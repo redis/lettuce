@@ -492,7 +492,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
 
         // Give subscription time to establish
         latch.await(1, TimeUnit.SECONDS);
-        
+
         // Create direct PubSub connections for publishing
         StatefulRedisPubSubConnection<String, String> publisher1 = directClient1.connectPubSub();
         StatefulRedisPubSubConnection<String, String> publisher2 = directClient2.connectPubSub();
