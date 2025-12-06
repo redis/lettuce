@@ -629,8 +629,6 @@ class DatabaseEndpointCallbackTests {
             // Complete successfully (error will be null in callback)
             asyncCommand.complete();
 
-            // Thread.sleep(100);
-
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getSuccessCount()).isEqualTo(1);
             assertThat(snapshot.getFailureCount()).isEqualTo(0);
@@ -685,7 +683,6 @@ class DatabaseEndpointCallbackTests {
             // Complete command - callback should handle exception gracefully
             assertThatCode(() -> {
                 asyncCommand.complete();
-                Thread.sleep(100);
             }).doesNotThrowAnyException();
         }
 
