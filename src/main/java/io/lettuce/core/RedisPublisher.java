@@ -59,6 +59,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * are emitted as they are decoded. Otherwise, results are processed at command completion.
  *
  * @author Mark Paluch
+ * @author Tihomir Mateev
  * @since 5.0
  */
 class RedisPublisher<K, V, T> implements Publisher<T> {
@@ -293,7 +294,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                     try {
                         DEMAND.decrementAndGet(this);
                         this.subscriber.onNext(t);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         onError(e);
                     }
                     return;
@@ -544,7 +545,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
 
                         try {
                             subscription.checkCommandDispatch();
-                        } catch (Exception ex) {
+                        } catch (Throwable ex) {
                             subscription.onError(ex);
                         }
                         subscription.checkOnDataAvailable();
@@ -575,7 +576,7 @@ class RedisPublisher<K, V, T> implements Publisher<T> {
                             return;
                         }
                     } while (subscription.hasDemand());
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     subscription.onError(e);
                 }
             }
