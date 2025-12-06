@@ -76,6 +76,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Daniel Albuquerque
  * @author Gavin Cook
  * @author Anuraag Agrawal
+ * @author Tihomir Mateev
  */
 public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCommands {
 
@@ -646,8 +647,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                         return;
                     }
 
-                } catch (Exception e) {
-
+                } catch (Throwable e) {
                     ctx.close();
                     throw e;
                 }
@@ -672,8 +672,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                         decodeBufferPolicy.afterPartialDecode(buffer);
                         return;
                     }
-                } catch (Exception e) {
-
+                } catch (Throwable e) {
                     ctx.close();
                     throw e;
                 }
@@ -691,8 +690,9 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                                 logger.debug("{} Completing command {}", logPrefix(), command);
                             }
                             complete(command);
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                            command.completeExceptionally(e);
                         }
                     }
                 }
