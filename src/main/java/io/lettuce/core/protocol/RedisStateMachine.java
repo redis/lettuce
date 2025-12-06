@@ -42,6 +42,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Mark Paluch
  * @author Helly Guo
  * @author shikharid
+ * @author Tihomir Mateev
  */
 public class RedisStateMachine {
 
@@ -80,7 +81,7 @@ public class RedisStateMachine {
         interface StateHandler {
 
             Result handle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-                    Consumer<Exception> errorHandler);
+                    Consumer<Throwable> errorHandler);
 
         }
 
@@ -206,7 +207,7 @@ public class RedisStateMachine {
 
             @Override
             public Result handle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-                    Consumer<Exception> errorHandler) {
+                    Consumer<Throwable> errorHandler) {
                 return behavior.handle(rsm, state, buffer, output, errorHandler);
             }
 
@@ -309,7 +310,7 @@ public class RedisStateMachine {
      * @param errorHandler the error handler
      * @return true if a complete response was read.
      */
-    public boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    public boolean decode(ByteBuf buffer, CommandOutput<?, ?, ?> output, Consumer<Throwable> errorHandler) {
 
         buffer.touch("RedisStateMachine.decode(…)");
 
@@ -338,7 +339,7 @@ public class RedisStateMachine {
         return isEmpty(stack);
     }
 
-    private boolean doDecode(ByteBuf buffer, CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+    private boolean doDecode(ByteBuf buffer, CommandOutput<?, ?, ?> output, Consumer<Throwable> errorHandler) {
 
         boolean resp3Indicator = false;
 
@@ -376,7 +377,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleSingle(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         ByteBuffer bytes;
 
         if ((bytes = rsm.readLine(buffer)) == null) {
@@ -390,7 +391,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleBigNumber(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         ByteBuffer bytes;
 
         if ((bytes = rsm.readLine(buffer)) == null) {
@@ -402,7 +403,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleError(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         ByteBuffer bytes;
 
         if ((bytes = rsm.readLine(buffer)) == null) {
@@ -414,7 +415,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleNull(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         if (rsm.readLine(buffer) == null) {
             return State.Result.BREAK_LOOP;
         }
@@ -423,7 +424,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleInteger(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         int end;
 
         if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
@@ -435,7 +436,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleBoolean(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         if (rsm.findLineEnd(buffer) == NOT_FOUND) {
             return State.Result.BREAK_LOOP;
         }
@@ -445,7 +446,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleFloat(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         int end;
 
         if ((end = rsm.findLineEnd(buffer)) == NOT_FOUND) {
@@ -457,7 +458,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleBulkAndVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         int length;
         int end;
 
@@ -477,7 +478,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleBulkError(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         int length;
         int end;
 
@@ -497,7 +498,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleHelloV3(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         int end;
 
         if (state.count == NOT_FOUND) {
@@ -511,7 +512,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handlePushAndMulti(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         int end;
 
         if (state.count == NOT_FOUND) {
@@ -527,7 +528,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleMap(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         int length;
         int end;
 
@@ -545,7 +546,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleSet(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         int end;
 
         if (state.count == NOT_FOUND) {
@@ -579,7 +580,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleVerbatim(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         ByteBuffer bytes;
 
         if ((bytes = rsm.readBytes(buffer, state.count)) == null) {
@@ -592,7 +593,7 @@ public class RedisStateMachine {
     }
 
     static State.Result handleBytes(RedisStateMachine rsm, State state, ByteBuf buffer, CommandOutput<?, ?, ?> output,
-            Consumer<Exception> errorHandler) {
+            Consumer<Throwable> errorHandler) {
         ByteBuffer bytes;
 
         if ((bytes = rsm.readBytes(buffer, state.count)) == null) {
@@ -603,7 +604,7 @@ public class RedisStateMachine {
     }
 
     private static State.Result handleAttribute(RedisStateMachine rsm, State state, ByteBuf buffer,
-            CommandOutput<?, ?, ?> output, Consumer<Exception> errorHandler) {
+            CommandOutput<?, ?, ?> output, Consumer<Throwable> errorHandler) {
         throw new RedisProtocolException("Not implemented");
     }
 
@@ -760,11 +761,11 @@ public class RedisStateMachine {
      * @param value
      * @param errorHandler
      */
-    protected void safeSet(CommandOutput<?, ?, ?> output, boolean value, Consumer<Exception> errorHandler) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, boolean value, Consumer<Throwable> errorHandler) {
 
         try {
             output.set(value);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -776,11 +777,11 @@ public class RedisStateMachine {
      * @param number
      * @param errorHandler
      */
-    protected void safeSet(CommandOutput<?, ?, ?> output, long number, Consumer<Exception> errorHandler) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, long number, Consumer<Throwable> errorHandler) {
 
         try {
             output.set(number);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -792,11 +793,11 @@ public class RedisStateMachine {
      * @param number
      * @param errorHandler
      */
-    protected void safeSet(CommandOutput<?, ?, ?> output, double number, Consumer<Exception> errorHandler) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, double number, Consumer<Throwable> errorHandler) {
 
         try {
             output.set(number);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -808,11 +809,11 @@ public class RedisStateMachine {
      * @param bytes
      * @param errorHandler
      */
-    protected void safeSet(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Exception> errorHandler) {
+    protected void safeSet(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Throwable> errorHandler) {
 
         try {
             output.set(bytes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -824,11 +825,11 @@ public class RedisStateMachine {
      * @param bytes
      * @param errorHandler
      */
-    protected void safeSetSingle(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Exception> errorHandler) {
+    protected void safeSetSingle(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Throwable> errorHandler) {
 
         try {
             output.set(bytes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -840,11 +841,11 @@ public class RedisStateMachine {
      * @param bytes
      * @param errorHandler
      */
-    protected void safeSetBigNumber(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Exception> errorHandler) {
+    protected void safeSetBigNumber(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Throwable> errorHandler) {
 
         try {
             output.setBigNumber(bytes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -856,11 +857,11 @@ public class RedisStateMachine {
      * @param count
      * @param errorHandler
      */
-    protected void safeMultiArray(CommandOutput<?, ?, ?> output, int count, Consumer<Exception> errorHandler) {
+    protected void safeMultiArray(CommandOutput<?, ?, ?> output, int count, Consumer<Throwable> errorHandler) {
 
         try {
             output.multiArray(count);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -872,11 +873,11 @@ public class RedisStateMachine {
      * @param count
      * @param errorHandler
      */
-    protected void safeMultiPush(CommandOutput<?, ?, ?> output, int count, Consumer<Exception> errorHandler) {
+    protected void safeMultiPush(CommandOutput<?, ?, ?> output, int count, Consumer<Throwable> errorHandler) {
 
         try {
             output.multiPush(count);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -888,11 +889,11 @@ public class RedisStateMachine {
      * @param count
      * @param errorHandler
      */
-    protected void safeMultiSet(CommandOutput<?, ?, ?> output, int count, Consumer<Exception> errorHandler) {
+    protected void safeMultiSet(CommandOutput<?, ?, ?> output, int count, Consumer<Throwable> errorHandler) {
 
         try {
             output.multiSet(count);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -904,11 +905,11 @@ public class RedisStateMachine {
      * @param count
      * @param errorHandler
      */
-    protected void safeMultiMap(CommandOutput<?, ?, ?> output, int count, Consumer<Exception> errorHandler) {
+    protected void safeMultiMap(CommandOutput<?, ?, ?> output, int count, Consumer<Throwable> errorHandler) {
 
         try {
             output.multiMap(count);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
@@ -920,11 +921,11 @@ public class RedisStateMachine {
      * @param bytes
      * @param errorHandler
      */
-    protected void safeSetError(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Exception> errorHandler) {
+    protected void safeSetError(CommandOutput<?, ?, ?> output, ByteBuffer bytes, Consumer<Throwable> errorHandler) {
 
         try {
             output.setError(bytes);
-        } catch (Exception e) {
+        } catch (Throwable e) {
             errorHandler.accept(e);
         }
     }
