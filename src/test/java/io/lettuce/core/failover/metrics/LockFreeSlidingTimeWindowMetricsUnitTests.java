@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
+
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
@@ -33,7 +35,7 @@ class LockFreeSlidingTimeWindowMetricsUnitTests {
     @BeforeEach
     void setUp() {
         clock = new TestClock();
-        metrics = new LockFreeSlidingTimeWindowMetrics(LockFreeSlidingTimeWindowMetrics.DEFAULT_WINDOW_DURATION_SECONDS, clock);
+        metrics = new LockFreeSlidingTimeWindowMetrics(CircuitBreakerConfig.DEFAULT.getMetricsWindowSize(), clock);
     }
 
     @Test

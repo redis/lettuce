@@ -35,14 +35,21 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
     private final Set<Class<? extends Throwable>> trackedExceptions;
 
+    private final MetricsFactory metricsFactory;
+
     /**
      * Create a circuit breaker instance.
      */
     public CircuitBreakerImpl(CircuitBreakerConfig config) {
+        this(config, MetricsFactory.DEFAULT);
+    }
+
+    CircuitBreakerImpl(CircuitBreakerConfig config, MetricsFactory metricsFactory) {
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
+        this.metricsFactory = metricsFactory;
         this.stateRef = new AtomicReference<>(new CircuitBreakerStateHolder(this,
-                MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
+                metricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
     }
 
     /**
@@ -77,7 +84,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
         return false;
     }
 
-    public void recordResult(CircuitBreakerStateHolder generation, Throwable error) {
+    void recordResult(CircuitBreakerStateHolder generation, Throwable error) {
         if (error != null && isCircuitBreakerTrackedException(error)) {
             recordFailure(generation);
         } else {
@@ -85,7 +92,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
         }
     }
 
-    public void recordFailure() {
+    void recordFailure() {
         recordFailure(stateRef.get());
     }
 
@@ -161,7 +168,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
             }
 
             // Always create fresh metrics on state transition
-            CircuitBreakerMetrics nextMetrics = MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize());
+            CircuitBreakerMetrics nextMetrics = metricsFactory.createDefaultMetrics(config.getMetricsWindowSize());
 
             CircuitBreakerStateHolder next = new CircuitBreakerStateHolder(this, nextMetrics, newState);
 

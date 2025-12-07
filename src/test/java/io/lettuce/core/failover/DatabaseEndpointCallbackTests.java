@@ -3,21 +3,26 @@ package io.lettuce.core.failover;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.awaitility.Awaitility.await;
-
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.awaitility.Durations;
 import org.junit.jupiter.api.*;
+import org.mockito.MockedStatic;
+
 import io.lettuce.core.*;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
+import io.lettuce.core.failover.metrics.MetricsFactory;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
+import io.lettuce.core.failover.metrics.TestClock;
+import io.lettuce.core.failover.metrics.TestLockFreeSlidingTimeWindowMetrics;
+import io.lettuce.core.failover.metrics.TestMetricsFactory;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
@@ -357,8 +362,12 @@ class DatabaseEndpointCallbackTests {
         @Test
         @DisplayName("Should handle burst of failures during failover")
         void shouldHandleBurstOfFailuresDuringFailover() throws Exception {
+            // here replace Clock with TestClock
+            TestClock clock = new TestClock();
+            MetricsFactory metricsFactory = new TestMetricsFactory(clock);
+
             // Use high minimum failures to prevent circuit breaker from opening during test
-            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
+            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100), metricsFactory);
             endpoint.bind(circuitBreaker);
 
             // Issue many commands
@@ -377,10 +386,9 @@ class DatabaseEndpointCallbackTests {
                 for (AsyncCommand<String, String, String> cmd : commands) {
                     executor.submit(() -> {
                         try {
-                            Thread.sleep((long) (Math.random() * 100)); // Random delay
+                            clock.advance(Duration.ofMillis((long) (Math.random() * 100)));
                             cmd.completeExceptionally(new RedisConnectionException("Connection lost during failover"));
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
+
                         } finally {
                             latch.countDown();
                         }
@@ -397,12 +405,18 @@ class DatabaseEndpointCallbackTests {
             } finally {
                 executor.shutdown();
             }
+
         }
 
         @Test
         @DisplayName("Should handle mixed success/failure during partial failover")
         void shouldHandleMixedResultsDuringPartialFailover() throws Exception {
-            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 3));
+            // here replace Clock with TestClock
+            TestClock clock = new TestClock();
+            MetricsFactory metricsFactory = new TestMetricsFactory(clock);
+
+            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 3), metricsFactory);
+
             endpoint.bind(circuitBreaker);
 
             List<AsyncCommand<String, String, String>> commands = new ArrayList<>();
@@ -421,7 +435,7 @@ class DatabaseEndpointCallbackTests {
                     final int index = i;
                     executor.submit(() -> {
                         try {
-                            Thread.sleep((long) (Math.random() * 200));
+                            clock.advance(Duration.ofMillis(((long) Math.random() * 200)));
                             if (index < 6) {
                                 // First 6 succeed
                                 commands.get(index).complete();
@@ -430,8 +444,6 @@ class DatabaseEndpointCallbackTests {
                                 commands.get(index)
                                         .completeExceptionally(new RedisCommandTimeoutException("Timeout during failover"));
                             }
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
                         } finally {
                             latch.countDown();
                         }

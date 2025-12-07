@@ -52,8 +52,6 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  */
 class LockFreeSlidingTimeWindowMetrics implements CircuitBreakerMetrics {
 
-    static final int DEFAULT_WINDOW_DURATION_SECONDS = 2;
-
     private static final long TIME_SLICE_DURATION_IN_NANOS = TimeUnit.SECONDS.toNanos(1);
 
     private static final AtomicReferenceFieldUpdater<LockFreeSlidingTimeWindowMetrics, Node> HEAD = AtomicReferenceFieldUpdater
@@ -75,10 +73,6 @@ class LockFreeSlidingTimeWindowMetrics implements CircuitBreakerMetrics {
     private volatile Node headRef;
 
     private volatile Node tailRef;
-
-    LockFreeSlidingTimeWindowMetrics() {
-        this(DEFAULT_WINDOW_DURATION_SECONDS, Clock.SYSTEM);
-    }
 
     LockFreeSlidingTimeWindowMetrics(int windowSize) {
         this(windowSize, Clock.SYSTEM);
