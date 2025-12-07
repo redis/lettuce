@@ -132,8 +132,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         }
 
         RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
-                circuitBreaker,
-                healthCheck);
+                circuitBreaker, healthCheck);
 
         return database;
     }
@@ -193,8 +192,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         }
 
         RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
-                circuitBreaker,
-                healthCheck);
+                circuitBreaker, healthCheck);
         return database;
     }
 

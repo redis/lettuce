@@ -96,8 +96,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
     }
 
     /**
-     * ONLY FOR THE PURPOSE OF TESTING. 
-     * Record a successful command execution.
+     * ONLY FOR THE PURPOSE OF TESTING. Record a successful command execution.
      */
     void recordFailure() {
         recordFailure(stateRef.get());
@@ -109,8 +108,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
     }
 
     /**
-     * ONLY FOR THE PURPOSE OF TESTING. 
-     * Record a successful command execution.
+     * ONLY FOR THE PURPOSE OF TESTING. Record a successful command execution.
      */
     void recordSuccess() {
         recordSuccess(stateRef.get());
@@ -121,8 +119,8 @@ class CircuitBreakerImpl implements CircuitBreaker {
     }
 
     /**
-     * ONLY FOR THE PURPOSE OF TESTING. 
-     * Evaluate the current metrics to determine if the circuit breaker should transition to a new state.
+     * ONLY FOR THE PURPOSE OF TESTING. Evaluate the current metrics to determine if the circuit breaker should transition to a
+     * new state.
      *
      * <p>
      * This method checks the failure rate and failure count against the configured thresholds. If the thresholds are met, the
@@ -156,8 +154,8 @@ class CircuitBreakerImpl implements CircuitBreaker {
     }
 
     /**
-     * ONLY FOR THE PURPOSE OF TESTING. 
-     * Switch the circuit breaker to the specified state. This method is used to force the circuit breaker to a specific state.
+     * ONLY FOR THE PURPOSE OF TESTING. Switch the circuit breaker to the specified state. This method is used to force the
+     * circuit breaker to a specific state.
      *
      * <p>
      * This method does not evaluate the metrics to determine if the state transition is valid. It simply transitions to the
