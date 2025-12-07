@@ -36,23 +36,16 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
     private final Set<Class<? extends Throwable>> trackedExceptions;
 
-    private final MetricsFactory metricsFactory;
-
     /**
      * Create a circuit breaker instance.
      */
     public CircuitBreakerImpl(CircuitBreakerConfig config) {
-        this(config, MetricsFactory.DEFAULT);
-    }
-
-    CircuitBreakerImpl(CircuitBreakerConfig config, MetricsFactory metricsFactory) {
         LettuceAssert.notNull(config, "CircuitBreakerConfig must not be null");
 
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
-        this.metricsFactory = metricsFactory;
         this.stateRef = new AtomicReference<>(new CircuitBreakerStateHolder(this,
-                metricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
+                MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
     }
 
     /**
@@ -189,7 +182,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
             }
 
             // Always create fresh metrics on state transition
-            CircuitBreakerMetrics nextMetrics = metricsFactory.createDefaultMetrics(config.getMetricsWindowSize());
+            CircuitBreakerMetrics nextMetrics = MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize());
 
             CircuitBreakerStateHolder next = new CircuitBreakerStateHolder(this, nextMetrics, newState);
 

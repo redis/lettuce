@@ -3,11 +3,11 @@ package io.lettuce.core.failover.metrics;
 /**
  * Factory for creating {@link CircuitBreakerMetrics} instances.
  */
-public class MetricsFactory {
+public final class MetricsFactory {
 
-    public static final MetricsFactory DEFAULT = new MetricsFactory();
+    private static Clock DEFAULT_CLOCK = Clock.SYSTEM;
 
-    MetricsFactory() {
+    private MetricsFactory() {
     }
 
     /**
@@ -16,8 +16,8 @@ public class MetricsFactory {
      * @param windowSize the window size in seconds
      * @return the default {@link CircuitBreakerMetrics} implementation
      */
-    public CircuitBreakerMetrics createDefaultMetrics(int windowSize) {
-        return new LockFreeSlidingTimeWindowMetrics(windowSize);
+    public static CircuitBreakerMetrics createDefaultMetrics(int windowSize) {
+        return new LockFreeSlidingTimeWindowMetrics(windowSize, DEFAULT_CLOCK);
     }
 
 }

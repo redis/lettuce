@@ -503,15 +503,15 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         shutdownRedisInstance(currentEndpoint);
 
         // Execute commands that will fail using REACTIVE API
-        AtomicInteger failureConter = new AtomicInteger();
+        AtomicInteger failureCounter = new AtomicInteger();
         int aimedFailureCount = cbConfig.getMinimumNumberOfFailures() - 1;
         for (int i = 0; i < aimedFailureCount; i++) {
-            connection.reactive().get("key" + i).doOnError(e -> failureConter.incrementAndGet()).subscribe();
+            connection.reactive().get("key" + i).doOnError(e -> failureCounter.incrementAndGet()).subscribe();
         }
 
         // Then: Metrics should track failures
         await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS).atMost(Durations.FIVE_SECONDS)
-                .untilAsserted(() -> assertEquals(aimedFailureCount, failureConter.get()));
+                .untilAsserted(() -> assertEquals(aimedFailureCount, failureCounter.get()));
         assertEquals(aimedFailureCount, cb.getSnapshot().getFailureCount());
     }
 

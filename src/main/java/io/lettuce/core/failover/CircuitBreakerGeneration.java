@@ -7,7 +7,7 @@ package io.lettuce.core.failover;
  * @author Ali Takavci
  * @since 7.1
  */
-interface CircuitBreakerGeneration {
+public interface CircuitBreakerGeneration {
 
     /**
      * Record the result of a command execution for the metrics tracking of this generation.

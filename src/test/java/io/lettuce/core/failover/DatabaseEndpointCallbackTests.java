@@ -20,10 +20,10 @@ import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
 import io.lettuce.core.failover.metrics.MetricsFactory;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
 import io.lettuce.core.failover.metrics.TestClock;
-import io.lettuce.core.failover.metrics.TestMetricsFactory;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
@@ -553,10 +553,10 @@ class DatabaseEndpointCallbackTests {
         void shouldHandleBurstOfFailuresDuringFailover() throws Exception {
             // here replace Clock with TestClock
             TestClock clock = new TestClock();
-            MetricsFactory metricsFactory = new TestMetricsFactory(clock);
+            ReflectionTestUtils.setField(MetricsFactory.class, "DEFAULT_CLOCK", clock);
 
             // Use high minimum failures to prevent circuit breaker from opening during test
-            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100), metricsFactory);
+            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
             // Issue many commands
@@ -602,9 +602,9 @@ class DatabaseEndpointCallbackTests {
         void shouldHandleMixedResultsDuringPartialFailover() throws Exception {
             // here replace Clock with TestClock
             TestClock clock = new TestClock();
-            MetricsFactory metricsFactory = new TestMetricsFactory(clock);
+            ReflectionTestUtils.setField(MetricsFactory.class, "DEFAULT_CLOCK", clock);
 
-            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 3), metricsFactory);
+            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 3));
 
             endpoint.bind(circuitBreaker);
 
