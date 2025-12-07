@@ -2,6 +2,7 @@ package io.lettuce.core.failover;
 
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.failover.health.HealthStatusManager;
 
 /**
  * Factory interface for creating database connections in a multi-database client.
@@ -23,6 +24,6 @@ interface DatabaseConnectionFactory<C extends StatefulRedisConnection<K, V>, K, 
      * @param codec the codec to use for encoding/decoding
      * @return a new RedisDatabase instance
      */
-    RedisDatabase<C> createDatabase(DatabaseConfig config, RedisCodec<K, V> codec);
+    RedisDatabase<C> createDatabase(DatabaseConfig config, RedisCodec<K, V> codec, HealthStatusManager healthStatusManager);
 
 }

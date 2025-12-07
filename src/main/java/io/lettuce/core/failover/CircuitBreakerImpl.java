@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,8 @@ class CircuitBreakerImpl implements CircuitBreaker {
     }
 
     CircuitBreakerImpl(CircuitBreakerConfig config, MetricsFactory metricsFactory) {
+        LettuceAssert.notNull(config, "CircuitBreakerConfig must not be null");
+
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
         this.metricsFactory = metricsFactory;
@@ -92,6 +95,10 @@ class CircuitBreakerImpl implements CircuitBreaker {
         }
     }
 
+    /**
+     * ONLY FOR THE PURPOSE OF TESTING. 
+     * Record a successful command execution.
+     */
     void recordFailure() {
         recordFailure(stateRef.get());
     }
@@ -101,6 +108,10 @@ class CircuitBreakerImpl implements CircuitBreaker {
         evaluateMetrics(state);
     }
 
+    /**
+     * ONLY FOR THE PURPOSE OF TESTING. 
+     * Record a successful command execution.
+     */
     void recordSuccess() {
         recordSuccess(stateRef.get());
     }
@@ -110,6 +121,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
     }
 
     /**
+     * ONLY FOR THE PURPOSE OF TESTING. 
      * Evaluate the current metrics to determine if the circuit breaker should transition to a new state.
      *
      * <p>
@@ -123,6 +135,16 @@ class CircuitBreakerImpl implements CircuitBreaker {
         return evaluateMetrics(stateRef.get());
     }
 
+    /**
+     * Evaluate the current metrics to determine if the circuit breaker should transition to a new state.
+     *
+     * <p>
+     * This method checks the failure rate and failure count against the configured thresholds. If the thresholds are met, the
+     * circuit breaker transitions to the OPEN state. Metrics are reset when the state changes.
+     * </p>
+     *
+     * @return an immutable snapshot of current metrics
+     */
     MetricsSnapshot evaluateMetrics(CircuitBreakerImpl.CircuitBreakerStateHolder current) {
         MetricsSnapshot snapshot = current.metrics.getSnapshot();
         boolean evaluationResult = snapshot.getFailureRate() >= config.getFailureRateThreshold()
@@ -134,6 +156,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
     }
 
     /**
+     * ONLY FOR THE PURPOSE OF TESTING. 
      * Switch the circuit breaker to the specified state. This method is used to force the circuit breaker to a specific state.
      *
      * <p>
