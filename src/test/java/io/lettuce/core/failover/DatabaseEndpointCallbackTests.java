@@ -13,7 +13,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.awaitility.Durations;
 import org.junit.jupiter.api.*;
-import org.mockito.MockedStatic;
 
 import io.lettuce.core.*;
 import io.lettuce.core.codec.StringCodec;
@@ -21,7 +20,6 @@ import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
 import io.lettuce.core.failover.metrics.MetricsFactory;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
 import io.lettuce.core.failover.metrics.TestClock;
-import io.lettuce.core.failover.metrics.TestLockFreeSlidingTimeWindowMetrics;
 import io.lettuce.core.failover.metrics.TestMetricsFactory;
 import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
@@ -74,53 +72,211 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should attach callback to single command when circuit breaker is set")
-        void shouldAttachCallbackToSingleCommand() {
+        void shouldAttachCallbackToSingleCommand() throws Exception {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
             // Create a command
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
-            AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
 
-            // Write command - this should attach the callback
-            RedisCommand<String, String, String> result = endpoint.write(asyncCommand);
+            // Track how many callbacks are registered on this command
+            AtomicInteger onCompleteCallCount = new AtomicInteger(0);
+
+            // Wrap to intercept onComplete calls
+            AsyncCommand<String, String, String> spyCommand = new AsyncCommand<String, String, String>(command) {
+
+                @Override
+                public void onComplete(java.util.function.BiConsumer<? super String, Throwable> action) {
+                    onCompleteCallCount.incrementAndGet();
+                    super.onComplete(action);
+                }
+
+            };
+
+            // Write command - this should call completeable.onComplete(generation::recordResult) at line 72
+            RedisCommand<String, String, String> result = endpoint.write(spyCommand);
 
             assertThat(result).isNotNull();
             assertThat(result).isInstanceOf(CompleteableCommand.class);
+
+            // Verify onComplete was called exactly once (the callback was attached)
+            assertThat(onCompleteCallCount.get()).isEqualTo(1);
+
+            // Complete the command to trigger the callback
+            spyCommand.complete();
+
+            // Verify the callback actually recorded metrics
+            MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
+            assertThat(snapshot.getSuccessCount()).isEqualTo(1);
         }
 
         @Test
         @DisplayName("Should attach callbacks to multiple commands")
-        void shouldAttachCallbacksToMultipleCommands() {
+        void shouldAttachCallbacksToMultipleCommands() throws Exception {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
-            // Create multiple commands
-            List<RedisCommand<String, String, ?>> commands = new ArrayList<>();
+            // Create multiple commands with onComplete tracking
+            List<AsyncCommand<String, String, String>> spyCommands = new ArrayList<>();
+            AtomicInteger totalOnCompleteCalls = new AtomicInteger(0);
+
             for (int i = 0; i < 5; i++) {
                 Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
-                commands.add(new AsyncCommand<>(command));
+                AsyncCommand<String, String, String> spyCommand = new AsyncCommand<String, String, String>(command) {
+
+                    @Override
+                    public void onComplete(java.util.function.BiConsumer<? super String, Throwable> action) {
+                        totalOnCompleteCalls.incrementAndGet();
+                        super.onComplete(action);
+                    }
+
+                };
+                spyCommands.add(spyCommand);
             }
 
-            // Write commands - this should attach callbacks to all
-            Collection<RedisCommand<String, String, ?>> results = endpoint.write(commands);
+            // Write commands - this should call completeable.onComplete(generation::recordResult) at line 102 for each
+            List<RedisCommand<String, String, ?>> results = new ArrayList<>(endpoint.write(new ArrayList<>(spyCommands)));
 
             assertThat(results).hasSize(5);
             results.forEach(result -> assertThat(result).isInstanceOf(CompleteableCommand.class));
+
+            // Verify onComplete was called exactly 5 times (callbacks were attached to all commands)
+            assertThat(totalOnCompleteCalls.get()).isEqualTo(5);
+
+            // Complete all commands to trigger callbacks
+            spyCommands.forEach(cmd -> cmd.complete());
+
+            // Verify callbacks actually recorded metrics for all commands
+            MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
+            assertThat(snapshot.getSuccessCount()).isEqualTo(5);
         }
 
         @Test
         @DisplayName("Should not attach callback when circuit breaker is null")
-        void shouldNotAttachCallbackWhenCircuitBreakerIsNull() {
-            // Don't set circuit breaker
+        void shouldNotAttachCallbackWhenCircuitBreakerIsNull() throws Exception {
+            // Don't bind circuit breaker - this should trigger early return at line 50-51
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
-            AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
 
-            // Write command - should not fail even without circuit breaker
-            RedisCommand<String, String, String> result = endpoint.write(asyncCommand);
+            // Track if onComplete is called
+            AtomicInteger onCompleteCallCount = new AtomicInteger(0);
+            AsyncCommand<String, String, String> spyCommand = new AsyncCommand<String, String, String>(command) {
+
+                @Override
+                public void onComplete(java.util.function.BiConsumer<? super String, Throwable> action) {
+                    onCompleteCallCount.incrementAndGet();
+                    super.onComplete(action);
+                }
+
+            };
+
+            // Write command - should NOT call onComplete since circuit breaker is null
+            RedisCommand<String, String, String> result = endpoint.write(spyCommand);
 
             assertThat(result).isNotNull();
+
+            // Verify onComplete was NEVER called (no callback attached)
+            assertThat(onCompleteCallCount.get()).isEqualTo(0);
+
+            // Complete the command
+            spyCommand.complete();
+
+            // Verify command completed successfully
+            assertThat(spyCommand.isDone()).isTrue();
+            assertThat(spyCommand.isCompletedExceptionally()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Should complete command exceptionally when circuit breaker is open")
+        void shouldCompleteCommandExceptionallyWhenCircuitBreakerIsOpen() throws Exception {
+            // Create circuit breaker and force it to OPEN state
+            CircuitBreakerImpl circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 2)); // threshold: 2 failures
+            endpoint.bind(circuitBreaker);
+
+            // Force circuit breaker to OPEN by recording failures and evaluating
+            circuitBreaker.recordFailure();
+            circuitBreaker.recordFailure();
+            circuitBreaker.evaluateMetrics(); // This triggers state transition to OPEN
+
+            assertThat(circuitBreaker.isClosed()).isFalse(); // Verify CB is OPEN
+
+            // Create a command
+            Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+
+            // Track if onComplete is called
+            AtomicInteger onCompleteCallCount = new AtomicInteger(0);
+            AsyncCommand<String, String, String> spyCommand = new AsyncCommand<String, String, String>(command) {
+
+                @Override
+                public void onComplete(java.util.function.BiConsumer<? super String, Throwable> action) {
+                    onCompleteCallCount.incrementAndGet();
+                    super.onComplete(action);
+                }
+
+            };
+
+            // Write command - should trigger lines 53-55 and complete exceptionally
+            RedisCommand<String, String, String> result = endpoint.write(spyCommand);
+
+            assertThat(result).isNotNull();
+
+            // Verify command was completed exceptionally with RedisCircuitBreakerException
+            assertThat(spyCommand.isDone()).isTrue();
+            assertThat(spyCommand.isCompletedExceptionally()).isTrue();
+
+            // Verify the exception is RedisCircuitBreakerException
+            assertThatThrownBy(() -> spyCommand.get()).hasCauseInstanceOf(RedisCircuitBreakerException.class);
+
+            // Verify onComplete was NEVER called (no callback attached when CB is OPEN)
+            assertThat(onCompleteCallCount.get()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("Should complete all commands exceptionally when circuit breaker is open for collection write")
+        void shouldCompleteAllCommandsExceptionallyWhenCircuitBreakerIsOpen() throws Exception {
+            // Create circuit breaker and force it to OPEN state
+            CircuitBreakerImpl circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 2)); // threshold: 2 failures
+            endpoint.bind(circuitBreaker);
+
+            // Force circuit breaker to OPEN by recording failures and evaluating
+            circuitBreaker.recordFailure();
+            circuitBreaker.recordFailure();
+            circuitBreaker.evaluateMetrics(); // This triggers state transition to OPEN
+
+            assertThat(circuitBreaker.isClosed()).isFalse(); // Verify CB is OPEN
+
+            // Create multiple commands with onComplete tracking
+            List<AsyncCommand<String, String, String>> spyCommands = new ArrayList<>();
+            AtomicInteger totalOnCompleteCalls = new AtomicInteger(0);
+
+            for (int i = 0; i < 5; i++) {
+                Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+                AsyncCommand<String, String, String> spyCommand = new AsyncCommand<String, String, String>(command) {
+
+                    @Override
+                    public void onComplete(java.util.function.BiConsumer<? super String, Throwable> action) {
+                        totalOnCompleteCalls.incrementAndGet();
+                        super.onComplete(action);
+                    }
+
+                };
+                spyCommands.add(spyCommand);
+            }
+
+            // Write commands - should trigger lines 82-84 and complete all exceptionally
+            Collection<RedisCommand<String, String, ?>> results = endpoint.write(new ArrayList<>(spyCommands));
+
+            assertThat(results).hasSize(5);
+
+            // Verify all commands were completed exceptionally
+            spyCommands.forEach(cmd -> {
+                assertThat(cmd.isDone()).isTrue();
+                assertThat(cmd.isCompletedExceptionally()).isTrue();
+                assertThatThrownBy(() -> cmd.get()).hasCauseInstanceOf(RedisCircuitBreakerException.class);
+            });
+
+            // Verify onComplete was NEVER called for any command (no callbacks attached when CB is OPEN)
+            assertThat(totalOnCompleteCalls.get()).isEqualTo(0);
         }
 
     }
