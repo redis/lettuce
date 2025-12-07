@@ -478,40 +478,73 @@ class DatabaseEndpointCallbackTests {
     class FailoverBehaviorTests {
 
         @Test
-        @DisplayName("Should attribute failures to original endpoint even after circuit breaker change")
-        // TODO : this test provided by AI is complete non-sense
-        void shouldAttributeFailuresToOriginalEndpoint() throws Exception {
+        @DisplayName("Should ignore late failures from old generation after CB opens and new generation created")
+        void shouldIgnoreLateFailuresFromOldGenerationAfterCBOpens() throws Exception {
 
-            // Create two endpoints with separate circuit breakers
             DatabaseEndpointImpl endpoint1 = new DatabaseEndpointImpl(clientOptions, clientResources);
-            DatabaseEndpointImpl endpoint2 = new DatabaseEndpointImpl(clientOptions, clientResources);
             try {
-                CircuitBreaker cb1 = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-                CircuitBreaker cb2 = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
+                // Create circuit breaker with low threshold so it opens quickly
+                CircuitBreaker cb1 = new CircuitBreakerImpl(getCBConfig(50.0f, 2)); // Opens after 2 failures with 50% rate
 
                 endpoint1.bind(cb1);
-                endpoint2.bind(cb2);
 
-                // Issue command on endpoint1
-                Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
-                AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
-                endpoint1.write(asyncCommand);
+                // Issue commands while CB is CLOSED
+                Command<String, String, String> command1 = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+                AsyncCommand<String, String, String> asyncCommand1 = new AsyncCommand<>(command1);
+                endpoint1.write(asyncCommand1);
 
-                // Simulate failover - command is still pending
-                // In actual , the connection would switch to endpoint2
+                Command<String, String, String> command2 = new Command<>(CommandType.GET, new StatusOutput<>(StringCodec.UTF8));
+                AsyncCommand<String, String, String> asyncCommand2 = new AsyncCommand<>(command2);
+                endpoint1.write(asyncCommand2);
 
-                // Command completes with timeout AFTER failover
-                asyncCommand.completeExceptionally(new RedisCommandTimeoutException("Timeout after failover"));
+                Command<String, String, String> command3 = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
+                AsyncCommand<String, String, String> asyncCommand3 = new AsyncCommand<>(command3);
+                endpoint1.write(asyncCommand3);
 
-                // Failure should be recorded in endpoint1's circuit breaker (where command was issued)
-                MetricsSnapshot snapshot1 = cb1.getSnapshot();
-                MetricsSnapshot snapshot2 = cb2.getSnapshot();
+                // Capture the original generation (CLOSED state)
+                CircuitBreakerGeneration originalGeneration = cb1.getGeneration();
+                assertThat(cb1.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
 
-                assertThat(snapshot1.getFailureCount()).isEqualTo(1);
-                assertThat(snapshot2.getFailureCount()).isEqualTo(0); // endpoint2 should have no failures
+                // Get snapshot before any failures
+                MetricsSnapshot beforeSnapshot = cb1.getSnapshot();
+                assertThat(beforeSnapshot.getFailureCount()).isEqualTo(0);
+
+                // Fail the first 2 commands to trigger CB to open
+                asyncCommand1.completeExceptionally(new RedisCommandTimeoutException("Timeout 1"));
+                asyncCommand2.completeExceptionally(new RedisCommandTimeoutException("Timeout 2"));
+
+                // Verify CB has transitioned to OPEN state with a new generation
+                assertThat(cb1.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+                CircuitBreakerGeneration newGeneration = cb1.getGeneration();
+                assertThat(newGeneration).isNotSameAs(originalGeneration); // New generation created
+
+                // Get snapshot after CB opened - new generation starts fresh with 0 failures
+                MetricsSnapshot afterOpenSnapshot = cb1.getSnapshot();
+                assertThat(afterOpenSnapshot.getFailureCount()).isEqualTo(0);
+                assertThat(afterOpenSnapshot.getSuccessCount()).isEqualTo(0);
+
+                // Now the third command (issued during CLOSED state) fails AFTER CB is already OPEN
+                asyncCommand3.completeExceptionally(new RedisCommandTimeoutException("Late timeout"));
+
+                // Verify: The late failure is IGNORED because it belongs to the old generation
+                // The callback attached to asyncCommand3 points to originalGeneration, but when it fires,
+                // it checks if (current != this) and returns early without recording the failure.
+                // This prevents stale failures from earlier failover stages from affecting the current state.
+
+                MetricsSnapshot finalSnapshot = cb1.getSnapshot();
+
+                // The new generation (OPEN state) should still have 0 failures
+                // The late failure from asyncCommand3 was ignored (not recorded)
+                assertThat(finalSnapshot.getFailureCount()).isEqualTo(0);
+                assertThat(finalSnapshot.getSuccessCount()).isEqualTo(0);
+
+                // Verify CB is still OPEN
+                assertThat(cb1.getCurrentState()).isEqualTo(CircuitBreaker.State.OPEN);
+
+                // This test verifies the generation/epoch tracking behavior:
+                // Late timeouts from earlier CLOSED periods don't affect the current OPEN state's metrics
             } finally {
                 endpoint1.close();
-                endpoint2.close();
             }
         }
 
