@@ -47,6 +47,8 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     private final Map<RedisURI, DatabaseConfig> databaseConfigs;
 
+    private final DatabaseConnectionProvider databaseConnectionProvider = new DatabaseConnectionProviderImpl();
+
     MultiDbClientImpl(Collection<DatabaseConfig> databaseConfigs) {
         this(null, databaseConfigs);
     }
@@ -125,7 +127,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         HealthCheck healthCheck;
         if (config.getHealthCheckStrategySupplier() != null) {
             HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                    connection.getOptions());
+                    databaseConnectionProvider);
             healthCheck = healthStatusManager.add(uri, hcStrategy);
         } else {
             healthCheck = null;
@@ -184,8 +186,9 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         HealthCheck healthCheck;
         if (config.getHealthCheckStrategySupplier() != null) {
+
             HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                    connection.getOptions());
+                    databaseConnectionProvider);
             healthCheck = healthStatusManager.add(uri, hcStrategy);
         } else {
             healthCheck = null;
@@ -260,6 +263,15 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         // All databases are unhealthy
         throw new RedisConnectionException("All configured databases are unhealthy.");
+    }
+
+    private class DatabaseConnectionProviderImpl implements DatabaseConnectionProvider {
+
+        @Override
+        public StatefulRedisConnection<?, ?> getConnection(RedisURI endpoint) {
+            return MultiDbClientImpl.this.connect(endpoint);
+        }
+
     }
 
 }

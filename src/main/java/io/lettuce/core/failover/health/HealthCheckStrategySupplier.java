@@ -2,6 +2,7 @@ package io.lettuce.core.failover.health;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.failover.DatabaseConnectionProvider;
 
 /**
  * Supplier for health check strategies.
@@ -18,6 +19,6 @@ public interface HealthCheckStrategySupplier {
      * @param clientOptions the client options
      * @return the health check strategy
      */
-    HealthCheckStrategy get(RedisURI redisURI, ClientOptions clientOptions);
+    HealthCheckStrategy get(RedisURI redisURI, DatabaseConnectionProvider connectionProvider);
 
 }

@@ -3,9 +3,11 @@ package io.lettuce.core.failover.health;
 import eu.rekawek.toxiproxy.Proxy;
 import eu.rekawek.toxiproxy.ToxiproxyClient;
 import eu.rekawek.toxiproxy.model.ToxicDirection;
-import io.lettuce.core.ClientOptions;
+import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.DatabaseConfig;
+import io.lettuce.core.failover.DatabaseConnectionProvider;
 import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.failover.MultiDbTestSupport;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
@@ -42,6 +44,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
     private static RedisURI proxyUri1;
 
     private static RedisURI proxyUri2;
+
+    private static TestDatabaseConnectionProviderImpl connectionProvider;
 
     @Inject
     PingStrategyIntegrationTests(MultiDbClient client) {
@@ -99,6 +103,16 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         });
     }
 
+    @BeforeAll
+    static void setupDatabaseConnectionProvider() {
+        connectionProvider = new TestDatabaseConnectionProviderImpl();
+    }
+
+    @AfterAll
+    static void cleanupDatabaseConnectionProvider() {
+        connectionProvider.close();
+    }
+
     @Test
     @DisplayName("Should create MultiDbClient with PingStrategy health checks")
     void shouldCreateClientWithPingStrategy() {
@@ -136,7 +150,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(1000))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, ClientOptions.create(),
+        PingStrategy strategy = new PingStrategy(uri, connectionProvider,
                 HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build());
 
         try {
@@ -170,7 +184,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(100))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, ClientOptions.create(),
+        PingStrategy strategy = new PingStrategy(uri, connectionProvider,
                 HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build());
 
         try {
@@ -203,7 +217,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(2000))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, ClientOptions.create(), HealthCheckStrategy.Config.create());
+        PingStrategy strategy = new PingStrategy(uri, connectionProvider, HealthCheckStrategy.Config.create());
 
         try {
             // When: Initial health check
@@ -305,6 +319,56 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
             connection.close();
             testClient.shutdown();
         }
+    }
+
+    @Test
+    @DisplayName("Should reuse MultiDbClient connections with DEFAULT_WITH_PROVIDER supplier")
+    void shouldReuseConnectionsWithProvider() {
+        // Given: DatabaseConfig with DEFAULT_WITH_PROVIDER supplier that reuses connections
+        DatabaseConfig config1 = new DatabaseConfig(proxyUri1, 1.0f, null, null, PingStrategy.DEFAULT_WITH_PROVIDER);
+        DatabaseConfig config2 = new DatabaseConfig(proxyUri2, 0.5f, null, null, PingStrategy.DEFAULT_WITH_PROVIDER);
+
+        // When: Create MultiDbClient and connect
+        MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+        StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+
+        try {
+            // Then: Connection should work normally
+            assertThat(connection.sync().ping()).isEqualTo("PONG");
+            assertThat(connection.getCurrentEndpoint()).isNotNull();
+
+            // And: Should be able to execute commands
+            connection.sync().set("provider-test-key", "provider-test-value");
+            assertThat(connection.sync().get("provider-test-key")).isEqualTo("provider-test-value");
+
+            // And: Health checks should be running using the same connection
+            await().pollDelay(Duration.ofMillis(100)).atMost(Duration.ofMillis(500)).untilAsserted(() -> {
+                assertThat(connection.sync().ping()).isEqualTo("PONG");
+            });
+
+        } finally {
+            connection.close();
+            testClient.shutdown();
+        }
+    }
+
+    private static class TestDatabaseConnectionProviderImpl implements DatabaseConnectionProvider {
+
+        private final RedisClient client;
+
+        public TestDatabaseConnectionProviderImpl() {
+            this.client = RedisClient.create();
+        }
+
+        @Override
+        public StatefulRedisConnection<?, ?> getConnection(RedisURI endpoint) {
+            return client.connect(endpoint);
+        }
+
+        public void close() {
+            client.shutdown();
+        }
+
     }
 
 }
