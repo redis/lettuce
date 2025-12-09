@@ -54,9 +54,6 @@ class DatabaseEndpointCallbackTests {
 
     @AfterEach
     void tearDown() {
-        if (clientResources != null) {
-            FastShutdown.shutdown(clientResources);
-        }
         if (endpoint != null) {
             endpoint.close();
         }
