@@ -88,23 +88,9 @@ class CircuitBreakerImpl implements CircuitBreaker {
         }
     }
 
-    /**
-     * ONLY FOR THE PURPOSE OF TESTING. Record a successful command execution.
-     */
-    void recordFailure() {
-        recordFailure(stateRef.get());
-    }
-
     void recordFailure(CircuitBreakerStateHolder state) {
         state.metrics.recordFailure();
         evaluateMetrics(state);
-    }
-
-    /**
-     * ONLY FOR THE PURPOSE OF TESTING. Record a successful command execution.
-     */
-    void recordSuccess() {
-        recordSuccess(stateRef.get());
     }
 
     void recordSuccess(CircuitBreakerStateHolder state) {

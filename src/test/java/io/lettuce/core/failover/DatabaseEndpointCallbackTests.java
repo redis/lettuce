@@ -37,6 +37,8 @@ import io.lettuce.test.resource.TestClientResources;
 @Tag("unit")
 class DatabaseEndpointCallbackTests {
 
+    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
+
     private ClientResources clientResources;
 
     private ClientOptions clientOptions;
@@ -194,8 +196,10 @@ class DatabaseEndpointCallbackTests {
             endpoint.bind(circuitBreaker);
 
             // Force circuit breaker to OPEN by recording failures and evaluating
-            circuitBreaker.recordFailure();
-            circuitBreaker.recordFailure();
+            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+
+            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+
             circuitBreaker.evaluateMetrics(); // This triggers state transition to OPEN
 
             assertThat(circuitBreaker.isClosed()).isFalse(); // Verify CB is OPEN
@@ -239,8 +243,10 @@ class DatabaseEndpointCallbackTests {
             endpoint.bind(circuitBreaker);
 
             // Force circuit breaker to OPEN by recording failures and evaluating
-            circuitBreaker.recordFailure();
-            circuitBreaker.recordFailure();
+            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+
+            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+
             circuitBreaker.evaluateMetrics(); // This triggers state transition to OPEN
 
             assertThat(circuitBreaker.isClosed()).isFalse(); // Verify CB is OPEN

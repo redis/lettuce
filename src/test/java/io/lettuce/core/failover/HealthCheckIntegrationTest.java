@@ -1,5 +1,6 @@
 package io.lettuce.core.failover;
 
+import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
@@ -58,6 +59,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
     /** Expected run_id for uri3 Redis instance - used to verify we are connected to the correct endpoint */
     private String expectedRunIdUri3;
+
+    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @Inject
     HealthCheckIntegrationTest(MultiDbClient client) {
@@ -618,9 +621,9 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // When: Record failures to trigger circuit breaker (need 2 failures with 50% rate)
                 // Record 2 failures and 1 success = 66% failure rate, which exceeds 50% threshold
-                ((CircuitBreakerImpl) cb1).recordFailure();
-                ((CircuitBreakerImpl) cb1).recordFailure();
-                ((CircuitBreakerImpl) cb1).recordSuccess();
+                cb1.getGeneration().recordResult(null, timeoutException);
+                cb1.getGeneration().recordResult(null, timeoutException);
+                cb1.getGeneration().recordResult(null, null);
 
                 // Then: Circuit breaker should transition to OPEN
                 awaitAtMost().untilAsserted(() -> {
