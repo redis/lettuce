@@ -12,6 +12,8 @@ import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.failover.MultiDbTestSupport;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,7 +47,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
 
     private static RedisURI proxyUri2;
 
-    private static TestDatabaseRawConnectionFactoryImpl connectionProvider;
+    private static TestDatabaseRawConnectionFactoryImpl rawConnectionFactory;
 
     @Inject
     PingStrategyIntegrationTests(MultiDbClient client) {
@@ -105,12 +107,12 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
 
     @BeforeAll
     static void setupDatabaseConnectionProvider() {
-        connectionProvider = new TestDatabaseRawConnectionFactoryImpl();
+        rawConnectionFactory = new TestDatabaseRawConnectionFactoryImpl();
     }
 
     @AfterAll
     static void cleanupDatabaseConnectionProvider() {
-        connectionProvider.close();
+        rawConnectionFactory.close();
     }
 
     @Test
@@ -150,7 +152,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(1000))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, connectionProvider,
+        PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
                 HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build());
 
         try {
@@ -184,7 +186,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(100))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, connectionProvider,
+        PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
                 HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build());
 
         try {
@@ -217,7 +219,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(2000))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, connectionProvider, HealthCheckStrategy.Config.create());
+        PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory, HealthCheckStrategy.Config.create());
 
         try {
             // When: Initial health check
@@ -357,7 +359,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         private final RedisClient client;
 
         public TestDatabaseRawConnectionFactoryImpl() {
-            this.client = RedisClient.create();
+            this.client = RedisClient.create(TestClientResources.get());
         }
 
         @Override
@@ -366,7 +368,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         }
 
         public void close() {
-            client.shutdown();
+            FastShutdown.shutdown(client);
         }
 
     }
