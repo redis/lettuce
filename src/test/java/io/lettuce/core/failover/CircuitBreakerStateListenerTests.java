@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
 
 import io.lettuce.TestTags;
+import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 
 /**
@@ -21,13 +22,16 @@ import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 @Tag(TestTags.UNIT_TEST)
 class CircuitBreakerStateListenerTests {
 
-    private CircuitBreaker circuitBreaker;
+    private CircuitBreakerImpl circuitBreaker;
+
+    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @BeforeEach
     void setUp() {
         CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(50.0f, 5,
-                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
-        circuitBreaker = new CircuitBreaker(config);
+                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions(),
+                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+        circuitBreaker = new CircuitBreakerImpl(config);
     }
 
     @Test
@@ -38,7 +42,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change by recording failures
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.recordFailure();
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
 
         // Then
@@ -60,7 +64,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.recordFailure();
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
 
         // Then
@@ -77,7 +81,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.recordFailure();
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
 
         // Then
@@ -91,7 +95,7 @@ class CircuitBreakerStateListenerTests {
         circuitBreaker.addListener(listener);
 
         // When - evaluate without enough failures
-        circuitBreaker.recordSuccess();
+        circuitBreaker.getGeneration().recordResult(null);
         circuitBreaker.evaluateMetrics();
 
         // Then
@@ -108,7 +112,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.recordFailure();
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
 
         // Then - normal listener should still receive the event
@@ -125,7 +129,7 @@ class CircuitBreakerStateListenerTests {
         // When
         Thread.sleep(10); // Small delay to ensure timestamp difference
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.recordFailure();
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
         long afterTimestamp = System.currentTimeMillis();
 

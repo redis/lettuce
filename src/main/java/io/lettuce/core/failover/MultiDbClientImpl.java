@@ -119,6 +119,8 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         RedisURI uri = config.getRedisURI();
         StatefulRedisConnection<K, V> connection = connect(codec, uri);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
+        CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
+        databaseEndpoint.bind(circuitBreaker);
 
         HealthCheck healthCheck;
         if (config.getHealthCheckStrategySupplier() != null) {
@@ -130,7 +132,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         }
 
         RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
-                healthCheck);
+                circuitBreaker, healthCheck);
 
         return database;
     }
@@ -177,6 +179,8 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         RedisURI uri = config.getRedisURI();
         StatefulRedisPubSubConnection<K, V> connection = connectPubSub(codec, uri);
         DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
+        CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
+        databaseEndpoint.bind(circuitBreaker);
 
         HealthCheck healthCheck;
         if (config.getHealthCheckStrategySupplier() != null) {
@@ -188,7 +192,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         }
 
         RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
-                healthCheck);
+                circuitBreaker, healthCheck);
         return database;
     }
 

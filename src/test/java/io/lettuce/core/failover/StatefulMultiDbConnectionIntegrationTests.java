@@ -22,10 +22,12 @@ package io.lettuce.core.failover;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -39,8 +41,12 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.SocketOptions;
+import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
@@ -55,6 +61,8 @@ import io.lettuce.test.settings.TestSettings;
 @ExtendWith(LettuceExtension.class)
 @Tag(INTEGRATION_TEST)
 class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
+
+    public static final String TESTKEY = "testkey";
 
     @Inject
     StatefulMultiDbConnectionIntegrationTests(MultiDbClient client) {
@@ -565,6 +573,52 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         assertThat(connection.sync().get("thread-safety-test")).isEqualTo("success");
 
         connection.close();
+    }
+
+    // ====== Pending Commands Tests =====
+
+    @Test
+    void testPendingCommandsRequeuedAfterEndpointRemoval() {
+
+        ClientOptions clientOptions = ClientOptions.builder()
+                .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
+        multiDbClient.setOptions(clientOptions);
+
+        try (StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect(StringCodec.UTF8)) {
+
+            // Get the initial active endpoint
+            RedisURI initialActive = connection.getCurrentEndpoint();
+
+            // Disable auto-flush to buffer commands
+            connection.setAutoFlushCommands(false);
+
+            try {
+                // Issue a command that will be buffered
+                connection.async().set(TESTKEY, "testvalue");
+
+                // Verify command is not yet executed on the initial endpoint
+                RedisCommands<String, String> oldDirect = uri1.equals(initialActive) ? directClient1.connect().sync()
+                        : directClient2.connect().sync();
+                RedisCommands<String, String> newDirect = uri1.equals(initialActive) ? directClient2.connect().sync()
+                        : directClient1.connect().sync();
+                assertThat(oldDirect.get(TESTKEY)).isNull();
+
+                // Switch to the other endpoint
+                RedisURI newActive = initialActive.equals(uri1) ? uri2 : uri1;
+                connection.switchToDatabase(newActive);
+                connection.removeDatabase(initialActive);
+
+                // Flush commands - they should now be sent to the new active endpoint
+                connection.flushCommands();
+                // Verify command was executed on the NEW active endpoint
+                // close of removed connection happens asynchronously
+                await().untilAsserted(() -> assertThat(newDirect.get(TESTKEY)).isEqualTo("testvalue"));
+                assertThat(oldDirect.get(TESTKEY)).isNull();
+
+            } finally {
+                connection.setAutoFlushCommands(true);
+            }
+        }
     }
 
 }

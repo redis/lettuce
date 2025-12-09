@@ -25,12 +25,13 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
     }
 
     /**
-     * Set the circuit breaker for this endpoint. Must be called before any commands are written.
+     * Bind a circuit breaker to this endpoint. There is 1-1 relationship between a database endpoint and a circuit breaker.
+     * Must be called before any commands are written.
      *
      * @param circuitBreaker the circuit breaker instance
      */
     @Override
-    public void setCircuitBreaker(CircuitBreaker circuitBreaker) {
+    public void bind(CircuitBreaker circuitBreaker) {
         this.circuitBreaker = circuitBreaker;
     }
 
@@ -45,39 +46,63 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
 
     @Override
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {
-        RedisCommand<K, V, T> result = super.write(command);
 
-        // Attach completion callback to track success/failure
-        if (circuitBreaker != null && result instanceof CompleteableCommand) {
-            @SuppressWarnings("unchecked")
-            CompleteableCommand<T> completeable = (CompleteableCommand<T>) result;
-            completeable.onComplete(this::handleFailure);
+        if (circuitBreaker == null) {
+            return super.write(command);
+        }
+        if (!circuitBreaker.isClosed()) {
+            command.completeExceptionally(RedisCircuitBreakerException.INSTANCE);
+            return command;
         }
 
+        RedisCommand<K, V, T> result;
+        try {
+            // Delegate to parent
+            result = super.write(command);
+        } catch (Exception e) {
+            circuitBreaker.getGeneration().recordResult(e);
+            throw e;
+        }
+
+        // Attach completion callback to track success/failure
+        if (result instanceof CompleteableCommand) {
+            CircuitBreakerGeneration generation = circuitBreaker.getGeneration();
+            @SuppressWarnings("unchecked")
+            CompleteableCommand<T> completeable = (CompleteableCommand<T>) result;
+            completeable.onComplete((o, e) -> generation.recordResult(e));
+        }
         return result;
     }
 
     @Override
     public <K, V> Collection<RedisCommand<K, V, ?>> write(Collection<? extends RedisCommand<K, V, ?>> commands) {
-        // Delegate to parent
-        Collection<RedisCommand<K, V, ?>> result = super.write(commands);
-
-        // Attach completion callbacks to track success/failure for each command
-        if (circuitBreaker != null) {
-            for (RedisCommand<K, V, ?> command : result) {
-                if (command instanceof CompleteableCommand) {
-                    @SuppressWarnings("unchecked")
-                    CompleteableCommand<Object> completeable = (CompleteableCommand<Object>) command;
-                    completeable.onComplete(this::handleFailure);
-                }
-            }
+        if (circuitBreaker == null) {
+            return super.write(commands);
+        }
+        if (!circuitBreaker.isClosed()) {
+            commands.forEach(c -> c.completeExceptionally(RedisCircuitBreakerException.INSTANCE));
+            return (Collection) commands;
+        }
+        Collection<RedisCommand<K, V, ?>> result;
+        try {
+            // Delegate to parent
+            result = super.write(commands);
+        } catch (Exception e) {
+            // TODO: here not sure we should record exception for each command or just once for the batch
+            circuitBreaker.getGeneration().recordResult(e);
+            throw e;
         }
 
+        // Attach completion callbacks to track success/failure for each command
+        CircuitBreakerGeneration generation = circuitBreaker.getGeneration();
+        for (RedisCommand<K, V, ?> command : result) {
+            if (command instanceof CompleteableCommand) {
+                @SuppressWarnings("unchecked")
+                CompleteableCommand<Object> completeable = (CompleteableCommand<Object>) command;
+                completeable.onComplete((o, e) -> generation.recordResult(e));
+            }
+        }
         return result;
-    }
-
-    private void handleFailure(Object output, Throwable error) {
-        circuitBreaker.recordResult(error);
     }
 
     @Override

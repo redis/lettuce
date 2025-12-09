@@ -6,19 +6,12 @@ import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-
-import io.lettuce.core.internal.LettuceAssert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
-import io.lettuce.core.failover.metrics.CircuitBreakerMetrics;
-import io.lettuce.core.failover.metrics.MetricsFactory;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
 
 /**
@@ -31,40 +24,7 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
  * @author Ali Takavci
  * @since 7.1
  */
-public class CircuitBreaker implements Closeable {
-
-    private static final Logger log = LoggerFactory.getLogger(CircuitBreaker.class);
-
-    private final CircuitBreakerConfig config;
-
-    private final AtomicReference<CircuitBreakerStateHolder> stateRef;
-
-    private final Set<CircuitBreakerStateListener> listeners = ConcurrentHashMap.newKeySet();
-
-    private final Set<Class<? extends Throwable>> trackedExceptions;
-
-    /**
-     * Create a circuit breaker instance.
-     */
-    public CircuitBreaker(CircuitBreakerConfig config) {
-        LettuceAssert.notNull(config, "CircuitBreakerConfig must not be null");
-
-        this.config = config;
-        this.trackedExceptions = new HashSet<>(config.trackedExceptions);
-        this.stateRef = new AtomicReference<>(
-                new CircuitBreakerStateHolder(State.CLOSED, MetricsFactory.createDefaultMetrics()));
-    }
-
-    /**
-     * Get the metrics tracked by this circuit breaker.
-     * <p>
-     * This is only for internal use and testing purposes.
-     *
-     * @return the circuit breaker metrics
-     */
-    CircuitBreakerMetrics getMetrics() {
-        return stateRef.get().metrics;
-    }
+public interface CircuitBreaker extends Closeable {
 
     /**
      * Get a snapshot of the current metrics within the time window. Use the snapshot to access success count, failure count,
@@ -72,178 +32,49 @@ public class CircuitBreaker implements Closeable {
      *
      * @return an immutable snapshot of current metrics
      */
-    public MetricsSnapshot getSnapshot() {
-        return stateRef.get().metrics.getSnapshot();
-    }
-
-    @Override
-    public String toString() {
-        CircuitBreakerStateHolder current = stateRef.get();
-        return "CircuitBreaker{" + "state=" + current.state + ", metrics=" + current.metrics + ", config=" + config + '}';
-    }
-
-    public boolean isCircuitBreakerTrackedException(Throwable throwable) {
-        Class<? extends Throwable> errorClass = throwable.getClass();
-        for (Class<? extends Throwable> trackedException : trackedExceptions) {
-            if (trackedException.isAssignableFrom(errorClass)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void recordResult(Throwable error) {
-        if (error != null && isCircuitBreakerTrackedException(error)) {
-            recordFailure();
-        } else {
-            recordSuccess();
-        }
-    }
-
-    public void recordFailure() {
-        stateRef.get().metrics.recordFailure();
-        evaluateMetrics();
-    }
-
-    public void recordSuccess() {
-        stateRef.get().metrics.recordSuccess();
-    }
+    public MetricsSnapshot getSnapshot();
 
     /**
-     * Evaluate the current metrics to determine if the circuit breaker should transition to a new state.
+     * Get the current generation of the circuit breaker. This is used to track the state and metrics of the circuit breaker at
+     * the time of command execution.
      *
-     * <p>
-     * This method checks the failure rate and failure count against the configured thresholds. If the thresholds are met, the
-     * circuit breaker transitions to the OPEN state. Metrics are reset when the state changes.
-     * </p>
-     *
-     * @return an immutable snapshot of current metrics
+     * @return the current generation of the circuit breaker
      */
-    MetricsSnapshot evaluateMetrics() {
-        CircuitBreakerStateHolder current = stateRef.get();
-        MetricsSnapshot snapshot = current.metrics.getSnapshot();
-        boolean evaluationResult = snapshot.getFailureRate() >= config.getFailureRateThreshold()
-                && snapshot.getFailureCount() >= config.getMinimumNumberOfFailures();
-        if (evaluationResult) {
-            stateTransitionTo(State.OPEN);
-        }
-        return snapshot;
-    }
+    public CircuitBreakerGeneration getGeneration();
 
     /**
-     * Switch the circuit breaker to the specified state. This method is used to force the circuit breaker to a specific state.
+     * Get the current state of the circuit breaker.
      *
-     * <p>
-     * This method does not evaluate the metrics to determine if the state transition is valid. It simply transitions to the
-     * specified state. Metrics are reset when the state changes.
-     * </p>
-     *
-     * @param newState the target state
+     * @return the current state
      */
-    public void transitionTo(State newState) {
-        stateTransitionTo(newState);
-    }
+    public State getCurrentState();
 
     /**
-     * Atomically transition to a new state with fresh metrics.
-     * <p>
-     * This method uses lock-free CAS to ensure that state change and metrics reset happen atomically. Whenever the circuit
-     * breaker transitions to a new state, a fresh metrics instance is created, providing a clean slate for tracking metrics in
-     * the new state.
-     * <p>
-     * If the state is already the target state, no transition occurs.
+     * Check if the circuit breaker is in the closed state.
      *
-     * @param newState the target state
+     * @return {@code true} if the circuit breaker is in the closed state
      */
-    private void stateTransitionTo(State newState) {
-        while (true) {
-            CircuitBreakerStateHolder current = stateRef.get();
-
-            // No transition needed if already in target state
-            if (current.state == newState) {
-                return;
-            }
-
-            // Always create fresh metrics on state transition
-            CircuitBreakerMetrics nextMetrics = MetricsFactory.createDefaultMetrics();
-
-            CircuitBreakerStateHolder next = new CircuitBreakerStateHolder(newState, nextMetrics);
-
-            // Atomically swap if current state hasn't changed
-            if (stateRef.compareAndSet(current, next)) {
-                fireStateChanged(current.state, newState);
-                return;
-            }
-            // CAS failed, retry with updated current state
-        }
-    }
-
-    public State getCurrentState() {
-        return stateRef.get().state;
-    }
+    public boolean isClosed();
 
     /**
      * Add a listener for circuit breaker state change events.
      *
      * @param listener the listener to add, must not be {@code null}
      */
-    public void addListener(CircuitBreakerStateListener listener) {
-        listeners.add(listener);
-    }
+    public void addListener(CircuitBreakerStateListener listener);
 
     /**
      * Remove a listener for circuit breaker state change events.
      *
      * @param listener the listener to remove, must not be {@code null}
      */
-    public void removeListener(CircuitBreakerStateListener listener) {
-        listeners.remove(listener);
-    }
-
-    /**
-     * Fire a state change event to all registered listeners.
-     *
-     * @param previousState the previous state
-     * @param newState the new state
-     */
-    private void fireStateChanged(State previousState, State newState) {
-        CircuitBreakerStateChangeEvent event = new CircuitBreakerStateChangeEvent(this, previousState, newState);
-        for (CircuitBreakerStateListener listener : listeners) {
-            try {
-                listener.onCircuitBreakerStateChange(event);
-            } catch (Exception e) {
-                // Ignore listener exceptions to prevent one bad listener from affecting others
-                log.error("Error notifying listener " + listener + " of state change " + event, e);
-            }
-        }
-    }
+    public void removeListener(CircuitBreakerStateListener listener);
 
     @Override
-    public void close() {
-        listeners.clear();
-    }
+    public void close();
 
     public enum State {
         CLOSED, OPEN
-    }
-
-    /**
-     * Immutable holder for circuit breaker state and metrics.
-     * <p>
-     * This class enables atomic updates of both state and metrics using {@link AtomicReference}. When a state transition
-     * occurs, a new instance is created with fresh metrics.
-     */
-    private static final class CircuitBreakerStateHolder {
-
-        final State state;
-
-        final CircuitBreakerMetrics metrics;
-
-        CircuitBreakerStateHolder(State state, CircuitBreakerMetrics metrics) {
-            this.state = state;
-            this.metrics = metrics;
-        }
-
     }
 
     public static class CircuitBreakerConfig {
@@ -251,6 +82,8 @@ public class CircuitBreaker implements Closeable {
         private final static float DEFAULT_FAILURE_RATE_THRESHOLD = 10;
 
         private final static int DEFAULT_MINIMUM_NUMBER_OF_FAILURES = 1000;
+
+        private final static int DEFAULT_METRICS_WINDOW_SIZE = 2;
 
         private final static Set<Class<? extends Throwable>> DEFAULT_TRACKED_EXCEPTIONS = new HashSet<>(Arrays.asList(
 
@@ -273,15 +106,19 @@ public class CircuitBreaker implements Closeable {
 
         private final int minimumNumberOfFailures;
 
+        private final int metricsWindowSize;
+
         private CircuitBreakerConfig() {
-            this(DEFAULT_FAILURE_RATE_THRESHOLD, DEFAULT_MINIMUM_NUMBER_OF_FAILURES, DEFAULT_TRACKED_EXCEPTIONS);
+            this(DEFAULT_FAILURE_RATE_THRESHOLD, DEFAULT_MINIMUM_NUMBER_OF_FAILURES, DEFAULT_TRACKED_EXCEPTIONS,
+                    DEFAULT_METRICS_WINDOW_SIZE);
         }
 
         public CircuitBreakerConfig(float failureThreshold, int minimumNumberOfFailures,
-                Set<Class<? extends Throwable>> trackedExceptions) {
+                Set<Class<? extends Throwable>> trackedExceptions, int metricsWindowSize) {
             this.trackedExceptions = trackedExceptions;
             this.failureThreshold = failureThreshold;
             this.minimumNumberOfFailures = minimumNumberOfFailures;
+            this.metricsWindowSize = metricsWindowSize;
         }
 
         public Set<Class<? extends Throwable>> getTrackedExceptions() {
@@ -294,6 +131,16 @@ public class CircuitBreaker implements Closeable {
 
         public int getMinimumNumberOfFailures() {
             return minimumNumberOfFailures;
+        }
+
+        public int getMetricsWindowSize() {
+            return metricsWindowSize;
+        }
+
+        @Override
+        public String toString() {
+            return "CircuitBreakerConfig{" + "trackedExceptions=" + trackedExceptions + ", failureThreshold=" + failureThreshold
+                    + ", minimumNumberOfFailures=" + minimumNumberOfFailures + ", metricsWindowSize=" + metricsWindowSize + '}';
         }
 
     }

@@ -1,5 +1,6 @@
 package io.lettuce.core.failover;
 
+import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
@@ -58,6 +59,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
     /** Expected run_id for uri3 Redis instance - used to verify we are connected to the correct endpoint */
     private String expectedRunIdUri3;
+
+    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @Inject
     HealthCheckIntegrationTest(MultiDbClient client) {
@@ -588,7 +591,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             CircuitBreaker.CircuitBreakerConfig cbConfig = new CircuitBreaker.CircuitBreakerConfig(50.0f, // 50% failure rate
                                                                                                           // threshold
                     2, // minimum 2 failures
-                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
+                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions(),
+                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
 
             DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, cbConfig, supplier);
             DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, cbConfig, supplier);
@@ -617,9 +621,9 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // When: Record failures to trigger circuit breaker (need 2 failures with 50% rate)
                 // Record 2 failures and 1 success = 66% failure rate, which exceeds 50% threshold
-                cb1.recordFailure();
-                cb1.recordFailure();
-                cb1.recordSuccess();
+                cb1.getGeneration().recordResult(timeoutException);
+                cb1.getGeneration().recordResult(timeoutException);
+                cb1.getGeneration().recordResult(null);
 
                 // Then: Circuit breaker should transition to OPEN
                 awaitAtMost().untilAsserted(() -> {

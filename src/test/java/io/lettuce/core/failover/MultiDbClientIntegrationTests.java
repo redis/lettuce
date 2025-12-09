@@ -5,12 +5,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 
@@ -40,6 +43,8 @@ class MultiDbClientIntegrationTests {
 
     private StatefulRedisMultiDbConnection<String, String> connection;
 
+    private static final Pattern runIdPattern = Pattern.compile("run_id:([0-9a-f]+)");
+
     @AfterEach
     void tearDown() {
         if (connection != null) {
@@ -52,16 +57,6 @@ class MultiDbClientIntegrationTests {
 
     @Test
     void shouldCreateWithMultipleEndpoints() {
-        RedisURI uri1 = RedisURI.create("redis://localhost:6379");
-        RedisURI uri2 = RedisURI.create("redis://localhost:6380");
-
-        client = MultiDbClient.create(MultiDbTestSupport.getDatabaseConfigs(uri1, uri2));
-
-        assertThat(client).isNotNull();
-    }
-
-    @Test
-    void shouldCreateWithSet() {
         RedisURI uri1 = MultiDbTestSupport.URI1;
         RedisURI uri2 = MultiDbTestSupport.URI2;
 
@@ -210,10 +205,28 @@ class MultiDbClientIntegrationTests {
         // API CHANGE: Original used multiDbClient.getActive()
         assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
-        // API CHANGE: Original used multiDbClient.setActive(uri2)
-        connection.switchToDatabase(uri2);
-        // API CHANGE: Original used multiDbClient.getActive()
-        assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
+        try (RedisClient c = RedisClient.create()) {
+            String initialServerId = extractServerId(connection.sync().info("server"));
+            String serverId = extractServerId(c.connect(uri1).sync().info("server"));
+            assertThat(serverId).isEqualTo(initialServerId);
+
+            // API CHANGE: Original used multiDbClient.setActive(uri2)
+            connection.switchToDatabase(uri2);
+            // API CHANGE: Original used multiDbClient.getActive()
+            assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
+
+            String newServerId = extractServerId(connection.sync().info("server"));
+            String secondServerId = extractServerId(c.connect(uri2).sync().info("server"));
+            assertThat(secondServerId).isEqualTo(newServerId);
+            assertThat(newServerId).isNotEqualTo(initialServerId);
+        }
+    }
+
+    private String extractServerId(String info) {
+        Matcher matcher = runIdPattern.matcher(info);
+
+        assertThat(matcher.find()).isTrue();
+        return matcher.group(1);
     }
 
     @Test
