@@ -4,8 +4,8 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 /**
- * Factory interface to obtain direct {@link StatefulRedisConnection connections} to Redis database nodes. Connections created by
- * this factory are raw connections without CircuitBreaker counting, health checks, or other management features.
+ * Factory interface to obtain direct {@link StatefulRedisConnection connections} to Redis database nodes. Connections created
+ * by this factory are raw connections without CircuitBreaker counting, health checks, or other management features.
  *
  * @author Ivo Gaydazhiev
  * @since 7.2
