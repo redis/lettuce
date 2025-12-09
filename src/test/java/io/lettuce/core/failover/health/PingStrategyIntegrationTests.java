@@ -7,7 +7,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.DatabaseConfig;
-import io.lettuce.core.failover.DatabaseConnectionProvider;
+import io.lettuce.core.failover.DatabaseRawConnectionFactory;
 import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.failover.MultiDbTestSupport;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
@@ -45,7 +45,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
 
     private static RedisURI proxyUri2;
 
-    private static TestDatabaseConnectionProviderImpl connectionProvider;
+    private static TestDatabaseRawConnectionFactoryImpl connectionProvider;
 
     @Inject
     PingStrategyIntegrationTests(MultiDbClient client) {
@@ -105,7 +105,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
 
     @BeforeAll
     static void setupDatabaseConnectionProvider() {
-        connectionProvider = new TestDatabaseConnectionProviderImpl();
+        connectionProvider = new TestDatabaseRawConnectionFactoryImpl();
     }
 
     @AfterAll
@@ -352,16 +352,16 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         }
     }
 
-    private static class TestDatabaseConnectionProviderImpl implements DatabaseConnectionProvider {
+    private static class TestDatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
 
         private final RedisClient client;
 
-        public TestDatabaseConnectionProviderImpl() {
+        public TestDatabaseRawConnectionFactoryImpl() {
             this.client = RedisClient.create();
         }
 
         @Override
-        public StatefulRedisConnection<?, ?> getConnection(RedisURI endpoint) {
+        public StatefulRedisConnection<?, ?> connectToDatabase(RedisURI endpoint) {
             return client.connect(endpoint);
         }
 

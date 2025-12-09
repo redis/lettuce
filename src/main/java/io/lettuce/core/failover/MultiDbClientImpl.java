@@ -47,7 +47,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     private final Map<RedisURI, DatabaseConfig> databaseConfigs;
 
-    private final DatabaseConnectionProvider databaseConnectionProvider = new DatabaseConnectionProviderImpl();
+    private final DatabaseRawConnectionFactory databaseRawConnectionFactory = new DatabaseRawConnectionFactoryImpl();
 
     MultiDbClientImpl(Collection<DatabaseConfig> databaseConfigs) {
         this(null, databaseConfigs);
@@ -127,7 +127,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         HealthCheck healthCheck;
         if (config.getHealthCheckStrategySupplier() != null) {
             HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                    databaseConnectionProvider);
+                    databaseRawConnectionFactory);
             healthCheck = healthStatusManager.add(uri, hcStrategy);
         } else {
             healthCheck = null;
@@ -188,7 +188,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         if (config.getHealthCheckStrategySupplier() != null) {
 
             HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                    databaseConnectionProvider);
+                    databaseRawConnectionFactory);
             healthCheck = healthStatusManager.add(uri, hcStrategy);
         } else {
             healthCheck = null;
@@ -265,10 +265,10 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         throw new RedisConnectionException("All configured databases are unhealthy.");
     }
 
-    private class DatabaseConnectionProviderImpl implements DatabaseConnectionProvider {
+    private class DatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
 
         @Override
-        public StatefulRedisConnection<?, ?> getConnection(RedisURI endpoint) {
+        public StatefulRedisConnection<?, ?> connectToDatabase(RedisURI endpoint) {
             return MultiDbClientImpl.this.connect(endpoint);
         }
 
