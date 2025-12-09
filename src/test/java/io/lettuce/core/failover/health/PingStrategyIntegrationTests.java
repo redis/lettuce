@@ -323,37 +323,6 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         }
     }
 
-    @Test
-    @DisplayName("Should reuse MultiDbClient connections with DEFAULT_WITH_PROVIDER supplier")
-    void shouldReuseConnectionsWithProvider() {
-        // Given: DatabaseConfig with DEFAULT_WITH_PROVIDER supplier that reuses connections
-        DatabaseConfig config1 = new DatabaseConfig(proxyUri1, 1.0f, null, null, PingStrategy.DEFAULT_WITH_PROVIDER);
-        DatabaseConfig config2 = new DatabaseConfig(proxyUri2, 0.5f, null, null, PingStrategy.DEFAULT_WITH_PROVIDER);
-
-        // When: Create MultiDbClient and connect
-        MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
-        StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
-
-        try {
-            // Then: Connection should work normally
-            assertThat(connection.sync().ping()).isEqualTo("PONG");
-            assertThat(connection.getCurrentEndpoint()).isNotNull();
-
-            // And: Should be able to execute commands
-            connection.sync().set("provider-test-key", "provider-test-value");
-            assertThat(connection.sync().get("provider-test-key")).isEqualTo("provider-test-value");
-
-            // And: Health checks should be running using the same connection
-            await().pollDelay(Duration.ofMillis(100)).atMost(Duration.ofMillis(500)).untilAsserted(() -> {
-                assertThat(connection.sync().ping()).isEqualTo("PONG");
-            });
-
-        } finally {
-            connection.close();
-            testClient.shutdown();
-        }
-    }
-
     private static class TestDatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
 
         private final RedisClient client;

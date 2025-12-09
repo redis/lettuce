@@ -65,9 +65,4 @@ public class PingStrategy implements HealthCheckStrategy {
 
     public static final HealthCheckStrategySupplier DEFAULT = PingStrategy::new;
 
-    /**
-     * Default supplier that uses connection provider when available for resource efficiency.
-     */
-    public static final HealthCheckStrategySupplier DEFAULT_WITH_PROVIDER = PingStrategy::new;
-
 }
