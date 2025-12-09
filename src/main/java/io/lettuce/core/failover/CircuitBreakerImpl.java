@@ -260,7 +260,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
         }
 
         @Override
-        public void recordResult(Object output, Throwable error) {
+        public void recordResult(Throwable error) {
             CircuitBreakerGeneration current = circuitBreaker.getGeneration();
             if (current != this) {
                 return;

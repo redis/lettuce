@@ -58,7 +58,7 @@ class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements D
             // Delegate to parent
             result = super.write(command);
         } catch (Exception e) {
-            circuitBreaker.getGeneration().recordResult(null, e);
+            circuitBreaker.getGeneration().recordResult(e);
             throw e;
         }
 
@@ -67,7 +67,7 @@ class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements D
             CircuitBreakerGeneration generation = circuitBreaker.getGeneration();
             @SuppressWarnings("unchecked")
             CompleteableCommand<T> completeable = (CompleteableCommand<T>) result;
-            completeable.onComplete(generation::recordResult);
+            completeable.onComplete((o, e) -> generation.recordResult(e));
         }
         return result;
     }
@@ -87,7 +87,7 @@ class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements D
             result = super.write(commands);
         } catch (Exception e) {
             // TODO: here not sure we should record exception for each command or just once for the batch
-            circuitBreaker.getGeneration().recordResult(null, e);
+            circuitBreaker.getGeneration().recordResult(e);
             throw e;
         }
 
@@ -97,7 +97,7 @@ class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements D
             if (command instanceof CompleteableCommand) {
                 @SuppressWarnings("unchecked")
                 CompleteableCommand<Object> completeable = (CompleteableCommand<Object>) command;
-                completeable.onComplete(generation::recordResult);
+                completeable.onComplete((o, e) -> generation.recordResult(e));
             }
         }
         return result;

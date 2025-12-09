@@ -10,11 +10,8 @@ package io.lettuce.core.failover;
 public interface CircuitBreakerGeneration {
 
     /**
-     * Record the result of a command execution for the metrics tracking of this generation.
-     *
-     * @param output the command output
-     * @param error the error, if any
+     * Record the result of a command execution for the metrics tracking of this generation. * @param error the error, if any
      */
-    void recordResult(Object output, Throwable error);
+    void recordResult(Throwable error);
 
 }

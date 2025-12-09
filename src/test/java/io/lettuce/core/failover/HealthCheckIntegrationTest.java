@@ -621,9 +621,9 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
                 // When: Record failures to trigger circuit breaker (need 2 failures with 50% rate)
                 // Record 2 failures and 1 success = 66% failure rate, which exceeds 50% threshold
-                cb1.getGeneration().recordResult(null, timeoutException);
-                cb1.getGeneration().recordResult(null, timeoutException);
-                cb1.getGeneration().recordResult(null, null);
+                cb1.getGeneration().recordResult(timeoutException);
+                cb1.getGeneration().recordResult(timeoutException);
+                cb1.getGeneration().recordResult(null);
 
                 // Then: Circuit breaker should transition to OPEN
                 awaitAtMost().untilAsserted(() -> {

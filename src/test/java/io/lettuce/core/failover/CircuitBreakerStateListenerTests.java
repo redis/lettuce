@@ -42,7 +42,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change by recording failures
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
 
         // Then
@@ -64,7 +64,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
 
         // Then
@@ -81,7 +81,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
 
         // Then
@@ -95,7 +95,7 @@ class CircuitBreakerStateListenerTests {
         circuitBreaker.addListener(listener);
 
         // When - evaluate without enough failures
-        circuitBreaker.getGeneration().recordResult(null, null);
+        circuitBreaker.getGeneration().recordResult(null);
         circuitBreaker.evaluateMetrics();
 
         // Then
@@ -112,7 +112,7 @@ class CircuitBreakerStateListenerTests {
 
         // When - trigger state change
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
 
         // Then - normal listener should still receive the event
@@ -129,7 +129,7 @@ class CircuitBreakerStateListenerTests {
         // When
         Thread.sleep(10); // Small delay to ensure timestamp difference
         for (int i = 0; i < 10; i++) {
-            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+            circuitBreaker.getGeneration().recordResult(timeoutException);
         }
         long afterTimestamp = System.currentTimeMillis();
 

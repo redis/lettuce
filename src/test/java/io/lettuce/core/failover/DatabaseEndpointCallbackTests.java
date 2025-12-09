@@ -196,9 +196,9 @@ class DatabaseEndpointCallbackTests {
             endpoint.bind(circuitBreaker);
 
             // Force circuit breaker to OPEN by recording failures and evaluating
-            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+            circuitBreaker.getGeneration().recordResult(timeoutException);
 
-            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+            circuitBreaker.getGeneration().recordResult(timeoutException);
 
             circuitBreaker.evaluateMetrics(); // This triggers state transition to OPEN
 
@@ -243,9 +243,9 @@ class DatabaseEndpointCallbackTests {
             endpoint.bind(circuitBreaker);
 
             // Force circuit breaker to OPEN by recording failures and evaluating
-            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+            circuitBreaker.getGeneration().recordResult(timeoutException);
 
-            circuitBreaker.getGeneration().recordResult(null, timeoutException);
+            circuitBreaker.getGeneration().recordResult(timeoutException);
 
             circuitBreaker.evaluateMetrics(); // This triggers state transition to OPEN
 
@@ -872,7 +872,7 @@ class DatabaseEndpointCallbackTests {
             CircuitBreakerGeneration generation = new CircuitBreakerGeneration() {
 
                 @Override
-                public void recordResult(Object output, Throwable error) {
+                public void recordResult(Throwable error) {
                     throw new RuntimeException("Simulated callback exception");
                 }
 
