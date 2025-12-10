@@ -2,6 +2,7 @@ package io.lettuce.core.failover;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -160,6 +161,129 @@ class CircuitBreakerConfigBuilderUnitTests {
             assertThatThrownBy(() -> CircuitBreakerConfig.builder().metricsWindowSize(1).build())
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Metrics window size must be at least 2 seconds");
+        }
+
+    }
+
+    @Nested
+    @DisplayName("Tracked Exceptions Modification Tests")
+    class TrackedExceptionsModificationTests {
+
+        @Test
+        @DisplayName("Should add tracked exceptions to defaults")
+        void shouldAddTrackedExceptions() {
+            // When: Add custom exceptions to defaults
+            CircuitBreakerConfig config = CircuitBreakerConfig.builder()
+                    .addTrackedExceptions(RuntimeException.class, IllegalArgumentException.class).build();
+
+            // Then: Should contain both defaults and added exceptions
+            assertThat(config.getTrackedExceptions()).contains(RuntimeException.class, IllegalArgumentException.class);
+            // Should still contain default exceptions
+            assertThat(config.getTrackedExceptions()).isNotEmpty();
+        }
+
+        @Test
+        @DisplayName("Should remove tracked exceptions from defaults")
+        void shouldRemoveTrackedExceptions() {
+            // Given: Get a default exception to remove
+            Class<? extends Throwable> exceptionToRemove = CircuitBreakerConfig.DEFAULT.getTrackedExceptions().iterator()
+                    .next();
+
+            // When: Remove an exception from defaults
+            CircuitBreakerConfig config = CircuitBreakerConfig.builder().removeTrackedExceptions(exceptionToRemove).build();
+
+            // Then: Should not contain the removed exception
+            assertThat(config.getTrackedExceptions()).doesNotContain(exceptionToRemove);
+            // Should still contain other default exceptions
+            assertThat(config.getTrackedExceptions()).isNotEmpty();
+        }
+
+        @Test
+        @DisplayName("Should add and remove tracked exceptions")
+        void shouldAddAndRemoveTrackedExceptions() {
+            // Given: Get a default exception to remove
+            Class<? extends Throwable> exceptionToRemove = CircuitBreakerConfig.DEFAULT.getTrackedExceptions().iterator()
+                    .next();
+
+            // When: Add and remove exceptions
+            CircuitBreakerConfig config = CircuitBreakerConfig.builder().addTrackedExceptions(RuntimeException.class)
+                    .removeTrackedExceptions(exceptionToRemove).build();
+
+            // Then: Should contain added exception
+            assertThat(config.getTrackedExceptions()).contains(RuntimeException.class);
+            // Should not contain removed exception
+            assertThat(config.getTrackedExceptions()).doesNotContain(exceptionToRemove);
+        }
+
+        @Test
+        @DisplayName("Should replace all tracked exceptions using trackedExceptions()")
+        void shouldReplaceAllTrackedExceptions() {
+            // Given: Custom exception set
+            Set<Class<? extends Throwable>> customExceptions = new HashSet<>();
+            customExceptions.add(RuntimeException.class);
+            customExceptions.add(IllegalArgumentException.class);
+
+            // When: Replace all tracked exceptions
+            CircuitBreakerConfig config = CircuitBreakerConfig.builder().trackedExceptions(customExceptions).build();
+
+            // Then: Should only contain the specified exceptions
+            assertThat(config.getTrackedExceptions()).containsExactlyInAnyOrder(RuntimeException.class,
+                    IllegalArgumentException.class);
+        }
+
+        @Test
+        @DisplayName("Should reject null when adding tracked exceptions")
+        void shouldRejectNullWhenAdding() {
+            // When/Then: Attempting to add null should throw
+            assertThatThrownBy(() -> CircuitBreakerConfig.builder().addTrackedExceptions((Class<? extends Throwable>[]) null))
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Exception classes must not be null");
+        }
+
+        @Test
+        @DisplayName("Should reject null elements when adding tracked exceptions")
+        void shouldRejectNullElementsWhenAdding() {
+            // When/Then: Attempting to add null elements should throw
+            assertThatThrownBy(
+                    () -> CircuitBreakerConfig.builder().addTrackedExceptions(RuntimeException.class, null, IOException.class))
+                            .isInstanceOf(IllegalArgumentException.class)
+                            .hasMessageContaining("Exception classes must not contain null elements");
+        }
+
+        @Test
+        @DisplayName("Should reject empty array when adding tracked exceptions")
+        void shouldRejectEmptyArrayWhenAdding() {
+            // When/Then: Attempting to add empty array should throw
+            assertThatThrownBy(() -> CircuitBreakerConfig.builder().addTrackedExceptions())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Exception classes must contain at least one element");
+        }
+
+        @Test
+        @DisplayName("Should reject null when removing tracked exceptions")
+        void shouldRejectNullWhenRemoving() {
+            // When/Then: Attempting to remove null should throw
+            assertThatThrownBy(
+                    () -> CircuitBreakerConfig.builder().removeTrackedExceptions((Class<? extends Throwable>[]) null))
+                            .isInstanceOf(IllegalArgumentException.class)
+                            .hasMessageContaining("Exception classes must not be null");
+        }
+
+        @Test
+        @DisplayName("Should reject null elements when removing tracked exceptions")
+        void shouldRejectNullElementsWhenRemoving() {
+            // When/Then: Attempting to remove null elements should throw
+            assertThatThrownBy(() -> CircuitBreakerConfig.builder().removeTrackedExceptions(RuntimeException.class, null,
+                    IOException.class)).isInstanceOf(IllegalArgumentException.class)
+                            .hasMessageContaining("Exception classes must not contain null elements");
+        }
+
+        @Test
+        @DisplayName("Should reject empty array when removing tracked exceptions")
+        void shouldRejectEmptyArrayWhenRemoving() {
+            // When/Then: Attempting to remove empty array should throw
+            assertThatThrownBy(() -> CircuitBreakerConfig.builder().removeTrackedExceptions())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Exception classes must contain at least one element");
         }
 
     }

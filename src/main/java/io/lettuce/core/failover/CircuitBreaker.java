@@ -197,7 +197,7 @@ public interface CircuitBreaker extends Closeable {
 
             /**
              * Set the exceptions to track for circuit breaker metrics. Only these exceptions (and their subclasses) will be
-             * counted as failures.
+             * counted as failures. This replaces any previously configured tracked exceptions.
              *
              * @param trackedExceptions the set of exception classes to track, must not be {@code null}
              * @return {@code this} builder
@@ -205,6 +205,53 @@ public interface CircuitBreaker extends Closeable {
             public Builder trackedExceptions(Set<Class<? extends Throwable>> trackedExceptions) {
                 LettuceAssert.notNull(trackedExceptions, "Tracked exceptions must not be null");
                 this.trackedExceptions = trackedExceptions;
+                return this;
+            }
+
+            /**
+             * Add one or more exception classes to track for circuit breaker metrics. Only these exceptions (and their
+             * subclasses) will be counted as failures. This adds to the existing tracked exceptions.
+             *
+             * @param exceptionClasses one or more exception classes to track, must not be {@code null} and must not contain
+             *        {@code null} elements
+             * @return {@code this} builder
+             * @since 7.4
+             */
+            @SafeVarargs
+            public final Builder addTrackedExceptions(Class<? extends Throwable>... exceptionClasses) {
+                LettuceAssert.notNull(exceptionClasses, "Exception classes must not be null");
+                LettuceAssert.noNullElements(exceptionClasses, "Exception classes must not contain null elements");
+                LettuceAssert.notEmpty(exceptionClasses, "Exception classes must contain at least one element");
+
+                // Ensure we have a mutable copy
+                if (this.trackedExceptions == DEFAULT_TRACKED_EXCEPTIONS) {
+                    this.trackedExceptions = new HashSet<>(DEFAULT_TRACKED_EXCEPTIONS);
+                }
+
+                this.trackedExceptions.addAll(Arrays.asList(exceptionClasses));
+                return this;
+            }
+
+            /**
+             * Remove one or more exception classes from the tracked exceptions for circuit breaker metrics.
+             *
+             * @param exceptionClasses one or more exception classes to remove, must not be {@code null} and must not contain
+             *        {@code null} elements
+             * @return {@code this} builder
+             * @since 7.4
+             */
+            @SafeVarargs
+            public final Builder removeTrackedExceptions(Class<? extends Throwable>... exceptionClasses) {
+                LettuceAssert.notNull(exceptionClasses, "Exception classes must not be null");
+                LettuceAssert.noNullElements(exceptionClasses, "Exception classes must not contain null elements");
+                LettuceAssert.notEmpty(exceptionClasses, "Exception classes must contain at least one element");
+
+                // Ensure we have a mutable copy
+                if (this.trackedExceptions == DEFAULT_TRACKED_EXCEPTIONS) {
+                    this.trackedExceptions = new HashSet<>(DEFAULT_TRACKED_EXCEPTIONS);
+                }
+
+                Arrays.asList(exceptionClasses).forEach(this.trackedExceptions::remove);
                 return this;
             }
 
