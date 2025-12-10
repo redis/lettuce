@@ -71,14 +71,14 @@ public class MultiDbTestSupport extends TestSupport {
     /*
      * DBs configured with Disable health checks for testsing CB detected failures without interference from health checks
      */
-    public static final DatabaseConfig DB1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(
-            NO_HEALTH_CHECK).build();
+    public static final DatabaseConfig DB1 = DatabaseConfig.builder(URI1).weight(1.0f)
+            .healthCheckStrategySupplier(NO_HEALTH_CHECK).build();
 
-    public static final DatabaseConfig DB2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(
-            NO_HEALTH_CHECK).build();
+    public static final DatabaseConfig DB2 = DatabaseConfig.builder(URI2).weight(0.5f)
+            .healthCheckStrategySupplier(NO_HEALTH_CHECK).build();
 
-    public static final DatabaseConfig DB3 = DatabaseConfig.builder(URI3).weight(0.25f).healthCheckStrategySupplier(
-            NO_HEALTH_CHECK).build();
+    public static final DatabaseConfig DB3 = DatabaseConfig.builder(URI3).weight(0.25f)
+            .healthCheckStrategySupplier(NO_HEALTH_CHECK).build();
 
     public static final List<DatabaseConfig> DBs = getDatabaseConfigs();
 
