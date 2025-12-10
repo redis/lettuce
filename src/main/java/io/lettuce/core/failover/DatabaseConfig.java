@@ -1,6 +1,5 @@
 package io.lettuce.core.failover;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
@@ -8,8 +7,8 @@ import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Configuration for a database in a multi-database client. Holds the Redis URI, weight for load balancing, client options,
- * circuit breaker configuration, and optional health check strategy supplier.
+ * Configuration for a database in a multi-database client. Holds the Redis URI, weight for load balancing, circuit breaker
+ * configuration, and optional health check strategy supplier.
  *
  * <p>
  * Example usage with builder:
@@ -18,8 +17,7 @@ import io.lettuce.core.internal.LettuceAssert;
  * <pre>
  *
  * DatabaseConfig config = DatabaseConfig.builder(RedisURI.create("redis://localhost:6379")).weight(1.0f)
- *         .clientOptions(ClientOptions.create()).circuitBreakerConfig(CircuitBreakerConfig.DEFAULT)
- *         .healthCheckStrategySupplier(PingStrategy.DEFAULT).build();
+ *         .circuitBreakerConfig(CircuitBreakerConfig.DEFAULT).healthCheckStrategySupplier(PingStrategy.DEFAULT).build();
  * </pre>
  *
  * @author Ali Takavci
@@ -33,8 +31,6 @@ public class DatabaseConfig {
 
     private final float weight;
 
-    private final ClientOptions clientOptions;
-
     private final CircuitBreakerConfig circuitBreakerConfig;
 
     private final HealthCheckStrategySupplier healthCheckStrategySupplier;
@@ -47,7 +43,6 @@ public class DatabaseConfig {
     DatabaseConfig(Builder builder) {
         this.redisURI = builder.redisURI;
         this.weight = builder.weight;
-        this.clientOptions = builder.clientOptions;
         this.circuitBreakerConfig = builder.circuitBreakerConfig != null ? builder.circuitBreakerConfig
                 : CircuitBreakerConfig.DEFAULT;
         this.healthCheckStrategySupplier = builder.healthCheckStrategySupplier;
@@ -69,15 +64,6 @@ public class DatabaseConfig {
      */
     public float getWeight() {
         return weight;
-    }
-
-    /**
-     * Get the client options.
-     *
-     * @return the client options, can be {@code null}
-     */
-    public ClientOptions getClientOptions() {
-        return clientOptions;
     }
 
     /**
@@ -111,8 +97,6 @@ public class DatabaseConfig {
             return false;
         if (!redisURI.equals(that.redisURI))
             return false;
-        if (clientOptions != null ? !clientOptions.equals(that.clientOptions) : that.clientOptions != null)
-            return false;
         if (circuitBreakerConfig != null ? !circuitBreakerConfig.equals(that.circuitBreakerConfig)
                 : that.circuitBreakerConfig != null)
             return false;
@@ -123,7 +107,6 @@ public class DatabaseConfig {
     public int hashCode() {
         int result = redisURI.hashCode();
         result = 31 * result + (weight != +0.0f ? Float.floatToIntBits(weight) : 0);
-        result = 31 * result + (clientOptions != null ? clientOptions.hashCode() : 0);
         result = 31 * result + (circuitBreakerConfig != null ? circuitBreakerConfig.hashCode() : 0);
         result = 31 * result + healthCheckStrategySupplier.hashCode();
         return result;
@@ -131,9 +114,8 @@ public class DatabaseConfig {
 
     @Override
     public String toString() {
-        return "DatabaseConfig{" + "redisURI=" + redisURI + ", weight=" + weight + ", clientOptions=" + clientOptions
-                + ", circuitBreakerConfig=" + circuitBreakerConfig + ", healthCheckStrategySupplier="
-                + healthCheckStrategySupplier + '}';
+        return "DatabaseConfig{" + "redisURI=" + redisURI + ", weight=" + weight + ", circuitBreakerConfig="
+                + circuitBreakerConfig + ", healthCheckStrategySupplier=" + healthCheckStrategySupplier + '}';
     }
 
     /**
@@ -157,7 +139,6 @@ public class DatabaseConfig {
     public Builder mutate() {
         Builder builder = new Builder(this.redisURI);
         builder.weight = this.weight;
-        builder.clientOptions = this.clientOptions;
         builder.circuitBreakerConfig = this.circuitBreakerConfig;
         builder.healthCheckStrategySupplier = this.healthCheckStrategySupplier;
         return builder;
@@ -173,8 +154,6 @@ public class DatabaseConfig {
         private final RedisURI redisURI;
 
         private float weight = DEFAULT_WEIGHT;
-
-        private ClientOptions clientOptions;
 
         private CircuitBreakerConfig circuitBreakerConfig;
 
@@ -193,17 +172,6 @@ public class DatabaseConfig {
         public Builder weight(float weight) {
             LettuceAssert.isTrue(weight > 0, "Weight must be greater than 0");
             this.weight = weight;
-            return this;
-        }
-
-        /**
-         * Set the client options.
-         *
-         * @param clientOptions the client options, can be {@code null} to use defaults
-         * @return {@code this} builder
-         */
-        public Builder clientOptions(ClientOptions clientOptions) {
-            this.clientOptions = clientOptions;
             return this;
         }
 

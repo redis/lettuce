@@ -63,7 +63,6 @@ class DatabaseConfigBuilderUnitTests {
             // Then: Should use default values
             assertThat(config.getRedisURI()).isEqualTo(TEST_URI);
             assertThat(config.getWeight()).isEqualTo(1.0f);
-            assertThat(config.getClientOptions()).isNull();
             assertThat(config.getCircuitBreakerConfig()).isEqualTo(CircuitBreakerConfig.DEFAULT);
             assertThat(config.getHealthCheckStrategySupplier()).isEqualTo(PingStrategy.DEFAULT);
         }
@@ -123,19 +122,6 @@ class DatabaseConfigBuilderUnitTests {
 
             assertThatThrownBy(() -> DatabaseConfig.builder(TEST_URI).weight(-1.0f))
                     .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Weight must be greater than 0");
-        }
-
-        @Test
-        @DisplayName("Should set custom clientOptions")
-        void shouldSetCustomClientOptions() {
-            // Given: Custom client options
-            ClientOptions customOptions = ClientOptions.create();
-
-            // When: Build with custom clientOptions
-            DatabaseConfig config = DatabaseConfig.builder(TEST_URI).clientOptions(customOptions).build();
-
-            // Then: ClientOptions should be set
-            assertThat(config.getClientOptions()).isEqualTo(customOptions);
         }
 
         @Test
@@ -209,16 +195,14 @@ class DatabaseConfigBuilderUnitTests {
         void exampleFullConfiguration() {
             // Example: Create config with all options
             RedisURI uri = RedisURI.create("redis://localhost:6379");
-            ClientOptions options = ClientOptions.create();
             CircuitBreakerConfig cbConfig = CircuitBreakerConfig.DEFAULT;
 
-            DatabaseConfig config = DatabaseConfig.builder(uri).weight(1.5f).clientOptions(options)
-                    .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(PingStrategy.DEFAULT).build();
+            DatabaseConfig config = DatabaseConfig.builder(uri).weight(1.5f).circuitBreakerConfig(cbConfig)
+                    .healthCheckStrategySupplier(PingStrategy.DEFAULT).build();
 
             // Verify all settings
             assertThat(config.getRedisURI()).isEqualTo(uri);
             assertThat(config.getWeight()).isEqualTo(1.5f);
-            assertThat(config.getClientOptions()).isEqualTo(options);
             assertThat(config.getCircuitBreakerConfig()).isEqualTo(cbConfig);
             assertThat(config.getHealthCheckStrategySupplier()).isEqualTo(PingStrategy.DEFAULT);
         }
@@ -257,8 +241,7 @@ class DatabaseConfigBuilderUnitTests {
         @DisplayName("Should create builder from existing config with mutate()")
         void shouldCreateBuilderFromExistingConfig() {
             // Given: Existing config
-            DatabaseConfig original = DatabaseConfig.builder(TEST_URI).weight(2.0f).clientOptions(ClientOptions.create())
-                    .build();
+            DatabaseConfig original = DatabaseConfig.builder(TEST_URI).weight(2.0f).build();
 
             // When: Create builder from existing config
             DatabaseConfig mutated = original.mutate().weight(3.0f).build();
@@ -266,19 +249,17 @@ class DatabaseConfigBuilderUnitTests {
             // Then: New config should have updated weight but same other values
             assertThat(mutated.getRedisURI()).isEqualTo(original.getRedisURI());
             assertThat(mutated.getWeight()).isEqualTo(3.0f);
-            assertThat(mutated.getClientOptions()).isEqualTo(original.getClientOptions());
         }
 
         @Test
         @DisplayName("Should preserve all settings when mutating without changes")
         void shouldPreserveAllSettingsWhenMutating() {
             // Given: Existing config with all settings
-            ClientOptions options = ClientOptions.create();
             CircuitBreakerConfig cbConfig = CircuitBreakerConfig.DEFAULT;
             HealthCheckStrategySupplier supplier = PingStrategy.DEFAULT;
 
-            DatabaseConfig original = DatabaseConfig.builder(TEST_URI).weight(2.5f).clientOptions(options)
-                    .circuitBreakerConfig(cbConfig).healthCheckStrategySupplier(supplier).build();
+            DatabaseConfig original = DatabaseConfig.builder(TEST_URI).weight(2.5f).circuitBreakerConfig(cbConfig)
+                    .healthCheckStrategySupplier(supplier).build();
 
             // When: Mutate without changes
             DatabaseConfig mutated = original.mutate().build();
@@ -286,7 +267,6 @@ class DatabaseConfigBuilderUnitTests {
             // Then: All settings should be preserved
             assertThat(mutated.getRedisURI()).isEqualTo(original.getRedisURI());
             assertThat(mutated.getWeight()).isEqualTo(original.getWeight());
-            assertThat(mutated.getClientOptions()).isEqualTo(original.getClientOptions());
             assertThat(mutated.getCircuitBreakerConfig()).isEqualTo(original.getCircuitBreakerConfig());
             assertThat(mutated.getHealthCheckStrategySupplier()).isEqualTo(original.getHealthCheckStrategySupplier());
         }
