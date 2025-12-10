@@ -4,6 +4,7 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
 import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
+import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
@@ -219,7 +220,7 @@ public class DatabaseConfig {
 
         private CircuitBreakerConfig circuitBreakerConfig;
 
-        private HealthCheckStrategySupplier healthCheckStrategySupplier;
+        private HealthCheckStrategySupplier healthCheckStrategySupplier = PingStrategy.DEFAULT;
 
         private Builder(RedisURI redisURI) {
             this.redisURI = redisURI;
@@ -260,7 +261,7 @@ public class DatabaseConfig {
         }
 
         /**
-         * Set the health check strategy supplier.
+         * Set the health check strategy supplier. Defaults to {@link PingStrategy#DEFAULT}.
          *
          * @param healthCheckStrategySupplier the health check strategy supplier, can be {@code null} to disable health checks
          * @return {@code this} builder
