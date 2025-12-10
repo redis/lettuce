@@ -68,7 +68,7 @@ public class MultiDbTestSupport extends TestSupport {
     public static final RedisURI URI3 = RedisURI.create(TestSettings.host(), TestSettings.port(5));
 
     /*
-     * DBs configured with Disable health checks for testsing CB detected failures without interference from health checks
+     * DBs configured with Disable health checks for testing CB detected failures without interference from health checks
      */
     public static final DatabaseConfig DB1 = DatabaseConfig.builder(URI1).weight(1.0f)
             .healthCheckStrategySupplier(NO_HEALTH_CHECK).build();

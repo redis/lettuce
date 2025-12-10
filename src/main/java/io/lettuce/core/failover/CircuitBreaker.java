@@ -116,7 +116,7 @@ public interface CircuitBreaker extends Closeable {
          * @param builder the builder
          */
         CircuitBreakerConfig(Builder builder) {
-            this.trackedExceptions = builder.trackedExceptions;
+            this.trackedExceptions = new HashSet<>(builder.trackedExceptions);
             this.failureThreshold = builder.failureThreshold;
             this.minimumNumberOfFailures = builder.minimumNumberOfFailures;
             this.metricsWindowSize = builder.metricsWindowSize;

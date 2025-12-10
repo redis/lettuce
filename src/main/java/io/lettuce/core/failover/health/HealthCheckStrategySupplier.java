@@ -19,11 +19,12 @@ public interface HealthCheckStrategySupplier {
     HealthCheckStrategySupplier NO_HEALTH_CHECK = (uri, factory) -> null;
 
     /**
-     * Get the health check strategy for the given Redis URI and client options.
+     * Get the health check strategy for the given Redis URI
      *
      * @param redisURI the Redis URI
+     * @param connectionFactory the connection factory
      * @return the health check strategy
      */
-    HealthCheckStrategy get(RedisURI redisURI, DatabaseRawConnectionFactory connectionProvider);
+    HealthCheckStrategy get(RedisURI redisURI, DatabaseRawConnectionFactory connectionFactory);
 
 }
