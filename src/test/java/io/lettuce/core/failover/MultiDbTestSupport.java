@@ -65,11 +65,11 @@ public class MultiDbTestSupport extends TestSupport {
 
     public static final RedisURI URI3 = RedisURI.create(TestSettings.host(), TestSettings.port(5));
 
-    public static final DatabaseConfig DB1 = new DatabaseConfig(URI1, 1.0f);
+    public static final DatabaseConfig DB1 = DatabaseConfig.builder(URI1).weight(1.0f).build();
 
-    public static final DatabaseConfig DB2 = new DatabaseConfig(URI2, 0.5f);
+    public static final DatabaseConfig DB2 = DatabaseConfig.builder(URI2).weight(0.5f).build();
 
-    public static final DatabaseConfig DB3 = new DatabaseConfig(URI3, 0.25f);
+    public static final DatabaseConfig DB3 = DatabaseConfig.builder(URI3).weight(0.25f).build();
 
     public static final List<DatabaseConfig> DBs = getDatabaseConfigs();
 
@@ -81,7 +81,7 @@ public class MultiDbTestSupport extends TestSupport {
         float weight = 1.0f;
         List<DatabaseConfig> endpoints = new ArrayList<>();
         for (RedisURI uri : URIs) {
-            endpoints.add(new DatabaseConfig(uri, weight));
+            endpoints.add(DatabaseConfig.builder(uri).weight(weight).build());
             weight /= 2;
         }
         return endpoints;
@@ -92,7 +92,7 @@ public class MultiDbTestSupport extends TestSupport {
         float weight = 1.0f;
         List<DatabaseConfig> endpoints = new ArrayList<>();
         for (RedisURI uri : URIs) {
-            endpoints.add(new DatabaseConfig(uri, weight, null, circuitBreakerConfig));
+            endpoints.add(DatabaseConfig.builder(uri).weight(weight).circuitBreakerConfig(circuitBreakerConfig).build());
             weight /= 2;
         }
         return endpoints;

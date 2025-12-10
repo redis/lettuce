@@ -40,60 +40,17 @@ public class DatabaseConfig {
     private final HealthCheckStrategySupplier healthCheckStrategySupplier;
 
     /**
-     * Create a new database configuration.
+     * Create a new database configuration from a builder.
      *
-     * @param redisURI the Redis URI, must not be {@code null}
-     * @param weight the weight for load balancing, must be greater than 0
-     * @param clientOptions the client options, can be {@code null} to use defaults
-     * @param circuitBreakerConfig the circuit breaker configuration, can be {@code null} to use defaults
-     * @param healthCheckStrategySupplier the health check strategy supplier, use
-     *        {@link HealthCheckStrategySupplier#NO_HEALTH_CHECK} to disable health checks, must not be {@code null}
+     * @param builder the builder
      */
-    public DatabaseConfig(RedisURI redisURI, float weight, ClientOptions clientOptions,
-            CircuitBreakerConfig circuitBreakerConfig, HealthCheckStrategySupplier healthCheckStrategySupplier) {
-        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
-        LettuceAssert.isTrue(weight > 0, "Weight must be greater than 0");
-        LettuceAssert.notNull(healthCheckStrategySupplier, "HealthCheckStrategySupplier must not be null");
-
-        this.redisURI = redisURI;
-        this.weight = weight;
-        this.clientOptions = clientOptions;
-        this.circuitBreakerConfig = circuitBreakerConfig != null ? circuitBreakerConfig : CircuitBreakerConfig.DEFAULT;
-        this.healthCheckStrategySupplier = healthCheckStrategySupplier;
-    }
-
-    /**
-     * Create a new database configuration with default health check strategy supplier.
-     *
-     * @param redisURI the Redis URI, must not be {@code null}
-     * @param weight the weight for load balancing, must be greater than 0
-     * @param clientOptions the client options, can be {@code null} to use defaults
-     * @param circuitBreakerConfig the circuit breaker configuration, can be {@code null} to use defaults
-     */
-    public DatabaseConfig(RedisURI redisURI, float weight, ClientOptions clientOptions,
-            CircuitBreakerConfig circuitBreakerConfig) {
-        this(redisURI, weight, clientOptions, circuitBreakerConfig, PingStrategy.DEFAULT);
-    }
-
-    /**
-     * Create a new database configuration with default client options and health check strategy supplier.
-     *
-     * @param redisURI the Redis URI, must not be {@code null}
-     * @param weight the weight for load balancing, must be greater than 0
-     * @param clientOptions the client options, can be {@code null} to use defaults
-     */
-    public DatabaseConfig(RedisURI redisURI, float weight, ClientOptions clientOptions) {
-        this(redisURI, weight, clientOptions, null, PingStrategy.DEFAULT);
-    }
-
-    /**
-     * Create a new database configuration with default client options and health check strategy supplier.
-     *
-     * @param redisURI the Redis URI, must not be {@code null}
-     * @param weight the weight for load balancing, must be greater than 0
-     */
-    public DatabaseConfig(RedisURI redisURI, float weight) {
-        this(redisURI, weight, null, null, PingStrategy.DEFAULT);
+    DatabaseConfig(Builder builder) {
+        this.redisURI = builder.redisURI;
+        this.weight = builder.weight;
+        this.clientOptions = builder.clientOptions;
+        this.circuitBreakerConfig = builder.circuitBreakerConfig != null ? builder.circuitBreakerConfig
+                : CircuitBreakerConfig.DEFAULT;
+        this.healthCheckStrategySupplier = builder.healthCheckStrategySupplier;
     }
 
     /**
@@ -159,8 +116,7 @@ public class DatabaseConfig {
         if (circuitBreakerConfig != null ? !circuitBreakerConfig.equals(that.circuitBreakerConfig)
                 : that.circuitBreakerConfig != null)
             return false;
-        return healthCheckStrategySupplier != null ? healthCheckStrategySupplier.equals(that.healthCheckStrategySupplier)
-                : that.healthCheckStrategySupplier == null;
+        return healthCheckStrategySupplier.equals(that.healthCheckStrategySupplier);
     }
 
     @Override
@@ -169,7 +125,7 @@ public class DatabaseConfig {
         result = 31 * result + (weight != +0.0f ? Float.floatToIntBits(weight) : 0);
         result = 31 * result + (clientOptions != null ? clientOptions.hashCode() : 0);
         result = 31 * result + (circuitBreakerConfig != null ? circuitBreakerConfig.hashCode() : 0);
-        result = 31 * result + (healthCheckStrategySupplier != null ? healthCheckStrategySupplier.hashCode() : 0);
+        result = 31 * result + healthCheckStrategySupplier.hashCode();
         return result;
     }
 
@@ -281,7 +237,7 @@ public class DatabaseConfig {
          * @return a new {@link DatabaseConfig}
          */
         public DatabaseConfig build() {
-            return new DatabaseConfig(redisURI, weight, clientOptions, circuitBreakerConfig, healthCheckStrategySupplier);
+            return new DatabaseConfig(this);
         }
 
     }

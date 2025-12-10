@@ -400,7 +400,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     @Override
     public void addDatabase(RedisURI redisURI, float weight) {
-        addDatabase(new DatabaseConfig(redisURI, weight));
+        addDatabase(DatabaseConfig.builder(redisURI).weight(weight).build());
     }
 
     @Override

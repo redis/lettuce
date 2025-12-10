@@ -48,15 +48,6 @@ class DatabaseConfigBuilderUnitTests {
                     .hasMessageContaining("RedisURI must not be null");
         }
 
-        @Test
-        @DisplayName("Should reject null healthCheckStrategySupplier in constructor")
-        void shouldRejectNullHealthCheckStrategySupplierInConstructor() {
-            // When/Then: Creating DatabaseConfig with null healthCheckStrategySupplier should throw exception
-            assertThatThrownBy(() -> new DatabaseConfig(TEST_URI, 1.0f, null, null, null))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("HealthCheckStrategySupplier must not be null");
-        }
-
     }
 
     @Nested

@@ -123,8 +123,10 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
                 HealthCheckStrategy.Config.builder().interval(100) // Fast interval for testing
                         .timeout(1000).numProbes(1).build());
 
-        DatabaseConfig config1 = new DatabaseConfig(proxyUri1, 1.0f, null, null, pingSupplier);
-        DatabaseConfig config2 = new DatabaseConfig(proxyUri2, 0.5f, null, null, pingSupplier);
+        DatabaseConfig config1 = DatabaseConfig.builder(proxyUri1).weight(1.0f).healthCheckStrategySupplier(pingSupplier)
+                .build();
+        DatabaseConfig config2 = DatabaseConfig.builder(proxyUri2).weight(0.5f).healthCheckStrategySupplier(pingSupplier)
+                .build();
 
         // When: Create MultiDbClient and connect
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
@@ -252,7 +254,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
                 HealthCheckStrategy.Config.builder().interval(50) // Very fast for testing
                         .timeout(1000).numProbes(1).build());
 
-        DatabaseConfig config = new DatabaseConfig(proxyUri1, 1.0f, null, null, pingSupplier);
+        DatabaseConfig config = DatabaseConfig.builder(proxyUri1).weight(1.0f).healthCheckStrategySupplier(pingSupplier)
+                .build();
 
         // When: Create MultiDbClient and connect
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config));
@@ -277,8 +280,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
     @DisplayName("Should use default PingStrategy supplier")
     void shouldUseDefaultPingStrategySupplier() {
         // Given: DatabaseConfig with default PingStrategy supplier using proxy URIs
-        DatabaseConfig config1 = new DatabaseConfig(proxyUri1, 1.0f, null, null, PingStrategy.DEFAULT);
-        DatabaseConfig config2 = new DatabaseConfig(proxyUri2, 0.5f, null, null, PingStrategy.DEFAULT);
+        DatabaseConfig config1 = DatabaseConfig.builder(proxyUri1).weight(1.0f).build();
+        DatabaseConfig config2 = DatabaseConfig.builder(proxyUri2).weight(0.5f).build();
 
         // When: Create MultiDbClient and connect
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
@@ -307,7 +310,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
                 HealthCheckStrategy.Config.builder().interval(100).timeout(1000).numProbes(3) // Multiple probes
                         .delayInBetweenProbes(50).policy(ProbingPolicy.BuiltIn.MAJORITY_SUCCESS).build());
 
-        DatabaseConfig config = new DatabaseConfig(proxyUri1, 1.0f, null, null, pingSupplier);
+        DatabaseConfig config = DatabaseConfig.builder(proxyUri1).weight(1.0f).healthCheckStrategySupplier(pingSupplier)
+                .build();
 
         // When: Create MultiDbClient and connect
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config));
