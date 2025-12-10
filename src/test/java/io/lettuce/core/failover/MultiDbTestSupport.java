@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -12,6 +13,8 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
 import io.lettuce.test.settings.TestSettings;
+
+import static io.lettuce.core.failover.health.HealthCheckStrategySupplier.NO_HEALTH_CHECK;
 
 /**
  * @author Ali Takavci
@@ -65,11 +68,17 @@ public class MultiDbTestSupport extends TestSupport {
 
     public static final RedisURI URI3 = RedisURI.create(TestSettings.host(), TestSettings.port(5));
 
-    public static final DatabaseConfig DB1 = DatabaseConfig.builder(URI1).weight(1.0f).build();
+    /*
+     * DBs configured with Disable health checks for testsing CB detected failures without interference from health checks
+     */
+    public static final DatabaseConfig DB1 = DatabaseConfig.builder(URI1).weight(1.0f).healthCheckStrategySupplier(
+            NO_HEALTH_CHECK).build();
 
-    public static final DatabaseConfig DB2 = DatabaseConfig.builder(URI2).weight(0.5f).build();
+    public static final DatabaseConfig DB2 = DatabaseConfig.builder(URI2).weight(0.5f).healthCheckStrategySupplier(
+            NO_HEALTH_CHECK).build();
 
-    public static final DatabaseConfig DB3 = DatabaseConfig.builder(URI3).weight(0.25f).build();
+    public static final DatabaseConfig DB3 = DatabaseConfig.builder(URI3).weight(0.25f).healthCheckStrategySupplier(
+            NO_HEALTH_CHECK).build();
 
     public static final List<DatabaseConfig> DBs = getDatabaseConfigs();
 
