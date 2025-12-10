@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Example of automatic failover using MultiDbClient. Automatic Failover API is subject to change since we are still in Beta and
- * actively improving the API.*
+ * actively improving the API.
  */
 public class AutomaticFailover {
 
@@ -49,14 +49,14 @@ public class AutomaticFailover {
         SocketOptions.KeepAliveOptions keepAliveOptions = SocketOptions.KeepAliveOptions.builder()
                 .interval(Duration.ofSeconds(1)).idle(Duration.ofSeconds(1)).count(3).enable().build();
 
-        ClientOptions clientOptions = ClientOptions.builder().autoReconnect(false)
+        ClientOptions clientOptions = ClientOptions.builder()
                 .socketOptions(SocketOptions.builder().tcpUserTimeout(tcpUserTimeout).keepAlive(keepAliveOptions).build())
                 .build();
 
-        List<DatabaseConfig> databaseConfigs = createDatabaseConfigs(endpoints, clientOptions);
+        List<DatabaseConfig> databaseConfigs = createDatabaseConfigs(endpoints);
         MultiDbClient client = MultiDbClient.create(databaseConfigs);
 
-        // Auto-reconnect and automatic failback are not supported in the current Beta release.
+        // Automatic failback are not supported in the current Beta release.
         client.setOptions(clientOptions);
 
         // Connect to the MultiDbClient
@@ -97,30 +97,24 @@ public class AutomaticFailover {
 
         // Stop the command execution
         subscription.dispose();
-        connection.close();
         client.shutdown();
     }
 
     /**
-     * @param clientOptions the client options to use for all database configs
      * @return list of DatabaseConfig instances
      */
-    private static List<DatabaseConfig> createDatabaseConfigs(List<String> endpoints,
-            io.lettuce.core.ClientOptions clientOptions) {
+    private static List<DatabaseConfig> createDatabaseConfigs(List<String> endpoints) {
         List<DatabaseConfig> configs = new ArrayList<>();
 
-        CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig = new CircuitBreaker.CircuitBreakerConfig(5.0f, 5,
-                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions(), 2);
-
-        HealthCheckStrategySupplier pingSupplier = (uri, options) -> new PingStrategy(uri, options,
-                HealthCheckStrategy.Config.builder().interval(500).timeout(1000).numProbes(1).build());
+        CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig = CircuitBreaker.CircuitBreakerConfig.builder()
+                .failureRateThreshold(10.0f).minimumNumberOfFailures(5).metricsWindowSize(5).build();
 
         // Create a DatabaseConfig for each endpoint
         float weight = 1.0f;
         for (String endpointUri : endpoints) {
-            RedisURI uri = RedisURI.builder(RedisURI.create(endpointUri)).withTimeout(Duration.ofSeconds(5)).build();
+            configs.add(DatabaseConfig.builder(RedisURI.create(endpointUri)).weight(weight)
+                    .circuitBreakerConfig(circuitBreakerConfig).healthCheckStrategySupplier(PingStrategy.DEFAULT).build());
 
-            configs.add(new DatabaseConfig(uri, weight, clientOptions, circuitBreakerConfig, pingSupplier));
             weight /= 2; // Decrease weight for subsequent endpoints
         }
 
