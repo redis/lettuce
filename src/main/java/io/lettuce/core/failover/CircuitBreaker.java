@@ -13,6 +13,7 @@ import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Circuit breaker for tracking command metrics and managing circuit breaker state. Wraps CircuitBreakerMetrics and exposes it
@@ -216,10 +217,11 @@ public interface CircuitBreaker extends Closeable {
             /**
              * Set the metrics window size in seconds. Metrics are collected over this time window.
              *
-             * @param metricsWindowSize the metrics window size in seconds, must be > 0
+             * @param metricsWindowSize the metrics window size in seconds, must be >= 2
              * @return {@code this} builder
              */
             public Builder metricsWindowSize(int metricsWindowSize) {
+                LettuceAssert.isTrue(metricsWindowSize >= 2, "Metrics window size must be at least 2 seconds");
                 this.metricsWindowSize = metricsWindowSize;
                 return this;
             }

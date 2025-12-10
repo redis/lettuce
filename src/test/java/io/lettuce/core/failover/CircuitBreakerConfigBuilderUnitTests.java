@@ -146,6 +146,25 @@ class CircuitBreakerConfigBuilderUnitTests {
             assertThat(config.getTrackedExceptions()).isEqualTo(CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
         }
 
+        @Test
+        @DisplayName("Should accept minimum window size of 2 seconds")
+        void shouldAcceptMinimumWindowSize() {
+            // When: Build with minimum window size of 2 seconds
+            CircuitBreakerConfig config = CircuitBreakerConfig.builder().metricsWindowSize(2).build();
+
+            // Then: Should accept 2 seconds
+            assertThat(config.getMetricsWindowSize()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Should reject window size less than 2 seconds")
+        void shouldRejectWindowSizeLessThan2() {
+            // When/Then: Build with window size less than 2 should throw exception
+            assertThatThrownBy(() -> CircuitBreakerConfig.builder().metricsWindowSize(1).build())
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Metrics window size must be at least 2 seconds");
+        }
+
     }
 
 }
