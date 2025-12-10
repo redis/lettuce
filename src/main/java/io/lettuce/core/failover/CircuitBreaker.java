@@ -32,7 +32,7 @@ public interface CircuitBreaker extends Closeable {
      *
      * @return an immutable snapshot of current metrics
      */
-    public MetricsSnapshot getSnapshot();
+    MetricsSnapshot getSnapshot();
 
     /**
      * Get the current generation of the circuit breaker. This is used to track the state and metrics of the circuit breaker at
@@ -40,44 +40,44 @@ public interface CircuitBreaker extends Closeable {
      *
      * @return the current generation of the circuit breaker
      */
-    public CircuitBreakerGeneration getGeneration();
+    CircuitBreakerGeneration getGeneration();
 
     /**
      * Get the current state of the circuit breaker.
      *
      * @return the current state
      */
-    public State getCurrentState();
+    State getCurrentState();
 
     /**
      * Check if the circuit breaker is in the closed state.
      *
      * @return {@code true} if the circuit breaker is in the closed state
      */
-    public boolean isClosed();
+    boolean isClosed();
 
     /**
      * Add a listener for circuit breaker state change events.
      *
      * @param listener the listener to add, must not be {@code null}
      */
-    public void addListener(CircuitBreakerStateListener listener);
+    void addListener(CircuitBreakerStateListener listener);
 
     /**
      * Remove a listener for circuit breaker state change events.
      *
      * @param listener the listener to remove, must not be {@code null}
      */
-    public void removeListener(CircuitBreakerStateListener listener);
+    void removeListener(CircuitBreakerStateListener listener);
 
     @Override
-    public void close();
+    void close();
 
-    public enum State {
+    enum State {
         CLOSED, OPEN
     }
 
-    public static class CircuitBreakerConfig {
+    class CircuitBreakerConfig {
 
         private final static float DEFAULT_FAILURE_RATE_THRESHOLD = 10;
 
