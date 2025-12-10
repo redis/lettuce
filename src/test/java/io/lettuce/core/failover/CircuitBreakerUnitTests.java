@@ -335,8 +335,8 @@ class CircuitBreakerUnitTests {
         void shouldSupportCustomTrackedException() {
             Set<Class<? extends Throwable>> customExceptions = new HashSet<>();
             customExceptions.add(IllegalStateException.class);
-            CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(50.0f, 5, customExceptions,
-                    CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+            CircuitBreaker.CircuitBreakerConfig config = CircuitBreakerConfig.builder().failureRateThreshold(50.0f)
+                    .minimumNumberOfFailures(5).trackedExceptions(customExceptions).build();
             try (CircuitBreakerImpl customCircuitBreaker = new CircuitBreakerImpl(config)) {
                 assertThat(customCircuitBreaker.isCircuitBreakerTrackedException(new IllegalStateException("test"))).isTrue();
                 assertThat(customCircuitBreaker.isCircuitBreakerTrackedException(new IOException("test"))).isFalse();
@@ -372,8 +372,8 @@ class CircuitBreakerUnitTests {
             Set<Class<? extends Throwable>> customExceptions = new HashSet<>();
             customExceptions.add(RuntimeException.class);
 
-            CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(25.5f, 100, customExceptions,
-                    CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+            CircuitBreaker.CircuitBreakerConfig config = CircuitBreakerConfig.builder().failureRateThreshold(25.5f)
+                    .minimumNumberOfFailures(100).trackedExceptions(customExceptions).build();
 
             assertThat(config.getFailureRateThreshold()).isEqualTo(25.5f);
             assertThat(config.getMinimumNumberOfFailures()).isEqualTo(100);
@@ -492,8 +492,8 @@ class CircuitBreakerUnitTests {
     }
 
     private CircuitBreakerConfig getTestConfig(float failureRateThreshold, int minimumNumberOfFailures) {
-        return new CircuitBreakerConfig(failureRateThreshold, minimumNumberOfFailures,
-                CircuitBreakerConfig.DEFAULT.getTrackedExceptions(), CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+        return CircuitBreakerConfig.builder().failureRateThreshold(failureRateThreshold)
+                .minimumNumberOfFailures(minimumNumberOfFailures).build();
     }
 
 }

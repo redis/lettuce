@@ -109,16 +109,32 @@ public interface CircuitBreaker extends Closeable {
         private final int metricsWindowSize;
 
         private CircuitBreakerConfig() {
-            this(DEFAULT_FAILURE_RATE_THRESHOLD, DEFAULT_MINIMUM_NUMBER_OF_FAILURES, DEFAULT_TRACKED_EXCEPTIONS,
-                    DEFAULT_METRICS_WINDOW_SIZE);
+            this.trackedExceptions = DEFAULT_TRACKED_EXCEPTIONS;
+            this.failureThreshold = DEFAULT_FAILURE_RATE_THRESHOLD;
+            this.minimumNumberOfFailures = DEFAULT_MINIMUM_NUMBER_OF_FAILURES;
+            this.metricsWindowSize = DEFAULT_METRICS_WINDOW_SIZE;
         }
 
-        public CircuitBreakerConfig(float failureThreshold, int minimumNumberOfFailures,
-                Set<Class<? extends Throwable>> trackedExceptions, int metricsWindowSize) {
-            this.trackedExceptions = trackedExceptions;
-            this.failureThreshold = failureThreshold;
-            this.minimumNumberOfFailures = minimumNumberOfFailures;
-            this.metricsWindowSize = metricsWindowSize;
+        /**
+         * Create a new circuit breaker configuration from a builder. Use {@link #builder()} instead.
+         *
+         * @param builder the builder
+         */
+        CircuitBreakerConfig(Builder builder) {
+            this.trackedExceptions = builder.trackedExceptions != null ? builder.trackedExceptions : DEFAULT_TRACKED_EXCEPTIONS;
+            this.failureThreshold = builder.failureThreshold;
+            this.minimumNumberOfFailures = builder.minimumNumberOfFailures;
+            this.metricsWindowSize = builder.metricsWindowSize;
+        }
+
+        /**
+         * Create a new builder for {@link CircuitBreakerConfig}.
+         *
+         * @return a new builder
+         * @since 7.4
+         */
+        public static Builder builder() {
+            return new Builder();
         }
 
         public Set<Class<? extends Throwable>> getTrackedExceptions() {
@@ -141,6 +157,82 @@ public interface CircuitBreaker extends Closeable {
         public String toString() {
             return "CircuitBreakerConfig{" + "trackedExceptions=" + trackedExceptions + ", failureThreshold=" + failureThreshold
                     + ", minimumNumberOfFailures=" + minimumNumberOfFailures + ", metricsWindowSize=" + metricsWindowSize + '}';
+        }
+
+        /**
+         * Builder for {@link CircuitBreakerConfig}.
+         *
+         * @since 7.4
+         */
+        public static class Builder {
+
+            private Set<Class<? extends Throwable>> trackedExceptions;
+
+            private float failureThreshold = DEFAULT_FAILURE_RATE_THRESHOLD;
+
+            private int minimumNumberOfFailures = DEFAULT_MINIMUM_NUMBER_OF_FAILURES;
+
+            private int metricsWindowSize = DEFAULT_METRICS_WINDOW_SIZE;
+
+            private Builder() {
+            }
+
+            /**
+             * Set the failure rate threshold percentage (0-100). The circuit breaker will open when the failure rate exceeds
+             * this threshold.
+             *
+             * @param failureThreshold the failure rate threshold percentage, must be >= 0
+             * @return {@code this} builder
+             */
+            public Builder failureRateThreshold(float failureThreshold) {
+                this.failureThreshold = failureThreshold;
+                return this;
+            }
+
+            /**
+             * Set the minimum number of failures required before the circuit breaker can open. This prevents the circuit from
+             * opening due to a small number of failures.
+             *
+             * @param minimumNumberOfFailures the minimum number of failures, must be >= 0
+             * @return {@code this} builder
+             */
+            public Builder minimumNumberOfFailures(int minimumNumberOfFailures) {
+                this.minimumNumberOfFailures = minimumNumberOfFailures;
+                return this;
+            }
+
+            /**
+             * Set the exceptions to track for circuit breaker metrics. Only these exceptions (and their subclasses) will be
+             * counted as failures.
+             *
+             * @param trackedExceptions the set of exception classes to track, can be {@code null} to use defaults
+             * @return {@code this} builder
+             */
+            public Builder trackedExceptions(Set<Class<? extends Throwable>> trackedExceptions) {
+                this.trackedExceptions = trackedExceptions;
+                return this;
+            }
+
+            /**
+             * Set the metrics window size in seconds. Metrics are collected over this time window.
+             *
+             * @param metricsWindowSize the metrics window size in seconds, must be > 0
+             * @return {@code this} builder
+             */
+            public Builder metricsWindowSize(int metricsWindowSize) {
+                this.metricsWindowSize = metricsWindowSize;
+                return this;
+            }
+
+            /**
+             * Build a new {@link CircuitBreakerConfig} instance.
+             *
+             * @return a new {@link CircuitBreakerConfig}
+             */
+            public CircuitBreakerConfig build() {
+                return new CircuitBreakerConfig(this);
+            }
+
         }
 
     }

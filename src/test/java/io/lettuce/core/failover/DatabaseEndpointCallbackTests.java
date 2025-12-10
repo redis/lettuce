@@ -60,8 +60,8 @@ class DatabaseEndpointCallbackTests {
     }
 
     private CircuitBreakerConfig getCBConfig(float failureRateThreshold, int minimumNumberOfFailures) {
-        return new CircuitBreakerConfig(failureRateThreshold, minimumNumberOfFailures,
-                CircuitBreakerConfig.DEFAULT.getTrackedExceptions(), CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+        return CircuitBreakerConfig.builder().failureRateThreshold(failureRateThreshold)
+                .minimumNumberOfFailures(minimumNumberOfFailures).build();
     }
     // ============ Basic Callback Attachment Tests ============
 

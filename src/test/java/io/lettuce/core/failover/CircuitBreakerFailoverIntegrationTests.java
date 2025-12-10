@@ -122,9 +122,9 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         this.redis2Conn.auth(passwd);
 
         // Create circuit breaker config with low thresholds for testing
-        cbConfig = new CircuitBreaker.CircuitBreakerConfig(10.0f, // 10% failure rate threshold
-                5, // Only need 5 failures minimum (instead of default 1000)
-                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions(), 5);
+        cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(10.0f) // 10% failure rate threshold
+                .minimumNumberOfFailures(5) // Only need 5 failures minimum (instead of default 1000)
+                .metricsWindowSize(5).build();
 
         // Create MultiDbClient with proxy endpoints and custom circuit breaker config
         multiDbClient = MultiDbClient.create(MultiDbTestSupport.getDatabaseConfigs(cbConfig, redis1ProxyUri, redis2ProxyUri));

@@ -142,8 +142,8 @@ class DatabaseConfigBuilderUnitTests {
         @DisplayName("Should set custom circuitBreakerConfig")
         void shouldSetCustomCircuitBreakerConfig() {
             // Given: Custom circuit breaker config
-            CircuitBreakerConfig customConfig = new CircuitBreakerConfig(20.0f, 500,
-                    CircuitBreakerConfig.DEFAULT.getTrackedExceptions(), CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+            CircuitBreakerConfig customConfig = CircuitBreakerConfig.builder().failureRateThreshold(20.0f)
+                    .minimumNumberOfFailures(500).build();
 
             // When: Build with custom circuitBreakerConfig
             DatabaseConfig config = DatabaseConfig.builder(TEST_URI).circuitBreakerConfig(customConfig).build();

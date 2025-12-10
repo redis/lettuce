@@ -591,11 +591,10 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
             // Configure circuit breaker with low thresholds for fast testing
-            CircuitBreaker.CircuitBreakerConfig cbConfig = new CircuitBreaker.CircuitBreakerConfig(50.0f, // 50% failure rate
-                                                                                                          // threshold
-                    2, // minimum 2 failures
-                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions(),
-                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+            CircuitBreaker.CircuitBreakerConfig cbConfig = CircuitBreaker.CircuitBreakerConfig.builder()
+                    .failureRateThreshold(50.0f) // 50% failure rate threshold
+                    .minimumNumberOfFailures(2) // minimum 2 failures
+                    .build();
 
             DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).circuitBreakerConfig(cbConfig)
                     .healthCheckStrategySupplier(supplier).build();
