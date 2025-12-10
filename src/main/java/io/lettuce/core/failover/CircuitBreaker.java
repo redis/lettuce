@@ -99,7 +99,7 @@ public interface CircuitBreaker extends Closeable {
 
         ));
 
-        public static final CircuitBreakerConfig DEFAULT = new CircuitBreakerConfig();
+        public static final CircuitBreakerConfig DEFAULT = builder().build();
 
         private final Set<Class<? extends Throwable>> trackedExceptions;
 
@@ -109,20 +109,13 @@ public interface CircuitBreaker extends Closeable {
 
         private final int metricsWindowSize;
 
-        private CircuitBreakerConfig() {
-            this.trackedExceptions = DEFAULT_TRACKED_EXCEPTIONS;
-            this.failureThreshold = DEFAULT_FAILURE_RATE_THRESHOLD;
-            this.minimumNumberOfFailures = DEFAULT_MINIMUM_NUMBER_OF_FAILURES;
-            this.metricsWindowSize = DEFAULT_METRICS_WINDOW_SIZE;
-        }
-
         /**
          * Create a new circuit breaker configuration from a builder. Use {@link #builder()} instead.
          *
          * @param builder the builder
          */
         CircuitBreakerConfig(Builder builder) {
-            this.trackedExceptions = builder.trackedExceptions != null ? builder.trackedExceptions : DEFAULT_TRACKED_EXCEPTIONS;
+            this.trackedExceptions = builder.trackedExceptions;
             this.failureThreshold = builder.failureThreshold;
             this.minimumNumberOfFailures = builder.minimumNumberOfFailures;
             this.metricsWindowSize = builder.metricsWindowSize;
@@ -167,7 +160,7 @@ public interface CircuitBreaker extends Closeable {
          */
         public static class Builder {
 
-            private Set<Class<? extends Throwable>> trackedExceptions;
+            private Set<Class<? extends Throwable>> trackedExceptions = DEFAULT_TRACKED_EXCEPTIONS;
 
             private float failureThreshold = DEFAULT_FAILURE_RATE_THRESHOLD;
 
@@ -206,10 +199,11 @@ public interface CircuitBreaker extends Closeable {
              * Set the exceptions to track for circuit breaker metrics. Only these exceptions (and their subclasses) will be
              * counted as failures.
              *
-             * @param trackedExceptions the set of exception classes to track, can be {@code null} to use defaults
+             * @param trackedExceptions the set of exception classes to track, must not be {@code null}
              * @return {@code this} builder
              */
             public Builder trackedExceptions(Set<Class<? extends Throwable>> trackedExceptions) {
+                LettuceAssert.notNull(trackedExceptions, "Tracked exceptions must not be null");
                 this.trackedExceptions = trackedExceptions;
                 return this;
             }

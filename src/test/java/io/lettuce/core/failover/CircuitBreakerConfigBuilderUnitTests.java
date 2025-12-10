@@ -136,14 +136,11 @@ class CircuitBreakerConfigBuilderUnitTests {
         }
 
         @Test
-        @DisplayName("Should use default tracked exceptions when null is provided")
-        void shouldUseDefaultTrackedExceptionsWhenNull() {
-            // When: Build with null tracked exceptions
-            CircuitBreakerConfig config = CircuitBreakerConfig.builder().trackedExceptions(null).build();
-
-            // Then: Should use default tracked exceptions
-            assertThat(config.getTrackedExceptions()).isNotEmpty();
-            assertThat(config.getTrackedExceptions()).isEqualTo(CircuitBreakerConfig.DEFAULT.getTrackedExceptions());
+        @DisplayName("Should reject null tracked exceptions")
+        void shouldRejectNullTrackedExceptions() {
+            // When/Then: Attempting to set null tracked exceptions should throw
+            assertThatThrownBy(() -> CircuitBreakerConfig.builder().trackedExceptions(null))
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Tracked exceptions must not be null");
         }
 
         @Test
