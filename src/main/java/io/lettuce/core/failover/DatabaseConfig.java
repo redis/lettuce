@@ -46,12 +46,14 @@ public class DatabaseConfig {
      * @param weight the weight for load balancing, must be greater than 0
      * @param clientOptions the client options, can be {@code null} to use defaults
      * @param circuitBreakerConfig the circuit breaker configuration, can be {@code null} to use defaults
-     * @param healthCheckStrategySupplier the health check strategy supplier, can be {@code null} to disable health checks
+     * @param healthCheckStrategySupplier the health check strategy supplier, use
+     *        {@link HealthCheckStrategySupplier#NO_HEALTH_CHECK} to disable health checks, must not be {@code null}
      */
     public DatabaseConfig(RedisURI redisURI, float weight, ClientOptions clientOptions,
             CircuitBreakerConfig circuitBreakerConfig, HealthCheckStrategySupplier healthCheckStrategySupplier) {
         LettuceAssert.notNull(redisURI, "RedisURI must not be null");
         LettuceAssert.isTrue(weight > 0, "Weight must be greater than 0");
+        LettuceAssert.notNull(healthCheckStrategySupplier, "HealthCheckStrategySupplier must not be null");
 
         this.redisURI = redisURI;
         this.weight = weight;
@@ -70,7 +72,7 @@ public class DatabaseConfig {
      */
     public DatabaseConfig(RedisURI redisURI, float weight, ClientOptions clientOptions,
             CircuitBreakerConfig circuitBreakerConfig) {
-        this(redisURI, weight, clientOptions, circuitBreakerConfig, null);
+        this(redisURI, weight, clientOptions, circuitBreakerConfig, PingStrategy.DEFAULT);
     }
 
     /**
@@ -81,7 +83,7 @@ public class DatabaseConfig {
      * @param clientOptions the client options, can be {@code null} to use defaults
      */
     public DatabaseConfig(RedisURI redisURI, float weight, ClientOptions clientOptions) {
-        this(redisURI, weight, clientOptions, null, null);
+        this(redisURI, weight, clientOptions, null, PingStrategy.DEFAULT);
     }
 
     /**
@@ -91,7 +93,7 @@ public class DatabaseConfig {
      * @param weight the weight for load balancing, must be greater than 0
      */
     public DatabaseConfig(RedisURI redisURI, float weight) {
-        this(redisURI, weight, null, null, null);
+        this(redisURI, weight, null, null, PingStrategy.DEFAULT);
     }
 
     /**
@@ -263,10 +265,12 @@ public class DatabaseConfig {
         /**
          * Set the health check strategy supplier. Defaults to {@link PingStrategy#DEFAULT}.
          *
-         * @param healthCheckStrategySupplier the health check strategy supplier, can be {@code null} to disable health checks
+         * @param healthCheckStrategySupplier the health check strategy supplier, use
+         *        {@link HealthCheckStrategySupplier#NO_HEALTH_CHECK} to disable health checks, must not be {@code null}
          * @return {@code this} builder
          */
         public Builder healthCheckStrategySupplier(HealthCheckStrategySupplier healthCheckStrategySupplier) {
+            LettuceAssert.notNull(healthCheckStrategySupplier, "HealthCheckStrategySupplier must not be null");
             this.healthCheckStrategySupplier = healthCheckStrategySupplier;
             return this;
         }

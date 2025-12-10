@@ -19,6 +19,7 @@ import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
+import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.failover.health.HealthStatusManagerImpl;
@@ -124,13 +125,11 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
         databaseEndpoint.bind(circuitBreaker);
 
-        HealthCheck healthCheck;
-        if (config.getHealthCheckStrategySupplier() != null) {
+        HealthCheck healthCheck = null;
+        if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
             HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
                     databaseRawConnectionFactory);
             healthCheck = healthStatusManager.add(uri, hcStrategy);
-        } else {
-            healthCheck = null;
         }
 
         RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
@@ -184,14 +183,11 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
         databaseEndpoint.bind(circuitBreaker);
 
-        HealthCheck healthCheck;
-        if (config.getHealthCheckStrategySupplier() != null) {
-
+        HealthCheck healthCheck = null;
+        if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
             HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
                     databaseRawConnectionFactory);
             healthCheck = healthStatusManager.add(uri, hcStrategy);
-        } else {
-            healthCheck = null;
         }
 
         RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,

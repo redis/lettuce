@@ -12,6 +12,13 @@ import io.lettuce.core.failover.DatabaseRawConnectionFactory;
 public interface HealthCheckStrategySupplier {
 
     /**
+     * No health check strategy supplier. When used, no health checks will be performed.
+     *
+     * @since 7.4
+     */
+    HealthCheckStrategySupplier NO_HEALTH_CHECK = (uri, factory) -> null;
+
+    /**
      * Get the health check strategy for the given Redis URI and client options.
      *
      * @param redisURI the Redis URI

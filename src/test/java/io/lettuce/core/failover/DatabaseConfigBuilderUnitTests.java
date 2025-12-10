@@ -48,6 +48,15 @@ class DatabaseConfigBuilderUnitTests {
                     .hasMessageContaining("RedisURI must not be null");
         }
 
+        @Test
+        @DisplayName("Should reject null healthCheckStrategySupplier in constructor")
+        void shouldRejectNullHealthCheckStrategySupplierInConstructor() {
+            // When/Then: Creating DatabaseConfig with null healthCheckStrategySupplier should throw exception
+            assertThatThrownBy(() -> new DatabaseConfig(TEST_URI, 1.0f, null, null, null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("HealthCheckStrategySupplier must not be null");
+        }
+
     }
 
     @Nested
@@ -166,13 +175,23 @@ class DatabaseConfigBuilderUnitTests {
         }
 
         @Test
-        @DisplayName("Should allow setting healthCheckStrategySupplier to null to disable health checks")
-        void shouldAllowNullHealthCheckStrategySupplier() {
-            // When: Build with null healthCheckStrategySupplier
-            DatabaseConfig config = DatabaseConfig.builder(TEST_URI).healthCheckStrategySupplier(null).build();
+        @DisplayName("Should allow setting healthCheckStrategySupplier to NO_HEALTH_CHECK to disable health checks")
+        void shouldAllowNoHealthCheckStrategySupplier() {
+            // When: Build with NO_HEALTH_CHECK healthCheckStrategySupplier
+            DatabaseConfig config = DatabaseConfig.builder(TEST_URI)
+                    .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
-            // Then: HealthCheckStrategySupplier should be null
-            assertThat(config.getHealthCheckStrategySupplier()).isNull();
+            // Then: HealthCheckStrategySupplier should be NO_HEALTH_CHECK
+            assertThat(config.getHealthCheckStrategySupplier()).isEqualTo(HealthCheckStrategySupplier.NO_HEALTH_CHECK);
+        }
+
+        @Test
+        @DisplayName("Should reject null healthCheckStrategySupplier")
+        void shouldRejectNullHealthCheckStrategySupplier() {
+            // When/Then: Setting null healthCheckStrategySupplier should throw exception
+            assertThatThrownBy(() -> DatabaseConfig.builder(TEST_URI).healthCheckStrategySupplier(null))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("HealthCheckStrategySupplier must not be null");
         }
 
     }
@@ -218,10 +237,10 @@ class DatabaseConfigBuilderUnitTests {
         void exampleConfigurationWithoutHealthChecks() {
             // Example: Create config with health checks disabled
             DatabaseConfig config = DatabaseConfig.builder(RedisURI.create("redis://localhost:6379")).weight(1.0f)
-                    .healthCheckStrategySupplier(null).build();
+                    .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
             // Verify health checks are disabled
-            assertThat(config.getHealthCheckStrategySupplier()).isNull();
+            assertThat(config.getHealthCheckStrategySupplier()).isEqualTo(HealthCheckStrategySupplier.NO_HEALTH_CHECK);
         }
 
         @Test
