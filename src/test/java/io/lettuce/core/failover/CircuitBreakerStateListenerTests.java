@@ -24,7 +24,7 @@ class CircuitBreakerStateListenerTests {
 
     private CircuitBreakerImpl circuitBreaker;
 
-    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
+    private final RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @BeforeEach
     void setUp() {

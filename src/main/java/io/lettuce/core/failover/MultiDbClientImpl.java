@@ -35,7 +35,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * Failover-aware client that composes multiple standalone Redis endpoints and returns a single Stateful connection wrapper
  * which can switch the active endpoint without requiring users to recreate command objects.
  *
+ * <p>
  * Standalone-only POC. Not for Sentinel/Cluster.
+ * </p>
  *
  * @author Ali Takavci
  * @since 7.1

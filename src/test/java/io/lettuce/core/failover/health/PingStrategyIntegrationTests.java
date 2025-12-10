@@ -130,9 +130,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
 
         // When: Create MultiDbClient and connect
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
-        StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
-        try {
+        try (StatefulRedisMultiDbConnection<String, String> connection = testClient.connect()) {
             // Then: Connection should work normally
             assertThat(connection.sync().ping()).isEqualTo("PONG");
             assertThat(connection.getCurrentEndpoint()).isNotNull();
@@ -142,7 +141,6 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
             assertThat(connection.sync().get("test-key")).isEqualTo("test-value");
 
         } finally {
-            connection.close();
             testClient.shutdown();
         }
     }
@@ -154,10 +152,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(1000))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
-                HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build());
-
-        try {
+        try (PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
+                HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build())) {
             // When: Initial health check should work
             HealthStatus initialStatus = strategy.doHealthCheck(uri);
             assertThat(initialStatus).isEqualTo(HealthStatus.HEALTHY);
@@ -176,8 +172,6 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
             HealthStatus statusAfterEnable = strategy.doHealthCheck(uri);
             assertThat(statusAfterEnable).isEqualTo(HealthStatus.HEALTHY);
 
-        } finally {
-            strategy.close();
         }
     }
 
@@ -188,10 +182,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(100))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
-                HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build());
-
-        try {
+        try (PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
+                HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build())) {
             // When: Initial health check should work
             assertThat(strategy.doHealthCheck(uri)).isEqualTo(HealthStatus.HEALTHY);
 
@@ -209,8 +201,6 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
             HealthStatus recoveredStatus = strategy.doHealthCheck(uri);
             assertThat(recoveredStatus).as("Health check should recover from high latency").isEqualTo(HealthStatus.HEALTHY);
 
-        } finally {
-            strategy.close();
         }
     }
 
@@ -221,9 +211,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(2000))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory, HealthCheckStrategy.Config.create());
-
-        try {
+        try (PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory, HealthCheckStrategy.Config.create())) {
             // When: Initial health check
             assertThat(strategy.doHealthCheck(uri)).isEqualTo(HealthStatus.HEALTHY);
 
@@ -241,8 +229,6 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
             HealthStatus afterRecovery = strategy.doHealthCheck(uri);
             assertThat(afterRecovery).isEqualTo(HealthStatus.HEALTHY);
 
-        } finally {
-            strategy.close();
         }
     }
 

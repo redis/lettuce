@@ -31,7 +31,7 @@ import io.lettuce.core.failover.CircuitBreaker.*;
 @DisplayName("CircuitBreaker Unit Tests")
 class CircuitBreakerUnitTests {
 
-    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
+    private final RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @Nested
     @DisplayName("Metrics Evaluation Rules")

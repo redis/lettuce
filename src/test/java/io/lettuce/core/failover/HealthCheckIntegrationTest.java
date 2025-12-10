@@ -60,7 +60,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
     /** Expected run_id for uri3 Redis instance - used to verify we are connected to the correct endpoint */
     private String expectedRunIdUri3;
 
-    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
+    private final RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @Inject
     HealthCheckIntegrationTest(MultiDbClient client) {

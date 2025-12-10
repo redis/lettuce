@@ -16,11 +16,12 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
- * Circuit breaker for tracking command metrics and managing circuit breaker state. Wraps CircuitBreakerMetrics and exposes it
- * via {@link #getMetrics()}.
+ * Circuit breaker for tracking command metrics and managing circuit breaker state.
+ * 
  * <p>
- * State transitions and metrics replacement are atomic and lock-free using {@link AtomicReference}. When the circuit breaker
- * transitions to a new state, a fresh metrics instance is created atomically.
+ * This interface provides methods to track command metrics and manage circuit breaker state. Implementations must be
+ * thread-safe.
+ * </p>
  *
  * @author Ali Takavci
  * @since 7.1
