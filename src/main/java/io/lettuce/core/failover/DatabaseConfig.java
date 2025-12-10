@@ -10,10 +10,23 @@ import io.lettuce.core.internal.LettuceAssert;
  * Configuration for a database in a multi-database client. Holds the Redis URI, weight for load balancing, client options,
  * circuit breaker configuration, and optional health check strategy supplier.
  *
+ * <p>
+ * Example usage with builder:
+ * </p>
+ *
+ * <pre>
+ *
+ * DatabaseConfig config = DatabaseConfig.builder(RedisURI.create("redis://localhost:6379")).weight(1.0f)
+ *         .clientOptions(ClientOptions.create()).circuitBreakerConfig(CircuitBreakerConfig.DEFAULT)
+ *         .healthCheckStrategySupplier(PingStrategy.DEFAULT).build();
+ * </pre>
+ *
  * @author Ali Takavci
  * @since 7.1
  */
 public class DatabaseConfig {
+
+    private static final float DEFAULT_WEIGHT = 1.0f;
 
     private final RedisURI redisURI;
 
@@ -162,6 +175,110 @@ public class DatabaseConfig {
         return "DatabaseConfig{" + "redisURI=" + redisURI + ", weight=" + weight + ", clientOptions=" + clientOptions
                 + ", circuitBreakerConfig=" + circuitBreakerConfig + ", healthCheckStrategySupplier="
                 + healthCheckStrategySupplier + '}';
+    }
+
+    /**
+     * Create a new {@link Builder} to construct {@link DatabaseConfig}.
+     *
+     * @param redisURI the Redis URI, must not be {@code null}
+     * @return a new {@link Builder}
+     * @since 7.4
+     */
+    public static Builder builder(RedisURI redisURI) {
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+        return new Builder(redisURI);
+    }
+
+    /**
+     * Create a {@link Builder} initialized with this {@link DatabaseConfig}'s settings.
+     *
+     * @return a new {@link Builder} initialized with this {@link DatabaseConfig}'s settings
+     * @since 7.4
+     */
+    public Builder mutate() {
+        Builder builder = new Builder(this.redisURI);
+        builder.weight = this.weight;
+        builder.clientOptions = this.clientOptions;
+        builder.circuitBreakerConfig = this.circuitBreakerConfig;
+        builder.healthCheckStrategySupplier = this.healthCheckStrategySupplier;
+        return builder;
+    }
+
+    /**
+     * Builder for {@link DatabaseConfig}.
+     *
+     * @since 7.4
+     */
+    public static class Builder {
+
+        private final RedisURI redisURI;
+
+        private float weight = DEFAULT_WEIGHT;
+
+        private ClientOptions clientOptions;
+
+        private CircuitBreakerConfig circuitBreakerConfig;
+
+        private HealthCheckStrategySupplier healthCheckStrategySupplier;
+
+        private Builder(RedisURI redisURI) {
+            this.redisURI = redisURI;
+        }
+
+        /**
+         * Set the weight for load balancing. Defaults to {@code 1.0}.
+         *
+         * @param weight the weight, must be greater than 0
+         * @return {@code this} builder
+         */
+        public Builder weight(float weight) {
+            LettuceAssert.isTrue(weight > 0, "Weight must be greater than 0");
+            this.weight = weight;
+            return this;
+        }
+
+        /**
+         * Set the client options.
+         *
+         * @param clientOptions the client options, can be {@code null} to use defaults
+         * @return {@code this} builder
+         */
+        public Builder clientOptions(ClientOptions clientOptions) {
+            this.clientOptions = clientOptions;
+            return this;
+        }
+
+        /**
+         * Set the circuit breaker configuration.
+         *
+         * @param circuitBreakerConfig the circuit breaker configuration, can be {@code null} to use defaults
+         * @return {@code this} builder
+         */
+        public Builder circuitBreakerConfig(CircuitBreakerConfig circuitBreakerConfig) {
+            this.circuitBreakerConfig = circuitBreakerConfig;
+            return this;
+        }
+
+        /**
+         * Set the health check strategy supplier.
+         *
+         * @param healthCheckStrategySupplier the health check strategy supplier, can be {@code null} to disable health checks
+         * @return {@code this} builder
+         */
+        public Builder healthCheckStrategySupplier(HealthCheckStrategySupplier healthCheckStrategySupplier) {
+            this.healthCheckStrategySupplier = healthCheckStrategySupplier;
+            return this;
+        }
+
+        /**
+         * Build a new {@link DatabaseConfig} instance.
+         *
+         * @return a new {@link DatabaseConfig}
+         */
+        public DatabaseConfig build() {
+            return new DatabaseConfig(redisURI, weight, clientOptions, circuitBreakerConfig, healthCheckStrategySupplier);
+        }
+
     }
 
 }
