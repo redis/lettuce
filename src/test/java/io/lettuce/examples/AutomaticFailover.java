@@ -7,13 +7,10 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
-import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.failover.CircuitBreaker;
 import io.lettuce.core.failover.DatabaseConfig;
 import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
-import io.lettuce.core.failover.health.HealthCheckStrategy;
-import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.test.Wait;
 
@@ -47,14 +44,14 @@ public class AutomaticFailover {
         // docker run -p 6381:6379 -it redis:8.2.1
         List<String> endpoints = Arrays.asList("redis://localhost:6380", "redis://localhost:6381");
 
-        //        SocketOptions.TcpUserTimeoutOptions tcpUserTimeout = SocketOptions.TcpUserTimeoutOptions.builder()
-        //                .tcpUserTimeout(Duration.ofSeconds(4)).enable().build();
+        // SocketOptions.TcpUserTimeoutOptions tcpUserTimeout = SocketOptions.TcpUserTimeoutOptions.builder()
+        // .tcpUserTimeout(Duration.ofSeconds(4)).enable().build();
 
         SocketOptions.KeepAliveOptions keepAliveOptions = SocketOptions.KeepAliveOptions.builder()
                 .interval(Duration.ofSeconds(1)).idle(Duration.ofSeconds(1)).count(3).enable().build();
 
         ClientOptions clientOptions = ClientOptions.builder().socketOptions(SocketOptions.builder()
-                //.tcpUserTimeout(tcpUserTimeout)
+                // .tcpUserTimeout(tcpUserTimeout)
                 .keepAlive(keepAliveOptions).build()).build();
 
         List<DatabaseConfig> databaseConfigs = createDatabaseConfigs(endpoints);
@@ -94,7 +91,6 @@ public class AutomaticFailover {
         // Wait for some commands to be executed before triggering the fault
         Wait.untilTrue(() -> commandsSubmitted.get() > 10).waitOrTimeout();
 
-
         // Direct connection to the Redis instances used to trigger Primary Redis instance shutdown
         // and verify that commands are executed on the secondary Redis instance
         RedisClient directClient = RedisClient.create();
@@ -114,7 +110,7 @@ public class AutomaticFailover {
         subscription.dispose();
 
         log.info("Commands submitted total: {}", commandsSubmitted.get());
-        log.info("Commands executed on secondary [{}]: {}", secondaryUri,  getMulitDbCounter(secondary));
+        log.info("Commands executed on secondary [{}]: {}", secondaryUri, getMulitDbCounter(secondary));
         log.info("Captured exceptions: {}", capturedExceptions);
 
         // Cleanup
@@ -124,7 +120,7 @@ public class AutomaticFailover {
 
     private static int getMulitDbCounter(StatefulRedisConnection<String, String> connection) {
         String count = connection.sync().get("multidb-counter");
-        return count == null ? 0: Integer.parseInt(count);
+        return count == null ? 0 : Integer.parseInt(count);
     }
 
     private static void shutdownRedisInstance(RedisClient redis, RedisURI redisUri) {
