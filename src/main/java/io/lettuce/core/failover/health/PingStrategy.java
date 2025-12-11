@@ -10,11 +10,11 @@ public class PingStrategy implements HealthCheckStrategy {
 
     private final HealthCheckStrategy.Config config;
 
-    public PingStrategy(RedisURI redisURI, DatabaseRawConnectionFactory connectionFactory) {
-        this(redisURI, connectionFactory, HealthCheckStrategy.Config.create());
+    public PingStrategy(DatabaseRawConnectionFactory connectionFactory) {
+        this(connectionFactory, HealthCheckStrategy.Config.create());
     }
 
-    public PingStrategy(RedisURI redisURI, DatabaseRawConnectionFactory connectionFactory, HealthCheckStrategy.Config config) {
+    public PingStrategy(DatabaseRawConnectionFactory connectionFactory, HealthCheckStrategy.Config config) {
         this.connectionFactory = connectionFactory;
         this.config = config;
     }
@@ -63,6 +63,6 @@ public class PingStrategy implements HealthCheckStrategy {
         // No resources to close
     }
 
-    public static final HealthCheckStrategySupplier DEFAULT = PingStrategy::new;
+    public static final HealthCheckStrategySupplier DEFAULT = (uri, connectionFactory) -> new PingStrategy(connectionFactory);
 
 }
