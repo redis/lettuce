@@ -1,6 +1,7 @@
 package io.lettuce.core.failover;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 /**
@@ -8,8 +9,9 @@ import io.lettuce.core.api.StatefulRedisConnection;
  * by this factory are raw connections without CircuitBreaker counting, health checks, or other management features.
  *
  * @author Ivo Gaydazhiev
- * @since 7.2
+ * @since 7.4
  */
+@Experimental
 @FunctionalInterface
 public interface DatabaseRawConnectionFactory {
 

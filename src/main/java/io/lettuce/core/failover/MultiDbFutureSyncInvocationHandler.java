@@ -37,13 +37,13 @@ import io.lettuce.core.protocol.RedisCommand;
 /**
  * Invocation-handler to synchronize API calls which use Futures as backend. This class leverages the need to implement a full
  * sync class which just delegates every request.
- * 
+ *
  * IMPORTANT: This class is copied from io.lettuce.core.FutureSyncInvocationHandler. Any changes made there should be reflected.
  * We will need to change how the timeout cases are handled for MultiDb connections, since Futures.awaitOrCancel() does not
  * provide actual error types in DefaultEndpoint(DatabaseEndpoint, DatabasePubSubEndpoint) implementations for MultiDb.
  *
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
 class MultiDbFutureSyncInvocationHandler extends AbstractInvocationHandler {
 

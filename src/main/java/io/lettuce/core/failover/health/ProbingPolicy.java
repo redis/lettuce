@@ -1,5 +1,7 @@
 package io.lettuce.core.failover.health;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Interface for probing policies.
  *
@@ -13,8 +15,9 @@ package io.lettuce.core.failover.health;
  *
  * @author Ali Takavci
  * @author Ivo Gaydazhiev
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 public interface ProbingPolicy {
 
     enum Decision {

@@ -7,25 +7,26 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
 import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Circuit breaker for tracking command metrics and managing circuit breaker state.
- * 
+ *
  * <p>
  * This interface provides methods to track command metrics and manage circuit breaker state. Implementations must be
  * thread-safe.
  * </p>
  *
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 public interface CircuitBreaker extends Closeable {
 
     /**

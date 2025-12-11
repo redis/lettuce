@@ -2,6 +2,7 @@
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 
 /**
  * Interface for health check operations on a Redis endpoint.
@@ -12,8 +13,9 @@ import io.lettuce.core.RedisURI;
  *
  * @author Ali Takavci
  * @author Ivo Gaydazhiev
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 public interface HealthCheck {
 
     /**

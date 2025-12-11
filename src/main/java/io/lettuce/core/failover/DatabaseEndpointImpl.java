@@ -14,7 +14,7 @@ import io.lettuce.core.resource.ClientResources;
  * and tracks command successes and failures.
  *
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
 class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint {
 

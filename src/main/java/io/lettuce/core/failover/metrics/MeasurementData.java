@@ -32,6 +32,8 @@ package io.lettuce.core.failover.metrics;
 
 /**
  * Represents a data structure that holds the results of a measurement.
+ *
+ * @since 7.4
  */
 interface MeasurementData {
 

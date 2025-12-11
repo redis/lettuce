@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.failover.health.HealthStatusManager;
@@ -27,8 +28,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
         extends StatefulRedisMultiDbConnectionImpl<StatefulRedisPubSubConnection<K, V>, K, V>
         implements StatefulRedisMultiDbPubSubConnection<K, V> {

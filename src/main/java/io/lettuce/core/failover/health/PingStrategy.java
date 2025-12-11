@@ -1,9 +1,17 @@
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.DatabaseRawConnectionFactory;
 
+/**
+ * Health check strategy that uses PING command to check endpoint health.
+ *
+ * @author Ali Takavci
+ * @since 7.4
+ */
+@Experimental
 public class PingStrategy implements HealthCheckStrategy {
 
     private final DatabaseRawConnectionFactory connectionFactory;

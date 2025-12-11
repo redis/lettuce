@@ -9,7 +9,7 @@ import io.lettuce.core.protocol.RedisCommand;
  * Database endpoint interface for multi-database failover with circuit breaker metrics tracking.
  *
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
 interface DatabaseEndpoint {
 

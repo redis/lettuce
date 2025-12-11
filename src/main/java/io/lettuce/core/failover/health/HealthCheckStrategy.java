@@ -1,6 +1,7 @@
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 
 import java.io.Closeable;
 
@@ -18,8 +19,9 @@ import java.io.Closeable;
  *
  * @author Ali Takavci
  * @author Ivo Gaydazhiev
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 public interface HealthCheckStrategy extends Closeable {
 
     /**
