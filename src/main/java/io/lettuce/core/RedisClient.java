@@ -845,7 +845,7 @@ public class RedisClient extends AbstractRedisClient {
      * Create a new {@link DefaultEndpoint}. Subclasses may override this method to change the default behavior.
      *
      * @return a new {@link DefaultEndpoint}.
-     * @since  7.4
+     * @since 7.4
      */
     @Experimental
     protected DefaultEndpoint createEndpoint() {
@@ -856,7 +856,7 @@ public class RedisClient extends AbstractRedisClient {
      * Create a new {@link PubSubEndpoint}. Subclasses may override this method to change the default behavior.
      *
      * @return a new {@link PubSubEndpoint}.
-     * @since  7.4
+     * @since 7.4
      */
     @Experimental
     protected <K, V> PubSubEndpoint<K, V> createPubSubEndpoint() {
