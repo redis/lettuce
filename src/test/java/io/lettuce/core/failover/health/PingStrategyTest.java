@@ -49,7 +49,7 @@ class PingStrategyTest {
         @DisplayName("Should create PingStrategy with default config")
         void shouldCreateWithDefaultConfig() {
             // When
-            PingStrategy strategy = new PingStrategy(testUri, connectionFactory);
+            PingStrategy strategy = new PingStrategy(connectionFactory);
 
             // Then
             assertThat(strategy).isNotNull();
@@ -69,7 +69,7 @@ class PingStrategyTest {
                     .numProbes(3).delayInBetweenProbes(100).policy(ProbingPolicy.BuiltIn.MAJORITY_SUCCESS).build();
 
             // When
-            PingStrategy strategy = new PingStrategy(testUri, connectionFactory, customConfig);
+            PingStrategy strategy = new PingStrategy(connectionFactory, customConfig);
 
             // Then
             assertThat(strategy.getInterval()).isEqualTo(500);
@@ -94,7 +94,7 @@ class PingStrategyTest {
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenReturn("PONG");
 
-            PingStrategy strategy = new PingStrategy(testUri, connectionFactory);
+            PingStrategy strategy = new PingStrategy(connectionFactory);
 
             // When
             HealthStatus status = strategy.doHealthCheck(testUri);
@@ -116,7 +116,7 @@ class PingStrategyTest {
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenReturn("UNEXPECTED");
 
-            PingStrategy strategy = new PingStrategy(testUri, connectionFactory);
+            PingStrategy strategy = new PingStrategy(connectionFactory);
 
             // When
             HealthStatus status = strategy.doHealthCheck(testUri);
@@ -132,7 +132,7 @@ class PingStrategyTest {
             // Given
             when(connectionFactory.connectToDatabase(testUri)).thenReturn(null);
 
-            PingStrategy strategy = new PingStrategy(testUri, connectionFactory);
+            PingStrategy strategy = new PingStrategy(connectionFactory);
 
             // When
             HealthStatus status = strategy.doHealthCheck(testUri);
@@ -149,7 +149,7 @@ class PingStrategyTest {
             // Given
             when(connectionFactory.connectToDatabase(testUri)).thenThrow(new RuntimeException("Connection failed"));
 
-            PingStrategy strategy = new PingStrategy(testUri, connectionFactory);
+            PingStrategy strategy = new PingStrategy(connectionFactory);
 
             // When
             HealthStatus status = strategy.doHealthCheck(testUri);
@@ -167,7 +167,7 @@ class PingStrategyTest {
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenThrow(new RuntimeException("PING failed"));
 
-            PingStrategy strategy = new PingStrategy(testUri, connectionFactory);
+            PingStrategy strategy = new PingStrategy(connectionFactory);
 
             // When
             HealthStatus status = strategy.doHealthCheck(testUri);
@@ -186,7 +186,7 @@ class PingStrategyTest {
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenThrow(new RuntimeException("PING failed"));
 
-            PingStrategy strategy = new PingStrategy(testUri, connectionFactory);
+            PingStrategy strategy = new PingStrategy(connectionFactory);
 
             // When
             strategy.doHealthCheck(testUri);
@@ -204,7 +204,7 @@ class PingStrategyTest {
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenReturn("PONG");
 
-            PingStrategy strategy = new PingStrategy(testUri, connectionFactory);
+            PingStrategy strategy = new PingStrategy(connectionFactory);
 
             // When
             HealthStatus status1 = strategy.doHealthCheck(testUri);
