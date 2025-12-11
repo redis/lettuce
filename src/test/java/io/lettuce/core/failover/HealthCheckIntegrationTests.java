@@ -43,7 +43,7 @@ import static org.awaitility.Awaitility.with;
 @ExtendWith(LettuceExtension.class)
 @Tag("integration")
 @DisplayName("HealthCheck Integration Tests")
-public class HealthCheckIntegrationTest extends MultiDbTestSupport {
+public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
     /** Default timeout for await() calls in this test - 500ms for fast test execution */
     private static final Duration AWAIT_TIMEOUT = Duration.ofMillis(500);
@@ -63,7 +63,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
     private final RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @Inject
-    HealthCheckIntegrationTest(MultiDbClient client) {
+    HealthCheckIntegrationTests(MultiDbClient client) {
         super(client);
     }
 
@@ -85,7 +85,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
     @Nested
     @DisplayName("Health Check Configuration")
-    class HealthCheckConfigurationTests {
+    @Tag("integration")
+    class HealthCheckConfigurationIntegrationTests {
 
         @Test
         @DisplayName("Should create MultiDbClient without health checks when supplier is NO_HEALTH_CHECK")
@@ -304,7 +305,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
     @Nested
     @DisplayName("Health Check Lifecycle")
-    class HealthCheckLifecycleTests {
+    @Tag("integration")
+    class HealthCheckLifecycleIntegrationTests {
 
         @Test
         @DisplayName("Should start health checks automatically when connection is created")
@@ -448,6 +450,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
     @Nested
     @DisplayName("Failover Integration")
+    @Tag("integration")
     class FailoverIntegrationTests {
 
         @Test
@@ -676,7 +679,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
 
     @Nested
     @DisplayName("Dynamic Database Management")
-    class DynamicDatabaseManagementTests {
+    class DynamicDatabaseManagementIntegrationTests {
 
         @Test
         @DisplayName("Should create health check when adding new database")
