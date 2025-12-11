@@ -60,7 +60,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
     /** Expected run_id for uri3 Redis instance - used to verify we are connected to the correct endpoint */
     private String expectedRunIdUri3;
 
-    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
+    private final RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @Inject
     HealthCheckIntegrationTest(MultiDbClient client) {
@@ -88,11 +88,13 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
     class HealthCheckConfigurationTests {
 
         @Test
-        @DisplayName("Should create MultiDbClient without health checks when supplier is null")
+        @DisplayName("Should create MultiDbClient without health checks when supplier is NO_HEALTH_CHECK")
         void shouldCreateClientWithoutHealthChecks() {
-            // Given: DatabaseConfigs without HealthCheckStrategySupplier (null)
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, null);
-            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, null);
+            // Given: DatabaseConfigs with NO_HEALTH_CHECK
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f)
+                    .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f)
+                    .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
@@ -133,8 +135,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             TestHealthCheckStrategy testHealthCheckStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testHealthCheckStrategy;
 
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
-            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier).build();
 
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
@@ -199,8 +201,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             HealthCheckStrategySupplier supplier1 = (uri, options) -> strategy1;
             HealthCheckStrategySupplier supplier2 = (uri, options) -> strategy2;
 
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier1);
-            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier2);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier1).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier2).build();
 
             // When: Create MultiDbClient with different strategies per endpoint
             MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
@@ -264,7 +266,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
-            DatabaseConfig databaseConfig = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+            DatabaseConfig databaseConfig = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier)
+                    .build();
 
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(databaseConfig));
@@ -313,7 +316,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier).build();
 
             MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(config1));
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
@@ -347,7 +350,7 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier).build();
 
             MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(config1));
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
@@ -402,8 +405,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             CountDownLatch healthCheckUri2Latch = new CountDownLatch(1);
             testStrategy.setHealthCheckDelay(uri2, TestHealthCheckStrategy.Delay.Await(healthCheckUri2Latch));
 
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
-            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier).build();
 
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
@@ -458,8 +461,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
             // uri1 has higher weight (1.0) than uri2 (0.5), so uri1 should be selected initially
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
-            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier).build();
 
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
@@ -520,9 +523,9 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
             // Create 3 endpoints: uri1 (weight 1.0), uri2 (weight 0.5), uri3 (weight 0.25)
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
-            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
-            DatabaseConfig config3 = new DatabaseConfig(uri3, 0.25f, null, null, supplier);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier).build();
+            DatabaseConfig config3 = DatabaseConfig.builder(uri3).weight(0.25f).healthCheckStrategySupplier(supplier).build();
 
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3));
@@ -588,14 +591,15 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
             // Configure circuit breaker with low thresholds for fast testing
-            CircuitBreaker.CircuitBreakerConfig cbConfig = new CircuitBreaker.CircuitBreakerConfig(50.0f, // 50% failure rate
-                                                                                                          // threshold
-                    2, // minimum 2 failures
-                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions(),
-                    CircuitBreaker.CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+            CircuitBreaker.CircuitBreakerConfig cbConfig = CircuitBreaker.CircuitBreakerConfig.builder()
+                    .failureRateThreshold(50.0f) // 50% failure rate threshold
+                    .minimumNumberOfFailures(2) // minimum 2 failures
+                    .build();
 
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, cbConfig, supplier);
-            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, cbConfig, supplier);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).circuitBreakerConfig(cbConfig)
+                    .healthCheckStrategySupplier(supplier).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).circuitBreakerConfig(cbConfig)
+                    .healthCheckStrategySupplier(supplier).build();
 
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
@@ -684,14 +688,15 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier).build();
 
             MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(config1));
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
             try {
                 // When: Add a new database dynamically with health check supplier
-                DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+                DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier)
+                        .build();
                 connection.addDatabase(config2);
 
                 // Then: Health check should be created and started for the new database
@@ -723,8 +728,8 @@ public class HealthCheckIntegrationTest extends MultiDbTestSupport {
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
 
-            DatabaseConfig config1 = new DatabaseConfig(uri1, 1.0f, null, null, supplier);
-            DatabaseConfig config2 = new DatabaseConfig(uri2, 0.5f, null, null, supplier);
+            DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).healthCheckStrategySupplier(supplier).build();
+            DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier).build();
 
             MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();

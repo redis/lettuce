@@ -24,13 +24,12 @@ class CircuitBreakerStateListenerTests {
 
     private CircuitBreakerImpl circuitBreaker;
 
-    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
+    private final RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @BeforeEach
     void setUp() {
-        CircuitBreaker.CircuitBreakerConfig config = new CircuitBreaker.CircuitBreakerConfig(50.0f, 5,
-                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getTrackedExceptions(),
-                CircuitBreaker.CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+        CircuitBreaker.CircuitBreakerConfig config = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(50.0f)
+                .minimumNumberOfFailures(5).build();
         circuitBreaker = new CircuitBreakerImpl(config);
     }
 

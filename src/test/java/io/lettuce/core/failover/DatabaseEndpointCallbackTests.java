@@ -24,7 +24,6 @@ import io.lettuce.core.output.StatusOutput;
 import io.lettuce.core.protocol.*;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.ReflectionTestUtils;
-import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 
 /**
@@ -37,7 +36,7 @@ import io.lettuce.test.resource.TestClientResources;
 @Tag("unit")
 class DatabaseEndpointCallbackTests {
 
-    private RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
+    private final RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     private ClientResources clientResources;
 
@@ -60,8 +59,8 @@ class DatabaseEndpointCallbackTests {
     }
 
     private CircuitBreakerConfig getCBConfig(float failureRateThreshold, int minimumNumberOfFailures) {
-        return new CircuitBreakerConfig(failureRateThreshold, minimumNumberOfFailures,
-                CircuitBreakerConfig.DEFAULT.getTrackedExceptions(), CircuitBreakerConfig.DEFAULT.getMetricsWindowSize());
+        return CircuitBreakerConfig.builder().failureRateThreshold(failureRateThreshold)
+                .minimumNumberOfFailures(minimumNumberOfFailures).build();
     }
     // ============ Basic Callback Attachment Tests ============
 
@@ -71,7 +70,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should attach callback to single command when circuit breaker is set")
-        void shouldAttachCallbackToSingleCommand() throws Exception {
+        void shouldAttachCallbackToSingleCommand() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -111,7 +110,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should attach callbacks to multiple commands")
-        void shouldAttachCallbacksToMultipleCommands() throws Exception {
+        void shouldAttachCallbacksToMultipleCommands() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -143,7 +142,7 @@ class DatabaseEndpointCallbackTests {
             assertThat(totalOnCompleteCalls.get()).isEqualTo(5);
 
             // Complete all commands to trigger callbacks
-            spyCommands.forEach(cmd -> cmd.complete());
+            spyCommands.forEach(AsyncCommand::complete);
 
             // Verify callbacks actually recorded metrics for all commands
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
@@ -152,7 +151,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should not attach callback when circuit breaker is null")
-        void shouldNotAttachCallbackWhenCircuitBreakerIsNull() throws Exception {
+        void shouldNotAttachCallbackWhenCircuitBreakerIsNull() {
             // Don't bind circuit breaker - this should trigger early return at line 50-51
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
@@ -275,7 +274,7 @@ class DatabaseEndpointCallbackTests {
             spyCommands.forEach(cmd -> {
                 assertThat(cmd.isDone()).isTrue();
                 assertThat(cmd.isCompletedExceptionally()).isTrue();
-                assertThatThrownBy(() -> cmd.get()).hasCauseInstanceOf(RedisCircuitBreakerException.class);
+                assertThatThrownBy(cmd::get).hasCauseInstanceOf(RedisCircuitBreakerException.class);
             });
 
             // Verify onComplete was NEVER called for any command (no callbacks attached when CB is OPEN)
@@ -292,7 +291,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should record timeout exception as failure")
-        void shouldRecordTimeoutExceptionAsFailure() throws Exception {
+        void shouldRecordTimeoutExceptionAsFailure() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -311,7 +310,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should record connection exception as failure")
-        void shouldRecordConnectionExceptionAsFailure() throws Exception {
+        void shouldRecordConnectionExceptionAsFailure() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -329,7 +328,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should record IOException as failure")
-        void shouldRecordIOExceptionAsFailure() throws Exception {
+        void shouldRecordIOExceptionAsFailure() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -365,7 +364,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should record generic TimeoutException as failure")
-        void shouldRecordGenericTimeoutExceptionAsFailure() throws Exception {
+        void shouldRecordGenericTimeoutExceptionAsFailure() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -383,7 +382,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should record success when command completes normally")
-        void shouldRecordSuccessWhenCommandCompletesNormally() throws Exception {
+        void shouldRecordSuccessWhenCommandCompletesNormally() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -438,7 +437,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should handle multiple commands completing at different times")
-        void shouldHandleMultipleCommandsCompletingAtDifferentTimes() throws Exception {
+        void shouldHandleMultipleCommandsCompletingAtDifferentTimes() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -482,7 +481,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should ignore late failures from old generation after CB opens and new generation created")
-        void shouldIgnoreLateFailuresFromOldGenerationAfterCBOpens() throws Exception {
+        void shouldIgnoreLateFailuresFromOldGenerationAfterCBOpens() {
 
             DatabaseEndpointImpl endpoint1 = new DatabaseEndpointImpl(clientOptions, clientResources);
             try {
@@ -627,7 +626,7 @@ class DatabaseEndpointCallbackTests {
                     final int index = i;
                     executor.submit(() -> {
                         try {
-                            clock.advance(Duration.ofMillis(((long) Math.random() * 200)));
+                            clock.advance(Duration.ofMillis((long) (Math.random() * 200)));
                             if (index < 6) {
                                 // First 6 succeed
                                 commands.get(index).complete();
@@ -799,7 +798,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should handle callback when command is already completed before write")
-        void shouldHandleAlreadyCompletedCommand() throws Exception {
+        void shouldHandleAlreadyCompletedCommand() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -821,7 +820,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should handle null error in callback (success case)")
-        void shouldHandleNullErrorInCallback() throws Exception {
+        void shouldHandleNullErrorInCallback() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -840,7 +839,7 @@ class DatabaseEndpointCallbackTests {
 
         @Test
         @DisplayName("Should handle multiple callbacks on same command (if possible)")
-        void shouldHandleMultipleCallbacksOnSameCommand() throws Exception {
+        void shouldHandleMultipleCallbacksOnSameCommand() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 
@@ -866,13 +865,8 @@ class DatabaseEndpointCallbackTests {
             CircuitBreaker circuitBreaker = spy(new CircuitBreakerImpl(getCBConfig(50.0f, 100)));
 
             // Make recordResult throw exception
-            CircuitBreakerGeneration generation = new CircuitBreakerGeneration() {
-
-                @Override
-                public void recordResult(Throwable error) {
-                    throw new RuntimeException("Simulated callback exception");
-                }
-
+            CircuitBreakerGeneration generation = error -> {
+                throw new RuntimeException("Simulated callback exception");
             };
 
             doReturn(generation).when(circuitBreaker).getGeneration();
@@ -885,14 +879,12 @@ class DatabaseEndpointCallbackTests {
             endpoint.write(asyncCommand);
 
             // Complete command - callback should handle exception gracefully
-            assertThatCode(() -> {
-                asyncCommand.complete();
-            }).doesNotThrowAnyException();
+            assertThatCode(asyncCommand::complete).doesNotThrowAnyException();
         }
 
         @Test
         @DisplayName("Should track different exception types correctly in same batch")
-        void shouldTrackDifferentExceptionTypesInSameBatch() throws Exception {
+        void shouldTrackDifferentExceptionTypesInSameBatch() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
 

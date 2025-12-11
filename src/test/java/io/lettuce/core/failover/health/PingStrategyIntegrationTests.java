@@ -123,14 +123,15 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
                 HealthCheckStrategy.Config.builder().interval(100) // Fast interval for testing
                         .timeout(1000).numProbes(1).build());
 
-        DatabaseConfig config1 = new DatabaseConfig(proxyUri1, 1.0f, null, null, pingSupplier);
-        DatabaseConfig config2 = new DatabaseConfig(proxyUri2, 0.5f, null, null, pingSupplier);
+        DatabaseConfig config1 = DatabaseConfig.builder(proxyUri1).weight(1.0f).healthCheckStrategySupplier(pingSupplier)
+                .build();
+        DatabaseConfig config2 = DatabaseConfig.builder(proxyUri2).weight(0.5f).healthCheckStrategySupplier(pingSupplier)
+                .build();
 
         // When: Create MultiDbClient and connect
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
-        StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
-        try {
+        try (StatefulRedisMultiDbConnection<String, String> connection = testClient.connect()) {
             // Then: Connection should work normally
             assertThat(connection.sync().ping()).isEqualTo("PONG");
             assertThat(connection.getCurrentEndpoint()).isNotNull();
@@ -140,7 +141,6 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
             assertThat(connection.sync().get("test-key")).isEqualTo("test-value");
 
         } finally {
-            connection.close();
             testClient.shutdown();
         }
     }
@@ -152,10 +152,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(1000))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
-                HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build());
-
-        try {
+        try (PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
+                HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build())) {
             // When: Initial health check should work
             HealthStatus initialStatus = strategy.doHealthCheck(uri);
             assertThat(initialStatus).isEqualTo(HealthStatus.HEALTHY);
@@ -174,8 +172,6 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
             HealthStatus statusAfterEnable = strategy.doHealthCheck(uri);
             assertThat(statusAfterEnable).isEqualTo(HealthStatus.HEALTHY);
 
-        } finally {
-            strategy.close();
         }
     }
 
@@ -186,10 +182,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(100))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
-                HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build());
-
-        try {
+        try (PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory,
+                HealthCheckStrategy.Config.builder().interval(1000).timeout(500).numProbes(1).build())) {
             // When: Initial health check should work
             assertThat(strategy.doHealthCheck(uri)).isEqualTo(HealthStatus.HEALTHY);
 
@@ -207,8 +201,6 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
             HealthStatus recoveredStatus = strategy.doHealthCheck(uri);
             assertThat(recoveredStatus).as("Health check should recover from high latency").isEqualTo(HealthStatus.HEALTHY);
 
-        } finally {
-            strategy.close();
         }
     }
 
@@ -219,9 +211,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(9479).withTimeout(Duration.ofMillis(2000))
                 .build();
 
-        PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory, HealthCheckStrategy.Config.create());
-
-        try {
+        try (PingStrategy strategy = new PingStrategy(uri, rawConnectionFactory, HealthCheckStrategy.Config.create())) {
             // When: Initial health check
             assertThat(strategy.doHealthCheck(uri)).isEqualTo(HealthStatus.HEALTHY);
 
@@ -239,8 +229,6 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
             HealthStatus afterRecovery = strategy.doHealthCheck(uri);
             assertThat(afterRecovery).isEqualTo(HealthStatus.HEALTHY);
 
-        } finally {
-            strategy.close();
         }
     }
 
@@ -252,7 +240,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
                 HealthCheckStrategy.Config.builder().interval(50) // Very fast for testing
                         .timeout(1000).numProbes(1).build());
 
-        DatabaseConfig config = new DatabaseConfig(proxyUri1, 1.0f, null, null, pingSupplier);
+        DatabaseConfig config = DatabaseConfig.builder(proxyUri1).weight(1.0f).healthCheckStrategySupplier(pingSupplier)
+                .build();
 
         // When: Create MultiDbClient and connect
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config));
@@ -277,8 +266,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
     @DisplayName("Should use default PingStrategy supplier")
     void shouldUseDefaultPingStrategySupplier() {
         // Given: DatabaseConfig with default PingStrategy supplier using proxy URIs
-        DatabaseConfig config1 = new DatabaseConfig(proxyUri1, 1.0f, null, null, PingStrategy.DEFAULT);
-        DatabaseConfig config2 = new DatabaseConfig(proxyUri2, 0.5f, null, null, PingStrategy.DEFAULT);
+        DatabaseConfig config1 = DatabaseConfig.builder(proxyUri1).weight(1.0f).build();
+        DatabaseConfig config2 = DatabaseConfig.builder(proxyUri2).weight(0.5f).build();
 
         // When: Create MultiDbClient and connect
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
@@ -307,7 +296,8 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
                 HealthCheckStrategy.Config.builder().interval(100).timeout(1000).numProbes(3) // Multiple probes
                         .delayInBetweenProbes(50).policy(ProbingPolicy.BuiltIn.MAJORITY_SUCCESS).build());
 
-        DatabaseConfig config = new DatabaseConfig(proxyUri1, 1.0f, null, null, pingSupplier);
+        DatabaseConfig config = DatabaseConfig.builder(proxyUri1).weight(1.0f).healthCheckStrategySupplier(pingSupplier)
+                .build();
 
         // When: Create MultiDbClient and connect
         MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config));
