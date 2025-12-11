@@ -1,11 +1,14 @@
 package io.lettuce.core.failover;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Event representing a circuit breaker state change.
  *
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 public class CircuitBreakerStateChangeEvent {
 
     private final CircuitBreaker circuitBreaker;

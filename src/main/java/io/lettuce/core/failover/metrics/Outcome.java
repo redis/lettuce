@@ -36,6 +36,8 @@ package io.lettuce.core.failover.metrics;
  * <p>
  * Used to record the result of a command execution for metrics tracking.
  * </p>
+ *
+ * @since 7.4
  */
 enum Outcome {
     SUCCESS, FAILURE

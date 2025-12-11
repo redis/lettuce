@@ -2,6 +2,7 @@
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,9 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author Ali Takavci
  * @author Ivo Gaydazhiev
+ * @since 7.4
  */
+@Experimental
 public class HealthCheckImpl implements HealthCheck {
 
     static class HealthProbeContext implements ProbingPolicy.ProbeContext {

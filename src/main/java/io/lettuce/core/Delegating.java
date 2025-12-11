@@ -1,13 +1,16 @@
 package io.lettuce.core;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * A delegating interface that allows access to the underlying delegate.
  * 
  * @param <T> the type of the delegate.
  * 
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 public interface Delegating<T> {
 
     /**

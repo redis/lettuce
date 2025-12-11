@@ -22,7 +22,7 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
  * transitions to a new state, a fresh metrics instance is created atomically.
  *
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
 class CircuitBreakerImpl implements CircuitBreaker {
 

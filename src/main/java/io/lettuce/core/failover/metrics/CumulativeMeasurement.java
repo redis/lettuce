@@ -32,6 +32,8 @@ package io.lettuce.core.failover.metrics;
 
 /**
  * Interface for measurement implementations that accumulate calls and outcomes.
+ *
+ * @since 7.4
  */
 interface CumulativeMeasurement extends MeasurementData {
 

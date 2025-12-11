@@ -20,6 +20,7 @@ import io.lettuce.core.RedisAsyncCommandsImpl;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
@@ -47,8 +48,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * they remain valid across switches.
  *
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>, K, V>
         implements StatefulRedisMultiDbConnection<K, V> {
 

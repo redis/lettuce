@@ -40,7 +40,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </p>
  *
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
 class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 

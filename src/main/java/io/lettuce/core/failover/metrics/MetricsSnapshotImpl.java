@@ -40,7 +40,7 @@ package io.lettuce.core.failover.metrics;
  * </p>
  *
  * @author Ali Takavci
- * @since 7.2
+ * @since 7.4
  */
 class MetricsSnapshotImpl implements MetricsSnapshot {
 

@@ -3,20 +3,19 @@ package io.lettuce.core.failover;
 import java.io.Closeable;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.health.HealthCheck;
-import io.lettuce.core.failover.health.HealthStatus;
-import io.lettuce.core.failover.health.HealthStatusManager;
-import io.lettuce.core.failover.health.HealthCheckStrategy;
 
 /**
  * Represents a Redis database with a weight and a connection.
  *
  * @param <C> Connection type.
- * 
+ *
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements Closeable {
 
     private final float weight;

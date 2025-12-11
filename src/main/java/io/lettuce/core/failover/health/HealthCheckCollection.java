@@ -1,6 +1,7 @@
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
+import io.lettuce.core.annotations.Experimental;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,7 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Ali Takavci
  * @author Ivo Gaydazhiev
+ * @since 7.4
  **/
+@Experimental
 public class HealthCheckCollection {
 
     private final Map<RedisURI, HealthCheck> healthChecks = new ConcurrentHashMap<>();

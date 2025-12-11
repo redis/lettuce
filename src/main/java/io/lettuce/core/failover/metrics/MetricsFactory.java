@@ -1,8 +1,14 @@
 package io.lettuce.core.failover.metrics;
 
+import io.lettuce.core.annotations.Experimental;
+
 /**
  * Factory for creating {@link CircuitBreakerMetrics} instances.
+ *
+ * @author Ali Takavci
+ * @since 7.4
  */
+@Experimental
 public final class MetricsFactory {
 
     private static Clock DEFAULT_CLOCK = Clock.SYSTEM;

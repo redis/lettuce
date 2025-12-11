@@ -37,7 +37,7 @@ package io.lettuce.core.failover.metrics;
  * This interface allows for testable time-dependent code by enabling injection of custom clock implementations.
  * </p>
  *
- * @since 7.1
+ * @since 7.4
  */
 interface Clock {
 

@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
  * processed flag in the time slice, which marks that no further increments should happen for it.
  * <p>
  *
+ * @since 7.4
  */
 class LockFreeSlidingTimeWindowMetrics implements CircuitBreakerMetrics {
 

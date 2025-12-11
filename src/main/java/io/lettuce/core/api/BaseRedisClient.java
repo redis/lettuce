@@ -6,14 +6,16 @@ import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisConnectionStateListener;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
  * @author Ali Takavci
- * @since 7.1
+ * @since 7.4
  */
+@Experimental
 // This is same interface that AbstractRedisClient expose as public
 public interface BaseRedisClient extends AutoCloseable {
 
