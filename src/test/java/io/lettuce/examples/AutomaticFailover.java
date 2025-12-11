@@ -94,8 +94,6 @@ public class AutomaticFailover {
         // Direct connection to the Redis instances used to trigger Primary Redis instance shutdown
         // and verify that commands are executed on the secondary Redis instance
         RedisClient directClient = RedisClient.create();
-        RedisURI secondaryUri = RedisURI.create(endpoints.get(1));
-        StatefulRedisConnection<String, String> secondary = directClient.connect(secondaryUri);
 
         // Shutdown the current Redis instance to trigger failover
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
@@ -103,6 +101,8 @@ public class AutomaticFailover {
         shutdownRedisInstance(directClient, currentEndpoint);
 
         // Wait for Commands to start being executed on the secondary Redis instances
+        RedisURI secondaryUri = RedisURI.create(endpoints.get(1));
+        StatefulRedisConnection<String, String> secondary = directClient.connect(secondaryUri);
         log.info("Waiting for commands to be executed on [{}]", secondaryUri);
         Wait.untilTrue(() -> (getMulitDbCounter(secondary)) > 20).during(Duration.ofSeconds(10)).waitOrTimeout();
 
