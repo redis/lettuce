@@ -1,62 +1,30 @@
-Lettuce 7.0.0.BETA2 RELEASE NOTES
+Lettuce 7.2.0 RELEASE NOTES
 ==============================
 
-The Lettuce team is pleased to announce the second beta release of Lettuce 7.0!
+The Lettuce team is pleased to announce the Lettuce 7.2.0 minor release!
 
-The release focuses on introducing **Maintenance events support** functionality, API improvements, and cleanup of deprecated features.
+Lettuce 7.2.0 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
+works with Java 24. The driver is tested against Redis 8.4, Redis 8.2, Redis 8.0, Redis 7.4 and Redis 7.2.
 
-### Key changes
-- **Maintenance events support** for graceful maintenance handling
-- **Enhanced JSON API** with `String`-based access to avoid unnecessary conversions
-- **Removal of deprecated APIs** and options as part of the major version upgrade
-As part of the 7.0 line, this beta also removes several deprecated APIs and options.
+Thanks to all contributors who made Lettuce 7.2.0.RELEASE possible.
 
-Lettuce 7.0.0.BETA2 supports Redis 2.6+ up to Redis 8.x and requires Java 8 or newer. The driver is tested against Redis 8.2, 8.0, 7.4, and 7.2.
+📗 Links
+Reference documentation: https://lettuce.io/core/7.2.0.RELEASE/reference/
+Javadoc: https://lettuce.io/core/7.2.0.RELEASE/api/
 
-Thanks to all contributors who made Lettuce 7.0.0.BETA2 possible!
+⭐ New Features
+* Add ftHybrid by @a-TODO-rov in https://github.com/redis/lettuce/pull/3540
+* Expose method to add upstream driver libraries to CLIENT SETINFO payload by @viktoriya-kutsarova in https://github.com/redis/lettuce/pull/3542
 
-If you need any support, meet Lettuce at
+🐞 Bug Fixes
+* SearchArgs.returnField with alias produces malformed redis command #3528 by @tishun in https://github.com/redis/lettuce/pull/3530
+* fix consistency with get(int) that returns wrapped DelegateJsonObject/DelegateJsonArray for nested structures by @NeatGuyCoding in https://github.com/redis/lettuce/pull/3464
 
-* GitHub Discussions: https://github.com/lettuce-io/lettuce-core/discussions
-* Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
-* Join the chat at https://discord.gg/redis and look for the "Help:Tools Lettuce" channel 
-* GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/7.0.0.BETA2/reference/
-* Javadoc: https://lettuce.io/core/7.0.0.BETA2/api/
+💡 Other
+* Bumping Netty to 4.2.5.Final (main) by @tishun in https://github.com/redis/lettuce/pull/3536
 
-# Changes
+❤️ New Contributors
+* @NeatGuyCoding made their first contribution in https://github.com/redis/lettuce/pull/3464
+* @viktoriya-kutsarova made their first contribution in https://github.com/redis/lettuce/pull/3542
 
-## 🔥 Breaking Changes
-
-- chore: remove usage of deprecated connection methods in command APIs in integration tests (#3328) (#3343)
-- Remove deprecated dnsResolver option (#3328) (#3333)
-- Remove deprecated `reset()` method from Lettuce API and internals (#3395)
-- Make Utility Class constructor private to enforce noninstantiability (#3266)
-- Enable adaptive refresh by default #3249 (#3316)
-- ISSUE#3328 - Remove deprecated code from ISSUE#1314 (#3351)
-- chore: deprecated withPassword(String) method (#3328) (#3350)
-- Remove deprecated Utf8StringCodec class (#3328) (#3389)
-- chore: remove deprecated default timeout from AbstractRedisClient (#3328) (#3344)
-- chore: remove deprecated ClientOptions#cancelCommandsOnReconnectFailure (#3328) (#3346)
-
-## 🚀 New Features
-
-- Add support for EPSILON and WITHATTRIBS arguments in VSIM command (#3449)
-- Add String-based JSON API to avoid unnecessary conversions (#3369) (#3394)
-- React to maintenance events #3345 (#3354)
-
-## 🐛 Bug Fixes
-- Rename maintenance notification configuration properties (#3450)
-- Timeouts seen during endpoint re-bind and migrate (#3426)
-- Fix a NullPointerException in DelegateJsonObject #3417 (#3418)
-
-## 💡 Other
-
-- Timeouts seen during endpoint re-bind and migrate (#3426)
-- Return name method to ProtocolKeyword public interface. (#3424)
-- Refactor JsonValue to Object mapping #3412 (#3413)
-- Using non-native transports with SocketOptions should cause an error (#3279)
-
----
-
-**Full Changelog**: [6.8.0.RELEASE...7.0.0.BETA2](https://github.com/redis/lettuce/compare/6.8.0.RELEASE...7.0.0.BETA2)
+**Full Changelog**: https://github.com/redis/lettuce/compare/7.1.0.RELEASE...7.2.0.RELEASE

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-Present, Redis Ltd. and Contributors
+ * Copyright 2017-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
@@ -20,11 +20,23 @@
 
 package io.lettuce.core.api.coroutines
 
-import io.lettuce.core.*
-import kotlinx.coroutines.flow.Flow
-import java.time.Duration
+import io.lettuce.core.CompareCondition
+import java.util.Date
 import java.time.Instant
-import java.util.*
+import java.time.Duration
+
+import io.lettuce.core.CopyArgs
+import io.lettuce.core.ExpireArgs
+import io.lettuce.core.KeyScanArgs
+import io.lettuce.core.KeyScanCursor
+import io.lettuce.core.MigrateArgs
+import io.lettuce.core.RestoreArgs
+import io.lettuce.core.ScanArgs
+import io.lettuce.core.ScanCursor
+import io.lettuce.core.SortArgs
+import io.lettuce.core.ExperimentalLettuceCoroutinesApi
+import io.lettuce.core.annotations.Experimental
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Coroutine executed commands for Keys (Key manipulation/querying).
@@ -66,6 +78,27 @@ interface RedisKeyCoroutinesCommands<K : Any, V : Any> {
      * @return Long integer-reply The number of keys that were removed.
      */
     suspend fun del(vararg keys: K): Long?
+
+    /**
+     * Delete the specified key if the compare condition matches.
+     *
+     * @param key the key.
+     * @param compareCondition the compare condition, must not be `null`.
+     * @return Long integer-reply the number of keys that were removed.
+     * @since 7.1
+     */
+    @Experimental
+    suspend fun delex(key: K, compareCondition: CompareCondition<V>): Long?
+
+    /**
+     * Return the XXH3 64-bit digest of the string value stored at a key as a 16-character hex string.
+     *
+     * @param key the key.
+     * @return String bulk-string-reply the hex digest of the key's value, or `null` when `key` does not exist.
+     * @since 7.1
+     */
+    @Experimental
+    suspend fun digestKey(key: K): String?
 
     /**
      * Unlink one or more keys (non blocking DEL).

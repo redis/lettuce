@@ -39,6 +39,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.search.HybridReply;
+import io.lettuce.core.search.arguments.HybridArgs;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -513,11 +515,20 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
 
     @Override
     public RedisFuture<Boolean> msetnx(Map<K, V> map) {
+        return executePartitionedBoolean(map, super::msetnx);
+    }
+
+    @Override
+    public RedisFuture<Boolean> msetex(Map<K, V> map, MSetExArgs args) {
+        return executePartitionedBoolean(map, op -> super.msetex(op, args));
+    }
+
+    private RedisFuture<Boolean> executePartitionedBoolean(Map<K, V> map, Function<Map<K, V>, RedisFuture<Boolean>> operation) {
 
         Map<Integer, List<K>> partitioned = SlotHash.partition(codec, map.keySet());
 
         if (partitioned.size() < 2) {
-            return super.msetnx(map);
+            return operation.apply(map);
         }
 
         Map<Integer, RedisFuture<Boolean>> executions = new HashMap<>();
@@ -527,14 +538,14 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
             Map<K, V> op = new HashMap<>();
             entry.getValue().forEach(k -> op.put(k, map.get(k)));
 
-            RedisFuture<Boolean> msetnx = super.msetnx(op);
-            executions.put(entry.getKey(), msetnx);
+            RedisFuture<Boolean> future = operation.apply(op);
+            executions.put(entry.getKey(), future);
         }
 
         return new PipelinedRedisFuture<>(executions, objectPipelinedRedisFuture -> {
 
-            for (RedisFuture<Boolean> listRedisFuture : executions.values()) {
-                Boolean b = MultiNodeExecution.execute(() -> listRedisFuture.get());
+            for (RedisFuture<Boolean> f : executions.values()) {
+                Boolean b = MultiNodeExecution.execute(f::get);
                 if (b == null || !b) {
                     return false;
                 }
@@ -788,6 +799,11 @@ public class RedisAdvancedClusterAsyncCommandsImpl<K, V> extends AbstractRedisAs
     @Override
     public RedisFuture<SearchReply<K, V>> ftSearch(String index, V query) {
         return ftSearch(index, query, SearchArgs.<K, V> builder().build());
+    }
+
+    @Override
+    public RedisFuture<HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> args) {
+        return routeKeyless(() -> super.ftHybrid(index, args), (conn) -> conn.ftHybrid(index, args), CommandType.FT_HYBRID);
     }
 
     @Override

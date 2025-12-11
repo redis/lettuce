@@ -940,6 +940,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEL, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, Long> delex(K key, CompareCondition<V> condition) {
+        notNullKey(key);
+        LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        condition.build(args);
+        return createCommand(DELEX, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, String> discard() {
         return createCommand(DISCARD, new StatusOutput<>(codec));
     }
@@ -2240,6 +2249,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(MSETNX, new BooleanOutput<>(codec), args);
     }
 
+    Command<K, V, Boolean> msetex(Map<K, V> map, MSetExArgs setArgs) {
+        LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!map.isEmpty(), "Map " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(map.size()).add(map);
+        if (setArgs != null) {
+            setArgs.build(args);
+        }
+        return createCommand(MSETEX, new BooleanOutput<>(codec), args);
+    }
+
     Command<K, V, String> multi() {
         return createCommand(MULTI, new StatusOutput<>(codec));
     }
@@ -2700,6 +2720,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
         setArgs.build(args);
         return createCommand(SET, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> digestKey(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(DIGEST, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, V> setGet(K key, V value) {
