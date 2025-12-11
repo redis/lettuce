@@ -43,8 +43,7 @@ public class DatabaseConfig {
     DatabaseConfig(Builder builder) {
         this.redisURI = builder.redisURI;
         this.weight = builder.weight;
-        this.circuitBreakerConfig = builder.circuitBreakerConfig != null ? builder.circuitBreakerConfig
-                : CircuitBreakerConfig.DEFAULT;
+        this.circuitBreakerConfig = builder.circuitBreakerConfig;
         this.healthCheckStrategySupplier = builder.healthCheckStrategySupplier;
     }
 
@@ -155,7 +154,7 @@ public class DatabaseConfig {
 
         private float weight = DEFAULT_WEIGHT;
 
-        private CircuitBreakerConfig circuitBreakerConfig;
+        private CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.DEFAULT;
 
         private HealthCheckStrategySupplier healthCheckStrategySupplier = PingStrategy.DEFAULT;
 
@@ -176,12 +175,13 @@ public class DatabaseConfig {
         }
 
         /**
-         * Set the circuit breaker configuration.
+         * Set the circuit breaker configuration. Defaults to {@link CircuitBreakerConfig#DEFAULT}.
          *
-         * @param circuitBreakerConfig the circuit breaker configuration, can be {@code null} to use defaults
+         * @param circuitBreakerConfig the circuit breaker configuration, must not be {@code null}
          * @return {@code this} builder
          */
         public Builder circuitBreakerConfig(CircuitBreakerConfig circuitBreakerConfig) {
+            LettuceAssert.notNull(circuitBreakerConfig, "CircuitBreakerConfig must not be null");
             this.circuitBreakerConfig = circuitBreakerConfig;
             return this;
         }

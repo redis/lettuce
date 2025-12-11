@@ -170,6 +170,14 @@ class DatabaseConfigBuilderUnitTests {
                     .hasMessageContaining("HealthCheckStrategySupplier must not be null");
         }
 
+        @Test
+        @DisplayName("Should reject null circuitBreakerConfig")
+        void shouldRejectNullCircuitBreakerConfig() {
+            // When/Then: Setting null circuitBreakerConfig should throw exception
+            assertThatThrownBy(() -> DatabaseConfig.builder(TEST_URI).circuitBreakerConfig(null))
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("CircuitBreakerConfig must not be null");
+        }
+
     }
 
     @Nested

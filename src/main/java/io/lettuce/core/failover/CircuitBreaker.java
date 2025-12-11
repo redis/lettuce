@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
@@ -221,8 +220,6 @@ public interface CircuitBreaker extends Closeable {
             @SafeVarargs
             public final Builder addTrackedExceptions(Class<? extends Throwable>... exceptionClasses) {
                 LettuceAssert.notNull(exceptionClasses, "Exception classes must not be null");
-                LettuceAssert.noNullElements(exceptionClasses, "Exception classes must not contain null elements");
-                LettuceAssert.notEmpty(exceptionClasses, "Exception classes must contain at least one element");
 
                 // Ensure we have a mutable copy
                 if (this.trackedExceptions == DEFAULT_TRACKED_EXCEPTIONS) {
