@@ -161,4 +161,31 @@ public class TestSettings {
         return port;
     }
 
+    /**
+     *
+     * @return base port of the test proxy used for simulating network issues. Defaults to {@literal 9479}. Can be overridden
+     *         with {@code -Dproxy.port=1234}
+     */
+    public static int proxyPort() {
+        return Integer.parseInt(System.getProperty("proxy.port", "9479"));
+    }
+
+    /**
+     *
+     * @param offset
+     * @return {@link #proxyPort()} with added {@literal offset}
+     */
+    public static int proxyPort(int offset) {
+        return proxyPort() + offset;
+    }
+
+    /**
+     *
+     * @return admin port of the toxiproxy service. Defaults to {@literal 8474}. Can be overridden with
+     *         {@code -Dproxy.admin.port=8474}
+     */
+    public static int proxyAdminPort() {
+        return Integer.parseInt(System.getProperty("proxy.admin.port", "8474"));
+    }
+
 }

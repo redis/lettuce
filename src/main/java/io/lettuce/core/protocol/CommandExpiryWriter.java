@@ -28,6 +28,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.Delegating;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.internal.ExceptionFactory;
@@ -45,7 +46,7 @@ import io.netty.util.Timer;
  * @since 5.1
  * @see io.lettuce.core.TimeoutOptions
  */
-public class CommandExpiryWriter implements RedisChannelWriter {
+public class CommandExpiryWriter implements RedisChannelWriter, Delegating<RedisChannelWriter> {
 
     private final RedisChannelWriter delegate;
 
