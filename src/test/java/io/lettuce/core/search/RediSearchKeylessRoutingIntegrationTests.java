@@ -13,18 +13,25 @@ import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.cluster.api.async.RedisAdvancedClusterAsyncCommands;
 import io.lettuce.core.cluster.models.partitions.Partitions;
+import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.HybridArgs;
+import io.lettuce.core.search.arguments.HybridSearchArgs;
+import io.lettuce.core.search.arguments.HybridVectorArgs;
 import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
+import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.test.LettuceExtension;
 import io.lettuce.core.metrics.CommandLatencyId;
 import io.lettuce.core.metrics.CommandMetrics;
 
+import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
+import java.nio.ByteBuffer;
 import java.util.*;
 import javax.inject.Inject;
 import org.junit.jupiter.api.*;
@@ -52,9 +59,15 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
 
     private static final String PREFIX = "book:keyless:routing:";
 
+    private static final String HYBRID_INDEX = "hybrid-keyless-routing-idx";
+
+    private static final String HYBRID_PREFIX = "product:hybrid:routing:";
+
     private final RedisClusterClient clusterClient;
 
     private StatefulRedisClusterConnection<String, String> connection;
+
+    private StatefulRedisClusterConnection<byte[], byte[]> binaryConnection;
 
     private RedisAdvancedClusterAsyncCommands<String, String> async;
 
@@ -66,6 +79,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
     @BeforeEach
     void open() {
         connection = clusterClient.connect();
+        binaryConnection = clusterClient.connect(ByteArrayCodec.INSTANCE);
         async = connection.async();
     }
 
@@ -73,6 +87,9 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
     void close() {
         if (connection != null) {
             connection.close();
+        }
+        if (binaryConnection != null) {
+            binaryConnection.close();
         }
     }
 
@@ -82,7 +99,7 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         assumeTrue(RedisConditions.of(connection.sync()).hasVersionGreaterOrEqualsTo("8.0"));
         connection.sync().flushall();
 
-        // Schema
+        // Schema for text search tests
         FieldArgs<String> title = TextFieldArgs.<String> builder().name("title").build();
         FieldArgs<String> author = TagFieldArgs.<String> builder().name("author").build();
         FieldArgs<String> year = NumericFieldArgs.<String> builder().name("year").sortable().build();
@@ -111,6 +128,10 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
     void tearDown() {
         try {
             connection.sync().ftDropindex(INDEX);
+        } catch (Exception ignore) {
+        }
+        try {
+            connection.sync().ftDropindex(HYBRID_INDEX);
         } catch (Exception ignore) {
         }
         connection.sync().flushall();
@@ -325,6 +346,98 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
             // Default options reset on retrieve; calling once clears any previous run's samples
             c.retrieveMetrics();
         }
+    }
+
+    private byte[] floatArrayToByteArray(float[] floats) {
+        ByteBuffer buffer = ByteBuffer.allocate(floats.length * 4);
+        for (float f : floats) {
+            buffer.putFloat(f);
+        }
+        return buffer.array();
+    }
+
+    private HybridArgs<String, String> hybridArgs() {
+        float[] queryVector = { 0.15f, 0.25f, 0.35f, 0.45f };
+        return HybridArgs.<String, String> builder()
+                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics}").build())
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding")
+                        .vector(floatArrayToByteArray(queryVector)).method(HybridVectorArgs.Knn.of(5)).build())
+                .build();
+    }
+
+    private void prepareHybrid() {
+        // Schema for hybrid search tests
+        FieldArgs<String> category = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs<String> price = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs<String> embedding = VectorFieldArgs.<String> builder().name("embedding").hnsw()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(4).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
+                .build();
+
+        CreateArgs<String, String> hybridCreateArgs = CreateArgs.<String, String> builder().withPrefix(HYBRID_PREFIX)
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(connection.sync().ftCreate(HYBRID_INDEX, hybridCreateArgs, Arrays.asList(category, price, embedding)))
+                .isEqualTo("OK");
+
+        // Add hybrid search data
+        String[] categories = { "electronics", "clothing", "electronics", "clothing" };
+        String[] prices = { "29.99", "49.99", "39.99", "59.99" };
+        float[][] vectors = { { 0.1f, 0.2f, 0.3f, 0.4f }, { 0.5f, 0.6f, 0.7f, 0.8f }, { 0.2f, 0.3f, 0.4f, 0.5f },
+                { 0.6f, 0.7f, 0.8f, 0.9f } };
+
+        for (int i = 0; i < categories.length; i++) {
+            Map<String, String> doc = new HashMap<>();
+            doc.put("category", categories[i]);
+            doc.put("price", prices[i]);
+            connection.sync().hmset(HYBRID_PREFIX + i, doc);
+            binaryConnection.sync().hset((HYBRID_PREFIX + i).getBytes(), "embedding".getBytes(),
+                    floatArrayToByteArray(vectors[i]));
+        }
+    }
+
+    @Test
+    @EnabledOnCommand("FT.HYBRID")
+    void hybrid_routesRandomly_acrossUpstreams_whenReadFromUpstream() {
+        prepareHybrid();
+        long upstreams = connection.getPartitions().stream().filter(n -> n.is(RedisClusterNode.NodeFlag.UPSTREAM)).count();
+        assumeTrue(upstreams >= 2, "requires >= 2 upstream nodes");
+
+        connection.setReadFrom(ReadFrom.UPSTREAM);
+        clearLatencyMetrics();
+
+        Set<String> nodes = new HashSet<>();
+        for (int i = 0; i < 40 && nodes.size() < (int) upstreams; i++) {
+            connection.sync().ftHybrid(HYBRID_INDEX, hybridArgs());
+            nodes.addAll(observedNodeIdsFor(CommandType.FT_HYBRID));
+        }
+
+        assertThat(nodes).isNotEmpty();
+        nodes.forEach(
+                id -> assertThat(connection.getPartitions().getPartitionByNodeId(id).is(RedisClusterNode.NodeFlag.UPSTREAM))
+                        .isTrue());
+        assertThat(nodes.size()).isEqualTo((int) upstreams);
+    }
+
+    @Test
+    @EnabledOnCommand("FT.HYBRID")
+    void hybrid_routesRandomly_acrossReplicas_whenReadFromAnyReplica() {
+        prepareHybrid();
+        long replicas = connection.getPartitions().stream().filter(n -> n.is(RedisClusterNode.NodeFlag.REPLICA)).count();
+        assumeTrue(replicas >= 1, "requires >= 1 replica node");
+
+        connection.setReadFrom(ReadFrom.ANY_REPLICA);
+        clearLatencyMetrics();
+
+        Set<String> nodes = new HashSet<>();
+        for (int i = 0; i < 60 && nodes.size() < replicas; i++) {
+            connection.sync().ftHybrid(HYBRID_INDEX, hybridArgs());
+            nodes.addAll(observedNodeIdsFor(CommandType.FT_HYBRID));
+        }
+
+        assertThat(nodes).isNotEmpty();
+        nodes.forEach(
+                id -> assertThat(connection.getPartitions().getPartitionByNodeId(id).is(RedisClusterNode.NodeFlag.REPLICA))
+                        .isTrue());
+        assertThat(nodes.size()).isLessThanOrEqualTo((int) replicas);
     }
 
 }

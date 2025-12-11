@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 /**
@@ -100,6 +99,57 @@ class RedisURIBuilderUnitTests {
 
         assertThat(result.getLibraryName()).isEqualTo("name");
         assertThat(result.getLibraryVersion()).isEqualTo("1.foo");
+    }
+
+    @Test
+    void redisWithDriverInfo() {
+        DriverInfo driverInfo = DriverInfo.builder().addUpstreamDriver("spring-data-redis", "3.2.0").build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withDriverInfo(driverInfo).build();
+
+        assertThat(result.getLibraryName()).isEqualTo("Lettuce(spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void redisWithDriverInfoMultipleDrivers() {
+        DriverInfo driverInfo = DriverInfo.builder().addUpstreamDriver("spring-data-redis", "3.2.0")
+                .addUpstreamDriver("spring-boot", "3.3.0").build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withDriverInfo(driverInfo).build();
+
+        // Most recently added driver should appear first (prepend behavior)
+        assertThat(result.getLibraryName()).isEqualTo("Lettuce(spring-boot_v3.3.0;spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void redisWithDriverInfoCustomName() {
+        DriverInfo driverInfo = DriverInfo.builder().name("my-custom-lib").addUpstreamDriver("spring-data-redis", "3.2.0")
+                .build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withDriverInfo(driverInfo).build();
+
+        assertThat(result.getLibraryName()).isEqualTo("my-custom-lib(spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void redisWithDriverInfoNullShouldFail() {
+        assertThatThrownBy(() -> RedisURI.Builder.redis("localhost").withDriverInfo(null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void redisWithLibraryNameThenDriverInfo() {
+        // Last call wins: withDriverInfo overwrites previous withLibraryName
+        DriverInfo driverInfo = DriverInfo.builder().addUpstreamDriver("spring-data-redis", "3.2.0").build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withLibraryName("my-lib").withDriverInfo(driverInfo).build();
+
+        assertThat(result.getLibraryName()).isEqualTo("Lettuce(spring-data-redis_v3.2.0)");
+    }
+
+    @Test
+    void redisWithDriverInfoThenLibraryName() {
+        // Last call wins: withLibraryName overwrites previous withDriverInfo
+        DriverInfo driverInfo = DriverInfo.builder().addUpstreamDriver("spring-data-redis", "3.2.0").build();
+        RedisURI result = RedisURI.Builder.redis("localhost").withDriverInfo(driverInfo).withLibraryName("my-lib").build();
+
+        assertThat(result.getLibraryName()).isEqualTo("my-lib");
     }
 
     @Test
