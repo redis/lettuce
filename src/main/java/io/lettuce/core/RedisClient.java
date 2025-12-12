@@ -33,6 +33,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
@@ -275,7 +276,7 @@ public class RedisClient extends AbstractRedisClient {
 
         logger.debug("Trying to get a Redis connection for: {}", redisURI);
 
-        DefaultEndpoint endpoint = new DefaultEndpoint(getOptions(), getResources());
+        DefaultEndpoint endpoint = createEndpoint();
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getOptions())) {
@@ -408,7 +409,7 @@ public class RedisClient extends AbstractRedisClient {
         assertNotNull(codec);
         checkValidRedisURI(redisURI);
 
-        PubSubEndpoint<K, V> endpoint = new PubSubEndpoint<>(getOptions(), getResources());
+        PubSubEndpoint<K, V> endpoint = createPubSubEndpoint();
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getOptions())) {
@@ -575,7 +576,7 @@ public class RedisClient extends AbstractRedisClient {
         connectionBuilder.clientOptions(ClientOptions.copyOf(getOptions()));
         connectionBuilder.clientResources(getResources());
 
-        DefaultEndpoint endpoint = new DefaultEndpoint(getOptions(), getResources());
+        DefaultEndpoint endpoint = createEndpoint();
         RedisChannelWriter writer = endpoint;
 
         if (CommandExpiryWriter.isSupported(getOptions())) {
@@ -838,6 +839,28 @@ public class RedisClient extends AbstractRedisClient {
         LettuceAssert.assertState(this.redisURI != EMPTY_URI,
                 "RedisURI is not available. Use RedisClient(Host), RedisClient(Host, Port) or RedisClient(RedisURI) to construct your client.");
         checkValidRedisURI(this.redisURI);
+    }
+
+    /**
+     * Create a new {@link DefaultEndpoint}. Subclasses may override this method to change the default behavior.
+     *
+     * @return a new {@link DefaultEndpoint}.
+     * @since 7.4
+     */
+    @Experimental
+    protected DefaultEndpoint createEndpoint() {
+        return new DefaultEndpoint(getOptions(), getResources());
+    }
+
+    /**
+     * Create a new {@link PubSubEndpoint}. Subclasses may override this method to change the default behavior.
+     *
+     * @return a new {@link PubSubEndpoint}.
+     * @since 7.4
+     */
+    @Experimental
+    protected <K, V> PubSubEndpoint<K, V> createPubSubEndpoint() {
+        return new PubSubEndpoint<>(getOptions(), getResources());
     }
 
 }

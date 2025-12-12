@@ -3,7 +3,8 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>7.3.0-SNAPSHOT</version>
+    <version>7.4.0-SNAPSHOT</version>
+
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -562,6 +563,14 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>1.20.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Toxiproxy for network failure simulation -->
+        <dependency>
+            <groupId>eu.rekawek.toxiproxy</groupId>
+            <artifactId>toxiproxy-java</artifactId>
+            <version>2.1.11</version>
             <scope>test</scope>
         </dependency>
 
@@ -1296,7 +1305,7 @@
                                         <argument>-classpath</argument>
                                         <classpath />
                                         <argument>org.openjdk.jmh.Main</argument>
-                                        <argument>.*</argument>
+                                        <argument>.*failover.*</argument>
                                         <argument>-tu</argument>
                                         <!--
                               Override time unit in benchmark results. Available

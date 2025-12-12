@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
+import io.lettuce.core.api.BaseRedisClient;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
@@ -82,7 +83,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @see ClientResources
  * @see DefaultClientResources
  */
-public abstract class AbstractRedisClient implements AutoCloseable {
+public abstract class AbstractRedisClient implements BaseRedisClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractRedisClient.class);
 
@@ -139,6 +140,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      *
      * @return the {@link ClientOptions} for this client
      */
+    @Override
     public ClientOptions getOptions() {
         return clientOptions;
     }
@@ -160,6 +162,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      * @since 6.0
      *
      */
+    @Override
     public ClientResources getResources() {
         return clientResources;
     }
@@ -176,6 +179,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      *
      * @param listener must not be {@code null}.
      */
+    @Override
     public void addListener(RedisConnectionStateListener listener) {
 
         LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
@@ -187,6 +191,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      *
      * @param listener must not be {@code null}.
      */
+    @Override
     public void removeListener(RedisConnectionStateListener listener) {
 
         LettuceAssert.notNull(listener, "RedisConnectionStateListener must not be null");
@@ -199,6 +204,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      * @param listener must not be {@code null}.
      * @since 6.1
      */
+    @Override
     public void addListener(CommandListener listener) {
 
         LettuceAssert.notNull(listener, "CommandListener must not be null");
@@ -211,6 +217,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      * @param listener must not be {@code null}.
      * @since 6.1
      */
+    @Override
     public void removeListener(CommandListener listener) {
 
         LettuceAssert.notNull(listener, "CommandListener must not be null");
@@ -448,6 +455,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      *
      * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
+    @Override
     public void shutdown() {
         shutdown(0, 2, TimeUnit.SECONDS);
     }
@@ -468,6 +476,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      * @since 5.0
      * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
+    @Override
     public void shutdown(Duration quietPeriod, Duration timeout) {
         shutdown(quietPeriod.toNanos(), timeout.toNanos(), TimeUnit.NANOSECONDS);
     }
@@ -483,6 +492,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}.
      * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
+    @Override
     public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         try {
@@ -501,6 +511,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      * @since 4.4
      * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
+    @Override
     public CompletableFuture<Void> shutdownAsync() {
         return shutdownAsync(0, 2, TimeUnit.SECONDS);
     }
@@ -517,6 +528,7 @@ public abstract class AbstractRedisClient implements AutoCloseable {
      * @since 4.4
      * @see EventExecutorGroup#shutdownGracefully(long, long, TimeUnit)
      */
+    @Override
     public CompletableFuture<Void> shutdownAsync(long quietPeriod, long timeout, TimeUnit timeUnit) {
 
         if (shutdown.compareAndSet(false, true)) {
