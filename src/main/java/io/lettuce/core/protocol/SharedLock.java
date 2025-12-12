@@ -66,7 +66,16 @@ class SharedLock {
         }
 
         WRITERS.decrementAndGet(this);
-        threadWriters.set(threadWriters.get() - 1);
+
+        Integer currentThreadWriterValue = threadWriters.get();
+        int newThreadWriterValue = currentThreadWriterValue - 1;
+
+        if (newThreadWriterValue <= 0) {
+            threadWriters.remove();
+            return;
+        }
+
+        threadWriters.set(newThreadWriterValue);
     }
 
     /**
