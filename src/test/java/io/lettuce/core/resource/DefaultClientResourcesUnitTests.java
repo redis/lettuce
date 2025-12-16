@@ -71,7 +71,8 @@ class DefaultClientResourcesUnitTests {
         assertThat(timer).hasFieldOrPropertyWithValue("workerState", 1);
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
-        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) sut.eventLoopGroupProvider()
+                .allocate(NioEventLoopGroup.class);
 
         eventExecutors.next().submit(mock(Runnable.class));
         eventLoopGroup.next().submit(mock(Runnable.class));
@@ -94,7 +95,8 @@ class DefaultClientResourcesUnitTests {
                 .commandLatencyCollectorOptions(DefaultCommandLatencyCollectorOptions.disabled()).build();
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
-        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) sut.eventLoopGroupProvider()
+                .allocate(NioEventLoopGroup.class);
 
         assertThat(eventExecutors).hasSize(4);
         assertThat(eventLoopGroup.executorCount()).isEqualTo(4);
@@ -186,7 +188,8 @@ class DefaultClientResourcesUnitTests {
         DefaultClientResources sut = DefaultClientResources.builder().ioThreadPoolSize(1).computationThreadPoolSize(1).build();
 
         EventExecutorGroup eventExecutors = sut.eventExecutorGroup();
-        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) sut.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) sut.eventLoopGroupProvider()
+                .allocate(NioEventLoopGroup.class);
 
         assertThat(eventExecutors).hasSize(2);
         assertThat(eventLoopGroup.executorCount()).isEqualTo(2);
@@ -293,7 +296,8 @@ class DefaultClientResourcesUnitTests {
         eventExecutor.submit(() -> eventExecutorThread.set(Thread.currentThread())).awaitUninterruptibly();
 
         AtomicReference<Thread> eventLoopThread = new AtomicReference<>();
-        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) clientResources.eventLoopGroupProvider().allocate(NioEventLoopGroup.class);
+        MultithreadEventLoopGroup eventLoopGroup = (MultithreadEventLoopGroup) clientResources.eventLoopGroupProvider()
+                .allocate(NioEventLoopGroup.class);
         eventLoopGroup.next().submit(() -> eventLoopThread.set(Thread.currentThread())).awaitUninterruptibly();
 
         clientResources.eventLoopGroupProvider().release(eventLoopGroup, 0, 0, TimeUnit.SECONDS);
