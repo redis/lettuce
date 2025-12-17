@@ -51,8 +51,6 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     private final Map<RedisURI, DatabaseConfig> databaseConfigs;
 
-    // private final DatabaseRawConnectionFactory databaseRawConnectionFactory = new DatabaseRawConnectionFactoryImpl();
-
     private ThreadLocal<ClientOptions> localClientOptions = new ThreadLocal<>();
 
     MultiDbClientImpl(Collection<DatabaseConfig> databaseConfigs) {
@@ -307,7 +305,6 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             MultiDbClientImpl.this.setOptions(clientOptions);
             try {
                 return MultiDbClientImpl.this.connect(endpoint);
-
             } finally {
                 MultiDbClientImpl.this.resetOptions();
             }

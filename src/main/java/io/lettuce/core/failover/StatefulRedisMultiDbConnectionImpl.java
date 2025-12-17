@@ -35,7 +35,6 @@ import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
@@ -203,7 +202,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
      * @return a new instance
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
-        return new RedisAsyncCommandsImpl<>(this, codec, () -> this.current.getConnection().getOptions().getJsonParser().get());
+        return new RedisAsyncCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
     }
 
     @Override
@@ -217,9 +216,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
      * @return a new instance
      */
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        JsonParser parser;
-        return new RedisReactiveCommandsImpl<>(this, codec,
-                () -> this.current.getConnection().getOptions().getJsonParser().get());
+        return new RedisReactiveCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
     }
 
     @Override

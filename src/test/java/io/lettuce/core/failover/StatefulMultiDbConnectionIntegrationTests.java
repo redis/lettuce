@@ -28,7 +28,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -50,6 +52,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.settings.TestSettings;
 
 /**
@@ -582,7 +585,10 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
 
         ClientOptions clientOptions = ClientOptions.builder()
                 .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
-        // ((MultiDbClientImpl) multiDbClient).setOptions(clientOptions);
+
+        Map<RedisURI, DatabaseConfig> configs = ReflectionTestUtils.getField(multiDbClient, "databaseConfigs");
+        configs.values().forEach(
+                dbConfig -> configs.put(dbConfig.getRedisURI(), dbConfig.mutate().clientOptions(clientOptions).build()));
 
         try (StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect(StringCodec.UTF8)) {
 

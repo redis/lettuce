@@ -133,11 +133,13 @@ class RedisMultiDbClientIntegrationTests extends TestSupport {
 
         TestCommandListener commandListener = new TestCommandListener();
 
-        MultiDbClient client = MultiDbClient.create(clientResources, MultiDbTestSupport.DBs);
-        client.addListener(commandListener);
         ClientOptions options = ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build();
-        // HACK : check how to access setOptions
-        // client.setOptions(options);
+
+        List<DatabaseConfig> databaseConfigs = MultiDbTestSupport.DBs.stream()
+                .map(databaseConfig -> databaseConfig.mutate().clientOptions(options).build()).collect(null);
+
+        MultiDbClient client = MultiDbClient.create(clientResources, databaseConfigs);
+        client.addListener(commandListener);
 
         StatefulRedisConnection<String, String> connection = client.connect();
         connection.setTimeout(Duration.ofMillis(1));
