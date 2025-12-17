@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -136,7 +137,7 @@ class RedisMultiDbClientIntegrationTests extends TestSupport {
         ClientOptions options = ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build();
 
         List<DatabaseConfig> databaseConfigs = MultiDbTestSupport.DBs.stream()
-                .map(databaseConfig -> databaseConfig.mutate().clientOptions(options).build()).collect(null);
+                .map(databaseConfig -> databaseConfig.mutate().clientOptions(options).build()).collect(Collectors.toList());
 
         MultiDbClient client = MultiDbClient.create(clientResources, databaseConfigs);
         client.addListener(commandListener);
