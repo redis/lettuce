@@ -121,18 +121,19 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         WithPassword.enableAuthentication(this.redis2Conn);
         this.redis2Conn.auth(passwd);
 
+        ClientOptions clientOptions = ClientOptions.builder()
+                .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build())
+                .timeoutOptions(TimeoutOptions.enabled(Duration.ofMillis(500))) // Enable command timeout
+                .build();
+
         // Create circuit breaker config with low thresholds for testing
         cbConfig = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(10.0f) // 10% failure rate threshold
                 .minimumNumberOfFailures(5) // Only need 5 failures minimum (instead of default 1000)
                 .metricsWindowSize(5).build();
 
         // Create MultiDbClient with proxy endpoints and custom circuit breaker config
-        multiDbClient = MultiDbClient.create(MultiDbTestSupport.getDatabaseConfigs(cbConfig, redis1ProxyUri, redis2ProxyUri));
-        ClientOptions clientOptions = ClientOptions.builder()
-                .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build())
-                .timeoutOptions(TimeoutOptions.enabled(Duration.ofMillis(500))) // Enable command timeout
-                .build();
-        multiDbClient.setOptions(clientOptions);
+        multiDbClient = MultiDbClient
+                .create(MultiDbTestSupport.getDatabaseConfigs(clientOptions, cbConfig, redis1ProxyUri, redis2ProxyUri));
 
         connection = multiDbClient.connect(StringCodec.UTF8);
         enableAllToxiproxy();

@@ -8,6 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
@@ -95,12 +96,13 @@ public class MultiDbTestSupport extends TestSupport {
         return endpoints;
     }
 
-    public static List<DatabaseConfig> getDatabaseConfigs(CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig,
-            RedisURI... URIs) {
+    public static List<DatabaseConfig> getDatabaseConfigs(ClientOptions clientOptions,
+            CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig, RedisURI... URIs) {
         float weight = 1.0f;
         List<DatabaseConfig> endpoints = new ArrayList<>();
         for (RedisURI uri : URIs) {
-            endpoints.add(DatabaseConfig.builder(uri).weight(weight).circuitBreakerConfig(circuitBreakerConfig).build());
+            endpoints.add(DatabaseConfig.builder(uri).weight(weight).circuitBreakerConfig(circuitBreakerConfig)
+                    .clientOptions(clientOptions).build());
             weight /= 2;
         }
         return endpoints;

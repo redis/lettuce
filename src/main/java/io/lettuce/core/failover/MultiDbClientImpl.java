@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.Delegating;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
@@ -50,7 +51,9 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     private final Map<RedisURI, DatabaseConfig> databaseConfigs;
 
-    private final DatabaseRawConnectionFactory databaseRawConnectionFactory = new DatabaseRawConnectionFactoryImpl();
+    // private final DatabaseRawConnectionFactory databaseRawConnectionFactory = new DatabaseRawConnectionFactoryImpl();
+
+    private ThreadLocal<ClientOptions> localClientOptions = new ThreadLocal<>();
 
     MultiDbClientImpl(Collection<DatabaseConfig> databaseConfigs) {
         this(null, databaseConfigs);
@@ -85,6 +88,25 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         return databaseConfigs.keySet();
     }
 
+    @Override
+    public ClientOptions getOptions() {
+        ClientOptions options = localClientOptions.get();
+        if (options == null) {
+            throw new IllegalStateException("ClientOptions not set!");
+        }
+        return options;
+    }
+
+    @Override
+    public void setOptions(ClientOptions clientOptions) {
+        LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
+        this.localClientOptions.set(clientOptions);
+    }
+
+    void resetOptions() {
+        this.localClientOptions.remove();
+    }
+
     public <K, V> StatefulRedisMultiDbConnection<K, V> connect(RedisCodec<K, V> codec) {
 
         if (codec == null) {
@@ -112,7 +134,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         // Provide a connection factory for dynamic database addition
         return new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(databases, getResources(), codec,
-                getOptions().getJsonParser(), this::createRedisDatabase, healthStatusManager);
+                this::createRedisDatabase, healthStatusManager);
     }
 
     protected HealthStatusManager createHealthStatusManager() {
@@ -122,22 +144,26 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     private <K, V> RedisDatabase<StatefulRedisConnection<K, V>> createRedisDatabase(DatabaseConfig config,
             RedisCodec<K, V> codec, HealthStatusManager healthStatusManager) {
         RedisURI uri = config.getRedisURI();
-        StatefulRedisConnection<K, V> connection = connect(codec, uri);
-        DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-        CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
-        databaseEndpoint.bind(circuitBreaker);
+        setOptions(config.getClientOptions());
+        try {
+            StatefulRedisConnection<K, V> connection = connect(codec, uri);
+            DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
+            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
+            databaseEndpoint.bind(circuitBreaker);
 
-        HealthCheck healthCheck = null;
-        if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
-            HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                    databaseRawConnectionFactory);
-            healthCheck = healthStatusManager.add(uri, hcStrategy);
+            HealthCheck healthCheck = null;
+            if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
+                HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
+                        new DatabaseRawConnectionFactoryImpl(config.getClientOptions()));
+                healthCheck = healthStatusManager.add(uri, hcStrategy);
+            }
+
+            RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
+                    circuitBreaker, healthCheck);
+            return database;
+        } finally {
+            resetOptions();
         }
-
-        RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
-                circuitBreaker, healthCheck);
-
-        return database;
     }
 
     /**
@@ -174,27 +200,32 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         // Provide a connection factory for dynamic database addition
         return new StatefulRedisMultiDbPubSubConnectionImpl<K, V>(databases, getResources(), codec,
-                getOptions().getJsonParser(), this::createRedisDatabaseWithPubSub, healthStatusManager);
+                this::createRedisDatabaseWithPubSub, healthStatusManager);
     }
 
     private <K, V> RedisDatabase<StatefulRedisPubSubConnection<K, V>> createRedisDatabaseWithPubSub(DatabaseConfig config,
             RedisCodec<K, V> codec, HealthStatusManager healthStatusManager) {
         RedisURI uri = config.getRedisURI();
-        StatefulRedisPubSubConnection<K, V> connection = connectPubSub(codec, uri);
-        DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-        CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
-        databaseEndpoint.bind(circuitBreaker);
+        setOptions(config.getClientOptions());
+        try {
+            StatefulRedisPubSubConnection<K, V> connection = connectPubSub(codec, uri);
+            DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
+            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
+            databaseEndpoint.bind(circuitBreaker);
 
-        HealthCheck healthCheck = null;
-        if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
-            HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                    databaseRawConnectionFactory);
-            healthCheck = healthStatusManager.add(uri, hcStrategy);
+            HealthCheck healthCheck = null;
+            if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
+                HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
+                        new DatabaseRawConnectionFactoryImpl(config.getClientOptions()));
+                healthCheck = healthStatusManager.add(uri, hcStrategy);
+            }
+
+            RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection,
+                    databaseEndpoint, circuitBreaker, healthCheck);
+            return database;
+        } finally {
+            resetOptions();
         }
-
-        RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
-                circuitBreaker, healthCheck);
-        return database;
     }
 
     private DatabaseEndpoint extractDatabaseEndpoint(StatefulRedisConnection<?, ?> connection) {
@@ -265,9 +296,21 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     private class DatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
 
+        private ClientOptions clientOptions;
+
+        public DatabaseRawConnectionFactoryImpl(ClientOptions clientOptions) {
+            this.clientOptions = clientOptions;
+        }
+
         @Override
         public StatefulRedisConnection<?, ?> connectToDatabase(RedisURI endpoint) {
-            return MultiDbClientImpl.this.connect(endpoint);
+            MultiDbClientImpl.this.setOptions(clientOptions);
+            try {
+                return MultiDbClientImpl.this.connect(endpoint);
+
+            } finally {
+                MultiDbClientImpl.this.resetOptions();
+            }
         }
 
     }

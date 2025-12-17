@@ -1,5 +1,6 @@
 package io.lettuce.core.failover;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
@@ -33,6 +34,8 @@ public class DatabaseConfig {
 
     private final float weight;
 
+    private final ClientOptions clientOptions;
+
     private final CircuitBreakerConfig circuitBreakerConfig;
 
     private final HealthCheckStrategySupplier healthCheckStrategySupplier;
@@ -45,6 +48,7 @@ public class DatabaseConfig {
     DatabaseConfig(Builder builder) {
         this.redisURI = builder.redisURI;
         this.weight = builder.weight;
+        this.clientOptions = builder.clientOptions;
         this.circuitBreakerConfig = builder.circuitBreakerConfig != null ? builder.circuitBreakerConfig
                 : CircuitBreakerConfig.DEFAULT;
         this.healthCheckStrategySupplier = builder.healthCheckStrategySupplier;
@@ -66,6 +70,15 @@ public class DatabaseConfig {
      */
     public float getWeight() {
         return weight;
+    }
+
+    /**
+     * Get the client options.
+     *
+     * @return the client options
+     */
+    public ClientOptions getClientOptions() {
+        return clientOptions;
     }
 
     /**
@@ -99,6 +112,8 @@ public class DatabaseConfig {
             return false;
         if (!redisURI.equals(that.redisURI))
             return false;
+        if (!clientOptions.equals(that.clientOptions))
+            return false;
         if (circuitBreakerConfig != null ? !circuitBreakerConfig.equals(that.circuitBreakerConfig)
                 : that.circuitBreakerConfig != null)
             return false;
@@ -116,8 +131,9 @@ public class DatabaseConfig {
 
     @Override
     public String toString() {
-        return "DatabaseConfig{" + "redisURI=" + redisURI + ", weight=" + weight + ", circuitBreakerConfig="
-                + circuitBreakerConfig + ", healthCheckStrategySupplier=" + healthCheckStrategySupplier + '}';
+        return "DatabaseConfig{" + "redisURI=" + redisURI + ", weight=" + weight + ", clientOptions=" + clientOptions
+                + ", circuitBreakerConfig=" + circuitBreakerConfig + ", healthCheckStrategySupplier="
+                + healthCheckStrategySupplier + '}';
     }
 
     /**
@@ -157,6 +173,8 @@ public class DatabaseConfig {
 
         private float weight = DEFAULT_WEIGHT;
 
+        private ClientOptions clientOptions = ClientOptions.create();
+
         private CircuitBreakerConfig circuitBreakerConfig;
 
         private HealthCheckStrategySupplier healthCheckStrategySupplier = PingStrategy.DEFAULT;
@@ -174,6 +192,11 @@ public class DatabaseConfig {
         public Builder weight(float weight) {
             LettuceAssert.isTrue(weight > 0, "Weight must be greater than 0");
             this.weight = weight;
+            return this;
+        }
+
+        public Builder clientOptions(ClientOptions clientOptions) {
+            this.clientOptions = clientOptions;
             return this;
         }
 

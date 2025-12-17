@@ -111,8 +111,16 @@ class MultiDbClientIntegrationTests {
         RedisURI uri2 = MultiDbTestSupport.URI2;
 
         client = MultiDbClient.create(MultiDbTestSupport.getDatabaseConfigs(uri1, uri2));
-        connection = client.connect();
+        new Thread(() -> {
+            connection = client.connect();
+        }).start();
 
+        try {
+            Thread.sleep(15000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         // API CHANGE: Original used multiDbClient.getActive()
         RedisURI active = connection.getCurrentEndpoint();
         assertThat(active).isIn(uri1, uri2);

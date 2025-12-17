@@ -582,7 +582,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
 
         ClientOptions clientOptions = ClientOptions.builder()
                 .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(2)).build()).build();
-        multiDbClient.setOptions(clientOptions);
+        // ((MultiDbClientImpl) multiDbClient).setOptions(clientOptions);
 
         try (StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect(StringCodec.UTF8)) {
 
