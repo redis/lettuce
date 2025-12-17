@@ -19,6 +19,7 @@
  */
 package io.lettuce.core.cluster;
 
+import io.lettuce.core.cluster.models.partitions.RedisClusterNode.NodeFlag;
 import java.io.Closeable;
 import java.net.SocketAddress;
 import java.net.URI;
@@ -1087,7 +1088,8 @@ public class RedisClusterClient extends AbstractRedisClient {
     private CompletionStage<Partitions> fetchPartitions(Iterable<RedisURI> topologyRefreshSource) {
 
         CompletionStage<Map<RedisURI, Partitions>> topology = refresh.loadViews(topologyRefreshSource,
-                getClusterClientOptions().getSocketOptions().getConnectTimeout(), useDynamicRefreshSources());
+                getClusterClientOptions().getSocketOptions().getConnectTimeout(), useDynamicRefreshSources(),
+                getMaxTopologyRefreshSources());
 
         return topology.thenApply(partitions -> {
 
@@ -1265,6 +1267,23 @@ public class RedisClusterClient extends AbstractRedisClient {
         ClusterTopologyRefreshOptions topologyRefreshOptions = getClusterClientOptions().getTopologyRefreshOptions();
 
         return topologyRefreshOptions.useDynamicRefreshSources();
+    }
+
+    /**
+     * Returns the maximum number of additionally queried (discovered) nodes used as topology refresh sources when
+     * {@link ClusterTopologyRefreshOptions#useDynamicRefreshSources() dynamic refresh sources} are enabled.
+     * <p>
+     * Subclasses of {@link RedisClusterClient} may override this method.
+     *
+     * @return the maximum number of additionally queried topology refresh sources.
+     * @see ClusterTopologyRefreshOptions#getMaxTopologyRefreshSources()
+     * @see ClusterTopologyRefreshOptions#useDynamicRefreshSources()
+     */
+    protected int getMaxTopologyRefreshSources() {
+
+        ClusterTopologyRefreshOptions topologyRefreshOptions = getClusterClientOptions().getTopologyRefreshOptions();
+
+        return topologyRefreshOptions.getMaxTopologyRefreshSources();
     }
 
     /**

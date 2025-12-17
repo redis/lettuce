@@ -30,6 +30,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
                 .adaptiveRefreshTriggersTimeout(15, TimeUnit.MILLISECONDS)//
                 .closeStaleConnections(false)//
                 .refreshTriggersReconnectAttempts(2)//
+                .maxTopologyRefreshSources(100)//
                 .build();
 
         assertThat(options.getRefreshPeriod()).isEqualTo(Duration.ofMinutes(10));
@@ -39,6 +40,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
         assertThat(options.getAdaptiveRefreshTimeout()).isEqualTo(Duration.ofMillis(15));
         assertThat(options.getAdaptiveRefreshTriggers()).containsOnly(RefreshTrigger.MOVED_REDIRECT);
         assertThat(options.getRefreshTriggersReconnectAttempts()).isEqualTo(2);
+        assertThat(options.getMaxTopologyRefreshSources()).isEqualTo(100);
     }
 
     @Test
@@ -52,6 +54,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
                 .adaptiveRefreshTriggersTimeout(15, TimeUnit.MILLISECONDS)//
                 .closeStaleConnections(false)//
                 .refreshTriggersReconnectAttempts(2)//
+                .maxTopologyRefreshSources(100)//
                 .build();
 
         ClusterTopologyRefreshOptions options = ClusterTopologyRefreshOptions.copyOf(master);
@@ -63,6 +66,7 @@ class ClusterTopologyRefreshOptionsUnitTests {
         assertThat(options.getAdaptiveRefreshTimeout()).isEqualTo(Duration.ofMillis(15));
         assertThat(options.getAdaptiveRefreshTriggers()).containsOnly(RefreshTrigger.MOVED_REDIRECT);
         assertThat(options.getRefreshTriggersReconnectAttempts()).isEqualTo(2);
+        assertThat(options.getMaxTopologyRefreshSources()).isEqualTo(100);
     }
 
     @Test
@@ -82,6 +86,8 @@ class ClusterTopologyRefreshOptionsUnitTests {
                 .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_ADAPTIVE_REFRESH_TRIGGERS);
         assertThat(options.getRefreshTriggersReconnectAttempts())
                 .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_REFRESH_TRIGGERS_RECONNECT_ATTEMPTS);
+        assertThat(options.getMaxTopologyRefreshSources())
+                .isEqualTo(ClusterTopologyRefreshOptions.DEFAULT_MAX_TOPOLOGY_REFRESH_SOURCES);
     }
 
     @Test

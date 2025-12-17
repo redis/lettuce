@@ -46,6 +46,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -600,6 +601,35 @@ class ClusterTopologyRefreshUnitTests {
 
             assertThat(e.getCause()).hasSuppressedException(nestedException);
         }
+    }
+
+    @Test
+    void shouldLimitDiscoveredNodesToOne() {
+
+        List<RedisURI> seed = Collections.singletonList(RedisURI.create("foobar", 7380));
+
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class),
+                eq(InetSocketAddress.createUnresolved("foobar", 7380))))
+                        .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class),
+                eq(InetSocketAddress.createUnresolved("127.0.0.1", 7380))))
+                        .thenReturn(completedFuture((StatefulRedisConnection) connection1));
+
+        when(nodeConnectionFactory.connectToNodeAsync(any(RedisCodec.class),
+                eq(InetSocketAddress.createUnresolved("127.0.0.1", 7381))))
+                        .thenReturn(completedFuture((StatefulRedisConnection) connection2));
+
+        sut.loadViews(seed, Duration.ofSeconds(1), true, 1).toCompletableFuture().join();
+
+        ArgumentCaptor<InetSocketAddress> captor = ArgumentCaptor.forClass(InetSocketAddress.class);
+
+        verify(nodeConnectionFactory, times(2)).connectToNodeAsync(any(RedisCodec.class), captor.capture());
+
+        List<InetSocketAddress> called = captor.getAllValues();
+        assertThat(called).contains(InetSocketAddress.createUnresolved("foobar", 7380));
+
+        assertThat(called).anyMatch(a -> a.getHostString().equals("127.0.0.1") && (a.getPort() == 7380 || a.getPort() == 7381));
     }
 
     Requests createClusterNodesRequests(int duration, String nodes) {
