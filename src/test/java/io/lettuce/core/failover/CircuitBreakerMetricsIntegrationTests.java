@@ -89,7 +89,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         // Switch to second endpoint
         RedisURI secondEndpoint = endpoints.stream().filter(uri -> !uri.equals(firstEndpoint)).findFirst()
                 .orElseThrow(() -> new IllegalStateException("No second endpoint found"));
-        connection.switchToDatabase(secondEndpoint);
+        connection.switchTo(secondEndpoint);
 
         // Execute command on second endpoint
         connection.sync().set("key2", "value2");
@@ -131,14 +131,14 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
                 .collect(Collectors.toList());
         RedisURI secondEndpoint = endpoints.stream().filter(uri -> !uri.equals(firstEndpoint)).findFirst()
                 .orElseThrow(() -> new IllegalStateException("No second endpoint found"));
-        connection.switchToDatabase(secondEndpoint);
+        connection.switchTo(secondEndpoint);
 
         // When: Record successful commands on second endpoint
         recordSuccessfulCommand(connection, "key2", "value2");
         recordSuccessfulCommand(connection, "key3", "value3");
 
         // When: Switch back to first endpoint
-        connection.switchToDatabase(firstEndpoint);
+        connection.switchTo(firstEndpoint);
 
         // Then: Circuit breaker metrics on first endpoint should be maintained
         CircuitBreaker cb1After = connection.getCircuitBreaker(firstEndpoint);

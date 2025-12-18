@@ -107,7 +107,7 @@ class RedisMultiDbClientConnectIntegrationTests extends MultiDbTestSupport {
         assertEquals(futureGet.get(), "value1");
         RedisURI other = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
                 .filter(uri -> !uri.equals(connection.getCurrentEndpoint())).findFirst().get();
-        connection.switchToDatabase(other);
+        connection.switchTo(other);
         RedisFuture<String> futureGet2 = connection.async().get("key1");
         TestFutures.awaitOrTimeout(futureGet2);
         assertEquals(null, futureGet2.get());

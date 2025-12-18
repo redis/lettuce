@@ -85,7 +85,7 @@ class MultiDbClientIntegrationTests {
         connection = client.connect();
 
         // API CHANGE: Original used multiDbClient.setActive(uri2)
-        connection.switchToDatabase(uri2);
+        connection.switchTo(uri2);
 
         // API CHANGE: Original used multiDbClient.getActive()
         assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
@@ -102,7 +102,7 @@ class MultiDbClientIntegrationTests {
 
         // API CHANGE: Original used multiDbClient.setActive(uri3)
         // Note: Current implementation throws UnsupportedOperationException for non-existent endpoints
-        assertThatThrownBy(() -> connection.switchToDatabase(uri3)).isInstanceOf(UnsupportedOperationException.class);
+        assertThatThrownBy(() -> connection.switchTo(uri3)).isInstanceOf(UnsupportedOperationException.class);
     }
 
     @Test
@@ -156,7 +156,7 @@ class MultiDbClientIntegrationTests {
         connection = client.connect();
 
         // Make sure we're not on uri2 before removing it
-        connection.switchToDatabase(uri1);
+        connection.switchTo(uri1);
 
         // API CHANGE: Original used multiDbClient.removeEndpoint(uri2)
         // Current API: connection.removeDatabase(uri2)
@@ -201,7 +201,7 @@ class MultiDbClientIntegrationTests {
         connection = client.connect();
 
         // API CHANGE: Original used multiDbClient.setActive(uri1)
-        connection.switchToDatabase(uri1);
+        connection.switchTo(uri1);
         // API CHANGE: Original used multiDbClient.getActive()
         assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
@@ -211,7 +211,7 @@ class MultiDbClientIntegrationTests {
             assertThat(serverId).isEqualTo(initialServerId);
 
             // API CHANGE: Original used multiDbClient.setActive(uri2)
-            connection.switchToDatabase(uri2);
+            connection.switchTo(uri2);
             // API CHANGE: Original used multiDbClient.getActive()
             assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
 
@@ -240,7 +240,7 @@ class MultiDbClientIntegrationTests {
         // API CHANGE: Original used multiDbClient.addEndpoint(uri2) then multiDbClient.setActive(uri2)
         // Current API: connection.addDatabase(uri2, weight) then connection.switchToDatabase(uri2)
         connection.addDatabase(uri2, 1.0f);
-        connection.switchToDatabase(uri2);
+        connection.switchTo(uri2);
 
         // Verify it's active
         assertThat(connection.getCurrentEndpoint()).isEqualTo(uri2);
@@ -255,7 +255,7 @@ class MultiDbClientIntegrationTests {
         connection = client.connect();
 
         // Make sure we're on uri1
-        connection.switchToDatabase(uri1);
+        connection.switchTo(uri1);
 
         // API CHANGE: Original used multiDbClient.removeEndpoint(uri1) where uri1 is active
         // Current API: connection.removeDatabase(uri1) should throw exception

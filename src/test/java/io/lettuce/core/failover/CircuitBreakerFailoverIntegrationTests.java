@@ -244,13 +244,13 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         RedisURI endpoint1 = redis1ProxyUri;
         RedisURI endpoint2 = redis2ProxyUri;
 
-        connection.switchToDatabase(endpoint1);
+        connection.switchTo(endpoint1);
         assertThat(connection.getCurrentEndpoint()).isEqualTo(endpoint1);
 
         // Write a test key to endpoint2 (so we can verify failover)
-        connection.switchToDatabase(endpoint2);
+        connection.switchTo(endpoint2);
         connection.async().set("failover-test-key", "endpoint2-value").get(1, TimeUnit.SECONDS);
-        connection.switchToDatabase(endpoint1);
+        connection.switchTo(endpoint1);
 
         // Track state changes
         CountDownLatch failoverLatch = new CountDownLatch(1);
@@ -452,13 +452,13 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         RedisURI endpoint1 = redis1ProxyUri;
         RedisURI endpoint2 = redis2ProxyUri;
 
-        connection.switchToDatabase(endpoint1);
+        connection.switchTo(endpoint1);
         assertThat(connection.getCurrentEndpoint()).isEqualTo(endpoint1);
 
         // Write a test key to endpoint2 (so we can verify failover)
-        connection.switchToDatabase(endpoint2);
+        connection.switchTo(endpoint2);
         connection.reactive().set("failover-test-key-reactive", "endpoint2-value").block(Duration.ofSeconds(1));
-        connection.switchToDatabase(endpoint1);
+        connection.switchTo(endpoint1);
 
         // Track state changes
         CountDownLatch failoverLatch = new CountDownLatch(1);

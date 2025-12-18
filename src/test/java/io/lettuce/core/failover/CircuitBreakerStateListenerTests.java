@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Tag;
 
 import io.lettuce.TestTags;
 import io.lettuce.core.RedisCommandTimeoutException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 
 /**
@@ -30,7 +31,7 @@ class CircuitBreakerStateListenerTests {
     void setUp() {
         CircuitBreaker.CircuitBreakerConfig config = CircuitBreaker.CircuitBreakerConfig.builder().failureRateThreshold(50.0f)
                 .minimumNumberOfFailures(5).build();
-        circuitBreaker = new CircuitBreakerImpl(config);
+        circuitBreaker = new CircuitBreakerImpl(new RedisURI(), config);
     }
 
     @Test

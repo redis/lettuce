@@ -47,7 +47,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultiDbClientImpl.class);
 
-    private static final RedisURI EMPTY_URI = new RedisURI();
+    private static final RedisURI EMPTY_URI = new ImmutableRedisURI(new RedisURI());
 
     private final Map<RedisURI, DatabaseConfig> databaseConfigs;
 
@@ -146,7 +146,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         try {
             StatefulRedisConnection<K, V> connection = connect(codec, uri);
             DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
+            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(uri, config.getCircuitBreakerConfig());
             databaseEndpoint.bind(circuitBreaker);
 
             HealthCheck healthCheck = null;
@@ -208,7 +208,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         try {
             StatefulRedisPubSubConnection<K, V> connection = connectPubSub(codec, uri);
             DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
+            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(uri, config.getCircuitBreakerConfig());
             databaseEndpoint.bind(circuitBreaker);
 
             HealthCheck healthCheck = null;

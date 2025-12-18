@@ -9,6 +9,7 @@ import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.CircuitBreakerMetrics;
 import io.lettuce.core.failover.metrics.MetricsFactory;
@@ -36,16 +37,23 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
     private final Set<Class<? extends Throwable>> trackedExceptions;
 
+    private RedisURI redisURI;
+
     /**
      * Create a circuit breaker instance.
      */
-    public CircuitBreakerImpl(CircuitBreakerConfig config) {
+    public CircuitBreakerImpl(RedisURI redisURI, CircuitBreakerConfig config) {
         LettuceAssert.notNull(config, "CircuitBreakerConfig must not be null");
 
         this.config = config;
+        this.redisURI = redisURI;
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
         this.stateRef = new AtomicReference<>(new CircuitBreakerStateHolder(this,
                 MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
+    }
+
+    public RedisURI getEndpoint() {
+        return redisURI;
     }
 
     /**

@@ -1,0 +1,132 @@
+package io.lettuce.core.failover;
+
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+
+import io.lettuce.core.DriverInfo;
+import io.lettuce.core.RedisCredentialsProvider;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.SslVerifyMode;
+
+/**
+ * An immutable implementation of {@link RedisURI} that prevents any modifications after construction. All setter methods throw
+ * {@link UnsupportedOperationException}.
+ */
+public class ImmutableRedisURI extends RedisURI {
+
+    public ImmutableRedisURI(RedisURI redisURI) {
+        super(redisURI);
+    }
+
+    @Override
+    public void setHost(String host) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setSentinelMasterId(String sentinelMasterId) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setPort(int port) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setSocket(String socket) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void applyAuthentication(RedisURI source) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setAuthentication(CharSequence password) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setAuthentication(char[] password) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setAuthentication(String username, char[] password) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setAuthentication(String username, CharSequence password) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setCredentialsProvider(RedisCredentialsProvider credentialsProvider) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setTimeout(Duration timeout) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setDatabase(int database) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setClientName(String clientName) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setLibraryName(String libraryName) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setDriverInfo(DriverInfo driverInfo) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setLibraryVersion(String libraryVersion) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void applySsl(RedisURI source) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setSsl(boolean ssl) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setVerifyPeer(boolean verifyPeer) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setVerifyPeer(SslVerifyMode verifyMode) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public void setStartTls(boolean startTls) {
+        throw new UnsupportedOperationException("ImmutableRedisURI cannot be modified");
+    }
+
+    @Override
+    public List<RedisURI> getSentinels() {
+        return Collections.unmodifiableList(super.getSentinels());
+    }
+
+}
