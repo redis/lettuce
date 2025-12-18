@@ -57,6 +57,7 @@ import io.netty.util.concurrent.Future;
  * @author Mikhael Sokolov
  * @author Yohei Ueki
  * @author Euiyoung Nam
+ * @author Hari Mani
  * @since 3.4
  * @see DefaultClientResources
  */
@@ -162,18 +163,6 @@ public interface ClientResources {
          * @return {@code this} {@link Builder}.
          */
         Builder computationThreadPoolSize(int computationThreadPoolSize);
-
-        /**
-         * Sets the {@link DnsResolver} that is used to resolve hostnames to {@link java.net.InetAddress}. Defaults to
-         * {@link DnsResolvers#UNRESOLVED} to use netty's {@link AddressResolverGroup}.
-         *
-         * @param dnsResolver the DNS resolver, must not be {@code null}.
-         * @return {@code this} {@link Builder}.
-         * @since 4.3
-         * @deprecated since 6.1. Configure {@link AddressResolverGroup} instead.
-         */
-        @Deprecated
-        Builder dnsResolver(DnsResolver dnsResolver);
 
         /**
          * Sets the {@link EventBus} that can be used across different instances of the RedisClient.
@@ -356,16 +345,6 @@ public interface ClientResources {
      * @return the pool size (number of threads to use).
      */
     int computationThreadPoolSize();
-
-    /**
-     * Return the {@link DnsResolver}.
-     *
-     * @return the DNS resolver.
-     * @since 4.3
-     * @deprecated since 6.6 replaced by{@link AddressResolverGroup} instead.
-     */
-    @Deprecated
-    DnsResolver dnsResolver();
 
     /**
      * Return the event bus used to publish events.

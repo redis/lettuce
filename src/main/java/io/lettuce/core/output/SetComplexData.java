@@ -47,4 +47,9 @@ public class SetComplexData extends ComplexData {
         return Collections.unmodifiableList(list);
     }
 
+    @Override
+    public boolean isSet() {
+        return true;
+    }
+
 }

@@ -74,8 +74,8 @@ jobs:
           tool: 'jmh'
           auto-push: true
           gh-repository: 'github.com/redis/lettuce'
-          gh-pages-branch: 'benchmarks'
-          benchmark-data-dir-path: './'
+          gh-pages-branch: 'main'
+          benchmark-data-dir-path: './docs/static/benchmarks'
           output-file-path: benchmarks.json
           fail-on-alert: false
           alert-threshold: '200%'

@@ -20,27 +20,25 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.core.ConnectionEvents.*;
+import static io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.time.LocalTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.ConnectionBuilder;
 import io.lettuce.core.RedisConnectionException;
-import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisException;
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.api.push.PushMessage;
 import io.lettuce.core.datastructure.queue.HashIndexedQueue;
@@ -78,6 +76,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @author Daniel Albuquerque
  * @author Gavin Cook
  * @author Anuraag Agrawal
+ * @author Tihomir Mateev
  */
 public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCommands {
 
@@ -489,15 +488,6 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
             Tracer.Span span = tracer.nextSpan(context);
             span.name(command.getType().toString());
 
-            if (channel.hasAttr(ConnectionBuilder.REDIS_URI)) {
-                String redisUriStr = channel.attr(ConnectionBuilder.REDIS_URI).get();
-                RedisURI redisURI = RedisURI.create(redisUriStr);
-                span.tag("server.address", redisURI.toString());
-                span.tag("db.namespace", String.valueOf(redisURI.getDatabase()));
-                span.tag("user.name", Optional.ofNullable(redisURI.getCredentialsProvider().resolveCredentials().block())
-                        .map(RedisCredentials::getUsername).orElse(""));
-            }
-
             if (tracedEndpoint != null) {
                 span.remoteEndpoint(tracedEndpoint);
             } else {
@@ -657,8 +647,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                         return;
                     }
 
-                } catch (Exception e) {
-
+                } catch (Throwable e) {
                     ctx.close();
                     throw e;
                 }
@@ -683,8 +672,7 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                         decodeBufferPolicy.afterPartialDecode(buffer);
                         return;
                     }
-                } catch (Exception e) {
-
+                } catch (Throwable e) {
                     ctx.close();
                     throw e;
                 }
@@ -702,12 +690,28 @@ public class CommandHandler extends ChannelDuplexHandler implements HasQueuedCom
                                 logger.debug("{} Completing command {}", logPrefix(), command);
                             }
                             complete(command);
-                        } catch (Exception e) {
+                        } catch (Throwable e) {
                             logger.warn("{} Unexpected exception during request: {}", logPrefix, e.toString(), e);
+                            command.completeExceptionally(e);
                         }
                     }
                 }
                 afterDecode(ctx, command);
+            }
+        }
+
+        final boolean rebindInProgress = ctx.channel().hasAttr(REBIND_ATTRIBUTE)
+                && ctx.channel().attr(REBIND_ATTRIBUTE).get() != null
+                && ctx.channel().attr(REBIND_ATTRIBUTE).get().equals(RebindState.STARTED);
+
+        if (rebindInProgress) {
+            if (stack.isEmpty()) {
+                logger.info("{} Rebind completed at {}", logPrefix(), LocalTime.now());
+                ctx.channel().attr(REBIND_ATTRIBUTE).set(RebindState.COMPLETED);
+            } else {
+                if (debugEnabled) {
+                    logger.debug("{} Rebind in progress, {} commands remaining in the stack", logPrefix(), stack.size());
+                }
             }
         }
 

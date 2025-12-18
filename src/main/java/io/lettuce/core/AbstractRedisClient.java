@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.event.command.CommandListener;
 import io.lettuce.core.event.connection.ConnectEvent;
@@ -109,8 +110,6 @@ public abstract class AbstractRedisClient implements AutoCloseable {
 
     private volatile ClientOptions clientOptions = ClientOptions.create();
 
-    private volatile Duration defaultTimeout = RedisURI.DEFAULT_TIMEOUT_DURATION;
-
     /**
      * Create a new instance with client resources.
      *
@@ -132,47 +131,6 @@ public abstract class AbstractRedisClient implements AutoCloseable {
 
     protected int getChannelCount() {
         return channels.size();
-    }
-
-    /**
-     * Returns the default {@link Duration timeout} for commands.
-     *
-     * @return the default {@link Duration timeout} for commands.
-     * @deprecated since 6.2, use {@link RedisURI#getTimeout()} to control timeouts.
-     */
-    @Deprecated
-    public Duration getDefaultTimeout() {
-        return defaultTimeout;
-    }
-
-    /**
-     * Set the default timeout for connections created by this client. The timeout applies to connection attempts and
-     * non-blocking commands.
-     *
-     * @param timeout default connection timeout, must not be {@code null}.
-     * @since 5.0
-     * @deprecated since 6.2, use {@link RedisURI#getTimeout()} to control timeouts.
-     */
-    @Deprecated
-    public void setDefaultTimeout(Duration timeout) {
-
-        LettuceAssert.notNull(timeout, "Timeout duration must not be null");
-        LettuceAssert.isTrue(!timeout.isNegative(), "Timeout duration must be greater or equal to zero");
-
-        this.defaultTimeout = timeout;
-    }
-
-    /**
-     * Set the default timeout for connections created by this client. The timeout applies to connection attempts and
-     * non-blocking commands.
-     *
-     * @param timeout Default connection timeout.
-     * @param unit Unit of time for the timeout.
-     * @deprecated since 6.2, use {@link RedisURI#getTimeout()} to control timeouts.
-     */
-    @Deprecated
-    public void setDefaultTimeout(long timeout, TimeUnit unit) {
-        setDefaultTimeout(Duration.ofNanos(unit.toNanos(timeout)));
     }
 
     /**
@@ -629,8 +587,16 @@ public abstract class AbstractRedisClient implements AutoCloseable {
     }
 
     protected RedisHandshake createHandshake(ConnectionState state) {
+        EndpointTypeSource source = null;
+        if (clientOptions.getMaintNotificationsConfig().maintNotificationsEnabled()) {
+            LettuceAssert.notNull(clientOptions.getMaintNotificationsConfig().getEndpointTypeSource(),
+                    "Address type source must not be null");
+
+            source = clientOptions.getMaintNotificationsConfig().getEndpointTypeSource();
+        }
+
         return new RedisHandshake(clientOptions.getConfiguredProtocolVersion(), clientOptions.isPingBeforeActivateConnection(),
-                state);
+                state, source);
     }
 
 }

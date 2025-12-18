@@ -10,13 +10,17 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.protocol.RedisCommand;
+import io.lettuce.test.resource.FastShutdown;
+import io.lettuce.test.settings.TestSettings;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import io.lettuce.core.AbstractRedisClientTest;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisCommandTimeoutException;
@@ -42,24 +46,35 @@ import io.netty.util.Version;
 
 /**
  * @author Mark Paluch
+ * @author Hari Mani
  */
 @Tag(INTEGRATION_TEST)
-class AtLeastOnceIntegrationTests extends AbstractRedisClientTest {
+class AtLeastOnceIntegrationTests {
 
-    private String key = "key";
+    private static final String key = "key";
+
+    private final RedisClient client;
+
+    public AtLeastOnceIntegrationTests() {
+        // needs to be increased on slow systems...perhaps...
+        final RedisURI uri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port()).withTimeout(Duration.ofSeconds(3))
+                .build();
+        this.client = RedisClient.create(uri);
+        this.client.setOptions(ClientOptions.builder().autoReconnect(true)
+                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
+    }
 
     @BeforeEach
     void before() {
-        client.setOptions(ClientOptions.builder().autoReconnect(true)
-                .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
-
-        // needs to be increased on slow systems...perhaps...
-        client.setDefaultTimeout(3, TimeUnit.SECONDS);
-
         RedisCommands<String, String> connection = client.connect().sync();
         connection.flushall();
         connection.flushdb();
         connection.getStatefulConnection().close();
+    }
+
+    @AfterEach
+    void tearDown() {
+        FastShutdown.shutdown(client);
     }
 
     @Test
@@ -159,7 +174,7 @@ class AtLeastOnceIntegrationTests extends AbstractRedisClientTest {
 
         assertThat(verificationConnection.get(key)).isEqualTo("2");
 
-        assertThat(ConnectionTestUtil.getStack(connection.getStatefulConnection())).isNotEmpty();
+        assertThat(connection.get(key)).isEqualTo("2");
 
         connection.getStatefulConnection().close();
     }
@@ -381,9 +396,6 @@ class AtLeastOnceIntegrationTests extends AbstractRedisClientTest {
 
         client.setOptions(ClientOptions.builder().autoReconnect(true).replayFilter(filter)
                 .timeoutOptions(TimeoutOptions.builder().timeoutCommands(false).build()).build());
-
-        // needs to be increased on slow systems...perhaps...
-        client.setDefaultTimeout(3, TimeUnit.SECONDS);
 
         StatefulRedisConnection<String, String> connection = client.connect();
         RedisCommands<String, String> verificationConnection = client.connect().sync();

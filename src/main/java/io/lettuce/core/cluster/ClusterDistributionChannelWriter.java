@@ -497,12 +497,6 @@ class ClusterDistributionChannelWriter implements RedisChannelWriter {
         return clusterConnectionProvider;
     }
 
-    @Override
-    public void reset() {
-        defaultWriter.reset();
-        clusterConnectionProvider.reset();
-    }
-
     public void setClusterConnectionProvider(ClusterConnectionProvider clusterConnectionProvider) {
         this.clusterConnectionProvider = clusterConnectionProvider;
         this.asyncClusterConnectionProvider = (AsyncClusterConnectionProvider) clusterConnectionProvider;

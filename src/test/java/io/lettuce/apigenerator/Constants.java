@@ -31,7 +31,7 @@ class Constants {
             "RedisGeoCommands", "RedisHashCommands", "RedisHLLCommands", "RedisKeyCommands", "RedisListCommands",
             "RedisScriptingCommands", "RedisSentinelCommands", "RedisServerCommands", "RedisSetCommands",
             "RedisSortedSetCommands", "RedisStreamCommands", "RedisStringCommands", "RedisTransactionalCommands",
-            "RedisJsonCommands", "RedisVectorSetCommands" };
+            "RedisJsonCommands", "RedisVectorSetCommands", "RediSearchCommands" };
 
     public static final File TEMPLATES = new File("src/main/templates");
 

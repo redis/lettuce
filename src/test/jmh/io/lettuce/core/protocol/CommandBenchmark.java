@@ -10,7 +10,6 @@ import org.openjdk.jmh.infra.Blackhole;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.codec.Utf8StringCodec;
 import io.lettuce.core.output.ValueOutput;
 
 /**
@@ -26,7 +25,7 @@ import io.lettuce.core.output.ValueOutput;
 public class CommandBenchmark {
 
     private static final ByteArrayCodec BYTE_ARRAY_CODEC = new ByteArrayCodec();
-    private static final Utf8StringCodec OLD_STRING_CODEC = new Utf8StringCodec();
+    private static final StringCodec OLD_STRING_CODEC = StringCodec.UTF8;
     private static final StringCodec NEW_STRING_CODEC = new StringCodec(StandardCharsets.UTF_8);
     private static final EmptyByteBuf DUMMY_BYTE_BUF = new EmptyByteBuf();
 

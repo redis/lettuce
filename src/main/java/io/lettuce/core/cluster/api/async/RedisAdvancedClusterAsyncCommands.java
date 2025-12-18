@@ -25,9 +25,11 @@ import java.util.function.Predicate;
 
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.KeyValue;
+import io.lettuce.core.MSetExArgs;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ScanCursor;
+import io.lettuce.core.SetArgs;
 import io.lettuce.core.StreamScanCursor;
 import io.lettuce.core.api.async.RedisKeyAsyncCommands;
 import io.lettuce.core.api.async.RedisScriptingAsyncCommands;
@@ -241,6 +243,17 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     RedisFuture<Boolean> msetnx(Map<K, V> map);
 
     /**
+     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
+     * of [EX|PX|EXAT|PXAT|KEEPTTL]. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param map the map of keys and values.
+     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
+     * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
+     * @since 7.1
+     */
+    RedisFuture<Boolean> msetex(Map<K, V> map, MSetExArgs args);
+
+    /**
      * Set the current connection name on all cluster nodes with pipelining.
      *
      * @param name the client name
@@ -285,11 +298,21 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
     /**
      * Find all keys matching the given pattern on all cluster upstream nodes.
      *
-     * @param pattern the pattern type: patternkey (pattern)
+     * @param pattern the pattern type
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyAsyncCommands#keys(Object)
+     * @see RedisKeyAsyncCommands#keys(String)
      */
-    RedisFuture<List<K>> keys(K pattern);
+    RedisFuture<List<K>> keys(String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    RedisFuture<List<K>> keysLegacy(K pattern);
 
     /**
      * Find all keys matching the given pattern on all cluster upstream nodes.
@@ -297,9 +320,21 @@ public interface RedisAdvancedClusterAsyncCommands<K, V> extends RedisClusterAsy
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyAsyncCommands#keys(KeyStreamingChannel, Object)
+     * @see RedisKeyAsyncCommands#keys(KeyStreamingChannel, String)
      */
-    RedisFuture<Long> keys(KeyStreamingChannel<K> channel, K pattern);
+    RedisFuture<Long> keys(KeyStreamingChannel<K> channel, String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    RedisFuture<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Return a random key from the keyspace on a random master.

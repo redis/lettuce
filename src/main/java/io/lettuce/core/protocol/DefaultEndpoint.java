@@ -20,6 +20,7 @@
 package io.lettuce.core.protocol;
 
 import static io.lettuce.core.protocol.CommandHandler.*;
+import static io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog.REBIND_ATTRIBUTE;
 
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
@@ -495,10 +496,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                     logger.debug("{} channelActive() ran into an exception", logPrefix());
                 }
 
-                if (clientOptions.isCancelCommandsOnReconnectFailure()) {
-                    reset();
-                }
-
                 throw e;
             }
         });
@@ -643,24 +640,6 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
         }
 
         return null;
-    }
-
-    /**
-     * Reset the writer state. Queued commands will be canceled and the internal state will be reset. This is useful when the
-     * internal state machine gets out of sync with the connection.
-     */
-    @Override
-    public void reset() {
-
-        if (debugEnabled) {
-            logger.debug("{} reset()", logPrefix());
-        }
-
-        Channel channel = this.channel;
-        if (channel != null) {
-            channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Reset());
-        }
-        cancelBufferedCommands("Reset");
     }
 
     /**
@@ -812,7 +791,16 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
     }
 
     private boolean isConnected(Channel channel) {
-        return channel != null && channel.isActive();
+
+        if (channel == null || !channel.isActive()) {
+            return false;
+        }
+
+        if (channel.hasAttr(REBIND_ATTRIBUTE)) {
+            return channel.attr(REBIND_ATTRIBUTE).get() != RebindState.STARTED;
+        }
+
+        return true;
     }
 
     protected String logPrefix() {
@@ -1054,20 +1042,8 @@ public class DefaultEndpoint implements RedisChannelWriter, Endpoint, PushHandle
                 return;
             }
 
-            if (sentCommands != null) {
-
-                boolean foundToSend = false;
-
-                for (RedisCommand<?, ?, ?> command : sentCommands) {
-                    if (!command.isDone()) {
-                        foundToSend = true;
-                        break;
-                    }
-                }
-
-                if (!foundToSend) {
-                    return;
-                }
+            if (sentCommands != null && sentCommands.stream().allMatch(RedisCommand::isDone)) {
+                return;
             }
 
             if (channel != null) {

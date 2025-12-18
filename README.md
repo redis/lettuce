@@ -28,10 +28,10 @@ This version of Lettuce has been tested against the latest Redis source-build.
 * [Redis Cluster](https://redis.github.io/lettuce/ha-sharding/#redis-cluster)
 * [SSL](https://redis.github.io/lettuce/advanced-usage/#ssl-connections) and [Unix Domain Socket](https://redis.github.io/lettuce/advanced-usage/#unix-domain-sockets) connections
 * [Streaming API](https://redis.github.io/lettuce/advanced-usage/#streaming-api)
-* [CDI](https://redis.github.io/lettuce/integration-extension/#cdi-support)
 * [Codecs](https://redis.github.io/lettuce/integration-extension/#codecss) (for UTF8/bit/JSON etc. representation of your data)
 * multiple [Command Interfaces](https://github.com/redis/lettuce/wiki/Command-Interfaces-%284.0%29)
 * Support for [Native Transports](https://redis.github.io/lettuce/advanced-usage/#native-transports)
+* Support [RediSearch](https://redis.github.io/lettuce/user-guide/redis-search/), [RedisJSON](https://redis.github.io/lettuce/user-guide/redis-json/) and [Redis Vector Sets](https://redis.github.io/lettuce/user-guide/vector-sets/)
 * Compatible with Java 8++ (implicit automatic module w/o descriptors)
 
 See the [reference documentation](https://redis.github.io/lettuce/) and [API Reference](https://www.javadoc.io/doc/io.lettuce/lettuce-core/latest/index.html) for more details.

@@ -37,11 +37,6 @@ public class EmptyRedisChannelWriter implements RedisChannelWriter {
     }
 
     @Override
-    public void reset() {
-
-    }
-
-    @Override
     public void setConnectionFacade(ConnectionFacade connection) {
     }
 
