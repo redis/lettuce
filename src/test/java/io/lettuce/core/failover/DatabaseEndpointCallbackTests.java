@@ -626,7 +626,7 @@ class DatabaseEndpointCallbackTests {
                     final int index = i;
                     executor.submit(() -> {
                         try {
-                            clock.advance(Duration.ofMillis((long) (Math.random() * 200)));
+                            clock.advance(Duration.ofMillis((long) (Math.random() * 100)));
                             if (index < 6) {
                                 // First 6 succeed
                                 commands.get(index).complete();
