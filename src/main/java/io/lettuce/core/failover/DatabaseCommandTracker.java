@@ -3,6 +3,9 @@ package io.lettuce.core.failover;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.protocol.CommandHandler;
 import io.lettuce.core.protocol.CompleteableCommand;
@@ -17,6 +20,8 @@ import io.netty.channel.Channel;
  */
 class DatabaseCommandTracker {
 
+    private static final Logger log = LoggerFactory.getLogger(DatabaseCommandTracker.class);
+
     interface CommandWriter {
 
         <K, V, T> RedisCommand<K, V, T> writeOne(RedisCommand<K, V, T> command);
@@ -29,8 +34,6 @@ class DatabaseCommandTracker {
 
     private CircuitBreaker circuitBreaker;
 
-    private MultiDbOutboundAdapter tracker;
-
     private AtomicReference<Channel> channelRef = new AtomicReference<>();
 
     public DatabaseCommandTracker(CommandWriter commandWriter) {
@@ -39,19 +42,24 @@ class DatabaseCommandTracker {
 
     public void bind(CircuitBreaker cb) {
         circuitBreaker = cb;
-        tracker = new MultiDbOutboundAdapter(circuitBreaker);
         registerHandlerToPipeline();
     }
 
     private void registerHandlerToPipeline() {
-        Channel targetChannel = channelRef.get();
-        if (targetChannel == null || tracker == null) {
-            return;
-        }
+        try {
+            Channel targetChannel = channelRef.get();
+            if (targetChannel == null || circuitBreaker == null) {
+                return;
+            }
 
-        if (channelRef.compareAndSet(targetChannel, null)) {
-            String commandHandlerName = targetChannel.pipeline().context(CommandHandler.class).name();
-            targetChannel.pipeline().addAfter(commandHandlerName, MultiDbOutboundAdapter.HANDLER_NAME, tracker);
+            if (channelRef.compareAndSet(targetChannel, null)) {
+                String commandHandlerName = targetChannel.pipeline().context(CommandHandler.class).name();
+                targetChannel.pipeline().addAfter(commandHandlerName, MultiDbOutboundHandler.HANDLER_NAME,
+                        new MultiDbOutboundHandler(circuitBreaker));
+            }
+        } catch (Exception e) {
+            log.error("Failed to register MultiDbOutboundHandler to pipeline", e);
+            throw e;
         }
     }
 
@@ -62,7 +70,7 @@ class DatabaseCommandTracker {
 
     public void resetChannel(Channel channel) {
         // remove/unbind tracker here
-        channel.pipeline().remove(MultiDbOutboundAdapter.class);
+        channel.pipeline().remove(MultiDbOutboundHandler.class);
     }
 
     public <K, V, T> RedisCommand<K, V, T> write(RedisCommand<K, V, T> command) {

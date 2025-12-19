@@ -320,7 +320,7 @@ class DatabaseCommandTrackerUnitTests {
 
             tracker.setChannel(mockChannel);
 
-            verify(mockPipeline).addAfter(eq("CommandHandler#0"), eq(MultiDbOutboundAdapter.HANDLER_NAME), any());
+            verify(mockPipeline).addAfter(eq("CommandHandler#0"), eq(MultiDbOutboundHandler.HANDLER_NAME), any());
         }
 
         @Test
@@ -347,7 +347,7 @@ class DatabaseCommandTrackerUnitTests {
 
             tracker.resetChannel(mockChannel);
 
-            verify(mockPipeline).remove(MultiDbOutboundAdapter.class);
+            verify(mockPipeline).remove(MultiDbOutboundHandler.class);
         }
 
     }

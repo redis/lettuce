@@ -40,7 +40,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.Future;
 
 /**
- * Unit tests for {@link MultiDbOutboundAdapter} focusing on:
+ * Unit tests for {@link MultiDbOutboundHandler} focusing on:
  * <ul>
  * <li>Write operation interception and listener attachment</li>
  * <li>Success/failure tracking via ChannelPromise listeners</li>
@@ -55,7 +55,7 @@ import io.netty.util.concurrent.Future;
 @Tag("unit")
 class MultiDbOutboundAdapterUnitTests {
 
-    private MultiDbOutboundAdapter adapter;
+    private MultiDbOutboundHandler adapter;
 
     private CircuitBreaker circuitBreaker;
 
@@ -89,7 +89,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should attach listener to promise for single command write")
         void shouldAttachListenerToPromiseForSingleCommandWrite() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundAdapter(circuitBreaker);
+            adapter = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
@@ -106,7 +106,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should attach listeners to promise for batch command write")
         void shouldAttachListenersToPromiseForBatchCommandWrite() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundAdapter(circuitBreaker);
+            adapter = new MultiDbOutboundHandler(circuitBreaker);
 
             List<RedisCommand<String, String, ?>> commands = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
@@ -125,7 +125,7 @@ class MultiDbOutboundAdapterUnitTests {
         @Test
         @DisplayName("Should not attach listener when circuit breaker is null")
         void shouldNotAttachListenerWhenCircuitBreakerIsNull() throws Exception {
-            adapter = new MultiDbOutboundAdapter(null);
+            adapter = new MultiDbOutboundHandler(null);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
@@ -142,7 +142,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should pass through non-command messages without attaching listeners")
         void shouldPassThroughNonCommandMessagesWithoutAttachingListeners() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundAdapter(circuitBreaker);
+            adapter = new MultiDbOutboundHandler(circuitBreaker);
 
             String nonCommandMessage = "not a command";
 
@@ -166,7 +166,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should record failure when write promise fails")
         void shouldRecordFailureWhenWritePromiseFails() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundAdapter(circuitBreaker);
+            adapter = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
@@ -205,7 +205,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should record success when command completes successfully after successful write")
         void shouldRecordSuccessWhenCommandCompletesSuccessfully() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundAdapter(circuitBreaker);
+            adapter = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
@@ -239,7 +239,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should record failure when command completes with non-timeout exception")
         void shouldRecordFailureWhenCommandCompletesWithNonTimeoutException() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundAdapter(circuitBreaker);
+            adapter = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
@@ -273,7 +273,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should NOT record timeout exception (handled by DatabaseCommandTracker)")
         void shouldNotRecordTimeoutException() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundAdapter(circuitBreaker);
+            adapter = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);

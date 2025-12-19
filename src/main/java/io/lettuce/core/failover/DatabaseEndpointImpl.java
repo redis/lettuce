@@ -41,8 +41,8 @@ class DatabaseEndpointImpl extends DefaultEndpoint implements DatabaseEndpoint, 
 
     @Override
     public void notifyChannelActive(Channel channel) {
-        super.notifyChannelActive(channel);
         tracker.setChannel(channel);
+        super.notifyChannelActive(channel);
     }
 
     @Override

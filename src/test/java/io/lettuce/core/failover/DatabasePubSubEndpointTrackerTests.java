@@ -286,7 +286,7 @@ class DatabasePubSubEndpointTrackerTests {
 
             endpoint.notifyChannelActive(mockChannel);
 
-            verify(mockPipeline).addAfter(eq("CommandHandler#0"), eq(MultiDbOutboundAdapter.HANDLER_NAME), any());
+            verify(mockPipeline).addAfter(eq("CommandHandler#0"), eq(MultiDbOutboundHandler.HANDLER_NAME), any());
         }
 
         @Test
@@ -302,7 +302,7 @@ class DatabasePubSubEndpointTrackerTests {
 
             endpoint.notifyChannelInactive(mockChannel);
 
-            verify(mockPipeline).remove(MultiDbOutboundAdapter.class);
+            verify(mockPipeline).remove(MultiDbOutboundHandler.class);
         }
 
     }
