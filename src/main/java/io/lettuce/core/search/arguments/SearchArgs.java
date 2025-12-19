@@ -558,10 +558,19 @@ public class SearchArgs<K, V> {
 
         if (!returnFields.isEmpty()) {
             args.add(CommandKeyword.RETURN);
-            args.add(returnFields.size());
+            // Count total number of field specifications (field + optional AS + alias)
+            int count = returnFields.size();
+
+            // Add 2 for each "AS" keyword and alias value
+            count += (int) (returnFields.values().stream().filter(Optional::isPresent).count() * 2);
+
+            args.add(count);
             returnFields.forEach((field, as) -> {
                 args.addKey(field);
-                as.ifPresent(args::addKey);
+                if (as.isPresent()) {
+                    args.add(CommandKeyword.AS);
+                    args.addKey(as.get());
+                }
             });
         }
 

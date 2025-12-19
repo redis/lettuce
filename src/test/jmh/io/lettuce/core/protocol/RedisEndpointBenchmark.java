@@ -1,5 +1,6 @@
 package io.lettuce.core.protocol;
 
+import io.lettuce.core.ConnectionEvents;
 import org.openjdk.jmh.annotations.*;
 
 import io.lettuce.core.ClientOptions;
@@ -43,7 +44,7 @@ public class RedisEndpointBenchmark {
 
     @TearDown(Level.Iteration)
     public void tearDown() {
-        defaultEndpoint.reset();
+        defaultEndpoint.channel.pipeline().fireUserEventTriggered(new ConnectionEvents.Reset());
     }
 
     @Benchmark

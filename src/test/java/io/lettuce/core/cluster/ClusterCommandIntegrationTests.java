@@ -151,25 +151,6 @@ class ClusterCommandIntegrationTests extends TestSupport {
     }
 
     @Test
-    void testReset() {
-
-        clusterClient.reloadPartitions();
-
-        StatefulRedisClusterConnection<String, String> clusterConnection = clusterClient.connect();
-
-        TestFutures.awaitOrTimeout(clusterConnection.async().set("a", "myValue1"));
-
-        clusterConnection.reset();
-
-        RedisFuture<String> setA = clusterConnection.async().set("a", "myValue1");
-
-        assertThat(TestFutures.getOrTimeout(setA)).isEqualTo("OK");
-        assertThat(setA.getError()).isNull();
-
-        connection.close();
-    }
-
-    @Test
     void testClusterSlots() {
 
         List<Object> reply = sync.clusterSlots();

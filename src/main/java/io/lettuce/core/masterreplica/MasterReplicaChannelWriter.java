@@ -242,11 +242,6 @@ class MasterReplicaChannelWriter implements RedisChannelWriter {
         masterReplicaConnectionProvider.flushCommands();
     }
 
-    @Override
-    public void reset() {
-        masterReplicaConnectionProvider.reset();
-    }
-
     /**
      * Set from which nodes data is read. The setting is used as default for read operations on this connection. See the
      * documentation for {@link ReadFrom} for more information.

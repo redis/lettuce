@@ -20,9 +20,4 @@ public interface ConnectionFacade {
      */
     void deactivated();
 
-    /**
-     * Reset the connection state.
-     */
-    void reset();
-
 }

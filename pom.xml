@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>7.0.0-SNAPSHOT</version>
+    <version>7.3.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -68,7 +68,7 @@
         <micrometer.version>1.14.2</micrometer.version>
         <micrometer-tracing.version>1.2.4</micrometer-tracing.version>
         <mockito.version>4.9.0</mockito.version>
-        <netty.version>4.1.118.Final</netty.version>
+        <netty.version>4.2.5.Final</netty.version>
         <openwebbeans.version>2.0.27</openwebbeans.version>
         <reactor.version>3.6.6</reactor.version>
         <rxjava.version>1.3.8</rxjava.version>
@@ -267,23 +267,19 @@
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-epoll</artifactId>
-            <classifier>linux-x86_64</classifier>
+            <artifactId>netty-transport-classes-epoll</artifactId>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-kqueue</artifactId>
-            <classifier>osx-x86_64</classifier>
+            <artifactId>netty-transport-classes-kqueue</artifactId>
             <optional>true</optional>
         </dependency>
 
         <dependency>
-            <groupId>io.netty.incubator</groupId>
-            <artifactId>netty-incubator-transport-native-io_uring</artifactId>
-            <version>0.0.26.Final</version>
-            <classifier>linux-x86_64</classifier>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-classes-io_uring</artifactId>
             <optional>true</optional>
         </dependency>
 
