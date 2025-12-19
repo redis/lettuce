@@ -11,14 +11,20 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
+import io.lettuce.core.failover.metrics.MetricsFactory;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
+import io.lettuce.core.failover.metrics.TestClock;
+
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import com.google.gson.internal.reflect.ReflectionHelper;
+
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.ReflectionTestUtils;
 
 /**
  * Integration tests for circuit breaker metrics tracking in multi-database connections.
@@ -163,6 +169,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
 
     @Test
     void shouldExposeMetricsViaCircuitBreaker() {
+        ReflectionTestUtils.setField(MetricsFactory.class, "DEFAULT_CLOCK", new TestClock());
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
         RedisURI endpoint = connection.getCurrentEndpoint();
 
