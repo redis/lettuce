@@ -14,6 +14,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
@@ -192,7 +193,7 @@ class RedisMultiDbClientIntegrationTests extends TestSupport {
 
         // given
         MultiDbClient redisFailoverClient1 = MultiDbClient.create(MultiDbTestSupport.DBs);
-        ClientResources clientResources = redisFailoverClient1.getResources();
+        ClientResources clientResources = ReflectionTestUtils.getField(redisFailoverClient1, "clientResources");
         Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = getExecutors(clientResources);
         connectAndClose(redisFailoverClient1);
 

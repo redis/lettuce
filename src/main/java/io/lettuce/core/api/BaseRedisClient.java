@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.event.command.CommandListener;
@@ -18,23 +17,6 @@ import io.netty.util.concurrent.EventExecutorGroup;
 @Experimental
 // This is same interface that AbstractRedisClient expose as public
 public interface BaseRedisClient extends AutoCloseable {
-
-    /**
-     * Returns the {@link ClientOptions} which are valid for that client. Connections inherit the current options at the moment
-     * the connection is created. Changes to options will not affect existing connections.
-     *
-     * @return the {@link ClientOptions} for this client
-     */
-    ClientOptions getOptions();
-
-    /**
-     * Returns the {@link ClientResources} which are used with that client.
-     *
-     * @return the {@link ClientResources} for this client.
-     * @since 6.0
-     *
-     */
-    ClientResources getResources();
 
     /**
      * Add a listener for the RedisConnectionState. The listener is notified every time a connect/disconnect/IO exception

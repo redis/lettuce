@@ -140,7 +140,6 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      *
      * @return the {@link ClientOptions} for this client
      */
-    @Override
     public ClientOptions getOptions() {
         return clientOptions;
     }
@@ -162,7 +161,6 @@ public abstract class AbstractRedisClient implements BaseRedisClient {
      * @since 6.0
      *
      */
-    @Override
     public ClientResources getResources() {
         return clientResources;
     }
