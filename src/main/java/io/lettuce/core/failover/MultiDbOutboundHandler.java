@@ -8,7 +8,6 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 
@@ -21,7 +20,6 @@ import io.netty.util.concurrent.GenericFutureListener;
  * @since 7.4
  */
 
- @Sharable
 class MultiDbOutboundHandler extends ChannelOutboundHandlerAdapter {
 
     public final static String HANDLER_NAME = MultiDbOutboundHandler.class.getSimpleName() + "#0";
