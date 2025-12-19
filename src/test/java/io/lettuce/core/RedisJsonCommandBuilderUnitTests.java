@@ -629,4 +629,36 @@ class RedisJsonCommandBuilderUnitTests {
                 .isEqualTo("*4\r\n$14\r\nJSON.ARRAPPEND\r\n$15\r\nbikes:inventory\r\n$1\r\nA\r\n$1\r\nB\r\n");
     }
 
+    @Test
+    void shouldCorrectlyConstructJsonGetRaw() {
+        JsonGetArgs args = JsonGetArgs.Builder.indent("   ").newline("\n").space("/");
+        Command<String, String, List<String>> command = builder.jsonGetRaw(MY_KEY, args, MY_PATH);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*9\r\n" + "$8\r\n" + "JSON.GET\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$6\r\n" + "INDENT\r\n" + "$3\r\n" + "   \r\n" + "$7\r\n" + "NEWLINE\r\n" + "$1\r\n"
+                + "\n\r\n" + "$5\r\n" + "SPACE\r\n" + "$1\r\n" + "/\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonMgetRaw() {
+        Command<String, String, List<String>> command = builder.jsonMGetRaw(MY_PATH, MY_KEY, MY_KEY2);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*4\r\n" + "$9\r\n" + "JSON.MGET\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$15\r\n" + "bikes:repairLog\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
+    @Test
+    void shouldCorrectlyConstructJsonArrpopRawNoIndex() {
+        Command<String, String, List<String>> command = builder.jsonArrpopRaw(MY_KEY, MY_PATH, -1);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+
+        assertThat(buf.toString(StandardCharsets.UTF_8)).isEqualTo("*3\r\n" + "$11\r\n" + "JSON.ARRPOP\r\n" + "$15\r\n"
+                + "bikes:inventory\r\n" + "$17\r\n" + "$..commuter_bikes\r\n");
+    }
+
 }

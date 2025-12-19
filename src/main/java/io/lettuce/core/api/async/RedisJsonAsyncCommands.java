@@ -178,6 +178,21 @@ public interface RedisJsonAsyncCommands<K, V> {
     RedisFuture<List<JsonValue>> jsonArrpop(K key, JsonPath jsonPath, int index);
 
     /**
+     * Remove and return the JSON value at a given index in the array at a given {@link JsonPath} as raw JSON strings.
+     * <p>
+     * Behaves like {@link #jsonArrpop(Object, JsonPath, int)} but returns {@code List<String>} with raw JSON instead of
+     * {@link JsonValue} wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
+     * @param index the index of the element to be removed. Default is -1, meaning the last element. Out-of-range indexes round
+     *        to their respective array ends. Popping an empty array returns null.
+     * @return List<String> the removed element, or null if the specified path is not an array.
+     * @since 7.0
+     */
+    RedisFuture<List<String>> jsonArrpopRaw(K key, JsonPath jsonPath, int index);
+
+    /**
      * Remove and return {@link JsonValue} at index -1 (last element) in the array at a given {@link JsonPath}
      *
      * @param key the key holding the JSON document.
@@ -188,6 +203,19 @@ public interface RedisJsonAsyncCommands<K, V> {
     RedisFuture<List<JsonValue>> jsonArrpop(K key, JsonPath jsonPath);
 
     /**
+     * Remove and return the JSON value at index -1 (last element) in the array at a given {@link JsonPath} as raw JSON strings.
+     * <p>
+     * Behaves like {@link #jsonArrpop(Object, JsonPath)} but returns {@code List<String>} with raw JSON instead of
+     * {@link JsonValue} wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPath the {@link JsonPath} pointing to the array inside the document.
+     * @return List<String> the removed element, or null if the specified path is not an array.
+     * @since 7.0
+     */
+    RedisFuture<List<String>> jsonArrpopRaw(K key, JsonPath jsonPath);
+
+    /**
      * Remove and return {@link JsonValue} at index -1 (last element) in the array at the {@link JsonPath#ROOT_PATH}
      *
      * @param key the key holding the JSON document.
@@ -195,6 +223,19 @@ public interface RedisJsonAsyncCommands<K, V> {
      * @since 6.5
      */
     RedisFuture<List<JsonValue>> jsonArrpop(K key);
+
+    /**
+     * Remove and return the JSON value at index -1 (last element) in the array at the {@link JsonPath#ROOT_PATH} as raw JSON
+     * strings.
+     * <p>
+     * Behaves like {@link #jsonArrpop(Object)} but returns {@code List<String>} with raw JSON instead of {@link JsonValue}
+     * wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @return List<String> the removed element, or null if the specified path is not an array.
+     * @since 7.0
+     */
+    RedisFuture<List<String>> jsonArrpopRaw(K key);
 
     /**
      * Trim an array at a given {@link JsonPath} so that it contains only the specified inclusive range of elements. All
@@ -273,6 +314,20 @@ public interface RedisJsonAsyncCommands<K, V> {
     RedisFuture<List<JsonValue>> jsonGet(K key, JsonGetArgs options, JsonPath... jsonPaths);
 
     /**
+     * Return the value at the specified path in JSON serialized form as raw strings.
+     * <p>
+     * Behaves like {@link #jsonGet(Object, JsonGetArgs, JsonPath...)} but returns {@code List<String>} with raw JSON instead of
+     * {@link JsonValue} wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @param options the {@link JsonGetArgs} to use.
+     * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
+     * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.0
+     */
+    RedisFuture<List<String>> jsonGetRaw(K key, JsonGetArgs options, JsonPath... jsonPaths);
+
+    /**
      * Return the value at the specified path in JSON serialized form. Uses defaults for the {@link JsonGetArgs}.
      * <p>
      * When using a single JSONPath, the root of the matching values is a JSON string with a top-level array of serialized JSON
@@ -289,6 +344,19 @@ public interface RedisJsonAsyncCommands<K, V> {
      * @since 6.5
      */
     RedisFuture<List<JsonValue>> jsonGet(K key, JsonPath... jsonPaths);
+
+    /**
+     * Return the value at the specified path in JSON serialized form as raw strings. Uses defaults for the {@link JsonGetArgs}.
+     * <p>
+     * Behaves like {@link #jsonGet(Object, JsonPath...)} but returns {@code List<String>} with raw JSON instead of
+     * {@link JsonValue} wrappers.
+     *
+     * @param key the key holding the JSON document.
+     * @param jsonPaths the {@link JsonPath}s to use to identify the values to get.
+     * @return List<String> the value at path in JSON serialized form, or null if the path does not exist.
+     * @since 7.0
+     */
+    RedisFuture<List<String>> jsonGetRaw(K key, JsonPath... jsonPaths);
 
     /**
      * Merge a given {@link JsonValue} with the value matching {@link JsonPath}. Consequently, JSON values at matching paths are
@@ -334,6 +402,19 @@ public interface RedisJsonAsyncCommands<K, V> {
      * @since 6.5
      */
     RedisFuture<List<JsonValue>> jsonMGet(JsonPath jsonPath, K... keys);
+
+    /**
+     * Return the values at the specified path from multiple key arguments as raw JSON strings.
+     * <p>
+     * Behaves like {@link #jsonMGet(JsonPath, Object[])} but returns {@code List<String>} with raw JSON instead of
+     * {@link JsonValue} wrappers.
+     *
+     * @param jsonPath the {@link JsonPath} pointing to the value to fetch.
+     * @param keys the keys holding the values to fetch.
+     * @return List<String> the values at path, or null if the path does not exist.
+     * @since 7.0
+     */
+    RedisFuture<List<String>> jsonMGetRaw(JsonPath jsonPath, K... keys);
 
     /**
      * Set or update one or more JSON values according to the specified {@link JsonMsetArgs}

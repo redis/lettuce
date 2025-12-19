@@ -495,10 +495,10 @@ public class AggregateArgs<K, V> {
                 }
                 args.add(argCount);
                 for (LoadField<K> loadField : loadFields) {
-                    args.addKey(loadField.field);
+                    args.add(loadField.field.toString());
                     if (loadField.alias != null) {
                         args.add(CommandKeyword.AS);
-                        args.addKey(loadField.alias);
+                        args.add(loadField.alias.toString());
                     }
                 }
             }
@@ -534,7 +534,7 @@ public class AggregateArgs<K, V> {
             args.add(CommandKeyword.PARAMS);
             args.add(params.size() * 2L);
             params.forEach((key, value) -> {
-                args.addKey(key);
+                args.add(key.toString());
                 args.addValue(value);
             });
         }
@@ -713,7 +713,7 @@ public class AggregateArgs<K, V> {
                 if (!propertyStr.startsWith("@")) {
                     args.add("@" + propertyStr);
                 } else {
-                    args.addKey(property);
+                    args.add(propertyStr);
                 }
             }
 
@@ -820,7 +820,7 @@ public class AggregateArgs<K, V> {
                 if (!propertyStr.startsWith("@")) {
                     args.add("@" + propertyStr);
                 } else {
-                    args.addKey(property.property);
+                    args.add(propertyStr);
                 }
                 args.add(property.direction.name());
             }
@@ -896,7 +896,7 @@ public class AggregateArgs<K, V> {
             args.add(CommandKeyword.APPLY);
             args.addValue(expression);
             args.add(CommandKeyword.AS);
-            args.addKey(name);
+            args.add(name.toString());
         }
 
         /**
@@ -1060,7 +1060,7 @@ public class AggregateArgs<K, V> {
 
             alias.ifPresent(a -> {
                 args.add(CommandKeyword.AS);
-                args.addKey(a);
+                args.add(a.toString());
             });
         }
 

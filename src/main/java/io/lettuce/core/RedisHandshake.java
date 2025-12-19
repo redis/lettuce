@@ -29,7 +29,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import io.lettuce.core.MaintenanceEventsOptions.AddressTypeSource;
+import io.lettuce.core.MaintNotificationsConfig.EndpointTypeSource;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.internal.Futures;
 import io.lettuce.core.internal.LettuceAssert;
@@ -69,12 +69,12 @@ class RedisHandshake implements ConnectionInitializer {
 
     private volatile ProtocolVersion negotiatedProtocolVersion;
 
-    private final MaintenanceEventsOptions.AddressTypeSource addressTypeSource;
+    private final EndpointTypeSource endpointTypeSource;
 
     RedisHandshake(ProtocolVersion requestedProtocolVersion, boolean pingOnConnect, ConnectionState connectionState,
-            MaintenanceEventsOptions.AddressTypeSource addressTypeSource) {
+            EndpointTypeSource endpointTypeSource) {
 
-        this.addressTypeSource = addressTypeSource;
+        this.endpointTypeSource = endpointTypeSource;
         this.requestedProtocolVersion = requestedProtocolVersion;
         this.pingOnConnect = pingOnConnect;
         this.connectionState = connectionState;
@@ -119,7 +119,7 @@ class RedisHandshake implements ConnectionInitializer {
                 // implementations or versions of the server runtime, and whose execution result (whether a success or a
                 // failure ) should not alter the outcome of the connection attempt
                 .thenCompose(ignore -> applyConnectionMetadataSafely(channel))
-                .thenCompose(ignore -> enableMaintenanceEvents(channel));
+                .thenCompose(ignore -> enableMaintNotifications(channel));
     }
 
     private CompletionStage<?> tryHandshakeResp3(Channel channel) {
@@ -279,15 +279,15 @@ class RedisHandshake implements ConnectionInitializer {
         return dispatch(channel, postHandshake);
     }
 
-    private String addressType(Channel channel, ConnectionState state, AddressTypeSource addressTypeSource) {
-        MaintenanceEventsOptions.AddressType addressType = addressTypeSource.getAddressType(channel.remoteAddress(),
+    private String movingEndpointType(Channel channel, ConnectionState state, EndpointTypeSource endpointTypeSource) {
+        MaintNotificationsConfig.EndpointType endpointType = endpointTypeSource.getEndpointType(channel.remoteAddress(),
                 state.getConnectionMetadata().isSslEnabled());
 
-        if (addressType == null) {
+        if (endpointType == null) {
             return null;
         }
 
-        switch (addressType) {
+        switch (endpointType) {
             case INTERNAL_IP:
                 return "internal-ip";
             case INTERNAL_FQDN:
@@ -299,7 +299,7 @@ class RedisHandshake implements ConnectionInitializer {
             case NONE:
                 return "none";
             default:
-                throw new IllegalArgumentException("Unknown moving endpoint address type:" + addressType);
+                throw new IllegalArgumentException("Unknown moving endpoint address type:" + endpointType);
         }
     }
 
@@ -338,7 +338,7 @@ class RedisHandshake implements ConnectionInitializer {
         return dispatch(channel, postHandshake);
     }
 
-    private CompletionStage<Void> enableMaintenanceEvents(Channel channel) {
+    private CompletionStage<Void> enableMaintNotifications(Channel channel) {
         return sendMaintenanceNotificationsOn(channel).handle((result, error) -> {
             if (error != null) {
                 LOG.info("Maintenance events not supported.");
@@ -353,12 +353,12 @@ class RedisHandshake implements ConnectionInitializer {
     private CompletionStage<Void> sendMaintenanceNotificationsOn(Channel channel) {
         List<AsyncCommand<?, ?, ?>> postHandshake = new ArrayList<>();
 
-        if (addressTypeSource != null) {
+        if (endpointTypeSource != null) {
             CommandArgs<String, String> args = new CommandArgs<>(StringCodec.UTF8).add(MAINT_NOTIFICATIONS).add("on");
-            String addressType = addressType(channel, connectionState, addressTypeSource);
+            String endpointType = movingEndpointType(channel, connectionState, endpointTypeSource);
 
-            if (addressType != null) {
-                args.add("moving-endpoint-type").add(addressType);
+            if (endpointType != null) {
+                args.add("moving-endpoint-type").add(endpointType);
             }
 
             Command<String, String, String> maintNotificationsOn = new Command<>(CLIENT, new StatusOutput<>(StringCodec.UTF8),

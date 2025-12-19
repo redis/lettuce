@@ -1,41 +1,30 @@
-Lettuce 6.8.0 RELEASE NOTES
+Lettuce 7.2.0 RELEASE NOTES
 ==============================
 
-The Redis team is delighted to announce the release of Lettuce 6.8.0
+The Lettuce team is pleased to announce the Lettuce 7.2.0 minor release!
 
-Lettuce 6 supports Redis 2.6+ up to Redis 7.x. In terms of Java runtime, Lettuce requires
-at least Java 8 and works with Java 21.
+Lettuce 7.2.0 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
+works with Java 24. The driver is tested against Redis 8.4, Redis 8.2, Redis 8.0, Redis 7.4 and Redis 7.2.
 
-Thanks to all contributors who made Lettuce 6.8.0 possible.
+Thanks to all contributors who made Lettuce 7.2.0.RELEASE possible.
 
-If you need any support, meet Lettuce at
+📗 Links
+Reference documentation: https://lettuce.io/core/7.2.0.RELEASE/reference/
+Javadoc: https://lettuce.io/core/7.2.0.RELEASE/api/
 
-* GitHub Discussions: https://github.com/lettuce-io/lettuce-core/discussions
-* Stack Overflow (Questions): https://stackoverflow.com/questions/tagged/lettuce
-* Join the chat at https://discord.gg/redis and look for the "Help:Tools Lettuce" channel 
-* GitHub Issues (Bug reports, feature requests): https://github.com/lettuce-io/lettuce-core/issues
-* Documentation: https://lettuce.io/core/6.8.0.RELEASE/reference/
-* Javadoc: https://lettuce.io/core/6.8.0.RELEASE/api/
+⭐ New Features
+* Add ftHybrid by @a-TODO-rov in https://github.com/redis/lettuce/pull/3540
+* Expose method to add upstream driver libraries to CLIENT SETINFO payload by @viktoriya-kutsarova in https://github.com/redis/lettuce/pull/3542
 
-Commands
---------
-* Introduce RediSearch by @tishun in https://github.com/redis/lettuce/pull/3375
-* Add support for new operations of BITOP command in Redis Community Edition 8.2 by @atakavci in https://github.com/redis/lettuce/pull/3334
-* Add support for 8.2 stream commands by @uglide in https://github.com/redis/lettuce/pull/3374
+🐞 Bug Fixes
+* SearchArgs.returnField with alias produces malformed redis command #3528 by @tishun in https://github.com/redis/lettuce/pull/3530
+* fix consistency with get(int) that returns wrapped DelegateJsonObject/DelegateJsonArray for nested structures by @NeatGuyCoding in https://github.com/redis/lettuce/pull/3464
 
-Enhancements
-------------
-* N/A
+💡 Other
+* Bumping Netty to 4.2.5.Final (main) by @tishun in https://github.com/redis/lettuce/pull/3536
 
-Fixes
------
-* NoClassDefFoundError in Lettuce 6.7.0 #3317 by @tishun in https://github.com/redis/lettuce/pull/3318
-  
-Other
------
-* The instance of the `ObjectMapper` can now be reused in the `DefaultJsonParser` by @thachlp in https://github.com/redis/lettuce/pull/3372
-* Added basic connection interruption tests by @uglide in https://github.com/redis/lettuce/pull/3292
-* DOC-4758 async JSON doc examples by @andy-stark-redis in https://github.com/redis/lettuce/pull/3335
-* Fixed SocketOptions.Builder validation messages by @hubertchylik in https://github.com/redis/lettuce/pull/3366
-* Refactor tests for clarity and maintainability by @Rian-Ismael in https://github.com/redis/lettuce/pull/3363
-* Provide support for the SVS-VMANA index (#3385) by @tishun in https://github.com/redis/lettuce/pull/3386
+❤️ New Contributors
+* @NeatGuyCoding made their first contribution in https://github.com/redis/lettuce/pull/3464
+* @viktoriya-kutsarova made their first contribution in https://github.com/redis/lettuce/pull/3542
+
+**Full Changelog**: https://github.com/redis/lettuce/compare/7.1.0.RELEASE...7.2.0.RELEASE

@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
+import io.lettuce.core.CompareCondition;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.CopyArgs;
@@ -35,6 +36,7 @@ import io.lettuce.core.ScanArgs;
 import io.lettuce.core.ScanCursor;
 import io.lettuce.core.SortArgs;
 import io.lettuce.core.StreamScanCursor;
+import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.output.KeyStreamingChannel;
 import io.lettuce.core.output.ValueStreamingChannel;
 
@@ -77,6 +79,29 @@ public interface RedisKeyReactiveCommands<K, V> {
      * @return Long integer-reply The number of keys that were removed.
      */
     Mono<Long> del(K... keys);
+
+    /**
+     * Delete the specified key if the compare condition matches.
+     *
+     * @param key the key.
+     * @param compareCondition the compare condition, must not be {@code null}.
+     * @return Long integer-reply the number of keys that were removed.
+     *
+     * @since 7.1
+     */
+    @Experimental
+    Mono<Long> delex(K key, CompareCondition<V> compareCondition);
+
+    /**
+     * Return the XXH3 64-bit digest of the string value stored at a key as a 16-character hex string.
+     *
+     * @param key the key.
+     * @return String bulk-string-reply the hex digest of the key's value, or {@code null} when {@code key} does not exist.
+     *
+     * @since 7.1
+     */
+    @Experimental
+    Mono<String> digestKey(K key);
 
     /**
      * Unlink one or more keys (non blocking DEL).
@@ -227,22 +252,45 @@ public interface RedisKeyReactiveCommands<K, V> {
     /**
      * Find all keys matching the given pattern.
      *
+     * @param pattern the pattern type.
+     * @return K flux of keys matching {@code pattern}.
+     */
+    Flux<K> keys(String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
      * @param pattern the pattern type: patternkey (pattern).
      * @return K array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
      */
-    Flux<K> keys(K pattern);
+    @Deprecated
+    Flux<K> keysLegacy(K pattern);
 
     /**
      * Find all keys matching the given pattern.
      *
      * @param channel the channel.
-     * @param pattern the pattern.
+     * @param pattern the pattern type.
      * @return Long array-reply list of keys matching {@code pattern}.
      * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
      *             {@link #keys}.
      */
     @Deprecated
-    Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern);
+    Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #keysLegacy}.
+     */
+    @Deprecated
+    Mono<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Atomically transfer a key from a Redis instance to another one.
