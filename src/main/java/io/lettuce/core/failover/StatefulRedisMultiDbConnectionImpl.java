@@ -12,7 +12,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.ClientOptions;
@@ -36,7 +35,6 @@ import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
 import io.lettuce.core.internal.LettuceAssert;
-import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
@@ -71,8 +69,6 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     protected final RedisCodec<K, V> codec;
 
-    protected final Supplier<JsonParser> parser;
-
     protected final Set<PushListener> pushListeners = ConcurrentHashMap.newKeySet();
 
     protected final Set<RedisConnectionStateListener> connectionStateListeners = ConcurrentHashMap.newKeySet();
@@ -86,7 +82,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     private final Lock writeLock = multiDbLock.writeLock();
 
     public StatefulRedisMultiDbConnectionImpl(Map<RedisURI, RedisDatabase<C>> connections, ClientResources resources,
-            RedisCodec<K, V> codec, Supplier<JsonParser> parser, DatabaseConnectionFactory<C, K, V> connectionFactory,
+            RedisCodec<K, V> codec, DatabaseConnectionFactory<C, K, V> connectionFactory,
             HealthStatusManager healthStatusManager) {
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
@@ -95,7 +91,6 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
         this.databases = new ConcurrentHashMap<>(connections);
         this.codec = codec;
-        this.parser = parser;
         this.connectionFactory = connectionFactory;
         this.healthStatusManager = healthStatusManager;
 
@@ -207,7 +202,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
      * @return a new instance
      */
     protected RedisAsyncCommandsImpl<K, V> newRedisAsyncCommandsImpl() {
-        return new RedisAsyncCommandsImpl<>(this, codec, parser);
+        return new RedisAsyncCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
     }
 
     @Override
@@ -221,7 +216,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
      * @return a new instance
      */
     protected RedisReactiveCommandsImpl<K, V> newRedisReactiveCommandsImpl() {
-        return new RedisReactiveCommandsImpl<>(this, codec, parser);
+        return new RedisReactiveCommandsImpl<>(this, codec, () -> this.getOptions().getJsonParser().get());
     }
 
     @Override

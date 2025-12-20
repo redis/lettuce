@@ -6,15 +6,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
-import java.util.function.Supplier;
-
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.failover.health.HealthStatusManager;
-import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
 import io.lettuce.core.pubsub.RedisPubSubListener;
@@ -39,10 +36,9 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
 
     public StatefulRedisMultiDbPubSubConnectionImpl(
             Map<RedisURI, RedisDatabase<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
-            RedisCodec<K, V> codec, Supplier<JsonParser> parser,
-            DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
+            RedisCodec<K, V> codec, DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
             HealthStatusManager healthStatusManager) {
-        super(connections, resources, codec, parser, connectionFactory, healthStatusManager);
+        super(connections, resources, codec, connectionFactory, healthStatusManager);
     }
 
     @Override

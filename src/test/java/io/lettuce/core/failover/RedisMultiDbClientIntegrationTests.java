@@ -14,6 +14,7 @@ import io.lettuce.core.protocol.CommandType;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
 import io.lettuce.core.resource.DefaultEventLoopGroupProvider;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.Wait;
 import io.lettuce.test.resource.FastShutdown;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -133,11 +135,13 @@ class RedisMultiDbClientIntegrationTests extends TestSupport {
 
         TestCommandListener commandListener = new TestCommandListener();
 
-        MultiDbClient client = MultiDbClient.create(clientResources, MultiDbTestSupport.DBs);
-        client.addListener(commandListener);
         ClientOptions options = ClientOptions.builder().timeoutOptions(TimeoutOptions.enabled()).build();
-        // HACK : check how to access setOptions
-        // client.setOptions(options);
+
+        List<DatabaseConfig> databaseConfigs = MultiDbTestSupport.DBs.stream()
+                .map(databaseConfig -> databaseConfig.mutate().clientOptions(options).build()).collect(Collectors.toList());
+
+        MultiDbClient client = MultiDbClient.create(clientResources, databaseConfigs);
+        client.addListener(commandListener);
 
         StatefulRedisConnection<String, String> connection = client.connect();
         connection.setTimeout(Duration.ofMillis(1));
@@ -189,7 +193,7 @@ class RedisMultiDbClientIntegrationTests extends TestSupport {
 
         // given
         MultiDbClient redisFailoverClient1 = MultiDbClient.create(MultiDbTestSupport.DBs);
-        ClientResources clientResources = redisFailoverClient1.getResources();
+        ClientResources clientResources = ReflectionTestUtils.getField(redisFailoverClient1, "clientResources");
         Map<Class<? extends EventExecutorGroup>, EventExecutorGroup> eventLoopGroups = getExecutors(clientResources);
         connectAndClose(redisFailoverClient1);
 

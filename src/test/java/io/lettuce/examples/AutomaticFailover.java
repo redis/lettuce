@@ -54,11 +54,10 @@ public class AutomaticFailover {
                 .socketOptions(SocketOptions.builder().tcpUserTimeout(tcpUserTimeout).keepAlive(keepAliveOptions).build())
                 .build();
 
-        List<DatabaseConfig> databaseConfigs = createDatabaseConfigs(endpoints);
+        List<DatabaseConfig> databaseConfigs = createDatabaseConfigs(clientOptions, endpoints);
         MultiDbClient multiDbClient = MultiDbClient.create(databaseConfigs);
 
         // Automatic failback are not supported in the current Beta release.
-        multiDbClient.setOptions(clientOptions);
 
         // Connect to the MultiDbClient
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
@@ -144,7 +143,7 @@ public class AutomaticFailover {
     /**
      * @return list of DatabaseConfig instances
      */
-    private static List<DatabaseConfig> createDatabaseConfigs(List<String> endpoints) {
+    private static List<DatabaseConfig> createDatabaseConfigs(ClientOptions clientOptions, List<String> endpoints) {
         List<DatabaseConfig> configs = new ArrayList<>();
 
         CircuitBreaker.CircuitBreakerConfig circuitBreakerConfig = CircuitBreaker.CircuitBreakerConfig.builder()
@@ -153,7 +152,7 @@ public class AutomaticFailover {
         // Create a DatabaseConfig for each endpoint
         float weight = 1.0f;
         for (String endpointUri : endpoints) {
-            configs.add(DatabaseConfig.builder(RedisURI.create(endpointUri)).weight(weight)
+            configs.add(DatabaseConfig.builder(RedisURI.create(endpointUri)).weight(weight).clientOptions(clientOptions)
                     .circuitBreakerConfig(circuitBreakerConfig).healthCheckStrategySupplier(PingStrategy.DEFAULT).build());
 
             weight /= 2; // Decrease weight for subsequent endpoints

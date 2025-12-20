@@ -2,7 +2,6 @@ package io.lettuce.core.failover;
 
 import java.util.Collection;
 
-import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.BaseRedisClient;
@@ -34,21 +33,6 @@ public interface MultiDbClient extends BaseRedisClient {
         }
         return new MultiDbClientImpl(resources, databaseConfigs);
     }
-
-    public static MultiDbClient create(ClientOptions options, ClientResources resources,
-            Collection<DatabaseConfig> databaseConfigs) {
-        MultiDbClientImpl client = new MultiDbClientImpl(resources, databaseConfigs);
-        client.setOptions(options);
-        return client;
-    }
-
-    /**
-     * Set the {@link ClientOptions} for the client.
-     *
-     * @param clientOptions the new client options
-     * @throws IllegalArgumentException if {@param clientOptions} is null
-     */
-    public void setOptions(ClientOptions clientOptions);
 
     /**
      * Get the configured Redis URIs.
