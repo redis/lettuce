@@ -4,10 +4,10 @@ import java.util.Collection;
 import java.util.List;
 
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.protocol.CompleteableCommand;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.resource.ClientResources;
+import io.netty.channel.Channel;
 
 /**
  * Database PubSub endpoint implementation for multi-database failover with circuit breaker metrics tracking. Extends
@@ -16,12 +16,16 @@ import io.lettuce.core.resource.ClientResources;
  * @author Ali Takavci
  * @since 7.4
  */
-class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements DatabaseEndpoint {
+class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V>
+        implements DatabaseEndpoint, DatabaseCommandTracker.CommandWriter {
+
+    private final DatabaseCommandTracker tracker;
 
     private CircuitBreaker circuitBreaker;
 
     public DatabasePubSubEndpointImpl(ClientOptions clientOptions, ClientResources clientResources) {
         super(clientOptions, clientResources);
+        this.tracker = new DatabaseCommandTracker(this);
     }
 
     /**
@@ -33,6 +37,20 @@ class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements D
     @Override
     public void bind(CircuitBreaker circuitBreaker) {
         this.circuitBreaker = circuitBreaker;
+        tracker.bind(circuitBreaker);
+    }
+
+    @Override
+    public void notifyChannelActive(Channel channel) {
+        super.notifyChannelActive(channel);
+        tracker.setChannel(channel);
+    }
+
+    @Override
+    public void notifyChannelInactive(Channel channel) {
+        super.notifyChannelInactive(channel);
+        // remove/unbind tracker here
+        tracker.resetChannel(channel);
     }
 
     /**
@@ -46,66 +64,27 @@ class DatabasePubSubEndpointImpl<K, V> extends PubSubEndpoint<K, V> implements D
 
     @Override
     public <K1, V1, T> RedisCommand<K1, V1, T> write(RedisCommand<K1, V1, T> command) {
-        if (circuitBreaker == null) {
-            return super.write(command);
-        }
-        if (!circuitBreaker.isClosed()) {
-            command.completeExceptionally(RedisCircuitBreakerException.INSTANCE);
-            return command;
-        }
-        RedisCommand<K1, V1, T> result;
-        try {
-            // Delegate to parent
-            result = super.write(command);
-        } catch (Exception e) {
-            circuitBreaker.getGeneration().recordResult(e);
-            throw e;
-        }
-
-        // Attach completion callback to track success/failure
-        if (result instanceof CompleteableCommand) {
-            CircuitBreakerGeneration generation = circuitBreaker.getGeneration();
-            @SuppressWarnings("unchecked")
-            CompleteableCommand<T> completeable = (CompleteableCommand<T>) result;
-            completeable.onComplete((o, e) -> generation.recordResult(e));
-        }
-        return result;
+        return tracker.write(command);
     }
 
     @Override
     public <K1, V1> Collection<RedisCommand<K1, V1, ?>> write(Collection<? extends RedisCommand<K1, V1, ?>> commands) {
-        if (circuitBreaker == null) {
-            return super.write(commands);
-        }
-        if (!circuitBreaker.isClosed()) {
-            commands.forEach(c -> c.completeExceptionally(RedisCircuitBreakerException.INSTANCE));
-            return (Collection) commands;
-        }
-        Collection<RedisCommand<K1, V1, ?>> result;
-        try {
-            // Delegate to parent
-            result = super.write(commands);
-        } catch (Exception e) {
-            // TODO: here not sure we should record exception for each command or just once for the batch
-            circuitBreaker.getGeneration().recordResult(e);
-            throw e;
-        }
-
-        // Attach completion callbacks to track success/failure for each command
-        CircuitBreakerGeneration generation = circuitBreaker.getGeneration();
-        for (RedisCommand<K1, V1, ?> command : result) {
-            if (command instanceof CompleteableCommand) {
-                @SuppressWarnings("unchecked")
-                CompleteableCommand<Object> completeable = (CompleteableCommand<Object>) command;
-                completeable.onComplete((o, e) -> generation.recordResult(e));
-            }
-        }
-        return result;
+        return tracker.write(commands);
     }
 
     @Override
     public List<RedisCommand<?, ?, ?>> drainCommands() {
         return super.drainCommands();
+    }
+
+    @Override
+    public <K, V, T> RedisCommand<K, V, T> writeOne(RedisCommand<K, V, T> command) {
+        return super.write(command);
+    }
+
+    @Override
+    public <K, V> Collection<RedisCommand<K, V, ?>> writeMany(Collection<? extends RedisCommand<K, V, ?>> commands) {
+        return super.write(commands);
     }
 
 }
