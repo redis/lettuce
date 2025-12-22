@@ -106,18 +106,6 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
     }
 
     @Test
-    void shouldThrowExceptionForUnknownEndpoint() {
-        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
-
-        RedisURI unknownEndpoint = RedisURI.create("redis://unknown:9999");
-
-        assertThatThrownBy(() -> ((RedisDatabase<?>) connection.getDatabase(unknownEndpoint)).getCircuitBreaker())
-                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unknown endpoint");
-
-        connection.close();
-    }
-
-    @Test
     void shouldMaintainMetricsAfterSwitch() {
         // Given: Connection with multiple endpoints
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();

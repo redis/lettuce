@@ -439,7 +439,11 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     @Override
     public RedisDatabase<C> getDatabase(RedisURI redisURI) {
-        return databases.get(redisURI);
+        RedisDatabase<C> database = databases.get(redisURI);
+        if (database == null) {
+            throw new IllegalArgumentException("Unknown endpoint: " + redisURI);
+        }
+        return database;
     }
 
     @Override
