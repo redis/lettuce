@@ -2,6 +2,7 @@ package io.lettuce.core.failover;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
@@ -83,6 +85,10 @@ class MultiDbClientIntegrationTests {
 
         client = MultiDbClient.create(MultiDbTestSupport.getDatabaseConfigs(uri1, uri2));
         connection = client.connect();
+        await().atMost(Durations.ONE_SECOND).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> {
+            assertThat(connection.isHealthy(uri1)).isTrue();
+            assertThat(connection.isHealthy(uri2)).isTrue();
+        });
 
         // API CHANGE: Original used multiDbClient.setActive(uri2)
         connection.switchTo(uri2);
@@ -240,6 +246,9 @@ class MultiDbClientIntegrationTests {
         // API CHANGE: Original used multiDbClient.addEndpoint(uri2) then multiDbClient.setActive(uri2)
         // Current API: connection.addDatabase(uri2, weight) then connection.switchToDatabase(uri2)
         connection.addDatabase(uri2, 1.0f);
+        await().atMost(Durations.TWO_SECONDS).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> {
+            assertThat(connection.isHealthy(uri2)).isTrue();
+        });
         connection.switchTo(uri2);
 
         // Verify it's active

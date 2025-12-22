@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.AbstractRedisClient;
@@ -29,8 +30,8 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.failover.RedisDatabase.DatabasePredicates;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
@@ -152,11 +153,14 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     private void failoverFrom(RedisDatabase<C> fromDb) {
         RedisDatabase<C> selectedDatabase = getNextHealthyDatabase(fromDb);
+        if (logger.isInfoEnabled()) {
+            logger.info("Failing over from {} to {}", fromDb.getRedisURI(), selectedDatabase.getRedisURI());
+        }
         if (selectedDatabase != null) {
             switchToDatabaseInternal(selectedDatabase.getRedisURI());
             // check if we missed any events during the switch,
             // if selected one is not healthy anymore, failover again
-            if (selectedDatabase.isHealthy()) {
+            if (DatabasePredicates.isHealthyAndCbClosed.test(selectedDatabase)) {
                 return;
             } else {
                 failoverFrom(selectedDatabase);
@@ -174,6 +178,28 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     static class DatabaseComparators {
 
         public static final Comparator<RedisDatabase<?>> byWeight = Comparator.comparingDouble(RedisDatabase::getWeight);
+
+    }
+
+    static class DatabasePredicates {
+
+        public static final Predicate<RedisDatabase<?>> isHealthCheckHealthy = db -> {
+            HealthCheck healthCheck = db.getHealthCheck();
+            // If no health check configured, assume healthy
+            if (healthCheck == null) {
+                return true;
+            }
+            return healthCheck.getStatus() == HealthStatus.HEALTHY;
+        };
+
+        public static final Predicate<RedisDatabase<?>> isCbClosed = db -> db.getCircuitBreaker()
+                .getCurrentState() == CircuitBreaker.State.CLOSED;
+
+        public static final Predicate<RedisDatabase<?>> isHealthyAndCbClosed = isHealthCheckHealthy.and(isCbClosed);
+
+        public static Predicate<RedisDatabase<?>> isNot(RedisDatabase<?> dbInstance) {
+            return db -> !db.equals(dbInstance);
+        }
 
     }
 
@@ -337,13 +363,19 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     @Override
     public void switchTo(RedisURI redisURI) {
         if (switchToDatabaseInternal(redisURI)) {
-            if (!current.isHealthy()) {
+            if (!DatabasePredicates.isHealthyAndCbClosed.test(current)) {
+                if (logger.isInfoEnabled()) {
+                    logger.info("Switched to unhealthy endpoint {}, failing over", redisURI);
+                }
                 failoverFrom(current);
             }
         }
     }
 
     boolean switchToDatabaseInternal(RedisURI redisURI) {
+        if (logger.isInfoEnabled()) {
+            logger.info("Starting switching to endpoint {}", redisURI);
+        }
         AtomicBoolean switched = new AtomicBoolean(false);
         doByExclusiveLock(() -> {
             RedisDatabase<C> fromDb = current;
@@ -360,13 +392,25 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             connectionStateListeners.forEach(listener -> {
                 toDb.getConnection().addListener(listener);
                 fromDb.getConnection().removeListener(listener);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Moved connection state listener {} from {} to {}", listener, fromDb.getRedisURI(),
+                            toDb.getRedisURI());
+                }
             });
             pushListeners.forEach(listener -> {
                 toDb.getConnection().addListener(listener);
                 fromDb.getConnection().removeListener(listener);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Moved push listener {} from {} to {}", listener, fromDb.getRedisURI(), toDb.getRedisURI());
+                }
             });
+
             fromDb.getDatabaseEndpoint().handOverCommandQueue(toDb.getDatabaseEndpoint());
             switched.set(true);
+
+            if (logger.isInfoEnabled()) {
+                logger.info("Switched to endpoint {}", redisURI);
+            }
         });
         return switched.get();
     }
@@ -389,13 +433,13 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         }
     }
 
+    RedisDatabase<C> getCurrentDatabase() {
+        return current;
+    }
+
     @Override
-    public CircuitBreaker getCircuitBreaker(RedisURI endpoint) {
-        RedisDatabase<C> database = databases.get(endpoint);
-        if (database == null) {
-            throw new IllegalArgumentException("Unknown endpoint: " + endpoint);
-        }
-        return database.getCircuitBreaker();
+    public RedisDatabase<C> getDatabase(RedisURI redisURI) {
+        return databases.get(redisURI);
     }
 
     @Override

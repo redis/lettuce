@@ -6,8 +6,11 @@ import java.util.function.Predicate;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.failover.CircuitBreaker.State;
+import io.lettuce.core.failover.api.BaseRedisDatabase;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
+import io.lettuce.core.failover.metrics.MetricsSnapshot;
 
 /**
  * Represents a Redis database with a weight and a connection.
@@ -18,7 +21,7 @@ import io.lettuce.core.failover.health.HealthStatus;
  * @since 7.4
  */
 @Experimental
-public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements Closeable {
+public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements BaseRedisDatabase, Closeable {
 
     private final float weight;
 
@@ -63,10 +66,6 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
         return circuitBreaker;
     }
 
-    public boolean isHealthy() {
-        return DatabasePredicates.isHealthyAndCbClosed.test(this) && connection.isOpen();
-    }
-
     /**
      * Get the health check for this database.
      *
@@ -82,26 +81,19 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements C
         circuitBreaker.close();
     }
 
-    static class DatabasePredicates {
+    @Override
+    public MetricsSnapshot getMetricsSnapshot() {
+        return circuitBreaker.getSnapshot();
+    }
 
-        public static final Predicate<RedisDatabase<?>> isHealthCheckHealthy = db -> {
-            HealthCheck healthCheck = db.getHealthCheck();
-            // If no health check configured, assume healthy
-            if (healthCheck == null) {
-                return true;
-            }
-            return healthCheck.getStatus() == HealthStatus.HEALTHY;
-        };
+    @Override
+    public HealthStatus getHealthCheckStatus() {
+        return healthCheck != null ? healthCheck.getStatus() : HealthStatus.UNKNOWN;
+    }
 
-        public static final Predicate<RedisDatabase<?>> isCbClosed = db -> db.getCircuitBreaker()
-                .getCurrentState() == CircuitBreaker.State.CLOSED;
-
-        public static final Predicate<RedisDatabase<?>> isHealthyAndCbClosed = isHealthCheckHealthy.and(isCbClosed);
-
-        public static Predicate<RedisDatabase<?>> isNot(RedisDatabase<?> dbInstance) {
-            return db -> !db.equals(dbInstance);
-        }
-
+    @Override
+    public State getCircuitBreakerState() {
+        return circuitBreaker.getCurrentState();
     }
 
 }

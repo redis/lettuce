@@ -37,6 +37,7 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
+import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -446,6 +447,9 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         RedisURI newUri = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(6))
                 .withPassword(TestSettings.password()).build();
         connection.addDatabase(newUri, 1.0f);
+        await().atMost(Durations.TWO_SECONDS).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> {
+            assertThat(connection.isHealthy(newUri)).isTrue();
+        });
 
         // Switch to it
         connection.switchTo(newUri);

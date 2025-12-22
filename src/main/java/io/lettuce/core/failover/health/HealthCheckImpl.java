@@ -151,6 +151,7 @@ public class HealthCheckImpl implements HealthCheck {
             t.setDaemon(true);
             return t;
         });
+        log.debug("Created health check for {}", endpoint);
     }
 
     @Override
@@ -280,7 +281,9 @@ public class HealthCheckImpl implements HealthCheck {
         });
 
         if (wasUpdated.get() && oldResult.getStatus() != status) {
-            log.info("Health status changed for {} from {} to {}", endpoint, oldResult.getStatus(), status);
+            if (log.isInfoEnabled()) {
+                log.info("Health status changed for {} from {} to {}", endpoint, oldResult.getStatus(), status);
+            }
             // notify listeners
             notifyListeners(oldResult.getStatus(), status);
         }

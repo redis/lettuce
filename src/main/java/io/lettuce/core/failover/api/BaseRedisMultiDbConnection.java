@@ -44,13 +44,13 @@ public interface BaseRedisMultiDbConnection {
     boolean isHealthy(RedisURI endpoint);
 
     /**
-     * Get the circuit breaker for a specific endpoint.
+     * Get the {@link BaseRedisDatabase} for a specific endpoint.
      *
-     * @param endpoint the Redis endpoint URI
-     * @return the circuit breaker for the endpoint
+     * @param redisURI the Redis endpoint URI
+     * @return the {@link BaseRedisDatabase} for the endpoint
      * @throws IllegalArgumentException if the endpoint is not known
      */
-    CircuitBreaker getCircuitBreaker(RedisURI endpoint);
+    BaseRedisDatabase getDatabase(RedisURI redisURI);
 
     /**
      * Add a new database to the multi-database connection.

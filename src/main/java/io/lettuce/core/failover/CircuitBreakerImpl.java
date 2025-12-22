@@ -50,6 +50,10 @@ class CircuitBreakerImpl implements CircuitBreaker {
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
         this.stateRef = new AtomicReference<>(new CircuitBreakerStateHolder(this,
                 MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
+
+        if (log.isInfoEnabled()) {
+            log.info("Created circuit breaker for {}", redisURI);
+        }
     }
 
     public RedisURI getEndpoint() {
@@ -75,7 +79,8 @@ class CircuitBreakerImpl implements CircuitBreaker {
     @Override
     public String toString() {
         CircuitBreakerStateHolder current = stateRef.get();
-        return "CircuitBreaker{" + "state=" + current.state + ", metrics=" + current.metrics + ", config=" + config + '}';
+        return "CircuitBreaker{" + "redisURI=" + redisURI + "state=" + current.state + ", metrics=" + current.metrics
+                + ", config=" + config + '}';
     }
 
     boolean isCircuitBreakerTrackedException(Throwable throwable) {
@@ -182,6 +187,9 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
             // Atomically swap if current state hasn't changed
             if (stateRef.compareAndSet(current, next)) {
+                if (log.isInfoEnabled()) {
+                    log.info("Circuit breaker for {} transitioned from {} to {}", redisURI, current.state, newState);
+                }
                 fireStateChanged(current.state, newState);
                 return;
             }

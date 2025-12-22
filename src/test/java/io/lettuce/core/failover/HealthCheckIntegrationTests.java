@@ -623,7 +623,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                 assertThat(actualRunIdBeforeFailover).isEqualTo(expectedRunIdUri1);
 
                 // And: Verify circuit breaker is CLOSED initially
-                CircuitBreaker cb1 = connection.getCircuitBreaker(uri1);
+                CircuitBreaker cb1 = ((RedisDatabase<?>) connection.getDatabase(URI1)).getCircuitBreaker();
                 assertThat(cb1.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
 
                 // When: Record failures to trigger circuit breaker (need 2 failures with 50% rate)
