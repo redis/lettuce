@@ -220,12 +220,9 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
                     factoryProvider.getThreadFactory("lettuce-eventExecutorLoop"));
         }
 
-        EventLoopResources nioResources = NioProvider.getResources();
-
-        if (nioResources.matches(type)) {
-            return nioResources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory("lettuce-nioEventLoop"));
-        }
-
+        // Check native transports FIRST (priority order: Epoll > Kqueue > IOUring)
+        // This ensures native transports are used when available, even though all providers
+        // now match MultiThreadIoEventLoopGroup.class in Netty 4.2
         if (EpollProvider.isAvailable()) {
 
             EventLoopResources resources = EpollProvider.getResources();
@@ -253,6 +250,13 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
                 return resources.newEventLoopGroup(numberOfThreads,
                         factoryProvider.getThreadFactory("lettuce-io_uringEventLoop"));
             }
+        }
+
+        // NIO as fallback (checked LAST)
+        EventLoopResources nioResources = NioProvider.getResources();
+
+        if (nioResources.matches(type)) {
+            return nioResources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory("lettuce-nioEventLoop"));
         }
 
         throw new IllegalArgumentException(String.format("Type %s not supported", type.getName()));
