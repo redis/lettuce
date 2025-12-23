@@ -4,6 +4,32 @@ x-client-libs-stack-image: &client-libs-stack-image
   image: "redislabs/client-libs-test:${REDIS_STACK_VERSION:-8.4.0}"
 
 services:
+  # Test infrastructure used for simulating network issues to test multi-db client failover
+  # includes standalone redis instances with toxiproxy in front of them allowing enabling/disabling
+  # access to the redis instances
+  toxiproxy:
+    image: ghcr.io/shopify/toxiproxy:2.8.0
+    ports:
+      - "8474:8474"   # Admin API
+      - "9479:9479"   # Proxy port for redis instance 1
+      - "9480:9480"   # Proxy port for redis instance 2
+    networks:
+      - redis-network
+
+  redis-standalone-multi:
+    <<: *client-libs-image
+    container_name: redis-failover
+    environment:
+      - PORT=6487
+      - NODES=2
+    volumes:
+      - ${REDIS_ENV_WORK_DIR}/redis-standalone-multi/work:/redis/work:rw
+    ports:
+      - "6487:6487"
+      - "6488:6488"
+    networks:
+      - redis-network
+
   # Standalone Redis Servers
   redis-standalone-0:
     <<: *client-libs-image
