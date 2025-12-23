@@ -225,7 +225,8 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
         EventLoopResources resources = Transports.eventLoopResources();
 
         // Verify the requested type matches the selected resources
-        if (resources.eventLoopGroupClass().equals(type)) {
+        // Support both the new MultiThreadIoEventLoopGroup and deprecated NioEventLoopGroup for backward compatibility
+        if (resources.eventLoopGroupClass().equals(type) || resources.matches(type)) {
             return resources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory(resources.threadNamePrefix()));
         }
 
