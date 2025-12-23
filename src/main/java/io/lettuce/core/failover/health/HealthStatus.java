@@ -52,6 +52,10 @@ public enum HealthStatus {
      * The endpoint is unhealthy according to health check probes. Health checks are failing, indicating the endpoint is not
      * responding or not meeting health criteria.
      */
-    UNHEALTHY
+    UNHEALTHY;
+
+    public boolean isHealthy() {
+        return this == HEALTHY;
+    }
 
 }

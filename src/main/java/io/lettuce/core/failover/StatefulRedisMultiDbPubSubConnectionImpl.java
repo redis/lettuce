@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
@@ -89,12 +90,12 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @Override
-    boolean switchToDatabaseInternal(RedisURI redisURI) {
-        RedisDatabase<StatefulRedisPubSubConnection<K, V>> fromDb = current;
+    boolean safeSwitch(RedisDatabase<?> database) {
         AtomicBoolean switched = new AtomicBoolean(false);
         doByExclusiveLock(() -> {
-            switched.set(super.switchToDatabaseInternal(redisURI));
-            if (!switched.get()) {
+            RedisDatabase<StatefulRedisPubSubConnection<K, V>> fromDb = current;
+            switched.set(super.safeSwitch(database));
+            if (fromDb == current) {
                 return;
             }
             pubSubListeners.forEach(listener -> {

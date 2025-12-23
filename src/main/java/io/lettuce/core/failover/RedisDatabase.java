@@ -1,7 +1,7 @@
 package io.lettuce.core.failover;
 
 import java.io.Closeable;
-import java.util.function.Predicate;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
@@ -23,6 +23,8 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
 @Experimental
 public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements BaseRedisDatabase, Closeable {
 
+    private static final AtomicInteger ID_COUNTER = new AtomicInteger(1);
+
     private final float weight;
 
     private final C connection;
@@ -35,15 +37,22 @@ public class RedisDatabase<C extends StatefulRedisConnection<?, ?>> implements B
 
     private final HealthCheck healthCheck;
 
+    private final String id;
+
     public RedisDatabase(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint, CircuitBreaker circuitBreaker,
             HealthCheck healthCheck) {
 
+        this.id = config.getRedisURI().toString() + "-" + ID_COUNTER.getAndIncrement();
         this.redisURI = config.getRedisURI();
         this.weight = config.getWeight();
         this.connection = connection;
         this.databaseEndpoint = databaseEndpoint;
         this.circuitBreaker = circuitBreaker;
         this.healthCheck = healthCheck;
+    }
+
+    public String getId() {
+        return id;
     }
 
     public float getWeight() {

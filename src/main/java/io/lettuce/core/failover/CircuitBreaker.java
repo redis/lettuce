@@ -10,7 +10,6 @@ import java.util.concurrent.TimeoutException;
 
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
@@ -31,11 +30,11 @@ import io.lettuce.core.internal.LettuceAssert;
 public interface CircuitBreaker extends Closeable {
 
     /**
-     * Get the endpoint for which this circuit breaker is configured.
+     * Get the ID for this circuit breaker.
      *
-     * @return the endpoint
+     * @return the ID
      */
-    RedisURI getEndpoint();
+    public String getId();
 
     /**
      * Get a snapshot of the current metrics within the time window. Use the snapshot to access success count, failure count,
@@ -85,7 +84,13 @@ public interface CircuitBreaker extends Closeable {
     void close();
 
     enum State {
-        CLOSED, OPEN
+
+        CLOSED, OPEN;
+
+        public boolean isClosed() {
+            return this == CLOSED;
+        }
+
     }
 
     class CircuitBreakerConfig {

@@ -9,7 +9,6 @@ import io.lettuce.core.internal.LettuceAssert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
 import io.lettuce.core.failover.metrics.CircuitBreakerMetrics;
 import io.lettuce.core.failover.metrics.MetricsFactory;
@@ -37,27 +36,29 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
     private final Set<Class<? extends Throwable>> trackedExceptions;
 
-    private RedisURI redisURI;
+    private final String id;
 
     /**
      * Create a circuit breaker instance.
      */
-    public CircuitBreakerImpl(RedisURI redisURI, CircuitBreakerConfig config) {
+    public CircuitBreakerImpl(CircuitBreakerConfig config) {
         LettuceAssert.notNull(config, "CircuitBreakerConfig must not be null");
 
+        this.id = Integer.toString(hashCode());
         this.config = config;
-        this.redisURI = redisURI;
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
         this.stateRef = new AtomicReference<>(new CircuitBreakerStateHolder(this,
                 MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
-
-        if (log.isInfoEnabled()) {
-            log.info("Created circuit breaker for {}", redisURI);
-        }
     }
 
-    public RedisURI getEndpoint() {
-        return redisURI;
+    /**
+     * Get the ID for this circuit breaker.
+     *
+     * @return the ID
+     */
+    @Override
+    public String getId() {
+        return id;
     }
 
     /**
@@ -79,8 +80,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
     @Override
     public String toString() {
         CircuitBreakerStateHolder current = stateRef.get();
-        return "CircuitBreaker{" + "redisURI=" + redisURI + "state=" + current.state + ", metrics=" + current.metrics
-                + ", config=" + config + '}';
+        return "CircuitBreaker{" + "state=" + current.state + ", metrics=" + current.metrics + ", config=" + config + '}';
     }
 
     boolean isCircuitBreakerTrackedException(Throwable throwable) {
@@ -188,7 +188,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
             // Atomically swap if current state hasn't changed
             if (stateRef.compareAndSet(current, next)) {
                 if (log.isInfoEnabled()) {
-                    log.info("Circuit breaker for {} transitioned from {} to {}", redisURI, current.state, newState);
+                    log.info("Circuit breaker for {} transitioned from {} to {}", current.state, newState);
                 }
                 fireStateChanged(current.state, newState);
                 return;

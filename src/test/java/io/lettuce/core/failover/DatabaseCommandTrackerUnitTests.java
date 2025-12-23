@@ -31,6 +31,7 @@ import org.junit.jupiter.api.*;
 
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.failover.CircuitBreaker.CircuitBreakerConfig;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
@@ -60,6 +61,8 @@ class DatabaseCommandTrackerUnitTests {
     private DatabaseCommandTracker tracker;
 
     private CircuitBreaker circuitBreaker;
+
+    private static final RedisURI URI = new RedisURI();
 
     @BeforeEach
     void setUp() {

@@ -132,9 +132,6 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         when(circuitBreaker1.getCurrentState()).thenReturn(CircuitBreaker.State.CLOSED);
         when(circuitBreaker2.getCurrentState()).thenReturn(CircuitBreaker.State.CLOSED);
         when(circuitBreaker3.getCurrentState()).thenReturn(CircuitBreaker.State.CLOSED);
-        when(circuitBreaker1.getEndpoint()).thenReturn(uri1);
-        when(circuitBreaker2.getEndpoint()).thenReturn(uri2);
-        when(circuitBreaker3.getEndpoint()).thenReturn(uri3);
 
         // Setup health checks
         when(healthCheck1.getStatus()).thenReturn(HealthStatus.HEALTHY);
@@ -172,8 +169,8 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @Test
         @DisplayName("Should throw IllegalArgumentException when connections is null")
         void shouldThrowWhenConnectionsIsNull() {
-            assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(null, clientResources, codec, parser,
-                    connectionFactory, healthStatusManager)).isInstanceOf(IllegalArgumentException.class)
+            assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(null, clientResources, codec, connectionFactory,
+                    healthStatusManager)).isInstanceOf(IllegalArgumentException.class)
                             .hasMessageContaining("connections must not be empty");
         }
 
@@ -181,7 +178,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @DisplayName("Should throw IllegalArgumentException when connections is empty")
         void shouldThrowWhenConnectionsIsEmpty() {
             Map<RedisURI, RedisDatabase<StatefulRedisConnection<String, String>>> emptyMap = new HashMap<>();
-            assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(emptyMap, clientResources, codec, parser,
+            assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(emptyMap, clientResources, codec,
                     connectionFactory, healthStatusManager)).isInstanceOf(IllegalArgumentException.class)
                             .hasMessageContaining("connections must not be empty");
         }
@@ -189,8 +186,9 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @Test
         @DisplayName("Should throw IllegalArgumentException when healthStatusManager is null")
         void shouldThrowWhenHealthStatusManagerIsNull() {
-            assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser,
-                    connectionFactory, null)).isInstanceOf(IllegalArgumentException.class)
+            assertThatThrownBy(
+                    () -> new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory, null))
+                            .isInstanceOf(IllegalArgumentException.class)
                             .hasMessageContaining("healthStatusManager must not be null");
         }
 
@@ -198,7 +196,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @DisplayName("Should initialize with healthy database as current")
         void shouldInitializeWithHealthyDatabase() {
             StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
-                    databases, clientResources, codec, parser, connectionFactory, healthStatusManager);
+                    databases, clientResources, codec, connectionFactory, healthStatusManager);
 
             assertThat(connection.getCurrentDatabase()).isNotNull();
             assertThat(connection.getCurrentEndpoint()).isIn(uri1, uri2, uri3);
@@ -207,8 +205,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @Test
         @DisplayName("Should register circuit breaker listeners for all databases")
         void shouldRegisterCircuitBreakerListeners() {
-            new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
-                    healthStatusManager);
+            new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory, healthStatusManager);
 
             verify(circuitBreaker1).addListener(any());
             verify(circuitBreaker2).addListener(any());
@@ -218,8 +215,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @Test
         @DisplayName("Should register health status listeners for all databases")
         void shouldRegisterHealthStatusListeners() {
-            new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
-                    healthStatusManager);
+            new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory, healthStatusManager);
 
             verify(healthStatusManager).registerListener(eq(uri1), any());
             verify(healthStatusManager).registerListener(eq(uri2), any());
@@ -230,7 +226,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @DisplayName("Should select database with highest weight when all are healthy")
         void shouldSelectHighestWeightDatabase() {
             StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
-                    databases, clientResources, codec, parser, connectionFactory, healthStatusManager);
+                    databases, clientResources, codec, connectionFactory, healthStatusManager);
 
             // db1 has weight 1.0, which is the highest
             assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
@@ -247,7 +243,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 
@@ -299,7 +295,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 
@@ -336,7 +332,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 
@@ -386,7 +382,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 
@@ -456,7 +452,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 
@@ -520,7 +516,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 
@@ -629,7 +625,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
 
             when(newCircuitBreaker.getCurrentState()).thenReturn(CircuitBreaker.State.CLOSED);
@@ -719,7 +715,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 
@@ -791,7 +787,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 
@@ -825,7 +821,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 
@@ -862,7 +858,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         @BeforeEach
         void setUp() {
-            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, parser, connectionFactory,
+            connection = new StatefulRedisMultiDbConnectionImpl<>(databases, clientResources, codec, connectionFactory,
                     healthStatusManager);
         }
 

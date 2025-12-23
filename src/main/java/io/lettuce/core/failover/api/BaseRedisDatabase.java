@@ -7,6 +7,8 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
 
 public interface BaseRedisDatabase {
 
+    String getId();
+
     float getWeight();
 
     RedisURI getRedisURI();
