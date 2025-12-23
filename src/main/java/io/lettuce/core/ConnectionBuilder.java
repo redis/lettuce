@@ -41,6 +41,7 @@ import io.lettuce.core.protocol.ReconnectionListener;
 import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.EpollProvider;
+import io.lettuce.core.resource.EventLoopResources;
 import io.lettuce.core.resource.IOUringProvider;
 import io.lettuce.core.resource.KqueueProvider;
 import io.lettuce.core.resource.Transports;
@@ -263,16 +264,16 @@ public class ConnectionBuilder {
         LettuceAssert.assertState(bootstrap != null, "Bootstrap must be set");
         LettuceAssert.assertState(clientOptions != null, "ClientOptions must be set");
 
-        Class<? extends EventLoopGroup> eventLoopGroupClass = Transports.eventLoopGroupClass();
-
-        Class<? extends Channel> channelClass = Transports.socketChannelClass();
+        EventLoopResources resources = Transports.eventLoopResources();
+        Class<? extends EventLoopGroup> eventLoopGroupClass = resources.eventLoopGroupClass();
+        Class<? extends Channel> channelClass;
 
         if (domainSocket) {
 
             Transports.NativeTransports.assertDomainSocketAvailable();
-            eventLoopGroupClass = Transports.NativeTransports.eventLoopGroupClass(true);
-            channelClass = Transports.NativeTransports.domainSocketChannelClass();
+            channelClass = resources.domainSocketChannelClass();
         } else {
+            channelClass = resources.socketChannelClass();
             bootstrap.resolver(clientResources.addressResolverGroup());
         }
 

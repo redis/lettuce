@@ -170,6 +170,13 @@ public class KqueueProvider {
             return null;
         }
 
+        @Override
+        public String threadNamePrefix() {
+
+            checkForKqueueLibrary();
+            return null;
+        }
+
     }
 
     /**
@@ -236,6 +243,11 @@ public class KqueueProvider {
             checkForKqueueLibrary();
 
             return new DomainSocketAddress(socketPath);
+        }
+
+        @Override
+        public String threadNamePrefix() {
+            return "lettuce-kqueueEventLoop";
         }
 
     }

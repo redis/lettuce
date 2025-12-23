@@ -181,6 +181,11 @@ public class IOUringProvider {
             return new DomainSocketAddress(socketPath);
         }
 
+        @Override
+        public String threadNamePrefix() {
+            return "lettuce-io_uringEventLoop";
+        }
+
     }
 
 }

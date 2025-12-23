@@ -120,8 +120,8 @@ public class DefaultClientResources implements ClientResources {
      * Default {@link AddressResolverGroup}.
      */
     public static final AddressResolverGroup<?> DEFAULT_ADDRESS_RESOLVER_GROUP = new DnsAddressResolverGroup(
-            new DnsNameResolverBuilder().datagramChannelType(Transports.datagramChannelClass())
-                    .socketChannelType(Transports.socketChannelClass().asSubclass(SocketChannel.class))
+            new DnsNameResolverBuilder().datagramChannelType(Transports.eventLoopResources().datagramChannelClass())
+                    .socketChannelType(Transports.eventLoopResources().socketChannelClass().asSubclass(SocketChannel.class))
                     .cnameCache(new DefaultDnsCnameCache()).resolveCache(new DefaultDnsCache()));
 
     static {

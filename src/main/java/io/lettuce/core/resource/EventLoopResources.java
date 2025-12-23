@@ -41,8 +41,13 @@ public interface EventLoopResources {
      *
      * @param type must not be {@code null}.
      * @return {@code true} if {@code type} is a {@link EventExecutorGroup} of the underlying loop resources.
+     * @deprecated since 7.3.0, use {@link Transports#eventLoopResources()} to obtain the appropriate {@link EventLoopResources}
+     *             instead of checking type compatibility. This method will be removed in 8.0.
      */
-    boolean matches(Class<? extends EventExecutorGroup> type);
+    @Deprecated
+    default boolean matches(Class<? extends EventExecutorGroup> type) {
+        return eventLoopGroupClass().equals(type);
+    }
 
     /**
      * @return the {@link EventLoopGroup} class.
@@ -79,5 +84,13 @@ public interface EventLoopResources {
      * @return a domain socket address object.
      */
     SocketAddress newSocketAddress(String socketPath);
+
+    /**
+     * Returns the thread name prefix for event loop threads created by this provider.
+     *
+     * @return the thread name prefix (e.g., "lettuce-nioEventLoop", "lettuce-epollEventLoop")
+     * @since 7.3.0
+     */
+    String threadNamePrefix();
 
 }

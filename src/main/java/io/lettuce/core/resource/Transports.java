@@ -3,10 +3,7 @@ package io.lettuce.core.resource;
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
-import io.netty.channel.socket.nio.NioDatagramChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
@@ -22,38 +19,53 @@ public class Transports {
 
     /**
      * @return the default {@link EventLoopGroup} for socket transport that is compatible with {@link #socketChannelClass()}.
+     * @deprecated since 7.3.0, use {@link #eventLoopResources()} to obtain {@link EventLoopResources} and call
+     *             {@link EventLoopResources#eventLoopGroupClass()}. This method will be removed in 8.0.
      */
+    @Deprecated
     public static Class<? extends EventLoopGroup> eventLoopGroupClass() {
-
-        if (NativeTransports.isAvailable()) {
-            return NativeTransports.eventLoopGroupClass();
-        }
-
-        return NioProvider.getResources().eventLoopGroupClass();
+        return eventLoopResources().eventLoopGroupClass();
     }
 
     /**
      * @return the default {@link Channel} for socket (network/TCP) transport.
+     * @deprecated since 7.3.0, use {@link #eventLoopResources()} to obtain {@link EventLoopResources} and call
+     *             {@link EventLoopResources#socketChannelClass()}. This method will be removed in 8.0.
      */
+    @Deprecated
     public static Class<? extends Channel> socketChannelClass() {
-
-        if (NativeTransports.isAvailable()) {
-            return NativeTransports.socketChannelClass();
-        }
-
-        return NioSocketChannel.class;
+        return eventLoopResources().socketChannelClass();
     }
 
     /**
      * @return the default {@link DatagramChannel} for socket (network/UDP) transport.
+     * @deprecated since 7.3.0, use {@link #eventLoopResources()} to obtain {@link EventLoopResources} and call
+     *             {@link EventLoopResources#datagramChannelClass()}. This method will be removed in 8.0.
      */
+    @Deprecated
     public static Class<? extends DatagramChannel> datagramChannelClass() {
+        return eventLoopResources().datagramChannelClass();
+    }
+
+    /**
+     * Returns the best available {@link EventLoopResources} based on the runtime environment. This method selects native
+     * transports (Epoll, Kqueue, IOUring) when available, falling back to NIO otherwise.
+     * <p>
+     * Priority order: Epoll &gt; Kqueue &gt; IOUring &gt; NIO
+     * <p>
+     * The returned {@link EventLoopResources} automatically handles domain socket support. When both Epoll and IOUring are
+     * available, Epoll is selected (as it supports domain sockets while IOUring does not).
+     *
+     * @return the best available {@link EventLoopResources}
+     * @since 7.3.0
+     */
+    public static EventLoopResources eventLoopResources() {
 
         if (NativeTransports.isAvailable()) {
-            return NativeTransports.datagramChannelClass();
+            return NativeTransports.RESOURCES;
         }
 
-        return NioDatagramChannel.class;
+        return NioProvider.getResources();
     }
 
     /**
@@ -63,8 +75,8 @@ public class Transports {
 
         private static final InternalLogger transportsLogger = InternalLoggerFactory.getInstance(Transports.class);
 
-        static EventLoopResources RESOURCES = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
-                : IOUringProvider.isAvailable() ? IOUringProvider.getResources() : EpollProvider.getResources();
+        static EventLoopResources RESOURCES = EpollProvider.isAvailable() ? EpollProvider.getResources()
+                : KqueueProvider.isAvailable() ? KqueueProvider.getResources() : IOUringProvider.getResources();
 
         /**
          * @return {@code true} if a native transport is available.
@@ -85,46 +97,60 @@ public class Transports {
 
         /**
          * @return the native transport socket {@link Channel} class.
+         * @deprecated since 7.3.0, use {@link Transports#eventLoopResources()} to obtain {@link EventLoopResources} and call
+         *             {@link EventLoopResources#socketChannelClass()}. This method will be removed in 8.0.
          */
+        @Deprecated
         static Class<? extends Channel> socketChannelClass() {
             return RESOURCES.socketChannelClass();
         }
 
         /**
          * @return the native transport socket {@link DatagramChannel} class.
+         * @deprecated since 7.3.0, use {@link Transports#eventLoopResources()} to obtain {@link EventLoopResources} and call
+         *             {@link EventLoopResources#datagramChannelClass()}. This method will be removed in 8.0.
          */
+        @Deprecated
         static Class<? extends DatagramChannel> datagramChannelClass() {
             return RESOURCES.datagramChannelClass();
         }
 
         /**
          * @return the native transport domain socket {@link Channel} class.
+         * @deprecated since 7.3.0, use {@link Transports#eventLoopResources()} to obtain {@link EventLoopResources} and call
+         *             {@link EventLoopResources#domainSocketChannelClass()}. With the corrected transport priority order (Epoll
+         *             &gt; Kqueue &gt; IOUring), the returned resources automatically handle domain socket support. This method
+         *             will be removed in 8.0.
          */
+        @Deprecated
         public static Class<? extends Channel> domainSocketChannelClass() {
             assertDomainSocketAvailable();
-            return EpollProvider.isAvailable() && IOUringProvider.isAvailable()
-                    ? EpollProvider.getResources().domainSocketChannelClass()
-                    : RESOURCES.domainSocketChannelClass();
+            return RESOURCES.domainSocketChannelClass();
         }
 
         /**
-         * @return the native transport {@link EventLoopGroup} class. Defaults to TCP sockets. See
-         *         {@link #eventLoopGroupClass(boolean)} to request a specific EventLoopGroup for Domain Socket usage.
+         * @return the native transport {@link EventLoopGroup} class.
+         * @deprecated since 7.3.0, use {@link Transports#eventLoopResources()} to obtain {@link EventLoopResources} and call
+         *             {@link EventLoopResources#eventLoopGroupClass()}. This method will be removed in 8.0.
          */
+        @Deprecated
         public static Class<? extends EventLoopGroup> eventLoopGroupClass() {
-            return eventLoopGroupClass(false);
+            return RESOURCES.eventLoopGroupClass();
         }
 
         /**
          * @return the native transport {@link EventLoopGroup} class.
          * @param domainSocket {@code true} to indicate Unix Domain Socket usage, {@code false} otherwise.
+         * @deprecated since 7.3.0, the {@code domainSocket} parameter is no longer needed. Use
+         *             {@link Transports#eventLoopResources()} to obtain {@link EventLoopResources} and call
+         *             {@link EventLoopResources#eventLoopGroupClass()}. With the corrected transport priority order (Epoll &gt;
+         *             Kqueue &gt; IOUring), the returned resources automatically handle domain socket support. This method will
+         *             be removed in 8.0.
          * @since 6.3.3
          */
+        @Deprecated
         public static Class<? extends EventLoopGroup> eventLoopGroupClass(boolean domainSocket) {
-
-            return domainSocket && EpollProvider.isAvailable() && IOUringProvider.isAvailable()
-                    ? EpollProvider.getResources().eventLoopGroupClass()
-                    : RESOURCES.eventLoopGroupClass();
+            return RESOURCES.eventLoopGroupClass();
         }
 
         public static void assertDomainSocketAvailable() {

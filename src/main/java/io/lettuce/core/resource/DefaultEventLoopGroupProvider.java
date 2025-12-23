@@ -220,43 +220,13 @@ public class DefaultEventLoopGroupProvider implements EventLoopGroupProvider {
                     factoryProvider.getThreadFactory("lettuce-eventExecutorLoop"));
         }
 
-        // Check native transports FIRST (priority order: Epoll > Kqueue > IOUring)
-        // This ensures native transports are used when available, even though all providers
-        // now match MultiThreadIoEventLoopGroup.class in Netty 4.2
-        if (EpollProvider.isAvailable()) {
+        // Use Transports.eventLoopResources() to get the best available transport
+        // This automatically handles the priority order: Epoll > Kqueue > IOUring > NIO
+        EventLoopResources resources = Transports.eventLoopResources();
 
-            EventLoopResources resources = EpollProvider.getResources();
-
-            if (resources.matches(type)) {
-                return resources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory("lettuce-epollEventLoop"));
-            }
-        }
-
-        if (KqueueProvider.isAvailable()) {
-
-            EventLoopResources resources = KqueueProvider.getResources();
-
-            if (resources.matches(type)) {
-                return resources.newEventLoopGroup(numberOfThreads,
-                        factoryProvider.getThreadFactory("lettuce-kqueueEventLoop"));
-            }
-        }
-
-        if (IOUringProvider.isAvailable()) {
-
-            EventLoopResources resources = IOUringProvider.getResources();
-
-            if (resources.matches(type)) {
-                return resources.newEventLoopGroup(numberOfThreads,
-                        factoryProvider.getThreadFactory("lettuce-io_uringEventLoop"));
-            }
-        }
-
-        // NIO as fallback (checked LAST)
-        EventLoopResources nioResources = NioProvider.getResources();
-
-        if (nioResources.matches(type)) {
-            return nioResources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory("lettuce-nioEventLoop"));
+        // Verify the requested type matches the selected resources
+        if (resources.eventLoopGroupClass().equals(type)) {
+            return resources.newEventLoopGroup(numberOfThreads, factoryProvider.getThreadFactory(resources.threadNamePrefix()));
         }
 
         throw new IllegalArgumentException(String.format("Type %s not supported", type.getName()));
