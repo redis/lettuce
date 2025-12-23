@@ -539,10 +539,14 @@ class PooledClusterConnectionProvider<K, V> implements ClusterConnectionProvider
             return false;
         }
 
-        if (connectionKey.host != null && partitions.getPartition(connectionKey.host, connectionKey.port) != null) {
-            return false;
-        }
+        RedisClusterNode node = partitions.getPartition(connectionKey.host, connectionKey.port);
 
+        if (connectionKey.host != null && node != null) {
+            if (connectionKey.intent == Intent.READ && node.getRole() == RedisInstance.Role.MASTER) {
+                return true;
+            }
+            return connectionKey.intent == Intent.WRITE && node.getRole() == RedisInstance.Role.SLAVE;
+        }
         return true;
     }
 
