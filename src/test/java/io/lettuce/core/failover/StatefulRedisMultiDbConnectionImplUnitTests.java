@@ -480,8 +480,8 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         void shouldThrowWhenSwitchingToUnknownDatabase() {
             RedisURI unknownUri = RedisURI.create("redis://unknown:6379");
 
-            assertThatThrownBy(() -> connection.switchTo(unknownUri)).isInstanceOf(UnsupportedOperationException.class)
-                    .hasMessageContaining("Unable to switch between endpoints");
+            assertThatThrownBy(() -> connection.switchTo(unknownUri)).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Unknown endpoint");
         }
 
         @Test

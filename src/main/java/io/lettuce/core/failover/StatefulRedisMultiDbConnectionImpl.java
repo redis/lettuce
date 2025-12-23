@@ -382,6 +382,9 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     @Override
     public boolean switchTo(RedisURI redisURI) {
         RedisDatabase<C> target = databases.get(redisURI);
+        if (target == null) {
+            throw new IllegalArgumentException("Unknown endpoint: " + redisURI);
+        }
         if (safeSwitch(target)) {
             logger.info("Switched to database {}", target.getId());
             // if target got unhealthy along the way, failover from it
