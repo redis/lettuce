@@ -53,4 +53,9 @@ enum UnavailableResources implements EventLoopResources {
         return null;
     }
 
+    @Override
+    public String threadNamePrefix() {
+        return null;
+    }
+
 }

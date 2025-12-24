@@ -49,7 +49,6 @@ import io.lettuce.core.protocol.ConnectionWatchdog;
 import io.lettuce.core.protocol.RedisHandshakeHandler;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
-import io.lettuce.core.resource.Transports;
 import io.lettuce.core.resource.Transports.NativeTransports;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
@@ -254,22 +253,6 @@ public abstract class AbstractRedisClient implements AutoCloseable {
         connectionBuilder.channelGroup(channels).connectionEvents(connectionEvents == this.connectionEvents ? connectionEvents
                 : ConnectionEvents.of(this.connectionEvents, connectionEvents));
         connectionBuilder.socketAddressSupplier(socketAddressSupplier);
-    }
-
-    protected void channelType(ConnectionBuilder connectionBuilder, ConnectionPoint connectionPoint) {
-
-        LettuceAssert.notNull(connectionPoint, "ConnectionPoint must not be null");
-
-        boolean domainSocket = LettuceStrings.isNotEmpty(connectionPoint.getSocket());
-        connectionBuilder.bootstrap().group(getEventLoopGroup(
-                domainSocket ? NativeTransports.eventLoopGroupClass(true) : Transports.eventLoopGroupClass()));
-
-        if (connectionPoint.getSocket() != null) {
-            NativeTransports.assertDomainSocketAvailable();
-            connectionBuilder.bootstrap().channel(NativeTransports.domainSocketChannelClass());
-        } else {
-            connectionBuilder.bootstrap().channel(Transports.socketChannelClass());
-        }
     }
 
     private EventLoopGroup getEventLoopGroup(Class<? extends EventLoopGroup> eventLoopGroupClass) {
