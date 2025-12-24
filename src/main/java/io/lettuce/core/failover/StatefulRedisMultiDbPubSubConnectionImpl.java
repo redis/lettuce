@@ -37,7 +37,7 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     private final Set<RedisPubSubListener<K, V>> pubSubListeners = ConcurrentHashMap.newKeySet();
 
     public StatefulRedisMultiDbPubSubConnectionImpl(
-            Map<RedisURI, RedisDatabase<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
+            Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
             RedisCodec<K, V> codec, DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
             HealthStatusManager healthStatusManager) {
         super(connections, resources, codec, connectionFactory, healthStatusManager);
@@ -90,10 +90,10 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @Override
-    boolean safeSwitch(RedisDatabase<?> database) {
+    boolean safeSwitch(RedisDatabaseImpl<?> database) {
         AtomicBoolean switched = new AtomicBoolean(false);
         doByExclusiveLock(() -> {
-            RedisDatabase<StatefulRedisPubSubConnection<K, V>> fromDb = current;
+            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb = current;
             switched.set(super.safeSwitch(database));
             if (fromDb == current) {
                 return;
@@ -109,8 +109,8 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @SuppressWarnings("unchecked")
-    public void moveSubscriptions(RedisDatabase<StatefulRedisPubSubConnection<K, V>> fromDb,
-            RedisDatabase<StatefulRedisPubSubConnection<K, V>> toDb) {
+    public void moveSubscriptions(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb,
+            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> toDb) {
 
         PubSubEndpoint<K, V> fromEndpoint = (PubSubEndpoint<K, V>) fromDb.getDatabaseEndpoint();
         StatefulRedisPubSubConnection<K, V> fromConn = (StatefulRedisPubSubConnection<K, V>) fromDb.getConnection();

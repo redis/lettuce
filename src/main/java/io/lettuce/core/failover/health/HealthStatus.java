@@ -20,7 +20,7 @@
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.failover.RedisDatabase;
+import io.lettuce.core.failover.RedisDatabaseImpl;
 
 /**
  * Enumeration representing the health status of a database endpoint as determined by the health check service.
@@ -28,7 +28,7 @@ import io.lettuce.core.failover.RedisDatabase;
  * This status reflects the results from active health checks performed by the health check service. Health checks periodically
  * probes endpoints to verify their availability and responsiveness, updating this status accordingly.
  * <p>
- * Used by the {@link RedisDatabase} to track and report health check results from the health check API.
+ * Used by the {@link RedisDatabaseImpl} to track and report health check results from the health check API.
  *
  * @author Ali Takavci
  * @since 7.4

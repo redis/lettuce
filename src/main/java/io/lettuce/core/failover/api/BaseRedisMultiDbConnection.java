@@ -1,3 +1,23 @@
+/*
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.lettuce.core.failover.api;
 
 import io.lettuce.core.RedisURI;
@@ -50,13 +70,13 @@ public interface BaseRedisMultiDbConnection {
     boolean isHealthy(RedisURI endpoint);
 
     /**
-     * Get the {@link BaseRedisDatabase} for a specific endpoint.
+     * Get the {@link RedisDatabase} for a specific endpoint.
      *
-     * @param redisURI the Redis endpoint URI
-     * @return the {@link BaseRedisDatabase} for the endpoint
+     * @param endpoint the Redis endpoint URI
+     * @return the {@link RedisDatabase} for the endpoint
      * @throws IllegalArgumentException if the endpoint is not known
      */
-    BaseRedisDatabase getDatabase(RedisURI redisURI);
+    RedisDatabase getDatabase(RedisURI endpoint);
 
     /**
      * Add a new database to the multi-database connection.

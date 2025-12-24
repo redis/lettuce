@@ -249,6 +249,7 @@ class MultiDbClientIntegrationTests {
         await().atMost(Durations.TWO_SECONDS).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> {
             assertThat(connection.isHealthy(uri2)).isTrue();
         });
+
         connection.switchTo(uri2);
 
         // Verify it's active

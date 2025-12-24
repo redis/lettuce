@@ -109,13 +109,13 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
     private RedisURI uri3;
 
-    private RedisDatabase<StatefulRedisConnection<String, String>> db1;
+    private RedisDatabaseImpl<StatefulRedisConnection<String, String>> db1;
 
-    private RedisDatabase<StatefulRedisConnection<String, String>> db2;
+    private RedisDatabaseImpl<StatefulRedisConnection<String, String>> db2;
 
-    private RedisDatabase<StatefulRedisConnection<String, String>> db3;
+    private RedisDatabaseImpl<StatefulRedisConnection<String, String>> db3;
 
-    private Map<RedisURI, RedisDatabase<StatefulRedisConnection<String, String>>> databases;
+    private Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<String, String>>> databases;
 
     @BeforeEach
     void setUp() {
@@ -151,9 +151,9 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).build();
         DatabaseConfig config3 = DatabaseConfig.builder(uri3).weight(0.25f).build();
 
-        db1 = new RedisDatabase<>(config1, connection1, endpoint1, circuitBreaker1, healthCheck1);
-        db2 = new RedisDatabase<>(config2, connection2, endpoint2, circuitBreaker2, healthCheck2);
-        db3 = new RedisDatabase<>(config3, connection3, endpoint3, circuitBreaker3, healthCheck3);
+        db1 = new RedisDatabaseImpl<>(config1, connection1, endpoint1, circuitBreaker1, healthCheck1);
+        db2 = new RedisDatabaseImpl<>(config2, connection2, endpoint2, circuitBreaker2, healthCheck2);
+        db3 = new RedisDatabaseImpl<>(config3, connection3, endpoint3, circuitBreaker3, healthCheck3);
 
         databases = new ConcurrentHashMap<>();
         databases.put(uri1, db1);
@@ -177,7 +177,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @Test
         @DisplayName("Should throw IllegalArgumentException when connections is empty")
         void shouldThrowWhenConnectionsIsEmpty() {
-            Map<RedisURI, RedisDatabase<StatefulRedisConnection<String, String>>> emptyMap = new HashMap<>();
+            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<String, String>>> emptyMap = new HashMap<>();
             assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(emptyMap, clientResources, codec,
                     connectionFactory, healthStatusManager)).isInstanceOf(IllegalArgumentException.class)
                             .hasMessageContaining("connections must not be empty");
@@ -638,7 +638,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         void shouldAddNewDatabase() {
             RedisURI newUri = RedisURI.create("redis://localhost:6382");
             DatabaseConfig newConfig = DatabaseConfig.builder(newUri).weight(0.1f).build();
-            RedisDatabase<StatefulRedisConnection<String, String>> newDb = new RedisDatabase<>(newConfig, newConnection,
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> newDb = new RedisDatabaseImpl<>(newConfig, newConnection,
                     newEndpoint, newCircuitBreaker, newHealthCheck);
 
             when(connectionFactory.createDatabase(eq(newConfig), eq(codec), eq(healthStatusManager))).thenReturn(newDb);
@@ -758,7 +758,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @Test
         @DisplayName("Should get database by URI")
         void shouldGetDatabaseByUri() {
-            RedisDatabase<StatefulRedisConnection<String, String>> database = connection.getDatabase(uri1);
+            RedisDatabaseImpl<StatefulRedisConnection<String, String>> database = connection.getDatabase(uri1);
 
             assertThat(database).isNotNull();
             assertThat(database.getRedisURI()).isEqualTo(uri1);
