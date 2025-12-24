@@ -149,7 +149,8 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
      */
     private MetricsSnapshot recordSuccessfulCommand(StatefulRedisMultiDbConnection<String, String> connection, String key,
             String value) {
-        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(connection.getCurrentEndpoint())).getCircuitBreaker();
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(connection.getCurrentEndpoint()))
+                .getCircuitBreaker();
         MetricsSnapshot metrics = cb.getSnapshot();
         connection.sync().set(key, value);
         return await().until(cb::getSnapshot, snapshot -> snapshot.getSuccessCount() > metrics.getSuccessCount());
