@@ -424,20 +424,27 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     /**
      * Switch to the given database. This method is thread-safe and can be called from multiple threads.
      * <p>
-     * Beyond thread safety it also handles the cases where;
+     * This method performs the actual database switch operation under an exclusive lock. It verifies the switch is possible,
+     * updates the current database reference, migrates all listeners (connection state and push listeners) from the old
+     * database to the new one, and hands over the command queue.
      * <p>
-     * - the requested database is the same as the current one
-     * <p>
-     * OR
-     * <p>
-     * - the requested database is a different instance than registered in connection map but with the same target endpoint/uri.
-     * 
+     * Beyond thread-safety, there are special cases handled:
+     * <ul>
+     * <li>If the requested database is the same as the current one, returns {@code true} without performing any switch</li>
+     * <li>If the requested database is unhealthy or circuit breaker is open, the behavior depends on {@code internalCall}</li>
+     * <li>If the requested database is a different instance with the same URI, the behavior depends on {@code internalCall}</li>
+     * </ul>
+     *
      * @param database the database to switch to
-     * @return true if the provided database is now the selected database after executing this method ( even if it was already
-     *         the current one), false otherwise
-     * @throws IllegalStateException if the requested database is a different instance than registered in connection map but
-     *         with the same target endpoint/uri.
-     * @throws UnsupportedOperationException if the requested database is not found in the connection map
+     * @param internalCall if {@code true}, validation failures return {@code false} and log errors; if {@code false},
+     *        validation failures throw exceptions
+     * @return {@code true} if the switch succeeded or the database was already current; {@code false} if validation failed
+     *         and {@code internalCall} is {@code true}
+     * @throws IllegalStateException if {@code internalCall} is {@code false} and the requested database is a different
+     *         instance than registered in connection map but with the same target endpoint/uri, or if the target database is
+     *         unhealthy or circuit breaker is open
+     * @throws UnsupportedOperationException if {@code internalCall} is {@code false} and the source or destination endpoint
+     *         cannot be located in the connection map
      */
     boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall) {
         logger.info("Initiated safe switching to database {}", database.getId());
@@ -483,15 +490,26 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
 
     /**
      * Verify if the switch is possible. This method is not thread-safe and should be called within a lock.
+     * <p>
+     * Performs three validation checks:
+     * <ol>
+     * <li>Verifies both source and destination databases exist in the connection map</li>
+     * <li>Verifies the requested database instance matches the registered instance for the same URI</li>
+     * <li>Verifies the target database is healthy and has a closed circuit breaker</li>
+     * </ol>
      *
-     * @param target the target database
-     * @param fromDb the current database
-     * @param toDb the target database
-     * @param internalCall whether this is an internal call
-     * @return true if the switch is possible, false otherwise
-     * @throws IllegalStateException if the requested database is a different instance than registered in connection map but
-     *         with the same target endpoint/uri.
-     * @throws UnsupportedOperationException if the requested database is not found in the connection map
+     * @param target the requested database instance to switch to
+     * @param fromDb the current database (source of the switch)
+     * @param toDb the database instance registered in the connection map for the target URI
+     * @param internalCall if {@code true}, validation failures return {@code false} and log messages; if {@code false},
+     *        validation failures throw exceptions
+     * @return {@code true} if the switch is possible and all validations pass; {@code false} if validation failed and
+     *         {@code internalCall} is {@code true}
+     * @throws IllegalStateException if {@code internalCall} is {@code false} and either the requested database is a different
+     *         instance than registered in the connection map (same URI, different object), or the target database is unhealthy
+     *         or has an open circuit breaker
+     * @throws UnsupportedOperationException if {@code internalCall} is {@code false} and either the source or destination
+     *         database cannot be located in the connection map
      */
     private boolean verifySwitch(RedisDatabaseImpl<?> target, RedisDatabaseImpl<C> fromDb, RedisDatabaseImpl<C> toDb,
             boolean internalCall) {

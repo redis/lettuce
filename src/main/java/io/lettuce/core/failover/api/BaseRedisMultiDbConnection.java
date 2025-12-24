@@ -33,11 +33,17 @@ public interface BaseRedisMultiDbConnection {
 
     /**
      * Switch to a different database.
+     * <p>
+     * This method performs a thread-safe switch to the specified database endpoint. If the target database is already the
+     * current database, this is a no-op. The method verifies that the target database is healthy and has a closed circuit
+     * breaker before switching.
      *
      * @param redisURI the Redis URI of the database to switch to, must not be {@code null}
-     * @throws IllegalStateException if the requested database is a different instance than registered in connection map but
-     *         with the same target endpoint/uri.
-     * @throws UnsupportedOperationException if the requested database is not found in the connection map
+     * @throws IllegalArgumentException if the database endpoint is not registered in the connection map
+     * @throws IllegalStateException if the requested database is unhealthy or circuit breaker is open, or if the requested
+     *         database is a different instance than registered in connection map but with the same target endpoint/uri, or if
+     *         the switch operation fails
+     * @throws UnsupportedOperationException if the source or destination endpoint cannot be located
      */
     void switchTo(RedisURI redisURI);
 
