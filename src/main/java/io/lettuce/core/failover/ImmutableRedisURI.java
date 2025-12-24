@@ -23,6 +23,7 @@ package io.lettuce.core.failover;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import io.lettuce.core.DriverInfo;
 import io.lettuce.core.RedisCredentialsProvider;
@@ -37,8 +38,12 @@ import io.lettuce.core.annotations.Experimental;
 @Experimental
 public class ImmutableRedisURI extends RedisURI {
 
+    private List<RedisURI> sentinels;
+
     public ImmutableRedisURI(RedisURI redisURI) {
         super(redisURI);
+        this.sentinels = Collections
+                .unmodifiableList(super.getSentinels().stream().map(ImmutableRedisURI::new).collect(Collectors.toList()));
     }
 
     @Override
@@ -148,7 +153,7 @@ public class ImmutableRedisURI extends RedisURI {
 
     @Override
     public List<RedisURI> getSentinels() {
-        return Collections.unmodifiableList(super.getSentinels());
+        return sentinels;
     }
 
 }

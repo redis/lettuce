@@ -173,7 +173,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             return;
         }
 
-        if (event.getNewStatus().isHealthy() && isCurrent(database)) {
+        if (!event.getNewStatus().isHealthy() && isCurrent(database)) {
             logger.info("Database {} is unhealthy, failing over if current", database.getId());
             failoverFrom(database);
         }
@@ -190,7 +190,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             if (logger.isInfoEnabled()) {
                 logger.info("Initiating failover from {} to {}", fromDb.getId(), selectedDatabase.getId());
             }
-            if (safeSwitch(selectedDatabase)) {
+            if (safeSwitch(selectedDatabase, true)) {
                 if (logger.isInfoEnabled()) {
                     logger.info("Failover successful from {} to {}", fromDb.getId(), selectedDatabase.getId());
                 }
@@ -404,23 +404,20 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
     }
 
     @Override
-    public boolean switchTo(RedisURI redisURI) {
+    public void switchTo(RedisURI redisURI) {
         RedisDatabaseImpl<C> target = databases.get(redisURI);
         if (target == null) {
             throw new IllegalArgumentException("Unknown endpoint: " + redisURI);
         }
-        if (safeSwitch(target)) {
-            logger.info("Switched to database {}", target.getId());
+        if (safeSwitch(target, false)) {
             // if target got unhealthy along the way, failover from it
             if (!DatabasePredicates.isHealthyAndCbClosed.test(target)) {
                 failoverFrom(target);
+                throw new IllegalStateException("Failed to switch to database " + target.getId() + " - target is unhealthy");
             }
-            // this will return true no matter if it failed over or not,
-            // since there is a possible window that commands could be issued before the failover kicks in
-            return true;
         } else {
-            logger.info("Failed to switch to database {}", target.getId());
-            return false;
+            // this should never happen in theory; as safe switch either switches or throws for external calls
+            throw new IllegalStateException("Failed to switch to database " + target.getId());
         }
     }
 
@@ -438,38 +435,24 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
      * @param database the database to switch to
      * @return true if the provided database is now the selected database after executing this method ( even if it was already
      *         the current one), false otherwise
+     * @throws IllegalStateException if the requested database is a different instance than registered in connection map but
+     *         with the same target endpoint/uri.
+     * @throws UnsupportedOperationException if the requested database is not found in the connection map
      */
-    boolean safeSwitch(RedisDatabaseImpl<?> database) {
-        logger.info("Starting switching to database {}", database.getId());
+    boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall) {
+        logger.info("Initiated safe switching to database {}", database.getId());
         AtomicBoolean switched = new AtomicBoolean(false);
         doByExclusiveLock(() -> {
             RedisDatabaseImpl<C> fromDb = current;
             RedisDatabaseImpl<C> toDb = databases.get(database.getRedisURI());
 
-            if (database != toDb) {
-                logger.error(
-                        "Same URI with different database, this should never happen in the driver. Requested database: {}, found database: {} , endpoint: {}",
-                        database.getId(), toDb.getId(), toDb.getRedisURI());
-                throw new IllegalStateException(
-                        "Same URI with different database, this should never happen in the driver. Requested database: "
-                                + database.getId() + ", found database: " + toDb.getId() + " , endpoint: "
-                                + toDb.getRedisURI());
-            }
-
-            if (fromDb == null || toDb == null) {
-                throw new UnsupportedOperationException(
-                        "Unable to switch between endpoints - the driver was not able to locate the source or destination endpoint.");
+            if (!verifySwitch(database, fromDb, toDb, internalCall)) {
+                return;
             }
 
             if (fromDb == toDb) {
                 // Nothing to do, already on the right database
                 switched.set(true);
-                return;
-            }
-
-            if (!DatabasePredicates.isHealthyAndCbClosed.test(toDb)) {
-                logger.warn("Requested database ({}) is unhealthy or circuit breaker is open. Skipping switch request.",
-                        toDb.getId());
                 return;
             }
 
@@ -496,6 +479,56 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             fromDb.getDatabaseEndpoint().handOverCommandQueue(toDb.getDatabaseEndpoint());
         });
         return switched.get();
+    }
+
+    /**
+     * Verify if the switch is possible. This method is not thread-safe and should be called within a lock.
+     *
+     * @param target the target database
+     * @param fromDb the current database
+     * @param toDb the target database
+     * @param internalCall whether this is an internal call
+     * @return true if the switch is possible, false otherwise
+     * @throws IllegalStateException if the requested database is a different instance than registered in connection map but
+     *         with the same target endpoint/uri.
+     * @throws UnsupportedOperationException if the requested database is not found in the connection map
+     */
+    private boolean verifySwitch(RedisDatabaseImpl<?> target, RedisDatabaseImpl<C> fromDb, RedisDatabaseImpl<C> toDb,
+            boolean internalCall) {
+        if (fromDb == null || toDb == null) {
+            if (internalCall) {
+                logger.info("Failed to switch to database {} - source or destination endpoint not found", target.getId());
+                return false;
+            }
+
+            throw new UnsupportedOperationException(
+                    "Unable to switch between endpoints - the driver was not able to locate the source or destination endpoint.");
+        }
+
+        if (target != toDb) {
+            if (internalCall) {
+                logger.error(
+                        "Same URI with different database, this should never happen in the driver. Requested database: {}, found database: {} , endpoint: {}",
+                        target.getId(), toDb.getId(), toDb.getRedisURI());
+                return false;
+            }
+
+            throw new IllegalStateException(
+                    "Same URI with different database, this should never happen in the driver. Requested database: "
+                            + target.getId() + ", found database: " + toDb.getId() + " , endpoint: " + toDb.getRedisURI());
+        }
+
+        if (!DatabasePredicates.isHealthyAndCbClosed.test(toDb)) {
+            if (internalCall) {
+                logger.info("Requested database ({}) is unhealthy or circuit breaker is open. Skipping switch request.",
+                        toDb.getId());
+                return false;
+            }
+            throw new IllegalStateException("Requested database (" + toDb.getId()
+                    + ") is unhealthy or circuit breaker is open. Skipping switch request.");
+        }
+
+        return true;
     }
 
     protected void doBySharedLock(Runnable operation) {

@@ -90,11 +90,11 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @Override
-    boolean safeSwitch(RedisDatabaseImpl<?> database) {
+    boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall) {
         AtomicBoolean switched = new AtomicBoolean(false);
         doByExclusiveLock(() -> {
             RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb = current;
-            switched.set(super.safeSwitch(database));
+            switched.set(super.safeSwitch(database, internalCall));
             if (fromDb == current) {
                 return;
             }

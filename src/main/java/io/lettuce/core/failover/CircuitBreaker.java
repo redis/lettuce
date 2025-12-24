@@ -54,7 +54,7 @@ public interface CircuitBreaker extends Closeable {
      *
      * @return the ID
      */
-    public String getId();
+    String getId();
 
     /**
      * Get a snapshot of the current metrics within the time window. Use the snapshot to access success count, failure count,

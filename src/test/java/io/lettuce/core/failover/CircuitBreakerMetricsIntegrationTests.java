@@ -77,7 +77,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
     }
 
     @Test
-    void shouldIsolatMetricsPerEndpoint() {
+    void shouldIsolateMetricsPerEndpoint() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
         List<RedisURI> endpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
                 .collect(Collectors.toList());

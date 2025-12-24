@@ -35,16 +35,11 @@ public interface BaseRedisMultiDbConnection {
      * Switch to a different database.
      *
      * @param redisURI the Redis URI of the database to switch to, must not be {@code null}
-     * @return true if the switch was successful, otherwise false due to one of the following reasons;
-     *         <p>
-     *         - the requested database is unhealthy or gets unhealthy in the process of switching
-     *         <p>
-     *         - the requested database is the same as the current one
-     *         <p>
-     *         - the requested database is not found
-     * @throws IllegalArgumentException if the database does not exist
+     * @throws IllegalStateException if the requested database is a different instance than registered in connection map but
+     *         with the same target endpoint/uri.
+     * @throws UnsupportedOperationException if the requested database is not found in the connection map
      */
-    boolean switchTo(RedisURI redisURI);
+    void switchTo(RedisURI redisURI);
 
     /**
      * Get the current database endpoint.

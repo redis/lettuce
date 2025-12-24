@@ -296,7 +296,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
         this.verifyMode = source.verifyMode;
         this.startTls = source.startTls;
         this.timeout = source.timeout;
-        this.sentinels.addAll(source.sentinels);
+        for (RedisURI sentinel : source.sentinels) {
+            this.sentinels.add(new RedisURI(sentinel));
+        }
     }
 
     /**
