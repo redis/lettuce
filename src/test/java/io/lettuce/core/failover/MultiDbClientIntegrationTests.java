@@ -107,8 +107,8 @@ class MultiDbClientIntegrationTests {
         connection = client.connect();
 
         // API CHANGE: Original used multiDbClient.setActive(uri3)
-        // Note: Current implementation throws UnsupportedOperationException for non-existent endpoints
-        assertThatThrownBy(() -> connection.switchTo(uri3)).isInstanceOf(UnsupportedOperationException.class);
+        // Note: Current implementation throws IllegalArgumentException for non-existent endpoints
+        assertThatThrownBy(() -> connection.switchTo(uri3)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test

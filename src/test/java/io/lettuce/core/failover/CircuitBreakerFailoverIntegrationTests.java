@@ -245,6 +245,10 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         RedisURI endpoint1 = redis1ProxyUri;
         RedisURI endpoint2 = redis2ProxyUri;
 
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(connection.isHealthy(endpoint1)).isTrue();
+            assertThat(connection.isHealthy(endpoint2)).isTrue();
+        });
         connection.switchTo(endpoint1);
         assertThat(connection.getCurrentEndpoint()).isEqualTo(endpoint1);
 
@@ -453,6 +457,10 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         RedisURI endpoint1 = redis1ProxyUri;
         RedisURI endpoint2 = redis2ProxyUri;
 
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(connection.isHealthy(endpoint1)).isTrue();
+            assertThat(connection.isHealthy(endpoint2)).isTrue();
+        });
         connection.switchTo(endpoint1);
         assertThat(connection.getCurrentEndpoint()).isEqualTo(endpoint1);
 

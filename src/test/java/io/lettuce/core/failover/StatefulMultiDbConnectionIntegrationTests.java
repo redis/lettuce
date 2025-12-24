@@ -484,8 +484,8 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         // Create a URI that's not in the configured endpoints
         RedisURI nonExistentUri = RedisURI.create("redis://localhost:9999");
 
-        // Note: Current implementation throws UnsupportedOperationException for non-existent endpoints
-        assertThatThrownBy(() -> connection.switchTo(nonExistentUri)).isInstanceOf(UnsupportedOperationException.class);
+        // Note: Current implementation throws IllegalArgumentException for non-existent endpoints
+        assertThatThrownBy(() -> connection.switchTo(nonExistentUri)).isInstanceOf(IllegalArgumentException.class);
 
         connection.close();
     }
