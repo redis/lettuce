@@ -155,7 +155,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         if (!event.getNewState().isClosed() && event.getCircuitBreaker() == current.getCircuitBreaker()) {
             if (logger.isInfoEnabled()) {
                 logger.info("Circuit breaker {} running for {} changed state from {} to {}", event.getCircuitBreaker().getId(),
-                        current.getId(), event.getPreviousState(), event.getNewState(), current.getId());
+                        current.getId(), event.getPreviousState(), event.getNewState());
             }
             failoverFrom(current);
         }
@@ -477,15 +477,14 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
                 toDb.getConnection().addListener(listener);
                 fromDb.getConnection().removeListener(listener);
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Moved connection state listener {} from {} to {}", listener, fromDb.getRedisURI(),
-                            toDb.getRedisURI());
+                    logger.debug("Moved connection state listener {} from {} to {}", listener, fromDb.getId(), toDb.getId());
                 }
             });
             pushListeners.forEach(listener -> {
                 toDb.getConnection().addListener(listener);
                 fromDb.getConnection().removeListener(listener);
                 if (logger.isDebugEnabled()) {
-                    logger.debug("Moved push listener {} from {} to {}", listener, fromDb.getRedisURI(), toDb.getRedisURI());
+                    logger.debug("Moved push listener {} from {} to {}", listener, fromDb.getId(), toDb.getId());
                 }
             });
 
@@ -648,7 +647,7 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
             }
 
             if (current.getRedisURI().equals(redisURI)) {
-                throw new UnsupportedOperationException("Cannot remove the currently active database: " + redisURI);
+                throw new UnsupportedOperationException("Cannot remove the currently active database: " + current.getId());
             }
 
             healthStatusManager.unregisterListener(redisURI, this::onHealthStatusChange);
