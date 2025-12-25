@@ -8,15 +8,12 @@ import static org.awaitility.Awaitility.await;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -207,7 +204,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         };
 
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
-        CircuitBreaker cb = connection.getCircuitBreaker(currentEndpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(currentEndpoint)).getCircuitBreaker();
         cb.addListener(listener);
 
         // When: Trigger failures to open the circuit breaker
@@ -244,13 +241,17 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         RedisURI endpoint1 = redis1ProxyUri;
         RedisURI endpoint2 = redis2ProxyUri;
 
-        connection.switchToDatabase(endpoint1);
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(connection.isHealthy(endpoint1)).isTrue();
+            assertThat(connection.isHealthy(endpoint2)).isTrue();
+        });
+        connection.switchTo(endpoint1);
         assertThat(connection.getCurrentEndpoint()).isEqualTo(endpoint1);
 
         // Write a test key to endpoint2 (so we can verify failover)
-        connection.switchToDatabase(endpoint2);
+        connection.switchTo(endpoint2);
         connection.async().set("failover-test-key", "endpoint2-value").get(1, TimeUnit.SECONDS);
-        connection.switchToDatabase(endpoint1);
+        connection.switchTo(endpoint1);
 
         // Track state changes
         CountDownLatch failoverLatch = new CountDownLatch(1);
@@ -261,7 +262,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
             }
         };
 
-        CircuitBreaker cb1 = connection.getCircuitBreaker(endpoint1);
+        CircuitBreaker cb1 = ((RedisDatabaseImpl<?>) connection.getDatabase(endpoint1)).getCircuitBreaker();
         cb1.addListener(listener);
 
         // When: Shutdown endpoint1 to trigger failures
@@ -289,7 +290,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
     void shouldTrackFailuresInCircuitBreakerMetrics() {
         // Given: Current endpoint
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
-        CircuitBreaker cb = connection.getCircuitBreaker(currentEndpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(currentEndpoint)).getCircuitBreaker();
 
         assertEquals(0, cb.getSnapshot().getFailureCount());
 
@@ -317,7 +318,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
     void shouldOpenCircuitBreakerAfterThresholdExceeded() {
         // Given: Current endpoint with circuit breaker
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
-        CircuitBreaker cb = connection.getCircuitBreaker(currentEndpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(currentEndpoint)).getCircuitBreaker();
 
         assertThat(cb.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
 
@@ -356,7 +357,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         };
 
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
-        CircuitBreaker cb = connection.getCircuitBreaker(currentEndpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(currentEndpoint)).getCircuitBreaker();
         cb.addListener(listener1);
         cb.addListener(listener2);
 
@@ -415,7 +416,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         };
 
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
-        CircuitBreaker cb = connection.getCircuitBreaker(currentEndpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(currentEndpoint)).getCircuitBreaker();
         cb.addListener(listener);
 
         // When: Trigger failures to open the circuit breaker
@@ -452,13 +453,17 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         RedisURI endpoint1 = redis1ProxyUri;
         RedisURI endpoint2 = redis2ProxyUri;
 
-        connection.switchToDatabase(endpoint1);
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(connection.isHealthy(endpoint1)).isTrue();
+            assertThat(connection.isHealthy(endpoint2)).isTrue();
+        });
+        connection.switchTo(endpoint1);
         assertThat(connection.getCurrentEndpoint()).isEqualTo(endpoint1);
 
         // Write a test key to endpoint2 (so we can verify failover)
-        connection.switchToDatabase(endpoint2);
+        connection.switchTo(endpoint2);
         connection.reactive().set("failover-test-key-reactive", "endpoint2-value").block(Duration.ofSeconds(1));
-        connection.switchToDatabase(endpoint1);
+        connection.switchTo(endpoint1);
 
         // Track state changes
         CountDownLatch failoverLatch = new CountDownLatch(1);
@@ -469,7 +474,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
             }
         };
 
-        CircuitBreaker cb1 = connection.getCircuitBreaker(endpoint1);
+        CircuitBreaker cb1 = ((RedisDatabaseImpl<?>) connection.getDatabase(endpoint1)).getCircuitBreaker();
         cb1.addListener(listener);
 
         // When: Shutdown endpoint1 to trigger failures
@@ -498,7 +503,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
     void shouldTrackFailuresInCircuitBreakerMetricsReactive() {
         // Given: Current endpoint
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
-        CircuitBreaker cb = connection.getCircuitBreaker(currentEndpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(currentEndpoint)).getCircuitBreaker();
 
         assertEquals(0, cb.getSnapshot().getFailureCount());
 
@@ -513,7 +518,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         }
 
         // Then: Metrics should track failures
-        await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS).atMost(Durations.FIVE_SECONDS)
+        await().pollDelay(Durations.ONE_HUNDRED_MILLISECONDS).atMost(Durations.TWO_SECONDS)
                 .untilAsserted(() -> assertEquals(aimedFailureCount, failureCounter.get()));
         assertEquals(aimedFailureCount, cb.getSnapshot().getFailureCount());
     }
@@ -522,7 +527,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
     void shouldOpenCircuitBreakerAfterThresholdExceededReactive() {
         // Given: Current endpoint with circuit breaker
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
-        CircuitBreaker cb = connection.getCircuitBreaker(currentEndpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(currentEndpoint)).getCircuitBreaker();
 
         assertThat(cb.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
 
@@ -561,7 +566,7 @@ class CircuitBreakerFailoverIntegrationTests extends AbstractRedisClientTest {
         };
 
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
-        CircuitBreaker cb = connection.getCircuitBreaker(currentEndpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(currentEndpoint)).getCircuitBreaker();
         cb.addListener(listener1);
         cb.addListener(listener2);
 

@@ -107,11 +107,11 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                 assertThat(connection.sync().ping()).isEqualTo("PONG");
 
                 // And: Verify we can execute commands on both endpoints
-                connection.switchToDatabase(uri1);
+                connection.switchTo(uri1);
                 connection.sync().set("test-key", "test-value");
                 assertThat(connection.sync().get("test-key")).isEqualTo("test-value");
 
-                connection.switchToDatabase(uri2);
+                connection.switchTo(uri2);
                 connection.sync().set("test-key2", "test-value2");
                 assertThat(connection.sync().get("test-key2")).isEqualTo("test-value2");
 
@@ -623,7 +623,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                 assertThat(actualRunIdBeforeFailover).isEqualTo(expectedRunIdUri1);
 
                 // And: Verify circuit breaker is CLOSED initially
-                CircuitBreaker cb1 = connection.getCircuitBreaker(uri1);
+                CircuitBreaker cb1 = ((RedisDatabaseImpl<?>) connection.getDatabase(uri1)).getCircuitBreaker();
                 assertThat(cb1.getCurrentState()).isEqualTo(CircuitBreaker.State.CLOSED);
 
                 // When: Record failures to trigger circuit breaker (need 2 failures with 50% rate)

@@ -191,7 +191,7 @@ class DatabasePubSubEndpointTrackerTests {
 
             endpoint.write(asyncCommand);
 
-            // Complete with non-timeout exception (should be tracked by MultiDbOutboundAdapter)
+            // Complete with non-timeout exception (should be tracked by MultiDbOutboundHandler)
             asyncCommand.completeExceptionally(new RedisConnectionException("connection failed"));
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();

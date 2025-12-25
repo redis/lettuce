@@ -27,7 +27,7 @@ class MultiDbOutboundHandler extends ChannelOutboundHandlerAdapter {
     private CircuitBreaker circuitBreaker;
 
     /**
-     * Create a new MultiDbOutboundAdapter.
+     * Create a new MultiDbOutboundHandler.
      *
      * @param circuitBreaker the circuit breaker instance
      */

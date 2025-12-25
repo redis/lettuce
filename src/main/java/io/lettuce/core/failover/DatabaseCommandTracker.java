@@ -130,7 +130,7 @@ class DatabaseCommandTracker {
             CompleteableCommand<Object> completeable = (CompleteableCommand<Object>) command;
             completeable.onComplete((o, e) -> {
                 // Only record timeout exceptions
-                // Other exceptions are tracked inside the pipeline vioa MultiDbOutboundAdapter
+                // Other exceptions are tracked inside the pipeline vioa MultiDbOutboundHandler
                 if (e instanceof RedisCommandTimeoutException) {
                     generation.recordResult(e);
                 }
