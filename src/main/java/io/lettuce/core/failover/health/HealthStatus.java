@@ -20,7 +20,6 @@
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.failover.RedisDatabaseImpl;
 
 /**
  * Enumeration representing the health status of a database endpoint as determined by the health check service.

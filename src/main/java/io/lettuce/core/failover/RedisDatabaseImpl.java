@@ -41,7 +41,7 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
  * @since 7.4
  */
 @Experimental
-public class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements RedisDatabase, Closeable {
+class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements RedisDatabase, Closeable {
 
     private static final AtomicInteger ID_COUNTER = new AtomicInteger(1);
 
