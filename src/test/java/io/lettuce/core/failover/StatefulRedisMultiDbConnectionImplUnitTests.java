@@ -494,14 +494,14 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         }
 
         @Test
-        @DisplayName("Should failover if switched to unhealthy database")
+        @DisplayName("Should throw exception if switched to unhealthy database")
         void shouldFailoverIfSwitchedToUnhealthyDatabase() {
             // Make uri2 unhealthy
             when(healthCheck2.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
 
-            connection.switchTo(uri2);
+            assertThatThrownBy(() -> connection.switchTo(uri2)).isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("is unhealthy");
 
-            // Should failover to a healthy database (uri1 or uri3)
             assertThat(connection.getCurrentEndpoint()).isNotEqualTo(uri2);
         }
 
