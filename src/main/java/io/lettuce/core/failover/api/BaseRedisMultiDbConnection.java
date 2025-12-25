@@ -55,6 +55,13 @@ public interface BaseRedisMultiDbConnection {
     RedisURI getCurrentEndpoint();
 
     /**
+     * Get the current database.
+     *
+     * @return the current database
+     */
+    RedisDatabase getCurrentDatabase();
+
+    /**
      * Get all available database endpoints.
      *
      * @return an iterable of all database endpoints

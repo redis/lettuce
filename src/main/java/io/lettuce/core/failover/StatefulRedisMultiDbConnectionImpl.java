@@ -432,21 +432,27 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
      * <ul>
      * <li>If the requested database is the same as the current one, returns {@code true} without performing any switch</li>
      * <li>If the requested database is unhealthy or circuit breaker is open, the behavior depends on {@code internalCall}</li>
-     * <li>If the requested database is a different instance with the same URI, the behavior depends on {@code internalCall}</li>
+     * <li>If the requested database is a different instance with the same URI, the behavior depends on
+     * {@code internalCall}</li>
      * </ul>
      *
      * @param database the database to switch to
      * @param internalCall if {@code true}, validation failures return {@code false} and log errors; if {@code false},
      *        validation failures throw exceptions
-     * @return {@code true} if the switch succeeded or the database was already current; {@code false} if validation failed
-     *         and {@code internalCall} is {@code true}
-     * @throws IllegalStateException if {@code internalCall} is {@code false} and the requested database is a different
-     *         instance than registered in connection map but with the same target endpoint/uri, or if the target database is
-     *         unhealthy or circuit breaker is open
+     * @return {@code true} if the switch succeeded or the database was already current; {@code false} if validation failed and
+     *         {@code internalCall} is {@code true}
+     * @throws IllegalStateException if {@code internalCall} is {@code false} and the requested database is a different instance
+     *         than registered in connection map but with the same target endpoint/uri, or if the target database is unhealthy
+     *         or circuit breaker is open
      * @throws UnsupportedOperationException if {@code internalCall} is {@code false} and the source or destination endpoint
      *         cannot be located in the connection map
+     * @throws IllegalArgumentException if {@code database} is {@code null}
      */
     boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall) {
+        if (database == null) {
+            // this should never happen but in case we ever decide to remove null checks from the caller
+            throw new IllegalArgumentException("Target database to switch to can not be null.");
+        }
         logger.info("Initiated safe switching to database {}", database.getId());
         AtomicBoolean switched = new AtomicBoolean(false);
         doByExclusiveLock(() -> {
@@ -567,7 +573,8 @@ public class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnectio
         }
     }
 
-    RedisDatabaseImpl<C> getCurrentDatabase() {
+    @Override
+    public RedisDatabaseImpl<C> getCurrentDatabase() {
         return current;
     }
 

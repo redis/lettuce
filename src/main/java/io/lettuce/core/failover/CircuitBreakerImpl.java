@@ -208,7 +208,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
             // Atomically swap if current state hasn't changed
             if (stateRef.compareAndSet(current, next)) {
                 if (log.isInfoEnabled()) {
-                    log.info("Circuit breaker for {} transitioned from {} to {}", current.state, newState);
+                    log.info("Circuit breaker for {} transitioned from {} to {}", this.id, current.state, newState);
                 }
                 fireStateChanged(current.state, newState);
                 return;
