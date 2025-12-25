@@ -20,6 +20,7 @@
 package io.lettuce.core.failover;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ import io.netty.util.concurrent.Future;
  * <li>Write operation interception and listener attachment</li>
  * <li>Success/failure tracking via ChannelPromise listeners</li>
  * <li>Command completion tracking via CompleteableCommand callbacks</li>
- * <li>Timeout exception filtering (should NOT be recorded by adapter)</li>
+ * <li>Timeout exception filtering (should NOT be recorded by outbound handler)</li>
  * <li>Single and batch command handling</li>
  * </ul>
  *
@@ -53,9 +54,9 @@ import io.netty.util.concurrent.Future;
  * @since 7.4
  */
 @Tag("unit")
-class MultiDbOutboundAdapterUnitTests {
+class MultiDbOutboundHandlerUnitTests {
 
-    private MultiDbOutboundHandler adapter;
+    private MultiDbOutboundHandler handler;
 
     private CircuitBreaker circuitBreaker;
 
@@ -89,12 +90,12 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should attach listener to promise for single command write")
         void shouldAttachListenerToPromiseForSingleCommandWrite() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundHandler(circuitBreaker);
+            handler = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
 
-            adapter.write(mockContext, asyncCommand, mockPromise);
+            handler.write(mockContext, asyncCommand, mockPromise);
 
             // Verify listener was attached to promise
             verify(mockPromise).addListener(any());
@@ -106,7 +107,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should attach listeners to promise for batch command write")
         void shouldAttachListenersToPromiseForBatchCommandWrite() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundHandler(circuitBreaker);
+            handler = new MultiDbOutboundHandler(circuitBreaker);
 
             List<RedisCommand<String, String, ?>> commands = new ArrayList<>();
             for (int i = 0; i < 3; i++) {
@@ -114,7 +115,7 @@ class MultiDbOutboundAdapterUnitTests {
                 commands.add(new AsyncCommand<>(command));
             }
 
-            adapter.write(mockContext, commands, mockPromise);
+            handler.write(mockContext, commands, mockPromise);
 
             // Verify listener was attached for each command (3 times)
             verify(mockPromise, times(3)).addListener(any());
@@ -125,12 +126,12 @@ class MultiDbOutboundAdapterUnitTests {
         @Test
         @DisplayName("Should not attach listener when circuit breaker is null")
         void shouldNotAttachListenerWhenCircuitBreakerIsNull() throws Exception {
-            adapter = new MultiDbOutboundHandler(null);
+            handler = new MultiDbOutboundHandler(null);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
 
-            adapter.write(mockContext, asyncCommand, mockPromise);
+            handler.write(mockContext, asyncCommand, mockPromise);
 
             // Verify NO listener was attached
             verify(mockPromise, never()).addListener(any());
@@ -142,11 +143,11 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should pass through non-command messages without attaching listeners")
         void shouldPassThroughNonCommandMessagesWithoutAttachingListeners() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundHandler(circuitBreaker);
+            handler = new MultiDbOutboundHandler(circuitBreaker);
 
             String nonCommandMessage = "not a command";
 
-            adapter.write(mockContext, nonCommandMessage, mockPromise);
+            handler.write(mockContext, nonCommandMessage, mockPromise);
 
             // Verify NO listener was attached
             verify(mockPromise, never()).addListener(any());
@@ -166,7 +167,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should record failure when write promise fails")
         void shouldRecordFailureWhenWritePromiseFails() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundHandler(circuitBreaker);
+            handler = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
@@ -187,7 +188,7 @@ class MultiDbOutboundAdapterUnitTests {
                 return mockPromise;
             });
 
-            adapter.write(mockContext, asyncCommand, mockPromise);
+            handler.write(mockContext, asyncCommand, mockPromise);
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             assertThat(snapshot.getFailureCount()).isEqualTo(1);
@@ -205,7 +206,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should record success when command completes successfully after successful write")
         void shouldRecordSuccessWhenCommandCompletesSuccessfully() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundHandler(circuitBreaker);
+            handler = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
@@ -225,7 +226,7 @@ class MultiDbOutboundAdapterUnitTests {
                 return mockPromise;
             });
 
-            adapter.write(mockContext, asyncCommand, mockPromise);
+            handler.write(mockContext, asyncCommand, mockPromise);
 
             // Complete command successfully
             asyncCommand.complete();
@@ -239,7 +240,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should record failure when command completes with non-timeout exception")
         void shouldRecordFailureWhenCommandCompletesWithNonTimeoutException() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundHandler(circuitBreaker);
+            handler = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
@@ -259,7 +260,7 @@ class MultiDbOutboundAdapterUnitTests {
                 return mockPromise;
             });
 
-            adapter.write(mockContext, asyncCommand, mockPromise);
+            handler.write(mockContext, asyncCommand, mockPromise);
 
             // Complete command with non-timeout exception
             asyncCommand.completeExceptionally(new RedisConnectionException("Connection failed"));
@@ -273,7 +274,7 @@ class MultiDbOutboundAdapterUnitTests {
         @DisplayName("Should NOT record timeout exception (handled by DatabaseCommandTracker)")
         void shouldNotRecordTimeoutException() throws Exception {
             circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
-            adapter = new MultiDbOutboundHandler(circuitBreaker);
+            handler = new MultiDbOutboundHandler(circuitBreaker);
 
             Command<String, String, String> command = new Command<>(CommandType.SET, new StatusOutput<>(StringCodec.UTF8));
             AsyncCommand<String, String, String> asyncCommand = new AsyncCommand<>(command);
@@ -293,13 +294,13 @@ class MultiDbOutboundAdapterUnitTests {
                 return mockPromise;
             });
 
-            adapter.write(mockContext, asyncCommand, mockPromise);
+            handler.write(mockContext, asyncCommand, mockPromise);
 
             // Complete command with timeout exception
             asyncCommand.completeExceptionally(new RedisCommandTimeoutException("Command timed out"));
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
-            // Should NOT be recorded by MultiDbOutboundAdapter (filtered out)
+            // Should NOT be recorded by MultiDbOutboundHandler (filtered out)
             assertThat(snapshot.getFailureCount()).isEqualTo(0);
             assertThat(snapshot.getSuccessCount()).isEqualTo(0);
         }

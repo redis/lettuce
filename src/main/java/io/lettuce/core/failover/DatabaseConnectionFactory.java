@@ -24,6 +24,6 @@ interface DatabaseConnectionFactory<C extends StatefulRedisConnection<K, V>, K, 
      * @param codec the codec to use for encoding/decoding
      * @return a new RedisDatabase instance
      */
-    RedisDatabase<C> createDatabase(DatabaseConfig config, RedisCodec<K, V> codec, HealthStatusManager healthStatusManager);
+    RedisDatabaseImpl<C> createDatabase(DatabaseConfig config, RedisCodec<K, V> codec, HealthStatusManager healthStatusManager);
 
 }

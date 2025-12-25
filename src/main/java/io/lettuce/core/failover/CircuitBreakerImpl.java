@@ -1,3 +1,23 @@
+/*
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.lettuce.core.failover;
 
 import java.util.HashSet;
@@ -36,16 +56,29 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
     private final Set<Class<? extends Throwable>> trackedExceptions;
 
+    private final String id;
+
     /**
      * Create a circuit breaker instance.
      */
     public CircuitBreakerImpl(CircuitBreakerConfig config) {
         LettuceAssert.notNull(config, "CircuitBreakerConfig must not be null");
 
+        this.id = Integer.toString(hashCode());
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
         this.stateRef = new AtomicReference<>(new CircuitBreakerStateHolder(this,
                 MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
+    }
+
+    /**
+     * Get the ID for this circuit breaker.
+     *
+     * @return the ID
+     */
+    @Override
+    public String getId() {
+        return id;
     }
 
     /**
@@ -174,6 +207,9 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
             // Atomically swap if current state hasn't changed
             if (stateRef.compareAndSet(current, next)) {
+                if (log.isInfoEnabled()) {
+                    log.info("Circuit breaker for {} transitioned from {} to {}", this.id, current.state, newState);
+                }
                 fireStateChanged(current.state, newState);
                 return;
             }
@@ -193,7 +229,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
     @Override
     public boolean isClosed() {
-        return getCurrentState() == State.CLOSED;
+        return getCurrentState().isClosed();
     }
 
     /**

@@ -142,7 +142,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         RedisCommands<String, String> multiDbSync = multiDbConnection.sync();
 
         // Phase 1: Write keys 1-500 to endpoint1 (default endpoint)
-        multiDbConnection.switchToDatabase(endpoint1);
+        multiDbConnection.switchTo(endpoint1);
         assertThat(multiDbConnection.getCurrentEndpoint()).isEqualTo(endpoint1);
 
         for (int i = 1; i <= 500; i++) {
@@ -158,7 +158,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         }
 
         // Phase 2: Switch to endpoint2 and write keys 501-1000
-        multiDbConnection.switchToDatabase(endpoint2);
+        multiDbConnection.switchTo(endpoint2);
         assertThat(multiDbConnection.getCurrentEndpoint()).isEqualTo(endpoint2);
 
         for (int i = 501; i <= 1000; i++) {
@@ -174,7 +174,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         }
 
         // Phase 3: Switch back to endpoint1 and write keys 1001-1500
-        multiDbConnection.switchToDatabase(endpoint1);
+        multiDbConnection.switchTo(endpoint1);
         assertThat(multiDbConnection.getCurrentEndpoint()).isEqualTo(endpoint1);
 
         for (int i = 1001; i <= 1500; i++) {
@@ -289,7 +289,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         Map<String, Integer> keyToExpectedEndpoint = new HashMap<>();
 
         // Phase 1: Fire write commands for keys 1-500 to endpoint1 (NO WAITING)
-        multiDbConnection.switchToDatabase(endpoint1);
+        multiDbConnection.switchTo(endpoint1);
         assertThat(multiDbConnection.getCurrentEndpoint()).isEqualTo(endpoint1);
 
         for (int i = 1; i <= 500; i++) {
@@ -303,7 +303,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         }
 
         // Phase 2: Switch to endpoint2 and fire write commands for keys 501-1000 (NO WAITING)
-        multiDbConnection.switchToDatabase(endpoint2);
+        multiDbConnection.switchTo(endpoint2);
         assertThat(multiDbConnection.getCurrentEndpoint()).isEqualTo(endpoint2);
 
         for (int i = 501; i <= 1000; i++) {
@@ -317,7 +317,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         }
 
         // Phase 3: Switch back to endpoint1 and fire write commands for keys 1001-1500 (NO WAITING)
-        multiDbConnection.switchToDatabase(endpoint1);
+        multiDbConnection.switchTo(endpoint1);
         assertThat(multiDbConnection.getCurrentEndpoint()).isEqualTo(endpoint1);
 
         for (int i = 1001; i <= 1500; i++) {
@@ -339,7 +339,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         Map<String, RedisFuture<String>> keyToReadFuture = new HashMap<>();
 
         // Read from endpoint1 (should have keys 1-500 and 1001-1500)
-        multiDbConnection.switchToDatabase(endpoint1);
+        multiDbConnection.switchTo(endpoint1);
         for (int i = 1; i <= 500; i++) {
             String key = "key" + i;
             RedisFuture<String> getFuture = multiDbAsync.get(key);
@@ -352,7 +352,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         }
 
         // Read from endpoint2 (should have keys 501-1000)
-        multiDbConnection.switchToDatabase(endpoint2);
+        multiDbConnection.switchTo(endpoint2);
         for (int i = 501; i <= 1000; i++) {
             String key = "key" + i;
             RedisFuture<String> getFuture = multiDbAsync.get(key);
@@ -534,15 +534,15 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         Thread.sleep(3000);
 
         // Switch to endpoint2 - 3 seconds
-        multiDbPubSub.switchToDatabase(endpoint2);
+        multiDbPubSub.switchTo(endpoint2);
         Thread.sleep(3000);
 
         // Switch back to endpoint1 - 3 seconds
-        multiDbPubSub.switchToDatabase(endpoint1);
+        multiDbPubSub.switchTo(endpoint1);
         Thread.sleep(3000);
 
         // Switch to endpoint2 - 3 seconds
-        multiDbPubSub.switchToDatabase(endpoint2);
+        multiDbPubSub.switchTo(endpoint2);
         Thread.sleep(3000);
 
         // Stop publisher

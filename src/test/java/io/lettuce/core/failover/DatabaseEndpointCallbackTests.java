@@ -34,8 +34,8 @@ import io.lettuce.test.resource.TestClientResources;
  * </ul>
  *
  * Note: This test file focuses on integration-level behavior of DatabaseEndpointImpl. Unit-level tests for
- * DatabaseCommandTracker are in {@link DatabaseCommandTrackerUnitTests}. Unit-level tests for MultiDbOutboundAdapter are in
- * {@link MultiDbOutboundAdapterUnitTests}.
+ * DatabaseCommandTracker are in {@link DatabaseCommandTrackerUnitTests}. Unit-level tests for MultiDbOutboundHandler are in
+ * {@link MultiDbOutboundHandlerUnitTests}.
  *
  * @author Ali Takavci
  */
@@ -69,7 +69,7 @@ class DatabaseEndpointCallbackTests {
 
     // ============ Timeout Exception Tracking Tests ============
     // Note: Only timeout exceptions are tracked via DatabaseCommandTracker callback.
-    // Other exceptions and successes are tracked by MultiDbOutboundAdapter in the pipeline.
+    // Other exceptions and successes are tracked by MultiDbOutboundHandler in the pipeline.
 
     @Nested
     @DisplayName("Timeout Exception Tracking Tests")
@@ -116,7 +116,7 @@ class DatabaseEndpointCallbackTests {
         }
 
         @Test
-        @DisplayName("Should NOT track non-timeout exceptions via callback (handled by MultiDbOutboundAdapter)")
+        @DisplayName("Should NOT track non-timeout exceptions via callback (handled by MultiDbOutboundHandler)")
         void shouldNotTrackNonTimeoutExceptionsViaCallback() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
@@ -126,16 +126,16 @@ class DatabaseEndpointCallbackTests {
 
             endpoint.write(asyncCommand);
 
-            // Complete with non-timeout exception (should be tracked by MultiDbOutboundAdapter, not callback)
+            // Complete with non-timeout exception (should be tracked by MultiDbOutboundHandler, not callback)
             asyncCommand.completeExceptionally(new RedisConnectionException("connection failed"));
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
-            // Should NOT be recorded by callback (MultiDbOutboundAdapter would record it in real pipeline)
+            // Should NOT be recorded by callback (MultiDbOutboundHandler would record it in real pipeline)
             assertThat(snapshot.getFailureCount()).isEqualTo(0);
         }
 
         @Test
-        @DisplayName("Should NOT track success via callback (handled by MultiDbOutboundAdapter)")
+        @DisplayName("Should NOT track success via callback (handled by MultiDbOutboundHandler)")
         void shouldNotTrackSuccessViaCallback() {
             CircuitBreaker circuitBreaker = new CircuitBreakerImpl(getCBConfig(50.0f, 100));
             endpoint.bind(circuitBreaker);
@@ -149,7 +149,7 @@ class DatabaseEndpointCallbackTests {
             asyncCommand.complete();
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
-            // Should NOT be recorded by callback (MultiDbOutboundAdapter would record it in real pipeline)
+            // Should NOT be recorded by callback (MultiDbOutboundHandler would record it in real pipeline)
             assertThat(snapshot.getSuccessCount()).isEqualTo(0);
         }
 
@@ -645,7 +645,7 @@ class DatabaseEndpointCallbackTests {
 
             MetricsSnapshot snapshot = circuitBreaker.getSnapshot();
             // Only timeout exception (index 0) is tracked by callback
-            // Other exceptions and success would be tracked by MultiDbOutboundAdapter in real pipeline
+            // Other exceptions and success would be tracked by MultiDbOutboundHandler in real pipeline
             assertThat(snapshot.getFailureCount()).isEqualTo(1);
         }
 

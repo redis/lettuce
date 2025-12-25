@@ -1,3 +1,23 @@
+/*
+ * Copyright 2011-Present, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ *
+ * This file contains contributions from third-party contributors
+ * licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.lettuce.core.failover;
 
 import java.util.Collection;
@@ -47,7 +67,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultiDbClientImpl.class);
 
-    private static final RedisURI EMPTY_URI = new RedisURI();
+    private static final RedisURI EMPTY_URI = new ImmutableRedisURI(new RedisURI());
 
     private final Map<RedisURI, DatabaseConfig> databaseConfigs;
 
@@ -113,7 +133,8 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         HealthStatusManager healthStatusManager = createHealthStatusManager();
 
-        Map<RedisURI, RedisDatabase<StatefulRedisConnection<K, V>>> databases = new ConcurrentHashMap<>(databaseConfigs.size());
+        Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases = new ConcurrentHashMap<>(
+                databaseConfigs.size());
         for (Map.Entry<RedisURI, DatabaseConfig> entry : databaseConfigs.entrySet()) {
             RedisURI uri = entry.getKey();
             DatabaseConfig config = entry.getValue();
@@ -121,7 +142,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             // HACK: looks like repeating the implementation all around 'RedisClient.connect' is an overkill.
             // connections.put(uri, connect(codec, uri));
             // Instead we will use it from delegate
-            RedisDatabase<StatefulRedisConnection<K, V>> database = createRedisDatabase(config, codec, healthStatusManager);
+            RedisDatabaseImpl<StatefulRedisConnection<K, V>> database = createRedisDatabase(config, codec, healthStatusManager);
 
             databases.put(uri, database);
         }
@@ -139,14 +160,14 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         return new HealthStatusManagerImpl();
     }
 
-    private <K, V> RedisDatabase<StatefulRedisConnection<K, V>> createRedisDatabase(DatabaseConfig config,
+    private <K, V> RedisDatabaseImpl<StatefulRedisConnection<K, V>> createRedisDatabase(DatabaseConfig config,
             RedisCodec<K, V> codec, HealthStatusManager healthStatusManager) {
         RedisURI uri = config.getRedisURI();
         setOptions(config.getClientOptions());
         try {
             StatefulRedisConnection<K, V> connection = connect(codec, uri);
             DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
+            CircuitBreakerImpl circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
             databaseEndpoint.bind(circuitBreaker);
 
             HealthCheck healthCheck = null;
@@ -156,8 +177,12 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
                 healthCheck = healthStatusManager.add(uri, hcStrategy);
             }
 
-            RedisDatabase<StatefulRedisConnection<K, V>> database = new RedisDatabase<>(config, connection, databaseEndpoint,
-                    circuitBreaker, healthCheck);
+            RedisDatabaseImpl<StatefulRedisConnection<K, V>> database = new RedisDatabaseImpl<>(config, connection,
+                    databaseEndpoint, circuitBreaker, healthCheck);
+            if (logger.isInfoEnabled()) {
+                logger.info("Created database: {} with CircuitBreaker {} and HealthCheck {}", database.getId(),
+                        circuitBreaker.getId(), healthCheck != null ? healthCheck.getEndpoint() : "N/A");
+            }
             return database;
         } finally {
             resetOptions();
@@ -181,13 +206,13 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         HealthStatusManager healthStatusManager = createHealthStatusManager();
 
-        Map<RedisURI, RedisDatabase<StatefulRedisPubSubConnection<K, V>>> databases = new ConcurrentHashMap<>(
+        Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> databases = new ConcurrentHashMap<>(
                 databaseConfigs.size());
         for (Map.Entry<RedisURI, DatabaseConfig> entry : databaseConfigs.entrySet()) {
             RedisURI uri = entry.getKey();
             DatabaseConfig config = entry.getValue();
 
-            RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = createRedisDatabaseWithPubSub(config, codec,
+            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> database = createRedisDatabaseWithPubSub(config, codec,
                     healthStatusManager);
             databases.put(uri, database);
         }
@@ -201,7 +226,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
                 this::createRedisDatabaseWithPubSub, healthStatusManager);
     }
 
-    private <K, V> RedisDatabase<StatefulRedisPubSubConnection<K, V>> createRedisDatabaseWithPubSub(DatabaseConfig config,
+    private <K, V> RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> createRedisDatabaseWithPubSub(DatabaseConfig config,
             RedisCodec<K, V> codec, HealthStatusManager healthStatusManager) {
         RedisURI uri = config.getRedisURI();
         setOptions(config.getClientOptions());
@@ -218,7 +243,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
                 healthCheck = healthStatusManager.add(uri, hcStrategy);
             }
 
-            RedisDatabase<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabase<>(config, connection,
+            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabaseImpl<>(config, connection,
                     databaseEndpoint, circuitBreaker, healthCheck);
             return database;
         } finally {
@@ -253,17 +278,18 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * @throws RedisConnectionException if all databases are unhealthy
      */
     private void waitForInitialHealthyDatabase(StatusTracker statusTracker,
-            Map<RedisURI, ? extends RedisDatabase<?>> databaseMap) {
+            Map<RedisURI, ? extends RedisDatabaseImpl<?>> databaseMap) {
         // Sort databases by weight in descending order
-        List<? extends Map.Entry<RedisURI, ? extends RedisDatabase<?>>> sortedDatabases = databaseMap.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue(Comparator.comparing((RedisDatabase<?> db) -> db.getWeight()).reversed()))
+        List<? extends Map.Entry<RedisURI, ? extends RedisDatabaseImpl<?>>> sortedDatabases = databaseMap.entrySet().stream()
+                .sorted(Map.Entry
+                        .comparingByValue(Comparator.comparing((RedisDatabaseImpl<?> db) -> db.getWeight()).reversed()))
                 .collect(Collectors.toList());
         logger.info("Selecting initial database from {} configured databases", sortedDatabases.size());
 
         // Select database in weight order
-        for (Map.Entry<RedisURI, ? extends RedisDatabase<?>> entry : sortedDatabases) {
+        for (Map.Entry<RedisURI, ? extends RedisDatabaseImpl<?>> entry : sortedDatabases) {
             RedisURI endpoint = entry.getKey();
-            RedisDatabase<?> database = entry.getValue();
+            RedisDatabaseImpl<?> database = entry.getValue();
 
             logger.info("Evaluating database {} (weight: {})", endpoint, database.getWeight());
 
@@ -280,7 +306,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
                 status = HealthStatus.HEALTHY;
             }
 
-            if (status == HealthStatus.HEALTHY) {
+            if (status.isHealthy()) {
                 logger.info("Found healthy database: {} (weight: {})", endpoint, database.getWeight());
                 return;
             } else {
