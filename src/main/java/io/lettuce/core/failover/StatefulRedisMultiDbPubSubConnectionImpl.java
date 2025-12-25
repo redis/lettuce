@@ -106,8 +106,8 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
      * @param database the database to switch to
      * @param internalCall if {@code true}, validation failures return {@code false} and log errors; if {@code false},
      *        validation failures throw exceptions
-     * @return {@code true} if the switch succeeded or the database was already current; {@code false} if validation failed
-     *         and {@code internalCall} is {@code true}
+     * @return {@code true} if the switch succeeded or the database was already current; {@code false} if validation failed and
+     *         {@code internalCall} is {@code true}
      * @throws IllegalStateException if {@code internalCall} is {@code false} and validation fails
      * @throws UnsupportedOperationException if {@code internalCall} is {@code false} and the source or destination endpoint
      *         cannot be located
