@@ -155,6 +155,9 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo> {
                     indexInfo.putSizeStatistic(key, parseValue(value));
                 } else if (INDEXING_STATS.contains(key)) {
                     indexInfo.putIndexingStatistic(key, parseValue(value));
+                } else {
+                    // Store unrecognized fields for forward compatibility
+                    indexInfo.putAdditionalField(key, parseValue(value));
                 }
                 break;
         }
