@@ -54,6 +54,7 @@ import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.AggregationReply.Cursor;
 
 import io.lettuce.core.search.HybridReply;
+import io.lettuce.core.search.IndexInfo;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -1717,6 +1718,11 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     @Override
     public Flux<V> ftList() {
         return createDissolvingFlux(() -> searchCommandBuilder.ftList());
+    }
+
+    @Override
+    public Mono<IndexInfo> ftInfo(String index) {
+        return createMono(() -> searchCommandBuilder.ftInfo(index));
     }
 
     @Override

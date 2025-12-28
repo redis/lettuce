@@ -52,7 +52,7 @@ import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.search.AggregationReply;
 import io.lettuce.core.search.AggregationReply.Cursor;
 import io.lettuce.core.search.HybridReply;
-
+import io.lettuce.core.search.IndexInfo;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
@@ -1656,6 +1656,11 @@ public abstract class AbstractRedisAsyncCommands<K, V> implements RedisAclAsyncC
     @Override
     public RedisFuture<List<V>> ftList() {
         return dispatch(searchCommandBuilder.ftList());
+    }
+
+    @Override
+    public RedisFuture<IndexInfo> ftInfo(String index) {
+        return dispatch(searchCommandBuilder.ftInfo(index));
     }
 
     @Override

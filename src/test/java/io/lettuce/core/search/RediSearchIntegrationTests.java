@@ -1064,6 +1064,68 @@ public class RediSearchIntegrationTests {
     }
 
     /**
+     * Test FT.INFO command for getting index information and statistics.
+     */
+    @Test
+    void testFtInfoCommand() {
+        String testIndex = "info-idx";
+
+        // Create field definitions
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> contentField = TextFieldArgs.<String> builder().name("content").build();
+        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+
+        // Create index
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("product:")
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, contentField, priceField, categoryField)))
+                .isEqualTo("OK");
+
+        // Add some test documents
+        redis.hset("product:1", "title", "Redis Guide");
+        redis.hset("product:1", "content", "A comprehensive guide to Redis");
+        redis.hset("product:1", "price", "29.99");
+        redis.hset("product:1", "category", "books");
+
+        redis.hset("product:2", "title", "Lettuce Tutorial");
+        redis.hset("product:2", "content", "Learn Lettuce Redis client");
+        redis.hset("product:2", "price", "19.99");
+        redis.hset("product:2", "category", "tutorials");
+
+        // Get index information
+        IndexInfo info = redis.ftInfo(testIndex);
+
+        // Verify basic information is present
+        assertThat(info).isNotNull();
+        assertThat(info.getIndexName()).isEqualTo(testIndex);
+
+        // Verify index definition
+        assertThat(info.getIndexDefinition()).isNotEmpty();
+        assertThat(info.getIndexDefinition()).containsKey("key_type");
+
+        // Verify attributes (schema fields)
+        assertThat(info.getAttributes()).isNotEmpty();
+        assertThat(info.getAttributes()).hasSize(4); // title, content, price, category
+
+        // Verify document count
+        assertThat(info.getNumDocs()).isEqualTo(2L);
+
+        // Verify statistics are present
+        assertThat(info.getNumTerms()).isNotNull();
+        assertThat(info.getNumRecords()).isNotNull();
+        assertThat(info.getSizeStatistics()).containsKey("inverted_sz_mb");
+
+        // Verify indexing statistics
+        assertThat(info.getIndexingStatistics()).containsKey("indexing");
+        assertThat(info.getIndexingStatistics()).containsKey("percent_indexed");
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+        redis.del("product:1", "product:2");
+    }
+
+    /**
      * Test field aliases in RETURN clause to rename fields in search results.
      */
     @Test
