@@ -65,6 +65,8 @@ public class IndexInfo {
 
     private final List<Map<String, Object>> fieldStatistics = new ArrayList<>();
 
+    private final Map<String, Object> additionalFields = new HashMap<>();
+
     /**
      * Creates a new empty IndexInfo instance.
      */
@@ -320,6 +322,23 @@ public class IndexInfo {
 
     void addFieldStatistic(Map<String, Object> fieldStatistic) {
         this.fieldStatistics.add(fieldStatistic);
+    }
+
+    /**
+     * Gets additional fields that were returned by FT.INFO but are not explicitly mapped to known properties.
+     * <p>
+     * This map captures any fields that are not recognized by the current version of the parser, making the implementation
+     * forward-compatible with future Redis versions that may add new fields to the FT.INFO response.
+     * </p>
+     *
+     * @return an unmodifiable map of additional fields
+     */
+    public Map<String, Object> getAdditionalFields() {
+        return Collections.unmodifiableMap(additionalFields);
+    }
+
+    void putAdditionalField(String key, Object value) {
+        this.additionalFields.put(key, value);
     }
 
     @Override
