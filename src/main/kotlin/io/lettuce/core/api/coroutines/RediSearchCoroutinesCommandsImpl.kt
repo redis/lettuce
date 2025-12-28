@@ -10,6 +10,7 @@ package io.lettuce.core.api.coroutines
 import io.lettuce.core.ExperimentalLettuceCoroutinesApi
 import io.lettuce.core.api.reactive.RediSearchReactiveCommands
 import io.lettuce.core.search.AggregationReply
+import io.lettuce.core.search.IndexInfo
 import io.lettuce.core.search.SearchReply
 import io.lettuce.core.search.SpellCheckResult
 import io.lettuce.core.search.Suggestion
@@ -147,6 +148,8 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftList(): List<V> =
         ops.ftList().asFlow().toList()
 
-
+    override suspend fun ftInfo(index: String): IndexInfo? =
+        ops.ftInfo(index).awaitFirstOrNull()
 
 }
+
