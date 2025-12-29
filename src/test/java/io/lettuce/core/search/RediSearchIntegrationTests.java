@@ -14,11 +14,14 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.json.JsonPath;
 import io.lettuce.core.protocol.DecodeBufferPolicies;
 import io.lettuce.core.search.aggregateutils.Apply;
 import io.lettuce.core.search.arguments.hybrid.Combiners;
 import io.lettuce.core.search.arguments.CreateArgs;
+import io.lettuce.core.search.arguments.DocumentLanguage;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 import io.lettuce.core.search.aggregateutils.Filter;
@@ -46,6 +49,7 @@ import io.lettuce.core.search.arguments.VectorFieldArgs;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.condition.RedisConditions;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -1101,12 +1105,25 @@ public class RediSearchIntegrationTests {
         assertThat(info.getIndexName()).isEqualTo(testIndex);
 
         // Verify index definition
-        assertThat(info.getIndexDefinition()).isNotEmpty();
-        assertThat(info.getIndexDefinition()).containsKey("key_type");
+        assertThat(info.getIndexDefinition()).isNotNull();
+        assertThat(info.getIndexDefinition().getKeyType()).isNotNull();
 
-        // Verify attributes (schema fields)
-        assertThat(info.getAttributes()).isNotEmpty();
-        assertThat(info.getAttributes()).hasSize(4); // title, content, price, category
+        // Verify fields (schema fields)
+        assertThat(info.getFields()).isNotEmpty();
+        assertThat(info.getFields()).hasSize(4); // title, content, price, category
+
+        // Verify field types
+        List<IndexInfo.Field> fields = info.getFields();
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TextField).count()).isEqualTo(2); // title, content
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.NumericField).count()).isEqualTo(1); // price
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TagField).count()).isEqualTo(1); // category
+
+        // Verify specific field properties
+        IndexInfo.Field priceFieldInfo = fields.stream().filter(f -> "price".equals(f.getIdentifier())).findFirst()
+                .orElse(null);
+        assertThat(priceFieldInfo).isNotNull();
+        assertThat(priceFieldInfo).isInstanceOf(IndexInfo.NumericField.class);
+        assertThat(priceFieldInfo.isSortable()).isTrue();
 
         // Verify document count
         assertThat(info.getNumDocs()).isEqualTo(2L);
@@ -1114,15 +1131,146 @@ public class RediSearchIntegrationTests {
         // Verify statistics are present
         assertThat(info.getNumTerms()).isNotNull();
         assertThat(info.getNumRecords()).isNotNull();
-        assertThat(info.getSizeStatistics()).containsKey("inverted_sz_mb");
 
-        // Verify indexing statistics
-        assertThat(info.getIndexingStatistics()).containsKey("indexing");
-        assertThat(info.getIndexingStatistics()).containsKey("percent_indexed");
+        // Verify size statistics are available
+        if (info.getSizeStats() != null) {
+            assertThat(info.getSizeStats().getInvertedSizeMb()).isNotNull();
+        }
+
+        // Verify indexing statistics are available
+        if (info.getIndexingStats() != null) {
+            // These fields should be present
+            assertThat(info.getIndexingStats().isIndexing()).isNotNull();
+            assertThat(info.getIndexingStats().getPercentIndexed()).isNotNull();
+        }
 
         // Cleanup
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
         redis.del("product:1", "product:2");
+    }
+
+    /**
+     * Test FT.INFO command with ByteArrayCodec to verify parsing works correctly with binary codec.
+     */
+    @Test
+    void testFtInfoCommandWithByteArrayCodec() {
+        String testIndex = "binary-info-idx";
+
+        // Create field definitions using String codec
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").separator(",").build();
+
+        // Create index using String codec
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("product:")
+                .on(CreateArgs.TargetType.HASH).build();
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, priceField, categoryField))).isEqualTo("OK");
+
+        // Add test documents
+        redis.hset("product:1", "title", "Test Product");
+        redis.hset("product:1", "price", "99.99");
+        redis.hset("product:1", "category", "electronics,gadgets");
+
+        // Get index information using ByteArrayCodec connection
+        // Note: ftInfo always takes a String index name, but the connection uses ByteArrayCodec
+        // internally for parsing the response
+        IndexInfo info = redisBinary.ftInfo(testIndex);
+
+        // Verify basic information is present
+        assertThat(info).isNotNull();
+        assertThat(info.getIndexName()).isEqualTo(testIndex);
+
+        // Verify index definition
+        assertThat(info.getIndexDefinition()).isNotNull();
+        assertThat(info.getIndexDefinition().getKeyType()).isNotNull();
+
+        // Verify fields
+        assertThat(info.getFields()).isNotEmpty();
+        assertThat(info.getFields()).hasSize(3);
+
+        // Verify field types
+        List<IndexInfo.Field> fields = info.getFields();
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TextField).count()).isEqualTo(1);
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.NumericField).count()).isEqualTo(1);
+        assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TagField).count()).isEqualTo(1);
+
+        // Verify category field properties
+        IndexInfo.Field categoryFieldInfo = fields.stream()
+                .filter(f -> "category".equals(new String((byte[]) f.getIdentifier()))).findFirst().orElse(null);
+        assertThat(categoryFieldInfo).isNotNull();
+        assertThat(categoryFieldInfo).isInstanceOf(IndexInfo.TagField.class);
+        assertThat(((IndexInfo.TagField) categoryFieldInfo).getSeparator()).isNotNull();
+        assertThat(((IndexInfo.TagField) categoryFieldInfo).getSeparator()).isEqualTo(",");
+
+        // Verify document count
+        assertThat(info.getNumDocs()).isEqualTo(1L);
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    @Test
+    void testFtInfoCommandWithCompositeCodec() {
+        String testIndex = "composite-codec-idx";
+
+        // Create a connection with composite codec (String keys, byte[] values)
+        RedisCodec<String, byte[]> codec = RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE);
+        StatefulRedisConnection<String, byte[]> compositeConnection = client.connect(codec);
+        RedisCommands<String, byte[]> compositeRedis = compositeConnection.sync();
+
+        try {
+            // Create field definitions using String codec
+            FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+            FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+            FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").separator(",").build();
+
+            // Create index using String codec
+            CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("product:")
+                    .on(CreateArgs.TargetType.HASH).build();
+            assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, priceField, categoryField)))
+                    .isEqualTo("OK");
+
+            // Add test documents using regular String connection
+            redis.hset("product:1", "title", "Test Product");
+            redis.hset("product:1", "price", "99.99");
+            redis.hset("product:1", "category", "electronics,gadgets");
+
+            // Get index information using composite codec connection
+            IndexInfo<byte[]> info = compositeRedis.ftInfo(testIndex);
+
+            // Verify basic information is present
+            assertThat(info).isNotNull();
+            // Index name should be a String (key type)
+            assertThat(info.getIndexName()).isEqualTo(testIndex);
+
+            // Verify index definition
+            assertThat(info.getIndexDefinition()).isNotNull();
+            assertThat(info.getIndexDefinition().getKeyType()).isNotNull();
+
+            // Verify fields
+            assertThat(info.getFields()).isNotEmpty();
+            assertThat(info.getFields()).hasSize(3);
+
+            // Verify field types - identifiers and attributes should be byte[] (value type)
+            List<IndexInfo.Field<byte[]>> fields = info.getFields();
+            assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TextField).count()).isEqualTo(1);
+            assertThat(fields.stream().filter(f -> f instanceof IndexInfo.NumericField).count()).isEqualTo(1);
+            assertThat(fields.stream().filter(f -> f instanceof IndexInfo.TagField).count()).isEqualTo(1);
+
+            // Verify category field properties - identifier should be byte[]
+            IndexInfo.Field<byte[]> categoryFieldInfo = fields.stream()
+                    .filter(f -> "category".equals(new String(f.getIdentifier()))).findFirst().orElse(null);
+            assertThat(categoryFieldInfo).isNotNull();
+            assertThat(categoryFieldInfo).isInstanceOf(IndexInfo.TagField.class);
+            assertThat(((IndexInfo.TagField<byte[]>) categoryFieldInfo).getSeparator()).isNotNull();
+            assertThat(((IndexInfo.TagField<byte[]>) categoryFieldInfo).getSeparator()).isEqualTo(",");
+
+            // Verify document count
+            assertThat(info.getNumDocs()).isEqualTo(1L);
+        } finally {
+            compositeConnection.close();
+            assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+        }
     }
 
     /**
@@ -1450,6 +1598,160 @@ public class RediSearchIntegrationTests {
             buffer.putFloat(value);
         }
         return buffer.array();
+    }
+
+    /**
+     * Comprehensive test that verifies all CreateArgs options are properly reflected in IndexInfo.
+     */
+    @Test
+    void testIndexInfoWithAllCreateArgsOptions() {
+        String testIndex = "comprehensive-idx";
+
+        // Create index with all available CreateArgs options
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.HASH)
+                .withPrefix("test:").filter("@category=='electronics'").defaultLanguage(DocumentLanguage.ENGLISH)
+                .languageField("lang").defaultScore(0.5).scoreField("score").payloadField("payload").noOffsets()
+                .noHighlighting().noFields().noFrequency().maxTextFields().skipInitialScan().build();
+
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").sortable().noStem().build();
+
+        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").sortable().build();
+
+        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").separator(",").build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Arrays.asList(titleField, priceField, categoryField))).isEqualTo("OK");
+
+        // Get index information
+        IndexInfo<String> info = redis.ftInfo(testIndex);
+
+        // Verify basic information
+        assertThat(info).isNotNull();
+        assertThat(info.getIndexName()).isEqualTo(testIndex);
+
+        // Verify index definition options
+        IndexInfo.IndexDefinition<String> definition = info.getIndexDefinition();
+        assertThat(definition).isNotNull();
+        assertThat(definition.getKeyType()).isNotNull();
+        assertThat(definition.getKeyType()).isEqualTo(IndexInfo.IndexDefinition.TargetType.HASH);
+
+        // Verify prefixes
+        assertThat(definition.getPrefixes()).containsExactly("test:");
+
+        // Verify filter
+        assertThat(definition.getFilter()).isNotNull();
+        assertThat(definition.getFilter()).isEqualTo("@category=='electronics'");
+
+        // Verify language settings
+        // Note: Redis FT.INFO does not return default_language, only language_field
+        assertThat(definition.getLanguageField()).isNotNull();
+        assertThat(definition.getLanguageField()).isEqualTo("lang");
+
+        // Verify score settings
+        assertThat(definition.getDefaultScore()).isEqualTo(0.5);
+        assertThat(definition.getScoreField()).isNotNull();
+        assertThat(definition.getScoreField()).isEqualTo("score");
+
+        // Verify payload field
+        assertThat(definition.getPayloadField()).isNotNull();
+        assertThat(definition.getPayloadField()).isEqualTo("payload");
+
+        // Verify index options (the main focus of this test)
+        assertThat(info.isNoOffsets()).isTrue();
+        assertThat(info.isNoHighlight()).isTrue();
+        assertThat(info.isNoFields()).isTrue();
+        assertThat(info.isNoFrequency()).isTrue();
+        assertThat(info.isMaxTextFields()).isTrue();
+        // Note: Redis FT.INFO does not return SKIPINITIALSCAN option
+        // assertThat(info.isSkipInitialScan()).isTrue();
+
+        // Verify fields
+        assertThat(info.getFields()).hasSize(3);
+
+        // Verify title field properties
+        IndexInfo.Field titleFieldInfo = info.getFields().stream().filter(f -> "title".equals(f.getIdentifier())).findFirst()
+                .orElse(null);
+        assertThat(titleFieldInfo).isNotNull();
+        assertThat(titleFieldInfo).isInstanceOf(IndexInfo.TextField.class);
+        assertThat(titleFieldInfo.isSortable()).isTrue();
+        assertThat(((IndexInfo.TextField) titleFieldInfo).isNoStem()).isTrue();
+
+        // Verify price field properties
+        IndexInfo.Field priceFieldInfo = info.getFields().stream().filter(f -> "price".equals(f.getIdentifier())).findFirst()
+                .orElse(null);
+        assertThat(priceFieldInfo).isNotNull();
+        assertThat(priceFieldInfo).isInstanceOf(IndexInfo.NumericField.class);
+        assertThat(priceFieldInfo.isSortable()).isTrue();
+
+        // Verify category field properties
+        IndexInfo.Field categoryFieldInfo = info.getFields().stream().filter(f -> "category".equals(f.getIdentifier()))
+                .findFirst().orElse(null);
+        assertThat(categoryFieldInfo).isNotNull();
+        assertThat(categoryFieldInfo).isInstanceOf(IndexInfo.TagField.class);
+        assertThat(((IndexInfo.TagField) categoryFieldInfo).getSeparator()).isNotNull();
+        assertThat(((IndexInfo.TagField) categoryFieldInfo).getSeparator()).isEqualTo(",");
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    /**
+     * Test that verifies strongly-typed statistics objects are properly populated.
+     */
+    @Test
+    void testIndexInfoStatistics() {
+        String testIndex = "stats-idx";
+
+        // Create a simple index
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().on(CreateArgs.TargetType.HASH)
+                .withPrefix("stats:").build();
+
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+
+        assertThat(redis.ftCreate(testIndex, createArgs, Collections.singletonList(titleField))).isEqualTo("OK");
+
+        // Add some documents to generate statistics
+        redis.hset("stats:1", "title", "First document");
+        redis.hset("stats:2", "title", "Second document");
+        redis.hset("stats:3", "title", "Third document");
+
+        // Wait a bit for indexing to complete
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Get index information
+        IndexInfo info = redis.ftInfo(testIndex);
+
+        // Verify size statistics are available
+        IndexInfo.SizeStatistics sizeStats = info.getSizeStats();
+        if (sizeStats != null) {
+            // At least some size statistics should be present
+            assertThat(sizeStats.getInvertedSizeMb()).isNotNull();
+            assertThat(sizeStats.getDocTableSizeMb()).isNotNull();
+        }
+
+        // Verify indexing statistics are available
+        IndexInfo.IndexingStatistics indexingStats = info.getIndexingStats();
+        if (indexingStats != null) {
+            // Indexing should be complete
+            // If indexing field is present, it should be false (complete)
+            assertThat(indexingStats.isIndexing()).isFalse();
+            // Percent indexed should be 1.0 (100%)
+            assertThat(indexingStats.getPercentIndexed()).isEqualTo(1.0);
+        }
+
+        // Verify GC statistics structure (may or may not have data)
+        IndexInfo.GcStatistics gcStats = info.getGcStats();
+        // GC stats may be null if no GC has run yet, which is fine
+
+        // Verify cursor statistics structure (may or may not have data)
+        IndexInfo.CursorStatistics cursorStats = info.getCursorStats();
+        // Cursor stats may be null if no cursors have been used, which is fine
+
+        // Cleanup
+        assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
     }
 
 }

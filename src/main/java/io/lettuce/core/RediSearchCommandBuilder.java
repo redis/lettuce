@@ -407,7 +407,7 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
      * @param index the index name
      * @return an IndexInfo object containing index information and statistics
      */
-    public Command<K, V, IndexInfo> ftInfo(String index) {
+    public Command<K, V, IndexInfo<V>> ftInfo(String index) {
         LettuceAssert.notNull(index, "Index must not be null");
 
         CommandArgs<K, V> commandArgs = new CommandArgs<>(codec).add(index);

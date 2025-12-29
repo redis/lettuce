@@ -677,7 +677,7 @@ public interface RediSearchAsyncCommands<K, V> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    RedisFuture<IndexInfo> ftInfo(String index);
+    RedisFuture<IndexInfo<V>> ftInfo(String index);
 
     /**
      * Dump synonym group contents.

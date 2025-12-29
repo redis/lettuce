@@ -1721,7 +1721,7 @@ public abstract class AbstractRedisReactiveCommands<K, V>
     }
 
     @Override
-    public Mono<IndexInfo> ftInfo(String index) {
+    public Mono<IndexInfo<V>> ftInfo(String index) {
         return createMono(() -> searchCommandBuilder.ftInfo(index));
     }
 
