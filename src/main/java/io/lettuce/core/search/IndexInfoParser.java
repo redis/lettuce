@@ -309,7 +309,34 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
         List<Object> attributesList = parseListValue(value);
         for (Object attr : attributesList) {
             Map<String, Object> attributeMap = new LinkedHashMap<>();
-            if (attr instanceof ComplexData) {
+            if (attr instanceof List) {
+                // Handle case where parseListValue already parsed the ComplexData into a List
+                // RESP2: alternating key-value pairs
+                List<?> list = (List<?>) attr;
+                for (int i = 0; i < list.size(); i += 2) {
+                    if (i + 1 < list.size()) {
+                        String key = decodeStringAsString(list.get(i));
+                        Object val = list.get(i + 1);
+                        // Handle special case where SORTABLE has a flag as its value (e.g., SORTABLE NOSTEM)
+                        // In this case, we need to add both SORTABLE and the flag (NOSTEM) as separate keys
+                        if ("SORTABLE".equals(key)) {
+                            attributeMap.put(key, val);
+                            String valStr = decodeStringAsString(val);
+                            // Check if the value is a known flag
+                            if (isFieldFlag(valStr)) {
+                                attributeMap.put(valStr, valStr);
+                            }
+                        } else {
+                            attributeMap.put(key, val);
+                        }
+                    }
+                }
+            } else if (attr instanceof Map) {
+                // Handle case where parseListValue already parsed the map
+                @SuppressWarnings("unchecked")
+                Map<String, Object> map = (Map<String, Object>) attr;
+                attributeMap.putAll(map);
+            } else if (attr instanceof ComplexData) {
                 ComplexData data = (ComplexData) attr;
                 if (data.isList()) {
                     // RESP2: alternating key-value pairs
@@ -317,7 +344,18 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
                     for (int i = 0; i < list.size(); i += 2) {
                         if (i + 1 < list.size()) {
                             // Don't call parseValue - keep raw values for metadata fields
-                            attributeMap.put(decodeStringAsString(list.get(i)), list.get(i + 1));
+                            String key = decodeStringAsString(list.get(i));
+                            Object val = list.get(i + 1);
+                            // Handle special case where SORTABLE has a flag as its value
+                            if ("SORTABLE".equals(key)) {
+                                attributeMap.put(key, val);
+                                String valStr = decodeStringAsString(val);
+                                if (isFieldFlag(valStr)) {
+                                    attributeMap.put(valStr, valStr);
+                                }
+                            } else {
+                                attributeMap.put(key, val);
+                            }
                         }
                     }
                 } else if (data.isMap()) {
@@ -328,17 +366,20 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
                         attributeMap.put(decodeStringAsString(entry.getKey()), entry.getValue());
                     }
                 }
-            } else if (attr instanceof Map) {
-                // Handle case where parseListValue already parsed the map
-                @SuppressWarnings("unchecked")
-                Map<String, Object> map = (Map<String, Object>) attr;
-                attributeMap.putAll(map);
             }
             IndexInfo.Field<V> field = createFieldFromMap(attributeMap);
             if (field != null) {
                 indexInfo.addField(field);
             }
         }
+    }
+
+    /**
+     * Check if a string is a known field flag.
+     */
+    private boolean isFieldFlag(String str) {
+        return "NOSTEM".equals(str) || "UNF".equals(str) || "NOINDEX".equals(str) || "PHONETIC".equals(str)
+                || "WITHSUFFIXTRIE".equals(str) || "INDEXEMPTY".equals(str) || "INDEXMISSING".equals(str);
     }
 
     /**
@@ -810,6 +851,12 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
             } catch (NumberFormatException e) {
                 return 0;
             }
+        } else if (value instanceof String) {
+            try {
+                return Long.parseLong((String) value);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
         }
         return 0;
     }
@@ -824,6 +871,12 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
             String str = decodeStringAsString(value);
             try {
                 return Double.parseDouble(str);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        } else if (value instanceof String) {
+            try {
+                return Double.parseDouble((String) value);
             } catch (NumberFormatException e) {
                 return 0;
             }
@@ -847,6 +900,13 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
                 return Integer.parseInt(str) != 0;
             } catch (NumberFormatException e) {
                 return Boolean.parseBoolean(str);
+            }
+        }
+        if (value instanceof String) {
+            try {
+                return Integer.parseInt((String) value) != 0;
+            } catch (NumberFormatException e) {
+                return Boolean.parseBoolean((String) value);
             }
         }
         return false;
@@ -961,7 +1021,13 @@ public class IndexInfoParser<K, V> implements ComplexDataParser<IndexInfo<V>> {
         if (flags instanceof List) {
             List<?> flagsList = (List<?>) flags;
             for (Object flag : flagsList) {
-                if (flag instanceof String && key.equals(flag)) {
+                String flagStr = null;
+                if (flag instanceof String) {
+                    flagStr = (String) flag;
+                } else {
+                    flagStr = decodeStringAsString(flag);
+                }
+                if (key.equals(flagStr)) {
                     return true;
                 }
             }
