@@ -679,7 +679,7 @@ public interface RediSearchReactiveCommands<K, V> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    Mono<IndexInfo> ftInfo(String index);
+    Mono<IndexInfo<V>> ftInfo(String index);
 
     /**
      * Dump synonym group contents.
