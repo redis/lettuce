@@ -148,7 +148,7 @@ open class RediSearchCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: 
     override suspend fun ftList(): List<V> =
         ops.ftList().asFlow().toList()
 
-    override suspend fun ftInfo(index: String): IndexInfo? =
+    override suspend fun ftInfo(index: String): IndexInfo<V>? =
         ops.ftInfo(index).awaitFirstOrNull()
 
 }

@@ -673,7 +673,7 @@ public interface RediSearchCommands<K, V> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    IndexInfo ftInfo(String index);
+    IndexInfo<V> ftInfo(String index);
 
     /**
      * Dump synonym group contents.

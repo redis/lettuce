@@ -674,7 +674,7 @@ interface RediSearchCoroutinesCommands<K : Any, V : Any> {
      * @see #ftDropindex(String)
      */
     @Experimental
-    suspend fun ftInfo(index: String): IndexInfo?
+    suspend fun ftInfo(index: String): IndexInfo<V>?
 
     /**
      * Dump synonym group contents.
