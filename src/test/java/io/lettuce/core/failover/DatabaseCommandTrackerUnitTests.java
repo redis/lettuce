@@ -24,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static io.lettuce.TestTags.UNIT_TEST;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,7 +56,7 @@ import io.netty.channel.ChannelPipeline;
  * @author Ali Takavci
  * @since 7.4
  */
-@Tag("unit")
+@Tag(UNIT_TEST)
 class DatabaseCommandTrackerUnitTests {
 
     private DatabaseCommandTracker.CommandWriter mockWriter;
@@ -84,7 +85,7 @@ class DatabaseCommandTrackerUnitTests {
 
     @Nested
     @DisplayName("Write Delegation Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class WriteDelegationTests {
 
         @Test
@@ -161,7 +162,7 @@ class DatabaseCommandTrackerUnitTests {
 
     @Nested
     @DisplayName("Circuit Breaker Open State Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class CircuitBreakerOpenStateTests {
 
         @Test
@@ -229,7 +230,7 @@ class DatabaseCommandTrackerUnitTests {
 
     @Nested
     @DisplayName("Timeout Exception Tracking Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class TimeoutExceptionTrackingTests {
 
         @Test
@@ -304,7 +305,7 @@ class DatabaseCommandTrackerUnitTests {
 
     @Nested
     @DisplayName("Channel Registration Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class ChannelRegistrationTests {
 
         @Test
@@ -359,7 +360,7 @@ class DatabaseCommandTrackerUnitTests {
 
     @Nested
     @DisplayName("Exception Handling Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class ExceptionHandlingTests {
 
         @Test
@@ -409,7 +410,7 @@ class DatabaseCommandTrackerUnitTests {
 
     @Nested
     @DisplayName("Success Tracking Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class SuccessTrackingTests {
 
         @Test
@@ -440,7 +441,7 @@ class DatabaseCommandTrackerUnitTests {
 
     @Nested
     @DisplayName("Callback Attachment Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class CallbackAttachmentTests {
 
         @Test
