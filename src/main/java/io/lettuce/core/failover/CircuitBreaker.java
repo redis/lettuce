@@ -30,6 +30,13 @@ import io.lettuce.core.internal.LettuceAssert;
 public interface CircuitBreaker extends Closeable {
 
     /**
+     * Get the ID for this circuit breaker.
+     *
+     * @return the ID
+     */
+    String getId();
+
+    /**
      * Get a snapshot of the current metrics within the time window. Use the snapshot to access success count, failure count,
      * total count, and failure rate.
      *
@@ -77,7 +84,13 @@ public interface CircuitBreaker extends Closeable {
     void close();
 
     enum State {
-        CLOSED, OPEN
+
+        CLOSED, OPEN;
+
+        public boolean isClosed() {
+            return this == CLOSED;
+        }
+
     }
 
     class CircuitBreakerConfig {

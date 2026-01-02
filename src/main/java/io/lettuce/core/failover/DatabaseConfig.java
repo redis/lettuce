@@ -30,7 +30,7 @@ public class DatabaseConfig {
 
     private static final float DEFAULT_WEIGHT = 1.0f;
 
-    private final RedisURI redisURI;
+    private final ImmutableRedisURI redisURI;
 
     private final float weight;
 
@@ -46,7 +46,7 @@ public class DatabaseConfig {
      * @param builder the builder
      */
     DatabaseConfig(Builder builder) {
-        this.redisURI = builder.redisURI;
+        this.redisURI = new ImmutableRedisURI(builder.redisURI);
         this.weight = builder.weight;
         this.clientOptions = builder.clientOptions;
         this.circuitBreakerConfig = builder.circuitBreakerConfig != null ? builder.circuitBreakerConfig

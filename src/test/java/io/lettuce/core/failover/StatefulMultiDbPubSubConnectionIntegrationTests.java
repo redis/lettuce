@@ -197,7 +197,7 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
             waitForSubscription(conn1, messages, "channel1");
 
             // Switch to second database
-            multiDbConn.switchToDatabase(secondEndpoint);
+            multiDbConn.switchTo(secondEndpoint);
 
             // Verify subscription is re-established on second database
             waitForSubscription(conn2, messages, "channel1");
@@ -226,7 +226,7 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
             waitForSubscription(conn1, messages, "switchchannel");
 
             // Switch to second database - subscriptions are automatically re-subscribed
-            multiDbConn.switchToDatabase(secondEndpoint);
+            multiDbConn.switchTo(secondEndpoint);
 
             // Verify subscription is established on second database
             waitForSubscription(conn2, messages, "switchchannel");
@@ -260,14 +260,14 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
             waitForSubscription(conn1, messages, "multichannel");
 
             // Switch to second database
-            multiDbConn.switchToDatabase(secondEndpoint);
+            multiDbConn.switchTo(secondEndpoint);
 
             // Verify subscription on second database
             waitForSubscription(conn2, messages, "multichannel");
             assertThat(conn2.sync().pubsubChannels()).contains("multichannel");
 
             // Switch back to first database
-            multiDbConn.switchToDatabase(firstEndpoint);
+            multiDbConn.switchTo(firstEndpoint);
 
             // Verify subscription on first database again
             waitForSubscription(conn1, messages, "multichannel");
@@ -303,7 +303,7 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
             waitForSubscription(conn1, messages, "listenertest");
 
             // Switch to second database
-            multiDbConn.switchToDatabase(secondEndpoint);
+            multiDbConn.switchTo(secondEndpoint);
 
             // Verify subscription on second database
             waitForSubscription(conn2, messages, "listenertest");
@@ -353,7 +353,7 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
             waitForSubscription(conn1, messages, "isolationtest");
 
             // Switch to second database
-            multiDbConn.switchToDatabase(secondEndpoint);
+            multiDbConn.switchTo(secondEndpoint);
 
             waitForSubscription(conn2, messages, "isolationtest");
             assertThat(conn2.sync().pubsubChannels()).contains("isolationtest");
@@ -395,7 +395,7 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
             waitForSubscription(conn1, messages, "unsubtest");
 
             // Switch to second database - this should trigger unsubscribe on old endpoint
-            multiDbConn.switchToDatabase(secondEndpoint);
+            multiDbConn.switchTo(secondEndpoint);
 
             // Verify subscription is established on second database
             waitForSubscription(conn2, messages, "unsubtest");

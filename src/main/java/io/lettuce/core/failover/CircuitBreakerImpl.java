@@ -36,16 +36,29 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
     private final Set<Class<? extends Throwable>> trackedExceptions;
 
+    private final String id;
+
     /**
      * Create a circuit breaker instance.
      */
     public CircuitBreakerImpl(CircuitBreakerConfig config) {
         LettuceAssert.notNull(config, "CircuitBreakerConfig must not be null");
 
+        this.id = Integer.toString(hashCode());
         this.config = config;
         this.trackedExceptions = new HashSet<>(config.getTrackedExceptions());
         this.stateRef = new AtomicReference<>(new CircuitBreakerStateHolder(this,
                 MetricsFactory.createDefaultMetrics(config.getMetricsWindowSize()), State.CLOSED));
+    }
+
+    /**
+     * Get the ID for this circuit breaker.
+     *
+     * @return the ID
+     */
+    @Override
+    public String getId() {
+        return id;
     }
 
     /**
@@ -174,6 +187,9 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
             // Atomically swap if current state hasn't changed
             if (stateRef.compareAndSet(current, next)) {
+                if (log.isInfoEnabled()) {
+                    log.info("Circuit breaker for {} transitioned from {} to {}", this.id, current.state, newState);
+                }
                 fireStateChanged(current.state, newState);
                 return;
             }
@@ -193,7 +209,7 @@ class CircuitBreakerImpl implements CircuitBreaker {
 
     @Override
     public boolean isClosed() {
-        return getCurrentState() == State.CLOSED;
+        return getCurrentState().isClosed();
     }
 
     /**

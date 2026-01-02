@@ -50,7 +50,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         connection.sync().set("key", "value");
 
         // Get metrics
-        CircuitBreaker cb = connection.getCircuitBreaker(endpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(endpoint)).getCircuitBreaker();
         assertNotNull(cb);
         assertThat(cb.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(1);
         assertThat(cb.getSnapshot().getFailureCount()).isEqualTo(0);
@@ -69,7 +69,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         connection.sync().get("key1");
 
         // Get metrics
-        CircuitBreaker cb = connection.getCircuitBreaker(endpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(endpoint)).getCircuitBreaker();
         assertThat(cb.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(3);
         assertThat(cb.getSnapshot().getFailureCount()).isEqualTo(0);
 
@@ -77,7 +77,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
     }
 
     @Test
-    void shouldIsolatMetricsPerEndpoint() {
+    void shouldIsolateMetricsPerEndpoint() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
         List<RedisURI> endpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
                 .collect(Collectors.toList());
@@ -89,30 +89,18 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         // Switch to second endpoint
         RedisURI secondEndpoint = endpoints.stream().filter(uri -> !uri.equals(firstEndpoint)).findFirst()
                 .orElseThrow(() -> new IllegalStateException("No second endpoint found"));
-        connection.switchToDatabase(secondEndpoint);
+        connection.switchTo(secondEndpoint);
 
         // Execute command on second endpoint
         connection.sync().set("key2", "value2");
 
         // Get metrics for both endpoints
-        CircuitBreaker cb1 = connection.getCircuitBreaker(firstEndpoint);
-        CircuitBreaker cb2 = connection.getCircuitBreaker(secondEndpoint);
+        CircuitBreaker cb1 = ((RedisDatabaseImpl<?>) connection.getDatabase(firstEndpoint)).getCircuitBreaker();
+        CircuitBreaker cb2 = ((RedisDatabaseImpl<?>) connection.getDatabase(secondEndpoint)).getCircuitBreaker();
 
         // Verify isolation - each endpoint has its own metrics
         assertThat(cb1.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(1);
         assertThat(cb2.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(1);
-
-        connection.close();
-    }
-
-    @Test
-    void shouldThrowExceptionForUnknownEndpoint() {
-        StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
-
-        RedisURI unknownEndpoint = RedisURI.create("redis://unknown:9999");
-
-        assertThatThrownBy(() -> connection.getCircuitBreaker(unknownEndpoint)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Unknown endpoint");
 
         connection.close();
     }
@@ -131,17 +119,17 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
                 .collect(Collectors.toList());
         RedisURI secondEndpoint = endpoints.stream().filter(uri -> !uri.equals(firstEndpoint)).findFirst()
                 .orElseThrow(() -> new IllegalStateException("No second endpoint found"));
-        connection.switchToDatabase(secondEndpoint);
+        connection.switchTo(secondEndpoint);
 
         // When: Record successful commands on second endpoint
         recordSuccessfulCommand(connection, "key2", "value2");
         recordSuccessfulCommand(connection, "key3", "value3");
 
         // When: Switch back to first endpoint
-        connection.switchToDatabase(firstEndpoint);
+        connection.switchTo(firstEndpoint);
 
         // Then: Circuit breaker metrics on first endpoint should be maintained
-        CircuitBreaker cb1After = connection.getCircuitBreaker(firstEndpoint);
+        CircuitBreaker cb1After = ((RedisDatabaseImpl<?>) connection.getDatabase(firstEndpoint)).getCircuitBreaker();
         assertThat(cb1After.getSnapshot()).isEqualTo(metricsBefore);
 
         connection.close();
@@ -161,7 +149,8 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
      */
     private MetricsSnapshot recordSuccessfulCommand(StatefulRedisMultiDbConnection<String, String> connection, String key,
             String value) {
-        CircuitBreaker cb = connection.getCircuitBreaker(connection.getCurrentEndpoint());
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(connection.getCurrentEndpoint()))
+                .getCircuitBreaker();
         MetricsSnapshot metrics = cb.getSnapshot();
         connection.sync().set(key, value);
         return await().until(cb::getSnapshot, snapshot -> snapshot.getSuccessCount() > metrics.getSuccessCount());
@@ -178,7 +167,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         connection.sync().get("key");
 
         // Get circuit breaker and verify metrics are accessible
-        CircuitBreaker cb = connection.getCircuitBreaker(endpoint);
+        CircuitBreaker cb = ((RedisDatabaseImpl<?>) connection.getDatabase(endpoint)).getCircuitBreaker();
         assertNotNull(cb);
         assertNotNull(cb.getSnapshot());
         assertThat(cb.getSnapshot().getSuccessCount()).isGreaterThanOrEqualTo(2);

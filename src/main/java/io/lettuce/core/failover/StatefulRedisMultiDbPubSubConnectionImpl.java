@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
@@ -28,14 +29,14 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 7.4
  */
 @Experimental
-public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
+class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
         extends StatefulRedisMultiDbConnectionImpl<StatefulRedisPubSubConnection<K, V>, K, V>
         implements StatefulRedisMultiDbPubSubConnection<K, V> {
 
     private final Set<RedisPubSubListener<K, V>> pubSubListeners = ConcurrentHashMap.newKeySet();
 
     public StatefulRedisMultiDbPubSubConnectionImpl(
-            Map<RedisURI, RedisDatabase<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
+            Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
             RedisCodec<K, V> codec, DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
             HealthStatusManager healthStatusManager) {
         super(connections, resources, codec, connectionFactory, healthStatusManager);
@@ -87,12 +88,39 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
         return new RedisPubSubReactiveCommandsImpl<>(this, codec);
     }
 
+    /**
+     * Switch to the given database with PubSub-specific handling. This method is thread-safe and can be called from multiple
+     * threads.
+     * <p>
+     * In addition to the standard database switch behavior from the parent class, this method also:
+     * <ul>
+     * <li>Migrates all PubSub listeners from the old database connection to the new one</li>
+     * <li>Re-subscribes to all active channels, shard channels, and patterns on the new database</li>
+     * <li>Unsubscribes from the old database on a best-effort basis</li>
+     * </ul>
+     * <p>
+     * The subscription migration ensures that active PubSub subscriptions are maintained across database switches, providing
+     * seamless failover for PubSub operations.
+     *
+     * @param database the database to switch to
+     * @param internalCall if {@code true}, validation failures return {@code false} and log errors; if {@code false},
+     *        validation failures throw exceptions
+     * @return {@code true} if the switch succeeded or the database was already current; {@code false} if validation failed and
+     *         {@code internalCall} is {@code true}
+     * @throws IllegalStateException if {@code internalCall} is {@code false} and validation fails
+     * @throws UnsupportedOperationException if {@code internalCall} is {@code false} and the source or destination endpoint
+     *         cannot be located
+     * @see StatefulRedisMultiDbConnectionImpl#safeSwitch(RedisDatabaseImpl, boolean)
+     */
     @Override
-    public void switchToDatabase(RedisURI redisURI) {
-
-        RedisDatabase<StatefulRedisPubSubConnection<K, V>> fromDb = current;
+    boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall) {
+        AtomicBoolean switched = new AtomicBoolean(false);
         doByExclusiveLock(() -> {
-            super.switchToDatabase(redisURI);
+            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb = current;
+            switched.set(super.safeSwitch(database, internalCall));
+            if (fromDb == current) {
+                return;
+            }
             pubSubListeners.forEach(listener -> {
                 current.getConnection().addListener(listener);
                 fromDb.getConnection().removeListener(listener);
@@ -100,11 +128,12 @@ public class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
 
             moveSubscriptions(fromDb, current);
         });
+        return switched.get();
     }
 
     @SuppressWarnings("unchecked")
-    public void moveSubscriptions(RedisDatabase<StatefulRedisPubSubConnection<K, V>> fromDb,
-            RedisDatabase<StatefulRedisPubSubConnection<K, V>> toDb) {
+    public void moveSubscriptions(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb,
+            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> toDb) {
 
         PubSubEndpoint<K, V> fromEndpoint = (PubSubEndpoint<K, V>) fromDb.getDatabaseEndpoint();
         StatefulRedisPubSubConnection<K, V> fromConn = (StatefulRedisPubSubConnection<K, V>) fromDb.getConnection();
