@@ -130,6 +130,17 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         this.localClientOptions.remove();
     }
 
+    /**
+     * Open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and values. This
+     * method is synchronous and will block until all database connections are established. It also waits for the initial health
+     * checks to complete starting from most weighted database, ensuring that at least one database is healthy before returning
+     * to use in the order of their weights.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new stateful Redis connection
+     */
     public <K, V> StatefulRedisMultiDbConnection<K, V> connect(RedisCodec<K, V> codec) {
 
         if (codec == null) {
@@ -157,8 +168,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         waitForInitialHealthyDatabase(statusTracker, databases);
 
         // Provide a connection factory for dynamic database addition
-        return new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(databases, getResources(), codec,
-                this::createRedisDatabase, healthStatusManager);
+        return createMultiDbConnection(databases, codec, healthStatusManager);
     }
 
     protected HealthStatusManager createHealthStatusManager() {
@@ -195,6 +205,72 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     }
 
     // ASYNC CONNECT
+
+    /**
+     * Asynchronously open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
+     * and values. This method is asynchronous and returns a {@link ConnectionFuture} that completes when all database
+     * connections are established and initial health checks (if configured) have completed.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new stateful Redis connection
+     */
+    @Override
+    public <K, V> ConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec) {
+        if (codec == null) {
+            throw new IllegalArgumentException("codec must not be null");
+        }
+
+        HealthStatusManager healthStatusManager = createHealthStatusManager();
+
+        // Create a CompletableFuture to track the overall connection process
+        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> connectionFuture = new CompletableFuture<>();
+
+        // Create async database connections for all configured endpoints
+        Map<RedisURI, CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>>> databaseFutures = new ConcurrentHashMap<>(
+                databaseConfigs.size());
+
+        for (Map.Entry<RedisURI, DatabaseConfig> entry : databaseConfigs.entrySet()) {
+            RedisURI uri = entry.getKey();
+            DatabaseConfig config = entry.getValue();
+
+            CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>> dbFuture = createRedisDatabaseAsync(config,
+                    codec, healthStatusManager);
+            databaseFutures.put(uri, dbFuture);
+        }
+
+        // Wait for all database connections to complete (both successful and failed)
+        // Use allOf() which waits for all futures to complete, regardless of success or failure
+        CompletableFuture<Void> allDatabasesFuture = CompletableFuture
+                .allOf(databaseFutures.values().toArray(new CompletableFuture[0]));
+
+        // Handle completion with partial success support
+        allDatabasesFuture.handle((v, throwable) -> {
+
+            CompletableFuture<Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>>> result = handleDatabaseFutures(
+                    databaseFutures, healthStatusManager);
+
+            result.handle((healthyDatabaseMap, exc) -> {
+                if (exc != null) {
+                    connectionFuture.completeExceptionally(exc);
+                } else if (healthyDatabaseMap != null && !healthyDatabaseMap.isEmpty()) {
+                    // Create the multi-db connection wrapper with only healthy and open databases
+                    connectionFuture.complete(createMultiDbConnection(healthyDatabaseMap, codec, healthStatusManager));
+                } else {
+                    // this should not happen ever
+                    connectionFuture.completeExceptionally(new IllegalStateException(
+                            "Healthy database map is empty without any errors propagated! This should be investigated."));
+                }
+                return null;
+            });
+            return null;
+        });
+
+        // Return a ConnectionFuture with null remote address (multi-endpoint scenario)
+        return ConnectionFuture.from(null, connectionFuture);
+    }
+
     /**
      * Asynchronously creates a Redis database connection with circuit breaker and health check support.
      *
@@ -212,6 +288,10 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         try {
             // Use the async connect method from RedisClient
             ConnectionFuture<StatefulRedisConnection<K, V>> connectionFuture = connectAsync(codec, uri);
+            // Reset options immediately after connectAsync() call, it should not be needed beyond this point
+            // If it is needed later, it should be EITHER a bug OR thread local is not suitable approach for client options in
+            // multi-db.
+            // This sounds ugly, but its the approach until the way ClientOptions used in RedisClient is fixed.
             resetOptions();
             return connectionFuture.toCompletableFuture().thenApply(connection -> {
                 try {
@@ -249,6 +329,108 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     }
 
     /**
+     * Handles the completion of individual database futures, collecting successful connections and closing failed ones. Also
+     * waits for initial health checks to complete and filters out unhealthy databases and closed connections.
+     *
+     * @param databaseFutures the map of database futures
+     * @param healthStatusManager the health status manager
+     * @return a CompletableFuture that completes with the map of healthy databases
+     */
+    private <K, V> CompletableFuture<Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>>> handleDatabaseFutures(
+            Map<RedisURI, CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>>> databaseFutures,
+            HealthStatusManager healthStatusManager) {
+
+        CompletableFuture<Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>>> healthyDatabasesFuture = new CompletableFuture<>();
+        try {
+
+            // Collect successfully created databases, skip failed ones
+            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases = collectDatabasesWithEstablishedConnections(
+                    databaseFutures);
+
+            // Wait for initial health checks asynchronously
+            CompletableFuture<Map<RedisURI, HealthStatus>> healthCheckFuture = collectHealthStatuses(healthStatusManager,
+                    databases);
+
+            healthCheckFuture.whenComplete((healthStatuses, ht) -> {
+                if (ht != null) {
+                    // Health check failed, close all connections
+                    databases.values().forEach(db -> db.getConnection().closeAsync());
+                    healthyDatabasesFuture.completeExceptionally(ht);
+                    return;
+                }
+
+                // Filter out unhealthy databases and closed connections - only include healthy and open ones
+                Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> healthyDatabases = filterHealthyDatabases(
+                        healthStatuses, databases);
+
+                healthyDatabasesFuture.complete(healthyDatabases);
+            });
+
+        } catch (Exception e) {
+            // Unexpected error during connection creation
+            logger.error("Unexpected error during async connection", e);
+            databaseFutures.values().forEach(dbFuture -> {
+                if (dbFuture.isDone() && !dbFuture.isCompletedExceptionally()) {
+                    dbFuture.thenAccept(db -> db.getConnection().closeAsync());
+                }
+            });
+            healthyDatabasesFuture.completeExceptionally(e);
+
+        }
+
+        return healthyDatabasesFuture;
+    }
+
+    /**
+     * Collects all databases that have successfully established connections. If no database has successfully connected, throws
+     * a {@link RedisConnectionException} exception with all failures as suppressed exceptions. If at least one database has
+     * successfully connected, logs a warning for each failed connection and proceeds.
+     *
+     * @param databaseFutures the map of database futures
+     * @return a map of successfully connected databases
+     */
+    private <K, V> Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> collectDatabasesWithEstablishedConnections(
+            Map<RedisURI, CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>>> databaseFutures) {
+        // Collect successfully created databases, skip failed ones
+        Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases = new ConcurrentHashMap<>();
+        List<Throwable> failures = new ArrayList<>();
+
+        for (Map.Entry<RedisURI, CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>>> entry : databaseFutures
+                .entrySet()) {
+            CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>> dbFuture = entry.getValue();
+
+            try {
+                RedisDatabaseImpl<StatefulRedisConnection<K, V>> database = dbFuture.get();
+                databases.put(entry.getKey(), database);
+            } catch (Exception e) {
+                // Failed to get database, record the failure
+                failures.add(e);
+                logger.warn("Failed to create database connection for {}: {}", entry.getKey(), e.getMessage());
+            }
+        }
+
+        // Check if we have at least one successful connection
+        if (databases.isEmpty()) {
+            // All connections failed - fail the entire operation
+            logger.error("All database connections failed. Total failures: {}", failures.size());
+
+            // Create a composite exception with all failures
+            RedisConnectionException compositeException = new RedisConnectionException(
+                    "Failed to connect to any database. All " + databaseConfigs.size() + " connection(s) failed.");
+            failures.forEach(compositeException::addSuppressed);
+            throw compositeException;
+        } else {
+            // We have at least one successful connection - proceed
+            logger.info("Successfully connected to {} out of {} database(s)", databases.size(), databaseConfigs.size());
+            if (!failures.isEmpty()) {
+                logger.info("{} database connection(s) failed but proceeding with successful ones", failures.size());
+            }
+
+        }
+        return databases;
+    }
+
+    /**
      * Asynchronously waits for all successfully connected databases to have their health status determined. Once all health
      * statuses are known, selects the most weighted healthy database.
      *
@@ -256,8 +438,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * @param databases the map of databases to check
      * @return a CompletableFuture that completes with a map of health statuses when all are determined
      */
-    private <K, V> CompletableFuture<Map<RedisURI, HealthStatus>> waitForInitialHealthyDatabaseAsync(
-            HealthStatusManager healthStatusManager,
+    private <K, V> CompletableFuture<Map<RedisURI, HealthStatus>> collectHealthStatuses(HealthStatusManager healthStatusManager,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases) {
 
         logger.info("Waiting for health status of {} successfully connected databases", databases.size());
@@ -320,159 +501,57 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         });
     }
 
-    @Override
-    public <K, V> ConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec) {
+    /**
+     * Filters out unhealthy databases and closed connections from the provided map of databases.
+     *
+     * @param healthStatuses the map of health statuses for each database
+     * @param databases the map of databases to filter
+     * @return a new map containing only the healthy and open databases
+     */
+    private <K, V> Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> filterHealthyDatabases(
+            Map<RedisURI, HealthStatus> healthStatuses,
+            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases) {
 
-        if (codec == null) {
-            throw new IllegalArgumentException("codec must not be null");
-        }
+        // Filter out unhealthy databases and closed connections - only include healthy and open ones
+        Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> healthyDatabases = new ConcurrentHashMap<>();
 
-        HealthStatusManager healthStatusManager = createHealthStatusManager();
+        for (Map.Entry<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> entry : databases.entrySet()) {
+            HealthStatus status = healthStatuses.get(entry.getKey());
+            boolean isHealthy = status != null && status.isHealthy();
+            boolean isOpen = entry.getValue().getConnection().isOpen();
 
-        // Create a CompletableFuture to track the overall connection process
-        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> connectionFuture = new CompletableFuture<>();
-
-        // Create async database connections for all configured endpoints
-        Map<RedisURI, CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>>> databaseFutures = new ConcurrentHashMap<>(
-                databaseConfigs.size());
-
-        for (Map.Entry<RedisURI, DatabaseConfig> entry : databaseConfigs.entrySet()) {
-            RedisURI uri = entry.getKey();
-            DatabaseConfig config = entry.getValue();
-
-            CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>> dbFuture = createRedisDatabaseAsync(config,
-                    codec, healthStatusManager);
-            databaseFutures.put(uri, dbFuture);
-        }
-
-        // Wait for all database connections to complete (both successful and failed)
-        // Use allOf() which waits for all futures to complete, regardless of success or failure
-        CompletableFuture<Void> allDatabasesFuture = CompletableFuture
-                .allOf(databaseFutures.values().toArray(new CompletableFuture[0]));
-
-        // Handle completion with partial success support
-        allDatabasesFuture.handle((v, throwable) -> {
-            // proceed with successful connections
-
-            try {
-                // Collect successfully created databases, skip failed ones
-                Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases = new ConcurrentHashMap<>();
-                List<Throwable> failures = new ArrayList<>();
-
-                for (Map.Entry<RedisURI, CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>>> entry : databaseFutures
-                        .entrySet()) {
-                    CompletableFuture<RedisDatabaseImpl<StatefulRedisConnection<K, V>>> dbFuture = entry.getValue();
-
-                    if (dbFuture.isDone() && !dbFuture.isCompletedExceptionally()) {
-                        try {
-                            RedisDatabaseImpl<StatefulRedisConnection<K, V>> database = dbFuture.get();
-                            databases.put(entry.getKey(), database);
-                        } catch (Exception e) {
-                            // Failed to get database, record the failure
-                            failures.add(e);
-                            if (logger.isWarnEnabled()) {
-                                logger.warn("Failed to create database connection for {}: {}", entry.getKey(), e.getMessage());
-                            }
-                        }
-                    } else if (dbFuture.isCompletedExceptionally()) {
-                        // Record the failure
-                        try {
-                            dbFuture.get(); // This will throw the exception
-                        } catch (Exception e) {
-                            failures.add(e);
-                            if (logger.isWarnEnabled()) {
-                                logger.warn("Database connection failed for {}: {}", entry.getKey(), e.getMessage());
-                            }
-                        }
-                    }
+            if (isHealthy && isOpen) {
+                healthyDatabases.put(entry.getKey(), entry.getValue());
+            } else {
+                // Close excluded database connections
+                entry.getValue().getConnection().closeAsync();
+                if (!isHealthy) {
+                    logger.info("Excluding database {} due to unhealthy status: {}", entry.getKey(), status);
+                } else if (!isOpen) {
+                    logger.info("Excluding database {} because connection is closed", entry.getKey());
                 }
-
-                // Check if we have at least one successful connection
-                if (databases.isEmpty()) {
-                    // All connections failed - fail the entire operation
-                    if (logger.isErrorEnabled()) {
-                        logger.error("All database connections failed. Total failures: {}", failures.size());
-                    }
-
-                    // Create a composite exception with all failures
-                    RedisConnectionException compositeException = new RedisConnectionException(
-                            "Failed to connect to any database. All " + databaseConfigs.size() + " connection(s) failed.");
-                    failures.forEach(compositeException::addSuppressed);
-
-                    connectionFuture.completeExceptionally(compositeException);
-                    return null;
-                }
-
-                // We have at least one successful connection - proceed
-                if (logger.isInfoEnabled()) {
-                    logger.info("Successfully connected to {} out of {} database(s)", databases.size(), databaseConfigs.size());
-                    if (!failures.isEmpty()) {
-                        logger.info("{} database connection(s) failed but proceeding with successful ones", failures.size());
-                    }
-                }
-
-                // Wait for initial health checks asynchronously
-                CompletableFuture<Map<RedisURI, HealthStatus>> healthCheckFuture = waitForInitialHealthyDatabaseAsync(
-                        healthStatusManager, databases);
-
-                healthCheckFuture.whenComplete((healthStatuses, ht) -> {
-                    if (ht != null) {
-                        // Health check failed, close all connections
-                        databases.values().forEach(db -> db.getConnection().closeAsync());
-                        connectionFuture.completeExceptionally(ht);
-                        return;
-                    }
-
-                    // Filter out unhealthy databases and closed connections - only include healthy and open ones
-                    Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> healthyDatabases = new ConcurrentHashMap<>();
-                    List<RedisURI> excludedEndpoints = new ArrayList<>();
-
-                    for (Map.Entry<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> entry : databases.entrySet()) {
-                        HealthStatus status = healthStatuses.get(entry.getKey());
-                        boolean isHealthy = status != null && status.isHealthy();
-                        boolean isOpen = entry.getValue().getConnection().isOpen();
-
-                        if (isHealthy && isOpen) {
-                            healthyDatabases.put(entry.getKey(), entry.getValue());
-                        } else {
-                            excludedEndpoints.add(entry.getKey());
-                            // Close excluded database connections
-                            entry.getValue().getConnection().closeAsync();
-                            if (!isHealthy) {
-                                logger.info("Excluding database {} due to unhealthy status: {}", entry.getKey(), status);
-                            } else if (!isOpen) {
-                                logger.info("Excluding database {} because connection is closed", entry.getKey());
-                            }
-                        }
-                    }
-
-                    if (!excludedEndpoints.isEmpty() && logger.isInfoEnabled()) {
-                        logger.info("Excluded {} database(s) from connection: {}", excludedEndpoints.size(), excludedEndpoints);
-                    }
-
-                    // Create the multi-db connection wrapper with only healthy and open databases
-                    StatefulRedisMultiDbConnection<K, V> multiDbConnection = new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(
-                            healthyDatabases, getResources(), codec, this::createRedisDatabase, healthStatusManager);
-
-                    connectionFuture.complete(multiDbConnection);
-                });
-
-            } catch (Exception e) {
-                // Unexpected error during connection creation
-                logger.error("Unexpected error during async connection", e);
-                databaseFutures.values().forEach(dbFuture -> {
-                    if (dbFuture.isDone() && !dbFuture.isCompletedExceptionally()) {
-                        dbFuture.thenAccept(db -> db.getConnection().closeAsync());
-                    }
-                });
-                connectionFuture.completeExceptionally(e);
             }
+        }
 
-            return null;
-        });
+        return healthyDatabases;
+    }
 
-        // Return a ConnectionFuture with null remote address (multi-endpoint scenario)
-        return ConnectionFuture.from(null, connectionFuture);
+    /**
+     * Creates a new {@link StatefulRedisMultiDbConnection} instance with the provided healthy database map.
+     *
+     * @param healthyDatabaseMap the map of healthy databases
+     * @param codec the Redis codec
+     * @param healthStatusManager the health status manager
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return a new multi-database connection
+     */
+    protected <K, V> StatefulRedisMultiDbConnection<K, V> createMultiDbConnection(
+            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> healthyDatabaseMap, RedisCodec<K, V> codec,
+            HealthStatusManager healthStatusManager) {
+
+        return new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(healthyDatabaseMap, getResources(),
+                codec, this::createRedisDatabase, healthStatusManager);
     }
     // END OF ASYNC CONNECT
 
