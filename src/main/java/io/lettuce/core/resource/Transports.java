@@ -29,7 +29,7 @@ public class Transports {
             return NativeTransports.eventLoopGroupClass();
         }
 
-        return NioEventLoopGroup.class;
+        return NioProvider.getResources().eventLoopGroupClass();
     }
 
     /**

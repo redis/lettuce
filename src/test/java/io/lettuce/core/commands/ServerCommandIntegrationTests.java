@@ -641,6 +641,15 @@ public class ServerCommandIntegrationTests extends TestSupport {
     }
 
     @Test
+    @EnabledOnCommand("WAITAOF")
+    // Redis 7.2
+    void clientSetinfoWithUpstreamDriver() {
+        redis.clientSetinfo("lib-name", "lettuce(spring-data-redis_v1.0.0)");
+
+        assertThat(redis.clientInfo().contains("lib-name=lettuce(spring-data-redis_v1.0.0)")).isTrue();
+    }
+
+    @Test
     void testReadOnlyCommands() {
         for (ProtocolKeyword readOnlyCommand : ClusterReadOnlyCommands.getReadOnlyCommands()) {
             assertThat(isCommandReadOnly(readOnlyCommand.toString())).isTrue();
