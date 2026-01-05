@@ -385,7 +385,6 @@ public interface RedisSortedSetCommands<K, V> {
      */
     Long zinterstore(K destination, ZStoreArgs storeArgs, K... keys);
 
-
     /**
      * Count the number of members in a sorted set between a given lexicographical range.
      *
@@ -546,7 +545,6 @@ public interface RedisSortedSetCommands<K, V> {
      */
     Long zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
-
     /**
      * Return a range of members in a sorted set, by lexicographical range.
      *
@@ -556,7 +554,6 @@ public interface RedisSortedSetCommands<K, V> {
      * @since 4.3
      */
     List<V> zrangebylex(K key, Range<? extends V> range);
-
 
     /**
      * Return a range of members in a sorted set, by lexicographical range.
@@ -943,7 +940,6 @@ public interface RedisSortedSetCommands<K, V> {
      *         The number of members removed from the sorted set, not including non existing members.
      */
     Long zrem(K key, V... members);
-
 
     /**
      * Remove all members in a sorted set between the given lexicographical range.
