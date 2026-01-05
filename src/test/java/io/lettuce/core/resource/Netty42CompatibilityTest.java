@@ -1,6 +1,7 @@
 package io.lettuce.core.resource;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -19,10 +20,13 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.epoll.EpollIoHandler;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.uring.IoUringIoHandler;
 
 /**
  * Test to reproduce Netty 4.2 compatibility issues between application event loops and Lettuce's internal event loops.
@@ -143,6 +147,56 @@ class Netty42CompatibilityTest {
         // Perform a simple operation
         String result = connection.sync().ping();
         assertThat(result).isEqualTo("PONG");
+    }
+
+    /**
+     * Test scenario: Both Epoll and IOUring are available (Linux), verify Lettuce works without incompatibility errors.
+     * <p>
+     * This is a regression test for the bug where the priority order mismatch caused:
+     * <ul>
+     * <li>Event loop created with EpollIoHandler (DefaultEventLoopGroupProvider priority: Epoll > Kqueue > IOUring)</li>
+     * <li>Channel class selected as IoUringSocketChannel (old Transports priority: Kqueue > IOUring > Epoll)</li>
+     * <li>Result: "incompatible event loop type" error when trying to register the channel</li>
+     * </ul>
+     * <p>
+     * With the fix, both event loop and channel use Epoll (highest priority).
+     */
+    @Test
+    void testEpollAndIOUringBothAvailable() throws Exception {
+        // This test only runs on Linux systems where both Epoll and IOUring are available
+        assumeTrue(EpollProvider.isAvailable() && IOUringProvider.isAvailable(),
+                "Test requires both Epoll and IOUring to be available (Linux only)");
+
+        // Simulate an application using Epoll and IOUring event loops
+        // Before the fix, this would cause "incompatible event loop type" error
+        // because Lettuce would create event loop with Epoll but select IOUring channel
+        appBossGroup = new MultiThreadIoEventLoopGroup(1, EpollIoHandler.newFactory());
+        appWorkerGroup = new MultiThreadIoEventLoopGroup(2, IoUringIoHandler.newFactory());
+
+        // Start a simple Netty server
+        ServerBootstrap bootstrap = new ServerBootstrap();
+        bootstrap.group(appBossGroup, appWorkerGroup).channel(EpollServerSocketChannel.class)
+                .option(ChannelOption.SO_BACKLOG, 128).childHandler(new ChannelInitializer<SocketChannel>() {
+
+                    @Override
+                    protected void initChannel(SocketChannel ch) {
+                        // Minimal handler
+                    }
+
+                });
+
+        serverChannel = bootstrap.bind(0).sync().channel();
+
+        // Application uses Lettuce - this should work without "incompatible event loop type" error
+        redisClient = RedisClient.create(RedisURI.create(host, port));
+        connection = redisClient.connect();
+
+        // Perform a simple operation to verify the connection works
+        String result = connection.sync().ping();
+        assertThat(result).isEqualTo("PONG");
+
+        // Verify that Epoll is being used (higher priority than IOUring)
+        assertThat(Transports.socketChannelClass().getSimpleName()).isEqualTo("EpollSocketChannel");
     }
 
 }
