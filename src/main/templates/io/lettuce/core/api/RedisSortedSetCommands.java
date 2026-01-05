@@ -385,17 +385,6 @@ public interface RedisSortedSetCommands<K, V> {
      */
     Long zinterstore(K destination, ZStoreArgs storeArgs, K... keys);
 
-    /**
-     * Count the number of members in a sorted set between a given lexicographical range.
-     *
-     * @param key the key.
-     * @param min min score.
-     * @param max max score.
-     * @return Long integer-reply the number of elements in the specified score range.
-     * @deprecated Use {@link #zlexcount(java.lang.Object, Range)}.
-     */
-    @Deprecated
-    Long zlexcount(K key, String min, String max);
 
     /**
      * Count the number of members in a sorted set between a given lexicographical range.
@@ -557,17 +546,6 @@ public interface RedisSortedSetCommands<K, V> {
      */
     Long zrangeWithScores(ScoredValueStreamingChannel<V> channel, K key, long start, long stop);
 
-    /**
-     * Return a range of members in a sorted set, by lexicographical range.
-     *
-     * @param key the key.
-     * @param min min score.
-     * @param max max score.
-     * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}.
-     */
-    @Deprecated
-    List<V> zrangebylex(K key, String min, String max);
 
     /**
      * Return a range of members in a sorted set, by lexicographical range.
@@ -579,19 +557,6 @@ public interface RedisSortedSetCommands<K, V> {
      */
     List<V> zrangebylex(K key, Range<? extends V> range);
 
-    /**
-     * Return a range of members in a sorted set, by lexicographical range.
-     *
-     * @param key the key.
-     * @param min min score.
-     * @param max max score.
-     * @param offset the offset.
-     * @param count the count.
-     * @return List&lt;V&gt; array-reply list of elements in the specified range.
-     * @deprecated Use {@link #zrangebylex(java.lang.Object, Range)}.
-     */
-    @Deprecated
-    List<V> zrangebylex(K key, String min, String max, long offset, long count);
 
     /**
      * Return a range of members in a sorted set, by lexicographical range.
@@ -979,17 +944,6 @@ public interface RedisSortedSetCommands<K, V> {
      */
     Long zrem(K key, V... members);
 
-    /**
-     * Remove all members in a sorted set between the given lexicographical range.
-     *
-     * @param key the key.
-     * @param min min score.
-     * @param max max score.
-     * @return Long integer-reply the number of elements removed.
-     * @deprecated Use {@link #zremrangebylex(java.lang.Object, Range)}.
-     */
-    @Deprecated
-    Long zremrangebylex(K key, String min, String max);
 
     /**
      * Remove all members in a sorted set between the given lexicographical range.
