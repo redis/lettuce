@@ -83,6 +83,9 @@
         <skipITs>true</skipITs>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
 
+        <!-- Default classifier for native transports (can be overridden by profiles) -->
+        <native.transport.classifier>${os.detected.classifier}</native.transport.classifier>
+
     </properties>
 
     <scm>
@@ -284,17 +287,21 @@
         </dependency>
 
         <!-- Native transport implementations for testing -->
+        <!-- Note: These use ${native.transport.classifier} which is set by profiles to handle
+             platform-specific variants. The classifier is auto-detected by os-maven-plugin. -->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <classifier>linux-x86_64</classifier>
+            <version>${netty.version}</version>
+            <classifier>${native.transport.classifier}</classifier>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-io_uring</artifactId>
-            <classifier>linux-x86_64</classifier>
+            <version>${netty.version}</version>
+            <classifier>${native.transport.classifier}</classifier>
             <scope>test</scope>
         </dependency>
 
@@ -1038,7 +1045,9 @@
                 </os>
             </activation>
             <properties>
+                <!-- netty-tcnative needs -fedora suffix, but native transports don't -->
                 <os.detected.classifier>linux-aarch_64-fedora</os.detected.classifier>
+                <native.transport.classifier>linux-aarch_64</native.transport.classifier>
             </properties>
         </profile>
 
@@ -1052,6 +1061,7 @@
             </activation>
             <properties>
                 <os.detected.classifier>osx-x86_64</os.detected.classifier>
+                <native.transport.classifier>osx-aarch_64</native.transport.classifier>
             </properties>
         </profile>
 
