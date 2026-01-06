@@ -9,7 +9,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.Delegating;
 import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
@@ -185,7 +184,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     /**
      * Asynchronously open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
-     * and values. This method is asynchronous and returns a {@link ConnectionFuture} that completes when all database
+     * and values. This method is asynchronous and returns a {@link CompletableFuture} that completes when all database
      * connections are established and initial health checks (if configured) have completed.
      *
      * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
@@ -194,7 +193,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * @return A new stateful Redis connection
      */
     @Override
-    public <K, V> ConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec) {
+    public <K, V> CompletableFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec) {
         if (codec == null) {
             throw new IllegalArgumentException("codec must not be null");
         }
@@ -203,10 +202,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         MultiDbAsyncConnectionBuilder<K, V> builder = new MultiDbAsyncConnectionBuilder<>(healthStatusManager, getResources(),
                 this);
 
-        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> connectionFuture = builder.connectAsync(databaseConfigs, codec,
-                this::createMultiDbConnection);
-
-        return ConnectionFuture.from(null, connectionFuture);
+        return builder.connectAsync(databaseConfigs, codec, this::createMultiDbConnection);
     }
 
     /**

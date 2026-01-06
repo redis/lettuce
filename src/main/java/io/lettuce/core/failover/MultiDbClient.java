@@ -1,8 +1,8 @@
 package io.lettuce.core.failover;
 
 import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 
-import io.lettuce.core.ConnectionFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.BaseRedisClient;
@@ -88,6 +88,6 @@ public interface MultiDbClient extends BaseRedisClient {
      * @return a {@link CompletableFuture} that is notified with the connection progress.
      * @since 7.4
      */
-    public <K, V> ConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec);
+    public <K, V> CompletableFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec);
 
 }
