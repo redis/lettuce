@@ -15,7 +15,7 @@ import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 
 import org.awaitility.Durations;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -37,8 +37,6 @@ import io.lettuce.test.TestFutures;
 @Tag(INTEGRATION_TEST)
 class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
-    private StatefulRedisMultiDbConnection<String, String> connection;
-
     @Inject
     MultiDbClientConnectAsyncIntegrationTests(MultiDbClient client) {
         super(client);
@@ -50,11 +48,9 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         directClient2.connect().sync().flushall();
     }
 
-    @AfterEach
-    void tearDown() {
-        if (connection != null && connection.isOpen()) {
-            connection.close();
-        }
+    @AfterAll
+    void tearDownAll() {
+        multiDbClient.shutdown();
     }
 
     @Test
@@ -64,7 +60,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         assertThat((Object) future).isNotNull();
         assertThat((Object) future).isInstanceOf(CompletableFuture.class);
 
-        connection = future.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         assertThat(connection).isNotNull();
         assertThat(connection.isOpen()).isTrue();
@@ -97,7 +93,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
         // Wait for completion
-        connection = future.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         assertThat(connection).isNotNull();
         assertThat(connection.isOpen()).isTrue();
@@ -108,7 +104,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     void connectAsyncShouldAllowCommandExecution() throws Exception {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
-        connection = future.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         // Execute a command
         String result = TestFutures.getOrTimeout(connection.async().set("key1", "value1"));
@@ -122,7 +118,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     void connectAsyncShouldSupportDatabaseSwitching() throws Exception {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
-        connection = future.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         // Set a key on the current database
         TestFutures.awaitOrTimeout(connection.async().set("key1", "value1"));
@@ -153,7 +149,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     void connectAsyncShouldWaitForHealthChecks() throws Exception {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
-        connection = future.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         // Verify that at least one database is healthy
         await().atMost(Durations.TWO_SECONDS).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS).untilAsserted(() -> {
@@ -175,7 +171,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future1 = multiDbClient.connectAsync(UTF8);
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future2 = multiDbClient.connectAsync(UTF8);
 
-        connection = future1.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future1.get(10, TimeUnit.SECONDS);
         StatefulRedisMultiDbConnection<String, String> connection2 = future2.get(10, TimeUnit.SECONDS);
 
         assertThat(connection).isNotNull();
@@ -193,12 +189,12 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
         CompletableFuture<String> resultFuture = future.thenApply(conn -> {
-            connection = conn;
             return "connected";
         });
 
         String result = resultFuture.get(10, TimeUnit.SECONDS);
         assertThat(result).isEqualTo("connected");
+        StatefulRedisMultiDbConnection<String, String> connection = future.get();
         assertThat(connection).isNotNull();
         assertThat(connection.isOpen()).isTrue();
     }
@@ -211,7 +207,6 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
         future.whenComplete((conn, throwable) -> {
             if (throwable == null) {
-                connection = conn;
                 completionTracker.complete(true);
             } else {
                 completionTracker.completeExceptionally(throwable);
@@ -220,6 +215,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
         Boolean completed = completionTracker.get(10, TimeUnit.SECONDS);
         assertThat(completed).isTrue();
+        StatefulRedisMultiDbConnection<String, String> connection = future.get();
         assertThat(connection).isNotNull();
         assertThat(connection.isOpen()).isTrue();
     }
@@ -228,7 +224,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     void connectAsyncShouldAllowSyncOperations() throws Exception {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
-        connection = future.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         // Use sync API
         String result = connection.sync().set("syncKey", "syncValue");
@@ -242,7 +238,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     void connectAsyncShouldAllowReactiveOperations() throws Exception {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
-        connection = future.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         // Use reactive API
         String result = connection.reactive().set("reactiveKey", "reactiveValue").block(Duration.ofSeconds(5));
@@ -256,7 +252,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     void connectAsyncShouldProvideAllEndpoints() throws Exception {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
-        connection = future.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         Iterable<RedisURI> endpoints = connection.getEndpoints();
         assertThat(endpoints).isNotNull();
@@ -271,7 +267,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     void connectAsyncShouldProvideAccessToAllConnectedDatabases() throws Exception {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
-        connection = future.get(10, TimeUnit.SECONDS);
+        StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
 
         // Verify we can access all connected database endpoints
         Iterable<RedisURI> endpoints = connection.getEndpoints();
@@ -462,8 +458,8 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
             assertThat(conn1.sync().ping()).isEqualTo("PONG");
             assertThat(conn2.sync().ping()).isEqualTo("PONG");
         } finally {
-            conn1.closeAsync();
-            conn2.closeAsync();
+            conn1.close();
+            conn2.close();
         }
     }
 
@@ -490,7 +486,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
             assertThat(retrieved).isEqualTo(value);
         } finally {
-            conn.closeAsync();
+            conn.close();
         }
     }
 
@@ -502,12 +498,12 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
 
         CompletableFuture<String> pingFuture = future.thenApply(conn -> {
-            connection = conn; // Store for cleanup
             return conn.sync().ping();
         });
 
         String result = pingFuture.get(10, TimeUnit.SECONDS);
         assertThat(result).isEqualTo("PONG");
+        future.get().close();
     }
 
     /**
