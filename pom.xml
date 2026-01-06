@@ -1029,10 +1029,12 @@
                 <!-- Native transport implementations for testing Epoll and IOUring on Linux -->
                 <!-- Note: These use ${native.transport.classifier} which is set by profiles to handle
                      platform-specific variants. The classifier is auto-detected by os-maven-plugin.
-                     Versions are managed by netty-bom. -->
+                     Version must be specified explicitly because Maven BOMs don't manage versions
+                     for dependencies with classifiers in profile-specific dependencies. -->
                 <dependency>
                     <groupId>io.netty</groupId>
                     <artifactId>netty-transport-native-epoll</artifactId>
+                    <version>${netty.version}</version>
                     <classifier>${native.transport.classifier}</classifier>
                     <scope>test</scope>
                 </dependency>
@@ -1040,6 +1042,7 @@
                 <dependency>
                     <groupId>io.netty</groupId>
                     <artifactId>netty-transport-native-io_uring</artifactId>
+                    <version>${netty.version}</version>
                     <classifier>${native.transport.classifier}</classifier>
                     <scope>test</scope>
                 </dependency>
