@@ -286,25 +286,6 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- Native transport implementations for testing -->
-        <!-- Note: These use ${native.transport.classifier} which is set by profiles to handle
-             platform-specific variants. The classifier is auto-detected by os-maven-plugin. -->
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-epoll</artifactId>
-            <version>${netty.version}</version>
-            <classifier>${native.transport.classifier}</classifier>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-io_uring</artifactId>
-            <version>${netty.version}</version>
-            <classifier>${native.transport.classifier}</classifier>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Metrics/Tracing -->
 
         <dependency>
@@ -1036,6 +1017,35 @@
 
     <profiles>
 
+        <!-- Linux-specific native transport dependencies for testing -->
+        <profile>
+            <id>linux-native-transports</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                </os>
+            </activation>
+            <dependencies>
+                <!-- Native transport implementations for testing Epoll and IOUring on Linux -->
+                <!-- Note: These use ${native.transport.classifier} which is set by profiles to handle
+                     platform-specific variants. The classifier is auto-detected by os-maven-plugin.
+                     Versions are managed by netty-bom. -->
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-transport-native-epoll</artifactId>
+                    <classifier>${native.transport.classifier}</classifier>
+                    <scope>test</scope>
+                </dependency>
+
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-transport-native-io_uring</artifactId>
+                    <classifier>${native.transport.classifier}</classifier>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
         <profile>
             <id>linux-aarch64-fedora</id>
             <activation>
@@ -1061,7 +1071,6 @@
             </activation>
             <properties>
                 <os.detected.classifier>osx-x86_64</os.detected.classifier>
-                <native.transport.classifier>osx-aarch_64</native.transport.classifier>
             </properties>
         </profile>
 

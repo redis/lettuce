@@ -163,6 +163,52 @@ class Netty42CompatibilityTest {
      */
     @Test
     void testEpollAndIOUringBothAvailable() throws Exception {
+        // Debug logging to understand availability
+        System.out.println("=== Netty Native Transport Availability Debug ===");
+        System.out.println("OS: " + System.getProperty("os.name"));
+        System.out.println("Arch: " + System.getProperty("os.arch"));
+        System.out.println("Kernel: " + System.getProperty("os.version"));
+        System.out.println();
+
+        System.out.println("EpollProvider.isAvailable() = " + EpollProvider.isAvailable());
+        if (!EpollProvider.isAvailable()) {
+            try {
+                // Use reflection to avoid compile-time dependency on Epoll class
+                Class<?> epollClass = Class.forName("io.netty.channel.epoll.Epoll");
+                java.lang.reflect.Method ensureAvailability = epollClass.getMethod("ensureAvailability");
+                ensureAvailability.invoke(null);
+            } catch (ClassNotFoundException e) {
+                System.out.println("Epoll unavailability cause: Epoll class not found (not on Linux)");
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                System.out.println("Epoll unavailability cause: " + e.getCause().getMessage());
+                e.getCause().printStackTrace(System.out);
+            } catch (Throwable t) {
+                System.out.println("Epoll unavailability cause: " + t.getMessage());
+                t.printStackTrace(System.out);
+            }
+        }
+        System.out.println();
+
+        System.out.println("IOUringProvider.isAvailable() = " + IOUringProvider.isAvailable());
+        if (!IOUringProvider.isAvailable()) {
+            try {
+                // Use reflection to avoid compile-time dependency on IOUring class
+                Class<?> ioUringClass = Class.forName("io.netty.incubator.channel.uring.IOUring");
+                java.lang.reflect.Method ensureAvailability = ioUringClass.getMethod("ensureAvailability");
+                ensureAvailability.invoke(null);
+            } catch (ClassNotFoundException e) {
+                System.out.println("IOUring unavailability cause: IOUring class not found (not on Linux)");
+            } catch (java.lang.reflect.InvocationTargetException e) {
+                System.out.println("IOUring unavailability cause: " + e.getCause().getMessage());
+                e.getCause().printStackTrace(System.out);
+            } catch (Throwable t) {
+                System.out.println("IOUring unavailability cause: " + t.getMessage());
+                t.printStackTrace(System.out);
+            }
+        }
+        System.out.println("=== End Debug ===");
+        System.out.println();
+
         // This test only runs on Linux systems where both Epoll and IOUring are available
         assumeTrue(EpollProvider.isAvailable() && IOUringProvider.isAvailable(),
                 "Test requires both Epoll and IOUring to be available (Linux only)");
