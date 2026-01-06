@@ -1305,7 +1305,7 @@
                                         <argument>-classpath</argument>
                                         <classpath />
                                         <argument>org.openjdk.jmh.Main</argument>
-                                        <argument>.*failover.*</argument>
+                                        <argument>.*</argument>
                                         <argument>-tu</argument>
                                         <!--
                               Override time unit in benchmark results. Available
