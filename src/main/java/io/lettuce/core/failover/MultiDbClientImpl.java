@@ -184,16 +184,20 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     /**
      * Asynchronously open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
-     * and values. This method is asynchronous and returns a {@link CompletableFuture} that completes when all database
+     * and values. This method is asynchronous and returns a {@link MultiDbConnectionFuture} that completes when all database
      * connections are established and initial health checks (if configured) have completed.
+     * <p>
+     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
+     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
+     * inside callbacks.
      *
      * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
      * @param <K> Key type
      * @param <V> Value type
-     * @return A new stateful Redis connection
+     * @return A new stateful Redis connection future
      */
     @Override
-    public <K, V> CompletableFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec) {
+    public <K, V> MultiDbConnectionFuture<K, V> connectAsync(RedisCodec<K, V> codec) {
         if (codec == null) {
             throw new IllegalArgumentException("codec must not be null");
         }
@@ -202,7 +206,10 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         MultiDbAsyncConnectionBuilder<K, V> builder = new MultiDbAsyncConnectionBuilder<>(healthStatusManager, getResources(),
                 this);
 
-        return builder.connectAsync(databaseConfigs, codec, this::createMultiDbConnection);
+        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs, codec,
+                this::createMultiDbConnection);
+
+        return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
     }
 
     /**

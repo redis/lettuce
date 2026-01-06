@@ -1,7 +1,6 @@
 package io.lettuce.core.failover;
 
 import java.util.Collection;
-import java.util.concurrent.CompletableFuture;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
@@ -81,13 +80,17 @@ public interface MultiDbClient extends BaseRedisClient {
     /**
      * Open asynchronously a new multi database connection to a Redis server. Use the supplied {@link RedisCodec codec} to
      * encode/decode keys and values.
+     * <p>
+     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
+     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
+     * inside callbacks.
      *
      * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
      * @param <K> Key type
      * @param <V> Value type
-     * @return a {@link CompletableFuture} that is notified with the connection progress.
+     * @return a {@link MultiDbConnectionFuture} that is notified with the connection progress.
      * @since 7.4
      */
-    public <K, V> CompletableFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec);
+    public <K, V> MultiDbConnectionFuture<K, V> connectAsync(RedisCodec<K, V> codec);
 
 }
