@@ -1022,7 +1022,8 @@
             <id>linux-native-transports</id>
             <activation>
                 <os>
-                    <name>linux</name>
+                    <family>unix</family>
+                    <name>!Mac OS X</name>
                 </os>
             </activation>
             <dependencies>
@@ -1053,7 +1054,8 @@
             <id>linux-aarch64-fedora</id>
             <activation>
                 <os>
-                    <name>linux</name>
+                    <family>unix</family>
+                    <name>!Mac OS X</name>
                     <arch>aarch64</arch>
                 </os>
             </activation>
@@ -1079,6 +1081,24 @@
 
         <profile>
             <id>ci</id>
+            <dependencies>
+                <!-- Include native transports for CI testing on Linux -->
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-transport-native-epoll</artifactId>
+                    <version>${netty.version}</version>
+                    <classifier>${native.transport.classifier}</classifier>
+                    <scope>test</scope>
+                </dependency>
+
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-transport-native-io_uring</artifactId>
+                    <version>${netty.version}</version>
+                    <classifier>${native.transport.classifier}</classifier>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
         </profile>
         <profile>
             <id>entraid-it</id>
