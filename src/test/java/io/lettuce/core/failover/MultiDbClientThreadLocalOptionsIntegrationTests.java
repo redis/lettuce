@@ -2,6 +2,7 @@ package io.lettuce.core.failover;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
+import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -329,7 +331,8 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
         assertThat(connection.isOpen()).isTrue();
 
         // Verify the async callback runs on a different thread (event loop thread)
-        assertThat(asyncCallbackThread.get()).isNotNull();
+        await().atMost(Durations.ONE_SECOND).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS)
+                .untilAsserted(() -> assertThat(asyncCallbackThread.get()).isNotNull());
         assertThat(asyncCallbackThread.get()).isNotEqualTo(Thread.currentThread());
 
         // Verify that the connection has the correct options despite resetOptions() being called immediately

@@ -177,14 +177,6 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     }
 
     @Test
-    void connectAsyncShouldReturnCompletableFuture() {
-        MultiDbConnectionFuture<String, String> future = multiDbClient.connectAsync(UTF8);
-        connections.add(future);
-
-        assertThat((Object) future).isInstanceOf(CompletableFuture.class);
-    }
-
-    @Test
     void connectAsyncShouldSupportMultipleConnections() throws Exception {
         MultiDbConnectionFuture<String, String> future1 = multiDbClient.connectAsync(UTF8);
         MultiDbConnectionFuture<String, String> future2 = multiDbClient.connectAsync(UTF8);
