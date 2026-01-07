@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assumptions.*;
 
 import java.util.concurrent.TimeUnit;
 
+import io.netty.channel.epoll.Epoll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -193,7 +194,7 @@ class Netty42CompatibilityTest {
         if (!IOUringProvider.isAvailable()) {
             try {
                 // Use reflection to avoid compile-time dependency on IOUring class
-                Class<?> ioUringClass = Class.forName("io.netty.incubator.channel.uring.IOUring");
+                Class<?> ioUringClass = Class.forName("io.netty.channel.uring.IoUring");
                 java.lang.reflect.Method ensureAvailability = ioUringClass.getMethod("ensureAvailability");
                 ensureAvailability.invoke(null);
             } catch (ClassNotFoundException e) {
