@@ -50,7 +50,6 @@ jobs:
       - name: Install missing dependencies to container
         run: |
           sudo apt update
-          sudo apt-get install -y liburing-dev
       - name: Set up Docker Compose environment
         run: |
           mkdir -m 777 $REDIS_ENV_WORK_DIR
