@@ -1041,9 +1041,14 @@
         </profile>
 
         <profile>
-            <id>ci</id>
+            <id>linux-native-transports</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                </os>
+            </activation>
             <dependencies>
-                <!-- Native transport implementations for testing on Linux in CI -->
+                <!-- Native transport implementations for testing on Linux -->
                 <dependency>
                     <groupId>io.netty</groupId>
                     <artifactId>netty-transport-native-epoll</artifactId>
@@ -1059,6 +1064,10 @@
                     <scope>test</scope>
                 </dependency>
             </dependencies>
+        </profile>
+
+        <profile>
+            <id>ci</id>
         </profile>
         <profile>
             <id>entraid-it</id>
