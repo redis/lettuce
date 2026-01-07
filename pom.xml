@@ -83,9 +83,6 @@
         <skipITs>true</skipITs>
         <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
 
-        <!-- Default classifier for native transports (can be overridden by profiles) -->
-        <native.transport.classifier>${os.detected.classifier}</native.transport.classifier>
-
     </properties>
 
     <scm>
@@ -795,46 +792,46 @@
                 </executions>
             </plugin>
 
-<!--            <plugin>-->
-<!--                <groupId>org.jetbrains.kotlin</groupId>-->
-<!--                <artifactId>kotlin-maven-plugin</artifactId>-->
-<!--                <configuration>-->
-<!--                    <jvmTarget>1.8</jvmTarget>-->
-<!--                    <languageVersion>1.4</languageVersion>-->
-<!--                    <apiVersion>1.4</apiVersion>-->
-<!--                    <args>-->
-<!--                        <arg>-Xopt-in=kotlin.RequiresOptIn</arg>-->
-<!--                        <arg>-Xopt-in=io.lettuce.core.ExperimentalLettuceCoroutinesApi-->
-<!--                        </arg>-->
-<!--                    </args>-->
-<!--                </configuration>-->
-<!--                <executions>-->
-<!--                    <execution>-->
-<!--                        <id>compile</id>-->
-<!--                        <goals>-->
-<!--                            <goal>compile</goal>-->
-<!--                        </goals>-->
-<!--                        <configuration>-->
-<!--                            <sourceDirs>-->
-<!--                                <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>-->
-<!--                                <sourceDir>${project.basedir}/src/main/java</sourceDir>-->
-<!--                            </sourceDirs>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
-<!--                    <execution>-->
-<!--                        <id>test-compile</id>-->
-<!--                        <goals>-->
-<!--                            <goal>test-compile</goal>-->
-<!--                        </goals>-->
-<!--                        <configuration>-->
-<!--                            <sourceDirs>-->
-<!--                                <sourceDir>${project.basedir}/src/test/kotlin</sourceDir>-->
-<!--                                <sourceDir>${project.basedir}/src/test/java</sourceDir>-->
-<!--                            </sourceDirs>-->
-<!--                        </configuration>-->
-<!--                    </execution>-->
-<!--                </executions>-->
-<!--            </plugin>-->
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <configuration>
+                    <jvmTarget>1.8</jvmTarget>
+                    <languageVersion>1.4</languageVersion>
+                    <apiVersion>1.4</apiVersion>
+                    <args>
+                        <arg>-Xopt-in=kotlin.RequiresOptIn</arg>
+                        <arg>-Xopt-in=io.lettuce.core.ExperimentalLettuceCoroutinesApi
+                        </arg>
+                    </args>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+                                <sourceDir>${project.basedir}/src/main/java</sourceDir>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirs>
+                                <sourceDir>${project.basedir}/src/test/kotlin</sourceDir>
+                                <sourceDir>${project.basedir}/src/test/java</sourceDir>
+                            </sourceDirs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -1017,52 +1014,16 @@
 
     <profiles>
 
-        <!-- Linux-specific native transport dependencies for testing -->
-        <profile>
-            <id>linux-native-transports</id>
-            <activation>
-                <os>
-                    <family>unix</family>
-                    <name>!Mac OS X</name>
-                </os>
-            </activation>
-            <dependencies>
-                <!-- Native transport implementations for testing Epoll and IOUring on Linux -->
-                <!-- Note: These use ${native.transport.classifier} which is set by profiles to handle
-                     platform-specific variants. The classifier is auto-detected by os-maven-plugin.
-                     Version must be specified explicitly because Maven BOMs don't manage versions
-                     for dependencies with classifiers in profile-specific dependencies. -->
-                <dependency>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-transport-native-epoll</artifactId>
-                    <version>${netty.version}</version>
-                    <classifier>${native.transport.classifier}</classifier>
-                    <scope>test</scope>
-                </dependency>
-
-                <dependency>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-transport-native-io_uring</artifactId>
-                    <version>${netty.version}</version>
-                    <classifier>${native.transport.classifier}</classifier>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
-        </profile>
-
         <profile>
             <id>linux-aarch64-fedora</id>
             <activation>
                 <os>
-                    <family>unix</family>
-                    <name>!Mac OS X</name>
+                    <name>linux</name>
                     <arch>aarch64</arch>
                 </os>
             </activation>
             <properties>
-                <!-- netty-tcnative needs -fedora suffix, but native transports don't -->
                 <os.detected.classifier>linux-aarch_64-fedora</os.detected.classifier>
-                <native.transport.classifier>linux-aarch_64</native.transport.classifier>
             </properties>
         </profile>
 
@@ -1081,24 +1042,6 @@
 
         <profile>
             <id>ci</id>
-            <dependencies>
-                <!-- Include native transports for CI testing on Linux -->
-                <dependency>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-transport-native-epoll</artifactId>
-                    <version>${netty.version}</version>
-                    <classifier>${native.transport.classifier}</classifier>
-                    <scope>test</scope>
-                </dependency>
-
-                <dependency>
-                    <groupId>io.netty</groupId>
-                    <artifactId>netty-transport-native-io_uring</artifactId>
-                    <version>${netty.version}</version>
-                    <classifier>${native.transport.classifier}</classifier>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
         </profile>
         <profile>
             <id>entraid-it</id>
