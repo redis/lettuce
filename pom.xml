@@ -414,6 +414,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
+            <version>${netty.version}</version>
             <classifier>${os.detected.classifier}</classifier>
             <scope>test</scope>
         </dependency>
@@ -421,6 +422,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-kqueue</artifactId>
+            <version>${netty.version}</version>
             <classifier>${os.detected.classifier}</classifier>
             <scope>test</scope>
         </dependency>
@@ -428,6 +430,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-io_uring</artifactId>
+            <version>${netty.version}</version>
             <classifier>${os.detected.classifier}</classifier>
             <scope>test</scope>
         </dependency>
