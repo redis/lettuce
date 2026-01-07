@@ -1,9 +1,9 @@
 package io.lettuce.core.failover;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,8 +19,6 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import com.google.gson.internal.reflect.ReflectionHelper;
-
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.LettuceExtension;
@@ -33,7 +31,7 @@ import io.lettuce.test.ReflectionTestUtils;
  * @since 7.1
  */
 @ExtendWith(LettuceExtension.class)
-@Tag("integration")
+@Tag(INTEGRATION_TEST)
 class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
 
     @Inject

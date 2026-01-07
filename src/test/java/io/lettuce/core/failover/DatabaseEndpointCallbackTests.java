@@ -3,6 +3,8 @@ package io.lettuce.core.failover;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.awaitility.Awaitility.await;
+import static io.lettuce.TestTags.UNIT_TEST;
+
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.time.Duration;
@@ -39,7 +41,7 @@ import io.lettuce.test.resource.TestClientResources;
  *
  * @author Ali Takavci
  */
-@Tag("unit")
+@Tag(UNIT_TEST)
 class DatabaseEndpointCallbackTests {
 
     private ClientResources clientResources;
@@ -73,7 +75,7 @@ class DatabaseEndpointCallbackTests {
 
     @Nested
     @DisplayName("Timeout Exception Tracking Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class TimeoutExceptionTrackingTests {
 
         @Test
@@ -160,7 +162,7 @@ class DatabaseEndpointCallbackTests {
 
     @Nested
     @DisplayName("Failover Behavior and Generation Tracking Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class FailoverBehaviorTests {
 
         @Test
@@ -251,7 +253,7 @@ class DatabaseEndpointCallbackTests {
 
     @Nested
     @DisplayName("Failover Behavior and Generation Tracking Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class FailoverBehaviorAndGenerationTrackingTests {
 
         @Test
@@ -427,7 +429,7 @@ class DatabaseEndpointCallbackTests {
 
     @Nested
     @DisplayName("Concurrent Timeout Exception Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class ConcurrentTimeoutExceptionTests {
 
         @Test
@@ -522,7 +524,7 @@ class DatabaseEndpointCallbackTests {
 
     @Nested
     @DisplayName("Edge Cases and Special Scenarios")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class EdgeCaseTests {
 
         @Test

@@ -13,6 +13,7 @@ import java.time.temporal.ChronoUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.offset;
+import static io.lettuce.TestTags.UNIT_TEST;
 
 /**
  * Unit tests for lock-free sliding window metrics implementation.
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.offset;
  * @author Ali Takavci
  * @since 7.1
  */
-@Tag("unit")
+@Tag(UNIT_TEST)
 @DisplayName("Lock-Free Sliding Window Metrics")
 class LockFreeSlidingTimeWindowMetricsUnitTests {
 

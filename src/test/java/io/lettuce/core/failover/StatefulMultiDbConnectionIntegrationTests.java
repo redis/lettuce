@@ -496,12 +496,14 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
         int initialEndpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false).collect(Collectors.toList())
                 .size();
+        int portOffset = StreamSupport.stream(connection.getEndpoints().spliterator(), false).mapToInt(u -> u.getPort()).max()
+                .orElse(0) + 1;
         // Create multiple URIs
         RedisURI[] uris = new RedisURI[5];
         AtomicInteger[] addCounts = new AtomicInteger[5];
         AtomicInteger[] removeCount = new AtomicInteger[5];
         for (int i = 0; i < 5; i++) {
-            uris[i] = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(6 + i))
+            uris[i] = RedisURI.Builder.redis(TestSettings.host(), TestSettings.port(portOffset + i))
                     .withPassword(TestSettings.password()).build();
             addCounts[i] = new AtomicInteger(0);
             removeCount[i] = new AtomicInteger(0);

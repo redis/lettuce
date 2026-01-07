@@ -26,6 +26,7 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 
 /**
  * Integration tests for {@link PingStrategy} using Toxiproxy for network failure simulation.
@@ -34,7 +35,7 @@ import static org.awaitility.Awaitility.await;
  * @since 7.1
  */
 @ExtendWith(LettuceExtension.class)
-@Tag("integration")
+@Tag(INTEGRATION_TEST)
 @DisplayName("PingStrategy Integration Tests")
 public class PingStrategyIntegrationTests extends MultiDbTestSupport {
 

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.Closeable;
 import java.lang.reflect.Field;
@@ -96,6 +97,18 @@ class RedisMultiDbClientUnitTests {
 
         verify(clientResources).shutdown(anyLong(), anyLong(), any());
         assertThat(future).isDone();
+    }
+
+    @Test
+    void connectAsyncShouldRejectNullCodec() {
+        MultiDbClient client = MultiDbClient.create(MultiDbTestSupport.DBs);
+
+        try {
+            assertThatThrownBy(() -> client.connectAsync(null)).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("codec must not be null");
+        } finally {
+            client.shutdown();
+        }
     }
 
 }

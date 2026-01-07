@@ -61,7 +61,7 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
         return weight;
     }
 
-    public C getConnection() {
+    C getConnection() {
         return connection;
     }
 

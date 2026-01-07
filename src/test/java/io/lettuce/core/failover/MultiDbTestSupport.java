@@ -62,11 +62,11 @@ public class MultiDbTestSupport extends TestSupport {
         directClient3.shutdown();
     }
 
-    public static final RedisURI URI1 = RedisURI.create(TestSettings.host(), TestSettings.port());
+    public static final RedisURI URI1 = RedisURI.create(TestSettings.host(), TestSettings.port(10));
 
-    public static final RedisURI URI2 = RedisURI.create(TestSettings.host(), TestSettings.port(1));
+    public static final RedisURI URI2 = RedisURI.create(TestSettings.host(), TestSettings.port(11));
 
-    public static final RedisURI URI3 = RedisURI.create(TestSettings.host(), TestSettings.port(5));
+    public static final RedisURI URI3 = RedisURI.create(TestSettings.host(), TestSettings.port(12));
 
     /*
      * DBs configured with Disable health checks for testing CB detected failures without interference from health checks

@@ -33,6 +33,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.awaitility.Awaitility.with;
+import static io.lettuce.TestTags.INTEGRATION_TEST;;
 
 /**
  * Integration tests for health check functionality in MultiDbClient.
@@ -41,7 +42,7 @@ import static org.awaitility.Awaitility.with;
  * @since 7.1
  */
 @ExtendWith(LettuceExtension.class)
-@Tag("integration")
+@Tag(INTEGRATION_TEST)
 @DisplayName("HealthCheck Integration Tests")
 public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
@@ -85,7 +86,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
     @Nested
     @DisplayName("Health Check Configuration")
-    @Tag("integration")
+    @Tag(INTEGRATION_TEST)
     class HealthCheckConfigurationIntegrationTests {
 
         @Test
@@ -305,7 +306,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
     @Nested
     @DisplayName("Health Check Lifecycle")
-    @Tag("integration")
+    @Tag(INTEGRATION_TEST)
     class HealthCheckLifecycleIntegrationTests {
 
         @Test
@@ -450,7 +451,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
 
     @Nested
     @DisplayName("Failover Integration")
-    @Tag("integration")
+    @Tag(INTEGRATION_TEST)
     class FailoverIntegrationTests {
 
         @Test
