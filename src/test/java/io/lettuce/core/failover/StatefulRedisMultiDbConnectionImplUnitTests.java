@@ -30,6 +30,9 @@ import io.lettuce.core.api.push.PushListener;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.failover.api.CircuitBreakerStateListener;
+import io.lettuce.core.event.EventBus;
+import io.lettuce.core.failover.event.DatabaseSwitchEvent;
+import io.lettuce.core.failover.event.SwitchReason;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
@@ -91,6 +94,9 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
     private ClientResources clientResources;
 
     @Mock
+    private EventBus eventBus;
+
+    @Mock
     private Tracing tracing;
 
     @Mock
@@ -123,6 +129,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         parser = () -> null;
 
         when(clientResources.tracing()).thenReturn(tracing);
+        when(clientResources.eventBus()).thenReturn(eventBus);
 
         uri1 = RedisURI.create("redis://localhost:6379");
         uri2 = RedisURI.create("redis://localhost:6380");
@@ -503,6 +510,23 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
                     .hasMessageContaining("is unhealthy");
 
             assertThat(connection.getCurrentEndpoint()).isNotEqualTo(uri2);
+        }
+
+        @Test
+        @DisplayName("Should publish DatabaseSwitchEvent on manual switch")
+        void shouldPublishDatabaseSwitchEventOnManualSwitch() {
+            connection.switchTo(uri1);
+            RedisURI fromUri = connection.getCurrentEndpoint();
+
+            connection.switchTo(uri2);
+
+            ArgumentCaptor<DatabaseSwitchEvent> eventCaptor = ArgumentCaptor.forClass(DatabaseSwitchEvent.class);
+            verify(eventBus, atLeastOnce()).publish(eventCaptor.capture());
+
+            DatabaseSwitchEvent event = eventCaptor.getValue();
+            assertThat(event.getReason()).isEqualTo(SwitchReason.FORCED);
+            assertThat(event.getFromDb()).isEqualTo(fromUri);
+            assertThat(event.getToDb()).isEqualTo(uri2);
         }
 
     }

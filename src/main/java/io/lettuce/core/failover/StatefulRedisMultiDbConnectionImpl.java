@@ -472,7 +472,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
             fromDb.getDatabaseEndpoint().handOverCommandQueue(toDb.getDatabaseEndpoint());
 
-            clientResources.eventBus().publish(new DatabaseSwitchEvent(reason, new ImmutableRedisURI(fromDb.getRedisURI()), new ImmutableRedisURI(toDb.getRedisURI())));
+            clientResources.eventBus().publish(new DatabaseSwitchEvent(reason, new ImmutableRedisURI(fromDb.getRedisURI()),
+                    new ImmutableRedisURI(toDb.getRedisURI())));
         });
         return switched.get();
     }

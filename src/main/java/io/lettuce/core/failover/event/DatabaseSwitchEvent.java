@@ -27,6 +27,14 @@ public class DatabaseSwitchEvent implements Event {
         return reason;
     }
 
+    public RedisURI getFromDb() {
+        return fromDb;
+    }
+
+    public RedisURI getToDb() {
+        return toDb;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
