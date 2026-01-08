@@ -11,6 +11,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+import io.lettuce.core.failover.health.HealthStatusListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -572,8 +573,8 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
             // Capture the health status listener
-            ArgumentCaptor<io.lettuce.core.failover.health.HealthStatusListener> listenerCaptor = ArgumentCaptor
-                    .forClass(io.lettuce.core.failover.health.HealthStatusListener.class);
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor
+                    .forClass(HealthStatusListener.class);
             verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
 
             // Simulate health status change to unhealthy
@@ -613,8 +614,8 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             RedisURI currentBefore = connection.getCurrentEndpoint();
 
             // Capture the health status listener for uri2
-            ArgumentCaptor<io.lettuce.core.failover.health.HealthStatusListener> listenerCaptor = ArgumentCaptor
-                    .forClass(io.lettuce.core.failover.health.HealthStatusListener.class);
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor
+                    .forClass(HealthStatusListener.class);
             verify(healthStatusManager).registerListener(eq(uri2), listenerCaptor.capture());
 
             // Simulate health status change to unhealthy for uri2 (not current)
@@ -624,6 +625,62 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
             // Should remain on uri1
             assertThat(connection.getCurrentEndpoint()).isEqualTo(currentBefore);
+        }
+
+        @Test
+        @DisplayName("Should publish DatabaseSwitchEvent on circuit breaker failover")
+        void shouldPublishDatabaseSwitchEventOnCircuitBreakerFailover() {
+            // Connection starts with uri1 (highest weight) by default
+            RedisURI currentUri = connection.getCurrentEndpoint();
+            assertThat(currentUri).isEqualTo(uri1);
+
+            // Capture the circuit breaker listener
+            ArgumentCaptor<CircuitBreakerStateListener> listenerCaptor = ArgumentCaptor
+                    .forClass(CircuitBreakerStateListener.class);
+            verify(circuitBreaker1).addListener(listenerCaptor.capture());
+
+            // Simulate circuit breaker opening
+            when(circuitBreaker1.getCurrentState()).thenReturn(CircuitBreaker.State.OPEN);
+            CircuitBreakerStateChangeEvent cbEvent = new CircuitBreakerStateChangeEvent(circuitBreaker1,
+                    CircuitBreaker.State.CLOSED, CircuitBreaker.State.OPEN);
+            listenerCaptor.getValue().onCircuitBreakerStateChange(cbEvent);
+
+            // Verify DatabaseSwitchEvent was published
+            ArgumentCaptor<DatabaseSwitchEvent> eventCaptor = ArgumentCaptor.forClass(DatabaseSwitchEvent.class);
+            verify(eventBus).publish(eventCaptor.capture());
+
+            DatabaseSwitchEvent event = eventCaptor.getValue();
+            assertThat(event.getReason()).isEqualTo(SwitchReason.CIRCUIT_BREAKER);
+            assertThat(event.getFromDb()).isEqualTo(uri1);
+            assertThat(event.getToDb()).isEqualTo(uri2); // Should failover to second highest weight
+        }
+
+        @Test
+        @DisplayName("Should publish DatabaseSwitchEvent on health check failover")
+        void shouldPublishDatabaseSwitchEventOnHealthCheckFailover() {
+            // Connection starts with uri1 (highest weight) by default
+            RedisURI currentUri = connection.getCurrentEndpoint();
+            assertThat(currentUri).isEqualTo(uri1);
+
+            // Capture the health status listener
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor
+                    .forClass(HealthStatusListener.class);
+            verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
+
+            // Simulate health status change to unhealthy
+            when(healthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
+            HealthStatusChangeEvent healthEvent = new HealthStatusChangeEvent(uri1, HealthStatus.HEALTHY,
+                    HealthStatus.UNHEALTHY);
+            listenerCaptor.getValue().onStatusChange(healthEvent);
+
+            // Verify DatabaseSwitchEvent was published
+            ArgumentCaptor<DatabaseSwitchEvent> eventCaptor = ArgumentCaptor.forClass(DatabaseSwitchEvent.class);
+            verify(eventBus).publish(eventCaptor.capture());
+
+            DatabaseSwitchEvent event = eventCaptor.getValue();
+            assertThat(event.getReason()).isEqualTo(SwitchReason.HEALTH_CHECK);
+            assertThat(event.getFromDb()).isEqualTo(uri1);
+            assertThat(event.getToDb()).isEqualTo(uri2); // Should failover to second highest weight
         }
 
     }
