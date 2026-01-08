@@ -12,6 +12,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
+import io.lettuce.core.failover.event.SwitchReason;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
@@ -113,11 +114,11 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
      * @see StatefulRedisMultiDbConnectionImpl#safeSwitch(RedisDatabaseImpl, boolean)
      */
     @Override
-    boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall) {
+    boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall, SwitchReason reason) {
         AtomicBoolean switched = new AtomicBoolean(false);
         doByExclusiveLock(() -> {
             RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb = current;
-            switched.set(super.safeSwitch(database, internalCall));
+            switched.set(super.safeSwitch(database, internalCall, reason));
             if (fromDb == current) {
                 return;
             }

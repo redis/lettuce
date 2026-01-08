@@ -30,6 +30,8 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.failover.event.DatabaseSwitchEvent;
+import io.lettuce.core.failover.event.SwitchReason;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
@@ -137,7 +139,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 logger.info("Circuit breaker {} running for {} changed state from {} to {}", event.getCircuitBreaker().getId(),
                         current.getId(), event.getPreviousState(), event.getNewState());
             }
-            failoverFrom(current);
+            failoverFrom(current, SwitchReason.CIRCUIT_BREAKER);
         }
     }
 
@@ -155,7 +157,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
         if (!event.getNewStatus().isHealthy() && isCurrent(database)) {
             logger.info("Database {} is unhealthy, failing over if current", database.getId());
-            failoverFrom(database);
+            failoverFrom(database, SwitchReason.HEALTH_CHECK);
         }
     }
 
@@ -163,27 +165,27 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return database == current;
     }
 
-    private void failoverFrom(RedisDatabaseImpl<C> fromDb) {
+    private void failoverFrom(RedisDatabaseImpl<C> fromDb, SwitchReason reason) {
         RedisDatabaseImpl<C> selectedDatabase = getNextHealthyDatabase(fromDb);
 
         if (selectedDatabase != null) {
             if (logger.isInfoEnabled()) {
                 logger.info("Initiating failover from {} to {}", fromDb.getId(), selectedDatabase.getId());
             }
-            if (safeSwitch(selectedDatabase, true)) {
+            if (safeSwitch(selectedDatabase, true, reason)) {
                 if (logger.isInfoEnabled()) {
                     logger.info("Failover successful from {} to {}", fromDb.getId(), selectedDatabase.getId());
                 }
                 // check if we missed any events during the switch
                 if (!DatabasePredicates.isHealthyAndCbClosed.test(selectedDatabase)) {
-                    failoverFrom(selectedDatabase);
+                    failoverFrom(selectedDatabase, reason);
                 }
             } else {
                 if (logger.isInfoEnabled()) {
                     logger.info("Failover attempt from {} to {} has failed!! Retrying failover one more time...",
                             fromDb.getId(), selectedDatabase.getId());
                 }
-                failoverFrom(fromDb);
+                failoverFrom(fromDb, reason);
             }
         } else {
             // No healthy database found, stay on the current one
@@ -389,10 +391,10 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         if (target == null) {
             throw new IllegalArgumentException("Unknown endpoint: " + redisURI);
         }
-        if (safeSwitch(target, false)) {
+        if (safeSwitch(target, false, SwitchReason.FORCED)) {
             // if target got unhealthy along the way, failover from it
             if (!DatabasePredicates.isHealthyAndCbClosed.test(target)) {
-                failoverFrom(target);
+                failoverFrom(target, SwitchReason.FORCED);
                 throw new IllegalStateException("Failed to switch to database " + target.getId() + " - target is unhealthy");
             }
         } else {
@@ -428,7 +430,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      *         cannot be located in the connection map
      * @throws IllegalArgumentException if {@code database} is {@code null}
      */
-    boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall) {
+    boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall, SwitchReason reason) {
         if (database == null) {
             // this should never happen but in case we ever decide to remove null checks from the caller
             throw new IllegalArgumentException("Target database to switch to can not be null.");
@@ -469,6 +471,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             });
 
             fromDb.getDatabaseEndpoint().handOverCommandQueue(toDb.getDatabaseEndpoint());
+
+            clientResources.eventBus().publish(new DatabaseSwitchEvent(reason, new ImmutableRedisURI(fromDb.getRedisURI()), new ImmutableRedisURI(toDb.getRedisURI())));
         });
         return switched.get();
     }
