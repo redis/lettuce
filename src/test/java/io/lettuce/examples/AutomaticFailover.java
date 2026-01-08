@@ -11,6 +11,7 @@ import io.lettuce.core.failover.CircuitBreaker;
 import io.lettuce.core.failover.DatabaseConfig;
 import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.test.Wait;
 
@@ -44,20 +45,27 @@ public class AutomaticFailover {
         // docker run -p 6381:6379 -it redis:8.2.1
         List<String> endpoints = Arrays.asList("redis://localhost:6380", "redis://localhost:6381");
 
-        SocketOptions.TcpUserTimeoutOptions tcpUserTimeout = SocketOptions.TcpUserTimeoutOptions.builder()
-                .tcpUserTimeout(Duration.ofSeconds(4)).enable().build();
+        // SocketOptions.TcpUserTimeoutOptions tcpUserTimeout = SocketOptions.TcpUserTimeoutOptions.builder()
+        // .tcpUserTimeout(Duration.ofSeconds(4)).enable().build();
 
         SocketOptions.KeepAliveOptions keepAliveOptions = SocketOptions.KeepAliveOptions.builder()
                 .interval(Duration.ofSeconds(1)).idle(Duration.ofSeconds(1)).count(3).enable().build();
 
         ClientOptions clientOptions = ClientOptions.builder()
-                .socketOptions(SocketOptions.builder().tcpUserTimeout(tcpUserTimeout).keepAlive(keepAliveOptions).build())
+                // .socketOptions(SocketOptions.builder().tcpUserTimeout(tcpUserTimeout).keepAlive(keepAliveOptions).build())
                 .build();
 
         List<DatabaseConfig> databaseConfigs = createDatabaseConfigs(clientOptions, endpoints);
         MultiDbClient multiDbClient = MultiDbClient.create(databaseConfigs);
 
         // Automatic failback are not supported in the current Beta release.
+
+        // Listen to database switch events
+        multiDbClient.getResources().eventBus().get().subscribe(event -> {
+            if (event instanceof DatabaseSwitchEvent) {
+                log.info("Database switch : {}", event);
+            }
+        });
 
         // Connect to the MultiDbClient
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();

@@ -573,8 +573,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
 
             // Capture the health status listener
-            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor
-                    .forClass(HealthStatusListener.class);
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
             verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
 
             // Simulate health status change to unhealthy
@@ -614,8 +613,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             RedisURI currentBefore = connection.getCurrentEndpoint();
 
             // Capture the health status listener for uri2
-            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor
-                    .forClass(HealthStatusListener.class);
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
             verify(healthStatusManager).registerListener(eq(uri2), listenerCaptor.capture());
 
             // Simulate health status change to unhealthy for uri2 (not current)
@@ -663,8 +661,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             assertThat(currentUri).isEqualTo(uri1);
 
             // Capture the health status listener
-            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor
-                    .forClass(HealthStatusListener.class);
+            ArgumentCaptor<HealthStatusListener> listenerCaptor = ArgumentCaptor.forClass(HealthStatusListener.class);
             verify(healthStatusManager).registerListener(eq(uri1), listenerCaptor.capture());
 
             // Simulate health status change to unhealthy
