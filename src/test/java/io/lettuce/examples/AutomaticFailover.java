@@ -11,6 +11,7 @@ import io.lettuce.core.failover.CircuitBreaker;
 import io.lettuce.core.failover.DatabaseConfig;
 import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.failover.event.DatabaseSwitchEvent;
 import io.lettuce.core.failover.health.PingStrategy;
 import io.lettuce.test.Wait;
 
@@ -58,6 +59,13 @@ public class AutomaticFailover {
         MultiDbClient multiDbClient = MultiDbClient.create(databaseConfigs);
 
         // Automatic failback are not supported in the current Beta release.
+
+        // Listen to database switch events
+        multiDbClient.getResources().eventBus().get().subscribe(event -> {
+            if (event instanceof DatabaseSwitchEvent) {
+                log.info("Database switch : {}", event);
+            }
+        });
 
         // Connect to the MultiDbClient
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
