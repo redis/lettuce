@@ -183,6 +183,11 @@ public class EpollProvider {
             return new DomainSocketAddress(socketPath);
         }
 
+        @Override
+        public String threadNamePrefix() {
+            return "lettuce-epollEventLoop";
+        }
+
     }
 
 }

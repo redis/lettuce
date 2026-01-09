@@ -87,6 +87,11 @@ class NioProvider {
             throw new UnsupportedOperationException("Domain sockets are not supported with NIO transport");
         }
 
+        @Override
+        public String threadNamePrefix() {
+            return "lettuce-nioEventLoop";
+        }
+
     }
 
 }
