@@ -436,10 +436,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             throw new IllegalArgumentException("Target database to switch to can not be null.");
         }
         logger.info("Initiated safe switching to database {}", database.getId());
-        AtomicBoolean switched = new AtomicBoolean(false);
+        SwitchContext switchContext = new SwitchContext();
+
         doByExclusiveLock(() -> {
             RedisDatabaseImpl<C> fromDb = current;
             RedisDatabaseImpl<C> toDb = databases.get(database.getRedisURI());
+
+            switchContext.fromUri = fromDb.getRedisURI();
+            switchContext.toUri = toDb.getRedisURI();
 
             if (!verifySwitch(database, fromDb, toDb, internalCall)) {
                 return;
@@ -447,11 +451,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
             if (fromDb == toDb) {
                 // Nothing to do, already on the right database
-                switched.set(true);
+                switchContext.switched = true;
                 return;
             }
 
-            switched.set(true);
+            switchContext.switched = true;
             current = toDb;
             logger.info("Switched to database {}", toDb.getId());
 
@@ -472,10 +476,39 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
             fromDb.getDatabaseEndpoint().handOverCommandQueue(toDb.getDatabaseEndpoint());
 
-            clientResources.eventBus().publish(new DatabaseSwitchEvent(reason, new ImmutableRedisURI(fromDb.getRedisURI()),
-                    new ImmutableRedisURI(toDb.getRedisURI())));
+            doOnSwitch(fromDb, toDb);
         });
-        return switched.get();
+
+        // Publish event outside the lock to avoid holding lock during event processing
+        if (switchContext.switched && !switchContext.toUri.equals(switchContext.fromUri)) {
+            publishSwitchEvent(reason, switchContext.fromUri, switchContext.toUri);
+        }
+
+        return switchContext.switched;
+    }
+
+    /**
+     * Extension point for subclasses to perform additional operations after a database switch. This method is called within the
+     * exclusive lock.
+     *
+     * @param fromDb
+     * @param toDb
+     */
+    protected void doOnSwitch(RedisDatabaseImpl<C> fromDb, RedisDatabaseImpl<C> toDb) {
+        // NOOP
+    }
+
+    /**
+     * Publishes a {@link DatabaseSwitchEvent} to the event bus. This method is called outside the exclusive lock to avoid
+     * holding the lock during event processing.
+     *
+     * @param reason the reason for the database switch
+     * @param fromUri the URI of the database being switched from
+     * @param toUri the URI of the database being switched to
+     */
+    protected void publishSwitchEvent(SwitchReason reason, RedisURI fromUri, RedisURI toUri) {
+        clientResources.eventBus()
+                .publish(new DatabaseSwitchEvent(reason, new ImmutableRedisURI(fromUri), new ImmutableRedisURI(toUri)));
     }
 
     /**
@@ -642,6 +675,19 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             databases.remove(redisURI);
             database.close();
         });
+    }
+
+    /**
+     * Context object that holds the result of a database switch operation and the URIs involved.
+     */
+    static class SwitchContext {
+
+        boolean switched;
+
+        RedisURI fromUri;
+
+        RedisURI toUri;
+
     }
 
 }

@@ -132,6 +132,31 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
         return switched.get();
     }
 
+    /**
+     * In addition to the standard database switch behavior from the parent class, this method also:
+     * <ul>
+     * <li>Migrates all PubSub listeners from the old database connection to the new one</li>
+     * <li>Re-subscribes to all active channels, shard channels, and patterns on the new database</li>
+     * <li>Unsubscribes from the old database on a best-effort basis</li>
+     * </ul>
+     * <p>
+     * The subscription migration ensures that active PubSub subscriptions are maintained across database switches, providing
+     * seamless failover for PubSub operations.
+     *
+     * @see StatefulRedisMultiDbConnectionImpl#safeSwitch(RedisDatabaseImpl, boolean, SwitchReason)
+     * @see StatefulRedisMultiDbConnectionImpl#doOnSwitch(RedisDatabaseImpl, RedisDatabaseImpl)
+     **/
+    @Override
+    protected void doOnSwitch(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb,
+            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> toDb) {
+        pubSubListeners.forEach(listener -> {
+            current.getConnection().addListener(listener);
+            fromDb.getConnection().removeListener(listener);
+        });
+
+        moveSubscriptions(fromDb, current);
+    }
+
     @SuppressWarnings("unchecked")
     public void moveSubscriptions(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb,
             RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> toDb) {
