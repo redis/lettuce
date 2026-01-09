@@ -111,7 +111,7 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
      * @throws IllegalStateException if {@code internalCall} is {@code false} and validation fails
      * @throws UnsupportedOperationException if {@code internalCall} is {@code false} and the source or destination endpoint
      *         cannot be located
-     * @see StatefulRedisMultiDbConnectionImpl#safeSwitch(RedisDatabaseImpl, boolean)
+     * @see StatefulRedisMultiDbConnectionImpl#safeSwitch(RedisDatabaseImpl, boolean, SwitchReason)
      */
     @Override
     boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall, SwitchReason reason) {
