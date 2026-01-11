@@ -8,8 +8,8 @@
         <!-- Redis Uri: Specify Database as Path -->
         <property name="uri" value="redis://localhost/12" />
 
-        <!-- Redis Sentinel Uri Format: redis-sentinel://host[:port][,host[:port][,host[:port]]/database#masterId -->
-        <!-- Redis Sentinel Uri: You can specify multiple sentinels. Specify Database as Path, Master Id as Fragment. -->
-        <property name="uri" value="redis-sentinel://localhost,localhost2,localhost3/1#myMaster" />
+        <!-- Redis Sentinel Uri Format: redis-sentinel://host[:port][,host[:port][,host[:port]]/database#primaryId -->
+        <!-- Redis Sentinel Uri: You can specify multiple sentinels. Specify Database as Path, Primary Id as Fragment. -->
+        <property name="uri" value="redis-sentinel://localhost,localhost2,localhost3/1#myPrimary" />
     </bean>
 </beans>

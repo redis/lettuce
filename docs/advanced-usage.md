@@ -2399,7 +2399,7 @@ configuration is required for netty and the JDK in
 
 We don’t have found a way yet to invoke default interface methods on
 proxies without `MethodHandle`. Hence the `NodeSelection` API
-(`masters()`, `all()` and others on `RedisAdvancedClusterCommands` and
+(`primaries()`, `all()` and others on `RedisAdvancedClusterCommands` and
 `RedisAdvancedClusterAsyncCommands`) do not work.
 
 ## Command execution reliability
@@ -2596,7 +2596,7 @@ means, if you execute a command twice, each resulting state is different
 in comparison to the previous. Examples for non-idempotent Redis
 commands are such as `LPUSH`, `PUBLISH` or `INCR`.
 
-Note: When using master-replica replication, different rules apply to
+Note: When using primary-replica replication, different rules apply to
 *at-least-once* consistency. Replication between Redis nodes works
 asynchronously. A command can be processed successfully from Lettuce’s
 client perspective, but the result is not necessarily replicated to the
@@ -2659,14 +2659,14 @@ auto-replay of commands.
 Lettuce sticks in clustered operations to the same rules as for
 standalone operations but with one exception:
 
-Command execution on master nodes, which is rejected by a `MOVED`
+Command execution on primary nodes, which is rejected by a `MOVED`
 response are tried to re-execute with the appropriate connection.
-`MOVED` errors occur on master nodes when a slot’s responsibility is
+`MOVED` errors occur on primary nodes when a slot’s responsibility is
 moved from one cluster node to another node. Afterwards *at-least-once*
 and *at-most-once* rules apply.
 
 When the cluster topology changes, generally spoken, the cluster slots
-or master/replica state is reconfigured, following rules apply:
+or primary/replica state is reconfigured, following rules apply:
 
 - **at-most-once** If the connection is disconnected, queued commands
   are canceled and buffered commands, which were not sent, are executed
@@ -2679,4 +2679,3 @@ or master/replica state is reconfigured, following rules apply:
 - If the connection is not disconnected, queued commands are finished
   and buffered commands, which were not sent, are executed by using the
   new cluster view
-

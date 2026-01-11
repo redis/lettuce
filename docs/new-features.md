@@ -142,7 +142,7 @@
 - Add support for [Redis
   Streams](https://redis.io/topics/streams-intro).
 
-- Asynchronous `connect()` for Master/Replica connections.
+- Asynchronous `connect()` for Primary/Replica connections.
 
 - [Asynchronous Connection Pooling](advanced-usage.md#asynchronous-connection-pooling)
   through `AsyncConnectionPoolSupport` and `AsyncPool`.
@@ -166,7 +166,7 @@
 - Reactive `ScanStream` to iterate over the keyspace using `SCAN`
   commands.
 
-- Transactions using Master/Replica connections are bound to the master
+- Transactions using Primary/Replica connections are bound to the primary
   node.
 
 ## What’s new in Lettuce 5.0
@@ -196,4 +196,3 @@
 
 - HTML and PDF reference documentation along with a new project website:
   <https://lettuce.io>.
-
