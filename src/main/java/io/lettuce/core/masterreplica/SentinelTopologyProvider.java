@@ -62,7 +62,7 @@ class SentinelTopologyProvider implements TopologyProvider {
     @Override
     public List<RedisNodeDescription> getNodes() {
 
-        logger.debug("lookup topology for masterId {}", masterId);
+        logger.debug("lookup topology for primaryId {}", masterId);
 
         try {
             return getNodesAsync().get(timeout.toMillis(), TimeUnit.MILLISECONDS);
@@ -74,7 +74,7 @@ class SentinelTopologyProvider implements TopologyProvider {
     @Override
     public CompletableFuture<List<RedisNodeDescription>> getNodesAsync() {
 
-        logger.debug("lookup topology for masterId {}", masterId);
+        logger.debug("lookup topology for primaryId {}", masterId);
 
         Mono<StatefulRedisSentinelConnection<String, String>> connect = Mono
                 .fromFuture(redisClient.connectSentinelAsync(StringCodec.UTF8, sentinelUri));

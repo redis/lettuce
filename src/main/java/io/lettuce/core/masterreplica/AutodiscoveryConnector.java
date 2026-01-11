@@ -145,7 +145,7 @@ class AutodiscoveryConnector<K, V> implements MasterReplicaConnector<K, V> {
     private static RedisNodeDescription lookupMaster(List<RedisNodeDescription> nodes) {
 
         Optional<RedisNodeDescription> first = findFirst(nodes, n -> n.getRole().isUpstream());
-        return first.orElseThrow(() -> new IllegalStateException("Cannot lookup master from " + nodes));
+        return first.orElseThrow(() -> new IllegalStateException("Cannot lookup primary from " + nodes));
     }
 
     private static RedisNodeDescription getConnectedNode(RedisURI redisURI, List<RedisNodeDescription> nodes) {

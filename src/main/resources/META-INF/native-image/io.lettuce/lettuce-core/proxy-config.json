@@ -46,6 +46,10 @@
   ],
   [
     "io.lettuce.core.support.ConnectionWrapping$HasTargetConnection",
+    "io.lettuce.core.primaryreplica.StatefulRedisPrimaryReplicaConnection"
+  ],
+  [
+    "io.lettuce.core.support.ConnectionWrapping$HasTargetConnection",
     "io.lettuce.core.api.StatefulRedisConnection"
   ],
   [
