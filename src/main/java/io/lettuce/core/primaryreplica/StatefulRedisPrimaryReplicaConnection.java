@@ -8,7 +8,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
  *
  * @param <K> Key type.
  * @param <V> Value type.
- * @author
+ * @author yeong0jae
  * @since 7.3
  */
 public interface StatefulRedisPrimaryReplicaConnection<K, V> extends StatefulRedisConnection<K, V> {

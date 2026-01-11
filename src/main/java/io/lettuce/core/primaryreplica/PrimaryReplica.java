@@ -15,7 +15,7 @@ import io.lettuce.core.masterreplica.MasterReplica;
  * {@link io.lettuce.core.ReadFrom}.
  * </p>
  *
- * @author Mark Paluch
+ * @author yeong0jae
  * @since 7.3
  */
 @SuppressWarnings("deprecation")

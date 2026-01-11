@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Represents an upstream (primary) instance.
  *
- * @author
+ * @author yeong0jae
  * @since 7.3
  */
 @SuppressWarnings("serial")

@@ -8,7 +8,7 @@ import io.lettuce.core.primaryreplica.PrimaryReplica;
 import io.lettuce.core.primaryreplica.StatefulRedisPrimaryReplicaConnection;
 
 /**
- * @author
+ * @author yeong0jae
  * @since 7.3
  */
 public class ConnectToPrimaryReplicaUsingRedisSentinel {
