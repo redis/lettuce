@@ -115,7 +115,7 @@ public class ClusterPartitionParser {
 
         for (RedisClusterNode parsedNode : nodes) {
             if (parsedNode.is(RedisClusterNode.NodeFlag.REPLICA) || parsedNode.is(RedisClusterNode.NodeFlag.SLAVE)) {
-                parsedNode.setSlaveOf(master.getNodeId());
+                parsedNode.setReplicaOf(master.getNodeId());
             }
         }
     }

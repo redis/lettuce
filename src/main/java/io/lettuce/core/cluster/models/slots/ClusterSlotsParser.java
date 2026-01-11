@@ -87,7 +87,7 @@ public class ClusterSlotsParser {
         while (iterator.hasNext()) {
             RedisClusterNode replica = getRedisClusterNode(iterator, nodeCache);
             if (replica != null && upstream != null) {
-                replica.setSlaveOf(upstream.getNodeId());
+                replica.setReplicaOf(upstream.getNodeId());
                 replica.setFlags(Collections.singleton(RedisClusterNode.NodeFlag.REPLICA));
                 replicas.add(replica);
             }

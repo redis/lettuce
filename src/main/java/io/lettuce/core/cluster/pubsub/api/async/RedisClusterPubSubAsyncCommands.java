@@ -26,7 +26,7 @@ public interface RedisClusterPubSubAsyncCommands<K, V> extends RedisPubSubAsyncC
      * Select all upstream nodes.
      *
      * @return API with asynchronous executed commands on a selection of upstream cluster nodes.
-     * @deprecated since 6.0 in favor of {@link #upstream()}.
+     * @deprecated since 6.0 in favor of {@link #upstream()} (use {@link #primaries()} for primary terminology).
      */
     @Deprecated
     default PubSubAsyncNodeSelection<K, V> masters() {
@@ -40,6 +40,16 @@ public interface RedisClusterPubSubAsyncCommands<K, V> extends RedisPubSubAsyncC
      */
     default PubSubAsyncNodeSelection<K, V> upstream() {
         return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
+    }
+
+    /**
+     * Select all primary nodes.
+     *
+     * @return API with asynchronous executed commands on a selection of primary cluster nodes.
+     * @since 7.3
+     */
+    default PubSubAsyncNodeSelection<K, V> primaries() {
+        return upstream();
     }
 
     /**
