@@ -21,7 +21,7 @@ public class RedisSlaveInstance extends RedisReplicaInstance implements RedisIns
     /**
      * Constructs a {@link RedisSlaveInstance}
      *
-     * @param master master for the replication, must not be {@code null}
+     * @param master primary for the replication, must not be {@code null}
      * @param state replica state, must not be {@code null}
      */
     RedisSlaveInstance(ReplicationPartner master, State state) {
@@ -38,14 +38,14 @@ public class RedisSlaveInstance extends RedisReplicaInstance implements RedisIns
 
     /**
      *
-     * @return the replication master.
+     * @return the replication primary.
      */
     public ReplicationPartner getMaster() {
         return getUpstream();
     }
 
     public void setMaster(ReplicationPartner master) {
-        LettuceAssert.notNull(master, "Master must not be null");
+        LettuceAssert.notNull(master, "Primary must not be null");
         setUpstream(master);
     }
 

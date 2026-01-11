@@ -17,10 +17,10 @@ import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
- * Master-Replica connection API.
+ * Primary-Replica connection API.
  * <p>
- * This API allows connections to Redis Master/Replica setups which run either in a static Master/Replica setup or are managed
- * by Redis Sentinel. Master-Replica connections can discover topologies and select a source for read operations using
+ * This API allows connections to Redis Primary/Replica setups which run either in a static Primary/Replica setup or are managed
+ * by Redis Sentinel. Primary-Replica connections can discover topologies and select a source for read operations using
  * {@link io.lettuce.core.ReadFrom}.
  * </p>
  * <p>
@@ -29,7 +29,7 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  *
  * <pre class="code">
  * RedisClient client = RedisClient.create();
- * StatefulRedisMasterReplicaConnection&lt;String, String&gt; connection = MasterReplica.connect(client,
+ * StatefulRedisPrimaryReplicaConnection&lt;String, String&gt; connection = PrimaryReplica.connect(client,
  *         RedisURI.create(&quot;redis://localhost&quot;), StringCodec.UTF8);
  * // ...
  *
@@ -40,50 +40,52 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </p>
  * <h3>Topology Discovery</h3>
  * <p />
- * Master-Replica topologies are either static or semi-static. Redis Standalone instances with attached replicas provide no
+ * Primary-Replica topologies are either static or semi-static. Redis Standalone instances with attached replicas provide no
  * failover/HA mechanism. Redis Sentinel managed instances are controlled by Redis Sentinel and allow failover (which include
- * master promotion). The {@link MasterReplica} API supports both mechanisms. The topology is provided by a
+ * primary promotion). The {@link MasterReplica} API supports both mechanisms. The topology is provided by a
  * {@link TopologyProvider}:
  *
  * <ul>
  * <li>{@link ReplicaTopologyProvider}: Dynamic topology lookup using the {@code INFO REPLICATION} output. Replicas are listed
- * as {@code replicaN=...} entries. The initial connection can either point to a master or a replica and the topology provider
- * will discover nodes. The connection needs to be re-established outside of lettuce in a case of Master/Replica failover or
+ * as {@code replicaN=...} entries. The initial connection can either point to a primary or a replica and the topology provider
+ * will discover nodes. The connection needs to be re-established outside of lettuce in a case of Primary/Replica failover or
  * topology changes.</li>
  * <li>{@link StaticMasterReplicaTopologyProvider}: Topology is defined by the list of {@link RedisURI URIs} and the
- * {@code ROLE} output. MasterReplica uses only the supplied nodes and won't discover additional nodes in the setup. The
- * connection needs to be re-established outside of lettuce in a case of Master/Replica failover or topology changes.</li>
+ * {@code ROLE} output. This API uses only the supplied nodes and won't discover additional nodes in the setup. The connection
+ * needs to be re-established outside of lettuce in a case of Primary/Replica failover or topology changes.</li>
  * <li>{@link SentinelTopologyProvider}: Dynamic topology lookup using the Redis Sentinel API. In particular,
- * {@code SENTINEL MASTER} and {@code SENTINEL SLAVES} output. Master/Replica failover is handled by lettuce.</li>
+ * {@code SENTINEL MASTER} and {@code SENTINEL SLAVES} output. Primary/Replica failover is handled by lettuce.</li>
  * </ul>
  *
  * <h3>Topology Updates</h4>
  * <ul>
- * <li>Standalone Master/Replica: Performs a one-time topology lookup which remains static afterward</li>
+ * <li>Standalone Primary/Replica: Performs a one-time topology lookup which remains static afterward</li>
  * <li>Redis Sentinel: Subscribes to all Sentinels and listens for Pub/Sub messages to trigger topology refreshing</li>
  * </ul>
  *
- * <h3>Connection Fault-Tolerance</h3> Connecting to Master/Replica bears the possibility that individual nodes are not
+ * <h3>Connection Fault-Tolerance</h3> Connecting to Primary/Replica bears the possibility that individual nodes are not
  * reachable. {@link MasterReplica} can still connect to a partially-available set of nodes.
  *
  * <ul>
- * <li>Redis Sentinel: At least one Sentinel must be reachable, the masterId must be registered and at least one host must be
- * available (master or replica). Allows for runtime-recovery based on Sentinel Events.</li>
+ * <li>Redis Sentinel: At least one Sentinel must be reachable, the primaryId must be registered and at least one host must be
+ * available (primary or replica). Allows for runtime-recovery based on Sentinel Events.</li>
  * <li>Static Setup (auto-discovery): The initial endpoint must be reachable. No recovery/reconfiguration during runtime.</li>
  * <li>Static Setup (provided hosts): All endpoints must be reachable. No recovery/reconfiguration during runtime.</li>
  * </ul>
  *
  * @author Mark Paluch
  * @since 5.2
+ * @deprecated since 7.3, use {@link io.lettuce.core.primaryreplica.PrimaryReplica}.
  */
+@Deprecated
 public class MasterReplica {
 
     /**
-     * Open a new connection to a Redis Master-Replica server/servers using the supplied {@link RedisURI} and the supplied
+     * Open a new connection to a Redis Primary-Replica server/servers using the supplied {@link RedisURI} and the supplied
      * {@link RedisCodec codec} to encode/decode keys.
      * <p>
-     * This {@link MasterReplica} performs auto-discovery of nodes using either Redis Sentinel or Master/Replica. A
-     * {@link RedisURI} can point to either a master or a replica host.
+     * This {@link MasterReplica} performs auto-discovery of nodes using either Redis Sentinel or Primary/Replica. A
+     * {@link RedisURI} can point to either a primary or a replica host.
      * </p>
      *
      * @param redisClient the Redis client.
@@ -99,11 +101,11 @@ public class MasterReplica {
     }
 
     /**
-     * Open asynchronously a new connection to a Redis Master-Replica server/servers using the supplied {@link RedisURI} and the
-     * supplied {@link RedisCodec codec} to encode/decode keys.
+     * Open asynchronously a new connection to a Redis Primary-Replica server/servers using the supplied {@link RedisURI} and
+     * the supplied {@link RedisCodec codec} to encode/decode keys.
      * <p>
-     * This {@link MasterReplica} performs auto-discovery of nodes using either Redis Sentinel or Master/Replica. A
-     * {@link RedisURI} can point to either a master or a replica host.
+     * This {@link MasterReplica} performs auto-discovery of nodes using either Redis Sentinel or Primary/Replica. A
+     * {@link RedisURI} can point to either a primary or a replica host.
      * </p>
      *
      * @param redisClient the Redis client.
@@ -134,11 +136,11 @@ public class MasterReplica {
     }
 
     /**
-     * Open a new connection to a Redis Master-Replica server/servers using the supplied {@link RedisURI} and the supplied
+     * Open a new connection to a Redis Primary-Replica server/servers using the supplied {@link RedisURI} and the supplied
      * {@link RedisCodec codec} to encode/decode keys.
      * <p>
-     * This {@link MasterReplica} performs auto-discovery of nodes if the URI is a Redis Sentinel URI. Master/Replica URIs will
-     * be treated as static topology and no additional hosts are discovered in such case. Redis Standalone Master/Replica will
+     * This {@link MasterReplica} performs auto-discovery of nodes if the URI is a Redis Sentinel URI. Primary/Replica URIs will
+     * be treated as static topology and no additional hosts are discovered in such case. Redis Standalone Primary/Replica will
      * discover the roles of the supplied {@link RedisURI URIs} and issue commands to the appropriate node.
      * </p>
      * <p>
@@ -161,11 +163,11 @@ public class MasterReplica {
     }
 
     /**
-     * Open asynchronously a new connection to a Redis Master-Replica server/servers using the supplied {@link RedisURI} and the
-     * supplied {@link RedisCodec codec} to encode/decode keys.
+     * Open asynchronously a new connection to a Redis Primary-Replica server/servers using the supplied {@link RedisURI} and
+     * the supplied {@link RedisCodec codec} to encode/decode keys.
      * <p>
-     * This {@link MasterReplica} performs auto-discovery of nodes if the URI is a Redis Sentinel URI. Master/Replica URIs will
-     * be treated as static topology and no additional hosts are discovered in such case. Redis Standalone Master/Replica will
+     * This {@link MasterReplica} performs auto-discovery of nodes if the URI is a Redis Sentinel URI. Primary/Replica URIs will
+     * be treated as static topology and no additional hosts are discovered in such case. Redis Standalone Primary/Replica will
      * discover the roles of the supplied {@link RedisURI URIs} and issue commands to the appropriate node.
      * </p>
      * <p>

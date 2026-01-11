@@ -428,7 +428,7 @@ class PooledClusterConnectionProvider<K, V>
         }
 
         // consider only replicas contain data from replication
-        if (upstream.getNodeId().equals(partition.getSlaveOf()) && partition.getReplOffset() != 0) {
+        if (upstream.getNodeId().equals(partition.getReplicaOf()) && partition.getReplOffset() != 0) {
             return true;
         }
 
