@@ -23,7 +23,7 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
     /**
      * Constructs a {@link RedisSentinelInstance}
      *
-     * @param monitoredMasters list of monitored masters, must not be {@code null} but may be empty
+     * @param monitoredMasters list of monitored primaries, must not be {@code null} but may be empty
      */
     public RedisSentinelInstance(List<String> monitoredMasters) {
         LettuceAssert.notNull(monitoredMasters, "List of monitoredMasters must not be null");
@@ -41,7 +41,7 @@ public class RedisSentinelInstance implements RedisInstance, Serializable {
 
     /**
      *
-     * @return List of monitored master names.
+     * @return List of monitored primary names.
      */
     public List<String> getMonitoredMasters() {
         return monitoredMasters;

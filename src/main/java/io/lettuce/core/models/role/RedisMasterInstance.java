@@ -3,12 +3,14 @@ package io.lettuce.core.models.role;
 import java.util.List;
 
 /**
- * Represents a upstream (master) instance.
+ * Represents an upstream (primary) instance.
  *
  * @author Mark Paluch
  * @since 3.0
+ * @deprecated since 7.3, use {@link RedisPrimaryInstance}.
  */
 @SuppressWarnings("serial")
+@Deprecated
 public class RedisMasterInstance extends RedisUpstreamInstance {
 
     public RedisMasterInstance() {
