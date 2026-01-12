@@ -78,6 +78,19 @@ public interface MultiDbClient extends BaseRedisClient {
     StatefulRedisMultiDbPubSubConnection<String, String> connectPubSub();
 
     /**
+     * Open asynchronously a new multi database connection to a Redis server. "Use the default {@link RedisCodec codec}
+     * StringCodec.UTF8 to encode/decode keys and values.
+     * <p>
+     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
+     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
+     * inside callbacks.
+     *
+     * @return a {@link MultiDbConnectionFuture} that is notified with the connection progress.
+     * @since 7.4
+     */
+    public MultiDbConnectionFuture<String, String> connectAsync();
+
+    /**
      * Open asynchronously a new multi database connection to a Redis server. Use the supplied {@link RedisCodec codec} to
      * encode/decode keys and values.
      * <p>

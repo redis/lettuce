@@ -181,6 +181,31 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     }
 
     // ASYNC CONNECT
+    /**
+     * Asynchronously open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
+     * and values. This method is asynchronous and returns a {@link MultiDbConnectionFuture} that completes when all database
+     * connections are established and initial health checks (if configured) have completed.
+     * <p>
+     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
+     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
+     * inside callbacks.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return A new stateful Redis connection future
+     */
+    @Override
+    public MultiDbConnectionFuture<String, String> connectAsync() {
+        HealthStatusManager healthStatusManager = createHealthStatusManager();
+        MultiDbAsyncConnectionBuilder<String, String> builder = new MultiDbAsyncConnectionBuilder<>(healthStatusManager,
+                getResources(), this);
+
+        CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = builder.connectAsync(databaseConfigs,
+                newStringStringCodec(), this::createMultiDbConnection);
+
+        return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
+    }
 
     /**
      * Asynchronously open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys

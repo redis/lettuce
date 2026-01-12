@@ -68,8 +68,8 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     }
 
     @Test
-    void connectAsyncWithCodec() throws Exception {
-        MultiDbConnectionFuture<String, String> future = multiDbClient.connectAsync(UTF8);
+    void connectAsyncWithoutCodec() throws Exception {
+        MultiDbConnectionFuture<String, String> future = multiDbClient.connectAsync();
         connections.add(future);
 
         assertThat((Object) future).isNotNull();
