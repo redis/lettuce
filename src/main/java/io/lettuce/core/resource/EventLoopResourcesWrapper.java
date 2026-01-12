@@ -66,4 +66,10 @@ class EventLoopResourcesWrapper implements EventLoopResources {
         return delegate.newSocketAddress(socketPath);
     }
 
+    @Override
+    public String threadNamePrefix() {
+        verifier.run();
+        return delegate.threadNamePrefix();
+    }
+
 }
