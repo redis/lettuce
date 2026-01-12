@@ -198,11 +198,7 @@ class MultiDbAsyncConnectionBuilder<K, V> {
                     return;
                 }
 
-                // Filter out unhealthy databases and closed connections - only include healthy and open ones
-                Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> healthyDatabases = filterHealthyDatabases(
-                        healthStatuses, databases);
-
-                healthyDatabasesFuture.complete(healthyDatabases);
+                healthyDatabasesFuture.complete(databases);
             });
 
         } catch (Exception e) {
@@ -337,41 +333,6 @@ class MultiDbAsyncConnectionBuilder<K, V> {
             logger.info("Selected database with weight {} as initial active database", selectedDatabase.getWeight());
             return healthStatuses;
         });
-    }
-
-    /**
-     * Filters out unhealthy databases and closed connections from the provided map of databases.
-     *
-     * @param healthStatuses the map of health statuses for each database
-     * @param databases the map of databases to filter
-     * @return a new map containing only the healthy and open databases
-     */
-    Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> filterHealthyDatabases(
-            Map<RedisURI, HealthStatus> healthStatuses,
-            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases) {
-
-        // Filter out unhealthy databases and closed connections - only include healthy and open ones
-        Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> healthyDatabases = new ConcurrentHashMap<>();
-
-        for (Map.Entry<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> entry : databases.entrySet()) {
-            HealthStatus status = healthStatuses.get(entry.getKey());
-            boolean isHealthy = status != null && status.isHealthy();
-            boolean isOpen = entry.getValue().getConnection().isOpen();
-
-            if (isHealthy && isOpen) {
-                healthyDatabases.put(entry.getKey(), entry.getValue());
-            } else {
-                // Close excluded database connections
-                entry.getValue().getConnection().closeAsync();
-                if (!isHealthy) {
-                    logger.info("Excluding database {} due to unhealthy status: {}", entry.getKey(), status);
-                } else if (!isOpen) {
-                    logger.info("Excluding database {} because connection is closed", entry.getKey());
-                }
-            }
-        }
-
-        return healthyDatabases;
     }
 
     /**
