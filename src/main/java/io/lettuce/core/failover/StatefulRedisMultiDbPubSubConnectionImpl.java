@@ -107,10 +107,6 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     protected void doOnSwitch(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb,
             RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> toDb) {
 
-        if (fromDb == current) {
-            return;
-        }
-
         pubSubListeners.forEach(listener -> {
             current.getConnection().addListener(listener);
             fromDb.getConnection().removeListener(listener);
