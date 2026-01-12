@@ -508,7 +508,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      */
     protected void publishSwitchEvent(SwitchReason reason, RedisURI fromUri, RedisURI toUri) {
         clientResources.eventBus()
-                .publish(new DatabaseSwitchEvent(reason, new ImmutableRedisURI(fromUri), new ImmutableRedisURI(toUri)));
+                .publish(new DatabaseSwitchEvent(reason, new ImmutableRedisURI(fromUri), new ImmutableRedisURI(toUri), this));
     }
 
     /**

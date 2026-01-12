@@ -2,6 +2,7 @@ package io.lettuce.core.failover.event;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.event.Event;
+import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 
 /**
  * Event that is fired when a database switch occurs.
@@ -17,10 +18,14 @@ public class DatabaseSwitchEvent implements Event {
 
     private final RedisURI toDb;
 
-    public DatabaseSwitchEvent(SwitchReason reason, RedisURI fromDb, RedisURI toDb) {
+    private final StatefulRedisMultiDbConnection<?, ?> source;
+
+    public DatabaseSwitchEvent(SwitchReason reason, RedisURI fromDb, RedisURI toDb,
+            StatefulRedisMultiDbConnection<?, ?> source) {
         this.reason = reason;
         this.fromDb = fromDb;
         this.toDb = toDb;
+        this.source = source;
     }
 
     public SwitchReason getReason() {
@@ -35,6 +40,10 @@ public class DatabaseSwitchEvent implements Event {
         return toDb;
     }
 
+    public StatefulRedisMultiDbConnection<?, ?> getSource() {
+        return source;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -42,6 +51,7 @@ public class DatabaseSwitchEvent implements Event {
         sb.append(" [reason=").append(reason);
         sb.append(", fromDb=").append(fromDb);
         sb.append(", toDb=").append(toDb);
+        sb.append(", source=").append(source);
         sb.append("]");
         return sb.toString();
     }

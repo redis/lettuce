@@ -528,6 +528,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             assertThat(event.getReason()).isEqualTo(SwitchReason.FORCED);
             assertThat(event.getFromDb()).isEqualTo(fromUri);
             assertThat(event.getToDb()).isEqualTo(uri2);
+            assertThat(event.getSource()).isSameAs(connection);
         }
 
     }
@@ -651,6 +652,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             assertThat(event.getReason()).isEqualTo(SwitchReason.CIRCUIT_BREAKER);
             assertThat(event.getFromDb()).isEqualTo(uri1);
             assertThat(event.getToDb()).isEqualTo(uri2); // Should failover to second highest weight
+            assertThat(event.getSource()).isSameAs(connection);
         }
 
         @Test
@@ -678,6 +680,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             assertThat(event.getReason()).isEqualTo(SwitchReason.HEALTH_CHECK);
             assertThat(event.getFromDb()).isEqualTo(uri1);
             assertThat(event.getToDb()).isEqualTo(uri2); // Should failover to second highest weight
+            assertThat(event.getSource()).isSameAs(connection);
         }
 
     }

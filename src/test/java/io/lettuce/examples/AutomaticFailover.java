@@ -63,7 +63,16 @@ public class AutomaticFailover {
         // Listen to database switch events
         multiDbClient.getResources().eventBus().get().subscribe(event -> {
             if (event instanceof DatabaseSwitchEvent) {
-                log.info("Database switch : {}", event);
+                DatabaseSwitchEvent switchEvent = (DatabaseSwitchEvent) event;
+                log.info("Database switch from {} to {} (reason: {})", switchEvent.getFromDb(), switchEvent.getToDb(),
+                        switchEvent.getReason());
+
+                // Access the source connection
+                StatefulRedisMultiDbConnection<?, ?> connection = switchEvent.getSource();
+
+                // Query connection state
+                RedisURI currentEndpoint = connection.getCurrentEndpoint();
+                log.info("Current endpoint after switch: {}", currentEndpoint);
             }
         });
 
