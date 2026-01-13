@@ -17,6 +17,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.failover.MultiDbAsyncConnectionBuilder.RedisDatabaseAsyncCompletion;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.failover.health.HealthCheck;
@@ -202,14 +203,22 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        HealthStatusManager healthStatusManager = createHealthStatusManager();
-        MultiDbAsyncConnectionBuilder<K, V> builder = new MultiDbAsyncConnectionBuilder<>(healthStatusManager, getResources(),
-                this);
+        MultiDbAsyncConnectionBuilder<K, V> builder = createConnectionBuilder(codec);
 
-        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs, codec,
-                this::createMultiDbConnection);
+        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs);
 
         return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
+    }
+
+    /**
+     * Creates a new {@link MultiDbAsyncConnectionBuilder} instance.
+     *
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return a new multi-database async connection builder
+     */
+    protected <K, V> MultiDbAsyncConnectionBuilder<K, V> createConnectionBuilder(RedisCodec<K, V> codec) {
+        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec, this::createMultiDbConnection);
     }
 
     /**
@@ -228,6 +237,25 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         return new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(healthyDatabaseMap, getResources(),
                 codec, this::createRedisDatabase, healthStatusManager);
+    }
+
+    /**
+     * Creates a new {@link StatefulRedisMultiDbConnection} instance with the provided healthy database map.
+     *
+     * @param healthyDatabaseMap the map of healthy databases
+     * @param codec the Redis codec
+     * @param healthStatusManager the health status manager
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return a new multi-database connection
+     */
+    protected <K, V> StatefulRedisMultiDbConnection<K, V> createMultiDbConnection(
+            RedisDatabaseImpl<StatefulRedisConnection<K, V>> selected,
+            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases, RedisCodec<K, V> codec,
+            HealthStatusManager healthStatusManager, RedisDatabaseAsyncCompletion<StatefulRedisConnection<K, V>> completion) {
+
+        return new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(selected, databases, getResources(),
+                codec, this::createRedisDatabase, healthStatusManager, completion);
     }
     // END OF ASYNC CONNECT
 

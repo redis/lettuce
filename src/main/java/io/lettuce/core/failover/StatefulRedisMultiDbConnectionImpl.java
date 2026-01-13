@@ -29,6 +29,7 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.api.sync.RedisClusterCommands;
 import io.lettuce.core.codec.RedisCodec;
+import io.lettuce.core.failover.MultiDbAsyncConnectionBuilder.RedisDatabaseAsyncCompletion;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
@@ -87,12 +88,21 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     public StatefulRedisMultiDbConnectionImpl(Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources,
             RedisCodec<K, V> codec, DatabaseConnectionFactory<C, K, V> connectionFactory,
             HealthStatusManager healthStatusManager) {
+        this(null, connections, resources, codec, connectionFactory, healthStatusManager, null);
+
+    }
+
+    public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
+            Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
+            DatabaseConnectionFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
+            RedisDatabaseAsyncCompletion<C> completion) {
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
         }
         LettuceAssert.notNull(healthStatusManager, "healthStatusManager must not be null");
 
         this.databases = new ConcurrentHashMap<>(connections);
+
         this.clientResources = resources;
         this.codec = codec;
         this.connectionFactory = connectionFactory;
@@ -101,19 +111,29 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
         databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
 
-        // TODO: Current implementation forces all database connections to be created and established (at least once before this
-        // constructor called).
-        // This is suboptimal and should be replaced with a logic that uses async connection creation and state management,
-        // which safely starts with at least one healthy connection.
-
-        // TODO: It is error prone to leave the possibility of setting null as current connection.
-        // Either we should identify and wait for healthy connection right here or pass it from outside as already identified as
-        // healthy
-        this.current = getNextHealthyDatabase(null);
+        if (initialDatabase == null) {
+            this.current = getNextHealthyDatabase(null);
+        } else {
+            this.current = initialDatabase;
+        }
+        if (current == null) {
+            throw new IllegalStateException("No healthy database found");
+        }
 
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
+        if (completion != null) {
+            completion.whenComplete(this::onDatabaseCompletion);
+        }
+    }
+
+    private void onDatabaseCompletion(RedisDatabaseImpl<C> db, Throwable e) {
+        if (db != null) {
+            doByExclusiveLock(() -> {
+                databases.putIfAbsent(db.getRedisURI(), (RedisDatabaseImpl<C>) db);
+            });
+        }
     }
 
     private void onCircuitBreakerStateChange(CircuitBreakerStateChangeEvent event) {
@@ -131,6 +151,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                         event.getCircuitBreaker().getId(), database.getId(), event.getPreviousState(), event.getNewState(),
                         current.getId());
             }
+        }
+        if (current == null) {
+            return;
         }
         if (!event.getNewState().isClosed() && event.getCircuitBreaker() == current.getCircuitBreaker()) {
             if (logger.isInfoEnabled()) {
