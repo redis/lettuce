@@ -26,6 +26,7 @@ import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.failover.health.HealthStatusManagerImpl;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.pubsub.PubSubEndpoint;
@@ -124,28 +125,20 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        HealthStatusManager healthStatusManager = createHealthStatusManager();
+        MultiDbAsyncConnectionBuilder<K, V> builder = createConnectionBuilder(codec);
 
-        Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases = new ConcurrentHashMap<>(
-                databaseConfigs.size());
-        for (Map.Entry<RedisURI, DatabaseConfig> entry : databaseConfigs.entrySet()) {
-            RedisURI uri = entry.getKey();
-            DatabaseConfig config = entry.getValue();
+        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs);
 
-            // HACK: looks like repeating the implementation all around 'RedisClient.connect' is an overkill.
-            // connections.put(uri, connect(codec, uri));
-            // Instead we will use it from delegate
-            RedisDatabaseImpl<StatefulRedisConnection<K, V>> database = createRedisDatabase(config, codec, healthStatusManager);
-
-            databases.put(uri, database);
+        MultiDbConnectionFuture<K, V> connectionFuture = MultiDbConnectionFuture.from(future,
+                getResources().eventExecutorGroup());
+        try {
+            return connectionFuture.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw RedisConnectionException.create(e);
+        } catch (Exception e) {
+            throw RedisConnectionException.create(Exceptions.unwrap(e));
         }
-
-        StatusTracker statusTracker = new StatusTracker(healthStatusManager, getResources());
-        // Wait for health checks to complete if configured
-        waitForInitialHealthyDatabase(statusTracker, databases);
-
-        // Provide a connection factory for dynamic database addition
-        return createMultiDbConnection(databases, codec, healthStatusManager);
     }
 
     protected HealthStatusManager createHealthStatusManager() {
@@ -232,24 +225,6 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * @return a new multi-database connection
      */
     protected <K, V> StatefulRedisMultiDbConnection<K, V> createMultiDbConnection(
-            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> healthyDatabaseMap, RedisCodec<K, V> codec,
-            HealthStatusManager healthStatusManager) {
-
-        return new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(healthyDatabaseMap, getResources(),
-                codec, this::createRedisDatabase, healthStatusManager);
-    }
-
-    /**
-     * Creates a new {@link StatefulRedisMultiDbConnection} instance with the provided healthy database map.
-     *
-     * @param healthyDatabaseMap the map of healthy databases
-     * @param codec the Redis codec
-     * @param healthStatusManager the health status manager
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return a new multi-database connection
-     */
-    protected <K, V> StatefulRedisMultiDbConnection<K, V> createMultiDbConnection(
             RedisDatabaseImpl<StatefulRedisConnection<K, V>> selected,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases, RedisCodec<K, V> codec,
             HealthStatusManager healthStatusManager, RedisDatabaseAsyncCompletion<StatefulRedisConnection<K, V>> completion) {
@@ -274,26 +249,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        HealthStatusManager healthStatusManager = createHealthStatusManager();
-
-        Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> databases = new ConcurrentHashMap<>(
-                databaseConfigs.size());
-        for (Map.Entry<RedisURI, DatabaseConfig> entry : databaseConfigs.entrySet()) {
-            RedisURI uri = entry.getKey();
-            DatabaseConfig config = entry.getValue();
-
-            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> database = createRedisDatabaseWithPubSub(config, codec,
-                    healthStatusManager);
-            databases.put(uri, database);
-        }
-
-        StatusTracker statusTracker = new StatusTracker(healthStatusManager, getResources());
-        // Wait for health checks to complete if configured
-        waitForInitialHealthyDatabase(statusTracker, databases);
-
-        // Provide a connection factory for dynamic database addition
-        return new StatefulRedisMultiDbPubSubConnectionImpl<K, V>(databases, getResources(), codec,
-                this::createRedisDatabaseWithPubSub, healthStatusManager);
+        return null;
     }
 
     private <K, V> RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> createRedisDatabaseWithPubSub(DatabaseConfig config,
@@ -337,55 +293,6 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     @Override
     protected <K, V> PubSubEndpoint<K, V> createPubSubEndpoint() {
         return new DatabasePubSubEndpointImpl<>(getOptions(), getResources());
-    }
-
-    /**
-     * Waits for initial health check results and selects the first healthy database based on weight priority. Blocks until at
-     * least one database becomes healthy or all databases are determined to be unhealthy.
-     *
-     * @param statusTracker the status tracker to use for waiting on health check results
-     * @param databaseMap the map of databases to evaluate
-     * @throws RedisConnectionException if all databases are unhealthy
-     */
-    private void waitForInitialHealthyDatabase(StatusTracker statusTracker,
-            Map<RedisURI, ? extends RedisDatabaseImpl<?>> databaseMap) {
-        // Sort databases by weight in descending order
-        List<? extends Map.Entry<RedisURI, ? extends RedisDatabaseImpl<?>>> sortedDatabases = databaseMap.entrySet().stream()
-                .sorted(Map.Entry
-                        .comparingByValue(Comparator.comparing((RedisDatabaseImpl<?> db) -> db.getWeight()).reversed()))
-                .collect(Collectors.toList());
-        logger.info("Selecting initial database from {} configured databases", sortedDatabases.size());
-
-        // Select database in weight order
-        for (Map.Entry<RedisURI, ? extends RedisDatabaseImpl<?>> entry : sortedDatabases) {
-            RedisURI endpoint = entry.getKey();
-            RedisDatabaseImpl<?> database = entry.getValue();
-
-            logger.info("Evaluating database {} (weight: {})", endpoint, database.getWeight());
-
-            HealthStatus status;
-
-            // Check if health checks are enabled for this database
-            if (database.getHealthCheck() != null) {
-                logger.info("Health checks enabled for {}, waiting for result", endpoint);
-                // Wait for this database's health status to be determined
-                status = statusTracker.waitForHealthStatus(endpoint);
-            } else {
-                // No health check configured - assume healthy
-                logger.info("No health check configured for database {}, defaulting to HEALTHY", endpoint);
-                status = HealthStatus.HEALTHY;
-            }
-
-            if (status.isHealthy()) {
-                logger.info("Found healthy database: {} (weight: {})", endpoint, database.getWeight());
-                return;
-            } else {
-                logger.info("Database {} is unhealthy, trying next database", endpoint);
-            }
-        }
-
-        // All databases are unhealthy
-        throw new RedisConnectionException("All configured databases are unhealthy.");
     }
 
     private class DatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {

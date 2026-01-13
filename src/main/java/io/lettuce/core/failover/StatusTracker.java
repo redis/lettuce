@@ -33,65 +33,6 @@ class StatusTracker {
     }
 
     /**
-     * Waits for a specific endpoint's health status to be determined (not UNKNOWN). Uses event-driven approach with
-     * CountDownLatch to avoid polling.
-     *
-     * @param endpoint the endpoint to wait for
-     * @return the determined health status (HEALTHY or UNHEALTHY)
-     * @throws RedisConnectionException if interrupted while waiting or if a timeout occurs
-     */
-    public HealthStatus waitForHealthStatus(RedisURI endpoint) {
-        // First check if status is already determined
-        HealthStatus currentStatus = healthStatusManager.getHealthStatus(endpoint);
-        if (currentStatus != HealthStatus.UNKNOWN) {
-            return currentStatus;
-        }
-
-        // Set up event-driven waiting
-        final CountDownLatch latch = new CountDownLatch(1);
-        final AtomicReference<HealthStatus> resultStatus = new AtomicReference<>();
-
-        // Create a temporary listener for this specific endpoint
-        HealthStatusListener tempListener = new HealthStatusListener() {
-
-            @Override
-            public void onStatusChange(HealthStatusChangeEvent event) {
-                if (event.getEndpoint().equals(endpoint) && event.getNewStatus() != HealthStatus.UNKNOWN) {
-                    resultStatus.set(event.getNewStatus());
-                    latch.countDown();
-                }
-            }
-
-        };
-
-        // Register the temporary listener
-        healthStatusManager.registerListener(endpoint, tempListener);
-
-        try {
-            // Double-check status after registering listener (race condition protection)
-            currentStatus = healthStatusManager.getHealthStatus(endpoint);
-            if (currentStatus != HealthStatus.UNKNOWN) {
-                return currentStatus;
-            }
-
-            // Wait for the health status change event
-            // just for safety to not block indefinitely
-            boolean completed = latch.await(healthStatusManager.getMaxWaitFor(endpoint), TimeUnit.MILLISECONDS);
-            if (!completed) {
-                throw new RedisConnectionException("Timeout while waiting for health check result");
-            }
-            return resultStatus.get();
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RedisConnectionException("Interrupted while waiting for health check result", e);
-        } finally {
-            // Clean up: unregister the temporary listener
-            healthStatusManager.unregisterListener(endpoint, tempListener);
-        }
-    }
-
-    /**
      * Asynchronously waits for a specific endpoint's health status to be determined (not UNKNOWN). Uses event-driven approach
      * with CompletableFuture to avoid blocking.
      *
