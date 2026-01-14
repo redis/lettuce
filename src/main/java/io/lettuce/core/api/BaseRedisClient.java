@@ -19,6 +19,15 @@ import io.netty.util.concurrent.EventExecutorGroup;
 public interface BaseRedisClient extends AutoCloseable {
 
     /**
+     * Returns the {@link ClientResources} which are used with that client.
+     *
+     * @return the {@link ClientResources} for this client.
+     * @since 6.0
+     *
+     */
+    ClientResources getResources();
+
+    /**
      * Add a listener for the RedisConnectionState. The listener is notified every time a connect/disconnect/IO exception
      * happens. The listeners are not bound to a specific connection, so every time a connection event happens on any
      * connection, the listener will be notified. The corresponding netty channel handler (async connection) is passed on the

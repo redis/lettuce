@@ -30,12 +30,14 @@ import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
  */
 public class MultiDbConnectionFuture<C extends BaseRedisMultiDbConnection> extends BaseConnectionFuture<C> {
 
+
     /**
      * Create a new {@link MultiDbConnectionFuture} wrapping the given delegate future.
      *
      * @param delegate the underlying CompletableFuture
      */
     public MultiDbConnectionFuture(CompletableFuture<C> delegate) {
+
         super(delegate);
     }
 
@@ -46,6 +48,7 @@ public class MultiDbConnectionFuture<C extends BaseRedisMultiDbConnection> exten
      * @param defaultExecutor the executor to use for async callbacks
      */
     public MultiDbConnectionFuture(CompletableFuture<C> delegate, Executor defaultExecutor) {
+
         super(delegate, defaultExecutor);
     }
 
@@ -59,6 +62,7 @@ public class MultiDbConnectionFuture<C extends BaseRedisMultiDbConnection> exten
      */
     public static <C extends BaseRedisMultiDbConnection> MultiDbConnectionFuture<C> from(CompletableFuture<C> future) {
         return new MultiDbConnectionFuture<C>(future);
+
     }
 
     /**

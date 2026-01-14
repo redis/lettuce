@@ -13,6 +13,7 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
+import io.lettuce.core.failover.event.SwitchReason;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.RedisPubSubAsyncCommandsImpl;
@@ -101,9 +102,6 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     /**
-     * Switch to the given database with PubSub-specific handling. This method is thread-safe and can be called from multiple
-     * threads.
-     * <p>
      * In addition to the standard database switch behavior from the parent class, this method also:
      * <ul>
      * <li>Migrates all PubSub listeners from the old database connection to the new one</li>
@@ -114,33 +112,19 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
      * The subscription migration ensures that active PubSub subscriptions are maintained across database switches, providing
      * seamless failover for PubSub operations.
      *
-     * @param database the database to switch to
-     * @param internalCall if {@code true}, validation failures return {@code false} and log errors; if {@code false},
-     *        validation failures throw exceptions
-     * @return {@code true} if the switch succeeded or the database was already current; {@code false} if validation failed and
-     *         {@code internalCall} is {@code true}
-     * @throws IllegalStateException if {@code internalCall} is {@code false} and validation fails
-     * @throws UnsupportedOperationException if {@code internalCall} is {@code false} and the source or destination endpoint
-     *         cannot be located
-     * @see StatefulRedisMultiDbConnectionImpl#safeSwitch(RedisDatabaseImpl, boolean)
-     */
+     * @see StatefulRedisMultiDbConnectionImpl#safeSwitch(RedisDatabaseImpl, boolean, SwitchReason)
+     * @see StatefulRedisMultiDbConnectionImpl#doOnSwitch(RedisDatabaseImpl, RedisDatabaseImpl)
+     **/
     @Override
-    boolean safeSwitch(RedisDatabaseImpl<?> database, boolean internalCall) {
-        AtomicBoolean switched = new AtomicBoolean(false);
-        doByExclusiveLock(() -> {
-            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb = current;
-            switched.set(super.safeSwitch(database, internalCall));
-            if (fromDb == current) {
-                return;
-            }
-            pubSubListeners.forEach(listener -> {
-                current.getConnection().addListener(listener);
-                fromDb.getConnection().removeListener(listener);
-            });
+    protected void doOnSwitch(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb,
+            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> toDb) {
 
-            moveSubscriptions(fromDb, current);
+        pubSubListeners.forEach(listener -> {
+            current.getConnection().addListener(listener);
+            fromDb.getConnection().removeListener(listener);
         });
-        return switched.get();
+
+        moveSubscriptions(fromDb, current);
     }
 
     @SuppressWarnings("unchecked")
