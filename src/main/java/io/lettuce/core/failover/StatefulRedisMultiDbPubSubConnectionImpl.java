@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
@@ -23,6 +24,7 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import io.lettuce.core.failover.MultiDbAsyncConnectionBuilder.RedisDatabaseAsyncCompletion;
 
 /**
  * @author Ali Takavci
@@ -42,6 +44,14 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
         super(connections, resources, codec, connectionFactory, healthStatusManager);
     }
 
+    public StatefulRedisMultiDbPubSubConnectionImpl(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> initialDatabase,
+            Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
+            RedisCodec<K, V> codec, DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
+            HealthStatusManager healthStatusManager,
+            RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
+        super(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion);
+    }
+
     @Override
     public void addListener(RedisPubSubListener<K, V> listener) {
         doBySharedLock(() -> {
@@ -59,6 +69,7 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RedisPubSubAsyncCommands<K, V> async() {
         return (RedisPubSubAsyncCommands<K, V>) async;
     }
@@ -79,6 +90,7 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RedisPubSubReactiveCommands<K, V> reactive() {
         return (RedisPubSubReactiveCommands<K, V>) reactive;
     }

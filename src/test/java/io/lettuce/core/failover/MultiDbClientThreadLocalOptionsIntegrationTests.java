@@ -121,7 +121,7 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
         client = MultiDbClient.create(Arrays.asList(db1, db2));
 
         // Connect asynchronously
-        MultiDbConnectionFuture<String, String> future = client.connectAsync(StringCodec.UTF8);
+        MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client.connectAsync(StringCodec.UTF8);
 
         connection = future.get(10, TimeUnit.SECONDS);
 
@@ -165,7 +165,8 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
         List<CompletableFuture<StatefulRedisMultiDbConnection<String, String>>> futures = new ArrayList<>();
 
         for (int i = 0; i < numConnections; i++) {
-            MultiDbConnectionFuture<String, String> future = client.connectAsync(StringCodec.UTF8);
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+                    .connectAsync(StringCodec.UTF8);
             futures.add(future.toCompletableFuture());
         }
 
@@ -309,7 +310,7 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
 
         ReflectionTestUtils.setField(client, "localClientOptions", wrapper);
 
-        MultiDbConnectionFuture<String, String> future = client.connectAsync(StringCodec.UTF8);
+        MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client.connectAsync(StringCodec.UTF8);
 
         // Capture the async callback thread
         future.whenComplete((conn, throwable) -> {

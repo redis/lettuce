@@ -91,6 +91,48 @@ public interface MultiDbClient extends BaseRedisClient {
      * @return a {@link MultiDbConnectionFuture} that is notified with the connection progress.
      * @since 7.4
      */
-    public <K, V> MultiDbConnectionFuture<K, V> connectAsync(RedisCodec<K, V> codec);
+    public <K, V> MultiDbConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec);
+
+    /**
+     * Open asynchronously a new multi database connection to a Redis server that treats keys and values as UTF-8 strings.
+     * <p>
+     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
+     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
+     * inside callbacks.
+     * 
+     * @return a {@link MultiDbConnectionFuture} that is notified with the connection progress.
+     * @since 7.4
+     */
+    public MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> connectAsync();
+
+    /**
+     * Open asynchronously a new multi database pub/sub connection to a Redis server. Use the supplied {@link RedisCodec codec}
+     * to encode/decode keys and values.
+     * <p>
+     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
+     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
+     * inside callbacks.
+     *
+     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return a {@link MultiDbConnectionFuture} that is notified with the pub/sub connection progress.
+     * @since 7.4
+     */
+    public <K, V> MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<K, V>> connectPubSubAsync(
+            RedisCodec<K, V> codec);
+
+    /**
+     * Open asynchronously a new multi database pub/sub connection to a Redis server that treats keys and values as UTF-8
+     * strings.
+     * <p>
+     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
+     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
+     * inside callbacks.
+     * 
+     * @return a {@link MultiDbConnectionFuture} that is notified with the pub/sub connection progress.
+     * @since 7.4
+     */
+    public MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<String, String>> connectPubSubAsync();
 
 }
