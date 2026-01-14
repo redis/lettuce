@@ -135,5 +135,4 @@ public interface MultiDbClient extends BaseRedisClient {
      */
     public MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<String, String>> connectPubSubAsync();
 
-
 }

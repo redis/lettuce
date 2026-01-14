@@ -30,7 +30,6 @@ import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
  */
 public class MultiDbConnectionFuture<C extends BaseRedisMultiDbConnection> extends BaseConnectionFuture<C> {
 
-
     /**
      * Create a new {@link MultiDbConnectionFuture} wrapping the given delegate future.
      *
