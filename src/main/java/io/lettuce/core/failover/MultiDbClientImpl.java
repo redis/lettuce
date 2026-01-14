@@ -120,7 +120,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        MultiDbAsyncConnectionBuilder<K, V> builder = createConnectionBuilder(codec);
+        MultiDbAsyncConnectionBuilder< K, V> builder = createConnectionBuilder(codec);
 
         CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs,
                 this::createMultiDbConnection);
@@ -266,7 +266,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        MultiDbAsyncConnectionBuilder<K, V> builder = createConnectionBuilder(codec);
+        MultiDbAsyncConnectionBuilder< K, V> builder = createConnectionBuilder(codec);
 
         CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs,
                 this::createMultiDbConnection);
@@ -295,8 +295,9 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * @param <V> Value type
      * @return a new multi-database async connection builder
      */
-    protected <K, V> MultiDbAsyncConnectionBuilder<K, V> createConnectionBuilder(RedisCodec<K, V> codec) {
-        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec, this::createMultiDbConnection);
+    protected <K, V> MultiDbAsyncConnectionBuilder< K, V> createConnectionBuilder(
+            RedisCodec<K, V> codec) {
+        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec);
     }
 
     /**
@@ -343,7 +344,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        MultiDbAsyncConnectionBuilder<K, V> builder = createPubSubConnectionBuilder(codec);
+        MultiDbAsyncConnectionBuilder< K, V> builder = createPubSubConnectionBuilder(codec);
 
         CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectPubSubAsync(databaseConfigs,
                 this::createMultiDbPubSubConnection);
@@ -367,7 +368,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        MultiDbAsyncConnectionBuilder<K, V> builder = createPubSubConnectionBuilder(codec);
+        MultiDbAsyncConnectionBuilder< K, V> builder = createPubSubConnectionBuilder(codec);
 
         CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectPubSubAsync(databaseConfigs,
                 this::createMultiDbPubSubConnection);
@@ -380,23 +381,19 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         return connectPubSubAsync(newStringStringCodec());
     }
 
-    protected <K, V> MultiDbAsyncConnectionBuilder<K, V> createPubSubConnectionBuilder(RedisCodec<K, V> codec) {
-        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec, this::createMultiDbPubSubConnection);
+    protected <K, V> MultiDbAsyncConnectionBuilder< K, V> createPubSubConnectionBuilder(
+            RedisCodec<K, V> codec) {
+        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec);
     }
 
     protected <K, V> StatefulRedisMultiDbPubSubConnection<K, V> createMultiDbPubSubConnection(
-            RedisDatabaseImpl<StatefulRedisConnection<K, V>> selected,
-            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases, RedisCodec<K, V> codec,
-            HealthStatusManager healthStatusManager, RedisDatabaseAsyncCompletion<StatefulRedisConnection<K, V>> completion) {
+            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> selected,
+            Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> databases, RedisCodec<K, V> codec,
+            HealthStatusManager healthStatusManager,
+            RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
 
-        // Cast the types to PubSub variants - this is safe because we control the builder
-        return new StatefulRedisMultiDbPubSubConnectionImpl<>(cast(selected), cast(databases), getResources(), codec,
-                this::createRedisDatabaseWithPubSub, healthStatusManager, cast(completion));
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T> T cast(Object obj) {
-        return (T) obj;
+        return new StatefulRedisMultiDbPubSubConnectionImpl<>(selected, databases, getResources(), codec,
+                this::createRedisDatabaseWithPubSub, healthStatusManager, completion);
     }
 
     private <K, V> RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> createRedisDatabaseWithPubSub(DatabaseConfig config,
