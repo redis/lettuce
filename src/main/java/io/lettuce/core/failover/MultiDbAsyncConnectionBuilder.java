@@ -294,7 +294,7 @@ class MultiDbAsyncConnectionBuilder<C extends BaseRedisMultiDbConnection, K, V> 
                     HealthCheck healthCheck = null;
                     if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
                         HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                                new DatabaseRawConnectionFactoryImpl(config.getClientOptions(), client));
+                                new MultiDbClientImpl.DatabaseRawConnectionFactoryImpl(config.getClientOptions(), client));
                         healthCheck = healthStatusManager.add(uri, hcStrategy);
                     }
 
@@ -494,41 +494,6 @@ class MultiDbAsyncConnectionBuilder<C extends BaseRedisMultiDbConnection, K, V> 
                 Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases, RedisCodec<K, V> codec,
                 HealthStatusManager healthStatusManager,
                 RedisDatabaseAsyncCompletion<StatefulRedisConnection<K, V>> completion);
-
-    }
-
-    /**
-     * Implementation of {@link DatabaseRawConnectionFactory} for creating raw connections to databases.
-     * <p>
-     * This factory is used by health check strategies to create dedicated connections for health checking, separate from the
-     * main application connections.
-     */
-    private static class DatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
-
-        private final io.lettuce.core.ClientOptions clientOptions;
-
-        private final MultiDbClientImpl client;
-
-        /**
-         * Creates a new raw connection factory.
-         *
-         * @param clientOptions the client options to use for connections
-         * @param client the multi-database client
-         */
-        public DatabaseRawConnectionFactoryImpl(io.lettuce.core.ClientOptions clientOptions, MultiDbClientImpl client) {
-            this.clientOptions = clientOptions;
-            this.client = client;
-        }
-
-        @Override
-        public StatefulRedisConnection<?, ?> connectToDatabase(RedisURI endpoint) {
-            client.setOptions(clientOptions);
-            try {
-                return client.connect(endpoint);
-            } finally {
-                client.resetOptions();
-            }
-        }
 
     }
 

@@ -153,7 +153,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             HealthCheck healthCheck = null;
             if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
                 HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                        new DatabaseRawConnectionFactoryImpl(config.getClientOptions()));
+                        new DatabaseRawConnectionFactoryImpl(config.getClientOptions(), this));
                 healthCheck = healthStatusManager.add(uri, hcStrategy);
             }
 
@@ -339,7 +339,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             HealthCheck healthCheck = null;
             if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
                 HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                        new DatabaseRawConnectionFactoryImpl(config.getClientOptions()));
+                        new DatabaseRawConnectionFactoryImpl(config.getClientOptions(), this));
                 healthCheck = healthStatusManager.add(uri, hcStrategy);
             }
 
@@ -369,21 +369,36 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         return new DatabasePubSubEndpointImpl<>(getOptions(), getResources());
     }
 
-    private class DatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
+    /**
+     * Implementation of {@link DatabaseRawConnectionFactory} for creating raw connections to databases.
+     * <p>
+     * This factory is used by health check strategies to create dedicated connections for health checking, separate from the
+     * main application connections.
+     */
+    static class DatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
 
-        private ClientOptions clientOptions;
+        private final io.lettuce.core.ClientOptions clientOptions;
 
-        public DatabaseRawConnectionFactoryImpl(ClientOptions clientOptions) {
+        private final MultiDbClientImpl client;
+
+        /**
+         * Creates a new raw connection factory.
+         *
+         * @param clientOptions the client options to use for connections
+         * @param client the multi-database client
+         */
+        public DatabaseRawConnectionFactoryImpl(io.lettuce.core.ClientOptions clientOptions, MultiDbClientImpl client) {
             this.clientOptions = clientOptions;
+            this.client = client;
         }
 
         @Override
         public StatefulRedisConnection<?, ?> connectToDatabase(RedisURI endpoint) {
-            MultiDbClientImpl.this.setOptions(clientOptions);
+            client.setOptions(clientOptions);
             try {
-                return MultiDbClientImpl.this.connect(endpoint);
+                return client.connect(endpoint);
             } finally {
-                MultiDbClientImpl.this.resetOptions();
+                client.resetOptions();
             }
         }
 
