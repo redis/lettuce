@@ -21,12 +21,15 @@ services:
     container_name: redis-failover
     environment:
       - PORT=6487
-      - NODES=2
+      - NODES=5
     volumes:
       - ${REDIS_ENV_WORK_DIR}/redis-standalone-multi/work:/redis/work:rw
     ports:
       - "6487:6487"
       - "6488:6488"
+      - "6489:6489"
+      - "6490:6490"
+      - "6491:6491"
     networks:
       - redis-network
 

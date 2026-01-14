@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static io.lettuce.TestTags.UNIT_TEST;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,7 +57,7 @@ import io.netty.channel.ChannelFuture;
  * @author Ali Takavci
  * @since 7.4
  */
-@Tag("unit")
+@Tag(UNIT_TEST)
 class DatabasePubSubEndpointTrackerTests {
 
     private ClientResources clientResources;
@@ -90,7 +91,7 @@ class DatabasePubSubEndpointTrackerTests {
 
     @Nested
     @DisplayName("DatabaseCommandTracker Integration Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class DatabaseCommandTrackerIntegrationTests {
 
         @Test
@@ -159,7 +160,7 @@ class DatabasePubSubEndpointTrackerTests {
 
     @Nested
     @DisplayName("Circuit Breaker Integration Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class CircuitBreakerIntegrationTests {
 
         @Test
@@ -257,7 +258,7 @@ class DatabasePubSubEndpointTrackerTests {
 
     @Nested
     @DisplayName("Channel Lifecycle Tests")
-    @Tag("unit")
+    @Tag(UNIT_TEST)
     class ChannelLifecycleTests {
 
         @Test

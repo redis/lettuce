@@ -22,6 +22,7 @@ package io.lettuce.core.failover;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static io.lettuce.TestTags.UNIT_TEST;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ import io.netty.util.concurrent.Future;
  * @author Ali Takavci
  * @since 7.4
  */
-@Tag("unit")
+@Tag(UNIT_TEST)
 class MultiDbOutboundHandlerUnitTests {
 
     private MultiDbOutboundHandler handler;
