@@ -170,82 +170,6 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         }
     }
 
-    // ASYNC CONNECT
-    /**
-     * Asynchronously open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
-     * and values. This method is asynchronous and returns a {@link MultiDbConnectionFuture} that completes when all database
-     * connections are established and initial health checks (if configured) have completed.
-     * <p>
-     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
-     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
-     * inside callbacks.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new stateful Redis connection future
-     */
-    @Override
-    public MultiDbConnectionFuture<String, String> connectAsync() {
-        HealthStatusManager healthStatusManager = createHealthStatusManager();
-        MultiDbAsyncConnectionBuilder<String, String> builder = new MultiDbAsyncConnectionBuilder<>(healthStatusManager,
-                getResources(), this);
-
-        CompletableFuture<StatefulRedisMultiDbConnection<String, String>> future = builder.connectAsync(databaseConfigs,
-                newStringStringCodec(), this::createMultiDbConnection);
-
-        return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
-    }
-
-    /**
-     * Asynchronously open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
-     * and values. This method is asynchronous and returns a {@link MultiDbConnectionFuture} that completes when all database
-     * connections are established and initial health checks (if configured) have completed.
-     * <p>
-     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
-     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
-     * inside callbacks.
-     *
-     * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return A new stateful Redis connection future
-     */
-    @Override
-    public <K, V> MultiDbConnectionFuture<K, V> connectAsync(RedisCodec<K, V> codec) {
-        if (codec == null) {
-            throw new IllegalArgumentException("codec must not be null");
-        }
-
-        HealthStatusManager healthStatusManager = createHealthStatusManager();
-        MultiDbAsyncConnectionBuilder<K, V> builder = new MultiDbAsyncConnectionBuilder<>(healthStatusManager, getResources(),
-                this);
-
-        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs, codec,
-                this::createMultiDbConnection);
-
-        return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
-    }
-
-    /**
-     * Creates a new {@link StatefulRedisMultiDbConnection} instance with the provided healthy database map.
-     *
-     * @param healthyDatabaseMap the map of healthy databases
-     * @param codec the Redis codec
-     * @param healthStatusManager the health status manager
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return a new multi-database connection
-     */
-    protected <K, V> StatefulRedisMultiDbConnection<K, V> createMultiDbConnection(
-            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> healthyDatabaseMap, RedisCodec<K, V> codec,
-            HealthStatusManager healthStatusManager) {
-
-        return new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(healthyDatabaseMap, getResources(),
-                codec, this::createRedisDatabase, healthStatusManager);
-    }
-    // END OF ASYNC CONNECT
-
     /**
      * Asynchronously open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
      * and values. This method is asynchronous and returns a {@link MultiDbConnectionFuture} that completes when all database
@@ -297,8 +221,9 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      */
     protected <K, V> MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> createConnectionBuilder(
             RedisCodec<K, V> codec) {
-        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec, (c, uri) -> this.connectAsync(c, uri),
-                this::createMultiDbConnection);
+
+        return new MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V>(
+                this, getResources(), codec, (c, uri) -> this.connectAsync(c, uri), this::createMultiDbConnection);
     }
 
     /**
@@ -384,11 +309,10 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     protected <K, V> MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V> createPubSubConnectionBuilder(
             RedisCodec<K, V> codec) {
-        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec, (c, uri) -> this.connectPubSubAsync(c, uri),
-                this::createMultiDbPubSubConnection);
-    }
 
-    
+        return new MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V>(
+                this, getResources(), codec, (c, uri) -> this.connectPubSubAsync(c, uri), this::createMultiDbPubSubConnection);
+    }
 
     protected <K, V> StatefulRedisMultiDbPubSubConnection<K, V> createMultiDbPubSubConnection(
             RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> selected,

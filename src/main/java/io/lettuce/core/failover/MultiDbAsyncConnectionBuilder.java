@@ -43,12 +43,12 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * </ul>
  *
  * @param <MC> the multi-database connection type
- * @param <C> the single connection type (StatefulRedisConnection or StatefulRedisPubSubConnection)
+ * @param <SC> the underlying single connection type (StatefulRedisConnection or StatefulRedisPubSubConnection)
  * @param <K> the key type
  * @param <V> the value type
  * @author Lettuce Contributors
  */
-class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C extends StatefulRedisConnection<K, V>, K, V> {
+class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, SC extends StatefulRedisConnection<K, V>, K, V> {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultiDbAsyncConnectionBuilder.class);
 
@@ -58,9 +58,9 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
 
     private final RedisCodec<K, V> codec;
 
-    private final SingleConnectionFactory<C, K, V> singleConnectionFactory;
+    private final StandaloneConnectionFactory<SC, K, V> standaloneConnectionFactory;
 
-    private final MultiDbConnectionFactory<MC, C, K, V> multiDbConnectionFactory;
+    private final MultiDbConnectionFactory<MC, SC, K, V> multiDbConnectionFactory;
 
     /**
      * Creates a new {@link MultiDbAsyncConnectionBuilder}.
@@ -68,16 +68,16 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
      * @param client the multi-database client instance
      * @param resources the client resources for event loops and thread pools
      * @param codec the codec for encoding/decoding keys and values
-     * @param singleConnectionFactory factory for creating single database connections
+     * @param standaloneConnectionFactory factory for creating single database connections
      * @param multiDbConnectionFactory factory for creating multi-database connections
      */
     MultiDbAsyncConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec,
-            SingleConnectionFactory<C, K, V> singleConnectionFactory,
-            MultiDbConnectionFactory<MC, C, K, V> multiDbConnectionFactory) {
+            StandaloneConnectionFactory<SC, K, V> standaloneConnectionFactory,
+            MultiDbConnectionFactory<MC, SC, K, V> multiDbConnectionFactory) {
         this.resources = resources;
         this.client = client;
         this.codec = codec;
-        this.singleConnectionFactory = singleConnectionFactory;
+        this.standaloneConnectionFactory = standaloneConnectionFactory;
         this.multiDbConnectionFactory = multiDbConnectionFactory;
     }
 
@@ -103,11 +103,11 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
         HealthStatusManager healthStatusManager = createHealthStatusManager();
 
         // Create a map to hold the final database instances
-        DatabaseMap<C> databases = new DatabaseMap<>(databaseConfigs.size());
+        DatabaseMap<SC> databases = new DatabaseMap<>(databaseConfigs.size());
 
         // Create async database connections for all configured endpoints
-        DatabaseFutureMap<C> databaseFutures = createDatabaseFutures(databaseConfigs, databases, healthStatusManager,
-                singleConnectionFactory);
+        DatabaseFutureMap<SC> databaseFutures = createDatabaseFutures(databaseConfigs, databases, healthStatusManager,
+                standaloneConnectionFactory);
 
         // Create a map of futures, one for each database's health status
         Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = createHealthStatusFutures(databaseFutures,
@@ -135,7 +135,7 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
      * @return a {@link CompletableFuture} that completes with the multi-database connection
      */
     CompletableFuture<MC> buildFuture(Map<RedisURI, DatabaseConfig> databaseConfigs, HealthStatusManager healthStatusManager,
-            DatabaseMap<C> databases, DatabaseFutureMap<C> databaseFutures,
+            DatabaseMap<SC> databases, DatabaseFutureMap<SC> databaseFutures,
             Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures) {
 
         CompletableFuture<MC> connectionFuture = new CompletableFuture<>();
@@ -144,11 +144,11 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
         List<DatabaseConfig> sortedConfigs = databaseConfigs.values().stream()
                 .sorted(Comparator.comparingDouble(DatabaseConfig::getWeight).reversed()).collect(Collectors.toList());
 
-        AtomicReference<RedisDatabaseImpl<C>> initialDb = new AtomicReference<>();
+        AtomicReference<RedisDatabaseImpl<SC>> initialDb = new AtomicReference<>();
 
         for (CompletableFuture<HealthStatus> healthStatusFuture : healthStatusFutures.values()) {
             healthStatusFuture.handle((healthStatus, throwable) -> {
-                RedisDatabaseImpl<C> selected = findInitialDbCandidate(sortedConfigs, databases, initialDb);
+                RedisDatabaseImpl<SC> selected = findInitialDbCandidate(sortedConfigs, databases, initialDb);
                 if (selected != null) {
                     logger.info("Selected {} as primary database", selected);
 
@@ -181,15 +181,15 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
      * @param selected the database selected as the initial primary
      * @return a multi-database connection ready for use
      */
-    MC buildConn(HealthStatusManager healthStatusManager, DatabaseMap<C> databases, DatabaseFutureMap<C> databaseFutures,
-            RedisDatabaseImpl<C> selected) {
-        DatabaseMap<C> clone = new DatabaseMap<>(databases);
+    MC buildConn(HealthStatusManager healthStatusManager, DatabaseMap<SC> databases, DatabaseFutureMap<SC> databaseFutures,
+            RedisDatabaseImpl<SC> selected) {
+        DatabaseMap<SC> clone = new DatabaseMap<>(databases);
 
-        List<CompletableFuture<RedisDatabaseImpl<C>>> remainingDbFutures;
+        List<CompletableFuture<RedisDatabaseImpl<SC>>> remainingDbFutures;
         remainingDbFutures = databaseFutures.entrySet().stream().filter(entry -> clone.containsKey(entry.getKey()))
                 .map(entry -> entry.getValue()).collect(Collectors.toList());
 
-        RedisDatabaseAsyncCompletion<C> completion = new RedisDatabaseAsyncCompletion<C>(remainingDbFutures);
+        RedisDatabaseAsyncCompletion<SC> completion = new RedisDatabaseAsyncCompletion<SC>(remainingDbFutures);
         return multiDbConnectionFactory.create(selected, clone, codec, healthStatusManager, completion);
     }
 
@@ -204,11 +204,11 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
      * @param healthStatusManager manager for registering health checks
      * @return a map of futures for database creation, keyed by Redis URI
      */
-    DatabaseFutureMap<C> createDatabaseFutures(Map<RedisURI, DatabaseConfig> databaseConfigs, DatabaseMap<C> databases,
-            HealthStatusManager healthStatusManager, SingleConnectionFactory<C, K, V> singleConnectionFactory) {
+    DatabaseFutureMap<SC> createDatabaseFutures(Map<RedisURI, DatabaseConfig> databaseConfigs, DatabaseMap<SC> databases,
+            HealthStatusManager healthStatusManager, StandaloneConnectionFactory<SC, K, V> standaloneConnectionFactory) {
 
         // Create async database connections for all configured endpoints
-        DatabaseFutureMap<C> databaseFutures = new DatabaseFutureMap<>(databaseConfigs.size());
+        DatabaseFutureMap<SC> databaseFutures = new DatabaseFutureMap<>(databaseConfigs.size());
 
         // Create async database connections for all configured endpoints
         for (Map.Entry<RedisURI, DatabaseConfig> entry : databaseConfigs.entrySet()) {
@@ -237,7 +237,7 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
      * @param healthStatusManager manager for registering health checks
      * @return a future that completes with the database instance or exceptionally on failure
      */
-    CompletableFuture<RedisDatabaseImpl<C>> createRedisDatabaseAsync(DatabaseConfig config,
+    CompletableFuture<RedisDatabaseImpl<SC>> createRedisDatabaseAsync(DatabaseConfig config,
             HealthStatusManager healthStatusManager) {
 
         RedisURI uri = config.getRedisURI();
@@ -245,7 +245,7 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
 
         try {
             // Use the async connect method from the factory
-            ConnectionFuture<C> connectionFuture = singleConnectionFactory.connectAsync(codec, uri);
+            ConnectionFuture<SC> connectionFuture = standaloneConnectionFactory.connectAsync(codec, uri);
             // Reset options immediately after connectAsync() call
             client.resetOptions();
 
@@ -263,7 +263,7 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
                     CircuitBreakerImpl circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
                     databaseEndpoint.bind(circuitBreaker);
 
-                    RedisDatabaseImpl<C> database = new RedisDatabaseImpl<>(config, connection, databaseEndpoint,
+                    RedisDatabaseImpl<SC> database = new RedisDatabaseImpl<>(config, connection, databaseEndpoint,
                             circuitBreaker, healthCheck);
                     if (logger.isInfoEnabled()) {
                         logger.info("Created database: {} with CircuitBreaker {} and HealthCheck {}", database.getId(),
@@ -278,7 +278,7 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
             });
         } catch (Exception e) {
             client.resetOptions();
-            CompletableFuture<RedisDatabaseImpl<C>> failedFuture = new CompletableFuture<>();
+            CompletableFuture<RedisDatabaseImpl<SC>> failedFuture = new CompletableFuture<>();
             failedFuture.completeExceptionally(e);
             return failedFuture;
         }
@@ -295,7 +295,7 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
      * @param healthStatusManager manager for tracking health status
      * @return a map of health status futures, keyed by Redis URI
      */
-    Map<RedisURI, CompletableFuture<HealthStatus>> createHealthStatusFutures(DatabaseFutureMap<C> databaseFutures,
+    Map<RedisURI, CompletableFuture<HealthStatus>> createHealthStatusFutures(DatabaseFutureMap<SC> databaseFutures,
             HealthStatusManager healthStatusManager) {
 
         StatusTracker statusTracker = new StatusTracker(healthStatusManager, resources);
@@ -303,10 +303,10 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
         // Create a map of futures, one for each database's health status
         Map<RedisURI, CompletableFuture<HealthStatus>> healthCheckFutures = new HashMap<>();
 
-        for (Map.Entry<RedisURI, CompletableFuture<RedisDatabaseImpl<C>>> entry : databaseFutures.entrySet()) {
+        for (Map.Entry<RedisURI, CompletableFuture<RedisDatabaseImpl<SC>>> entry : databaseFutures.entrySet()) {
 
             RedisURI endpoint = entry.getKey();
-            CompletableFuture<RedisDatabaseImpl<C>> dbFuture = entry.getValue();
+            CompletableFuture<RedisDatabaseImpl<SC>> dbFuture = entry.getValue();
 
             CompletableFuture<HealthStatus> healthCheckFuture = dbFuture.thenCompose(database -> {
                 // Check if health checks are enabled for this database
@@ -341,11 +341,11 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
      * @param initialDb atomic reference for storing the selected database
      * @return the selected database, or {@code null} if no suitable candidate is available yet
      */
-    RedisDatabaseImpl<C> findInitialDbCandidate(List<DatabaseConfig> sortedConfigs, DatabaseMap<C> databases,
-            AtomicReference<RedisDatabaseImpl<C>> initialDb) {
+    RedisDatabaseImpl<SC> findInitialDbCandidate(List<DatabaseConfig> sortedConfigs, DatabaseMap<SC> databases,
+            AtomicReference<RedisDatabaseImpl<SC>> initialDb) {
 
         for (DatabaseConfig config : sortedConfigs) {
-            RedisDatabaseImpl<C> database = databases.get(config.getRedisURI());
+            RedisDatabaseImpl<SC> database = databases.get(config.getRedisURI());
 
             // we will skip if most weighted database is not yet complete with connection creation
             if (database == null) {
@@ -437,7 +437,7 @@ class MultiDbAsyncConnectionBuilder<MC extends BaseRedisMultiDbConnection, C ext
      * @param <V> the value type
      */
     @FunctionalInterface
-    interface SingleConnectionFactory<C extends StatefulRedisConnection<K, V>, K, V> {
+    interface StandaloneConnectionFactory<C extends StatefulRedisConnection<K, V>, K, V> {
 
         /**
          * Creates an asynchronous connection to a Redis endpoint.
