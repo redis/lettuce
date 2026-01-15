@@ -164,7 +164,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
      * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
      * inside callbacks.
-     * 
+     *
      * @return A new stateful Redis connection future
      */
     @Override

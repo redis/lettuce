@@ -232,7 +232,6 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
     DatabaseFutureMap<SC> createDatabaseFutures(Map<RedisURI, DatabaseConfig> databaseConfigs, DatabaseMap<SC> databases,
             HealthStatusManager healthStatusManager) {
 
-        // Create async database connections for all configured endpoints
         DatabaseFutureMap<SC> databaseFutures = new DatabaseFutureMap<>(databaseConfigs.size());
 
         // Create async database connections for all configured endpoints
@@ -240,7 +239,10 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
             RedisURI uri = entry.getKey();
             DatabaseConfig config = entry.getValue();
 
-            databaseFutures.put(uri, createRedisDatabaseAsync(config, healthStatusManager));
+            databaseFutures.put(uri, createRedisDatabaseAsync(config, healthStatusManager).thenApply(db -> {
+                databases.put(uri, db);
+                return db;
+            }));
         }
         return databaseFutures;
     }

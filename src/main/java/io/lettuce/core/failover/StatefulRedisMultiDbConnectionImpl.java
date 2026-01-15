@@ -149,7 +149,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     private void onDatabaseCompletion(RedisDatabaseImpl<C> db, Throwable e) {
         if (db != null) {
             doByExclusiveLock(() -> {
-                databases.putIfAbsent(db.getRedisURI(), (RedisDatabaseImpl<C>) db);
+                databases.putIfAbsent(db.getRedisURI(), db);
             });
         }
     }

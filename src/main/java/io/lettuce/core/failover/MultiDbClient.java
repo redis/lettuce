@@ -99,7 +99,7 @@ public interface MultiDbClient extends BaseRedisClient {
      * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
      * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
      * inside callbacks.
-     * 
+     *
      * @return a {@link MultiDbConnectionFuture} that is notified with the connection progress.
      * @since 7.4
      */
@@ -129,7 +129,7 @@ public interface MultiDbClient extends BaseRedisClient {
      * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
      * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
      * inside callbacks.
-     * 
+     *
      * @return a {@link MultiDbConnectionFuture} that is notified with the pub/sub connection progress.
      * @since 7.4
      */
