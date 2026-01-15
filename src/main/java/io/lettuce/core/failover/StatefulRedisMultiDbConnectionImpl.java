@@ -60,7 +60,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     protected final HealthStatusManager healthStatusManager;
 
-    // this should not be null ever after succesfull initialization
+    // this should not be null ever after successful initialization
     protected volatile RedisDatabaseImpl<C> current;
 
     protected final RedisCommands<K, V> sync;
@@ -192,7 +192,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         }
 
         if (!event.getNewStatus().isHealthy() && isCurrent(database)) {
-            logger.info("Database {} is unhealthy, failing over if current", database.getId());
+            logger.info("Current database {} became unhealthy, initiating failover", database.getId());
             failoverFrom(database, SwitchReason.HEALTH_CHECK);
         }
     }
@@ -202,11 +202,16 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     /**
-     * Maximum number of failover recursion to prevent infinite loops. This limit covers both retry attempts when a switch fails
-     * and cascading failovers when the newly selected database becomes unhealthy during the switch.
+     * Maximum number of failover recursion attempts to prevent infinite loops and stack overflow.
      * <p>
-     * No solid reason for current value of it, it's just a safety net to prevent potential infinite loops, in case something
-     * goes really wrong.
+     * This limit covers both:
+     * <ul>
+     * <li>Retry attempts when a switch operation fails</li>
+     * <li>Cascading failovers when the newly selected database becomes unhealthy during the switch</li>
+     * </ul>
+     * <p>
+     * The value of 10 is chosen as a safety net to prevent potential infinite loops in pathological scenarios where all
+     * databases are unhealthy or rapidly changing state. In normal operation, failover should succeed within 1-2 attempts.
      */
     private static final int MAX_FAILOVER_RECURSION = 10;
 
@@ -225,8 +230,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
         if (selectedDatabase != null) {
             if (logger.isInfoEnabled()) {
-                logger.info("Initiating failover from {} to {} (attempts remaining: {})", fromDb.getId(),
-                        selectedDatabase.getId(), recursionAttempt);
+                logger.info("Initiating failover from {} to {} (attempt: {})", fromDb.getId(), selectedDatabase.getId(),
+                        recursionAttempt);
             }
             if (safeSwitch(selectedDatabase, true, reason)) {
                 if (logger.isInfoEnabled()) {
@@ -293,7 +298,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisCommands}. Can be overriden to extend.
+     * Create a new instance of {@link RedisCommands}. Can be overridden to extend.
      *
      * @return a new instance
      */
@@ -308,7 +313,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overriden to extend.
+     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overridden to extend.
      *
      * @return a new instance
      */
@@ -322,7 +327,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
+     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overridden to extend.
      *
      * @return a new instance
      */
@@ -501,12 +506,12 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             RedisDatabaseImpl<C> fromDb = current;
             RedisDatabaseImpl<C> toDb = databases.get(database.getRedisURI());
 
-            switchContext.fromUri = fromDb.getRedisURI();
-            switchContext.toUri = toDb.getRedisURI();
-
             if (!verifySwitch(database, fromDb, toDb, internalCall)) {
                 return;
             }
+
+            switchContext.fromUri = fromDb.getRedisURI();
+            switchContext.toUri = toDb.getRedisURI();
 
             switchContext.switched = true;
             if (fromDb == toDb) {
@@ -549,8 +554,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * Extension point for subclasses to perform additional operations after a database switch. This method is called within the
      * exclusive lock.
      *
-     * @param fromDb
-     * @param toDb
+     * @param fromDb the database being switched from
+     * @param toDb the database being switched to
      */
     protected void doOnSwitch(RedisDatabaseImpl<C> fromDb, RedisDatabaseImpl<C> toDb) {
         // NOOP
