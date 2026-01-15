@@ -9,11 +9,9 @@ import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.resource.ClientResources;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Utility class for tracking health status changes for specific endpoints.

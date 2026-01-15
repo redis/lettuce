@@ -5,20 +5,13 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.Delegating;
-import io.lettuce.core.RedisChannelWriter;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.failover.MultiDbAsyncConnectionBuilder.RedisDatabaseAsyncCompletion;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
-import io.lettuce.core.failover.health.HealthCheck;
-import io.lettuce.core.failover.health.HealthCheckStrategy;
-import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.failover.health.HealthStatusManagerImpl;
 import io.lettuce.core.internal.Exceptions;
@@ -27,8 +20,6 @@ import io.lettuce.core.protocol.DefaultEndpoint;
 import io.lettuce.core.pubsub.PubSubEndpoint;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.resource.ClientResources;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Failover-aware client that composes multiple standalone Redis endpoints and returns a single Stateful connection wrapper
@@ -42,8 +33,6 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 7.4
  */
 class MultiDbClientImpl extends RedisClient implements MultiDbClient {
-
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(MultiDbClientImpl.class);
 
     private static final RedisURI EMPTY_URI = new ImmutableRedisURI(new RedisURI());
 
@@ -120,7 +109,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> builder = createConnectionBuilder(
+        AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> builder = createConnectionBuilder(
                 codec);
 
         CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs);
@@ -139,35 +128,6 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     protected HealthStatusManager createHealthStatusManager() {
         return new HealthStatusManagerImpl();
-    }
-
-    private <K, V> RedisDatabaseImpl<StatefulRedisConnection<K, V>> createRedisDatabase(DatabaseConfig config,
-            RedisCodec<K, V> codec, HealthStatusManager healthStatusManager) {
-        RedisURI uri = config.getRedisURI();
-        setOptions(config.getClientOptions());
-        try {
-            StatefulRedisConnection<K, V> connection = connect(codec, uri);
-            DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-            CircuitBreakerImpl circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
-            databaseEndpoint.bind(circuitBreaker);
-
-            HealthCheck healthCheck = null;
-            if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
-                HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                        new DatabaseRawConnectionFactoryImpl(config.getClientOptions(), this));
-                healthCheck = healthStatusManager.add(uri, hcStrategy);
-            }
-
-            RedisDatabaseImpl<StatefulRedisConnection<K, V>> database = new RedisDatabaseImpl<>(config, connection,
-                    databaseEndpoint, circuitBreaker, healthCheck);
-            if (logger.isInfoEnabled()) {
-                logger.info("Created database: {} with CircuitBreaker {} and HealthCheck {}", database.getId(),
-                        circuitBreaker.getId(), healthCheck != null ? healthCheck.getEndpoint() : "N/A");
-            }
-            return database;
-        } finally {
-            resetOptions();
-        }
     }
 
     /**
@@ -190,7 +150,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> builder = createConnectionBuilder(
+        AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> builder = createConnectionBuilder(
                 codec);
 
         CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs);
@@ -213,36 +173,15 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     }
 
     /**
-     * Creates a new {@link MultiDbAsyncConnectionBuilder} instance.
+     * Creates a new {@link AbstractRedisMultiDbConnectionBuilder} instance.
      *
      * @param <K> Key type
      * @param <V> Value type
      * @return a new multi-database async connection builder
      */
-    protected <K, V> MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> createConnectionBuilder(
-            RedisCodec<K, V> codec) {
+    protected <K, V> MultiDbAsyncConnectionBuilder<K, V> createConnectionBuilder(RedisCodec<K, V> codec) {
 
-        return new MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V>(
-                this, getResources(), codec, (c, uri) -> this.connectAsync(c, uri), this::createMultiDbConnection);
-    }
-
-    /**
-     * Creates a new {@link StatefulRedisMultiDbConnection} instance with the provided healthy database map.
-     *
-     * @param healthyDatabaseMap the map of healthy databases
-     * @param codec the Redis codec
-     * @param healthStatusManager the health status manager
-     * @param <K> Key type
-     * @param <V> Value type
-     * @return a new multi-database connection
-     */
-    protected <K, V> StatefulRedisMultiDbConnection<K, V> createMultiDbConnection(
-            RedisDatabaseImpl<StatefulRedisConnection<K, V>> selected,
-            Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases, RedisCodec<K, V> codec,
-            HealthStatusManager healthStatusManager, RedisDatabaseAsyncCompletion<StatefulRedisConnection<K, V>> completion) {
-
-        return new StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<K, V>, K, V>(selected, databases, getResources(),
-                codec, this::createRedisDatabase, healthStatusManager, completion);
+        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec);
     }
 
     /**
@@ -270,7 +209,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V> builder = createPubSubConnectionBuilder(
+        AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V> builder = createPubSubConnectionBuilder(
                 codec);
 
         CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectAsync(databaseConfigs);
@@ -294,7 +233,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
             throw new IllegalArgumentException("codec must not be null");
         }
 
-        MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V> builder = createPubSubConnectionBuilder(
+        AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V> builder = createPubSubConnectionBuilder(
                 codec);
 
         CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectAsync(databaseConfigs);
@@ -307,54 +246,9 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         return connectPubSubAsync(newStringStringCodec());
     }
 
-    protected <K, V> MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V> createPubSubConnectionBuilder(
-            RedisCodec<K, V> codec) {
+    protected <K, V> MultiDbAsyncPubSubConnectionBuilder<K, V> createPubSubConnectionBuilder(RedisCodec<K, V> codec) {
 
-        return new MultiDbAsyncConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V>(
-                this, getResources(), codec, (c, uri) -> this.connectPubSubAsync(c, uri), this::createMultiDbPubSubConnection);
-    }
-
-    protected <K, V> StatefulRedisMultiDbPubSubConnection<K, V> createMultiDbPubSubConnection(
-            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> selected,
-            Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> databases, RedisCodec<K, V> codec,
-            HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
-
-        return new StatefulRedisMultiDbPubSubConnectionImpl<>(selected, databases, getResources(), codec,
-                this::createRedisDatabaseWithPubSub, healthStatusManager, completion);
-    }
-
-    private <K, V> RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> createRedisDatabaseWithPubSub(DatabaseConfig config,
-            RedisCodec<K, V> codec, HealthStatusManager healthStatusManager) {
-        RedisURI uri = config.getRedisURI();
-        setOptions(config.getClientOptions());
-        try {
-            StatefulRedisPubSubConnection<K, V> connection = connectPubSub(codec, uri);
-            DatabaseEndpoint databaseEndpoint = extractDatabaseEndpoint(connection);
-            CircuitBreaker circuitBreaker = new CircuitBreakerImpl(config.getCircuitBreakerConfig());
-            databaseEndpoint.bind(circuitBreaker);
-
-            HealthCheck healthCheck = null;
-            if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
-                HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                        new DatabaseRawConnectionFactoryImpl(config.getClientOptions(), this));
-                healthCheck = healthStatusManager.add(uri, hcStrategy);
-            }
-
-            RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> database = new RedisDatabaseImpl<>(config, connection,
-                    databaseEndpoint, circuitBreaker, healthCheck);
-            return database;
-        } finally {
-            resetOptions();
-        }
-    }
-
-    private DatabaseEndpoint extractDatabaseEndpoint(StatefulRedisConnection<?, ?> connection) {
-        RedisChannelWriter writer = ((StatefulRedisConnectionImpl<?, ?>) connection).getChannelWriter();
-        if (writer instanceof Delegating) {
-            writer = (RedisChannelWriter) ((Delegating<?>) writer).unwrap();
-        }
-        return (DatabaseEndpoint) writer;
+        return new MultiDbAsyncPubSubConnectionBuilder<>(this, getResources(), codec);
     }
 
     @Override

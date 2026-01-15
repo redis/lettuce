@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import io.lettuce.core.RedisFuture;
@@ -25,7 +24,6 @@ import io.lettuce.core.pubsub.api.reactive.RedisPubSubReactiveCommands;
 import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import io.lettuce.core.failover.MultiDbAsyncConnectionBuilder.RedisDatabaseAsyncCompletion;
 
 /**
  * @author Ali Takavci
