@@ -17,8 +17,8 @@ import io.lettuce.core.resource.ClientResources;
  * @param <V> the value type
  * @author Lettuce Contributors
  */
-class MultiDbAsyncConnectionBuilder<K, V>
-        extends AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> {
+class MultiDbAsyncConnectionBuilder<K, V> extends
+        AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> {
 
     /**
      * Creates a new regular multi-database connection builder.

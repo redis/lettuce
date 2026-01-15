@@ -9,8 +9,8 @@ import io.lettuce.core.api.StatefulRedisConnection;
 /**
  * Completion handler for databases that are created asynchronously after the initial connection is established.
  * <p>
- * This class allows the multi-database connection to register callbacks that will be invoked when additional databases
- * complete their connection and health check process.
+ * This class allows the multi-database connection to register callbacks that will be invoked when additional databases complete
+ * their connection and health check process.
  *
  * @param <SC> the connection type
  */
