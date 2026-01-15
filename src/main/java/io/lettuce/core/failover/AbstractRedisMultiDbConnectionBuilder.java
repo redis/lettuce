@@ -17,7 +17,6 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.StatefulRedisConnectionImpl;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.RedisCodec;
-import io.lettuce.core.failover.MultiDbClientImpl.DatabaseRawConnectionFactoryImpl;
 import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthCheckStrategy;
@@ -163,18 +162,29 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
 
         for (CompletableFuture<HealthStatus> healthStatusFuture : healthStatusFutures.values()) {
             healthStatusFuture.handle((healthStatus, throwable) -> {
+
+                MC conn = null;
+                Exception capturedFailure = null;
                 RedisDatabaseImpl<SC> selected = findInitialDbCandidate(sortedConfigs, databases, initialDb);
-                if (selected != null) {
-                    logger.info("Selected {} as primary database", selected);
-
-                    MC conn = buildConn(healthStatusManager, databases, databaseFutures, selected);
-
-                    connectionFuture.complete(conn);
-                } else {
-                    // check if everything seems to be somehow failed at this point.
-                    if (checkIfAllFailed(healthStatusFutures)) {
-                        connectionFuture
-                                .completeExceptionally(new RedisConnectionException("No healthy database available !!"));
+                try {
+                    if (selected != null) {
+                        logger.info("Selected {} as primary database", selected);
+                        conn = buildConn(healthStatusManager, databases, databaseFutures, selected);
+                        connectionFuture.complete(conn);
+                    }
+                } catch (Exception e) {
+                    capturedFailure = e;
+                } finally {
+                    // if we dont have the connection then its either
+                    // - no selected db yet
+                    // - or attempted to build connection but failed.
+                    // in both cases we need to check if all failed, and complete the future accordingly.
+                    if (conn == null) {
+                        // check if everything seems to be somehow failed at this point.
+                        if (checkIfAllFailed(healthStatusFutures)) {
+                            connectionFuture.completeExceptionally(capturedFailure != null ? capturedFailure
+                                    : new RedisConnectionException("No healthy database available !!"));
+                        }
                     }
                 }
                 return null;

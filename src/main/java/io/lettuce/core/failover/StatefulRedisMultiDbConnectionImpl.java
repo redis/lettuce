@@ -89,7 +89,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             RedisCodec<K, V> codec, DatabaseConnectionFactory<C, K, V> connectionFactory,
             HealthStatusManager healthStatusManager) {
         this(null, connections, resources, codec, connectionFactory, healthStatusManager, null);
-
     }
 
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
@@ -108,16 +107,35 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         this.connectionFactory = connectionFactory;
         this.healthStatusManager = healthStatusManager;
 
-        databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
-        databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
-
+        // Set current BEFORE registering listeners to avoid race condition where
+        // onHealthStatusChange or onCircuitBreakerStateChange are triggered before current is set
         if (initialDatabase == null) {
             this.current = getNextHealthyDatabase(null);
         } else {
             this.current = initialDatabase;
         }
+
         if (current == null) {
-            throw new IllegalStateException("No healthy database found");
+            throw new IllegalStateException("InitialDatabase must not be null");
+        }
+
+        // Now register listeners - they can safely access current
+        databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
+        databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
+
+        // Re-validate that current is still healthy after registering listeners
+        // This handles the case where the initial database became unhealthy between selection and listener registration
+        RedisDatabaseImpl<C> instance = current;
+        if (!DatabasePredicates.isHealthyAndCbClosed.test(instance)) {
+            failoverFrom(instance, SwitchReason.FORCED);
+            // if still unhealthy after failoverFrom, lets stop here
+            if (!DatabasePredicates.isHealthyAndCbClosed.test(current)) {
+                // remove listeners as we are going to throw an exception
+                databases.values().forEach(db -> db.getCircuitBreaker().removeListener(this::onCircuitBreakerStateChange));
+                databases.values()
+                        .forEach(db -> healthStatusManager.unregisterListener(db.getRedisURI(), this::onHealthStatusChange));
+                throw new IllegalStateException("No healthy database available");
+            }
         }
 
         this.async = newRedisAsyncCommandsImpl();
@@ -152,9 +170,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                         current.getId());
             }
         }
-        if (current == null) {
-            return;
-        }
         if (!event.getNewState().isClosed() && event.getCircuitBreaker() == current.getCircuitBreaker()) {
             if (logger.isInfoEnabled()) {
                 logger.info("Circuit breaker {} running for {} changed state from {} to {}", event.getCircuitBreaker().getId(),
@@ -186,12 +201,32 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return database == current;
     }
 
+    /**
+     * Maximum number of failover recursion to prevent infinite loops. This limit covers both retry attempts when a switch fails
+     * and cascading failovers when the newly selected database becomes unhealthy during the switch.
+     * <p>
+     * No solid reason for current value of it, it's just a safety net to prevent potential infinite loops, in case something
+     * goes really wrong.
+     */
+    private static final int MAX_FAILOVER_RECURSION = 10;
+
     private void failoverFrom(RedisDatabaseImpl<C> fromDb, SwitchReason reason) {
+        failoverFromRecursive(fromDb, reason, 0);
+    }
+
+    private void failoverFromRecursive(RedisDatabaseImpl<C> fromDb, SwitchReason reason, int recursionAttempt) {
+        if (MAX_FAILOVER_RECURSION <= recursionAttempt++) {
+            logger.warn("Max failover attempts ({}) reached, staying on current database {}", MAX_FAILOVER_RECURSION,
+                    current.getId());
+            return;
+        }
+
         RedisDatabaseImpl<C> selectedDatabase = getNextHealthyDatabase(fromDb);
 
         if (selectedDatabase != null) {
             if (logger.isInfoEnabled()) {
-                logger.info("Initiating failover from {} to {}", fromDb.getId(), selectedDatabase.getId());
+                logger.info("Initiating failover from {} to {} (attempts remaining: {})", fromDb.getId(),
+                        selectedDatabase.getId(), recursionAttempt);
             }
             if (safeSwitch(selectedDatabase, true, reason)) {
                 if (logger.isInfoEnabled()) {
@@ -199,18 +234,21 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 }
                 // check if we missed any events during the switch
                 if (!DatabasePredicates.isHealthyAndCbClosed.test(selectedDatabase)) {
-                    failoverFrom(selectedDatabase, reason);
+                    logger.warn("Database {} became unhealthy during failover, attempting cascading failover",
+                            selectedDatabase.getId());
+                    failoverFromRecursive(selectedDatabase, reason, recursionAttempt);
                 }
             } else {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Failover attempt from {} to {} has failed!! Retrying failover one more time...",
-                            fromDb.getId(), selectedDatabase.getId());
+                    logger.info("Failover attempt from {} to {} has failed, retrying...", fromDb.getId(),
+                            selectedDatabase.getId());
                 }
-                failoverFrom(fromDb, reason);
+                failoverFromRecursive(fromDb, reason, recursionAttempt);
             }
         } else {
             // No healthy database found, stay on the current one
-            // TODO: manage max attempts to failover
+            // TODO: manage max attempts to failover, to throw some proper exception to notify
+            // user that failovers are not recovering
             logger.info("No healthy database found, staying on current database {}", fromDb.getId());
         }
     }
@@ -470,13 +508,12 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 return;
             }
 
+            switchContext.switched = true;
             if (fromDb == toDb) {
                 // Nothing to do, already on the right database
-                switchContext.switched = true;
                 return;
             }
 
-            switchContext.switched = true;
             current = toDb;
             logger.info("Switched to database {}", toDb.getId());
 
