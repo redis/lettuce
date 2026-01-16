@@ -306,6 +306,17 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return syncHandler(async(), RedisCommands.class, RedisClusterCommands.class);
     }
 
+    /**
+     * Create a synchronous command handler proxy for the given async API.
+     * <p>
+     * This method creates a dynamic proxy that wraps the async API and provides synchronous command execution by blocking on
+     * futures.
+     *
+     * @param asyncApi the async API to wrap
+     * @param interfaces the interfaces to implement
+     * @param <T> the type of the proxy
+     * @return a synchronous command handler proxy
+     */
     @SuppressWarnings("unchecked")
     protected <T> T syncHandler(Object asyncApi, Class<?>... interfaces) {
         AbstractInvocationHandler h = new MultiDbFutureSyncInvocationHandler(this, asyncApi, interfaces);
@@ -635,6 +646,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return true;
     }
 
+    /**
+     * Execute an operation under a shared (read) lock.
+     * <p>
+     * This method acquires the read lock before executing the operation and releases it afterwards. Multiple threads can hold
+     * the read lock simultaneously as long as no thread holds the write lock.
+     *
+     * @param operation the operation to execute
+     */
     protected void doBySharedLock(Runnable operation) {
         readLock.lock();
         try {
@@ -644,6 +663,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         }
     }
 
+    /**
+     * Execute an operation under an exclusive (write) lock.
+     * <p>
+     * This method acquires the write lock before executing the operation and releases it afterwards. Only one thread can hold
+     * the write lock at a time, and no other threads can hold the read lock while the write lock is held.
+     *
+     * @param operation the operation to execute
+     */
     protected void doByExclusiveLock(Runnable operation) {
         writeLock.lock();
         try {

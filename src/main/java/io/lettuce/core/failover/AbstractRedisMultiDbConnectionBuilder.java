@@ -137,9 +137,10 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
     /**
      * Builds the connection future that completes when an initial primary database is selected.
      * <p>
-     * This method sets up completion handlers for all health check futures. When any health check completes, it attempts to
-     * find the highest-weighted healthy database to use as the initial primary. The connection future completes successfully
-     * when a suitable primary is found, or exceptionally if all databases fail their health checks.
+     * This method sets up completion handlers for all health check futures. Each time a health check completes (successfully or
+     * exceptionally), the handler attempts to find the highest-weighted healthy database to use as the initial primary. The
+     * connection future completes successfully as soon as a suitable primary is found, or exceptionally if all databases fail
+     * their health checks or connection attempts.
      *
      * @param databaseConfigs map of database configurations
      * @param healthStatusManager manager for tracking health status of all databases

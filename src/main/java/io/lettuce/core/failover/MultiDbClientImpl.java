@@ -93,10 +93,11 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     }
 
     /**
-     * Open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and values. This
-     * method is synchronous and will block until all database connections are established. It also waits for the initial health
-     * checks to complete starting from most weighted database, ensuring that at least one database is healthy before returning
-     * to use in the order of their weights.
+     * Open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys and values.
+     * <p>
+     * This method is synchronous and will block until at least one healthy database is available. It initiates asynchronous
+     * connections to all configured databases and waits for health checks to complete, selecting the highest-weighted healthy
+     * database as the initial primary. Other database connections continue to be established in the background.
      *
      * @param codec Use this codec to encode/decode keys and values, must not be {@code null}
      * @param <K> Key type
@@ -132,8 +133,12 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     /**
      * Asynchronously open a new connection to a Redis server. Use the supplied {@link RedisCodec codec} to encode/decode keys
-     * and values. This method is asynchronous and returns a {@link MultiDbConnectionFuture} that completes when all database
-     * connections are established and initial health checks (if configured) have completed.
+     * and values.
+     * <p>
+     * This method is asynchronous and returns a {@link MultiDbConnectionFuture} that completes when at least one healthy
+     * database is available. It initiates asynchronous connections to all configured databases and waits for health checks to
+     * complete, selecting the highest-weighted healthy database as the initial primary. Other database connections continue to
+     * be established in the background.
      * <p>
      * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
      * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
