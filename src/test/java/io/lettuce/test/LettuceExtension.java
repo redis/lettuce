@@ -7,7 +7,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.time.Duration;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -25,10 +24,12 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.dynamic.support.ResolvableType;
+import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.resource.DefaultRedisClient;
 import io.lettuce.test.resource.DefaultRedisClusterClient;
+import io.lettuce.test.resource.DefaultRedisMultiDbClient;
 import io.lettuce.test.resource.TestClientResources;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -88,16 +89,17 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
 
     private final ExtensionContext.Namespace LETTUCE = ExtensionContext.Namespace.create("lettuce.parameters");
 
-    private static final Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(
-            Arrays.asList(StatefulRedisConnection.class, StatefulRedisPubSubConnection.class, RedisCommands.class,
-                    RedisClient.class, ClientResources.class, StatefulRedisClusterConnection.class, RedisClusterClient.class));
+    private static final Set<Class<?>> SUPPORTED_INJECTABLE_TYPES = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
+            StatefulRedisPubSubConnection.class, RedisCommands.class, RedisClient.class, ClientResources.class,
+            StatefulRedisClusterConnection.class, RedisClusterClient.class, MultiDbClient.class));
 
     private static final Set<Class<?>> CLOSE_AFTER_EACH = new HashSet<>(Arrays.asList(StatefulRedisConnection.class,
             StatefulRedisPubSubConnection.class, StatefulRedisClusterConnection.class));
 
     private static final List<Supplier<?>> SUPPLIERS = Arrays.asList(ClientResourcesSupplier.INSTANCE,
             RedisClusterClientSupplier.INSTANCE, RedisClientSupplier.INSTANCE, StatefulRedisConnectionSupplier.INSTANCE,
-            StatefulRedisPubSubConnectionSupplier.INSTANCE, StatefulRedisClusterConnectionSupplier.INSTANCE);
+            StatefulRedisPubSubConnectionSupplier.INSTANCE, StatefulRedisClusterConnectionSupplier.INSTANCE,
+            RedisMultiDbClientSupplier.INSTANCE);
 
     private static final List<Function<?, ?>> RESOURCE_FUNCTIONS = Collections.singletonList(RedisCommandsFunction.INSTANCE);
 
@@ -290,6 +292,17 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
         @Override
         public RedisClient get() {
             return DefaultRedisClient.get();
+        }
+
+    }
+
+    enum RedisMultiDbClientSupplier implements Supplier<MultiDbClient> {
+
+        INSTANCE;
+
+        @Override
+        public MultiDbClient get() {
+            return DefaultRedisMultiDbClient.get();
         }
 
     }

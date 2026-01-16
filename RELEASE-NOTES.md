@@ -1,30 +1,25 @@
-Lettuce 7.2.0 RELEASE NOTES
+Lettuce 7.4.0.BETA1 RELEASE NOTES
 ==============================
 
-The Lettuce team is pleased to announce the Lettuce 7.2.0 minor release!
+The Lettuce team is pleased to announce the **first beta release of Lettuce 7.4.0**!
 
-Lettuce 7.2.0 supports Redis 2.6+ up to Redis 8.x. In terms of Java runtime, Lettuce requires at least Java 8 and
-works with Java 24. The driver is tested against Redis 8.4, Redis 8.2, Redis 8.0, Redis 7.4 and Redis 7.2.
+This release introduces **Automatic Client-Side Endpoint Failover** through the newly added **MultiDBClient**.
 
-Thanks to all contributors who made Lettuce 7.2.0.RELEASE possible.
+### Key Features
 
-📗 Links
-Reference documentation: https://lettuce.io/core/7.2.0.RELEASE/reference/
-Javadoc: https://lettuce.io/core/7.2.0.RELEASE/api/
+- **Automatic Detection**: The client monitors the health of all configured Redis endpoints.
+- **Seamless Failover**: If the active endpoint fails, traffic is automatically rerouted to the next healthiest endpoint based on configurable priorities.
+- **Customizable**: Developers can configure endpoints, set priorities, adjust failure sensitivity, and plug in custom health checks or failure detection logic.
 
-⭐ New Features
-* Add ftHybrid by @a-TODO-rov in https://github.com/redis/lettuce/pull/3540
-* Expose method to add upstream driver libraries to CLIENT SETINFO payload by @viktoriya-kutsarova in https://github.com/redis/lettuce/pull/3542
 
-🐞 Bug Fixes
-* SearchArgs.returnField with alias produces malformed redis command #3528 by @tishun in https://github.com/redis/lettuce/pull/3530
-* fix consistency with get(int) that returns wrapped DelegateJsonObject/DelegateJsonArray for nested structures by @NeatGuyCoding in https://github.com/redis/lettuce/pull/3464
+**Lettuce 7.4.0.BETA1** supports Redis **2.6+** up to Redis **8.x** and requires **Java 8** or newer. The driver is tested against Redis **8.4**, **8.2**, **7.4**, and **7.2**.
 
-💡 Other
-* Bumping Netty to 4.2.5.Final (main) by @tishun in https://github.com/redis/lettuce/pull/3536
 
-❤️ New Contributors
-* @NeatGuyCoding made their first contribution in https://github.com/redis/lettuce/pull/3464
-* @viktoriya-kutsarova made their first contribution in https://github.com/redis/lettuce/pull/3542
 
-**Full Changelog**: https://github.com/redis/lettuce/compare/7.1.0.RELEASE...7.2.0.RELEASE
+We encourage you to try out this beta and provide feedback ahead of the general availability release.
+
+**Full Changelog**: https://github.com/redis/lettuce/compare/7.2.0.RELEASE...7.4.0.BETA1
+
+## Contributors
+We'd like to thank all the contributors who worked on this release!
+@atakavci, @ggivo, @uglide
