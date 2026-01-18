@@ -281,7 +281,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     @Test
     void connectAsyncShouldProvideAllEndpoints() throws Exception {
         MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
-
+        waitForEndpoints(multiDbClient.connect(), 3, 2);
         connections.add(future);
 
         StatefulRedisMultiDbConnection<String, String> connection = future.get(10, TimeUnit.SECONDS);
