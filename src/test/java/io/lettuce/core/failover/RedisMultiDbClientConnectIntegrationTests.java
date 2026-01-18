@@ -100,6 +100,7 @@ class RedisMultiDbClientConnectIntegrationTests extends MultiDbTestSupport {
     @Test
     void connectAndRunAndSwitchAndRun() throws InterruptedException, ExecutionException {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
         RedisFuture futureSet = connection.async().set("key1", "value1");
         TestFutures.awaitOrTimeout(futureSet);
         RedisFuture<String> futureGet = connection.async().get("key1");

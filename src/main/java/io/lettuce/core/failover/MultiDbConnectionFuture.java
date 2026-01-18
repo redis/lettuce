@@ -3,7 +3,7 @@ package io.lettuce.core.failover;
 import java.util.concurrent.*;
 
 import io.lettuce.core.BaseConnectionFuture;
-import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
+import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
 
 /**
  * A {@code MultiDbConnectionFuture} represents the result of an asynchronous multi-database connection initialization.
@@ -28,14 +28,14 @@ import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
  * @author Ali Takavci
  * @since 7.4
  */
-public class MultiDbConnectionFuture<K, V> extends BaseConnectionFuture<StatefulRedisMultiDbConnection<K, V>> {
+public class MultiDbConnectionFuture<C extends BaseRedisMultiDbConnection> extends BaseConnectionFuture<C> {
 
     /**
      * Create a new {@link MultiDbConnectionFuture} wrapping the given delegate future.
      *
      * @param delegate the underlying CompletableFuture
      */
-    public MultiDbConnectionFuture(CompletableFuture<StatefulRedisMultiDbConnection<K, V>> delegate) {
+    public MultiDbConnectionFuture(CompletableFuture<C> delegate) {
         super(delegate);
     }
 
@@ -45,7 +45,7 @@ public class MultiDbConnectionFuture<K, V> extends BaseConnectionFuture<Stateful
      * @param delegate the underlying CompletableFuture
      * @param defaultExecutor the executor to use for async callbacks
      */
-    public MultiDbConnectionFuture(CompletableFuture<StatefulRedisMultiDbConnection<K, V>> delegate, Executor defaultExecutor) {
+    public MultiDbConnectionFuture(CompletableFuture<C> delegate, Executor defaultExecutor) {
         super(delegate, defaultExecutor);
     }
 
@@ -57,8 +57,8 @@ public class MultiDbConnectionFuture<K, V> extends BaseConnectionFuture<Stateful
      * @param <V> Value type
      * @return the wrapped future
      */
-    public static <K, V> MultiDbConnectionFuture<K, V> from(CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future) {
-        return new MultiDbConnectionFuture<>(future);
+    public static <C extends BaseRedisMultiDbConnection> MultiDbConnectionFuture<C> from(CompletableFuture<C> future) {
+        return new MultiDbConnectionFuture<C>(future);
     }
 
     /**
@@ -70,9 +70,9 @@ public class MultiDbConnectionFuture<K, V> extends BaseConnectionFuture<Stateful
      * @param <V> Value type
      * @return the wrapped future
      */
-    public static <K, V> MultiDbConnectionFuture<K, V> from(CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future,
+    public static <C extends BaseRedisMultiDbConnection> MultiDbConnectionFuture<C> from(CompletableFuture<C> future,
             Executor executor) {
-        return new MultiDbConnectionFuture<>(future, executor);
+        return new MultiDbConnectionFuture<C>(future, executor);
     }
 
     @Override

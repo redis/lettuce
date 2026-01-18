@@ -536,6 +536,8 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
             try {
+                // Wait for all 3 endpoints to be available
+                waitForEndpoints(connection, 3, 2);
 
                 // Then: Verify current endpoint is uri1 (highest weight)
                 assertThat(connection.getCurrentEndpoint()).isEqualTo(uri1);
