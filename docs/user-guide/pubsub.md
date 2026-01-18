@@ -99,7 +99,7 @@ connection.addListener(new RedisClusterPubSubListener<String, String>() { ... })
 connection.setNodeMessagePropagation(true);
 
 RedisPubSubCommands<String, String> sync = connection.sync();
-sync.masters().commands().subscribe("__keyspace@0__:*");
+sync.primaries().commands().subscribe("__keyspace@0__:*");
 ```
 
 There are two things to pay special attention to:
@@ -107,8 +107,8 @@ There are two things to pay special attention to:
 1.  Replication: Keys replicated to replica nodes, especially
     considering expiry, generate keyspace events on all nodes holding
     the key. If a key expires and it is replicated, it will expire on
-    the master and all replicas. Each Redis server will emit keyspace
-    events. Subscribing to non-master nodes, therefore, will let your
+    the primary and all replicas. Each Redis server will emit keyspace
+    events. Subscribing to non-primary nodes, therefore, will let your
     application see multiple events of the same type for the same key
     because of Redis distributed nature.
 

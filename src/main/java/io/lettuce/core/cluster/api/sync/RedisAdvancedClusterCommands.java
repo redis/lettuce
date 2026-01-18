@@ -79,7 +79,7 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      * Select all upstream nodes.
      *
      * @return API with synchronous executed commands on a selection of upstream cluster nodes.
-     * @deprecated since 6.0 in favor of {@link #upstream()}.
+     * @deprecated since 6.0 in favor of {@link #upstream()} (use {@link #primaries()} for primary terminology).
      */
     @Deprecated
     default NodeSelection<K, V> masters() {
@@ -93,6 +93,16 @@ public interface RedisAdvancedClusterCommands<K, V> extends RedisClusterCommands
      */
     default NodeSelection<K, V> upstream() {
         return nodes(redisClusterNode -> redisClusterNode.is(RedisClusterNode.NodeFlag.UPSTREAM));
+    }
+
+    /**
+     * Select all primary nodes.
+     *
+     * @return API with synchronous executed commands on a selection of primary cluster nodes.
+     * @since 7.3
+     */
+    default NodeSelection<K, V> primaries() {
+        return upstream();
     }
 
     /**
