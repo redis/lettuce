@@ -131,7 +131,6 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
     @Test
     void shouldPublishAndReceiveMessage() throws Exception {
-        // StatefulRedisMultiDbPubSubConnection<String, String> pubsub = multiDbClient.connectPubSub();
         BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
 
         multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
@@ -177,8 +176,6 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
     @Test
     void shouldMaintainSubscriptionAfterDatabaseSwitch() throws Exception {
-        // try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
-
         BlockingQueue<String> channels = LettuceFactories.newBlockingQueue();
         BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
         multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
@@ -209,13 +206,10 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
         waitForSubscription(conn2, messages, "channel1");
 
         assertThat(conn2.sync().pubsubChannels()).contains("channel1");
-        // }
     }
 
     @Test
     void shouldReceiveMessagesAfterDatabaseSwitch() throws Exception {
-        // try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
-
         BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
         multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
@@ -243,13 +237,10 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
         String message = messages.poll(1, TimeUnit.SECONDS);
         assertEquals("Message after switch", message);
-        // }
     }
 
     @Test
     void shouldHandleMultipleDatabaseSwitchesWithPubSub() throws Exception {
-        // try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
-
         BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
         multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
@@ -284,13 +275,10 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
         String message = messages.poll(1, TimeUnit.SECONDS);
         assertEquals("Message from DB1", message);
-        // }
     }
 
     @Test
     void shouldHandleListenerAdditionAfterSwitch() throws Exception {
-        // try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
-
         BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
 
         // Add initial listener
@@ -335,15 +323,12 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
         String message2 = messages2.poll(1, TimeUnit.SECONDS);
         assertEquals("Listener test message", message2);
-        // }
     }
 
     // ============ Tests for Isolation After Database Switch ============
 
     @Test
     void shouldNotReceiveMessagesFromOldEndpointAfterSwitch() throws Exception {
-        // try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
-
         BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
         multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
@@ -378,13 +363,10 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
         // Verify no additional messages are received (old endpoint message should not arrive)
         String unexpectedMessage = messages.poll(500, TimeUnit.MILLISECONDS);
         assertThat(unexpectedMessage).isNull();
-        // }
     }
 
     @Test
     void shouldUnsubscribeChannelsFromOldEndpointAfterSwitch() throws Exception {
-        // try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
-
         BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
         multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
@@ -423,7 +405,6 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
         // Verify no additional messages are received (old endpoint message should not arrive)
         String unexpectedMessage = messages.poll(500, TimeUnit.MILLISECONDS);
         assertThat(unexpectedMessage).isNull();
-        // }
     }
 
 }

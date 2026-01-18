@@ -78,7 +78,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
     void shouldIsolateMetricsPerEndpoint() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
 
-        // Wait for at least 2 endpoints to be available
+        // Wait for at least 3 endpoints to be available
         waitForEndpoints(connection, 3, 2);
 
         List<RedisURI> endpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
@@ -112,7 +112,7 @@ class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
         // Given: Connection with multiple endpoints
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
 
-        // Wait for at least 2 endpoints to be available
+        // Wait for at least 3 endpoints to be available
         waitForEndpoints(connection, 3, 2);
 
         RedisURI firstEndpoint = connection.getCurrentEndpoint();

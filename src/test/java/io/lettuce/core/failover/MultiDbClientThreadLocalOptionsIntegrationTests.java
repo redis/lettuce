@@ -270,8 +270,7 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
         assertThat(wrapper.operations).extracting("operation").containsExactly("set", "remove", "set", "remove", "set",
                 "remove", "set", "remove");
         // it contains 4 sets with non null options object and the exact same values should show up in 4 removes with
-        // exact same
-        // threads and options instances.
+        // exact same threads and options instances.
         // so each pair received from queue should be matching with threads and options objects
         for (int i = 0; i < 4; i++) {
             OperationInfo set = wrapper.operations.poll();

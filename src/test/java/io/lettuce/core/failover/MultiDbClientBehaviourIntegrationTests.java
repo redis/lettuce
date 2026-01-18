@@ -102,7 +102,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         directConnection1 = directClient1.connect();
         directConnection2 = directClient2.connect();
 
-        // Wait for at least 2 endpoints to be available
+        // Wait for at least 3 endpoints to be available
         waitForEndpoints(multiDbConnection, 3, 2);
     }
 
@@ -447,11 +447,6 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         assertThat(correctEndpointCount + wrongEndpointCount + missingKeysCount)
                 .as("All keys should be accounted for in endpoint distribution").isEqualTo(1500);
     }
-
-    // Test removed: testPubSubWithMultiDbClient
-    // Reason: The new implementation returns the connection as soon as ONE healthy database is found.
-    // This test assumes endpoint2 is available immediately (line 95: this.endpoint2 = endpoints.next()),
-    // which is no longer guaranteed. The test would fail at line 537: multiDbPubSub.switchTo(endpoint2).
 
     /**
      * Test PubSub functionality with MultiDbClient.

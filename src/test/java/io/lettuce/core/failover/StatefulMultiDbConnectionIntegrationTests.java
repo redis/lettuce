@@ -217,7 +217,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     void shouldMaintainDataAfterSwitch() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
 
-        // Wait for at least 2 endpoints to be available
+        // Wait for at least 3 endpoints to be available
         waitForEndpoints(connection, 3, 2);
 
         // Set value in first database
@@ -242,7 +242,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     void shouldSwitchAndExecuteCommandsAsync() throws Exception {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
 
-        // Wait for at least 2 endpoints to be available
+        // Wait for at least 3 endpoints to be available
         waitForEndpoints(connection, 3, 2);
 
         // Set value in first database
