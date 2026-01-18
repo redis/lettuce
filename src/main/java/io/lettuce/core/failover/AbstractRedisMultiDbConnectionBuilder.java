@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -211,8 +212,10 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
             RedisDatabaseImpl<SC> selected) {
         DatabaseMap<SC> clone = new DatabaseMap<>(databases);
 
+        // Include futures for databases that are NOT yet in the clone map
+        // These are the databases still being established asynchronously
         List<CompletableFuture<RedisDatabaseImpl<SC>>> remainingDbFutures;
-        remainingDbFutures = databaseFutures.entrySet().stream().filter(entry -> clone.containsKey(entry.getKey()))
+        remainingDbFutures = databaseFutures.entrySet().stream().filter(entry -> !clone.containsKey(entry.getKey()))
                 .map(entry -> entry.getValue()).collect(Collectors.toList());
 
         RedisDatabaseAsyncCompletion<SC> completion = new RedisDatabaseAsyncCompletion<SC>(remainingDbFutures);
@@ -303,9 +306,13 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                     connection.closeAsync();
                     throw e;
                 }
+            }).exceptionally(throwable -> {
+                logger.error("Failed to create database connection for {}: {}", uri, throwable.getMessage(), throwable);
+                throw new CompletionException(throwable);
             });
         } catch (Exception e) {
             client.resetOptions();
+            logger.error("Failed to initiate database connection for {}: {}", uri, e.getMessage(), e);
             CompletableFuture<RedisDatabaseImpl<SC>> failedFuture = new CompletableFuture<>();
             failedFuture.completeExceptionally(e);
             return failedFuture;
@@ -429,6 +436,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
         return false;
     }
 
+    // TODO : is this still needed? check if we should be dropping this
     /**
      * Creates a Redis database synchronously by blocking on the async creation. Used as a {@link DatabaseConnectionFactory} for
      * dynamic database addition.

@@ -216,6 +216,9 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     void shouldMaintainDataAfterSwitch() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
 
+        // Wait for at least 2 endpoints to be available
+        waitForEndpoints(connection, 3, 2);
+
         // Set value in first database
         connection.sync().set("persistKey", "persistValue");
         RedisURI firstDb = connection.getCurrentEndpoint();
@@ -237,6 +240,9 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     @Test
     void shouldSwitchAndExecuteCommandsAsync() throws Exception {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+
+        // Wait for at least 2 endpoints to be available
+        waitForEndpoints(connection, 3, 2);
 
         // Set value in first database
         RedisFuture<String> setFuture1 = connection.async().set("asyncSwitchKey", "asyncValue1");

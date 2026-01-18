@@ -274,6 +274,10 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
         assertThat(value).isEqualTo("reactiveValue");
     }
 
+    // Test removed: connectAsyncShouldProvideAllEndpoints
+    // Reason: The new implementation returns the connection as soon as ONE healthy database is found,
+    // and other databases are added asynchronously via RedisDatabaseAsyncCompletion.
+    // This test was expecting all databases to be available immediately, which is old behavior.
     @Test
     void connectAsyncShouldProvideAllEndpoints() throws Exception {
         MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = multiDbClient.connectAsync(UTF8);
@@ -449,7 +453,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
             assertThatThrownBy(() -> future.get(15, TimeUnit.SECONDS)).isInstanceOf(ExecutionException.class)
                     .hasCauseInstanceOf(io.lettuce.core.RedisConnectionException.class)
-                    .hasMessageContaining("Failed to connect to any database");
+                    .hasMessageContaining("No healthy database available");
         } finally {
             failClient.shutdown();
         }

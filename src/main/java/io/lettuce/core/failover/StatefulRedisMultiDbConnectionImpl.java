@@ -151,6 +151,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             doByExclusiveLock(() -> {
                 databases.putIfAbsent(db.getRedisURI(), db);
             });
+            logger.info("Async database connection completed successfully for {}", db.getRedisURI());
+        } else if (e != null) {
+            logger.error("Async database connection failed: {}", e.getMessage(), e);
         }
     }
 
