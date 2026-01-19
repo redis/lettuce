@@ -621,6 +621,7 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             assertThat((Object) result).isSameAs(mockFuture);
             verify(client).connectPubSubAsync(codec, uri1);
         }
+
     }
 
 }
