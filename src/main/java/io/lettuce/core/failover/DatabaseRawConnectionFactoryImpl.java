@@ -1,5 +1,6 @@
 package io.lettuce.core.failover;
 
+import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 
@@ -8,10 +9,13 @@ import io.lettuce.core.api.StatefulRedisConnection;
  * <p>
  * This factory is used by health check strategies to create dedicated connections for health checking, separate from the main
  * application connections.
+ * <p>
+ * There is room to improve this factory since it hides the underlying {@link ClientOptions}, which might need to mutate or to
+ * be exposed depending on the use case.
  */
 class DatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
 
-    private final io.lettuce.core.ClientOptions clientOptions;
+    private final ClientOptions clientOptions;
 
     private final MultiDbClientImpl client;
 
@@ -21,7 +25,7 @@ class DatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
      * @param clientOptions the client options to use for connections
      * @param client the multi-database client
      */
-    public DatabaseRawConnectionFactoryImpl(io.lettuce.core.ClientOptions clientOptions, MultiDbClientImpl client) {
+    public DatabaseRawConnectionFactoryImpl(ClientOptions clientOptions, MultiDbClientImpl client) {
         this.clientOptions = clientOptions;
         this.client = client;
     }

@@ -37,25 +37,6 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     private final Set<RedisPubSubListener<K, V>> pubSubListeners = ConcurrentHashMap.newKeySet();
 
     /**
-     * Create a new multi-database PubSub connection without an initial database.
-     * <p>
-     * This constructor is used when no initial database is available at construction time. The connection will wait for at
-     * least one database to become healthy before completing initialization.
-     *
-     * @param connections the map of database connections
-     * @param resources the client resources
-     * @param codec the Redis codec
-     * @param connectionFactory the connection factory for creating new database connections
-     * @param healthStatusManager the health status manager
-     */
-    public StatefulRedisMultiDbPubSubConnectionImpl(
-            Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
-            RedisCodec<K, V> codec, DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
-            HealthStatusManager healthStatusManager) {
-        super(connections, resources, codec, connectionFactory, healthStatusManager);
-    }
-
-    /**
      * Create a new multi-database PubSub connection with an initial database.
      * <p>
      * This constructor is used when an initial healthy database is available at construction time.

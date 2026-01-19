@@ -43,8 +43,8 @@ class MultiDbAsyncPubSubConnectionBuilder<K, V> extends
             HealthStatusManager healthStatusManager,
             RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
 
-        return new StatefulRedisMultiDbPubSubConnectionImpl<>(selected, databases, resources, codec, this::createRedisDatabase,
-                healthStatusManager, completion);
+        return new StatefulRedisMultiDbPubSubConnectionImpl<>(selected, databases, resources, codec,
+                this::createRedisDatabaseAsync, healthStatusManager, completion);
     }
 
 }

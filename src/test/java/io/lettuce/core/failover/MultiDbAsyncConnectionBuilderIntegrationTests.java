@@ -158,7 +158,7 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
 
         public void proceedHangingConnections() {
             for (RedisURI uri : hangingFutures.keySet()) {
-                actualFuturesMap.get(uri).toCompletableFuture().whenComplete((c, e) -> {
+                actualFuturesMap.get(uri).toCompletableFuture().whenCompleteAsync((c, e) -> {
                     if (c != null) {
                         hangingFutures.get(uri).complete(c);
                     } else {

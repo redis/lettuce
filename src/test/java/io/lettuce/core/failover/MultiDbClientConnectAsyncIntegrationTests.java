@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
@@ -448,8 +449,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = failClient.connectAsync(UTF8);
 
             assertThatThrownBy(() -> future.get(15, TimeUnit.SECONDS)).isInstanceOf(ExecutionException.class)
-                    .hasCauseInstanceOf(io.lettuce.core.RedisConnectionException.class)
-                    .hasMessageContaining("No healthy database available");
+                    .hasCauseInstanceOf(RedisConnectionException.class).hasMessageContaining("No healthy database available");
         } finally {
             failClient.shutdown();
         }

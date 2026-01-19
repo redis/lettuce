@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisAsyncCommandsImpl;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
@@ -36,6 +37,7 @@ import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -84,12 +86,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     private final Lock writeLock = multiDbLock.writeLock();
 
     private final ClientResources clientResources;
-
-    public StatefulRedisMultiDbConnectionImpl(Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources,
-            RedisCodec<K, V> codec, DatabaseConnectionFactory<C, K, V> connectionFactory,
-            HealthStatusManager healthStatusManager) {
-        this(null, connections, resources, codec, connectionFactory, healthStatusManager, null);
-    }
 
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
@@ -733,14 +729,21 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             healthStatusManager.registerListener(redisURI, this::onHealthStatusChange);
 
             // Create new database connection using the factory
-            RedisDatabaseImpl<C> database = connectionFactory.createDatabase(databaseConfig, codec, healthStatusManager);
+            CompletableFuture<RedisDatabaseImpl<C>> databaseFuture = connectionFactory.createDatabaseAsync(databaseConfig,
+                    healthStatusManager);
+            try {
+                RedisDatabaseImpl<C> database = databaseFuture.get();
+                databases.put(redisURI, database);
 
-            // Add listeners to the new connection if it's the current one
-            // (though it won't be current initially since we're just adding it)
-            databases.put(redisURI, database);
-
-            database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
-
+                // Add listeners to the new connection if it's the current one
+                // (though it won't be current initially since we're just adding it)
+                database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw RedisConnectionException.create(e);
+            } catch (Exception e) {
+                throw RedisConnectionException.create(Exceptions.unwrap(e));
+            }
         });
 
     }

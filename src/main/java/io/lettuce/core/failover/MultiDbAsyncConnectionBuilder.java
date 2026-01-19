@@ -42,7 +42,7 @@ class MultiDbAsyncConnectionBuilder<K, V> extends
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases, RedisCodec<K, V> codec,
             HealthStatusManager healthStatusManager, RedisDatabaseAsyncCompletion<StatefulRedisConnection<K, V>> completion) {
 
-        return new StatefulRedisMultiDbConnectionImpl<>(selected, databases, resources, codec, this::createRedisDatabase,
+        return new StatefulRedisMultiDbConnectionImpl<>(selected, databases, resources, codec, this::createRedisDatabaseAsync,
                 healthStatusManager, completion);
     }
 

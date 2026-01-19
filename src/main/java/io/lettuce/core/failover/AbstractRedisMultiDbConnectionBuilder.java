@@ -25,7 +25,6 @@ import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.failover.health.HealthStatusManagerImpl;
-import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.resource.ClientResources;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -451,30 +450,6 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
         return false;
     }
 
-    // TODO : is this still needed? check if we should be dropping this
-    /**
-     * Creates a Redis database synchronously by blocking on the async creation. Used as a {@link DatabaseConnectionFactory} for
-     * dynamic database addition.
-     *
-     * @param config the database configuration
-     * @param codec the codec to use for encoding/decoding
-     * @param healthStatusManager manager for registering health checks
-     * @return a new RedisDatabase instance
-     */
-    protected RedisDatabaseImpl<SC> createRedisDatabase(DatabaseConfig config, RedisCodec<K, V> codec,
-            HealthStatusManager healthStatusManager) {
-
-        CompletableFuture<RedisDatabaseImpl<SC>> future = createRedisDatabaseAsync(config, healthStatusManager);
-        try {
-            return future.get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw RedisConnectionException.create(e);
-        } catch (Exception e) {
-            throw RedisConnectionException.create(Exceptions.unwrap(e));
-        }
-    }
-
     /**
      * Extracts the {@link DatabaseEndpoint} from a Redis connection.
      * <p>
@@ -499,58 +474,6 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
      */
     protected HealthStatusManager createHealthStatusManager() {
         return new HealthStatusManagerImpl();
-    }
-
-    /**
-     * Functional interface for creating single database connections.
-     * <p>
-     * This factory is used to create individual connections to Redis endpoints.
-     *
-     * @param <C> the connection type
-     * @param <K> the key type
-     * @param <V> the value type
-     */
-    @FunctionalInterface
-    interface StandaloneConnectionFactory<C extends StatefulRedisConnection<K, V>, K, V> {
-
-        /**
-         * Creates an asynchronous connection to a Redis endpoint.
-         *
-         * @param codec the codec for encoding/decoding
-         * @param uri the Redis URI to connect to
-         * @return a future that completes with the connection
-         */
-        ConnectionFuture<C> connectAsync(RedisCodec<K, V> codec, RedisURI uri);
-
-    }
-
-    /**
-     * Functional interface for creating multi-database connections.
-     * <p>
-     * This factory is used to create the actual {@link StatefulRedisMultiDbConnection} instance with the selected primary
-     * database and all available databases.
-     *
-     * @param <MC> the multi-database connection type
-     * @param <SC> the single database connection type
-     * @param <K> the key type
-     * @param <V> the value type
-     */
-    @FunctionalInterface
-    interface MultiDbConnectionFactory<MC extends BaseRedisMultiDbConnection, SC extends StatefulRedisConnection<K, V>, K, V> {
-
-        /**
-         * Creates a multi-database connection.
-         *
-         * @param selected the database selected as the initial primary
-         * @param databases map of all available databases
-         * @param codec the codec for encoding/decoding
-         * @param healthStatusManager the health status manager
-         * @param completion handler for databases that complete asynchronously
-         * @return a new multi-database connection
-         */
-        MC create(RedisDatabaseImpl<SC> selected, Map<RedisURI, RedisDatabaseImpl<SC>> databases, RedisCodec<K, V> codec,
-                HealthStatusManager healthStatusManager, RedisDatabaseAsyncCompletion<SC> completion);
-
     }
 
     static class DatabaseMap<SC extends StatefulRedisConnection<?, ?>>
