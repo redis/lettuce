@@ -12,7 +12,7 @@ import io.lettuce.core.RedisURI;
  *
  * @author Ivo Gaydazhiev
  */
-class TestHealthCheckStrategy implements HealthCheckStrategy {
+public class TestHealthCheckStrategy implements HealthCheckStrategy {
 
     private final HealthCheckStrategy.Config config;
 
@@ -24,7 +24,7 @@ class TestHealthCheckStrategy implements HealthCheckStrategy {
      * @param config the health check configuration
      * @param healthCheckFunction the function to execute for health checks
      */
-    TestHealthCheckStrategy(HealthCheckStrategy.Config config, Function<RedisURI, HealthStatus> healthCheckFunction) {
+    public TestHealthCheckStrategy(HealthCheckStrategy.Config config, Function<RedisURI, HealthStatus> healthCheckFunction) {
         this.config = config;
         this.healthCheckFunction = healthCheckFunction;
     }
