@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -134,9 +135,9 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
 
         private final Set<RedisURI> hangingUris;
 
-        private final Map<RedisURI, CompletableFuture<StatefulRedisConnection<K, V>>> hangingFutures = new HashMap<>();
+        private final Map<RedisURI, CompletableFuture<StatefulRedisConnection<K, V>>> hangingFutures = new ConcurrentHashMap<>();
 
-        private final Map<RedisURI, ConnectionFuture<StatefulRedisConnection<K, V>>> actualFuturesMap = new HashMap<>();
+        private final Map<RedisURI, ConnectionFuture<StatefulRedisConnection<K, V>>> actualFuturesMap = new ConcurrentHashMap<>();
 
         TestMultiDbAsyncConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec,
                 Set<RedisURI> hangingUris) {

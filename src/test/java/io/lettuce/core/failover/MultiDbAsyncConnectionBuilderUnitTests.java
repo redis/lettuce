@@ -78,53 +78,38 @@ class MultiDbAsyncConnectionBuilderUnitTests {
     @Mock
     private HealthCheck mockHealthCheck2;
 
-    private ClientResources resources;
+    private static final ClientResources resources = DefaultClientResources.create();
 
-    private RedisCodec<String, String> codec;
+    private final RedisCodec<String, String> codec = StringCodec.UTF8;
 
-    private RedisURI uri1;
+    private final RedisURI uri1 = RedisURI.create("redis://localhost:6379");
 
-    private RedisURI uri2;
+    private final RedisURI uri2 = RedisURI.create("redis://localhost:6380");
 
-    private RedisURI uri3;
+    private final RedisURI uri3 = RedisURI.create("redis://localhost:6381");
 
-    private DatabaseConfig config1;
+    private final DatabaseConfig config1 = DatabaseConfig.builder(uri1).weight(1.0f).clientOptions(ClientOptions.create())
+            .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
-    private DatabaseConfig config2;
+    private DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).clientOptions(ClientOptions.create())
+            .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
-    private DatabaseConfig config3;
+    private DatabaseConfig config3 = DatabaseConfig.builder(uri3).weight(0.25f).clientOptions(ClientOptions.create())
+            .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
-    private MultiDbAsyncConnectionBuilder<String, String> regularBuilder;
+    private volatile MultiDbAsyncConnectionBuilder<String, String> regularBuilder;
 
-    private MultiDbAsyncPubSubConnectionBuilder<String, String> pubSubBuilder;
+    private volatile MultiDbAsyncPubSubConnectionBuilder<String, String> pubSubBuilder;
 
     @BeforeEach
     void setUp() {
-        resources = DefaultClientResources.create();
-        codec = StringCodec.UTF8;
-
-        uri1 = RedisURI.create("redis://localhost:6379");
-        uri2 = RedisURI.create("redis://localhost:6380");
-        uri3 = RedisURI.create("redis://localhost:6381");
-
-        config1 = DatabaseConfig.builder(uri1).weight(1.0f).clientOptions(ClientOptions.create())
-                .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
-
-        config2 = DatabaseConfig.builder(uri2).weight(0.5f).clientOptions(ClientOptions.create())
-                .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
-
-        config3 = DatabaseConfig.builder(uri3).weight(0.25f).clientOptions(ClientOptions.create())
-                .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
-
         regularBuilder = new MultiDbAsyncConnectionBuilder<>(client, resources, codec);
         pubSubBuilder = new MultiDbAsyncPubSubConnectionBuilder<>(client, resources, codec);
     }
 
-    @AfterEach
-    void tearDown() {
-        if (resources != null) {
-            resources.shutdown();
-        }
+    @AfterAll
+    static void cleanUp() {
+        resources.shutdown();
     }
 
     // ============ Helper Methods ============
