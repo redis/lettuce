@@ -1196,6 +1196,8 @@ public class RediSearchVectorIntegrationTests {
     @ParameterizedTest
     @MethodSource("quantizedVectorTypes")
     void testQuantizedVectorTypes(VectorFieldArgs.VectorType vectorType) {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.0"));
+
         String typeName = vectorType.name();
         String indexName = typeName.toLowerCase() + "-idx";
         String prefix = typeName.toLowerCase() + ":";
