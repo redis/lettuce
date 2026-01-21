@@ -150,6 +150,25 @@ public class HybridArgs<K, V> {
         }
 
         /**
+         * Add a parameter for parameterized queries with byte array value.
+         * <p>
+         * This overload allows passing binary parameter data (e.g., vector embeddings) when using String codec. Parameters can
+         * be referenced in queries using {@code $name} syntax.
+         * </p>
+         *
+         * @param name the parameter name
+         * @param value the parameter value as byte array
+         * @return this builder
+         */
+        @SuppressWarnings("unchecked")
+        public Builder<K, V> param(K name, byte[] value) {
+            LettuceAssert.notNull(name, "Parameter name must not be null");
+            LettuceAssert.notNull(value, "Parameter value must not be null");
+            instance.params.put(name, (V) value);
+            return this;
+        }
+
+        /**
          * Set the maximum time to wait for the query to complete.
          *
          * @param timeout the timeout duration (with millisecond resolution)
@@ -198,7 +217,12 @@ public class HybridArgs<K, V> {
             args.add(params.size() * 2L);
             params.forEach((name, value) -> {
                 args.addKey(name);
-                args.addValue(value);
+                // Handle byte[] values specially (they're always binary data)
+                if (value instanceof byte[]) {
+                    args.add((byte[]) value);
+                } else {
+                    args.addValue(value);
+                }
             });
         }
 
