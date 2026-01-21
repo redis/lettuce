@@ -1,9 +1,10 @@
 package io.lettuce.core.cluster;
 
 import java.net.SocketAddress;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
@@ -46,7 +47,7 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
     }
 
     /**
-     * Get a {@link Mono} of {@link SocketAddress} for a
+     * Get a {@link Supplier} of {@link CompletionStage} of {@link SocketAddress} for a
      * {@link io.lettuce.core.cluster.ClusterNodeConnectionFactory.ConnectionKey}.
      * <p>
      * This {@link Supplier} resolves the requested endpoint on each {@link Supplier#get()}.
@@ -54,22 +55,22 @@ abstract class AbstractClusterNodeConnectionFactory<K, V> implements ClusterNode
      * @param connectionKey must not be {@code null}.
      * @return
      */
-    Mono<SocketAddress> getSocketAddressSupplier(ConnectionKey connectionKey) {
+    Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(ConnectionKey connectionKey) {
 
-        return Mono.fromCallable(() -> {
+        return () -> {
 
             if (connectionKey.nodeId != null) {
 
                 SocketAddress socketAddress = getSocketAddress(connectionKey.nodeId);
                 logger.debug("Resolved SocketAddress {} using for Cluster node {}", socketAddress, connectionKey.nodeId);
-                return socketAddress;
+                return CompletableFuture.completedFuture(socketAddress);
             }
 
             SocketAddress socketAddress = resolve(RedisURI.create(connectionKey.host, connectionKey.port));
             logger.debug("Resolved SocketAddress {} using for Cluster node at {}:{}", socketAddress, connectionKey.host,
                     connectionKey.port);
-            return socketAddress;
-        });
+            return CompletableFuture.completedFuture(socketAddress);
+        };
     }
 
     /**

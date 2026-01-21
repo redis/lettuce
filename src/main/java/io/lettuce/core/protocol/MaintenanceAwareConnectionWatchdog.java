@@ -22,10 +22,11 @@ import io.netty.util.Timer;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import reactor.core.publisher.Mono;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
 import java.nio.ByteBuffer;
 import java.time.Clock;
 import java.time.Duration;
@@ -76,7 +77,7 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     private RebindAwareAddressSupplier rebindAwareAddressSupplier;
 
     public MaintenanceAwareConnectionWatchdog(Delay reconnectDelay, ClientOptions clientOptions, Bootstrap bootstrap,
-            Timer timer, EventExecutorGroup reconnectWorkers, Mono<SocketAddress> socketAddressSupplier,
+            Timer timer, EventExecutorGroup reconnectWorkers, Supplier<CompletionStage<SocketAddress>> socketAddressSupplier,
             ReconnectionListener reconnectionListener, ConnectionFacade connectionFacade, EventBus eventBus,
             Endpoint endpoint) {
 
@@ -111,8 +112,9 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
     }
 
     @Override
-    protected Mono<SocketAddress> wrapSocketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
-        Mono<SocketAddress> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
+    protected Supplier<CompletionStage<SocketAddress>> wrapSocketAddressSupplier(
+            Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
+        Supplier<CompletionStage<SocketAddress>> source = super.wrapSocketAddressSupplier(socketAddressSupplier);
         rebindAwareAddressSupplier = new RebindAwareAddressSupplier();
         return rebindAwareAddressSupplier.wrappedSupplier(source);
     }
@@ -405,22 +407,26 @@ public class MaintenanceAwareConnectionWatchdog extends ConnectionWatchdog imple
          * @param original the original supplier
          * @return a new supplier that is aware of re-bind events
          */
-        public Mono<SocketAddress> wrappedSupplier(Mono<SocketAddress> original) {
-            return Mono.defer(() -> {
+        public Supplier<CompletionStage<SocketAddress>> wrappedSupplier(Supplier<CompletionStage<SocketAddress>> original) {
+            return () -> {
                 State current = state.get();
                 logger.debug("RebindAwareAddressSupplier rebind state: {}", state.get());
                 if (current != null && current.rebindAddress != null && clock.instant().isBefore(current.cutoff)) {
                     logger.debug("RebindAwareAddressSupplier using rebind address: {}", state.get());
-                    return Mono.just(current.rebindAddress)
-                            .doOnSubscribe(s -> logger.debug("RebindAwareAddressSupplier subscribed to rebind address"))
-                            .doOnNext(address -> logger.debug("RebindAwareAddressSupplier rebind address: {}", address));
+                    logger.debug("RebindAwareAddressSupplier subscribed to rebind address");
+                    logger.debug("RebindAwareAddressSupplier rebind address: {}", current.rebindAddress);
+                    return java.util.concurrent.CompletableFuture.completedFuture(current.rebindAddress);
                 } else {
                     logger.debug("RebindAwareAddressSupplier falling back to original.");
                     state.compareAndSet(current, null);
-                    return original.doOnSubscribe(s -> logger.debug("RebindAwareAddressSupplier original to rebind address"))
-                            .doOnNext(address -> logger.debug("RebindAwareAddressSupplier original address: {}", address));
+                    logger.debug("RebindAwareAddressSupplier original to rebind address");
+                    return original.get().whenComplete((address, ex) -> {
+                        if (ex == null) {
+                            logger.debug("RebindAwareAddressSupplier original address: {}", address);
+                        }
+                    });
                 }
-            });
+            };
         }
 
     }

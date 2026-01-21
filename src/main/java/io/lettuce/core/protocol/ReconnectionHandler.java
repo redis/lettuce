@@ -24,17 +24,17 @@ import java.net.SocketAddress;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
-import reactor.util.function.Tuples;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisCommandTimeoutException;
 import io.lettuce.core.SslConnectionBuilder;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.internal.LettuceSets;
+import io.lettuce.core.internal.Pair;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -58,7 +58,7 @@ class ReconnectionHandler {
 
     private final Bootstrap bootstrap;
 
-    protected Mono<SocketAddress> socketAddressSupplier;
+    protected Supplier<CompletionStage<SocketAddress>> socketAddressSupplier;
 
     private final ConnectionFacade connectionFacade;
 
@@ -66,8 +66,9 @@ class ReconnectionHandler {
 
     private volatile boolean reconnectSuspended;
 
-    ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap, Mono<SocketAddress> socketAddressSupplier,
-            Timer timer, ExecutorService reconnectWorkers, ConnectionFacade connectionFacade) {
+    ReconnectionHandler(ClientOptions clientOptions, Bootstrap bootstrap,
+            Supplier<CompletionStage<SocketAddress>> socketAddressSupplier, Timer timer, ExecutorService reconnectWorkers,
+            ConnectionFacade connectionFacade) {
 
         LettuceAssert.notNull(socketAddressSupplier, "SocketAddressSupplier must not be null");
         LettuceAssert.notNull(bootstrap, "Bootstrap must not be null");
@@ -82,18 +83,26 @@ class ReconnectionHandler {
     }
 
     /**
-     * Initiate reconnect and return a {@link ChannelFuture} for synchronization. The resulting future either succeeds or fails.
-     * It can be {@link ChannelFuture#cancel(boolean) canceled} to interrupt reconnection and channel initialization. A failed
-     * {@link ChannelFuture} will close the channel.
+     * Initiate reconnect and return a {@link Pair} of futures for synchronization. The resulting future either succeeds or
+     * fails. It can be {@link CompletableFuture#cancel(boolean) canceled} to interrupt reconnection and channel initialization.
+     * A failed future will close the channel.
      *
-     * @return reconnect {@link ChannelFuture}.
+     * @return reconnect {@link Pair} containing channel future and address future.
      */
-    protected Tuple2<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnect() {
+    protected Pair<CompletableFuture<Channel>, CompletableFuture<SocketAddress>> reconnect() {
 
         CompletableFuture<Channel> future = new CompletableFuture<>();
         CompletableFuture<SocketAddress> address = new CompletableFuture<>();
 
-        socketAddressSupplier.subscribe(remoteAddress -> {
+        socketAddressSupplier.get().whenComplete((remoteAddress, ex) -> {
+
+            if (ex != null) {
+                if (!address.isDone()) {
+                    address.completeExceptionally(ex);
+                }
+                future.completeExceptionally(ex);
+                return;
+            }
 
             address.complete(remoteAddress);
 
@@ -102,16 +111,10 @@ class ReconnectionHandler {
             }
 
             reconnect0(future, remoteAddress);
-
-        }, ex -> {
-            if (!address.isDone()) {
-                address.completeExceptionally(ex);
-            }
-            future.completeExceptionally(ex);
         });
 
         this.currentFuture = future;
-        return Tuples.of(future, address);
+        return Pair.of(future, address);
     }
 
     private void reconnect0(CompletableFuture<Channel> result, SocketAddress remoteAddress) {

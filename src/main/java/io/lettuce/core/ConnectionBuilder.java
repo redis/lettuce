@@ -27,10 +27,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import java.util.concurrent.CompletionStage;
+
 import io.lettuce.core.protocol.MaintenanceAwareComponent;
 import io.lettuce.core.protocol.MaintenanceAwareConnectionWatchdog;
 import jdk.net.ExtendedSocketOptions;
-import reactor.core.publisher.Mono;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandEncoder;
 import io.lettuce.core.protocol.CommandHandler;
@@ -71,7 +72,7 @@ public class ConnectionBuilder {
 
     public static final AttributeKey<Throwable> INIT_FAILURE = AttributeKey.valueOf("ConnectionBuilder.INIT_FAILURE");
 
-    private Mono<SocketAddress> socketAddressSupplier;
+    private Supplier<CompletionStage<SocketAddress>> socketAddressSupplier;
 
     private ConnectionEvents connectionEvents;
 
@@ -181,12 +182,12 @@ public class ConnectionBuilder {
         return new PlainChannelInitializer(this::buildHandlers, clientResources);
     }
 
-    public ConnectionBuilder socketAddressSupplier(Mono<SocketAddress> socketAddressSupplier) {
+    public ConnectionBuilder socketAddressSupplier(Supplier<CompletionStage<SocketAddress>> socketAddressSupplier) {
         this.socketAddressSupplier = socketAddressSupplier;
         return this;
     }
 
-    public Mono<SocketAddress> socketAddress() {
+    public Supplier<CompletionStage<SocketAddress>> socketAddress() {
         LettuceAssert.assertState(socketAddressSupplier != null, "SocketAddressSupplier must be set");
         return socketAddressSupplier;
     }

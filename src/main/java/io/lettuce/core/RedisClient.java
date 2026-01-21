@@ -54,6 +54,7 @@ import io.lettuce.core.sentinel.StatefulRedisSentinelConnectionImpl;
 import io.lettuce.core.sentinel.api.StatefulRedisSentinelConnection;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+// TODO: Remove Reactor import after refactoring Sentinel lookup (Group 7)
 import reactor.core.publisher.Mono;
 
 /**
@@ -680,31 +681,34 @@ public class RedisClient extends AbstractRedisClient {
     }
 
     /**
-     * Get a {@link Mono} that resolves {@link RedisURI} to a {@link SocketAddress}. Resolution is performed either using Redis
+     * Get a supplier that resolves {@link RedisURI} to a {@link SocketAddress}. Resolution is performed either using Redis
      * Sentinel (if the {@link RedisURI} is configured with Sentinels) or via DNS resolution.
      * <p>
      * Subclasses of {@link RedisClient} may override that method.
      *
      * @param redisURI must not be {@code null}.
-     * @return the resolved {@link SocketAddress}.
+     * @return supplier of the resolved {@link SocketAddress}.
      * @see ClientResources#addressResolverGroup()
      * @see RedisURI#getSentinels()
      * @see RedisURI#getSentinelMasterId()
      */
-    protected Mono<SocketAddress> getSocketAddress(RedisURI redisURI) {
+    protected Supplier<CompletionStage<SocketAddress>> getSocketAddress(RedisURI redisURI) {
 
-        return Mono.defer(() -> {
+        return () -> {
 
             if (redisURI.getSentinelMasterId() != null && !redisURI.getSentinels().isEmpty()) {
-                logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinels(),
-                        redisURI.getSentinelMasterId());
-                return lookupRedis(redisURI).switchIfEmpty(Mono.error(new RedisConnectionException(
-                        "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId())));
+                logger.debug("Connecting to Redis using Sentinels {}, MasterId {}", redisURI.getSentinelMasterId());
+                // TODO: Refactor Sentinel lookup in Group 7 - for now use Reactor wrapper
+                return lookupRedis(redisURI)
+                        .switchIfEmpty(reactor.core.publisher.Mono.error(new RedisConnectionException(
+                                "Cannot provide redisAddress using sentinel for masterId " + redisURI.getSentinelMasterId())))
+                        .toFuture();
 
             } else {
-                return Mono.fromCallable(() -> getResources().socketAddressResolver().resolve((redisURI)));
+                // Simple case: synchronous resolution (default is UNRESOLVED which is instant)
+                return CompletableFuture.completedFuture(getResources().socketAddressResolver().resolve(redisURI));
             }
-        });
+        };
     }
 
     /**
@@ -735,11 +739,16 @@ public class RedisClient extends AbstractRedisClient {
         }
     }
 
-    private Mono<SocketAddress> getSocketAddressSupplier(RedisURI redisURI) {
-        return getSocketAddress(redisURI).doOnNext(addr -> logger.debug("Resolved SocketAddress {} using {}", addr, redisURI));
+    private Supplier<CompletionStage<SocketAddress>> getSocketAddressSupplier(RedisURI redisURI) {
+        Supplier<CompletionStage<SocketAddress>> supplier = getSocketAddress(redisURI);
+        return () -> supplier.get().whenComplete((addr, ex) -> {
+            if (ex == null) {
+                logger.debug("Resolved SocketAddress {} using {}", addr, redisURI);
+            }
+        });
     }
 
-    private Mono<SocketAddress> lookupRedis(RedisURI sentinelUri) {
+    private reactor.core.publisher.Mono<SocketAddress> lookupRedis(RedisURI sentinelUri) {
 
         Duration timeout = sentinelUri.getTimeout();
 

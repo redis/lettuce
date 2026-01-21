@@ -94,7 +94,8 @@ class AsyncConnectionProviderIntegrationTests {
                 redisURI.setTimeout(Duration.ofSeconds(5));
 
                 ConnectionFuture<StatefulRedisConnection<String, String>> future = client.connectToNodeAsync(StringCodec.UTF8,
-                        "", null, Mono.just(new InetSocketAddress(connectionKey.host, serverSocket.getLocalPort())));
+                        "", null, () -> java.util.concurrent.CompletableFuture
+                                .completedFuture(new InetSocketAddress(connectionKey.host, serverSocket.getLocalPort())));
 
                 connectInitiated.countDown();
 
