@@ -13,7 +13,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
  */
 @Experimental
 @FunctionalInterface
-public interface DatabaseRawConnectionFactory {
+public interface RawConnectionFactory {
 
     /**
      * Creates a new bare connection to the specified database endpoint. The connection is created without CircuitBreaker
@@ -22,6 +22,6 @@ public interface DatabaseRawConnectionFactory {
      * @param endpoint the Redis URI of the database endpoint
      * @return a new stateful Redis connection to the specified endpoint
      */
-    StatefulRedisConnection<?, ?> connectToDatabase(RedisURI endpoint);
+    StatefulRedisConnection<?, ?> create(RedisURI endpoint);
 
 }

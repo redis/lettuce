@@ -102,7 +102,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
     private HealthStatusManager healthStatusManager;
 
     @Mock
-    private DatabaseConnectionFactory<StatefulRedisConnection<String, String>, String, String> connectionFactory;
+    private DatabaseFactory<StatefulRedisConnection<String, String>, String, String> connectionFactory;
 
     private RedisCodec<String, String> codec;
 

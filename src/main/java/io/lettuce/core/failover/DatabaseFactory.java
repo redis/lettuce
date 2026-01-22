@@ -16,7 +16,7 @@ import io.lettuce.core.failover.health.HealthStatusManager;
  * @since 7.4
  */
 @FunctionalInterface
-interface DatabaseConnectionFactory<C extends StatefulRedisConnection<K, V>, K, V> {
+interface DatabaseFactory<C extends StatefulRedisConnection<K, V>, K, V> {
 
     /**
      * Create a new database connection for the given configuration.
