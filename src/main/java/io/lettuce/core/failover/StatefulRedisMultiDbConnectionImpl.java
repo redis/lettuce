@@ -389,7 +389,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     @Override
     public void close() {
         healthStatusManager.close();
-        databases.values().forEach(db -> db.getConnection().close());
+        databases.values().forEach(RedisDatabaseImpl::close);
     }
 
     @Override
