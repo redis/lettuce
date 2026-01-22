@@ -138,14 +138,11 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
         // Set a key on the current database
         TestFutures.awaitOrTimeout(connection.async().set("key1", "value1"));
+        waitForEndpoints(connection, 3, 2);
 
         RedisURI currentEndpoint = connection.getCurrentEndpoint();
-        RedisURI otherEndpoint = null;
-        await().atMost(Durations.ONE_SECOND).pollInterval(Duration.ofMillis(50)).untilAsserted(() -> {
-            StreamSupport.stream(connection.getEndpoints().spliterator(), false).filter(uri -> !uri.equals(currentEndpoint))
-                    .findFirst().orElse(null);
-            assertThat(otherEndpoint).isNotNull();
-        });
+        RedisURI otherEndpoint = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
+                .filter(uri -> !uri.equals(currentEndpoint)).findFirst().get();
 
         // Switch to the other database
         connection.switchTo(otherEndpoint);
