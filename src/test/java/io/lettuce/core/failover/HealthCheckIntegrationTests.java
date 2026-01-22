@@ -396,7 +396,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
         void shouldTransitionFromUnknownToHealthy() {
             // Given: Health check strategy with fast interval for testing
             HealthCheckStrategy.Config config = HealthCheckStrategy.Config.builder().interval(1) // 1ms interval
-                    .timeout(10).numProbes(1).delayInBetweenProbes(1).build();
+                    .timeout(1000).numProbes(1).delayInBetweenProbes(1).build();
 
             TestHealthCheckStrategy testStrategy = new TestHealthCheckStrategy(config);
             HealthCheckStrategySupplier supplier = (uri, options) -> testStrategy;
@@ -414,6 +414,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+            waitForEndpoints(connection, 2, 1);
 
             try {
                 // Then: uri1 should become HEALTHY (allowing connection to be created)

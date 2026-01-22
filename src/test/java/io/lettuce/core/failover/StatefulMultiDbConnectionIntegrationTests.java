@@ -37,8 +37,6 @@ import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 
 import org.awaitility.Durations;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,18 +68,6 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     @Inject
     StatefulMultiDbConnectionIntegrationTests(MultiDbClient client) {
         super(client);
-    }
-
-    @BeforeEach
-    void setUp() {
-        directClient1.connect().sync().flushall();
-        directClient2.connect().sync().flushall();
-    }
-
-    @AfterEach
-    void tearDownAfter() {
-        directClient1.shutdown();
-        directClient2.shutdown();
     }
 
     // ============ Basic Connection Tests ============

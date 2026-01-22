@@ -76,16 +76,12 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
     @BeforeEach
     void setUp() {
         multiDbConn = multiDbClient.connectPubSub();
-        directClient1.connect().sync().flushall();
-        directClient2.connect().sync().flushall();
         waitForEndpoints(multiDbConn, 3, 2);
     }
 
     @AfterEach
     void tearDown() {
         multiDbConn.close();
-        directClient1.shutdown();
-        directClient2.shutdown();
     }
 
     // ============ Basic PubSub Connection Tests ============

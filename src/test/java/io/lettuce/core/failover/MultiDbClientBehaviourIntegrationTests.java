@@ -108,16 +108,9 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
 
     @AfterEach
     void tearDownEach() {
-
         // Close connections
         if (multiDbConnection != null) {
             multiDbConnection.close();
-        }
-        if (directConnection1 != null) {
-            directConnection1.close();
-        }
-        if (directConnection2 != null) {
-            directConnection2.close();
         }
     }
 
