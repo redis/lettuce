@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.concurrent.CompletableFuture;
+
 import javax.inject.Inject;
 
 import io.lettuce.authx.TokenBasedRedisCredentialsProvider;
@@ -26,7 +28,6 @@ import io.lettuce.test.LettuceExtension;
 import io.lettuce.test.WithPassword;
 import io.lettuce.test.condition.EnabledOnCommand;
 import io.lettuce.test.settings.TestSettings;
-import reactor.core.publisher.Mono;
 import redis.clients.authentication.core.SimpleToken;
 import redis.clients.authentication.core.TokenManagerConfig;
 
@@ -80,7 +81,7 @@ class AuthenticationIntegrationTests extends TestSupport {
     void ownCredentialProvider(RedisClient client) {
 
         RedisURI uri = RedisURI.builder().withHost(TestSettings.host()).withPort(TestSettings.port()).withAuthentication(() -> {
-            return Mono.just(RedisCredentials.just(null, TestSettings.password()));
+            return CompletableFuture.completedFuture(RedisCredentials.just(null, TestSettings.password()));
         }).build();
 
         client.setOptions(ClientOptions.create());

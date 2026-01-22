@@ -1,7 +1,8 @@
 package io.lettuce.core;
 
+import java.util.concurrent.CompletionStage;
+
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 /**
@@ -20,9 +21,9 @@ public class MyStreamingRedisCredentialsProvider implements RedisCredentialsProv
     }
 
     @Override
-    public Mono<RedisCredentials> resolveCredentials() {
+    public CompletionStage<RedisCredentials> resolveCredentials() {
 
-        return credentialsSink.asFlux().next();
+        return credentialsSink.asFlux().next().toFuture();
     }
 
     public Flux<RedisCredentials> credentials() {

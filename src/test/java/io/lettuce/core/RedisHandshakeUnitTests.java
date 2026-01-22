@@ -329,8 +329,8 @@ class RedisHandshakeUnitTests {
         private final Sinks.One<RedisCredentials> credentialsSink = Sinks.one();
 
         @Override
-        public Mono<RedisCredentials> resolveCredentials() {
-            return credentialsSink.asMono();
+        public CompletionStage<RedisCredentials> resolveCredentials() {
+            return credentialsSink.asMono().toFuture();
         }
 
         public void completeCredentials(RedisCredentials credentials) {

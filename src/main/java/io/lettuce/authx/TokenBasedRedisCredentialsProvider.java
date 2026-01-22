@@ -6,6 +6,8 @@
  */
 package io.lettuce.authx;
 
+import java.util.concurrent.CompletionStage;
+
 import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisCredentialsProvider;
 import org.slf4j.Logger;
@@ -78,18 +80,18 @@ public class TokenBasedRedisCredentialsProvider implements RedisCredentialsProvi
     }
 
     /**
-     * Resolve the latest available credentials as a Mono.
+     * Resolve the latest available credentials as a CompletionStage.
      * <p>
-     * This method returns a Mono that emits the most recent set of Redis credentials. The Mono will complete once the
-     * credentials are emitted. If no credentials are available at the time of subscription, the Mono will wait until
-     * credentials are available.
+     * This method returns a CompletionStage that completes with the most recent set of Redis credentials. The CompletionStage
+     * will complete once the credentials are available. If no credentials are available at the time of invocation, it will wait
+     * until credentials are available.
      *
-     * @return a Mono that emits the latest Redis credentials
+     * @return a CompletionStage that completes with the latest Redis credentials
      */
     @Override
-    public Mono<RedisCredentials> resolveCredentials() {
+    public CompletionStage<RedisCredentials> resolveCredentials() {
 
-        return credentialsSink.asFlux().next();
+        return credentialsSink.asFlux().next().toFuture();
     }
 
     /**

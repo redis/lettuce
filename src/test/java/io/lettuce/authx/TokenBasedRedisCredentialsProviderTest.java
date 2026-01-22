@@ -37,7 +37,7 @@ public class TokenBasedRedisCredentialsProviderTest {
     public void shouldReturnPreviouslyEmittedTokenWhenResolved() {
         tokenManager.emitToken(testToken("test-user", "token-1"));
 
-        Mono<RedisCredentials> credentials = credentialsProvider.resolveCredentials();
+        Mono<RedisCredentials> credentials = Mono.fromCompletionStage(credentialsProvider.resolveCredentials());
 
         StepVerifier.create(credentials).assertNext(actual -> {
             assertThat(actual.getUsername()).isEqualTo("test-user");
@@ -50,7 +50,7 @@ public class TokenBasedRedisCredentialsProviderTest {
         tokenManager.emitToken(testToken("test-user", "token-2"));
         tokenManager.emitToken(testToken("test-user", "token-3")); // Latest token
 
-        Mono<RedisCredentials> credentials = credentialsProvider.resolveCredentials();
+        Mono<RedisCredentials> credentials = Mono.fromCompletionStage(credentialsProvider.resolveCredentials());
 
         StepVerifier.create(credentials).assertNext(actual -> {
             assertThat(actual.getUsername()).isEqualTo("test-user");
@@ -64,7 +64,7 @@ public class TokenBasedRedisCredentialsProviderTest {
         tokenManager.emitToken(testToken("test-user", "token-1"));
 
         // Test resolveCredentials
-        Mono<RedisCredentials> credentials1 = credentialsProvider.resolveCredentials();
+        Mono<RedisCredentials> credentials1 = Mono.fromCompletionStage(credentialsProvider.resolveCredentials());
 
         StepVerifier.create(credentials1).assertNext(actual -> {
             assertThat(actual.getUsername()).isEqualTo("test-user");
@@ -74,7 +74,7 @@ public class TokenBasedRedisCredentialsProviderTest {
         // Emit second token and subscribe another
         tokenManager.emitToken(testToken("test-user", "token-2"));
         tokenManager.emitToken(testToken("test-user", "token-3"));
-        Mono<RedisCredentials> credentials2 = credentialsProvider.resolveCredentials();
+        Mono<RedisCredentials> credentials2 = Mono.fromCompletionStage(credentialsProvider.resolveCredentials());
         StepVerifier.create(credentials2).assertNext(actual -> {
             assertThat(actual.getUsername()).isEqualTo("test-user");
             assertThat(new String(actual.getPassword())).isEqualTo("token-3");
@@ -83,7 +83,7 @@ public class TokenBasedRedisCredentialsProviderTest {
 
     @Test
     public void shouldWaitForAndReturnTokenWhenEmittedLater() {
-        Mono<RedisCredentials> result = credentialsProvider.resolveCredentials();
+        Mono<RedisCredentials> result = Mono.fromCompletionStage(credentialsProvider.resolveCredentials());
 
         tokenManager.emitTokenWithDelay(testToken("test-user", "delayed-token"), 100); // Emit token after 100ms
         StepVerifier.create(result)
