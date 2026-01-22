@@ -27,7 +27,7 @@ start:
 	echo "Environment work directory: $(REDIS_ENV_WORK_DIR)"; \
 	rm -rf "$(REDIS_ENV_WORK_DIR)"; \
 	mkdir -p "$(REDIS_ENV_WORK_DIR)"; \
-	docker compose $$env_files -f src/test/resources/docker-env/docker-compose.yml --parallel 1 up -d; \
+	docker compose $$env_files -f src/test/resources/docker-env/docker-compose.yml --parallel 1 up -d --build --force-recreate; \
 	echo "Started test environment with Redis version $$version."
 
 

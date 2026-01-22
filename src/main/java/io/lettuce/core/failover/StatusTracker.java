@@ -6,6 +6,7 @@ import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusListener;
 import io.lettuce.core.failover.health.HealthStatusManager;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
 
 import java.util.concurrent.CompletableFuture;
@@ -26,6 +27,8 @@ class StatusTracker {
     private final ScheduledExecutorService scheduler;
 
     public StatusTracker(HealthStatusManager healthStatusManager, ClientResources clientResources) {
+        LettuceAssert.notNull(healthStatusManager, "HealthStatusManager must not be null");
+        LettuceAssert.notNull(clientResources, "ClientResources must not be null");
         this.healthStatusManager = healthStatusManager;
         this.scheduler = clientResources.eventExecutorGroup();
     }
@@ -38,6 +41,7 @@ class StatusTracker {
      * @return CompletableFuture that completes with the determined health status (HEALTHY or UNHEALTHY)
      */
     public CompletableFuture<HealthStatus> waitForHealthStatusAsync(RedisURI endpoint) {
+        LettuceAssert.notNull(endpoint, "Endpoint must not be null");
         // First check if status is already determined
         HealthStatus currentStatus = healthStatusManager.getHealthStatus(endpoint);
         if (currentStatus != HealthStatus.UNKNOWN) {

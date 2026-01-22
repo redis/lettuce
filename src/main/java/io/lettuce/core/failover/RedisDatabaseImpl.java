@@ -100,7 +100,7 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
 
     @Override
     public HealthStatus getHealthCheckStatus() {
-        return healthCheck != null ? healthCheck.getStatus() : HealthStatus.UNKNOWN;
+        return healthCheck != null ? healthCheck.getStatus() : HealthStatus.HEALTHY;
     }
 
     @Override

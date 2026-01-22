@@ -166,7 +166,15 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
 
                 MC conn = null;
                 Exception capturedFailure = null;
-                RedisDatabaseImpl<SC> selected = findInitialDbCandidate(sortedConfigs, databaseFutures, initialDb);
+                RedisDatabaseImpl<SC> selected = null;
+
+                try {
+                    selected = findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, initialDb);
+                } catch (Exception e) {
+                    // this should not happen in theory, but if it does, lets stop playing wizard.
+                    logger.error("Error while finding initial db candidate", e);
+                    connectionFuture.completeExceptionally(e);
+                }
                 try {
                     if (selected != null) {
                         logger.info("Selected {} as primary database", selected);
@@ -376,21 +384,16 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
      *
      * @param sortedConfigs list of database configurations sorted by weight (descending)
      * @param databaseFutures map of database creation futures
+     * @param healthStatusFutures
      * @param initialDb atomic reference for storing the selected database
      * @return the selected database, or {@code null} if no suitable candidate is available yet
      */
     RedisDatabaseImpl<SC> findInitialDbCandidate(List<DatabaseConfig> sortedConfigs, DatabaseFutureMap<SC> databaseFutures,
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures,
             AtomicReference<RedisDatabaseImpl<SC>> initialDb) {
 
         for (DatabaseConfig config : sortedConfigs) {
             CompletableFuture<RedisDatabaseImpl<SC>> dbFuture = databaseFutures.get(config.getRedisURI());
-
-            // Check if the connection has failed (future completed exceptionally)
-            if (dbFuture.isCompletedExceptionally()) {
-                // Connection failed - skip to next weighted endpoint
-                logger.debug("Skipping failed database connection for {}", config.getRedisURI());
-                continue;
-            }
 
             // Check if database connection is not yet complete
             if (!dbFuture.isDone()) {
@@ -398,18 +401,33 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                 return null;
             }
 
-            // At this point, the future is done and not exceptionally completed, so we can get the database
-            RedisDatabaseImpl<SC> database = dbFuture.getNow(null);
+            // Check if the connection has failed (future completed exceptionally)
+            if (dbFuture.isCompletedExceptionally()) {
+                // Connection failed - skip to next weighted endpoint
+                // logger.debug("Skipping failed database connection for {}", config.getRedisURI());
+                continue;
+            }
 
-            // this means we have a connection for most weighted one but not yet received a health check result.
-            // this is a bit awkward expression below; its purely due to NO_HEALTH_CHECK configuration results with UNKNOWN
-            if (database.getHealthCheck() != null && database.getHealthCheckStatus() == HealthStatus.UNKNOWN) {
+            CompletableFuture<HealthStatus> healthStatusFurue = healthStatusFutures.get(config.getRedisURI());
+
+            // Check if health check is not yet complete
+            if (!healthStatusFurue.isDone()) {
+                // Health check is still pending - wait for highest weighted to complete
                 return null;
             }
 
-            // we have a connection and health check result where all prior(more weighted) databases are unhealthy.
+            // Check if the health check has failed (future completed exceptionally)
+            if (healthStatusFurue.isCompletedExceptionally()) {
+                // Health check failed - skip to next weighted endpoint
+                continue;
+            }
+
+            HealthStatus healthStatus = healthStatusFurue.getNow(HealthStatus.UNKNOWN);
+
+            // we have a connection and health check result where all prior(more weighted) databases are unhealthy or failed
             // So this one is the best bet we have so far.
-            if (database.getHealthCheck() == null || database.getHealthCheckStatus().isHealthy()) {
+            if (healthStatus.isHealthy()) {
+                RedisDatabaseImpl<SC> database = dbFuture.getNow(null);
                 if (initialDb.compareAndSet(null, database)) {
                     return database;
                 }
@@ -439,7 +457,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
             // check if none of the databases are healthy, no need to wait more, just fail.
             boolean noneHealthy = healthStatusFutures.values().stream()
                     .filter(singleFuture -> !singleFuture.isCompletedExceptionally())
-                    .map(singleFuture -> singleFuture.getNow(null)).noneMatch(status -> status.isHealthy());
+                    .map(singleFuture -> singleFuture.getNow(null)).noneMatch(status -> status == HealthStatus.HEALTHY);
 
             if (noneHealthy) {
                 // here it means we have all databases completed and all health checks completed,

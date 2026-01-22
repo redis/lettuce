@@ -332,10 +332,14 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             databaseFutures.put(uri1, CompletableFuture.completedFuture(db1));
             databaseFutures.put(uri2, CompletableFuture.completedFuture(db2));
 
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
+            healthStatusFutures.put(uri1, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+            healthStatusFutures.put(uri2, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
 
             assertThat(selected).isNotNull();
             assertThat(selected).isSameAs(db1);
@@ -351,10 +355,14 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             databaseFutures.put(uri1, new CompletableFuture<>());
             databaseFutures.put(uri2, CompletableFuture.completedFuture(db2));
 
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
+            healthStatusFutures.put(uri1, new CompletableFuture<>());
+            healthStatusFutures.put(uri2, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
 
             assertThat(selected).isNull();
         }
@@ -366,14 +374,15 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> db1 = createMockDatabase(config1, mockConnection1,
                     mockHealthCheck1);
 
-            when(mockHealthCheck1.getStatus()).thenReturn(HealthStatus.UNKNOWN);
-
             databaseFutures.put(uri1, CompletableFuture.completedFuture(db1));
+
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
+            healthStatusFutures.put(uri1, new CompletableFuture<>()); // Not completed
 
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
 
             assertThat(selected).isNull();
         }
@@ -387,16 +396,17 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> db2 = createMockDatabase(config2, mockConnection2,
                     mockHealthCheck2);
 
-            when(mockHealthCheck1.getStatus()).thenReturn(HealthStatus.UNHEALTHY);
-            when(mockHealthCheck2.getStatus()).thenReturn(HealthStatus.HEALTHY);
-
             databaseFutures.put(uri1, CompletableFuture.completedFuture(db1));
             databaseFutures.put(uri2, CompletableFuture.completedFuture(db2));
+
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
+            healthStatusFutures.put(uri1, CompletableFuture.completedFuture(HealthStatus.UNHEALTHY));
+            healthStatusFutures.put(uri2, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
 
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
 
             assertThat(selected).isNotNull();
             assertThat(selected).isSameAs(db2);
@@ -412,17 +422,21 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             databaseFutures.put(uri1, CompletableFuture.completedFuture(db1));
             databaseFutures.put(uri2, CompletableFuture.completedFuture(db2));
 
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
+            healthStatusFutures.put(uri1, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+            healthStatusFutures.put(uri2, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
             AtomicReference<RedisDatabaseImpl<StatefulRedisConnection<String, String>>> initialDb = new AtomicReference<>();
 
             // First call should select db1
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected1 = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, initialDb);
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, initialDb);
 
             // Second call should return null because atomic reference is already set
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected2 = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, initialDb);
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, initialDb);
 
             assertThat(selected1).isNotNull();
             assertThat(selected1).isSameAs(db1);
@@ -441,10 +455,14 @@ class MultiDbAsyncConnectionBuilderUnitTests {
             databaseFutures.put(uri1, failedFuture);
             databaseFutures.put(uri2, CompletableFuture.completedFuture(db2));
 
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures = new HashMap<>();
+            // No health status future for uri1 since connection failed
+            healthStatusFutures.put(uri2, CompletableFuture.completedFuture(HealthStatus.HEALTHY));
+
             List<DatabaseConfig> sortedConfigs = Arrays.asList(config1, config2);
 
             RedisDatabaseImpl<StatefulRedisConnection<String, String>> selected = regularBuilder
-                    .findInitialDbCandidate(sortedConfigs, databaseFutures, new AtomicReference<>());
+                    .findInitialDbCandidate(sortedConfigs, databaseFutures, healthStatusFutures, new AtomicReference<>());
 
             assertThat(selected).isNotNull();
             assertThat(selected).isSameAs(db2);
