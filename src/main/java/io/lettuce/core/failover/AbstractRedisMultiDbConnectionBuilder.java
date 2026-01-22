@@ -398,13 +398,14 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
             // Check if database connection is not yet complete
             if (!dbFuture.isDone()) {
                 // Connection is still pending - wait for highest weighted to complete
+                logger.debug("Waiting for database connection to complete for {}", config.getRedisURI());
                 return null;
             }
 
             // Check if the connection has failed (future completed exceptionally)
             if (dbFuture.isCompletedExceptionally()) {
                 // Connection failed - skip to next weighted endpoint
-                // logger.debug("Skipping failed database connection for {}", config.getRedisURI());
+                logger.debug("Skipping failed database connection for {}", config.getRedisURI());
                 continue;
             }
 
@@ -412,6 +413,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
 
             // Check if health check is not yet complete
             if (!healthStatusFurue.isDone()) {
+                logger.debug("Waiting for health check to complete for {}", config.getRedisURI());
                 // Health check is still pending - wait for highest weighted to complete
                 return null;
             }
@@ -419,6 +421,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
             // Check if the health check has failed (future completed exceptionally)
             if (healthStatusFurue.isCompletedExceptionally()) {
                 // Health check failed - skip to next weighted endpoint
+                logger.debug("Skipping database with failed health check for {}", config.getRedisURI());
                 continue;
             }
 
@@ -432,6 +435,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                     return database;
                 }
             }
+            logger.debug("Database {} is not healthy, skipping", config.getRedisURI());
         }
         return null;
     }
