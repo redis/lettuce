@@ -37,8 +37,6 @@ import java.util.stream.StreamSupport;
 import javax.inject.Inject;
 
 import org.awaitility.Durations;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,18 +70,6 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         super(client);
     }
 
-    @BeforeEach
-    void setUp() {
-        directClient1.connect().sync().flushall();
-        directClient2.connect().sync().flushall();
-    }
-
-    @AfterEach
-    void tearDownAfter() {
-        directClient1.shutdown();
-        directClient2.shutdown();
-    }
-
     // ============ Basic Connection Tests ============
 
     @Test
@@ -106,6 +92,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     @Test
     void shouldListAllEndpoints() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
         Iterable<RedisURI> endpoints = connection.getEndpoints();
         assertThat(endpoints).isNotNull();
         assertThat(StreamSupport.stream(endpoints.spliterator(), false).count()).isGreaterThanOrEqualTo(2);
@@ -216,6 +203,9 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     void shouldMaintainDataAfterSwitch() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
 
+        // Wait for at least 3 endpoints to be available
+        waitForEndpoints(connection, 3, 2);
+
         // Set value in first database
         connection.sync().set("persistKey", "persistValue");
         RedisURI firstDb = connection.getCurrentEndpoint();
@@ -237,6 +227,9 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     @Test
     void shouldSwitchAndExecuteCommandsAsync() throws Exception {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+
+        // Wait for at least 3 endpoints to be available
+        waitForEndpoints(connection, 3, 2);
 
         // Set value in first database
         RedisFuture<String> setFuture1 = connection.async().set("asyncSwitchKey", "asyncValue1");
@@ -262,6 +255,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     @Test
     void shouldHandleMultipleSwitches() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
         RedisURI firstDb = connection.getCurrentEndpoint();
         RedisURI secondDb = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
                 .filter(uri -> !uri.equals(firstDb)).findFirst().get();
@@ -334,6 +328,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     @Test
     void shouldAddDatabase() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
 
         // Get initial endpoint count
         List<RedisURI> initialEndpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
@@ -408,6 +403,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     @Test
     void shouldRejectRemovingLastDatabase() {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
 
         // Get all endpoints
         List<RedisURI> endpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false)
@@ -494,6 +490,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     @Test
     void shouldHandleConcurrentAddsAndRemovesOnMultipleUris() throws Exception {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
         int initialEndpoints = StreamSupport.stream(connection.getEndpoints().spliterator(), false).collect(Collectors.toList())
                 .size();
         int portOffset = StreamSupport.stream(connection.getEndpoints().spliterator(), false).mapToInt(u -> u.getPort()).max()

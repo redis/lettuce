@@ -13,6 +13,7 @@ services:
       - "8474:8474"   # Admin API
       - "9479:9479"   # Proxy port for redis instance 1
       - "9480:9480"   # Proxy port for redis instance 2
+      - "9481:9481"   # Proxy port for redis instance 3
     networks:
       - redis-network
 

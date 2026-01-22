@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -17,6 +16,7 @@ import java.util.function.Predicate;
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisAsyncCommandsImpl;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
@@ -37,6 +37,7 @@ import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.internal.AbstractInvocationHandler;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
@@ -61,7 +62,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     protected final HealthStatusManager healthStatusManager;
 
-    // this should not be null ever after succesfull initialization
+    // this should not be null ever after successful initialization
     protected volatile RedisDatabaseImpl<C> current;
 
     protected final RedisCommands<K, V> sync;
@@ -86,36 +87,70 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private final ClientResources clientResources;
 
-    public StatefulRedisMultiDbConnectionImpl(Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources,
-            RedisCodec<K, V> codec, DatabaseConnectionFactory<C, K, V> connectionFactory,
-            HealthStatusManager healthStatusManager) {
+    public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
+            Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
+            DatabaseConnectionFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
+            RedisDatabaseAsyncCompletion<C> completion) {
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
         }
         LettuceAssert.notNull(healthStatusManager, "healthStatusManager must not be null");
 
         this.databases = new ConcurrentHashMap<>(connections);
+
         this.clientResources = resources;
         this.codec = codec;
         this.connectionFactory = connectionFactory;
         this.healthStatusManager = healthStatusManager;
 
+        // Set current BEFORE registering listeners to avoid race condition where
+        // onHealthStatusChange or onCircuitBreakerStateChange are triggered before current is set
+        if (initialDatabase == null) {
+            this.current = getNextHealthyDatabase(null);
+        } else {
+            this.current = initialDatabase;
+        }
+
+        if (current == null) {
+            throw new IllegalStateException("InitialDatabase must not be null");
+        }
+
+        // Now register listeners - they can safely access current
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
         databases.values().forEach(db -> healthStatusManager.registerListener(db.getRedisURI(), this::onHealthStatusChange));
 
-        // TODO: Current implementation forces all database connections to be created and established (at least once before this
-        // constructor called).
-        // This is suboptimal and should be replaced with a logic that uses async connection creation and state management,
-        // which safely starts with at least one healthy connection.
-
-        // TODO: It is error prone to leave the possibility of setting null as current connection.
-        // Either we should identify and wait for healthy connection right here or pass it from outside as already identified as
-        // healthy
-        this.current = getNextHealthyDatabase(null);
+        // Re-validate that current is still healthy after registering listeners
+        // This handles the case where the initial database became unhealthy between selection and listener registration
+        RedisDatabaseImpl<C> instance = current;
+        if (!DatabasePredicates.isHealthyAndCbClosed.test(instance)) {
+            failoverFrom(instance, SwitchReason.FORCED);
+            // if still unhealthy after failoverFrom, lets stop here
+            if (!DatabasePredicates.isHealthyAndCbClosed.test(current)) {
+                // remove listeners as we are going to throw an exception
+                databases.values().forEach(db -> db.getCircuitBreaker().removeListener(this::onCircuitBreakerStateChange));
+                databases.values()
+                        .forEach(db -> healthStatusManager.unregisterListener(db.getRedisURI(), this::onHealthStatusChange));
+                throw new IllegalStateException("No healthy database available");
+            }
+        }
 
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
+        if (completion != null) {
+            completion.whenComplete(this::onDatabaseCompletion);
+        }
+    }
+
+    private void onDatabaseCompletion(RedisDatabaseImpl<C> db, Throwable e) {
+        if (db != null) {
+            doByExclusiveLock(() -> {
+                databases.putIfAbsent(db.getRedisURI(), db);
+            });
+            logger.info("Async database connection completed successfully for {}", db.getRedisURI());
+        } else if (e != null) {
+            logger.error("Async database connection failed: {}", e.getMessage(), e);
+        }
     }
 
     private void onCircuitBreakerStateChange(CircuitBreakerStateChangeEvent event) {
@@ -156,7 +191,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         }
 
         if (!event.getNewStatus().isHealthy() && isCurrent(database)) {
-            logger.info("Database {} is unhealthy, failing over if current", database.getId());
+            logger.info("Current database {} became unhealthy, initiating failover", database.getId());
             failoverFrom(database, SwitchReason.HEALTH_CHECK);
         }
     }
@@ -165,12 +200,37 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return database == current;
     }
 
+    /**
+     * Maximum number of failover recursion attempts to prevent infinite loops and stack overflow.
+     * <p>
+     * This limit covers both:
+     * <ul>
+     * <li>Retry attempts when a switch operation fails</li>
+     * <li>Cascading failovers when the newly selected database becomes unhealthy during the switch</li>
+     * </ul>
+     * <p>
+     * The value of 10 is chosen as a safety net to prevent potential infinite loops in pathological scenarios where all
+     * databases are unhealthy or rapidly changing state. In normal operation, failover should succeed within 1-2 attempts.
+     */
+    private static final int MAX_FAILOVER_RECURSION = 10;
+
     private void failoverFrom(RedisDatabaseImpl<C> fromDb, SwitchReason reason) {
+        failoverFromRecursive(fromDb, reason, 0);
+    }
+
+    private void failoverFromRecursive(RedisDatabaseImpl<C> fromDb, SwitchReason reason, int recursionAttempt) {
+        if (MAX_FAILOVER_RECURSION <= recursionAttempt++) {
+            logger.warn("Max failover attempts ({}) reached, staying on current database {}", MAX_FAILOVER_RECURSION,
+                    current.getId());
+            return;
+        }
+
         RedisDatabaseImpl<C> selectedDatabase = getNextHealthyDatabase(fromDb);
 
         if (selectedDatabase != null) {
             if (logger.isInfoEnabled()) {
-                logger.info("Initiating failover from {} to {}", fromDb.getId(), selectedDatabase.getId());
+                logger.info("Initiating failover from {} to {} (attempt: {})", fromDb.getId(), selectedDatabase.getId(),
+                        recursionAttempt);
             }
             if (safeSwitch(selectedDatabase, true, reason)) {
                 if (logger.isInfoEnabled()) {
@@ -178,18 +238,21 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 }
                 // check if we missed any events during the switch
                 if (!DatabasePredicates.isHealthyAndCbClosed.test(selectedDatabase)) {
-                    failoverFrom(selectedDatabase, reason);
+                    logger.warn("Database {} became unhealthy during failover, attempting cascading failover",
+                            selectedDatabase.getId());
+                    failoverFromRecursive(selectedDatabase, reason, recursionAttempt);
                 }
             } else {
                 if (logger.isInfoEnabled()) {
-                    logger.info("Failover attempt from {} to {} has failed!! Retrying failover one more time...",
-                            fromDb.getId(), selectedDatabase.getId());
+                    logger.info("Failover attempt from {} to {} has failed, retrying...", fromDb.getId(),
+                            selectedDatabase.getId());
                 }
-                failoverFrom(fromDb, reason);
+                failoverFromRecursive(fromDb, reason, recursionAttempt);
             }
         } else {
             // No healthy database found, stay on the current one
-            // TODO: manage max attempts to failover
+            // TODO: manage max attempts to failover, to throw some proper exception to notify
+            // user that failovers are not recovering
             logger.info("No healthy database found, staying on current database {}", fromDb.getId());
         }
     }
@@ -234,7 +297,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisCommands}. Can be overriden to extend.
+     * Create a new instance of {@link RedisCommands}. Can be overridden to extend.
      *
      * @return a new instance
      */
@@ -242,6 +305,17 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return syncHandler(async(), RedisCommands.class, RedisClusterCommands.class);
     }
 
+    /**
+     * Create a synchronous command handler proxy for the given async API.
+     * <p>
+     * This method creates a dynamic proxy that wraps the async API and provides synchronous command execution by blocking on
+     * futures.
+     *
+     * @param asyncApi the async API to wrap
+     * @param interfaces the interfaces to implement
+     * @param <T> the type of the proxy
+     * @return a synchronous command handler proxy
+     */
     @SuppressWarnings("unchecked")
     protected <T> T syncHandler(Object asyncApi, Class<?>... interfaces) {
         AbstractInvocationHandler h = new MultiDbFutureSyncInvocationHandler(this, asyncApi, interfaces);
@@ -249,7 +323,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overriden to extend.
+     * Create a new instance of {@link RedisAsyncCommandsImpl}. Can be overridden to extend.
      *
      * @return a new instance
      */
@@ -263,7 +337,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     /**
-     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overriden to extend.
+     * Create a new instance of {@link RedisReactiveCommandsImpl}. Can be overridden to extend.
      *
      * @return a new instance
      */
@@ -315,7 +389,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     @Override
     public void close() {
         healthStatusManager.close();
-        databases.values().forEach(db -> db.getConnection().close());
+        databases.values().forEach(RedisDatabaseImpl::close);
     }
 
     @Override
@@ -442,20 +516,19 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             RedisDatabaseImpl<C> fromDb = current;
             RedisDatabaseImpl<C> toDb = databases.get(database.getRedisURI());
 
-            switchContext.fromUri = fromDb.getRedisURI();
-            switchContext.toUri = toDb.getRedisURI();
-
             if (!verifySwitch(database, fromDb, toDb, internalCall)) {
                 return;
             }
 
+            switchContext.fromUri = fromDb.getRedisURI();
+            switchContext.toUri = toDb.getRedisURI();
+
+            switchContext.switched = true;
             if (fromDb == toDb) {
                 // Nothing to do, already on the right database
-                switchContext.switched = true;
                 return;
             }
 
-            switchContext.switched = true;
             current = toDb;
             logger.info("Switched to database {}", toDb.getId());
 
@@ -491,8 +564,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * Extension point for subclasses to perform additional operations after a database switch. This method is called within the
      * exclusive lock.
      *
-     * @param fromDb
-     * @param toDb
+     * @param fromDb the database being switched from
+     * @param toDb the database being switched to
      */
     protected void doOnSwitch(RedisDatabaseImpl<C> fromDb, RedisDatabaseImpl<C> toDb) {
         // NOOP
@@ -572,6 +645,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         return true;
     }
 
+    /**
+     * Execute an operation under a shared (read) lock.
+     * <p>
+     * This method acquires the read lock before executing the operation and releases it afterwards. Multiple threads can hold
+     * the read lock simultaneously as long as no thread holds the write lock.
+     *
+     * @param operation the operation to execute
+     */
     protected void doBySharedLock(Runnable operation) {
         readLock.lock();
         try {
@@ -581,6 +662,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         }
     }
 
+    /**
+     * Execute an operation under an exclusive (write) lock.
+     * <p>
+     * This method acquires the write lock before executing the operation and releases it afterwards. Only one thread can hold
+     * the write lock at a time, and no other threads can hold the read lock while the write lock is held.
+     *
+     * @param operation the operation to execute
+     */
     protected void doByExclusiveLock(Runnable operation) {
         writeLock.lock();
         try {
@@ -640,14 +729,21 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             healthStatusManager.registerListener(redisURI, this::onHealthStatusChange);
 
             // Create new database connection using the factory
-            RedisDatabaseImpl<C> database = connectionFactory.createDatabase(databaseConfig, codec, healthStatusManager);
+            CompletableFuture<RedisDatabaseImpl<C>> databaseFuture = connectionFactory.createDatabaseAsync(databaseConfig,
+                    healthStatusManager);
+            try {
+                RedisDatabaseImpl<C> database = databaseFuture.get();
+                databases.put(redisURI, database);
 
-            // Add listeners to the new connection if it's the current one
-            // (though it won't be current initially since we're just adding it)
-            databases.put(redisURI, database);
-
-            database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
-
+                // Add listeners to the new connection if it's the current one
+                // (though it won't be current initially since we're just adding it)
+                database.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw RedisConnectionException.create(e);
+            } catch (Exception e) {
+                throw RedisConnectionException.create(Exceptions.unwrap(e));
+            }
         });
 
     }

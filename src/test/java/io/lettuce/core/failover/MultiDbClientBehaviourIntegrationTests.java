@@ -101,20 +101,16 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
         multiDbConnection = multiDbClient.connect();
         directConnection1 = directClient1.connect();
         directConnection2 = directClient2.connect();
+
+        // Wait for at least 3 endpoints to be available
+        waitForEndpoints(multiDbConnection, 3, 2);
     }
 
     @AfterEach
     void tearDownEach() {
-
         // Close connections
         if (multiDbConnection != null) {
             multiDbConnection.close();
-        }
-        if (directConnection1 != null) {
-            directConnection1.close();
-        }
-        if (directConnection2 != null) {
-            directConnection2.close();
         }
     }
 

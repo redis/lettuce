@@ -62,6 +62,8 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
     private final StatefulRedisPubSubConnection<String, String> conn2;
 
+    private StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn;
+
     @Inject
     StatefulMultiDbPubSubConnectionIntegrationTests(MultiDbClient client) {
         super(client);
@@ -73,43 +75,42 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
     @BeforeEach
     void setUp() {
-        directClient1.connect().sync().flushall();
-        directClient2.connect().sync().flushall();
+        multiDbConn = multiDbClient.connectPubSub();
+        waitForEndpoints(multiDbConn, 3, 2);
     }
 
     @AfterEach
     void tearDown() {
-        directClient1.shutdown();
-        directClient2.shutdown();
+        multiDbConn.close();
     }
 
     // ============ Basic PubSub Connection Tests ============
 
     @Test
     void shouldConnectPubSubToMultipleEndpoints() {
-        StatefulRedisMultiDbPubSubConnection<String, String> connection = multiDbClient.connectPubSub();
-        assertNotNull(connection);
-        assertThat(connection.getEndpoints()).isNotNull();
-        connection.close();
+        // StatefulRedisMultiDbPubSubConnection<String, String> connection = multiDbClient.connectPubSub();
+        assertNotNull(multiDbConn);
+        assertThat(multiDbConn.getEndpoints()).isNotNull();
+        multiDbConn.close();
     }
 
     @Test
     void shouldGetCurrentEndpointForPubSub() {
-        StatefulRedisMultiDbPubSubConnection<String, String> connection = multiDbClient.connectPubSub();
-        RedisURI currentEndpoint = connection.getCurrentEndpoint();
+        // StatefulRedisMultiDbPubSubConnection<String, String> connection = multiDbClient.connectPubSub();
+        RedisURI currentEndpoint = multiDbConn.getCurrentEndpoint();
         assertNotNull(currentEndpoint);
-        assertThat(currentEndpoint).isIn(connection.getEndpoints());
-        connection.close();
+        assertThat(currentEndpoint).isIn(multiDbConn.getEndpoints());
+        multiDbConn.close();
     }
 
     // ============ Basic PubSub Functionality Tests ============
 
     @Test
     void shouldSubscribeToChannel() throws Exception {
-        StatefulRedisMultiDbPubSubConnection<String, String> pubsub = multiDbClient.connectPubSub();
+        // StatefulRedisMultiDbPubSubConnection<String, String> pubsub = multiDbClient.connectPubSub();
         BlockingQueue<String> channels = LettuceFactories.newBlockingQueue();
 
-        pubsub.addListener(new RedisPubSubAdapter<String, String>() {
+        multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
             @Override
             public void subscribed(String channel, long count) {
@@ -118,18 +119,17 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
         });
 
-        pubsub.sync().subscribe("testchannel");
+        multiDbConn.sync().subscribe("testchannel");
         String channel = channels.take();
         assertEquals("testchannel", channel);
-        pubsub.close();
+        multiDbConn.close();
     }
 
     @Test
     void shouldPublishAndReceiveMessage() throws Exception {
-        StatefulRedisMultiDbPubSubConnection<String, String> pubsub = multiDbClient.connectPubSub();
         BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
 
-        pubsub.addListener(new RedisPubSubAdapter<String, String>() {
+        multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
             @Override
             public void message(String channel, String message) {
@@ -138,16 +138,17 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
         });
 
-        pubsub.sync().subscribe("msgchannel");
+        multiDbConn.sync().subscribe("msgchannel");
 
         // Publish message from another connection
         StatefulRedisMultiDbPubSubConnection<String, String> publisher = multiDbClient.connectPubSub();
+        waitForEndpoints(publisher, 3, 2);
         publisher.sync().publish("msgchannel", "Hello World");
 
         String message = messages.take();
         assertEquals("Hello World", message);
 
-        pubsub.close();
+        multiDbConn.close();
         publisher.close();
     }
 
@@ -171,253 +172,235 @@ class StatefulMultiDbPubSubConnectionIntegrationTests extends MultiDbTestSupport
 
     @Test
     void shouldMaintainSubscriptionAfterDatabaseSwitch() throws Exception {
-        try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
+        BlockingQueue<String> channels = LettuceFactories.newBlockingQueue();
+        BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
+        multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
-            BlockingQueue<String> channels = LettuceFactories.newBlockingQueue();
-            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
-            multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
+            @Override
+            public void subscribed(String channel, long count) {
+                channels.add(channel);
+            }
 
-                @Override
-                public void subscribed(String channel, long count) {
-                    channels.add(channel);
-                }
+            @Override
+            public void message(String channel, String message) {
+                messages.add(message);
+            }
 
-                @Override
-                public void message(String channel, String message) {
-                    messages.add(message);
-                }
+        });
 
-            });
+        // Subscribe on first database
+        multiDbConn.sync().subscribe("channel1");
+        String channel = channels.take();
+        assertEquals("channel1", channel);
 
-            // Subscribe on first database
-            multiDbConn.sync().subscribe("channel1");
-            String channel = channels.take();
-            assertEquals("channel1", channel);
+        waitForSubscription(conn1, messages, "channel1");
 
-            waitForSubscription(conn1, messages, "channel1");
+        // Switch to second database
+        multiDbConn.switchTo(secondEndpoint);
 
-            // Switch to second database
-            multiDbConn.switchTo(secondEndpoint);
+        // Verify subscription is re-established on second database
+        waitForSubscription(conn2, messages, "channel1");
 
-            // Verify subscription is re-established on second database
-            waitForSubscription(conn2, messages, "channel1");
-
-            assertThat(conn2.sync().pubsubChannels()).contains("channel1");
-        }
+        assertThat(conn2.sync().pubsubChannels()).contains("channel1");
     }
 
     @Test
     void shouldReceiveMessagesAfterDatabaseSwitch() throws Exception {
-        try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
+        BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
+        multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
-            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
-            multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
+            @Override
+            public void message(String channel, String message) {
+                messages.add(message);
+            }
 
-                @Override
-                public void message(String channel, String message) {
-                    messages.add(message);
-                }
+        });
 
-            });
+        // Subscribe on first database
+        multiDbConn.sync().subscribe("switchchannel");
 
-            // Subscribe on first database
-            multiDbConn.sync().subscribe("switchchannel");
+        waitForSubscription(conn1, messages, "switchchannel");
 
-            waitForSubscription(conn1, messages, "switchchannel");
+        // Switch to second database - subscriptions are automatically re-subscribed
+        multiDbConn.switchTo(secondEndpoint);
 
-            // Switch to second database - subscriptions are automatically re-subscribed
-            multiDbConn.switchTo(secondEndpoint);
+        // Verify subscription is established on second database
+        waitForSubscription(conn2, messages, "switchchannel");
+        assertThat(conn2.sync().pubsubChannels()).contains("switchchannel");
 
-            // Verify subscription is established on second database
-            waitForSubscription(conn2, messages, "switchchannel");
-            assertThat(conn2.sync().pubsubChannels()).contains("switchchannel");
+        // Publish from second database
+        conn2.sync().publish("switchchannel", "Message after switch");
 
-            // Publish from second database
-            conn2.sync().publish("switchchannel", "Message after switch");
-
-            String message = messages.poll(1, TimeUnit.SECONDS);
-            assertEquals("Message after switch", message);
-        }
+        String message = messages.poll(1, TimeUnit.SECONDS);
+        assertEquals("Message after switch", message);
     }
 
     @Test
     void shouldHandleMultipleDatabaseSwitchesWithPubSub() throws Exception {
-        try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
+        BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
+        multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
-            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
-            multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
+            @Override
+            public void message(String channel, String message) {
+                messages.add(message);
+            }
 
-                @Override
-                public void message(String channel, String message) {
-                    messages.add(message);
-                }
+        });
 
-            });
+        // Subscribe on first database
+        multiDbConn.sync().subscribe("multichannel");
 
-            // Subscribe on first database
-            multiDbConn.sync().subscribe("multichannel");
+        waitForSubscription(conn1, messages, "multichannel");
 
-            waitForSubscription(conn1, messages, "multichannel");
+        // Switch to second database
+        multiDbConn.switchTo(secondEndpoint);
 
-            // Switch to second database
-            multiDbConn.switchTo(secondEndpoint);
+        // Verify subscription on second database
+        waitForSubscription(conn2, messages, "multichannel");
+        assertThat(conn2.sync().pubsubChannels()).contains("multichannel");
 
-            // Verify subscription on second database
-            waitForSubscription(conn2, messages, "multichannel");
-            assertThat(conn2.sync().pubsubChannels()).contains("multichannel");
+        // Switch back to first database
+        multiDbConn.switchTo(firstEndpoint);
 
-            // Switch back to first database
-            multiDbConn.switchTo(firstEndpoint);
+        // Verify subscription on first database again
+        waitForSubscription(conn1, messages, "multichannel");
+        assertThat(conn1.sync().pubsubChannels()).contains("multichannel");
 
-            // Verify subscription on first database again
-            waitForSubscription(conn1, messages, "multichannel");
-            assertThat(conn1.sync().pubsubChannels()).contains("multichannel");
+        // Publish on first database
+        conn1.sync().publish("multichannel", "Message from DB1");
 
-            // Publish on first database
-            conn1.sync().publish("multichannel", "Message from DB1");
-
-            String message = messages.poll(1, TimeUnit.SECONDS);
-            assertEquals("Message from DB1", message);
-        }
+        String message = messages.poll(1, TimeUnit.SECONDS);
+        assertEquals("Message from DB1", message);
     }
 
     @Test
     void shouldHandleListenerAdditionAfterSwitch() throws Exception {
-        try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
+        BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
 
-            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
+        // Add initial listener
+        multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
-            // Add initial listener
-            multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
+            @Override
+            public void message(String channel, String message) {
+                messages.add(message);
+            }
 
-                @Override
-                public void message(String channel, String message) {
-                    messages.add(message);
-                }
+        });
 
-            });
+        // Subscribe on first database
+        multiDbConn.sync().subscribe("listenertest");
 
-            // Subscribe on first database
-            multiDbConn.sync().subscribe("listenertest");
+        waitForSubscription(conn1, messages, "listenertest");
 
-            waitForSubscription(conn1, messages, "listenertest");
+        // Switch to second database
+        multiDbConn.switchTo(secondEndpoint);
 
-            // Switch to second database
-            multiDbConn.switchTo(secondEndpoint);
+        // Verify subscription on second database
+        waitForSubscription(conn2, messages, "listenertest");
+        assertThat(conn2.sync().pubsubChannels()).contains("listenertest");
 
-            // Verify subscription on second database
-            waitForSubscription(conn2, messages, "listenertest");
-            assertThat(conn2.sync().pubsubChannels()).contains("listenertest");
+        // Add another listener after switch
+        BlockingQueue<String> messages2 = LettuceFactories.newBlockingQueue();
+        multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
-            // Add another listener after switch
-            BlockingQueue<String> messages2 = LettuceFactories.newBlockingQueue();
-            multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
+            @Override
+            public void message(String channel, String message) {
+                messages2.add(message);
+            }
 
-                @Override
-                public void message(String channel, String message) {
-                    messages2.add(message);
-                }
+        });
 
-            });
+        // Publish on second database
+        conn2.sync().publish("listenertest", "Listener test message");
 
-            // Publish on second database
-            conn2.sync().publish("listenertest", "Listener test message");
+        // Both listeners should receive the message
+        String message1 = messages.poll(1, TimeUnit.SECONDS);
+        assertEquals("Listener test message", message1);
 
-            // Both listeners should receive the message
-            String message1 = messages.poll(1, TimeUnit.SECONDS);
-            assertEquals("Listener test message", message1);
-
-            String message2 = messages2.poll(1, TimeUnit.SECONDS);
-            assertEquals("Listener test message", message2);
-        }
+        String message2 = messages2.poll(1, TimeUnit.SECONDS);
+        assertEquals("Listener test message", message2);
     }
 
     // ============ Tests for Isolation After Database Switch ============
 
     @Test
     void shouldNotReceiveMessagesFromOldEndpointAfterSwitch() throws Exception {
-        try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
+        BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
+        multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
-            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
-            multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
+            @Override
+            public void message(String channel, String message) {
+                messages.add(message);
+            }
 
-                @Override
-                public void message(String channel, String message) {
-                    messages.add(message);
-                }
+        });
+        // Subscribe on first database
+        multiDbConn.sync().subscribe("isolationtest");
 
-            });
-            // Subscribe on first database
-            multiDbConn.sync().subscribe("isolationtest");
+        waitForSubscription(conn1, messages, "isolationtest");
 
-            waitForSubscription(conn1, messages, "isolationtest");
+        // Switch to second database
+        multiDbConn.switchTo(secondEndpoint);
 
-            // Switch to second database
-            multiDbConn.switchTo(secondEndpoint);
+        waitForSubscription(conn2, messages, "isolationtest");
+        assertThat(conn2.sync().pubsubChannels()).contains("isolationtest");
 
-            waitForSubscription(conn2, messages, "isolationtest");
-            assertThat(conn2.sync().pubsubChannels()).contains("isolationtest");
+        assertThat(conn1.sync().pubsubChannels()).doesNotContain("isolationtest");
 
-            assertThat(conn1.sync().pubsubChannels()).doesNotContain("isolationtest");
+        // Publish on the OLD endpoint (firstEndpoint) - should NOT be received
+        conn1.sync().publish("isolationtest", "Message from first db");
 
-            // Publish on the OLD endpoint (firstEndpoint) - should NOT be received
-            conn1.sync().publish("isolationtest", "Message from first db");
+        conn2.sync().publish("isolationtest", "Message from second db");
 
-            conn2.sync().publish("isolationtest", "Message from second db");
+        // We should only receive the message from the second endpoint
+        String message = messages.poll(1, TimeUnit.SECONDS);
+        assertEquals("Message from second db", message);
 
-            // We should only receive the message from the second endpoint
-            String message = messages.poll(1, TimeUnit.SECONDS);
-            assertEquals("Message from second db", message);
-
-            // Verify no additional messages are received (old endpoint message should not arrive)
-            String unexpectedMessage = messages.poll(500, TimeUnit.MILLISECONDS);
-            assertThat(unexpectedMessage).isNull();
-        }
+        // Verify no additional messages are received (old endpoint message should not arrive)
+        String unexpectedMessage = messages.poll(500, TimeUnit.MILLISECONDS);
+        assertThat(unexpectedMessage).isNull();
     }
 
     @Test
     void shouldUnsubscribeChannelsFromOldEndpointAfterSwitch() throws Exception {
-        try (StatefulRedisMultiDbPubSubConnection<String, String> multiDbConn = multiDbClient.connectPubSub()) {
+        BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
+        multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
 
-            BlockingQueue<String> messages = LettuceFactories.newBlockingQueue();
-            multiDbConn.addListener(new RedisPubSubAdapter<String, String>() {
+            @Override
+            public void message(String channel, String message) {
+                messages.add(message);
+            }
 
-                @Override
-                public void message(String channel, String message) {
-                    messages.add(message);
-                }
+        });
 
-            });
+        // Subscribe on first database
+        multiDbConn.sync().subscribe("unsubtest");
 
-            // Subscribe on first database
-            multiDbConn.sync().subscribe("unsubtest");
+        waitForSubscription(conn1, messages, "unsubtest");
 
-            waitForSubscription(conn1, messages, "unsubtest");
+        // Switch to second database - this should trigger unsubscribe on old endpoint
+        multiDbConn.switchTo(secondEndpoint);
 
-            // Switch to second database - this should trigger unsubscribe on old endpoint
-            multiDbConn.switchTo(secondEndpoint);
+        // Verify subscription is established on second database
+        waitForSubscription(conn2, messages, "unsubtest");
+        assertThat(conn2.sync().pubsubChannels()).contains("unsubtest");
 
-            // Verify subscription is established on second database
-            waitForSubscription(conn2, messages, "unsubtest");
-            assertThat(conn2.sync().pubsubChannels()).contains("unsubtest");
+        // Verify that the old endpoint no longer has the subscription
+        assertThat(conn1.sync().pubsubChannels()).doesNotContain("unsubtest");
 
-            // Verify that the old endpoint no longer has the subscription
-            assertThat(conn1.sync().pubsubChannels()).doesNotContain("unsubtest");
+        // Publish on the old endpoint - should NOT be received
+        conn1.sync().publish("unsubtest", "Message from old endpoint after unsubscribe");
 
-            // Publish on the old endpoint - should NOT be received
-            conn1.sync().publish("unsubtest", "Message from old endpoint after unsubscribe");
+        // Publish on the new endpoint - should be received
+        conn2.sync().publish("unsubtest", "Message from new endpoint");
 
-            // Publish on the new endpoint - should be received
-            conn2.sync().publish("unsubtest", "Message from new endpoint");
+        // We should only receive the message from the new endpoint
+        String message = messages.poll(1, TimeUnit.SECONDS);
+        assertEquals("Message from new endpoint", message);
 
-            // We should only receive the message from the new endpoint
-            String message = messages.poll(1, TimeUnit.SECONDS);
-            assertEquals("Message from new endpoint", message);
-
-            // Verify no additional messages are received (old endpoint message should not arrive)
-            String unexpectedMessage = messages.poll(500, TimeUnit.MILLISECONDS);
-            assertThat(unexpectedMessage).isNull();
-        }
+        // Verify no additional messages are received (old endpoint message should not arrive)
+        String unexpectedMessage = messages.poll(500, TimeUnit.MILLISECONDS);
+        assertThat(unexpectedMessage).isNull();
     }
 
 }
