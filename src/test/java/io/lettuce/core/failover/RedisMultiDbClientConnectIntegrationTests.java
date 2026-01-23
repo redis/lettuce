@@ -29,8 +29,6 @@ import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
-import org.junit.After;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -54,18 +52,6 @@ class RedisMultiDbClientConnectIntegrationTests extends MultiDbTestSupport {
     @Inject
     RedisMultiDbClientConnectIntegrationTests(MultiDbClient client) {
         super(client);
-    }
-
-    @BeforeEach
-    void setUp() {
-        directClient1.connect().sync().flushall();
-        directClient2.connect().sync().flushall();
-    }
-
-    @After
-    void tearDown() {
-        directClient1.shutdown();
-        directClient2.shutdown();
     }
 
     /*
@@ -100,6 +86,7 @@ class RedisMultiDbClientConnectIntegrationTests extends MultiDbTestSupport {
     @Test
     void connectAndRunAndSwitchAndRun() throws InterruptedException, ExecutionException {
         StatefulRedisMultiDbConnection<String, String> connection = multiDbClient.connect();
+        waitForEndpoints(connection, 3, 2);
         RedisFuture futureSet = connection.async().set("key1", "value1");
         TestFutures.awaitOrTimeout(futureSet);
         RedisFuture<String> futureGet = connection.async().get("key1");

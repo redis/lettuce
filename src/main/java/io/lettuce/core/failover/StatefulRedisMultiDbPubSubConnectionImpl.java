@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+
 import io.lettuce.core.RedisFuture;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
@@ -36,11 +36,25 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
 
     private final Set<RedisPubSubListener<K, V>> pubSubListeners = ConcurrentHashMap.newKeySet();
 
-    public StatefulRedisMultiDbPubSubConnectionImpl(
+    /**
+     * Create a new multi-database PubSub connection with an initial database.
+     * <p>
+     * This constructor is used when an initial healthy database is available at construction time.
+     *
+     * @param initialDatabase the initial database to use
+     * @param connections the map of database connections
+     * @param resources the client resources
+     * @param codec the Redis codec
+     * @param connectionFactory the connection factory for creating new database connections
+     * @param healthStatusManager the health status manager
+     * @param completion the async completion handler for database initialization
+     */
+    public StatefulRedisMultiDbPubSubConnectionImpl(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
             RedisCodec<K, V> codec, DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
-            HealthStatusManager healthStatusManager) {
-        super(connections, resources, codec, connectionFactory, healthStatusManager);
+            HealthStatusManager healthStatusManager,
+            RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
+        super(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion);
     }
 
     @Override
@@ -60,6 +74,7 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RedisPubSubAsyncCommands<K, V> async() {
         return (RedisPubSubAsyncCommands<K, V>) async;
     }
@@ -80,6 +95,7 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public RedisPubSubReactiveCommands<K, V> reactive() {
         return (RedisPubSubReactiveCommands<K, V>) reactive;
     }
@@ -115,6 +131,16 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
         moveSubscriptions(fromDb, current);
     }
 
+    /**
+     * Move all PubSub subscriptions from one database to another.
+     * <p>
+     * This method migrates channel subscriptions, shard channel subscriptions, and pattern subscriptions from the source
+     * database to the target database. It re-subscribes to all active subscriptions on the new database and unsubscribes from
+     * the old database on a best-effort basis.
+     *
+     * @param fromDb the source database to move subscriptions from
+     * @param toDb the target database to move subscriptions to
+     */
     @SuppressWarnings("unchecked")
     public void moveSubscriptions(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> fromDb,
             RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> toDb) {

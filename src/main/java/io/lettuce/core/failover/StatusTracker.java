@@ -6,14 +6,13 @@ import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.HealthStatusChangeEvent;
 import io.lettuce.core.failover.health.HealthStatusListener;
 import io.lettuce.core.failover.health.HealthStatusManager;
+import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.resource.ClientResources;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Utility class for tracking health status changes for specific endpoints.
@@ -28,67 +27,10 @@ class StatusTracker {
     private final ScheduledExecutorService scheduler;
 
     public StatusTracker(HealthStatusManager healthStatusManager, ClientResources clientResources) {
+        LettuceAssert.notNull(healthStatusManager, "HealthStatusManager must not be null");
+        LettuceAssert.notNull(clientResources, "ClientResources must not be null");
         this.healthStatusManager = healthStatusManager;
         this.scheduler = clientResources.eventExecutorGroup();
-    }
-
-    /**
-     * Waits for a specific endpoint's health status to be determined (not UNKNOWN). Uses event-driven approach with
-     * CountDownLatch to avoid polling.
-     *
-     * @param endpoint the endpoint to wait for
-     * @return the determined health status (HEALTHY or UNHEALTHY)
-     * @throws RedisConnectionException if interrupted while waiting or if a timeout occurs
-     */
-    public HealthStatus waitForHealthStatus(RedisURI endpoint) {
-        // First check if status is already determined
-        HealthStatus currentStatus = healthStatusManager.getHealthStatus(endpoint);
-        if (currentStatus != HealthStatus.UNKNOWN) {
-            return currentStatus;
-        }
-
-        // Set up event-driven waiting
-        final CountDownLatch latch = new CountDownLatch(1);
-        final AtomicReference<HealthStatus> resultStatus = new AtomicReference<>();
-
-        // Create a temporary listener for this specific endpoint
-        HealthStatusListener tempListener = new HealthStatusListener() {
-
-            @Override
-            public void onStatusChange(HealthStatusChangeEvent event) {
-                if (event.getEndpoint().equals(endpoint) && event.getNewStatus() != HealthStatus.UNKNOWN) {
-                    resultStatus.set(event.getNewStatus());
-                    latch.countDown();
-                }
-            }
-
-        };
-
-        // Register the temporary listener
-        healthStatusManager.registerListener(endpoint, tempListener);
-
-        try {
-            // Double-check status after registering listener (race condition protection)
-            currentStatus = healthStatusManager.getHealthStatus(endpoint);
-            if (currentStatus != HealthStatus.UNKNOWN) {
-                return currentStatus;
-            }
-
-            // Wait for the health status change event
-            // just for safety to not block indefinitely
-            boolean completed = latch.await(healthStatusManager.getMaxWaitFor(endpoint), TimeUnit.MILLISECONDS);
-            if (!completed) {
-                throw new RedisConnectionException("Timeout while waiting for health check result");
-            }
-            return resultStatus.get();
-
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RedisConnectionException("Interrupted while waiting for health check result", e);
-        } finally {
-            // Clean up: unregister the temporary listener
-            healthStatusManager.unregisterListener(endpoint, tempListener);
-        }
     }
 
     /**
@@ -99,6 +41,7 @@ class StatusTracker {
      * @return CompletableFuture that completes with the determined health status (HEALTHY or UNHEALTHY)
      */
     public CompletableFuture<HealthStatus> waitForHealthStatusAsync(RedisURI endpoint) {
+        LettuceAssert.notNull(endpoint, "Endpoint must not be null");
         // First check if status is already determined
         HealthStatus currentStatus = healthStatusManager.getHealthStatus(endpoint);
         if (currentStatus != HealthStatus.UNKNOWN) {

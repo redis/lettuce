@@ -1,9 +1,11 @@
 package io.lettuce.core.failover;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,9 +14,12 @@ import io.lettuce.core.ClientOptions;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.TestSupport;
+import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
 import io.lettuce.test.settings.TestSettings;
 
 import static io.lettuce.core.failover.health.HealthCheckStrategySupplier.NO_HEALTH_CHECK;
+import static org.awaitility.Awaitility.await;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Ali Takavci
@@ -106,6 +111,35 @@ public class MultiDbTestSupport extends TestSupport {
             weight /= 2;
         }
         return endpoints;
+    }
+
+    /**
+     * Wait for at least the specified number of endpoints to be available in the connection. This is necessary because the new
+     * implementation returns the connection as soon as ONE healthy database is found, and other databases continue connecting
+     * asynchronously.
+     *
+     * @param connection the multi-database connection
+     * @param minEndpoints minimum number of endpoints to wait for
+     * @param timeout maximum time to wait
+     */
+    protected static void waitForEndpoints(BaseRedisMultiDbConnection connection, int minEndpoints, Duration timeout) {
+        await().atMost(timeout).pollInterval(Duration.ofMillis(50)).untilAsserted(() -> {
+            long count = StreamSupport.stream(connection.getEndpoints().spliterator(), false).count();
+            assertThat(count).isGreaterThanOrEqualTo(minEndpoints);
+        });
+    }
+
+    /**
+     * Wait for at least the specified number of endpoints to be available in the connection. This is necessary because the new
+     * implementation returns the connection as soon as ONE healthy database is found, and other databases continue connecting
+     * asynchronously.
+     *
+     * @param connection the multi-database connection
+     * @param minEndpoints minimum number of endpoints to wait for
+     * @param timeout maximum time to wait
+     */
+    protected static void waitForEndpoints(BaseRedisMultiDbConnection connection, int minEndpoints, int seconds) {
+        waitForEndpoints(connection, minEndpoints, Duration.ofSeconds(seconds));
     }
 
 }

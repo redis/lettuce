@@ -121,7 +121,7 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
         client = MultiDbClient.create(Arrays.asList(db1, db2));
 
         // Connect asynchronously
-        MultiDbConnectionFuture<String, String> future = client.connectAsync(StringCodec.UTF8);
+        MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client.connectAsync(StringCodec.UTF8);
 
         connection = future.get(10, TimeUnit.SECONDS);
 
@@ -165,7 +165,9 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
         List<CompletableFuture<StatefulRedisMultiDbConnection<String, String>>> futures = new ArrayList<>();
 
         for (int i = 0; i < numConnections; i++) {
-            MultiDbConnectionFuture<String, String> future = client.connectAsync(StringCodec.UTF8);
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+                    .connectAsync(StringCodec.UTF8);
+
             futures.add(future.toCompletableFuture());
         }
 
@@ -267,8 +269,8 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
         assertThat(wrapper.operations).hasSize(8);
         assertThat(wrapper.operations).extracting("operation").containsExactly("set", "remove", "set", "remove", "set",
                 "remove", "set", "remove");
-        // it contains 4 sets with non null options object and the exact same values should show up in 4 removes with exact same
-        // threads and options instances.
+        // it contains 4 sets with non null options object and the exact same values should show up in 4 removes with
+        // exact same threads and options instances.
         // so each pair received from queue should be matching with threads and options objects
         for (int i = 0; i < 4; i++) {
             OperationInfo set = wrapper.operations.poll();
@@ -309,7 +311,7 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
 
         ReflectionTestUtils.setField(client, "localClientOptions", wrapper);
 
-        MultiDbConnectionFuture<String, String> future = client.connectAsync(StringCodec.UTF8);
+        MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client.connectAsync(StringCodec.UTF8);
 
         // Capture the async callback thread
         future.whenComplete((conn, throwable) -> {

@@ -1,7 +1,8 @@
 package io.lettuce.core.failover;
 
+import java.util.concurrent.CompletableFuture;
+
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.health.HealthStatusManager;
 
 /**
@@ -24,6 +25,6 @@ interface DatabaseConnectionFactory<C extends StatefulRedisConnection<K, V>, K, 
      * @param codec the codec to use for encoding/decoding
      * @return a new RedisDatabase instance
      */
-    RedisDatabaseImpl<C> createDatabase(DatabaseConfig config, RedisCodec<K, V> codec, HealthStatusManager healthStatusManager);
+    CompletableFuture<RedisDatabaseImpl<C>> createDatabaseAsync(DatabaseConfig config, HealthStatusManager healthStatusManager);
 
 }
