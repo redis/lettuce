@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 
+import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.StatefulRedisConnection;
 
 /**
@@ -14,7 +15,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
  *
  * @param <SC> the connection type
  */
-class RedisDatabaseAsyncCompletion<SC extends StatefulRedisConnection<?, ?>> {
+class RedisDatabaseAsyncCompletion<SC extends StatefulRedisConnection<?, ?>> implements AsyncCloseable {
 
     private final List<CompletableFuture<RedisDatabaseImpl<SC>>> databaseFutures;
 
@@ -32,8 +33,20 @@ class RedisDatabaseAsyncCompletion<SC extends StatefulRedisConnection<?, ?>> {
      *
      * @param action the callback to invoke with the database instance or exception
      */
-    void whenComplete(BiConsumer<RedisDatabaseImpl<SC>, Throwable> action) {
-        databaseFutures.forEach(future -> future.whenComplete(action));
+    @SuppressWarnings({ "unchecked" })
+    CompletableFuture<RedisDatabaseImpl<SC>>[] whenComplete(BiConsumer<RedisDatabaseImpl<SC>, Throwable> action) {
+        // lets return array of void futures for each future.whenComplete(action)
+        return databaseFutures.stream().map(f -> f.whenComplete(action)).toArray(CompletableFuture[]::new);
+    }
+
+    @Override
+    public CompletableFuture<Void> closeAsync() {
+        return CompletableFuture.allOf(databaseFutures.stream().map(f -> f.exceptionally(e -> null).thenCompose(db -> {
+            if (db != null) {
+                return db.closeAsync();
+            }
+            return CompletableFuture.completedFuture(null);
+        })).toArray(CompletableFuture[]::new));
     }
 
 }

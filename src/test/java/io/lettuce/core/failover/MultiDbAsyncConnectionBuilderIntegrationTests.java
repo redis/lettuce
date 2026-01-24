@@ -5,9 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
+import java.io.Closeable;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,19 +71,15 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
     // Non-existent endpoint for connection failures
     private static final RedisURI NONEXISTENT_URI = RedisURI.create(TestSettings.host(), TestSettings.nonexistentPort());
 
-    private MultiDbClient client;
+    private MultiDbClient forCleanup;
 
     private StatefulRedisMultiDbConnection<String, String> connection;
 
     @AfterEach
     void tearDown() {
-        if (connection != null && connection.isOpen()) {
-            connection.close();
-            connection = null;
-        }
-        if (client != null) {
-            client.shutdown();
-            client = null;
+        if (forCleanup != null) {
+            forCleanup.shutdown();
+            forCleanup = null;
         }
     }
 
@@ -135,6 +132,8 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
      */
     static class TestMultiDbAsyncConnectionBuilder<K, V> extends MultiDbAsyncConnectionBuilder<K, V> {
 
+        private static Collection<Closeable> closeableResources = ConcurrentHashMap.newKeySet();
+
         private final Set<RedisURI> hangingUris;
 
         private final Map<RedisURI, CompletableFuture<StatefulRedisConnection<K, V>>> hangingFutures = new ConcurrentHashMap<>();
@@ -143,7 +142,7 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
 
         TestMultiDbAsyncConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec,
                 Set<RedisURI> hangingUris) {
-            super(client, resources, codec);
+            super(client, resources, codec, closeableResources);
             this.hangingUris = hangingUris;
         }
 
@@ -191,10 +190,11 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
                     .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
 
-            client = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            forCleanup = testClient;
 
             // When: Connect asynchronously
-            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
                     .connectAsync(StringCodec.UTF8);
 
             // Then: Should select highest weighted endpoint (REDIS_URI_1)
@@ -217,10 +217,11 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
                     .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
 
-            client = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            forCleanup = testClient;
 
             // When: Connect asynchronously
-            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
                     .connectAsync(StringCodec.UTF8);
 
             // Then: Should select second highest weighted endpoint (REDIS_URI_2)
@@ -243,10 +244,11 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
                     .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
 
-            client = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            forCleanup = testClient;
 
             // When: Connect asynchronously
-            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
                     .connectAsync(StringCodec.UTF8);
 
             // Then: Should select lowest weighted endpoint (REDIS_URI_3)
@@ -282,6 +284,7 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             Set<RedisURI> hangingUris = new HashSet<>();
             hangingUris.add(REDIS_URI_1);
             TestMultiDbClient testClient = new TestMultiDbClient(Arrays.asList(config1, config2, config3), hangingUris);
+            forCleanup = testClient;
 
             // When: Connect asynchronously
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
@@ -315,10 +318,10 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             Set<RedisURI> hangingUris = new HashSet<>();
             hangingUris.add(REDIS_URI_3);
             TestMultiDbClient testClient = new TestMultiDbClient(Arrays.asList(config1, config2, config3), hangingUris);
-            client = testClient;
+            forCleanup = testClient;
 
             // When: Connect asynchronously
-            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
                     .connectAsync(StringCodec.UTF8);
 
             // Then: Future should complete quickly with REDIS_URI_1 (not blocked by REDIS_URI_3)
@@ -361,10 +364,11 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
                     .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
 
-            client = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            forCleanup = testClient;
 
             // When: Connect asynchronously
-            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
                     .connectAsync(StringCodec.UTF8);
 
             // Then: Should skip failing endpoint and select REDIS_URI_2
@@ -391,10 +395,11 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
                             .socketOptions(SocketOptions.builder().connectTimeout(Duration.ofSeconds(1)).build()).build())
                     .healthCheckStrategySupplier(HealthCheckStrategySupplier.NO_HEALTH_CHECK).build();
 
-            client = MultiDbClient.create(Arrays.asList(config1, config2));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+            forCleanup = testClient;
 
             // When/Then: Connect should fail with RedisConnectionException
-            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
                     .connectAsync(StringCodec.UTF8);
 
             assertThatThrownBy(() -> {
@@ -435,10 +440,11 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             DatabaseConfig config3 = DatabaseConfig.builder(REDIS_URI_3).weight(0.25f)
                     .healthCheckStrategySupplier(createAlwaysHealthySupplier()).build();
 
-            client = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2, config3));
+            forCleanup = testClient;
 
             // When: Connect asynchronously
-            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
                     .connectAsync(StringCodec.UTF8);
 
             // Then: Should skip hanging health check and select REDIS_URI_2
@@ -475,10 +481,11 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             DatabaseConfig config2 = DatabaseConfig.builder(REDIS_URI_2).weight(0.5f).healthCheckStrategySupplier(slowSupplier)
                     .build();
 
-            client = MultiDbClient.create(Arrays.asList(config1, config2));
+            MultiDbClient testClient = MultiDbClient.create(Arrays.asList(config1, config2));
+            forCleanup = testClient;
 
             // When: Connect asynchronously
-            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
                     .connectAsync(StringCodec.UTF8);
 
             // Then: Should eventually select highest weighted endpoint
@@ -524,6 +531,7 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             Set<RedisURI> hangingUris = new HashSet<>();
             hangingUris.add(REDIS_URI_1);
             TestMultiDbClient testClient = new TestMultiDbClient(Arrays.asList(config1, config2, config3), hangingUris);
+            forCleanup = testClient;
 
             // When: Connect asynchronously - should NOT complete yet
             MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
@@ -558,10 +566,10 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
             Set<RedisURI> hangingUris = new HashSet<>();
             hangingUris.add(REDIS_URI_2);
             TestMultiDbClient testClient = new TestMultiDbClient(Arrays.asList(config1, config2, config3), hangingUris);
-            client = testClient;
+            forCleanup = testClient;
 
             // When: Connect asynchronously
-            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client
+            MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = testClient
                     .connectAsync(StringCodec.UTF8);
 
             // Then: Should complete quickly with REDIS_URI_1 (not blocked by REDIS_URI_2)

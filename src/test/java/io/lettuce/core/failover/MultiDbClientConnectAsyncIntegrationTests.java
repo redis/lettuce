@@ -7,10 +7,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
-import java.util.Queue;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
@@ -41,23 +42,23 @@ import io.lettuce.test.TestFutures;
 class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
     @SuppressWarnings("rawtypes")
-    private final Queue<MultiDbConnectionFuture> cleanupList = new ConcurrentLinkedQueue<>();
+    private final LinkedBlockingQueue<MultiDbConnectionFuture> cleanupList = new LinkedBlockingQueue<MultiDbConnectionFuture>();
 
     @Inject
     MultiDbClientConnectAsyncIntegrationTests(MultiDbClient client) {
         super(client);
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @AfterEach
-    void tearDown() {
+    void tearDown() throws InterruptedException, ExecutionException {
+        // Drain all into a list from the queue
+        List<MultiDbConnectionFuture> futures = new ArrayList<>();
+        cleanupList.drainTo(futures);
+
         // clean up connections
-        while (!cleanupList.isEmpty()) {
-            try {
-                ((StatefulRedisMultiDbConnection) cleanupList.poll().get(2, TimeUnit.SECONDS)).closeAsync();
-            } catch (Exception e) {
-                // Ignore
-            }
+        for (MultiDbConnectionFuture<? extends StatefulRedisMultiDbConnection> future : futures) {
+            future.thenAccept(i -> i.closeAsync());
         }
     }
 

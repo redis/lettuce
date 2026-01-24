@@ -186,7 +186,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      */
     protected <K, V> MultiDbAsyncConnectionBuilder<K, V> createConnectionBuilder(RedisCodec<K, V> codec) {
 
-        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec);
+        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec, closeableResources);
     }
 
     /**
@@ -253,7 +253,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     protected <K, V> MultiDbAsyncPubSubConnectionBuilder<K, V> createPubSubConnectionBuilder(RedisCodec<K, V> codec) {
 
-        return new MultiDbAsyncPubSubConnectionBuilder<>(this, getResources(), codec);
+        return new MultiDbAsyncPubSubConnectionBuilder<>(this, getResources(), codec, closeableResources);
     }
 
     @Override
