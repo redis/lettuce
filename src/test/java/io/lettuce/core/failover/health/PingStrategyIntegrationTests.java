@@ -7,7 +7,7 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.DatabaseConfig;
-import io.lettuce.core.failover.DatabaseRawConnectionFactory;
+import io.lettuce.core.failover.RawConnectionFactory;
 import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.failover.MultiDbTestSupport;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
@@ -49,7 +49,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
 
     private static RedisURI proxyUri2;
 
-    private static TestDatabaseRawConnectionFactoryImpl rawConnectionFactory;
+    private static TestRawConnectionFactoryImpl rawConnectionFactory;
 
     @Inject
     PingStrategyIntegrationTests(MultiDbClient client) {
@@ -108,12 +108,12 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
     }
 
     @BeforeAll
-    static void setupDatabaseConnectionProvider() {
-        rawConnectionFactory = new TestDatabaseRawConnectionFactoryImpl();
+    static void setupConnectionFactory() {
+        rawConnectionFactory = new TestRawConnectionFactoryImpl();
     }
 
     @AfterAll
-    static void cleanupDatabaseConnectionProvider() {
+    static void cleanupConnectionFactory() {
         rawConnectionFactory.close();
     }
 
@@ -309,16 +309,16 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
         }
     }
 
-    private static class TestDatabaseRawConnectionFactoryImpl implements DatabaseRawConnectionFactory {
+    private static class TestRawConnectionFactoryImpl implements RawConnectionFactory {
 
         private final RedisClient client;
 
-        public TestDatabaseRawConnectionFactoryImpl() {
+        public TestRawConnectionFactoryImpl() {
             this.client = RedisClient.create(TestClientResources.get());
         }
 
         @Override
-        public StatefulRedisConnection<?, ?> connectToDatabase(RedisURI endpoint) {
+        public StatefulRedisConnection<?, ?> create(RedisURI endpoint) {
             return client.connect(endpoint);
         }
 

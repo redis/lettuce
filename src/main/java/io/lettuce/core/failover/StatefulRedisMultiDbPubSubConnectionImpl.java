@@ -51,7 +51,7 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
      */
     public StatefulRedisMultiDbPubSubConnectionImpl(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
-            RedisCodec<K, V> codec, DatabaseConnectionFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
+            RedisCodec<K, V> codec, DatabaseFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
             HealthStatusManager healthStatusManager,
             RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
         super(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion);
