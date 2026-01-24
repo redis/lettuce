@@ -62,10 +62,32 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
      */
     public static <K, V> CacheFrontend<K, V> enable(CacheAccessor<K, V> cacheAccessor, StatefulRedisConnection<K, V> connection,
             TrackingArgs tracking) {
+        return enable(cacheAccessor, connection, tracking, true);
+    }
+
+    /**
+     * Enable server-assisted Client side caching for the given {@link CacheAccessor} and {@link StatefulRedisConnection}.
+     * <p>
+     * Note that the {@link CacheFrontend} is associated with a Redis connection. Make sure to {@link CacheFrontend#close()
+     * close} the frontend object to release the Redis connection after use.
+     *
+     * @param cacheAccessor the accessor used to interact with the client-side cache.
+     * @param connection the Redis connection to use. The connection will be associated with {@link CacheFrontend} and must be
+     *        closed through {@link CacheFrontend#close()}.
+     * @param tracking the tracking parameters.
+     * @param closeConnection {@code true} to close the connection when the {@link CacheFrontend} is closed; {@code false} to
+     *        keep the connection open.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the {@link CacheFrontend} for value retrieval.
+     * @since 6.5
+     */
+    public static <K, V> CacheFrontend<K, V> enable(CacheAccessor<K, V> cacheAccessor, StatefulRedisConnection<K, V> connection,
+            TrackingArgs tracking, boolean closeConnection) {
 
         connection.sync().clientTracking(tracking);
 
-        return create(cacheAccessor, connection);
+        return create(cacheAccessor, connection, closeConnection);
     }
 
     /**
@@ -84,10 +106,32 @@ public class ClientSideCaching<K, V> implements CacheFrontend<K, V> {
      */
     public static <K, V> CacheFrontend<K, V> create(CacheAccessor<K, V> cacheAccessor,
             StatefulRedisConnection<K, V> connection) {
+        return create(cacheAccessor, connection, true);
+    }
+
+    /**
+     * Create a server-assisted Client side caching for the given {@link CacheAccessor} and {@link StatefulRedisConnection}.
+     * This method expects that client key tracking is already configured.
+     * <p>
+     * Note that the {@link CacheFrontend} is associated with a Redis connection. Make sure to {@link CacheFrontend#close()
+     * close} the frontend object to release the Redis connection after use.
+     *
+     * @param cacheAccessor the accessor used to interact with the client-side cache.
+     * @param connection the Redis connection to use. The connection will be associated with {@link CacheFrontend} and must be
+     *        closed through {@link CacheFrontend#close()}.
+     * @param closeConnection {@code true} to close the connection when the {@link CacheFrontend} is closed; {@code false} to
+     *        keep the connection open.
+     * @param <K> Key type.
+     * @param <V> Value type.
+     * @return the {@link CacheFrontend} for value retrieval.
+     * @since 6.5
+     */
+    public static <K, V> CacheFrontend<K, V> create(CacheAccessor<K, V> cacheAccessor, StatefulRedisConnection<K, V> connection,
+            boolean closeConnection) {
 
         StatefulRedisConnectionImpl<K, V> connectionImpl = (StatefulRedisConnectionImpl) connection;
         RedisCodec<K, V> codec = connectionImpl.getCodec();
-        RedisCache<K, V> redisCache = new DefaultRedisCache<>(connection, codec);
+        RedisCache<K, V> redisCache = new DefaultRedisCache<>(connection, codec, closeConnection);
 
         return create(cacheAccessor, redisCache);
     }
