@@ -1314,7 +1314,8 @@ public class RediSearchIntegrationTests {
         String testIndex = "idx-large-json";
         String prefix = "large-json:";
 
-        redis.ftCreate(testIndex, CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
+        redis.ftCreate(testIndex,
+                CreateArgs.<String, String> builder().on(CreateArgs.TargetType.JSON).withPrefix(prefix).build(),
                 Collections.singletonList(NumericFieldArgs.<String> builder().name("pos").build()));
 
         SearchArgs<String, String> searchArgs = SearchArgs.<String, String> builder().limit(0, 100).build();
@@ -1325,10 +1326,8 @@ public class RediSearchIntegrationTests {
         }
 
         for (int i = 1; i <= 50; i++) {
-            String json = String.format(
-                    "{\"pos\":%d, \"ts\":%d, \"large\":\"%s\"}",
-                    i, System.currentTimeMillis(), largeData.toString());
-            
+            String json = String.format("{\"pos\":%d, \"ts\":%d, \"large\":\"%s\"}", i, System.currentTimeMillis(), largeData);
+
             redis.jsonSet(prefix + i, io.lettuce.core.json.JsonPath.ROOT_PATH, json);
 
             SearchReply<String, String> reply = redis.ftSearch(testIndex, "*", searchArgs);
