@@ -7,7 +7,6 @@ import javax.inject.Inject;
 
 import io.lettuce.core.RedisCredentials;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +30,6 @@ import reactor.core.publisher.Mono;
 @Tag(INTEGRATION_TEST)
 @ExtendWith(LettuceExtension.class)
 @EnabledOnCommand("ACL")
-@Disabled("Failing with latest versions of Linux")
 public class SentinelAclIntegrationTests extends TestSupport {
 
     private final RedisClient redisClient;
