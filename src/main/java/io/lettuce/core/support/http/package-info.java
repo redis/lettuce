@@ -25,6 +25,7 @@
  * </p>
  *
  * <pre>
+ * 
  * {
  *     &#64;code
  *     // Acquire a shared HTTP client
@@ -32,8 +33,8 @@
  *
  *     try {
  *         // Configure connection settings
- *         HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().connectionTimeout(5000)
- *                 .readTimeout(5000).build();
+ *         HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().connectionTimeout(5000).readTimeout(5000)
+ *                 .build();
  *
  *         // Establish connection (reusable for multiple requests)
  *         try (HttpClient.HttpConnection connection = client.connect(URI.create("https://api.example.com"), config)) {
@@ -67,6 +68,7 @@
  * </p>
  *
  * <pre>
+ * 
  * {
  *     &#64;code
  *     HttpClient client = HttpClientResources.acquire();
@@ -100,6 +102,7 @@
  * </p>
  *
  * <pre>
+ * 
  * {
  *     &#64;code
  *     // Configure SSL options
@@ -107,8 +110,8 @@
  *             .protocols("TLSv1.2", "TLSv1.3").build();
  *
  *     // Create connection config with SSL
- *     HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().sslOptions(sslOptions)
- *             .connectionTimeout(5000).readTimeout(5000).build();
+ *     HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().sslOptions(sslOptions).connectionTimeout(5000)
+ *             .readTimeout(5000).build();
  *
  *     HttpClient client = HttpClientResources.acquire();
  *     try (HttpClient.HttpConnection connection = client.connect(URI.create("https://secure-api.example.com"), config)) {
@@ -128,6 +131,7 @@
  * </p>
  *
  * <pre>
+ * 
  * {
  *     &#64;code
  *     // Simple GET request
@@ -174,6 +178,7 @@
  * <h3>Example Custom Provider</h3>
  *
  * <pre>
+ * 
  * {
  *     &#64;code
  *     public class CustomHttpClientProvider implements HttpClientProvider {
@@ -197,6 +202,7 @@
  *         public int getPriority() {
  *             return 10; // Higher priority than default (0)
  *         }
+ * 
  *     }
  * }
  * </pre>
