@@ -96,7 +96,6 @@ class StatusTracker {
                     healthStatusManager.unregisterListener(endpoint, tempListener);
                 }
             }
-            scheduler.shutdown();
         }, timeoutMs, TimeUnit.MILLISECONDS);
 
         // Clean up scheduler when future completes (either successfully or exceptionally)
