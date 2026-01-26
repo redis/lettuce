@@ -53,8 +53,7 @@ class RedisMultiDbClientFactoryUnitTests {
 
     @Test
     void clientResourcesNullWithUri() {
-        assertThatThrownBy(() -> MultiDbClient.create(null, Collections.singletonList(MultiDbTestSupport.DB1)))
-                .isInstanceOf(IllegalArgumentException.class);
+        FastShutdown.shutdown(MultiDbClient.create(null, Collections.singletonList(MultiDbTestSupport.DB1)));
     }
 
 }

@@ -26,9 +26,11 @@ class MultiDbAsyncPubSubConnectionBuilder<K, V> extends
      * @param client the multi-database client instance
      * @param resources the client resources for event loops and thread pools
      * @param codec the codec for encoding/decoding keys and values
+     * @param multiDbOptions the multi-database configuration
      */
-    MultiDbAsyncPubSubConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec) {
-        super(client, resources, codec);
+    MultiDbAsyncPubSubConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec,
+            MultiDbOptions multiDbOptions) {
+        super(client, resources, codec, multiDbOptions);
     }
 
     @Override
@@ -41,10 +43,10 @@ class MultiDbAsyncPubSubConnectionBuilder<K, V> extends
             RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> selected,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> databases, RedisCodec<K, V> codec,
             HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
+            RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion, MultiDbOptions multiDbOptions) {
 
         return new StatefulRedisMultiDbPubSubConnectionImpl<>(selected, databases, resources, codec,
-                this::createRedisDatabaseAsync, healthStatusManager, completion);
+                this::createRedisDatabaseAsync, healthStatusManager, completion, multiDbOptions);
     }
 
 }

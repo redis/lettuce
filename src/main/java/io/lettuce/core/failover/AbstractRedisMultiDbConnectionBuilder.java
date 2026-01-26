@@ -58,17 +58,22 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
 
     protected final RedisCodec<K, V> codec;
 
+    protected final MultiDbOptions multiDbOptions;
+
     /**
      * Creates a new {@link AbstractRedisMultiDbConnectionBuilder}.
      *
      * @param client the multi-database client instance
      * @param resources the client resources for event loops and thread pools
      * @param codec the codec for encoding/decoding keys and values
+     * @param multiDbOptions the multi-database configuration
      */
-    AbstractRedisMultiDbConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec) {
+    AbstractRedisMultiDbConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec,
+            MultiDbOptions multiDbOptions) {
         this.resources = resources;
         this.client = client;
         this.codec = codec;
+        this.multiDbOptions = multiDbOptions;
     }
 
     /**
@@ -90,11 +95,12 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
      * @param codec the codec for encoding/decoding
      * @param healthStatusManager the health status manager
      * @param completion handler for async database completion
+     * @param multiDbOptions the multi-database configuration
      * @return the multi-database connection
      */
     protected abstract MC createMultiDbConnection(RedisDatabaseImpl<SC> selected,
             Map<RedisURI, RedisDatabaseImpl<SC>> databases, RedisCodec<K, V> codec, HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<SC> completion);
+            RedisDatabaseAsyncCompletion<SC> completion, MultiDbOptions multiDbOptions);
 
     /**
      * Asynchronously establishes connections to all configured Redis databases and creates a multi-database connection.
@@ -226,7 +232,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                 .map(entry -> entry.getValue()).collect(Collectors.toList());
 
         RedisDatabaseAsyncCompletion<SC> completion = new RedisDatabaseAsyncCompletion<SC>(remainingDbFutures);
-        return createMultiDbConnection(selected, clone, codec, healthStatusManager, completion);
+        return createMultiDbConnection(selected, clone, codec, healthStatusManager, completion, multiDbOptions);
     }
 
     /**

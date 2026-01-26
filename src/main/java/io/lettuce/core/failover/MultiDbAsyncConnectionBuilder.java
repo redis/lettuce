@@ -26,9 +26,11 @@ class MultiDbAsyncConnectionBuilder<K, V> extends
      * @param client the multi-database client instance
      * @param resources the client resources for event loops and thread pools
      * @param codec the codec for encoding/decoding keys and values
+     * @param multiDbOptions the multi-database configuration
      */
-    MultiDbAsyncConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec) {
-        super(client, resources, codec);
+    MultiDbAsyncConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec,
+            MultiDbOptions multiDbOptions) {
+        super(client, resources, codec, multiDbOptions);
     }
 
     @Override
@@ -40,10 +42,11 @@ class MultiDbAsyncConnectionBuilder<K, V> extends
     protected StatefulRedisMultiDbConnection<K, V> createMultiDbConnection(
             RedisDatabaseImpl<StatefulRedisConnection<K, V>> selected,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases, RedisCodec<K, V> codec,
-            HealthStatusManager healthStatusManager, RedisDatabaseAsyncCompletion<StatefulRedisConnection<K, V>> completion) {
+            HealthStatusManager healthStatusManager, RedisDatabaseAsyncCompletion<StatefulRedisConnection<K, V>> completion,
+            MultiDbOptions multiDbOptions) {
 
         return new StatefulRedisMultiDbConnectionImpl<>(selected, databases, resources, codec, this::createRedisDatabaseAsync,
-                healthStatusManager, completion);
+                healthStatusManager, completion, multiDbOptions);
     }
 
 }

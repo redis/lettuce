@@ -112,14 +112,14 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
         private TestMultiDbAsyncConnectionBuilder<?, ?> builder;
 
         TestMultiDbClient(List<DatabaseConfig> databaseConfigs, Set<RedisURI> hangingUris) {
-            super(databaseConfigs);
+            super(databaseConfigs, MultiDbOptions.create());
             this.hangingUris = hangingUris;
         }
 
         @Override
         protected <K, V> MultiDbAsyncConnectionBuilder<K, V> createConnectionBuilder(RedisCodec<K, V> codec) {
             TestMultiDbAsyncConnectionBuilder<K, V> testBuilder = new TestMultiDbAsyncConnectionBuilder<K, V>(this,
-                    getResources(), codec, hangingUris);
+                    getResources(), codec, getMultiDbOptions(), hangingUris);
             builder = testBuilder;
             return testBuilder;
         }
@@ -142,8 +142,8 @@ class MultiDbAsyncConnectionBuilderIntegrationTests {
         private final Map<RedisURI, ConnectionFuture<StatefulRedisConnection<K, V>>> actualFuturesMap = new ConcurrentHashMap<>();
 
         TestMultiDbAsyncConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec,
-                Set<RedisURI> hangingUris) {
-            super(client, resources, codec);
+                MultiDbOptions multiDbOptions, Set<RedisURI> hangingUris) {
+            super(client, resources, codec, multiDbOptions);
             this.hangingUris = hangingUris;
         }
 

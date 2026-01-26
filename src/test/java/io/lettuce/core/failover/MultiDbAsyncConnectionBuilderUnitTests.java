@@ -103,8 +103,8 @@ class MultiDbAsyncConnectionBuilderUnitTests {
 
     @BeforeEach
     void setUp() {
-        regularBuilder = new MultiDbAsyncConnectionBuilder<>(client, resources, codec);
-        pubSubBuilder = new MultiDbAsyncPubSubConnectionBuilder<>(client, resources, codec);
+        regularBuilder = new MultiDbAsyncConnectionBuilder<>(client, resources, codec, MultiDbOptions.create());
+        pubSubBuilder = new MultiDbAsyncPubSubConnectionBuilder<>(client, resources, codec, MultiDbOptions.create());
     }
 
     @AfterAll

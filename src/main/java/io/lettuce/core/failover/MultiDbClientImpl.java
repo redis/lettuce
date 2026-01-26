@@ -36,41 +36,36 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
     private static final RedisURI EMPTY_URI = new ImmutableRedisURI(new RedisURI());
 
-    private final Map<RedisURI, DatabaseConfig> databaseConfigs;
+    private final Map<RedisURI, DatabaseConfig> databaseConfigMap;
 
-    private ThreadLocal<ClientOptions> localClientOptions = new ThreadLocal<>();
+    private final ThreadLocal<ClientOptions> localClientOptions = new ThreadLocal<>();
 
-    MultiDbClientImpl(Collection<DatabaseConfig> databaseConfigs) {
-        this(null, databaseConfigs);
+    private final MultiDbOptions multiDbOptions;
+
+    MultiDbClientImpl(Collection<DatabaseConfig> databaseConfigs, MultiDbOptions multiDbOptions) {
+        this(null, databaseConfigs, multiDbOptions);
     }
 
-    MultiDbClientImpl(ClientResources clientResources, Collection<DatabaseConfig> databaseConfigs) {
+    MultiDbClientImpl(ClientResources clientResources, Collection<DatabaseConfig> databaseConfigs,
+            MultiDbOptions multiDbOptions) {
         super(clientResources, EMPTY_URI);
+        LettuceAssert.notNull(databaseConfigs, "DatabaseConfigs must not be null");
+        LettuceAssert.noNullElements(databaseConfigs, "DatabaseConfigs must not contain null elements");
+        LettuceAssert.notEmpty(databaseConfigs.toArray(), "DatabaseConfigs must not be empty");
 
-        if (databaseConfigs == null || databaseConfigs.isEmpty()) {
-            this.databaseConfigs = new ConcurrentHashMap<>();
-        } else {
-            this.databaseConfigs = new ConcurrentHashMap<>(databaseConfigs.size());
-            for (DatabaseConfig config : databaseConfigs) {
-                LettuceAssert.notNull(config, "DatabaseConfig must not be null");
-                LettuceAssert.notNull(config.getRedisURI(), "RedisURI must not be null");
-                this.databaseConfigs.put(config.getRedisURI(), config);
-            }
+        this.databaseConfigMap = new ConcurrentHashMap<>(databaseConfigs.size());
+        for (DatabaseConfig config : databaseConfigs) {
+            LettuceAssert.notNull(config, "DatabaseConfig must not be null");
+            LettuceAssert.notNull(config.getRedisURI(), "RedisURI must not be null");
+            this.databaseConfigMap.put(config.getRedisURI(), config);
         }
-    }
-
-    /**
-     * Open a new connection to a Redis server that treats keys and values as UTF-8 strings.
-     *
-     * @return A new stateful Redis connection
-     */
-    public StatefulRedisMultiDbConnection<String, String> connect() {
-        return connect(newStringStringCodec());
+        LettuceAssert.notNull(multiDbOptions, "MultiDbOptions must not be null");
+        this.multiDbOptions = multiDbOptions;
     }
 
     @Override
     public Collection<RedisURI> getRedisURIs() {
-        return databaseConfigs.keySet();
+        return databaseConfigMap.keySet();
     }
 
     @Override
@@ -85,11 +80,33 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     @Override
     public void setOptions(ClientOptions clientOptions) {
         LettuceAssert.notNull(clientOptions, "ClientOptions must not be null");
-        this.localClientOptions.set(clientOptions);
+        localClientOptions.set(clientOptions);
     }
 
+    /**
+     * Resets the thread-local client options to use the default options.
+     */
     void resetOptions() {
-        this.localClientOptions.remove();
+        localClientOptions.remove();
+    }
+
+    /**
+     * Gets the multi-database options.
+     *
+     * @return the multi-database options
+     */
+    @Override
+    public MultiDbOptions getMultiDbOptions() {
+        return multiDbOptions;
+    }
+
+    /**
+     * Open a new connection to a Redis server that treats keys and values as UTF-8 strings.
+     *
+     * @return A new stateful Redis connection
+     */
+    public StatefulRedisMultiDbConnection<String, String> connect() {
+        return connect(newStringStringCodec());
     }
 
     /**
@@ -105,18 +122,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * @return A new stateful Redis connection
      */
     public <K, V> StatefulRedisMultiDbConnection<K, V> connect(RedisCodec<K, V> codec) {
-
-        if (codec == null) {
-            throw new IllegalArgumentException("codec must not be null");
-        }
-
-        AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> builder = createConnectionBuilder(
-                codec);
-
-        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs);
-
-        MultiDbConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectionFuture = MultiDbConnectionFuture
-                .from((CompletableFuture<StatefulRedisMultiDbConnection<K, V>>) future, getResources().eventExecutorGroup());
+        MultiDbConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectionFuture = connectAsync(codec);
         try {
             return connectionFuture.get();
         } catch (InterruptedException e) {
@@ -127,8 +133,18 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         }
     }
 
-    protected HealthStatusManager createHealthStatusManager() {
-        return new HealthStatusManagerImpl();
+    /**
+     * Asynchronously open a new connection to a Redis server that treats keys and values as UTF-8 strings.
+     * <p>
+     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
+     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
+     * inside callbacks.
+     *
+     * @return A new stateful Redis connection future
+     */
+    @Override
+    public MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> connectAsync() {
+        return connectAsync(newStringStringCodec());
     }
 
     /**
@@ -158,35 +174,25 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> builder = createConnectionBuilder(
                 codec);
 
-        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs);
+        CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigMap);
 
         return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
     }
 
-    /**
-     * Asynchronously open a new connection to a Redis server that treats keys and values as UTF-8 strings.
-     * <p>
-     * The returned {@link MultiDbConnectionFuture} ensures that all callbacks (thenApply, thenAccept, etc.) execute on a
-     * separate thread pool rather than on Netty event loop threads, preventing deadlocks when calling blocking sync operations
-     * inside callbacks.
-     *
-     * @return A new stateful Redis connection future
-     */
-    @Override
-    public MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> connectAsync() {
-        return connectAsync(newStringStringCodec());
+    protected HealthStatusManager createHealthStatusManager() {
+        return new HealthStatusManagerImpl();
     }
 
     /**
      * Creates a new {@link AbstractRedisMultiDbConnectionBuilder} instance.
      *
+     * @param codec the codec for encoding/decoding keys and values
      * @param <K> Key type
      * @param <V> Value type
      * @return a new multi-database async connection builder
      */
     protected <K, V> MultiDbAsyncConnectionBuilder<K, V> createConnectionBuilder(RedisCodec<K, V> codec) {
-
-        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec);
+        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec, multiDbOptions);
     }
 
     /**
@@ -209,18 +215,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      */
     @Override
     public <K, V> StatefulRedisMultiDbPubSubConnection<K, V> connectPubSub(RedisCodec<K, V> codec) {
-
-        if (codec == null) {
-            throw new IllegalArgumentException("codec must not be null");
-        }
-
-        AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V> builder = createPubSubConnectionBuilder(
-                codec);
-
-        CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectAsync(databaseConfigs);
-
-        MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<K, V>> connectionFuture = MultiDbConnectionFuture
-                .from(future, getResources().eventExecutorGroup());
+        MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<K, V>> connectionFuture = connectPubSubAsync(codec);
         try {
             return (StatefulRedisMultiDbPubSubConnection<K, V>) connectionFuture.get();
         } catch (InterruptedException e) {
@@ -229,6 +224,11 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         } catch (Exception e) {
             throw RedisConnectionException.create(Exceptions.unwrap(e));
         }
+    }
+
+    @Override
+    public MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<String, String>> connectPubSubAsync() {
+        return connectPubSubAsync(newStringStringCodec());
     }
 
     @Override
@@ -241,19 +241,21 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V> builder = createPubSubConnectionBuilder(
                 codec);
 
-        CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectAsync(databaseConfigs);
+        CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectAsync(databaseConfigMap);
 
         return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
     }
 
-    @Override
-    public MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<String, String>> connectPubSubAsync() {
-        return connectPubSubAsync(newStringStringCodec());
-    }
-
+    /**
+     * Creates a new pub/sub connection builder.
+     *
+     * @param codec the codec for encoding/decoding keys and values
+     * @param <K> Key type
+     * @param <V> Value type
+     * @return a new multi-database async pub/sub connection builder
+     */
     protected <K, V> MultiDbAsyncPubSubConnectionBuilder<K, V> createPubSubConnectionBuilder(RedisCodec<K, V> codec) {
-
-        return new MultiDbAsyncPubSubConnectionBuilder<>(this, getResources(), codec);
+        return new MultiDbAsyncPubSubConnectionBuilder<>(this, getResources(), codec, multiDbOptions);
     }
 
     @Override

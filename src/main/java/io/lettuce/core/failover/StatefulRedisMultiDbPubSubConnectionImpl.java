@@ -48,13 +48,15 @@ class StatefulRedisMultiDbPubSubConnectionImpl<K, V>
      * @param connectionFactory the connection factory for creating new database connections
      * @param healthStatusManager the health status manager
      * @param completion the async completion handler for database initialization
+     * @param multiDbOptions the multi-database configuration
      */
     public StatefulRedisMultiDbPubSubConnectionImpl(RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> connections, ClientResources resources,
             RedisCodec<K, V> codec, DatabaseFactory<StatefulRedisPubSubConnection<K, V>, K, V> connectionFactory,
             HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
-        super(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion);
+            RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion, MultiDbOptions multiDbOptions) {
+        super(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion,
+                multiDbOptions);
     }
 
     @Override

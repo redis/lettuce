@@ -40,6 +40,7 @@ import io.lettuce.core.failover.health.HealthStatusManager;
 import io.lettuce.core.protocol.RedisCommand;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.tracing.Tracing;
+import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
  * Unit tests for {@link StatefulRedisMultiDbConnectionImpl}.
@@ -104,6 +105,9 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
     @Mock
     private DatabaseFactory<StatefulRedisConnection<String, String>, String, String> connectionFactory;
 
+    @Mock
+    private EventExecutorGroup eventExecutorGroup;
+
     private RedisCodec<String, String> codec;
 
     private RedisURI uri1;
@@ -126,6 +130,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
 
         when(clientResources.tracing()).thenReturn(tracing);
         when(clientResources.eventBus()).thenReturn(eventBus);
+        when(clientResources.eventExecutorGroup()).thenReturn(eventExecutorGroup);
 
         uri1 = RedisURI.create("redis://localhost:6379");
         uri2 = RedisURI.create("redis://localhost:6380");
@@ -943,7 +948,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @BeforeEach
         void setUp() {
             connection = new StatefulRedisMultiDbConnectionImpl<>(null, databases, clientResources, codec, connectionFactory,
-                    healthStatusManager, null);
+                    healthStatusManager, null, MultiDbOptions.builder().build());
         }
 
         @Test
