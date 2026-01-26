@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import io.lettuce.core.failover.health.HealthStatusListener;
 import org.junit.jupiter.api.BeforeEach;
@@ -967,6 +968,86 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         @DisplayName("Should provide reactive commands")
         void shouldProvideReactiveCommands() {
             assertThat(connection.reactive()).isNotNull();
+        }
+
+    }
+
+    @Nested
+    @Tag(UNIT_TEST)
+    @DisplayName("Failback Tests")
+    class FailbackTests {
+
+        @Test
+        @DisplayName("Should schedule failback task when failback is enabled")
+        void shouldScheduleFailbackTaskWhenEnabled() {
+            // Given: MultiDbOptions with failback enabled
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(60000L).build();
+
+            // When: Create connection
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Then: Failback task should be scheduled
+                verify(eventExecutorGroup).scheduleAtFixedRate(any(Runnable.class), eq(60000L), eq(60000L),
+                        eq(TimeUnit.MILLISECONDS));
+            }
+        }
+
+        @Test
+        @DisplayName("Should not schedule failback task when failback is disabled")
+        void shouldNotScheduleFailbackTaskWhenDisabled() {
+            // Given: MultiDbOptions with failback disabled
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false).build();
+
+            // When: Create connection
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Then: Failback task should not be scheduled
+                verify(eventExecutorGroup, never()).scheduleAtFixedRate(any(Runnable.class), anyLong(), anyLong(),
+                        any(TimeUnit.class));
+            }
+        }
+
+        @Test
+        @DisplayName("Should use default failback interval when not specified")
+        void shouldUseDefaultFailbackInterval() {
+            // Given: MultiDbOptions with default settings
+            MultiDbOptions options = MultiDbOptions.create();
+
+            // When: Create connection
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Then: Failback task should be scheduled with default interval (120000ms)
+                verify(eventExecutorGroup).scheduleAtFixedRate(any(Runnable.class), eq(120000L), eq(120000L),
+                        eq(TimeUnit.MILLISECONDS));
+            }
+        }
+
+        @Test
+        @DisplayName("Should use custom failback interval")
+        void shouldUseCustomFailbackInterval() {
+            // Given: MultiDbOptions with custom interval
+            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(true).failbackCheckInterval(30000L).build();
+
+            // When: Create connection
+            try (StatefulRedisMultiDbConnectionImpl<StatefulRedisConnection<String, String>, String, String> connection = new StatefulRedisMultiDbConnectionImpl<>(
+                    null, databases, clientResources, codec, connectionFactory, healthStatusManager, null, options)) {
+
+                // Then: Failback task should be scheduled with custom interval
+                verify(eventExecutorGroup).scheduleAtFixedRate(any(Runnable.class), eq(30000L), eq(30000L),
+                        eq(TimeUnit.MILLISECONDS));
+            }
+        }
+
+        @Test
+        @DisplayName("Should throw exception when MultiDbOptions is null")
+        void shouldThrowExceptionWhenMultiDbOptionsIsNull() {
+            // When/Then: Create connection with null options should throw exception
+            assertThatThrownBy(() -> new StatefulRedisMultiDbConnectionImpl<>(null, databases, clientResources, codec,
+                    connectionFactory, healthStatusManager, null, null)).isInstanceOf(IllegalArgumentException.class)
+                            .hasMessageContaining("multiDbOptions must not be null");
         }
 
     }

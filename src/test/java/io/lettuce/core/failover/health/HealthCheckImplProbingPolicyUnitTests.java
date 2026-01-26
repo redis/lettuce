@@ -34,7 +34,7 @@ class HealthCheckImplProbingPolicyUnitTests {
         CountDownLatch unhealthyLatch = new CountDownLatch(1);
 
         TestHealthCheckStrategy strategy = new TestHealthCheckStrategy(HealthCheckStrategy.Config.builder().interval(5)
-                .timeout(200).numProbes(3).policy(ProbingPolicy.BuiltIn.ALL_SUCCESS).delayInBetweenProbes(5).build(), e -> {
+                .timeout(200).numProbes(3).policy(ProbingPolicy.BuiltIn.ALL_SUCCESS).delayInBetweenProbes(100).build(), e -> {
                     int c = callCount.incrementAndGet();
                     return c == 1 ? HealthStatus.UNHEALTHY : HealthStatus.HEALTHY;
                 });

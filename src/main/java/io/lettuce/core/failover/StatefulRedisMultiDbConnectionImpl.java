@@ -108,6 +108,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             throw new IllegalArgumentException("connections must not be empty");
         }
         LettuceAssert.notNull(healthStatusManager, "healthStatusManager must not be null");
+        LettuceAssert.notNull(multiDbOptions, "multiDbOptions must not be null");
 
         this.databases = new ConcurrentHashMap<>(connections);
 
