@@ -1,5 +1,7 @@
 package io.lettuce.core.failover;
 
+import io.lettuce.core.internal.LettuceAssert;
+
 /**
  * Options for multi-database client behavior.
  * <p>
@@ -89,6 +91,8 @@ public class MultiDbOptions {
          * @return this builder
          */
         public Builder failbackCheckInterval(long failbackCheckInterval) {
+            LettuceAssert.isTrue(failbackCheckInterval > 0,
+                    "failbackCheckInterval must be greater than 0, got: " + failbackCheckInterval);
             this.failbackCheckInterval = failbackCheckInterval;
             return this;
         }

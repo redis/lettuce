@@ -105,6 +105,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      *
      * @return A new stateful Redis connection
      */
+    @Override
     public StatefulRedisMultiDbConnection<String, String> connect() {
         return connect(newStringStringCodec());
     }
@@ -121,6 +122,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * @param <V> Value type
      * @return A new stateful Redis connection
      */
+    @Override
     public <K, V> StatefulRedisMultiDbConnection<K, V> connect(RedisCodec<K, V> codec) {
         MultiDbConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectionFuture = connectAsync(codec);
         try {
@@ -167,9 +169,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      */
     @Override
     public <K, V> MultiDbConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectAsync(RedisCodec<K, V> codec) {
-        if (codec == null) {
-            throw new IllegalArgumentException("codec must not be null");
-        }
+        LettuceAssert.notNull(codec, "codec must not be null");
 
         AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> builder = createConnectionBuilder(
                 codec);
@@ -200,6 +200,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      *
      * @return A new stateful Redis connection
      */
+    @Override
     public StatefulRedisMultiDbPubSubConnection<String, String> connectPubSub() {
         return connectPubSub(newStringStringCodec());
     }
@@ -234,9 +235,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
     @Override
     public <K, V> MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<K, V>> connectPubSubAsync(
             RedisCodec<K, V> codec) {
-        if (codec == null) {
-            throw new IllegalArgumentException("codec must not be null");
-        }
+        LettuceAssert.notNull(codec, "codec must not be null");
 
         AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbPubSubConnection<K, V>, StatefulRedisPubSubConnection<K, V>, K, V> builder = createPubSubConnectionBuilder(
                 codec);

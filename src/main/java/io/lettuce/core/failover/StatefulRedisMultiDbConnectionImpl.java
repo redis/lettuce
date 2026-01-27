@@ -89,7 +89,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private final ClientResources clientResources;
 
-    private ScheduledFuture<?> failbackTask;
+    private volatile ScheduledFuture<?> failbackTask;
 
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
@@ -125,9 +125,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             this.current = initialDatabase;
         }
 
-        if (current == null) {
-            throw new IllegalStateException("InitialDatabase must not be null");
-        }
+        LettuceAssert.notNull(current, "InitialDatabase must not be null");
 
         // Now register listeners - they can safely access current
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
@@ -451,6 +449,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public CompletableFuture<Void> closeAsync() {
+        if (failbackTask != null) {
+            failbackTask.cancel(false);
+        }
         return CompletableFuture.allOf(databases.values().stream().map(db -> db.getConnection())
                 .map(StatefulConnection::closeAsync).toArray(CompletableFuture[]::new));
     }
@@ -767,9 +768,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public void addDatabase(DatabaseConfig databaseConfig) {
-        if (databaseConfig == null) {
-            throw new IllegalArgumentException("DatabaseConfig must not be null");
-        }
+        LettuceAssert.notNull(databaseConfig, "DatabaseConfig must not be null");
 
         if (connectionFactory == null) {
             throw new UnsupportedOperationException(
@@ -807,9 +806,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public void removeDatabase(RedisURI redisURI) {
-        if (redisURI == null) {
-            throw new IllegalArgumentException("RedisURI must not be null");
-        }
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+
         doByExclusiveLock(() -> {
             RedisDatabaseImpl<C> database = null;
             database = databases.get(redisURI);

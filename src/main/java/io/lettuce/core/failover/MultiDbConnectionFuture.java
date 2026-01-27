@@ -22,9 +22,9 @@ import io.lettuce.core.failover.api.BaseRedisMultiDbConnection;
  * future.thenApply(conn -> conn.sync().ping());
  * }
  * </pre>
- *
- * @param <K> Key type
- * @param <V> Value type
+ * 
+ * @param <C> Connection type , either StatefulRedisMultiDbConnection or StatefulRedisMultiDbPubSubConnection, extending
+ *        BaseRedisMultiDbConnection
  * @author Ali Takavci
  * @since 7.4
  */
@@ -45,8 +45,8 @@ public class MultiDbConnectionFuture<C extends BaseRedisMultiDbConnection> exten
      *
      * @param future the CompletableFuture to wrap
      * @param executor the executor to use for async callbacks
-     * @param <K> Key type
-     * @param <V> Value type
+     * @param <C> Connection type , either StatefulRedisMultiDbConnection or StatefulRedisMultiDbPubSubConnection, extending
+     *        BaseRedisMultiDbConnection
      * @return the wrapped future
      */
     public static <C extends BaseRedisMultiDbConnection> MultiDbConnectionFuture<C> from(CompletableFuture<C> future,
