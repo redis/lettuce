@@ -102,7 +102,15 @@ public class VectorFieldArgs<K> extends FieldArgs<K> {
         /**
          * 64-bit floating point.
          */
-        FLOAT64
+        FLOAT64,
+        /**
+         * 8-bit signed integer.
+         */
+        INT8,
+        /**
+         * 8-bit unsigned integer.
+         */
+        UINT8
     }
 
     /**
