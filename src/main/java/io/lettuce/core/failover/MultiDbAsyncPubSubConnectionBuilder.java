@@ -47,7 +47,7 @@ class MultiDbAsyncPubSubConnectionBuilder<K, V> extends
             RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>> selected,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisPubSubConnection<K, V>>> databases, RedisCodec<K, V> codec,
             HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
+            RedisDatabaseDeferredCompletion<StatefulRedisPubSubConnection<K, V>> completion) {
 
         StatefulRedisMultiDbPubSubConnectionImpl<K, V> connection = new StatefulRedisMultiDbPubSubConnectionImpl<>(selected,
                 databases, resources, codec, this::createRedisDatabaseAsync, healthStatusManager, completion);

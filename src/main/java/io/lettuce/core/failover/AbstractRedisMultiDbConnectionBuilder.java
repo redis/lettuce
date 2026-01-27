@@ -94,7 +94,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
      */
     protected abstract MC createMultiDbConnection(RedisDatabaseImpl<SC> selected,
             Map<RedisURI, RedisDatabaseImpl<SC>> databases, RedisCodec<K, V> codec, HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<SC> completion);
+            RedisDatabaseDeferredCompletion<SC> completion);
 
     /**
      * Asynchronously establishes connections to all configured Redis databases and creates a multi-database connection.
@@ -257,7 +257,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
         remainingDbFutures = databaseFutures.entrySet().stream().filter(entry -> !clone.containsKey(entry.getKey()))
                 .map(entry -> entry.getValue()).collect(Collectors.toList());
 
-        RedisDatabaseAsyncCompletion<SC> completion = new RedisDatabaseAsyncCompletion<SC>(remainingDbFutures);
+        RedisDatabaseDeferredCompletion<SC> completion = new RedisDatabaseDeferredCompletion<SC>(remainingDbFutures);
         return createMultiDbConnection(selected, clone, codec, healthStatusManager, completion);
     }
 

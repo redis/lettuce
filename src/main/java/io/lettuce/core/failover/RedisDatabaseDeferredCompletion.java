@@ -15,7 +15,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
  *
  * @param <SC> the connection type
  */
-class RedisDatabaseAsyncCompletion<SC extends StatefulRedisConnection<?, ?>> implements AsyncCloseable {
+class RedisDatabaseDeferredCompletion<SC extends StatefulRedisConnection<?, ?>> implements AsyncCloseable {
 
     private final List<CompletableFuture<RedisDatabaseImpl<SC>>> databaseFutures;
 
@@ -24,7 +24,7 @@ class RedisDatabaseAsyncCompletion<SC extends StatefulRedisConnection<?, ?>> imp
      *
      * @param databaseFutures list of futures for databases being created
      */
-    RedisDatabaseAsyncCompletion(List<CompletableFuture<RedisDatabaseImpl<SC>>> databaseFutures) {
+    RedisDatabaseDeferredCompletion(List<CompletableFuture<RedisDatabaseImpl<SC>>> databaseFutures) {
         this.databaseFutures = databaseFutures;
     }
 

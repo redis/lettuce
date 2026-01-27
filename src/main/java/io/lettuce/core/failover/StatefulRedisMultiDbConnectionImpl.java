@@ -89,14 +89,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private final ClientResources clientResources;
 
-    private final RedisDatabaseAsyncCompletion<C> completion;
+    private final RedisDatabaseDeferredCompletion<C> completion;
 
     private final Set<Consumer<Closeable>> onCloseListeners = ConcurrentHashMap.newKeySet();
 
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
             DatabaseFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<C> completion) {
+            RedisDatabaseDeferredCompletion<C> completion) {
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
         }
