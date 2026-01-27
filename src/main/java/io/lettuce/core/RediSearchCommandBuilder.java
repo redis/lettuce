@@ -24,6 +24,8 @@ import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
 import io.lettuce.core.search.AggregateReplyParser;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.HybridReply;
+import io.lettuce.core.search.HybridReplyParser;
 
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SearchReplyParser;
@@ -37,6 +39,7 @@ import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
 
+import io.lettuce.core.search.arguments.HybridArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
@@ -106,6 +109,29 @@ class RediSearchCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         }
 
         return createCommand(FT_SEARCH, new EncodedComplexOutput<>(codec, new SearchReplyParser<>(codec, searchArgs)), args);
+    }
+
+    /**
+     * Execute a hybrid query that combines textual search and vector similarity on the given index.
+     *
+     * Build FT.HYBRID command for hybrid search combining text and vector similarity.
+     * <p>
+     * FT.HYBRID supports flexible combinations of text search (SEARCH clause) and vector similarity (VSIM clause). At least one
+     * of SEARCH or VSIM must be configured in the HybridArgs.
+     * </p>
+     *
+     * @param index the index name
+     * @param hybridArgs the hybrid query arguments containing SEARCH and/or VSIM clauses
+     * @return the command
+     */
+    public Command<K, V, HybridReply<K, V>> ftHybrid(String index, HybridArgs<K, V> hybridArgs) {
+        LettuceAssert.notNull(index, "Index must not be null");
+        LettuceAssert.notNull(hybridArgs, "HybridArgs must not be null");
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(index);
+        hybridArgs.build(args);
+
+        return createCommand(FT_HYBRID, new EncodedComplexOutput<>(codec, new HybridReplyParser<>(codec)), args);
     }
 
     /**
