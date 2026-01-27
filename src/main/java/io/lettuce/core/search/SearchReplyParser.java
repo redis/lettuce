@@ -186,11 +186,13 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                     ComplexData resultData = (ComplexData) resultsList.get(i);
                     List<Object> resultEntries = resultData.getDynamicList();
 
-                    Map<K, V> resultEntriesProcessed = IntStream.range(0, resultEntries.size() / 2).boxed()
-                            .collect(Collectors.toMap(idx -> codec.decodeKey((ByteBuffer) resultEntries.get(idx * 2)),
-                                    idx -> codec.decodeValue((ByteBuffer) resultEntries.get(idx * 2 + 1))));
+                    for (int idx = 0; idx < resultEntries.size(); idx += 2) {
+                        K decodedKey = codec.decodeKey((ByteBuffer) resultEntries.get(idx));
+                        Object value = resultEntries.get(idx + 1);
+                        V decodedValue = value == null ? null : codec.decodeValue((ByteBuffer) value);
+                        searchResult.addFields(decodedKey, decodedValue);
+                    }
 
-                    searchResult.addFields(resultEntriesProcessed);
                     i++;
                 }
 
@@ -265,7 +267,7 @@ public class SearchReplyParser<K, V> implements ComplexDataParser<SearchReply<K,
                         ComplexData extraAttributes = (ComplexData) resultEntry.get(EXTRA_ATTRIBUTES_KEY);
                         extraAttributes.getDynamicMap().forEach((key, value) -> {
                             K decodedKey = codec.decodeKey((ByteBuffer) key);
-                            V decodedValue = codec.decodeValue((ByteBuffer) value);
+                            V decodedValue = value == null ? null : codec.decodeValue((ByteBuffer) value);
                             searchResult.addFields(decodedKey, decodedValue);
                         });
                     }

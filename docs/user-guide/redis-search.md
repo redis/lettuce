@@ -145,7 +145,7 @@ VectorFieldArgs<String> embeddingField = VectorFieldArgs.<String>builder()
 
 ```java
 CreateArgs<String, String> createArgs = CreateArgs.<String, String>builder()
-    .on(IndexDataType.HASH)                    // Index HASH documents
+    .on(CreateArgs.TargetType.HASH)            // Index HASH documents
     .withPrefix("product:")                    // Only index keys with this prefix
     .language("english")                       // Default language for text processing
     .languageField("lang")                     // Field containing document language
@@ -167,7 +167,7 @@ String result = search.ftCreate("advanced-idx", createArgs, fields);
 
 ```java
 CreateArgs<String, String> jsonArgs = CreateArgs.<String, String>builder()
-    .on(IndexDataType.JSON)
+    .on(CreateArgs.TargetType.JSON)
     .prefix("user:")
     .build();
 
@@ -181,6 +181,9 @@ search.ftCreate("users-idx", jsonArgs, jsonFields);
 ```
 
 ## Search Queries
+
+!!! INFO
+The Lettuce driver uses `DIALECT 2` by default for all search queries, unless configured otherwise. This is the recommended approach for new applications as all other dialects are [deprecated](https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/dialects/).
 
 ### Query Syntax
 
@@ -235,7 +238,7 @@ SearchArgs<String, String> searchArgs = SearchArgs.<String, String>builder()
     .slop(2)                                                   // Allow term reordering
     .timeout(5000)                                             // Query timeout in milliseconds
     .params("category", "electronics")                         // Query parameters
-    .dialect(QueryDialects.DIALECT_2)                          // Query dialect version
+    .dialect(QueryDialects.DIALECT2)                           // Query dialect version
     .build();
 
 SearchReply<String, String> results = search.ftSearch("products-idx", "@title:$category", searchArgs);
@@ -288,7 +291,7 @@ SearchArgs<String, String> vectorArgs = SearchArgs.<String, String>builder()
     .params("query_vec", Arrays.toString(queryVector))
     .sortBy("score", SortDirection.ASC)
     .returnFields("title", "score")
-    .dialect(QueryDialects.DIALECT_2)
+    .dialect(QueryDialects.DIALECT2)
     .build();
 
 SearchReply<String, String> results = search.ftSearch("semantic-idx", vectorQuery, vectorArgs);
@@ -379,7 +382,7 @@ AggregateArgs<String, String> aggArgs = AggregateArgs.<String, String>builder()
     .verbatim()
     .timeout(5000)
     .params("min_price", "50")
-    .dialect(QueryDialects.DIALECT_2)
+    .dialect(QueryDialects.DIALECT2)
     .build();
 
 AggregationReply<String, String> aggResults = search.ftAggregate("products-idx", "*", aggArgs);
@@ -575,7 +578,7 @@ SpellCheckArgs<String, String> spellArgs = SpellCheckArgs.<String, String>builde
     .distance(2)                    // Maximum Levenshtein distance
     .terms("include", "dictionary") // Include terms from dictionary
     .terms("exclude", "stopwords")  // Exclude stopwords
-    .dialect(QueryDialects.DIALECT_2)
+    .dialect(QueryDialects.DIALECT2)
     .build();
 
 List<SpellCheckResult<String>> results = search.ftSpellcheck("products-idx", "wireles hedphones", spellArgs);
@@ -634,7 +637,7 @@ String plan = search.ftExplain("products-idx", "@title:wireless");
 
 // Detailed explanation with dialect
 ExplainArgs<String, String> explainArgs = ExplainArgs.<String, String>builder()
-    .dialect(QueryDialects.DIALECT_2)
+    .dialect(QueryDialects.DIALECT2)
     .build();
 
 String detailedPlan = search.ftExplain("products-idx", "@title:wireless", explainArgs);
@@ -680,7 +683,7 @@ search.ftDropindex("products-idx-v1");
 ```java
 // Index only documents matching certain criteria
 CreateArgs<String, String> conditionalArgs = CreateArgs.<String, String>builder()
-    .on(IndexDataType.HASH)
+    .on(CreateArgs.TargetType.HASH)
     .prefix("product:")
     .filter("@status=='active'")  // Only index active products
     .build();
@@ -842,6 +845,6 @@ When migrating from older RediSearch versions:
 ```java
 // Ensure compatibility with modern features
 SearchArgs<String, String> modernArgs = SearchArgs.<String, String>builder()
-    .dialect(QueryDialects.DIALECT_2)  // Use latest dialect
+    .dialect(QueryDialects.DIALECT2)  // Use latest dialect
     .build();
 ```

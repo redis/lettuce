@@ -452,4 +452,40 @@ public class RedisJsonClusterIntegrationTests {
         assertThat(jsonType).isEqualTo(JsonType.ARRAY);
     }
 
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { "..mountain_bikes[0:2].model", "$..mountain_bikes[0:2].model" })
+    void jsonGetRaw(String path) {
+        JsonPath myPath = JsonPath.of(path);
+        List<String> value = redis.jsonGetRaw(BIKES_INVENTORY, myPath);
+        assertThat(value).hasSize(1);
+        if (path.startsWith("$")) {
+            assertThat(value.get(0)).isEqualTo("[\"Phoebe\",\"Quaoar\"]");
+        } else {
+            assertThat(value.get(0)).isEqualTo("\"Phoebe\"");
+        }
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { "..model", "$..model" })
+    void jsonMGetRaw(String path) {
+        JsonPath myPath = JsonPath.of(path);
+        List<String> value = redis.jsonMGetRaw(myPath, BIKES_INVENTORY);
+        assertThat(value).hasSize(1);
+        if (path.startsWith("$")) {
+            assertThat(value.get(0)).isEqualTo("[\"Phoebe\",\"Quaoar\",\"Weywot\"]");
+        } else {
+            assertThat(value.get(0)).isEqualTo("\"Phoebe\"");
+        }
+    }
+
+    @ParameterizedTest(name = "With {0} as path")
+    @ValueSource(strings = { MOUNTAIN_BIKES_V1, MOUNTAIN_BIKES_V2 })
+    void jsonArrpopRaw(String path) {
+        JsonPath myPath = JsonPath.of(path);
+        List<String> poppedJson = redis.jsonArrpopRaw(BIKES_INVENTORY, myPath);
+        assertThat(poppedJson).hasSize(1);
+        assertThat(poppedJson.get(0)).contains(
+                "{\"id\":\"bike:3\",\"model\":\"Weywot\",\"description\":\"This bike gives kids aged six years and old");
+    }
+
 }

@@ -19,4 +19,14 @@ public interface ProtocolKeyword {
      */
     String toString();
 
+    /**
+     * Return the keyword as a String. This method is retained for binary compatibility with existing integrations.
+     *
+     * @deprecated since 6.5, use {@link #toString()} instead.
+     */
+    @Deprecated
+    default String name() {
+        return this.toString();
+    }
+
 }

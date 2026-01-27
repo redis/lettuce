@@ -19,13 +19,13 @@
  */
 package io.lettuce.core;
 
+import io.lettuce.core.api.StatefulRedisConnection;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.test.resource.DefaultRedisClient;
-import io.lettuce.test.resource.TestClientResources;
 
 /**
  * @author Will Glozer
@@ -37,23 +37,21 @@ public abstract class AbstractRedisClientTest extends TestSupport {
 
     protected RedisCommands<String, String> redis;
 
+    protected StatefulRedisConnection<String, String> statefulRedisConnection;
+
     @BeforeAll
     public static void setupClient() {
         client = DefaultRedisClient.get();
         client.setOptions(ClientOptions.create());
     }
 
-    private static RedisClient newRedisClient() {
-        return RedisClient.create(TestClientResources.get(), RedisURI.Builder.redis(host, port).build());
-    }
-
     protected RedisCommands<String, String> connect() {
-        RedisCommands<String, String> connect = client.connect().sync();
-        return connect;
+        statefulRedisConnection = client.connect();
+        return statefulRedisConnection.sync();
     }
 
     @BeforeEach
-    public void openConnection() throws Exception {
+    public void openConnection() {
         client.setOptions(ClientOptions.builder().build());
         redis = connect();
         boolean scriptRunning;
@@ -77,9 +75,9 @@ public abstract class AbstractRedisClientTest extends TestSupport {
     }
 
     @AfterEach
-    public void closeConnection() throws Exception {
-        if (redis != null) {
-            redis.getStatefulConnection().close();
+    public void closeConnection() {
+        if (statefulRedisConnection != null) {
+            statefulRedisConnection.close();
         }
     }
 

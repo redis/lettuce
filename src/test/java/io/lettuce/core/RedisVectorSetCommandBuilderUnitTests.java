@@ -12,6 +12,7 @@ import io.lettuce.core.json.JsonParser;
 import io.lettuce.core.json.JsonValue;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.vector.RawVector;
+import io.lettuce.core.vector.VSimScoreAttribs;
 import io.lettuce.core.vector.VectorMetadata;
 import io.lettuce.core.vector.QuantizationType;
 import io.netty.buffer.ByteBuf;
@@ -25,6 +26,7 @@ import java.util.Map;
 
 import static io.lettuce.TestTags.UNIT_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for {@link RedisVectorSetCommandBuilder}.
@@ -313,6 +315,152 @@ class RedisVectorSetCommandBuilderUnitTests {
                 .isEqualTo("*11\r\n" + "$4\r\n" + "VSIM\r\n" + "$10\r\n" + "vector:set\r\n" + "$6\r\n" + "VALUES\r\n" + "$1\r\n"
                         + "3\r\n" + "$3\r\n" + "0.1\r\n" + "$3\r\n" + "0.2\r\n" + "$3\r\n" + "0.3\r\n" + "$10\r\n"
                         + "WITHSCORES\r\n" + "$5\r\n" + "COUNT\r\n" + "$1\r\n" + "5\r\n" + "$5\r\n" + "TRUTH\r\n");
+    }
+
+    @Test
+    void epsilonBelowZero_throws() {
+        VSimArgs args = new VSimArgs();
+        assertThatThrownBy(() -> args.epsilon(-0.1)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("EPSILON must be in range [0.0, 1.0]");
+    }
+
+    @Test
+    void epsilonAboveOne_throws() {
+        VSimArgs args = new VSimArgs();
+        assertThatThrownBy(() -> args.epsilon(1.1)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("EPSILON must be in range [0.0, 1.0]");
+    }
+
+    @Test
+    void epsilonAtBoundaries_succeeds() {
+        VSimArgs args = new VSimArgs();
+        args.epsilon(0.0);
+        args.epsilon(1.0);
+        // success is absence of exception
+    }
+
+    @Test
+    void epsilonEncodes_whenSet() {
+        VSimArgs vsim = new VSimArgs();
+        vsim.count(5L);
+        vsim.epsilon(0.25);
+        vsim.explorationFactor(200L);
+
+        Command<String, String, List<String>> command = builder.vsim(KEY, vsim, VECTORS);
+        ByteBuf buf = Unpooled.directBuffer();
+        command.encode(buf);
+        String s = buf.toString(StandardCharsets.UTF_8);
+
+        // Contains EPSILON and value
+        assertThat(s).contains("EPSILON");
+        assertThat(s).contains("0.25");
+
+        // Positioning: COUNT ... EPSILON ... EF
+        int idxCount = s.indexOf("COUNT");
+        int idxEps = s.indexOf("EPSILON");
+        int idxEf = s.indexOf("\r\n$2\r\nEF\r\n");
+        if (idxEf < 0)
+            idxEf = s.indexOf("EF\r\n");
+        if (idxEf < 0)
+            idxEf = s.indexOf("EF");
+
+        assertThat(idxCount).isNotNegative();
+        assertThat(idxEps).isGreaterThan(idxCount);
+        assertThat(idxEf).isGreaterThan(idxEps);
+    }
+
+    @Test
+    void epsilonNotEncoded_whenUnset() {
+        VSimArgs vsim = new VSimArgs();
+        vsim.count(5L);
+        vsim.explorationFactor(200L);
+
+        Command<String, String, List<String>> command = builder.vsim(KEY, vsim, VECTORS);
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            command.encode(buf);
+            String s = buf.toString(StandardCharsets.UTF_8);
+            assertThat(s).doesNotContain("EPSILON");
+        } finally {
+            buf.release();
+        }
+    }
+
+    @Test
+    void withAttribs_encodesFlag() {
+        VSimArgs vsim = new VSimArgs().count(5L).epsilon(0.25).explorationFactor(200L);
+        Command<String, String, Map<String, VSimScoreAttribs>> command = builder.vsimWithScoreWithAttribs(KEY, vsim, VECTORS);
+
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            command.encode(buf);
+            String s = buf.toString(StandardCharsets.UTF_8);
+            assertThat(s).contains("WITHATTRIBS");
+            assertThat(s).contains("WITHSCORES");
+        } finally {
+            buf.release();
+        }
+    }
+
+    @Test
+    void withAttribs_positioning_in_vsimWithScoreWithAttribs() {
+        VSimArgs vsim = new VSimArgs().count(5L).epsilon(0.25).explorationFactor(200L);
+
+        Command<String, String, Map<String, VSimScoreAttribs>> command = builder.vsimWithScoreWithAttribs(KEY, vsim, VECTORS);
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            command.encode(buf);
+            String s = buf.toString(StandardCharsets.UTF_8);
+
+            int iCount = s.indexOf("COUNT");
+            int iEps = s.indexOf("EPSILON");
+            int iAttr = s.indexOf("WITHATTRIBS");
+            int iEf = s.indexOf("\r\n$2\r\nEF\r\n");
+            if (iEf < 0)
+                iEf = s.indexOf("EF");
+
+            // In vsimWithScoreWithAttribs, WITHATTRIBS is part of the base tokens and appears before VSimArgs options
+            assertThat(iAttr).isNotNegative();
+            assertThat(iCount).isGreaterThan(iAttr);
+            assertThat(iEps).isGreaterThan(iCount);
+            assertThat(iEf).isGreaterThan(iEps);
+        } finally {
+            buf.release();
+        }
+    }
+
+    @Test
+    void withoutAttribs_doesNotEncode() {
+        VSimArgs vsim = new VSimArgs();
+        Command<String, String, List<String>> command = builder.vsim(KEY, vsim, VECTORS);
+
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            command.encode(buf);
+            String s = buf.toString(StandardCharsets.UTF_8);
+            assertThat(s).doesNotContain("WITHATTRIBS");
+        } finally {
+            buf.release();
+        }
+    }
+
+    @Test
+    void vsimWithScoreWithAttribs_withArgs_emits_withattribs_once() {
+        VSimArgs args = new VSimArgs();
+        Command<String, String, Map<String, VSimScoreAttribs>> cmd = builder.vsimWithScoreWithAttribs(KEY, args,
+                new Double[] { 1.0, 0.0 });
+
+        ByteBuf buf = Unpooled.directBuffer();
+        try {
+            cmd.encode(buf);
+            String encoded = buf.toString(StandardCharsets.UTF_8);
+            int first = encoded.indexOf("WITHATTRIBS");
+            int last = encoded.lastIndexOf("WITHATTRIBS");
+            assertThat(first).isGreaterThanOrEqualTo(0);
+            assertThat(last).isEqualTo(first);
+        } finally {
+            buf.release();
+        }
     }
 
 }
