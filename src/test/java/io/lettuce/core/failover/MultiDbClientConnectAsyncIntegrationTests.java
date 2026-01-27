@@ -541,9 +541,14 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
     /**
      * Test that connectAsync future handles exceptions properly in composition.
+     * 
+     * @throws TimeoutException
+     * @throws ExecutionException
+     * @throws InterruptedException
      */
     @Test
-    void connectAsyncFutureShouldHandleExceptionsInComposition() {
+    void connectAsyncFutureShouldHandleExceptionsInComposition()
+            throws InterruptedException, ExecutionException, TimeoutException {
         // Create a client with invalid endpoint
         DatabaseConfig invalidDb = DatabaseConfig.builder(RedisURI.create("redis://localhost:9999")).weight(1.0f).build();
         MultiDbClient failClient = MultiDbClient.create(java.util.Arrays.asList(invalidDb));
@@ -554,10 +559,8 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
             CompletableFuture<String> composedFuture = future.toCompletableFuture().thenApply(conn -> conn.sync().ping())
                     .exceptionally(throwable -> "ERROR: " + throwable.getMessage());
 
-            String result = composedFuture.get(15, TimeUnit.SECONDS);
+            String result = composedFuture.get(5, TimeUnit.SECONDS);
             assertThat(result).startsWith("ERROR:");
-        } catch (Exception e) {
-            // Expected
         } finally {
             failClient.shutdown();
         }
