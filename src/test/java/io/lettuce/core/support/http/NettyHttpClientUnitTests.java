@@ -380,12 +380,14 @@ class NettyHttpClientUnitTests {
 
     @Test
     void shouldHandleConnectionTimeout() {
-        // Create a server that doesn't accept connections
-        URI uri = URI.create("http://localhost:1"); // Port 1 is typically not listening
+        // Use a non-routable IP address to trigger actual connection timeout
+        // 10.255.255.1 is a non-routable address that will cause timeout, not connection refused
+        URI uri = URI.create("http://203.0.113.1:80");
 
         HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().connectionTimeout(100).build();
 
-        assertThatThrownBy(() -> httpClient.connect(uri, config)).isInstanceOf(IOException.class);
+        assertThatThrownBy(() -> httpClient.connect(uri, config)).isInstanceOf(IOException.class)
+                .hasMessageContaining("connection timed out");
     }
 
     @Test
