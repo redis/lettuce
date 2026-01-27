@@ -3,7 +3,7 @@
 
     <groupId>io.lettuce</groupId>
     <artifactId>lettuce-core</artifactId>
-    <version>7.0.0-SNAPSHOT</version>
+    <version>7.3.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Lettuce</name>
@@ -53,7 +53,7 @@
         <assertj-core.version>3.25.3</assertj-core.version>
         <cdi-api.version>2.0.SP1</cdi-api.version>
         <brave.version>5.13.11</brave.version>
-        <commons-lang3.version>3.13.0</commons-lang3.version>
+        <commons-lang3.version>3.18.0</commons-lang3.version>
         <commons-pool.version>2.12.0</commons-pool.version>
         <jackson-version>2.17.0</jackson-version>
         <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
@@ -61,14 +61,14 @@
         <junit5.version>5.10.2</junit5.version>
         <hamcrest-library.version>2.2</hamcrest-library.version>
         <hdr-histogram.version>2.2.2</hdr-histogram.version>
-        <kotlin.version>1.7.21</kotlin.version>
+        <kotlin.version>2.0.0</kotlin.version>
         <kotlinx-coroutines.version>1.5.2</kotlinx-coroutines.version>
         <latencyutils.version>2.0.3</latencyutils.version>
         <log4j2-version>2.24.0</log4j2-version>
         <micrometer.version>1.14.2</micrometer.version>
         <micrometer-tracing.version>1.2.4</micrometer-tracing.version>
         <mockito.version>4.9.0</mockito.version>
-        <netty.version>4.1.118.Final</netty.version>
+        <netty.version>4.2.5.Final</netty.version>
         <openwebbeans.version>2.0.27</openwebbeans.version>
         <reactor.version>3.6.6</reactor.version>
         <rxjava.version>1.3.8</rxjava.version>
@@ -267,23 +267,19 @@
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-epoll</artifactId>
-            <classifier>linux-x86_64</classifier>
+            <artifactId>netty-transport-classes-epoll</artifactId>
             <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
-            <artifactId>netty-transport-native-kqueue</artifactId>
-            <classifier>osx-x86_64</classifier>
+            <artifactId>netty-transport-classes-kqueue</artifactId>
             <optional>true</optional>
         </dependency>
 
         <dependency>
-            <groupId>io.netty.incubator</groupId>
-            <artifactId>netty-incubator-transport-native-io_uring</artifactId>
-            <version>0.0.26.Final</version>
-            <classifier>linux-x86_64</classifier>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-classes-io_uring</artifactId>
             <optional>true</optional>
         </dependency>
 
@@ -588,7 +584,7 @@
         <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty-http</artifactId>
-            <version>1.1.16</version>
+            <version>1.2.8</version>
             <scope>test</scope>
         </dependency>
 
@@ -801,8 +797,8 @@
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <configuration>
                     <jvmTarget>1.8</jvmTarget>
-                    <languageVersion>1.3</languageVersion>
-                    <apiVersion>1.3</apiVersion>
+                    <languageVersion>1.4</languageVersion>
+                    <apiVersion>1.4</apiVersion>
                     <args>
                         <arg>-Xopt-in=kotlin.RequiresOptIn</arg>
                         <arg>-Xopt-in=io.lettuce.core.ExperimentalLettuceCoroutinesApi
@@ -1042,6 +1038,32 @@
             <properties>
                 <os.detected.classifier>osx-x86_64</os.detected.classifier>
             </properties>
+        </profile>
+
+        <profile>
+            <id>linux-native-transports</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                </os>
+            </activation>
+            <dependencies>
+                <!-- Native transport implementations for testing on Linux -->
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-transport-native-epoll</artifactId>
+                    <version>${netty.version}</version>
+                    <classifier>${os.detected.classifier}</classifier>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-transport-native-io_uring</artifactId>
+                    <version>${netty.version}</version>
+                    <classifier>${os.detected.classifier}</classifier>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>

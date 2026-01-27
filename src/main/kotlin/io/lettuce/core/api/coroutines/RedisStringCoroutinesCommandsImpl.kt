@@ -98,6 +98,8 @@ internal class RedisStringCoroutinesCommandsImpl<K : Any, V : Any>(internal val 
 
     override suspend fun msetnx(map: Map<K, V>): Boolean? = ops.msetnx(map).awaitFirstOrNull()
 
+    override suspend fun msetex(map: Map<K, V>, args: MSetExArgs): Boolean? = ops.msetex(map, args).awaitFirstOrNull()
+
     override suspend fun set(key: K, value: V): String? = ops.set(key, value).awaitFirstOrNull()
 
     override suspend fun set(key: K, value: V, setArgs: SetArgs): String? = ops.set(key, value, setArgs).awaitFirstOrNull()

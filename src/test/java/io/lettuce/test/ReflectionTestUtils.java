@@ -11,6 +11,10 @@ import io.lettuce.core.internal.LettuceAssert;
  */
 public final class ReflectionTestUtils {
 
+    private ReflectionTestUtils() {
+        // No Instances.
+    }
+
     /**
      * Get the value of the {@linkplain Field field} with the given {@code name} from the provided {@code targetObject}.
      * <p>
@@ -138,6 +142,19 @@ public final class ReflectionTestUtils {
         } catch (Exception ex) {
             return String.format("target of type [%s] whose toString() method threw [%s]",
                     (target != null ? target.getClass().getName() : "unknown"), ex);
+        }
+    }
+
+    /**
+     * Helper method to set private/protected fields using reflection.
+     */
+    public static void setField(Object target, String fieldName, Object value) {
+        try {
+            java.lang.reflect.Field field = ReflectionTestUtils.findField(target.getClass(), fieldName);
+            field.setAccessible(true);
+            field.set(target, value);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set field " + fieldName, e);
         }
     }
 

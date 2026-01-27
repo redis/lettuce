@@ -87,12 +87,6 @@ interface ClusterConnectionProvider extends Closeable {
     CompletableFuture<Void> closeAsync();
 
     /**
-     * Reset the writer state. Queued commands will be canceled and the internal state will be reset. This is useful when the
-     * internal state machine gets out of sync with the connection.
-     */
-    void reset();
-
-    /**
      * Close connections that are not in use anymore/not part of the cluster.
      */
     void closeStaleConnections();

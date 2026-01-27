@@ -14,6 +14,7 @@ import io.lettuce.core.api.reactive.RedisVectorSetReactiveCommands
 import io.lettuce.core.json.JsonValue
 import io.lettuce.core.vector.RawVector
 import io.lettuce.core.vector.VectorMetadata
+import io.lettuce.core.vector.VSimScoreAttribs
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactive.asFlow
@@ -27,7 +28,6 @@ import kotlinx.coroutines.reactive.asFlow
  * @since 6.7
  */
 @ExperimentalLettuceCoroutinesApi
-
 internal class RedisVectorSetCoroutinesCommandsImpl<K : Any, V : Any>(internal val ops: RedisVectorSetReactiveCommands<K, V>) :
     RedisVectorSetCoroutinesCommands<K, V> {
 
@@ -88,4 +88,17 @@ internal class RedisVectorSetCoroutinesCommandsImpl<K : Any, V : Any>(internal v
     override suspend fun vsimWithScore(key: K, args: VSimArgs, vararg vectors: Double): Map<V, Double>? = ops.vsimWithScore(key, args, *vectors.asSequence().toList().toTypedArray()).awaitFirstOrNull()
 
     override suspend fun vsimWithScore(key: K, args: VSimArgs, element: V): Map<V, Double>? = ops.vsimWithScore(key, args, element).awaitFirstOrNull()
+
+    // WITHATTRIBS variants
+    override suspend fun vsimWithScoreWithAttribs(key: K, vararg vectors: Double): Map<V, VSimScoreAttribs>? =
+        ops.vsimWithScoreWithAttribs(key, *vectors.asSequence().toList().toTypedArray()).awaitFirstOrNull()
+
+    override suspend fun vsimWithScoreWithAttribs(key: K, element: V): Map<V, VSimScoreAttribs>? =
+        ops.vsimWithScoreWithAttribs(key, element).awaitFirstOrNull()
+
+    override suspend fun vsimWithScoreWithAttribs(key: K, args: VSimArgs, vararg vectors: Double): Map<V, VSimScoreAttribs>? =
+        ops.vsimWithScoreWithAttribs(key, args, *vectors.asSequence().toList().toTypedArray()).awaitFirstOrNull()
+
+    override suspend fun vsimWithScoreWithAttribs(key: K, args: VSimArgs, element: V): Map<V, VSimScoreAttribs>? =
+        ops.vsimWithScoreWithAttribs(key, args, element).awaitFirstOrNull()
 }

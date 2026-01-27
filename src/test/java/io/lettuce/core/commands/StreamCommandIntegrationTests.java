@@ -26,6 +26,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.models.stream.ClaimedMessages;
 import io.lettuce.core.models.stream.PendingMessage;
 import io.lettuce.core.models.stream.PendingMessages;
+import io.lettuce.core.models.stream.StreamEntryDeletionResult;
 import io.lettuce.core.output.NestedMultiOutput;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.test.LettuceExtension;
@@ -46,6 +47,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static io.lettuce.core.protocol.CommandType.XINFO;
@@ -273,6 +275,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(firstMessage.getStream()).isEqualTo("stream-1");
         assertThat(firstMessage.getBody()).hasSize(1).containsEntry("key1", "value1");
+        assertThat(firstMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(firstMessage.getDeliveredCount()).isNull();
 
         StreamMessage<String, String> nextMessage = messages.get(1);
 
@@ -302,12 +306,16 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(firstMessage.getId()).isEqualTo(initial1);
         assertThat(firstMessage.getStream()).isEqualTo("{s1}stream-1");
         assertThat(firstMessage.getBody()).hasSize(1).containsEntry("key1", "value1");
+        assertThat(firstMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(firstMessage.getDeliveredCount()).isNull();
 
         StreamMessage<String, String> secondMessage = messages.get(3);
 
         assertThat(secondMessage.getId()).isEqualTo(message2);
         assertThat(secondMessage.getStream()).isEqualTo("{s1}stream-2");
         assertThat(secondMessage.getBody()).hasSize(2).containsEntry("key4", "value4");
+        assertThat(secondMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(secondMessage.getDeliveredCount()).isNull();
     }
 
     @Test
@@ -332,12 +340,16 @@ public class StreamCommandIntegrationTests extends TestSupport {
         assertThat(firstMessage.getId()).isEqualTo(message1);
         assertThat(firstMessage.getStream()).isEqualTo("stream-1");
         assertThat(firstMessage.getBody()).containsEntry("key3", "value3");
+        assertThat(firstMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(firstMessage.getDeliveredCount()).isNull();
 
         StreamMessage<String, String> secondMessage = messages.get(1);
 
         assertThat(secondMessage.getId()).isEqualTo(message2);
         assertThat(secondMessage.getStream()).isEqualTo("stream-2");
         assertThat(secondMessage.getBody()).containsEntry("key4", "value4");
+        assertThat(secondMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(secondMessage.getDeliveredCount()).isNull();
     }
 
     @Test
@@ -356,6 +368,8 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
         assertThat(lastMessage.getStream()).isEqualTo("stream-1");
         assertThat(lastMessage.getBody()).hasSize(1).containsEntry("key2", "value2");
+        assertThat(lastMessage.getMillisElapsedFromDelivery()).isNull();
+        assertThat(lastMessage.getDeliveredCount()).isNull();
 
         assertThat(latestMessages).isEmpty();
     }
@@ -406,13 +420,30 @@ public class StreamCommandIntegrationTests extends TestSupport {
 
     @Test
     @EnabledOnCommand("EVAL_RO") // Redis 7.0
-    void xgroupCreateEntriesRead() {
+    void xgroupCreateEntriesRead_pre822() {
+        assumeTrue(RedisConditions.of(redis).getRedisVersion().isLessThan(RedisConditions.Version.parse("8.2.2")),
+                "Redis 8.2.2+ has different behavior for entries-read");
 
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.entriesRead(5).mkstream(true));
 
         List<List<Object>> group = (List) redis.xinfoGroups("key");
 
         assertThat(group.get(0)).containsSequence("entries-read", 5L, "lag");
+    }
+
+    @Test
+    @EnabledOnCommand("EVAL_RO") // Redis 7.0
+    void xgroupCreateEntriesRead_post822() {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.2.2"),
+                "Redis 8.2.2+ has different behavior for entries-read");
+
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xadd(key, Collections.singletonMap("key", "value"));
+        redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.entriesRead(5).mkstream(true));
+
+        List<List<Object>> group = (List) redis.xinfoGroups("key");
+
+        assertThat(group.get(0)).containsSequence("entries-read", 2L, "lag");
     }
 
     @Test
@@ -758,6 +789,453 @@ public class StreamCommandIntegrationTests extends TestSupport {
         redis.xgroupCreate(StreamOffset.latest(key), "group", XGroupCreateArgs.Builder.mkstream());
 
         assertThat(redis.xgroupSetid(StreamOffset.latest(key), "group")).isEqualTo("OK");
+    }
+
+    // Redis 8.2 Stream Commands Tests
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xdelex() {
+        // Add some entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        String nonExistentId = "999999-0";
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+
+        // Test XDELEX
+        List<StreamEntryDeletionResult> results = redis.xdelex(key, id1, id2, nonExistentId);
+
+        assertThat(results).hasSize(3);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(1)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(2)).isEqualTo(StreamEntryDeletionResult.NOT_FOUND);
+
+        // Verify entries were deleted
+        assertThat(redis.xlen(key)).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xdelexWithPolicy() {
+        // Add some entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+
+        // Test XDELEX with KEEP_REFERENCES policy
+        List<StreamEntryDeletionResult> results = redis.xdelex(key, StreamDeletionPolicy.KEEP_REFERENCES, id1, id2);
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(1)).isEqualTo(StreamEntryDeletionResult.DELETED);
+
+        // Verify entries were deleted
+        assertThat(redis.xlen(key)).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("XACKDEL") // Redis 8.2
+    void xackdel() {
+        // Set up stream with consumer group
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        // Add entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+
+        // Create consumer group
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        // Read messages to create pending entries
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from(groupName, consumerName),
+                StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(2);
+
+        // Test XACKDEL
+        List<StreamEntryDeletionResult> results = redis.xackdel(key, groupName, id1, id2);
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(1)).isEqualTo(StreamEntryDeletionResult.DELETED);
+
+        // Verify no pending messages remain
+        List<PendingMessage> pending = redis.xpending(key, groupName, Range.unbounded(), io.lettuce.core.Limit.from(10));
+        assertThat(pending).isEmpty();
+    }
+
+    @Test
+    @EnabledOnCommand("XACKDEL") // Redis 8.2
+    void xackdelWithPolicy() {
+        // Set up stream with consumer group
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        // Add entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(1L);
+
+        // Create consumer group
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        // Read message to create pending entry
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        // Test XACKDEL with DELETE_REFERENCES policy
+        List<StreamEntryDeletionResult> results = redis.xackdel(key, groupName, StreamDeletionPolicy.DELETE_REFERENCES, id1);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+    }
+
+    @Test
+    @EnabledOnCommand("XACKDEL") // Redis 8.2
+    void xackdelNotFound() {
+        String groupName = "test-group";
+        String nonExistentId = "999999-0";
+
+        // Create consumer group on empty stream
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        // Test XACKDEL with non-existent ID
+        List<StreamEntryDeletionResult> results = redis.xackdel(key, groupName, nonExistentId);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.NOT_FOUND);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xdelexEmptyStream() {
+        String nonExistentId = "999999-0";
+
+        // Test XDELEX on empty stream
+        List<StreamEntryDeletionResult> results = redis.xdelex(key, nonExistentId);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.NOT_FOUND);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xdelexWithDelrefPolicy() {
+        // Add entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        String id2 = redis.xadd(key, Collections.singletonMap("field2", "value2"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(2L);
+
+        // Test XDELEX with DELETE_REFERENCES policy
+        List<StreamEntryDeletionResult> results = redis.xdelex(key, StreamDeletionPolicy.DELETE_REFERENCES, id1, id2);
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+        assertThat(results.get(1)).isEqualTo(StreamEntryDeletionResult.DELETED);
+
+        // Verify entries were deleted
+        assertThat(redis.xlen(key)).isEqualTo(0L);
+    }
+
+    @Test
+    @EnabledOnCommand("XACKDEL") // Redis 8.2
+    void xackdelWithAckedPolicy() {
+        // Set up stream with consumer group
+        String groupName = "test-group";
+        String consumerName = "test-consumer";
+
+        // Add entries to the stream
+        String id1 = redis.xadd(key, Collections.singletonMap("field1", "value1"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(1L);
+
+        // Create consumer group
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), groupName, XGroupCreateArgs.Builder.mkstream());
+
+        // Read message to create pending entry
+        redis.xreadgroup(Consumer.from(groupName, consumerName), StreamOffset.lastConsumed(key));
+
+        // Test XACKDEL with ACKNOWLEDGED policy on pending entry
+        // The ACKNOWLEDGED policy behavior: it deletes the entry from the stream and acknowledges it
+        List<StreamEntryDeletionResult> results = redis.xackdel(key, groupName, StreamDeletionPolicy.ACKNOWLEDGED, id1);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0)).isEqualTo(StreamEntryDeletionResult.DELETED);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xaddWithTrimmingMode() {
+        // Add initial entries to the stream
+        redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xadd(key, Collections.singletonMap("field3", "value3"));
+        redis.xadd(key, Collections.singletonMap("field4", "value4"));
+        redis.xadd(key, Collections.singletonMap("field5", "value5"));
+
+        // Verify initial state
+        assertThat(redis.xlen(key)).isEqualTo(5L);
+
+        // Create consumer group and read messages to create PEL entries
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), "test-group", XGroupCreateArgs.Builder.mkstream());
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("test-group", "test-consumer"),
+                XReadArgs.Builder.count(3), StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(3);
+
+        // Add new entry with maxLen=3 and KEEP_REFERENCES mode - should preserve PEL references
+        String newId = redis.xadd(key, XAddArgs.Builder.maxlen(3).trimmingMode(StreamDeletionPolicy.KEEP_REFERENCES),
+                Collections.singletonMap("field6", "value6"));
+        assertThat(newId).isNotNull();
+
+        // Stream should be trimmed to 3 entries
+        assertThat(redis.xlen(key)).isEqualTo(3L);
+
+        // PEL should still contain references to read messages
+        PendingMessages pending = redis.xpending(key, "test-group");
+        assertThat(pending.getCount()).isEqualTo(3L);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xaddWithTrimmingModeDelref() {
+        // Add initial entries to the stream
+        redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xadd(key, Collections.singletonMap("field3", "value3"));
+        redis.xadd(key, Collections.singletonMap("field4", "value4"));
+        redis.xadd(key, Collections.singletonMap("field5", "value5"));
+
+        // Create consumer group and read messages
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), "test-group", XGroupCreateArgs.Builder.mkstream());
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("test-group", "test-consumer"),
+                XReadArgs.Builder.count(3), StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(3);
+
+        // Add new entry with maxLen=3 and DELETE_REFERENCES mode - should remove PEL references
+        String newId = redis.xadd(key, XAddArgs.Builder.maxlen(3).trimmingMode(StreamDeletionPolicy.DELETE_REFERENCES),
+                Collections.singletonMap("field6", "value6"));
+        assertThat(newId).isNotNull();
+
+        // Stream should be trimmed to 3 entries
+        assertThat(redis.xlen(key)).isEqualTo(3L);
+
+        // PEL should have fewer references due to DELREF policy
+        PendingMessages pending = redis.xpending(key, "test-group");
+        assertThat(pending.getCount()).isLessThan(3L);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xtrimWithTrimmingMode() {
+        // Add initial entries to the stream
+        redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xadd(key, Collections.singletonMap("field3", "value3"));
+        redis.xadd(key, Collections.singletonMap("field4", "value4"));
+        redis.xadd(key, Collections.singletonMap("field5", "value5"));
+
+        // Create consumer group and read messages
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), "test-group", XGroupCreateArgs.Builder.mkstream());
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("test-group", "test-consumer"),
+                XReadArgs.Builder.count(3), StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(3);
+
+        // Trim with KEEP_REFERENCES mode
+        Long trimmed = redis.xtrim(key, XTrimArgs.Builder.maxlen(3).trimmingMode(StreamDeletionPolicy.KEEP_REFERENCES));
+        assertThat(trimmed).isEqualTo(2L);
+
+        // Stream should be trimmed to 3 entries
+        assertThat(redis.xlen(key)).isEqualTo(3L);
+
+        // PEL should still contain references
+        PendingMessages pending = redis.xpending(key, "test-group");
+        assertThat(pending.getCount()).isEqualTo(3L);
+    }
+
+    @Test
+    @EnabledOnCommand("XDELEX") // Redis 8.2
+    void xtrimWithTrimmingModeDelref() {
+        // Add initial entries to the stream
+        redis.xadd(key, Collections.singletonMap("field1", "value1"));
+        redis.xadd(key, Collections.singletonMap("field2", "value2"));
+        redis.xadd(key, Collections.singletonMap("field3", "value3"));
+        redis.xadd(key, Collections.singletonMap("field4", "value4"));
+        redis.xadd(key, Collections.singletonMap("field5", "value5"));
+
+        // Create consumer group and read messages
+        redis.xgroupCreate(StreamOffset.from(key, "0-0"), "test-group", XGroupCreateArgs.Builder.mkstream());
+        List<StreamMessage<String, String>> messages = redis.xreadgroup(Consumer.from("test-group", "test-consumer"),
+                XReadArgs.Builder.count(3), StreamOffset.lastConsumed(key));
+
+        assertThat(messages).hasSize(3);
+
+        // Trim with DELETE_REFERENCES mode
+        Long trimmed = redis.xtrim(key, XTrimArgs.Builder.maxlen(3).trimmingMode(StreamDeletionPolicy.DELETE_REFERENCES));
+        assertThat(trimmed).isEqualTo(2L);
+
+        // Stream should be trimmed to 3 entries
+        assertThat(redis.xlen(key)).isEqualTo(3L);
+
+        // PEL should have fewer references due to DELREF policy
+        PendingMessages pending = redis.xpending(key, "test-group");
+        assertThat(pending.getCount()).isLessThan(3L);
+    }
+
+    // XREADGORUP CLAIM Tests - 8.4 OSS
+    // since: 7.1
+
+    private static final String KEY = "it:stream:claim:move:" + UUID.randomUUID();
+
+    private static final String GROUP = "g";
+
+    private static final String C1 = "c1";
+
+    private static final String C2 = "c2";
+
+    private static final Map<String, String> BODY = new HashMap<String, String>() {
+
+        {
+            put("f", "v");
+        }
+
+    };
+
+    private static final long IDLE_TIME_MS = 5;
+
+    private void beforeEachClaimTest() throws InterruptedException {
+        assumeTrue(RedisConditions.of(redis).hasVersionGreaterOrEqualsTo("8.4"), "Redis 8.4+ required for XREADGROUP CLAIM");
+
+        // Produce two entries
+        redis.xadd(KEY, BODY);
+        redis.xadd(KEY, BODY);
+
+        // Create group and consume with c1 so entries become pending for c1
+        redis.xgroupCreate(XReadArgs.StreamOffset.from(KEY, "0-0"), GROUP);
+        redis.xreadgroup(Consumer.from(GROUP, C1), XReadArgs.Builder.count(10), XReadArgs.StreamOffset.lastConsumed(KEY));
+
+        // Ensure idle time so entries are claimable
+        Thread.sleep(IDLE_TIME_MS);
+    }
+
+    @Test
+    void xreadgroupClaim_returnsMetadataOrdered() throws Exception {
+        beforeEachClaimTest();
+
+        // Produce fresh entries that are NOT claimed (not pending)
+        redis.xadd(KEY, BODY);
+        redis.xadd(KEY, BODY);
+
+        List<StreamMessage<String, String>> consumer2 = redis.xreadgroup(Consumer.from(GROUP, C2),
+                XReadArgs.Builder.claim(Duration.ofMillis(IDLE_TIME_MS)).count(10), XReadArgs.StreamOffset.lastConsumed(KEY));
+        long claimedCount = consumer2.stream().filter(StreamMessage::isClaimed).count();
+        long freshCount = consumer2.size() - claimedCount;
+        StreamMessage<String, String> first = consumer2.get(0);
+        StreamMessage<String, String> second = consumer2.get(1);
+        StreamMessage<String, String> third = consumer2.get(2);
+        StreamMessage<String, String> fourth = consumer2.get(3);
+
+        // Assertions
+        assertThat(consumer2).isNotNull();
+        assertThat(consumer2).isNotEmpty();
+        assertThat(claimedCount).isEqualTo(2);
+        assertThat(freshCount).isEqualTo(2);
+
+        // Assert order: pending entries are first
+        assertThat(first.isClaimed()).isTrue();
+        assertThat(second.isClaimed()).isTrue();
+        assertThat(third.isClaimed()).isFalse();
+        assertThat(fourth.isClaimed()).isFalse();
+
+        // Assert claimed message structure
+        assertThat(first.getMillisElapsedFromDelivery()).isGreaterThanOrEqualTo(5);
+        assertThat(first.getDeliveredCount()).isGreaterThanOrEqualTo(1);
+        assertThat(first.getBody()).containsEntry("f", "v");
+        assertThat(fourth.getMillisElapsedFromDelivery()).isEqualTo(0);
+        assertThat(fourth.getDeliveredCount()).isEqualTo(0);
+        assertThat(fourth.getBody()).containsEntry("f", "v");
+    }
+
+    @Test
+    void xreadgroupClaim_movesPendingFromC1ToC2AndRemainsPendingUntilAck() throws Exception {
+        beforeEachClaimTest();
+
+        PendingMessages before = redis.xpending(KEY, GROUP);
+        List<StreamMessage<String, String>> res = redis.xreadgroup(Consumer.from(GROUP, C2),
+                XReadArgs.Builder.claim(Duration.ofMillis(IDLE_TIME_MS)).count(10), XReadArgs.StreamOffset.lastConsumed(KEY));
+        PendingMessages afterClaim = redis.xpending(KEY, GROUP);
+        long acked = redis.xack(KEY, GROUP, res.get(0).getId(), res.get(1).getId());
+        PendingMessages afterAck = redis.xpending(KEY, GROUP);
+
+        // Verify pending belongs to c1
+        assertThat(before.getCount()).isEqualTo(2);
+        assertThat(before.getConsumerMessageCount().getOrDefault(C1, 0L)).isEqualTo(2);
+
+        // Verify claim withv c2
+        assertThat(res).isNotNull();
+        assertThat(res).isNotEmpty();
+        long claimed = res.stream().filter(StreamMessage::isClaimed).count();
+        assertThat(claimed).isEqualTo(2);
+
+        // After claim: entries are pending for c2 (moved), not acked yet
+        assertThat(afterClaim.getCount()).isEqualTo(2);
+        assertThat(afterClaim.getConsumerMessageCount().getOrDefault(C1, 0L)).isEqualTo(0);
+        assertThat(afterClaim.getConsumerMessageCount().getOrDefault(C2, 0L)).isEqualTo(2);
+
+        // XACK the claimed entries -> PEL should become empty
+        assertThat(acked).isEqualTo(2);
+        assertThat(afterAck.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    void xreadgroupClaim_claimWithNoackDoesNotCreatePendingAndRemovesClaimedFromPel() throws Exception {
+        beforeEachClaimTest();
+
+        PendingMessages before = redis.xpending(KEY, GROUP);
+
+        // Also produce fresh entries that should not be added to PEL when NOACK is set
+        redis.xadd(KEY, BODY);
+        redis.xadd(KEY, BODY);
+
+        // Claim with NOACK using c2
+        List<StreamMessage<String, String>> res = redis.xreadgroup(Consumer.from(GROUP, C2),
+                XReadArgs.Builder.claim(Duration.ofMillis(IDLE_TIME_MS)).noack(true).count(10),
+                XReadArgs.StreamOffset.lastConsumed(KEY));
+        PendingMessages afterNoack = redis.xpending(KEY, GROUP);
+
+        assertThat(res).isNotNull();
+        assertThat(res).isNotEmpty();
+
+        long claimedCount = res.stream().filter(StreamMessage::isClaimed).count();
+        long freshCount = res.size() - claimedCount;
+        assertThat(claimedCount).isEqualTo(2);
+        assertThat(freshCount).isEqualTo(2);
+
+        // After NOACK read, previously pending entries remain pending (NOACK does not remove them)
+        assertThat(afterNoack.getCount()).isEqualTo(2);
+
+        // Before claim: entries are pending for c1
+        assertThat(before.getCount()).isEqualTo(2);
+        assertThat(before.getConsumerMessageCount().getOrDefault(C1, 0L)).isEqualTo(2);
+        assertThat(before.getConsumerMessageCount().getOrDefault(C2, 0L)).isEqualTo(0);
+
+        // Claimed entries remain pending and are now owned by c2 (CLAIM reassigns ownership). Fresh entries were not added
+        // to PEL.
+        assertThat(afterNoack.getConsumerMessageCount().getOrDefault(C1, 0L)).isEqualTo(0);
+        assertThat(afterNoack.getConsumerMessageCount().getOrDefault(C2, 0L)).isEqualTo(2);
     }
 
 }

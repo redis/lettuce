@@ -53,7 +53,8 @@ public class ClusterClientOptions extends ClientOptions {
 
     public static final Duration DEFAULT_REFRESH_PERIOD_DURATION = Duration.ofSeconds(DEFAULT_REFRESH_PERIOD);
 
-    public static final boolean DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP = true;
+    /** Since Lettuce 7.0 validation is by default disabled. */
+    public static final boolean DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP = false;
 
     public static final Predicate<RedisClusterNode> DEFAULT_NODE_FILTER = node -> true;
 
@@ -130,9 +131,7 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         Builder builder = new Builder();
-        builder.autoReconnect(clientOptions.isAutoReconnect())
-                .cancelCommandsOnReconnectFailure(clientOptions.isCancelCommandsOnReconnectFailure())
-                .decodeBufferPolicy(clientOptions.getDecodeBufferPolicy())
+        builder.autoReconnect(clientOptions.isAutoReconnect()).decodeBufferPolicy(clientOptions.getDecodeBufferPolicy())
                 .disconnectedBehavior(clientOptions.getDisconnectedBehavior())
                 .reauthenticateBehavior(clientOptions.getReauthenticateBehaviour())
                 .pingBeforeActivateConnection(clientOptions.isPingBeforeActivateConnection())
@@ -177,33 +176,6 @@ public class ClusterClientOptions extends ClientOptions {
         @Override
         public Builder autoReconnect(boolean autoReconnect) {
             super.autoReconnect(autoReconnect);
-            return this;
-        }
-
-        /**
-         * @param bufferUsageRatio the buffer usage ratio. Must be between {@code 0} and {@code 2^31-1}, typically a value
-         *        between 1 and 10 representing 50% to 90%.
-         * @return {@code this}
-         * @deprecated since 6.0 in favor of {@link DecodeBufferPolicy}.
-         */
-        @Override
-        @Deprecated
-        public Builder bufferUsageRatio(int bufferUsageRatio) {
-            super.bufferUsageRatio(bufferUsageRatio);
-            return this;
-        }
-
-        /**
-         *
-         * @param cancelCommandsOnReconnectFailure true/false
-         * @return
-         * @deprecated since 6.2, to be removed with 7.0. This feature is unsafe and may cause protocol offsets if true (i.e.
-         *             Redis commands are completed with previous command values).
-         */
-        @Override
-        @Deprecated
-        public Builder cancelCommandsOnReconnectFailure(boolean cancelCommandsOnReconnectFailure) {
-            super.cancelCommandsOnReconnectFailure(cancelCommandsOnReconnectFailure);
             return this;
         }
 
@@ -310,8 +282,12 @@ public class ClusterClientOptions extends ClientOptions {
         }
 
         /**
-         * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code true}. See
+         * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code false}. See
          * {@link ClusterClientOptions#DEFAULT_VALIDATE_CLUSTER_MEMBERSHIP}.
+         * <p/>
+         * Since 7.0, validation is disabled by default, as it is causing problems in some upgrade scenarios. In scenarios where
+         * upgraded nodes are added to the cluster the ASK / MOVED replies usually come before the topology is refreshed and -
+         * respectively - this validation would fail.
          *
          * @param validateClusterNodeMembership {@code true} if validation is enabled.
          * @return {@code this}
@@ -360,14 +336,14 @@ public class ClusterClientOptions extends ClientOptions {
 
         Builder builder = new Builder();
 
-        builder.autoReconnect(isAutoReconnect()).cancelCommandsOnReconnectFailure(isCancelCommandsOnReconnectFailure())
-                .decodeBufferPolicy(getDecodeBufferPolicy()).disconnectedBehavior(getDisconnectedBehavior())
-                .reauthenticateBehavior(getReauthenticateBehaviour()).maxRedirects(getMaxRedirects())
-                .publishOnScheduler(isPublishOnScheduler()).pingBeforeActivateConnection(isPingBeforeActivateConnection())
-                .protocolVersion(getConfiguredProtocolVersion()).readOnlyCommands(getReadOnlyCommands())
-                .requestQueueSize(getRequestQueueSize()).scriptCharset(getScriptCharset()).socketOptions(getSocketOptions())
-                .sslOptions(getSslOptions()).suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure())
-                .timeoutOptions(getTimeoutOptions()).topologyRefreshOptions(getTopologyRefreshOptions())
+        builder.autoReconnect(isAutoReconnect()).decodeBufferPolicy(getDecodeBufferPolicy())
+                .disconnectedBehavior(getDisconnectedBehavior()).reauthenticateBehavior(getReauthenticateBehaviour())
+                .maxRedirects(getMaxRedirects()).publishOnScheduler(isPublishOnScheduler())
+                .pingBeforeActivateConnection(isPingBeforeActivateConnection()).protocolVersion(getConfiguredProtocolVersion())
+                .readOnlyCommands(getReadOnlyCommands()).requestQueueSize(getRequestQueueSize())
+                .scriptCharset(getScriptCharset()).socketOptions(getSocketOptions()).sslOptions(getSslOptions())
+                .suspendReconnectOnProtocolFailure(isSuspendReconnectOnProtocolFailure()).timeoutOptions(getTimeoutOptions())
+                .topologyRefreshOptions(getTopologyRefreshOptions())
                 .validateClusterNodeMembership(isValidateClusterNodeMembership()).nodeFilter(getNodeFilter());
 
         return builder;
@@ -425,7 +401,7 @@ public class ClusterClientOptions extends ClientOptions {
     }
 
     /**
-     * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code true}.
+     * Validate the cluster node membership before allowing connections to a cluster node. Defaults to {@code false}.
      *
      * @return {@code true} if validation is enabled.
      */

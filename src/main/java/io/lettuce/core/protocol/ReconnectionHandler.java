@@ -58,7 +58,7 @@ class ReconnectionHandler {
 
     private final Bootstrap bootstrap;
 
-    private final Mono<SocketAddress> socketAddressSupplier;
+    protected Mono<SocketAddress> socketAddressSupplier;
 
     private final ConnectionFacade connectionFacade;
 
@@ -155,10 +155,6 @@ class ReconnectionHandler {
                     if (isExecutionException(throwable)) {
                         result.completeExceptionally(throwable);
                         return;
-                    }
-
-                    if (clientOptions.isCancelCommandsOnReconnectFailure()) {
-                        connectionFacade.reset();
                     }
 
                     if (clientOptions.isSuspendReconnectOnProtocolFailure()) {

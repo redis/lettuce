@@ -8,10 +8,12 @@ on:
     branches:
       - main
       - '[0-9].*'
+      - 'feature/*'
   pull_request:
     branches:
       - main
       - '[0-9].*'
+      - 'feature/*'
   schedule:
     - cron: '0 1 * * *' # nightly build
   workflow_dispatch:
@@ -24,6 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         redis_version:
+          - "8.4"
           - "8.2"
           - "8.0"
           - "7.4"

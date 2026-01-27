@@ -45,4 +45,9 @@ class MapComplexData extends ComplexData {
         return Collections.unmodifiableMap(data);
     }
 
+    @Override
+    public boolean isMap() {
+        return true;
+    }
+
 }

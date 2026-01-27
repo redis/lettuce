@@ -305,12 +305,6 @@ public abstract class RedisChannelHandler<K, V> implements Closeable, Connection
         return active;
     }
 
-    @Deprecated
-    @Override
-    public void reset() {
-        channelWriter.reset();
-    }
-
     public ConnectionEvents getConnectionEvents() {
         return connectionEvents;
     }

@@ -8,6 +8,7 @@
 package io.lettuce.core.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import io.lettuce.core.internal.LettuceAssert;
@@ -20,15 +21,17 @@ import java.util.List;
  * Implementation of the {@link DelegateJsonArray} that delegates most of its' functionality to the Jackson {@link ArrayNode}.
  *
  * @author Tihomir Mateev
+ * @author Steffen Kreutz
+ * @author Ko Su
  */
 class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
 
-    DelegateJsonArray() {
-        super(new ArrayNode(JsonNodeFactory.instance));
+    DelegateJsonArray(ObjectMapper objectMapper) {
+        super(new ArrayNode(JsonNodeFactory.instance), objectMapper);
     }
 
-    DelegateJsonArray(JsonNode node) {
-        super(node);
+    DelegateJsonArray(JsonNode node, ObjectMapper objectMapper) {
+        super(node, objectMapper);
     }
 
     @Override
@@ -57,7 +60,7 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
         List<JsonValue> result = new ArrayList<>();
 
         for (JsonNode jsonNode : node) {
-            result.add(new DelegateJsonValue(jsonNode));
+            result.add(wrap(jsonNode, objectMapper));
         }
 
         return result;
@@ -67,7 +70,7 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
     public JsonValue get(int index) {
         JsonNode jsonNode = node.get(index);
 
-        return jsonNode == null ? null : wrap(jsonNode);
+        return jsonNode == null ? null : wrap(jsonNode, objectMapper);
     }
 
     @Override
@@ -84,7 +87,7 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
     public JsonValue remove(int index) {
         JsonNode jsonNode = ((ArrayNode) node).remove(index);
 
-        return wrap(jsonNode);
+        return wrap(jsonNode, objectMapper);
     }
 
     @Override
@@ -92,7 +95,15 @@ class DelegateJsonArray extends DelegateJsonValue implements JsonArray {
         JsonNode replaceWith = ((DelegateJsonValue) newElement).getNode();
         JsonNode replaced = ((ArrayNode) node).set(index, replaceWith);
 
-        return wrap(replaced);
+        return wrap(replaced, objectMapper);
+    }
+
+    @Override
+    public JsonArray swap(int index, JsonValue newElement) {
+        JsonNode replaceWith = ((DelegateJsonValue) newElement).getNode();
+        ((ArrayNode) node).set(index, replaceWith);
+
+        return this;
     }
 
     @Override

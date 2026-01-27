@@ -209,15 +209,6 @@ class MasterReplicaConnectionProvider<K, V> {
     }
 
     /**
-     * Reset the command state of all connections.
-     *
-     * @see StatefulRedisConnection#reset()
-     */
-    public void reset() {
-        connectionProvider.forEach(StatefulRedisConnection::reset);
-    }
-
-    /**
      * Close all connections.
      */
     public void close() {

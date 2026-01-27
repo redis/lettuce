@@ -110,12 +110,6 @@ public class CommandListenerWriter implements RedisChannelWriter {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public void reset() {
-        delegate.reset();
-    }
-
-    @Override
     public void setConnectionFacade(ConnectionFacade connection) {
         delegate.setConnectionFacade(connection);
     }
