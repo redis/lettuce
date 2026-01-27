@@ -188,36 +188,4 @@ public interface BaseRedisCommands<K, V> {
      */
     <T> T dispatch(ProtocolKeyword type, CommandOutput<K, V, T> output, CommandArgs<K, V> args);
 
-    /**
-     * @return {@code true} if the connection is open (connected and not closed).
-     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#isOpen()} method on the
-     *             connection interface. To be removed with Lettuce 7.0.
-     */
-    @Deprecated
-    boolean isOpen();
-
-    /**
-     * Disable or enable auto-flush behavior. Default is {@code true}. If autoFlushCommands is disabled, multiple commands can
-     * be issued without writing them actually to the transport. Commands are buffered until a {@link #flushCommands()} is
-     * issued. After calling {@link #flushCommands()} commands are sent to the transport and executed by Redis.
-     *
-     * @param autoFlush state of autoFlush.
-     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#setAutoFlushCommands(boolean)}
-     *             method on the connection interface. To be removed with Lettuce 7.0.
-     * 
-     */
-    @Deprecated
-    void setAutoFlushCommands(boolean autoFlush);
-
-    /**
-     * Flush pending commands. This commands forces a flush on the channel and can be used to buffer ("pipeline") commands to
-     * achieve batching. No-op if channel is not connected.
-     * 
-     * @deprecated since 6.2. Use the corresponding {@link io.lettuce.core.api.StatefulConnection#flushCommands()} method on the
-     *             connection interface. To be removed with Lettuce 7.0.
-     * 
-     */
-    @Deprecated
-    void flushCommands();
-
 }

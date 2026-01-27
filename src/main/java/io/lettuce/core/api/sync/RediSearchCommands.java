@@ -11,13 +11,16 @@ import java.util.List;
 
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.SearchReply;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
+import io.lettuce.core.search.AggregationReply.Cursor;
 import io.lettuce.core.search.arguments.AggregateArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
 import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.HybridArgs;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
@@ -50,17 +53,17 @@ public interface RediSearchCommands<K, V> {
      * triggered, where N is the number of keys in the keyspace
      * </p>
      *
-     * @param index the index name, as a key
+     * @param index the index name
      * @param fieldArgs the {@link FieldArgs} list defining the searchable fields and their types
      * @return {@code "OK"} if the index was created successfully
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      * @see CreateArgs
      * @see FieldArgs
-     * @see #ftCreate(Object, CreateArgs, List)
-     * @see #ftDropindex(Object)
+     * @see #ftCreate(String, CreateArgs, List)
+     * @see #ftDropindex(String)
      */
     @Experimental
-    String ftCreate(K index, List<FieldArgs<K>> fieldArgs);
+    String ftCreate(String index, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Create a new search index with the given name, custom configuration, and field definitions.
@@ -87,7 +90,7 @@ public interface RediSearchCommands<K, V> {
      * triggered, where N is the number of keys in the keyspace
      * </p>
      *
-     * @param index the index name, as a key
+     * @param index the index name
      * @param arguments the index {@link CreateArgs} containing configuration options
      * @param fieldArgs the {@link FieldArgs} list defining the searchable fields and their types
      * @return {@code "OK"} if the index was created successfully
@@ -95,11 +98,11 @@ public interface RediSearchCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/commands/ft.create/">FT.CREATE</a>
      * @see CreateArgs
      * @see FieldArgs
-     * @see #ftCreate(Object, List)
-     * @see #ftDropindex(Object)
+     * @see #ftCreate(String, List)
+     * @see #ftDropindex(String)
      */
     @Experimental
-    String ftCreate(K index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs);
+    String ftCreate(String index, CreateArgs<K, V> arguments, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Add an alias to a search index.
@@ -127,7 +130,7 @@ public interface RediSearchCommands<K, V> {
      * <li>An index can have multiple aliases, but an alias can only point to one index</li>
      * <li>Aliases cannot reference other aliases (no alias chaining)</li>
      * <li>If the alias already exists, this command will fail with an error</li>
-     * <li>Use {@link #ftAliasupdate(Object, Object)} to reassign an existing alias</li>
+     * <li>Use {@link #ftAliasupdate(String, String)} to reassign an existing alias</li>
      * </ul>
      *
      * <p>
@@ -139,18 +142,18 @@ public interface RediSearchCommands<K, V> {
      * @return {@code "OK"} if the alias was successfully created
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aliasadd/">FT.ALIASADD</a>
-     * @see #ftAliasupdate(Object, Object)
-     * @see #ftAliasdel(Object)
+     * @see #ftAliasupdate(String, String)
+     * @see #ftAliasdel(String)
      */
     @Experimental
-    String ftAliasadd(K alias, K index);
+    String ftAliasadd(String alias, String index);
 
     /**
      * Update an existing alias to point to a different search index.
      *
      * <p>
      * This command updates an existing alias to point to a different index, or creates the alias if it doesn't exist. Unlike
-     * {@link #ftAliasadd(Object, Object)}, this command will succeed even if the alias already exists, making it useful for
+     * {@link #ftAliasadd(String, String)}, this command will succeed even if the alias already exists, making it useful for
      * atomic alias updates during index migrations.
      * </p>
      *
@@ -183,11 +186,11 @@ public interface RediSearchCommands<K, V> {
      * @return {@code "OK"} if the alias was successfully updated
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aliasupdate/">FT.ALIASUPDATE</a>
-     * @see #ftAliasadd(Object, Object)
-     * @see #ftAliasdel(Object)
+     * @see #ftAliasadd(String, String)
+     * @see #ftAliasdel(String)
      */
     @Experimental
-    String ftAliasupdate(K alias, K index);
+    String ftAliasupdate(String alias, String index);
 
     /**
      * Remove an alias from a search index.
@@ -214,7 +217,7 @@ public interface RediSearchCommands<K, V> {
      * <li>Only the alias is removed - the target index is not affected</li>
      * <li>If the alias doesn't exist, this command will fail with an error</li>
      * <li>Applications using the alias will receive errors after deletion</li>
-     * <li>Consider using {@link #ftAliasupdate(Object, Object)} to redirect before deletion</li>
+     * <li>Consider using {@link #ftAliasupdate(String, String)} to redirect before deletion</li>
      * </ul>
      *
      * <p>
@@ -225,11 +228,11 @@ public interface RediSearchCommands<K, V> {
      * @return {@code "OK"} if the alias was successfully removed
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.aliasdel/">FT.ALIASDEL</a>
-     * @see #ftAliasadd(Object, Object)
-     * @see #ftAliasupdate(Object, Object)
+     * @see #ftAliasadd(String, String)
+     * @see #ftAliasupdate(String, String)
      */
     @Experimental
-    String ftAliasdel(K alias);
+    String ftAliasdel(String alias);
 
     /**
      * Add new attributes to an existing search index.
@@ -272,11 +275,11 @@ public interface RediSearchCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
      * @see FieldArgs
-     * @see #ftCreate(Object, List)
-     * @see #ftCreate(Object, CreateArgs, List)
+     * @see #ftCreate(String, List)
+     * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    String ftAlter(K index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs);
+    String ftAlter(String index, boolean skipInitialScan, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Add new attributes to an existing search index.
@@ -307,11 +310,11 @@ public interface RediSearchCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.alter/">FT.ALTER</a>
      * @see FieldArgs
-     * @see #ftCreate(Object, List)
-     * @see #ftCreate(Object, CreateArgs, List)
+     * @see #ftCreate(String, List)
+     * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    String ftAlter(K index, List<FieldArgs<K>> fieldArgs);
+    String ftAlter(String index, List<FieldArgs<K>> fieldArgs);
 
     /**
      * Return a distinct set of values indexed in a Tag field.
@@ -363,11 +366,11 @@ public interface RediSearchCommands<K, V> {
      *         were indexed (lowercase, whitespace removed).
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.tagvals/">FT.TAGVALS</a>
-     * @see #ftCreate(Object, List)
-     * @see #ftCreate(Object, CreateArgs, List)
+     * @see #ftCreate(String, List)
+     * @see #ftCreate(String, CreateArgs, List)
      */
     @Experimental
-    List<V> ftTagvals(K index, K fieldName);
+    List<V> ftTagvals(String index, String fieldName);
 
     /**
      * Perform spelling correction on a query, returning suggestions for misspelled terms.
@@ -402,13 +405,13 @@ public interface RediSearchCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftSpellcheck(Object, Object, SpellCheckArgs)
-     * @see #ftDictadd(Object, Object[])
-     * @see #ftDictdel(Object, Object[])
-     * @see #ftDictdump(Object)
+     * @see #ftSpellcheck(String, Object, SpellCheckArgs)
+     * @see #ftDictadd(String, Object[])
+     * @see #ftDictdel(String, Object[])
+     * @see #ftDictdump(String)
      */
     @Experimental
-    SpellCheckResult<V> ftSpellcheck(K index, V query);
+    SpellCheckResult<V> ftSpellcheck(String index, V query);
 
     /**
      * Perform spelling correction on a query with additional options.
@@ -439,13 +442,13 @@ public interface RediSearchCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.spellcheck/">FT.SPELLCHECK</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftSpellcheck(Object, Object)
-     * @see #ftDictadd(Object, Object[])
-     * @see #ftDictdel(Object, Object[])
-     * @see #ftDictdump(Object)
+     * @see #ftSpellcheck(String, Object)
+     * @see #ftDictadd(String, Object[])
+     * @see #ftDictdel(String, Object[])
+     * @see #ftDictdump(String)
      */
     @Experimental
-    SpellCheckResult<V> ftSpellcheck(K index, V query, SpellCheckArgs<K, V> args);
+    SpellCheckResult<V> ftSpellcheck(String index, V query, SpellCheckArgs<K, V> args);
 
     /**
      * Add terms to a dictionary.
@@ -475,11 +478,11 @@ public interface RediSearchCommands<K, V> {
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictadd/">FT.DICTADD</a>
      * @see <a href="https://redis.io/docs/latest/develop/ai/search-and-query/advanced-concepts/spellcheck/">Spellchecking</a>
-     * @see #ftDictdel(Object, Object[])
-     * @see #ftDictdump(Object)
+     * @see #ftDictdel(String, Object[])
+     * @see #ftDictdump(String)
      */
     @Experimental
-    Long ftDictadd(K dict, V... terms);
+    Long ftDictadd(String dict, V... terms);
 
     /**
      * Delete terms from a dictionary.
@@ -498,11 +501,11 @@ public interface RediSearchCommands<K, V> {
      * @return the number of terms that were deleted
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictdel/">FT.DICTDEL</a>
-     * @see #ftDictadd(Object, Object[])
-     * @see #ftDictdump(Object)
+     * @see #ftDictadd(String, Object[])
+     * @see #ftDictdump(String)
      */
     @Experimental
-    Long ftDictdel(K dict, V... terms);
+    Long ftDictdel(String dict, V... terms);
 
     /**
      * Dump all terms in a dictionary.
@@ -519,11 +522,11 @@ public interface RediSearchCommands<K, V> {
      * @return a list of all terms in the dictionary
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dictdump/">FT.DICTDUMP</a>
-     * @see #ftDictadd(Object, Object[])
-     * @see #ftDictdel(Object, Object[])
+     * @see #ftDictadd(String, Object[])
+     * @see #ftDictdel(String, Object[])
      */
     @Experimental
-    List<V> ftDictdump(K dict);
+    List<V> ftDictdump(String dict);
 
     /**
      * Return the execution plan for a complex query.
@@ -552,11 +555,11 @@ public interface RediSearchCommands<K, V> {
      * @return the execution plan as a string
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.explain/">FT.EXPLAIN</a>
-     * @see #ftExplain(Object, Object, ExplainArgs)
-     * @see #ftSearch(Object, Object)
+     * @see #ftExplain(String, Object, ExplainArgs)
+     * @see #ftSearch(String, Object)
      */
     @Experimental
-    String ftExplain(K index, V query);
+    String ftExplain(String index, V query);
 
     /**
      * Return the execution plan for a complex query with additional options.
@@ -583,11 +586,11 @@ public interface RediSearchCommands<K, V> {
      * @return the execution plan as a string
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.explain/">FT.EXPLAIN</a>
-     * @see #ftExplain(Object, Object)
-     * @see #ftSearch(Object, Object)
+     * @see #ftExplain(String, Object)
+     * @see #ftSearch(String, Object)
      */
     @Experimental
-    String ftExplain(K index, V query, ExplainArgs<K, V> args);
+    String ftExplain(String index, V query, ExplainArgs<K, V> args);
 
     /**
      * Return a list of all existing indexes.
@@ -619,8 +622,8 @@ public interface RediSearchCommands<K, V> {
      * @return a list of index names
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft._list/">FT._LIST</a>
-     * @see #ftCreate(Object, CreateArgs, FieldArgs[])
-     * @see #ftDropindex(Object)
+     * @see #ftCreate(String, CreateArgs, FieldArgs[])
+     * @see #ftDropindex(String)
      */
     @Experimental
     List<V> ftList();
@@ -651,11 +654,11 @@ public interface RediSearchCommands<K, V> {
      * @return a map where keys are synonym terms and values are lists of group IDs containing that synonym
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.syndump/">FT.SYNDUMP</a>
-     * @see #ftSynupdate(Object, Object, Object[])
-     * @see #ftSynupdate(Object, Object, SynUpdateArgs, Object[])
+     * @see #ftSynupdate(String, Object, Object[])
+     * @see #ftSynupdate(String, Object, SynUpdateArgs, Object[])
      */
     @Experimental
-    Map<V, List<V>> ftSyndump(K index);
+    Map<V, List<V>> ftSyndump(String index);
 
     /**
      * Update a synonym group with additional terms.
@@ -685,11 +688,11 @@ public interface RediSearchCommands<K, V> {
      * @return OK if executed correctly
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
-     * @see #ftSynupdate(Object, Object, SynUpdateArgs, Object[])
-     * @see #ftSyndump(Object)
+     * @see #ftSynupdate(String, Object, SynUpdateArgs, Object[])
+     * @see #ftSyndump(String)
      */
     @Experimental
-    String ftSynupdate(K index, V synonymGroupId, V... terms);
+    String ftSynupdate(String index, V synonymGroupId, V... terms);
 
     /**
      * Update a synonym group with additional terms and options.
@@ -717,11 +720,11 @@ public interface RediSearchCommands<K, V> {
      * @return OK if executed correctly
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.synupdate/">FT.SYNUPDATE</a>
-     * @see #ftSynupdate(Object, Object, Object[])
-     * @see #ftSyndump(Object)
+     * @see #ftSynupdate(String, Object, Object[])
+     * @see #ftSyndump(String)
      */
     @Experimental
-    String ftSynupdate(K index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms);
+    String ftSynupdate(String index, V synonymGroupId, SynUpdateArgs<K, V> args, V... terms);
 
     /**
      * Add a suggestion string to an auto-complete suggestion dictionary.
@@ -901,11 +904,11 @@ public interface RediSearchCommands<K, V> {
      * @return {@code "OK"} if the index was successfully dropped
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
-     * @see #ftDropindex(Object, boolean)
-     * @see #ftCreate(Object, List)
+     * @see #ftDropindex(String, boolean)
+     * @see #ftCreate(String, List)
      */
     @Experimental
-    String ftDropindex(K index);
+    String ftDropindex(String index);
 
     /**
      * Drop a search index with optional document deletion.
@@ -917,7 +920,7 @@ public interface RediSearchCommands<K, V> {
      * </p>
      *
      * <p>
-     * <strong>Asynchronous Behavior:</strong> If an index creation is still running ({@link #ftCreate(Object, List)} is running
+     * <strong>Asynchronous Behavior:</strong> If an index creation is still running ({@link #ftCreate(String, List)} is running
      * asynchronously), only the document hashes that have already been indexed are deleted. Documents that are queued for
      * indexing but not yet processed will remain in the database.
      * </p>
@@ -931,11 +934,11 @@ public interface RediSearchCommands<K, V> {
      * @return {@code "OK"} if the index was successfully dropped
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.dropindex/">FT.DROPINDEX</a>
-     * @see #ftDropindex(Object)
-     * @see #ftCreate(Object, List)
+     * @see #ftDropindex(String)
+     * @see #ftCreate(String, List)
      */
     @Experimental
-    String ftDropindex(K index, boolean deleteDocuments);
+    String ftDropindex(String index, boolean deleteDocuments);
 
     /**
      * Search the index with a textual query using default search options.
@@ -971,10 +974,10 @@ public interface RediSearchCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/query/">Query syntax</a>
      * @see SearchReply
      * @see SearchArgs
-     * @see #ftSearch(Object, Object, SearchArgs)
+     * @see #ftSearch(String, Object, SearchArgs)
      */
     @Experimental
-    SearchReply<K, V> ftSearch(K index, V query);
+    SearchReply<K, V> ftSearch(String index, V query);
 
     /**
      * Search the index with a textual query using advanced search options and filters.
@@ -1022,23 +1025,23 @@ public interface RediSearchCommands<K, V> {
      * @see <a href="https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/">Advanced concepts</a>
      * @see SearchReply
      * @see SearchArgs
-     * @see #ftSearch(Object, Object)
+     * @see #ftSearch(String, Object)
      */
     @Experimental
-    SearchReply<K, V> ftSearch(K index, V query, SearchArgs<K, V> args);
+    SearchReply<K, V> ftSearch(String index, V query, SearchArgs<K, V> args);
 
     /**
      * Run a search query on an index and perform basic aggregate transformations using default options.
      *
      * <p>
      * This command executes a search query and applies aggregation operations to transform and analyze the results. Unlike
-     * {@link #ftSearch(Object, Object)}, which returns individual documents, FT.AGGREGATE processes the result set through a
+     * {@link #ftSearch(String, Object)}, which returns individual documents, FT.AGGREGATE processes the result set through a
      * pipeline of transformations to produce analytical insights, summaries, and computed values.
      * </p>
      *
      * <p>
      * This basic variant uses default aggregation behavior without additional pipeline operations. For advanced aggregations
-     * with grouping, sorting, filtering, and custom transformations, use {@link #ftAggregate(Object, Object, AggregateArgs)}.
+     * with grouping, sorting, filtering, and custom transformations, use {@link #ftAggregate(String, Object, AggregateArgs)}.
      * </p>
      *
      * <p>
@@ -1064,10 +1067,10 @@ public interface RediSearchCommands<K, V> {
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/">Aggregations</a>
      * @see SearchReply
      * @see AggregateArgs
-     * @see #ftAggregate(Object, Object, AggregateArgs)
+     * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
-    AggregationReply<K, V> ftAggregate(K index, V query);
+    AggregationReply<K, V> ftAggregate(String index, V query);
 
     /**
      * Run a search query on an index and perform advanced aggregate transformations with a processing pipeline.
@@ -1119,18 +1122,18 @@ public interface RediSearchCommands<K, V> {
      *      API</a>
      * @see SearchReply
      * @see AggregateArgs
-     * @see #ftAggregate(Object, Object)
-     * @see #ftCursorread(Object, long)
+     * @see #ftAggregate(String, Object)
+     * @see #ftCursorread(String, Cursor)
      */
     @Experimental
-    AggregationReply<K, V> ftAggregate(K index, V query, AggregateArgs<K, V> args);
+    AggregationReply<K, V> ftAggregate(String index, V query, AggregateArgs<K, V> args);
 
     /**
-     * Read next results from an existing cursor.
+     * Read next results from an existing cursor and optionally override the batch size.
      *
      * <p>
-     * This command is used to read the next batch of results from a cursor created by
-     * {@link #ftAggregate(Object, Object, AggregateArgs)} with the {@code WITHCURSOR} option. Cursors provide an efficient way
+     * This command is used to read the next batch of results from a cursor that was created by
+     * {@link #ftAggregate(String, Object, AggregateArgs)} with the {@code WITHCURSOR} option. Cursors provide an efficient way
      * to iterate through large result sets without loading all results into memory at once.
      * </p>
      *
@@ -1143,28 +1146,27 @@ public interface RediSearchCommands<K, V> {
      * <strong>Time complexity:</strong> O(1)
      * </p>
      *
-     * @param index the index name, as a key
-     * @param cursorId the cursor id obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
-     * @param count the number of results to read. This parameter overrides the {@code COUNT} specified in {@code FT.AGGREGATE}
-     * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
-     *         {@link SearchReply}
+     * @param index the index name
+     * @param cursor the cursor obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
+     * @param count the number of results to read; overrides the {@code COUNT} from {@code FT.AGGREGATE}
+     * @return the next batch of results; see {@link AggregationReply}
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-read/">FT.CURSOR READ</a>
      * @see <a href=
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
-     * @see SearchReply
-     * @see #ftAggregate(Object, Object, AggregateArgs)
+     * @see AggregationReply
+     * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
-    AggregationReply<K, V> ftCursorread(K index, long cursorId, int count);
+    AggregationReply<K, V> ftCursorread(String index, Cursor cursor, int count);
 
     /**
      * Read next results from an existing cursor using the default batch size.
      *
      * <p>
      * This command is used to read the next batch of results from a cursor created by
-     * {@link #ftAggregate(Object, Object, AggregateArgs)} with the {@code WITHCURSOR} option. This variant uses the default
+     * {@link #ftAggregate(String, Object, AggregateArgs)} with the {@code WITHCURSOR} option. This variant uses the default
      * batch size that was specified in the original {@code FT.AGGREGATE} command's {@code WITHCURSOR} clause.
      * </p>
      *
@@ -1177,39 +1179,38 @@ public interface RediSearchCommands<K, V> {
      * <strong>Time complexity:</strong> O(1)
      * </p>
      *
-     * @param index the index name, as a key
-     * @param cursorId the cursor id obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
-     * @return the result of the cursor read command containing the next batch of results and potentially a new cursor id, see
-     *         {@link SearchReply}
+     * @param index the index name
+     * @param cursor the cursor obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
+     * @return the next batch of results; see {@link AggregationReply}
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-read/">FT.CURSOR READ</a>
      * @see <a href=
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
-     * @see SearchReply
-     * @see #ftAggregate(Object, Object, AggregateArgs)
+     * @see AggregationReply
+     * @see #ftAggregate(String, Object, AggregateArgs)
      */
     @Experimental
-    AggregationReply<K, V> ftCursorread(K index, long cursorId);
+    AggregationReply<K, V> ftCursorread(String index, Cursor cursor);
 
     /**
      * Delete a cursor and free its associated resources.
      *
      * <p>
-     * This command is used to explicitly delete a cursor created by {@link #ftAggregate(Object, Object, AggregateArgs)} with
+     * This command is used to explicitly delete a cursor created by {@link #ftAggregate(String, Object, AggregateArgs)} with
      * the {@code WITHCURSOR} option. Deleting a cursor frees up server resources and should be done when you no longer need to
      * read more results from the cursor.
      * </p>
      *
      * <p>
-     * <strong>Important:</strong> Cursors have a default timeout and will be automatically deleted by Redis if not accessed
+     * <strong>Important:</strong> Cursors have a default timeout and may be automatically deleted by Redis if not accessed
      * within the timeout period. However, it's good practice to explicitly delete cursors when you're finished with them to
      * free up resources immediately.
      * </p>
      *
      * <p>
-     * Once a cursor is deleted, any subsequent attempts to read from it using {@link #ftCursorread(Object, long)} or
-     * {@link #ftCursorread(Object, long, int)} will result in an error.
+     * Once a cursor is deleted, any subsequent attempts to read from it using {@link #ftCursorread(String, Cursor)} or
+     * {@link #ftCursorread(String, Cursor, int)} will result in an error.
      * </p>
      *
      * <p>
@@ -1217,18 +1218,32 @@ public interface RediSearchCommands<K, V> {
      * </p>
      *
      * @param index the index name, as a key
-     * @param cursorId the cursor id obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
+     * @param cursor the cursor obtained from a previous {@code FT.AGGREGATE} or {@code FT.CURSOR READ} command
      * @return {@code "OK"} if the cursor was successfully deleted
      * @since 6.8
      * @see <a href="https://redis.io/docs/latest/commands/ft.cursor-del/">FT.CURSOR DEL</a>
      * @see <a href=
      *      "https://redis.io/docs/latest/develop/interact/search-and-query/advanced-concepts/aggregations/#cursor-api">Cursor
      *      API</a>
-     * @see #ftAggregate(Object, Object, AggregateArgs)
-     * @see #ftCursorread(Object, long)
-     * @see #ftCursorread(Object, long, int)
+     * @see #ftAggregate(String, Object, AggregateArgs)
+     * @see #ftCursorread(String, Cursor)
+     * @see #ftCursorread(String, Cursor, int)
      */
     @Experimental
-    String ftCursordel(K index, long cursorId);
+    String ftCursordel(String index, Cursor cursor);
+
+    /**
+     * Execute a hybrid query combining text search and vector similarity.
+     *
+     * @param index the index name
+     * @param args the hybrid query arguments
+     * @return the hybrid search results
+     * @see <a href="https://redis.io/docs/latest/commands/ft.hybrid/">FT.HYBRID</a>
+     * @see HybridArgs
+     * @see HybridReply
+     * @since 7.2
+     */
+    @Experimental
+    HybridReply<K, V> ftHybrid(String index, HybridArgs<K, V> args);
 
 }

@@ -68,6 +68,29 @@ public interface RedisKeyCommands<K, V> {
     Long del(K... keys);
 
     /**
+     * Delete the specified key if the compare condition matches.
+     *
+     * @param key the key.
+     * @param compareCondition the compare condition, must not be {@code null}.
+     * @return Long integer-reply the number of keys that were removed.
+     *
+     * @since 7.1
+     */
+    @Experimental
+    Long delex(K key, CompareCondition<V> compareCondition);
+
+    /**
+     * Return the XXH3 64-bit digest of the string value stored at a key as a 16-character hex string.
+     *
+     * @param key the key.
+     * @return String bulk-string-reply the hex digest of the key's value, or {@code null} when {@code key} does not exist.
+     *
+     * @since 7.1
+     */
+    @Experimental
+    String digestKey(K key);
+
+    /**
      * Unlink one or more keys (non blocking DEL).
      *
      * @param keys the keys.
@@ -216,19 +239,41 @@ public interface RedisKeyCommands<K, V> {
     /**
      * Find all keys matching the given pattern.
      *
-     * @param pattern the pattern type: patternkey (pattern).
+     * @param pattern the pattern type.
      * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
      */
-    List<K> keys(K pattern);
+    List<K> keys(String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    List<K> keysLegacy(K pattern);
 
     /**
      * Find all keys matching the given pattern.
      *
      * @param channel the channel.
-     * @param pattern the pattern.
+     * @param pattern the pattern type.
      * @return Long array-reply list of keys matching {@code pattern}.
      */
-    Long keys(KeyStreamingChannel<K> channel, K pattern);
+    Long keys(KeyStreamingChannel<K> channel, String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    Long keysLegacy(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Atomically transfer a key from a Redis instance to another one.

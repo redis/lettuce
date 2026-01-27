@@ -237,11 +237,11 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
     private String clientName;
 
-    private String libraryName = LettuceVersion.getName();
+    private DriverInfo driverInfo = DriverInfo.builder().build();
 
     private String libraryVersion = LettuceVersion.getVersion();
 
-    private RedisCredentialsProvider credentialsProvider = new StaticCredentialsProvider(null, null);;
+    private RedisCredentialsProvider credentialsProvider = new StaticCredentialsProvider(null, null);
 
     private boolean ssl = false;
 
@@ -606,26 +606,35 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
-     * Returns the library name.
+     * Returns the library name to be sent via {@code CLIENT SETINFO}.
+     * <p>
+     * If upstream drivers have been added via {@link DriverInfo}, the returned value will include them in the format:
+     * {@code libraryName(driver1_v1.0.0;driver2_v2.0.0)}. Otherwise, returns just the library name.
      *
-     * @return the library name.
+     * @return the library name, potentially including upstream driver information.
      * @since 6.3
+     * @see #getDriverInfo()
+     * @see DriverInfo#getFormattedName()
      */
     public String getLibraryName() {
-        return libraryName;
+        return driverInfo.getFormattedName();
     }
 
     /**
      * Sets the library name to be applied on Redis connections.
+     * <p>
+     * This method creates a new {@link DriverInfo} with only the specified name, clearing any previously set upstream drivers.
+     * If you want to preserve upstream drivers, use {@link #setDriverInfo(DriverInfo)} instead.
      *
-     * @param libraryName the library name.
+     * @param libraryName the library name, must not contain spaces.
      * @since 6.3
+     * @see #setDriverInfo(DriverInfo)
      */
     public void setLibraryName(String libraryName) {
         if (libraryName != null && libraryName.indexOf(' ') != -1) {
             throw new IllegalArgumentException("Library name must not contain spaces");
         }
-        this.libraryName = libraryName;
+        this.driverInfo = DriverInfo.builder().name(libraryName).build();
     }
 
     /**
@@ -636,6 +645,32 @@ public class RedisURI implements Serializable, ConnectionPoint {
      */
     public String getLibraryVersion() {
         return libraryVersion;
+    }
+
+    /**
+     * Returns the driver information containing the library name and upstream drivers.
+     *
+     * @return the driver information, never {@code null}
+     * @since 6.5
+     * @see DriverInfo
+     */
+    public DriverInfo getDriverInfo() {
+        return driverInfo;
+    }
+
+    /**
+     * Sets the driver information containing the library name and upstream drivers.
+     * <p>
+     * This method replaces any previously set driver information or library name. Use this method when you want structured
+     * control over the library identification sent via {@code CLIENT SETINFO}.
+     *
+     * @param driverInfo the driver information to set
+     * @since 6.5
+     * @see DriverInfo
+     * @see #setLibraryName(String)
+     */
+    public void setDriverInfo(DriverInfo driverInfo) {
+        this.driverInfo = driverInfo;
     }
 
     /**
@@ -947,8 +982,8 @@ public class RedisURI implements Serializable, ConnectionPoint {
             queryPairs.add(PARAMETER_NAME_CLIENT_NAME + "=" + urlEncode(clientName));
         }
 
-        if (libraryName != null && !libraryName.equals(LettuceVersion.getName())) {
-            queryPairs.add(PARAMETER_NAME_LIBRARY_NAME + "=" + urlEncode(libraryName));
+        if (driverInfo.getName() != null && !driverInfo.getName().equals(LettuceVersion.getName())) {
+            queryPairs.add(PARAMETER_NAME_LIBRARY_NAME + "=" + urlEncode(driverInfo.getName()));
         }
 
         if (libraryVersion != null && !libraryVersion.equals(LettuceVersion.getVersion())) {
@@ -1291,9 +1326,9 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
         private String clientName;
 
-        private String libraryName = LettuceVersion.getName();
-
         private String libraryVersion = LettuceVersion.getVersion();
+
+        private DriverInfo driverInfo = DriverInfo.builder().build();
 
         private RedisCredentialsProvider credentialsProvider;
 
@@ -1625,8 +1660,35 @@ public class RedisURI implements Serializable, ConnectionPoint {
                 throw new IllegalArgumentException("Library name must not contain spaces");
             }
 
-            this.libraryName = libraryName;
+            this.driverInfo = DriverInfo.builder().name(libraryName).build();
             this.sentinels.forEach(it -> it.setLibraryName(libraryName));
+            return this;
+        }
+
+        /**
+         * Configures driver information containing the library name and upstream drivers.
+         * <p>
+         * This method allows upstream libraries (e.g., Spring Data Redis) that use Lettuce as their Redis driver to identify
+         * themselves. The driver information is sent via the {@code CLIENT SETINFO} command.
+         * <p>
+         * If both {@link #withLibraryName(String)} and this method are called, the last call wins. When {@code driverInfo} is
+         * set, it takes precedence over {@code libraryName} in the built {@link RedisURI}.
+         * <p>
+         * Also sets driver info for already configured Redis Sentinel nodes.
+         *
+         * @param driverInfo the driver information, must not be {@code null}
+         * @return the builder
+         * @throws IllegalArgumentException if driverInfo is {@code null}
+         * @see DriverInfo
+         * @see <a href="https://redis.io/docs/latest/commands/client-setinfo/">CLIENT SETINFO</a>
+         * @since 6.5
+         */
+        public Builder withDriverInfo(DriverInfo driverInfo) {
+
+            LettuceAssert.notNull(driverInfo, "DriverInfo must not be null");
+
+            this.driverInfo = driverInfo;
+            this.sentinels.forEach(it -> it.setDriverInfo(driverInfo));
             return this;
         }
 
@@ -1788,7 +1850,7 @@ public class RedisURI implements Serializable, ConnectionPoint {
 
             redisURI.setDatabase(database);
             redisURI.setClientName(clientName);
-            redisURI.setLibraryName(libraryName);
+            redisURI.setDriverInfo(driverInfo);
             redisURI.setLibraryVersion(libraryVersion);
 
             redisURI.setSentinelMasterId(sentinelMasterId);
