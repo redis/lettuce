@@ -115,8 +115,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs);
 
-        MultiDbConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectionFuture = MultiDbConnectionFuture
-                .from((CompletableFuture<StatefulRedisMultiDbConnection<K, V>>) future, getResources().eventExecutorGroup());
+        MultiDbConnectionFuture<StatefulRedisMultiDbConnection<K, V>> connectionFuture = MultiDbConnectionFuture.from(future);
         try {
             return connectionFuture.get();
         } catch (InterruptedException e) {
@@ -160,7 +159,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigs);
 
-        return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
+        return MultiDbConnectionFuture.from(future);
     }
 
     /**
@@ -220,7 +219,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
         CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectAsync(databaseConfigs);
 
         MultiDbConnectionFuture<StatefulRedisMultiDbPubSubConnection<K, V>> connectionFuture = MultiDbConnectionFuture
-                .from(future, getResources().eventExecutorGroup());
+                .from(future);
         try {
             return (StatefulRedisMultiDbPubSubConnection<K, V>) connectionFuture.get();
         } catch (InterruptedException e) {
@@ -243,7 +242,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectAsync(databaseConfigs);
 
-        return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
+        return MultiDbConnectionFuture.from(future);
     }
 
     @Override

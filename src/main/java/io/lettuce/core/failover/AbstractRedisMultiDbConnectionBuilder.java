@@ -162,7 +162,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
         AtomicReference<RedisDatabaseImpl<SC>> initialDb = new AtomicReference<>();
 
         for (CompletableFuture<HealthStatus> healthStatusFuture : healthStatusFutures.values()) {
-            healthStatusFuture.handle((healthStatus, throwable) -> {
+            healthStatusFuture.handleAsync((healthStatus, throwable) -> {
 
                 MC conn = null;
                 Exception capturedFailure = null;
