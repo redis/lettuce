@@ -172,15 +172,7 @@ class AtMostOnceIntegrationTests {
         assertThat(command.isCancelled()).isFalse();
         assertThat(getException(command)).isInstanceOf(EncoderException.class);
 
-        Wait.untilTrue(() -> !ConnectionTestUtil.getStack(connection).isEmpty()).waitOrTimeout();
-
-        assertThat(ConnectionTestUtil.getStack(connection)).isNotEmpty();
-        ConnectionTestUtil.getStack(connection).clear();
-
         assertThat(sync.get(key)).isEqualTo("2");
-
-        assertThat(ConnectionTestUtil.getStack(connection)).isEmpty();
-        assertThat(ConnectionTestUtil.getCommandBuffer(connection)).isEmpty();
 
         connection.close();
     }

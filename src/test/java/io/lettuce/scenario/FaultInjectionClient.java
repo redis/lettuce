@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.http.client.HttpClient;
@@ -46,7 +45,8 @@ public class FaultInjectionClient {
 
     private static final Duration STABILIZATION_DELAY = Duration.ofSeconds(10); // Wait for cluster to stabilize
 
-    private static final Duration CHECK_INTERVAL_LONG = Duration.ofSeconds(5); // Check interval for long operations
+    private static final Duration CHECK_INTERVAL_LONG = Duration.ofSeconds(1); // Check interval for long operations - reduced
+                                                                               // for faster notification detection
 
     private static final Duration CHECK_INTERVAL_MEDIUM = Duration.ofSeconds(3); // Check interval for medium operations
 
@@ -284,8 +284,9 @@ public class FaultInjectionClient {
                                     new RuntimeException("Rladmin command failed: status=" + status + ", error=" + error));
                         }
 
-                        if ("pending".equals(status)) {
-                            log.debug("Status is PENDING for '{}', returning empty to trigger retry", rladminCommand);
+                        if ("running".equals(status)) {
+                            log.debug("Status is {} for '{}', returning empty to trigger retry",
+                                    status != null ? status.toUpperCase() : "NULL", rladminCommand);
                             return Mono.empty(); // Trigger retry
                         }
 
@@ -389,8 +390,7 @@ public class FaultInjectionClient {
      * @param redisEnterpriseConfig the configuration to get shard information from
      * @return a Mono that emits true when the failover is initiated
      */
-    public Mono<Boolean> triggerShardFailover(String bdbId, String shardId, String nodeId,
-            RedisEnterpriseConfig redisEnterpriseConfig) {
+    public Mono<Boolean> triggerShardFailover(String bdbId, String nodeId, RedisEnterpriseConfig redisEnterpriseConfig) {
         // Enhanced parameter validation
         if (nodeId == null || nodeId.trim().isEmpty()) {
             return Mono.error(new IllegalArgumentException("Node ID cannot be null or empty"));
@@ -426,46 +426,6 @@ public class FaultInjectionClient {
                 .doOnSuccess(success -> log.info("Shard failover completed for node {} on BDB {}", nodeId, bdbId))
                 .doOnError(error -> log.error("Shard failover failed for node {} on BDB {}: {}", nodeId, bdbId,
                         error.getMessage()));
-    }
-
-    /**
-     * Advanced method to trigger a sequence of maintenance operations for comprehensive testing.
-     *
-     * @param bdbId the BDB ID
-     * @param operations list of operations to execute in sequence
-     * @return a Mono that emits true when all operations complete
-     */
-    public Mono<Boolean> triggerMaintenanceSequence(String bdbId, List<MaintenanceOperation> operations) {
-        if (operations == null || operations.isEmpty()) {
-            return Mono.error(new IllegalArgumentException("Operations list cannot be null or empty"));
-        }
-
-        log.info("Starting maintenance sequence with {} operations on BDB {}", operations.size(), bdbId);
-
-        return Flux.fromIterable(operations).concatMap(operation -> {
-            log.info("Executing maintenance operation: {}", operation);
-            return executeMaintenanceOperation(bdbId, operation).delayElement(OPERATION_DELAY); // Brief delay between
-                                                                                                // operations
-        }).then(Mono.just(true)).doOnSuccess(success -> log.info("Maintenance sequence completed on BDB {}", bdbId))
-                .doOnError(error -> log.error("Maintenance sequence failed on BDB {}: {}", bdbId, error.getMessage()));
-    }
-
-    /**
-     * Executes a single maintenance operation based on its type.
-     */
-    private Mono<Boolean> executeMaintenanceOperation(String bdbId, MaintenanceOperation operation) {
-        switch (operation.getType()) {
-            case ENDPOINT_REBIND:
-                return triggerEndpointRebind(bdbId, operation.getEndpointId(), operation.getPolicy());
-            case SHARD_MIGRATION:
-                return Mono.error(new IllegalArgumentException(
-                        "SHARD_MIGRATION operations require source and target nodes. Use the 4-parameter triggerShardMigration method directly."));
-            case SHARD_FAILOVER:
-                return Mono.error(new IllegalArgumentException(
-                        "SHARD_FAILOVER operations require nodeId and RedisEnterpriseConfig. Use the 4-parameter triggerShardFailover method directly."));
-            default:
-                return Mono.error(new IllegalArgumentException("Unknown operation type: " + operation.getType()));
-        }
     }
 
     /**
@@ -506,18 +466,6 @@ public class FaultInjectionClient {
             return type;
         }
 
-        public String getEndpointId() {
-            return endpointId;
-        }
-
-        public String getPolicy() {
-            return policy;
-        }
-
-        public String getShardId() {
-            return shardId;
-        }
-
         @Override
         public String toString() {
             switch (type) {
@@ -532,6 +480,38 @@ public class FaultInjectionClient {
             }
         }
 
+    }
+
+    /**
+     * Triggers a MOVING notification by automatically determining the optimal source and target nodes based on the endpoint's
+     * current binding. This ensures the endpoint will need to be rebound after migration, triggering the MOVING notification.
+     *
+     * @param bdbId the BDB ID
+     * @param endpointId the endpoint ID to rebind
+     * @param policy the policy to use for rebinding (typically "single")
+     * @param clusterConfig the cluster configuration to use for node selection
+     * @return a Mono that emits true when the operation sequence is completed
+     */
+    public Mono<Boolean> triggerMovingNotification(String bdbId, String endpointId, String policy,
+            RedisEnterpriseConfig clusterConfig) {
+        // Enhanced parameter validation
+        if (endpointId == null || endpointId.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Endpoint ID cannot be null or empty"));
+        }
+        if (policy == null || policy.trim().isEmpty()) {
+            return Mono.error(new IllegalArgumentException("Policy cannot be null or empty"));
+        }
+        if (clusterConfig == null) {
+            return Mono.error(new IllegalArgumentException("Cluster configuration cannot be null"));
+        }
+
+        // Use endpoint-aware node selection
+        String sourceNode = clusterConfig.getOptimalSourceNodeForEndpoint(endpointId);
+        String targetNode = clusterConfig.getOptimalTargetNode();
+
+        log.info("Auto-selected nodes for MOVING notification: source={} (endpoint-bound), target={}", sourceNode, targetNode);
+
+        return triggerMovingNotification(bdbId, endpointId, policy, sourceNode, targetNode);
     }
 
     /**
@@ -602,10 +582,21 @@ public class FaultInjectionClient {
     public Mono<Boolean> ensureEmptyTargetNode(String bdbId, String nodeToEmpty, String destinationNode) {
         log.info("Ensuring node {} is empty by migrating all shards to node {} on BDB {}", nodeToEmpty, destinationNode, bdbId);
 
-        String emptyNodeCommand = String.format("migrate node %s all_shards target_node %s", nodeToEmpty, destinationNode);
+        // First check if the node is already empty to avoid "nothing to do" errors
+        return Mono.fromCallable(() -> RedisEnterpriseConfig.discover(this, bdbId)).flatMap(currentConfig -> {
+            List<String> shardsOnNode = currentConfig.getShardsForNode(nodeToEmpty);
 
-        return executeRladminCommand(bdbId, emptyNodeCommand, CHECK_INTERVAL_LONG, MEDIUM_OPERATION_TIMEOUT)
-                .doOnSuccess(success -> log.info("Successfully emptied node {} on BDB {}", nodeToEmpty, bdbId))
+            if (shardsOnNode.isEmpty()) {
+                log.info("Node {} is already empty on BDB {}, no migration needed", nodeToEmpty, bdbId);
+                return Mono.just(true);
+            }
+
+            log.info("Node {} has {} shards on BDB {}, proceeding with migration to node {}", nodeToEmpty, shardsOnNode.size(),
+                    bdbId, destinationNode);
+
+            String emptyNodeCommand = String.format("migrate node %s all_shards target_node %s", nodeToEmpty, destinationNode);
+            return executeRladminCommand(bdbId, emptyNodeCommand, CHECK_INTERVAL_LONG, MEDIUM_OPERATION_TIMEOUT);
+        }).doOnSuccess(success -> log.info("Successfully ensured node {} is empty on BDB {}", nodeToEmpty, bdbId))
                 .doOnError(error -> log.error("Failed to empty node {} on BDB {}: {}", nodeToEmpty, bdbId, error.getMessage()));
     }
 
@@ -717,14 +708,32 @@ public class FaultInjectionClient {
                                 ? statusResponse.get("error").asText()
                                 : null;
 
-                        // Try to extract the actual command output
+                        // Log available fields for debugging when needed
+                        if (log.isDebugEnabled()) {
+                            statusResponse.fieldNames().forEachRemaining(
+                                    field -> log.debug("Response field '{}': {}", field, statusResponse.get(field)));
+                        }
+
+                        // Extract the actual command output from the nested JSON structure
                         String output = null;
                         if (statusResponse.has("output")) {
-                            output = statusResponse.get("output").asText();
-                        } else if (statusResponse.has("result")) {
-                            output = statusResponse.get("result").asText();
-                        } else if (statusResponse.has("data")) {
-                            output = statusResponse.get("data").asText();
+                            JsonNode outputNode = statusResponse.get("output");
+                            if (outputNode.isNull()) {
+                                // Output field is null - command likely still running
+                                log.debug("Output field is null for command '{}'", rladminCommand);
+                            } else if (outputNode.isTextual()) {
+                                // Simple text output
+                                output = outputNode.asText();
+                                log.debug("Found simple text output in 'output' field");
+                            } else if (outputNode.isObject() && outputNode.has("output")) {
+                                // Nested JSON with output field (expected format)
+                                output = outputNode.get("output").asText();
+                                log.debug("Found nested output in 'output.output' field");
+                            } else {
+                                log.warn("Output field found but unexpected format: {}", outputNode);
+                            }
+                        } else {
+                            log.debug("No output field in response for '{}'", rladminCommand);
                         }
 
                         log.debug("Parsed status: {}, error: {}, output present: {}", status, error, output != null);
@@ -744,8 +753,8 @@ public class FaultInjectionClient {
                                     new RuntimeException("Rladmin command failed: status=" + status + ", error=" + error));
                         }
 
-                        if ("pending".equals(status)) {
-                            log.debug("Command '{}' still pending, will retry...", rladminCommand);
+                        if ("running".equals(status)) {
+                            log.debug("Command '{}' still {}, will retry...", rladminCommand, status);
                             return Mono.empty(); // Trigger retry
                         }
 

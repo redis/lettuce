@@ -21,6 +21,8 @@ package io.lettuce.core.cluster.api.reactive;
 
 import java.util.Map;
 
+import io.lettuce.core.MSetExArgs;
+import io.lettuce.core.SetArgs;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import io.lettuce.core.KeyScanCursor;
@@ -135,6 +137,17 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     Mono<Boolean> msetnx(Map<K, V> map);
 
     /**
+     * Set multiple keys to multiple values with optional conditions and expiration. Emits: numkeys, pairs, then [NX|XX] and one
+     * of [EX|PX|EXAT|PXAT|KEEPTTL]. Cross-slot keys will result in multiple calls to the particular cluster nodes.
+     *
+     * @param map the map of keys and values.
+     * @param args the {@link MSetExArgs} specifying NX/XX and expiration.
+     * @return Boolean from integer-reply: {@code 1} if all keys were set, {@code 0} otherwise.
+     * @since 7.1
+     */
+    Mono<Boolean> msetex(Map<K, V> map, MSetExArgs args);
+
+    /**
      * Set the current connection name on all cluster nodes with pipelining.
      *
      * @param name the client name
@@ -179,11 +192,19 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
     /**
      * Find all keys matching the given pattern on all cluster masters.
      *
-     * @param pattern the pattern type: patternkey (pattern)
-     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyReactiveCommands#keys(Object)
+     * @param pattern the pattern type
+     * @return Flux&lt;K&gt; flux of keys matching {@code pattern}.
      */
-    Flux<K> keys(K pattern);
+    Flux<K> keys(String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return K array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    Flux<K> keysLegacy(K pattern);
 
     /**
      * Find all keys matching the given pattern on all cluster masters.
@@ -191,9 +212,22 @@ public interface RedisAdvancedClusterReactiveCommands<K, V> extends RedisCluster
      * @param channel the channel
      * @param pattern the pattern
      * @return Long array-reply list of keys matching {@code pattern}.
-     * @see RedisKeyReactiveCommands#keys(KeyStreamingChannel, Object)
+     * @deprecated since 6.0 in favor of consuming large results through the {@link org.reactivestreams.Publisher} returned by
+     *             {@link #keys(String)}.
      */
-    Mono<Long> keys(KeyStreamingChannel<K> channel, K pattern);
+    Mono<Long> keys(KeyStreamingChannel<K> channel, String pattern);
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    @Override
+    Mono<Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern);
 
     /**
      * Return a random key from the keyspace on a random master.

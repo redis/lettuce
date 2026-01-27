@@ -16,7 +16,7 @@ import java.time.Duration;
  *
  * @author Tihomir Mateev
  * @since 7.0
- * @see ClientOptions#getMaintenanceEventsOptions()
+ * @see ClientOptions#getMaintNotificationsConfig()
  */
 public interface MaintenanceAwareComponent {
 

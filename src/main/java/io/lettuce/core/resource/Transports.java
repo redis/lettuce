@@ -29,7 +29,7 @@ public class Transports {
             return NativeTransports.eventLoopGroupClass();
         }
 
-        return NioEventLoopGroup.class;
+        return NioProvider.getResources().eventLoopGroupClass();
     }
 
     /**
@@ -63,8 +63,9 @@ public class Transports {
 
         private static final InternalLogger transportsLogger = InternalLoggerFactory.getInstance(Transports.class);
 
-        static EventLoopResources RESOURCES = KqueueProvider.isAvailable() ? KqueueProvider.getResources()
-                : IOUringProvider.isAvailable() ? IOUringProvider.getResources() : EpollProvider.getResources();
+        // Priority order must match DefaultEventLoopGroupProvider: Epoll > Kqueue > IOUring
+        static EventLoopResources RESOURCES = EpollProvider.isAvailable() ? EpollProvider.getResources()
+                : KqueueProvider.isAvailable() ? KqueueProvider.getResources() : IOUringProvider.getResources();
 
         /**
          * @return {@code true} if a native transport is available.

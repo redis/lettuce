@@ -9,6 +9,7 @@ package io.lettuce.core.search;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents the response from a Redis Search aggregation command (FT.AGGREGATE) or an (FT.CURSOR READ) command. This class
@@ -47,13 +48,15 @@ import java.util.List;
  */
 public class AggregationReply<K, V> {
 
-    private static final long NO_CURSOR = -1;
-
     long aggregationGroups = 1;
 
     List<SearchReply<K, V>> replies = new ArrayList<>();
 
-    long cursorId = NO_CURSOR;
+    /**
+     * Optional Cursor metadata of the shard that created/owns the cursor. Present only when running in cluster mode, WITHCURSOR
+     * was used, and the server created a cursor (cursorId > 0).
+     */
+    private Cursor cursor;
 
     /**
      * Creates a new empty AggregationReply. The reply is initialized with defaults.
@@ -119,50 +122,74 @@ public class AggregationReply<K, V> {
     }
 
     /**
-     * Returns the cursor ID for pagination, if applicable.
+     * Returns the optional Cursor metadata for pagination and (in cluster) sticky routing, if applicable.
      *
      * <p>
-     * The cursor ID is used for paginating through large aggregation result sets that cannot be returned in a single response.
-     * When Redis returns a cursor ID, it indicates that there are more results available that can be retrieved using the
-     * FT.CURSOR READ command.
+     * When {@code WITHCURSOR} is used and Redis returns a cursor, this method yields a {@link Cursor} containing the cursor id.
+     * In cluster mode, the cursor may additionally carry the node id on which the cursor resides for sticky FT.CURSOR READ/DEL
+     * routing.
      * </p>
      *
-     * <p>
-     * Cursor behavior:
-     * </p>
-     * <ul>
-     * <li>Returns -1 (NO_CURSOR) when no pagination is needed or available</li>
-     * <li>Returns a positive integer when more results are available</li>
-     * <li>Returns 0 when this is the last page of a paginated result set</li>
-     * </ul>
-     *
-     * <p>
-     * To retrieve the next page of results, use the returned cursor ID with the FT.CURSOR READ command. Continue reading until
-     * the cursor ID becomes 0, indicating the end of the result set.
-     * </p>
-     *
-     * <p>
-     * Note: Cursors have a timeout and will expire if not used within the configured time limit. Always check for cursor
-     * expiration when implementing pagination.
-     * </p>
-     *
-     * @return the cursor ID for pagination. Returns -1 if no cursor is available, 0 if this is the last page, or a positive
-     *         integer if more results are available.
+     * @return an {@link Optional} with {@link Cursor} when a cursor was returned; otherwise an empty Optional.
      */
-    public long getCursorId() {
-        return cursorId;
+    public Optional<Cursor> getCursor() {
+        return Optional.ofNullable(cursor);
+    }
+
+    /**
+     * Set the {@link Cursor} metadata carried by this reply. Intended for post-parse stamping of node affinity (cluster mode)
+     * or attaching the server-returned cursor id (standalone).
+     */
+    public void setCursor(Cursor cursor) {
+        if (this.cursor == null) {
+            this.cursor = cursor;
+        }
     }
 
     void setGroupCount(long value) {
         this.aggregationGroups = value;
     }
 
-    void setCursorId(long value) {
-        this.cursorId = value;
-    }
-
     void addSearchReply(SearchReply<K, V> searchReply) {
         this.replies.add(searchReply);
+    }
+
+    /**
+     * Lightweight cursor handle containing the server-assigned cursor id and optional node id (cluster sticky routing).
+     */
+    public static class Cursor {
+
+        private final long cursorId;
+
+        private String nodeId;
+
+        private Cursor(long cursorId, String nodeId) {
+            this.cursorId = cursorId;
+            this.nodeId = nodeId;
+        }
+
+        /** Create a new cursor handle with the given cursor id and optional creating node id. */
+        public static Cursor of(long cursorId, String nodeId) {
+            return new Cursor(cursorId, nodeId);
+        }
+
+        /** Return the server-assigned cursor id for continued reads/deletes. */
+        public long getCursorId() {
+            return cursorId;
+        }
+
+        /** Return the node id that created this cursor, if known (cluster routing). */
+        public Optional<String> getNodeId() {
+            return Optional.ofNullable(nodeId);
+        }
+
+        /** Set the node id for this cursor (used for cluster-sticky routing). */
+        public void setNodeId(String nodeId) {
+            if (this.nodeId == null) {
+                this.nodeId = nodeId;
+            }
+        }
+
     }
 
 }

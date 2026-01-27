@@ -940,6 +940,15 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(DEL, new IntegerOutput<>(codec), args);
     }
 
+    Command<K, V, Long> delex(K key, CompareCondition<V> condition) {
+        notNullKey(key);
+        LettuceAssert.notNull(condition, "ValueCondition " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        condition.build(args);
+        return createCommand(DELEX, new IntegerOutput<>(codec), args);
+    }
+
     Command<K, V, String> discard() {
         return createCommand(DISCARD, new StatusOutput<>(codec));
     }
@@ -1942,13 +1951,46 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         return createCommand(CommandType.INFO, new StatusOutput<>(codec), args);
     }
 
-    Command<K, V, List<K>> keys(K pattern) {
+    Command<K, V, List<K>> keys(String pattern) {
+        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(pattern);
+        return createCommand(KEYS, new KeyListOutput<>(codec), args);
+    }
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param pattern the pattern type: patternkey (pattern).
+     * @return List&lt;K&gt; array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(String)} instead. This legacy overload will be removed in a later version.
+     */
+    @Deprecated
+    Command<K, V, List<K>> keysLegacy(K pattern) {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
 
         return createCommand(KEYS, new KeyListOutput<>(codec), pattern);
     }
 
-    Command<K, V, Long> keys(KeyStreamingChannel<K> channel, K pattern) {
+    Command<K, V, Long> keys(KeyStreamingChannel<K> channel, String pattern) {
+        LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
+        notNull(channel);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(pattern);
+        return createCommand(KEYS, new KeyStreamingOutput<>(codec, channel), args);
+    }
+
+    /**
+     * Find all keys matching the given pattern (legacy overload).
+     *
+     * @param channel the channel.
+     * @param pattern the pattern.
+     * @return Long array-reply list of keys matching {@code pattern}.
+     * @deprecated Use {@link #keys(KeyStreamingChannel, String)} instead. This legacy overload will be removed in a later
+     *             version.
+     */
+    @Deprecated
+    Command<K, V, Long> keysLegacy(KeyStreamingChannel<K> channel, K pattern) {
         LettuceAssert.notNull(pattern, "Pattern " + MUST_NOT_BE_NULL);
         notNull(channel);
 
@@ -2205,6 +2247,17 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
 
         CommandArgs<K, V> args = new CommandArgs<>(codec).add(map);
         return createCommand(MSETNX, new BooleanOutput<>(codec), args);
+    }
+
+    Command<K, V, Boolean> msetex(Map<K, V> map, MSetExArgs setArgs) {
+        LettuceAssert.notNull(map, "Map " + MUST_NOT_BE_NULL);
+        LettuceAssert.isTrue(!map.isEmpty(), "Map " + MUST_NOT_BE_EMPTY);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).add(map.size()).add(map);
+        if (setArgs != null) {
+            setArgs.build(args);
+        }
+        return createCommand(MSETEX, new BooleanOutput<>(codec), args);
     }
 
     Command<K, V, String> multi() {
@@ -2667,6 +2720,13 @@ class RedisCommandBuilder<K, V> extends BaseRedisCommandBuilder<K, V> {
         CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key).addValue(value);
         setArgs.build(args);
         return createCommand(SET, new StatusOutput<>(codec), args);
+    }
+
+    Command<K, V, String> digestKey(K key) {
+        notNullKey(key);
+
+        CommandArgs<K, V> args = new CommandArgs<>(codec).addKey(key);
+        return createCommand(DIGEST, new StatusOutput<>(codec), args);
     }
 
     Command<K, V, V> setGet(K key, V value) {
