@@ -8,6 +8,7 @@ package io.lettuce.core.support.http;
 
 import io.lettuce.core.SslOptions;
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.internal.AsyncCloseable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -93,7 +94,7 @@ public interface HttpClient extends Closeable {
      * Connections should be closed when no longer needed to release resources.
      * </p>
      */
-    interface HttpConnection extends Closeable {
+    interface HttpConnection extends Closeable, AsyncCloseable {
 
         /**
          * Executes an HTTP request using this connection.
@@ -124,6 +125,14 @@ public interface HttpClient extends Closeable {
          */
         @Override
         void close();
+
+        /**
+         * Asynchronously closes this connection and releases any resources.
+         *
+         * @return a {@link CompletableFuture} that will be completed when the connection is closed.
+         */
+        @Override
+        CompletableFuture<Void> closeAsync();
 
     }
 

@@ -262,6 +262,22 @@ class NettyHttpClient implements HttpClient {
             }
         }
 
+        @Override
+        public CompletableFuture<Void> closeAsync() {
+            if (channel != null && channel.isOpen()) {
+                CompletableFuture<Void> future = new CompletableFuture<>();
+                channel.close().addListener((ChannelFutureListener) f -> {
+                    if (f.isSuccess()) {
+                        future.complete(null);
+                    } else {
+                        future.completeExceptionally(f.cause());
+                    }
+                });
+                return future;
+            }
+            return CompletableFuture.completedFuture(null);
+        }
+
     }
 
     /**
