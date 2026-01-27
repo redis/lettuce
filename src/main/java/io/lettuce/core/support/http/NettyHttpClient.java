@@ -26,6 +26,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Netty-based implementation of {@link HttpClient}. This implementation uses Netty's http codecs to implement a asynchronous
@@ -58,9 +59,23 @@ class NettyHttpClient implements HttpClient {
             this.eventLoopGroup = eventLoopGroup;
             this.ownEventLoopGroup = false;
         } else {
-            this.eventLoopGroup = new NioEventLoopGroup(2);
+            this.eventLoopGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors());
             this.ownEventLoopGroup = true;
         }
+    }
+
+    /**
+     * Creates a new {@link NettyHttpClient} with a custom event loop group configuration.
+     *
+     * @param numberOfThreads the number of threads to use in the event loop group.
+     * @param threadFactory the thread factory to use for creating threads.
+     */
+    NettyHttpClient(int numberOfThreads, ThreadFactory threadFactory) {
+        LettuceAssert.isTrue(numberOfThreads > 0, "Number of threads must be greater than zero");
+        LettuceAssert.notNull(threadFactory, "ThreadFactory must not be null");
+
+        this.eventLoopGroup = new NioEventLoopGroup(numberOfThreads, threadFactory);
+        this.ownEventLoopGroup = true;
     }
 
     @Override
