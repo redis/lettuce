@@ -12,12 +12,18 @@ import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisCommandExecutionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.codec.ByteArrayCodec;
+import io.lettuce.core.search.arguments.CombineArgs;
 import io.lettuce.core.search.arguments.CreateArgs;
-import io.lettuce.core.search.arguments.FieldArgs;
-import io.lettuce.core.search.arguments.NumericFieldArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
-
+import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.HybridArgs;
+import io.lettuce.core.search.arguments.HybridSearchArgs;
+import io.lettuce.core.search.arguments.HybridVectorArgs;
+import io.lettuce.core.search.arguments.NumericFieldArgs;
+import io.lettuce.core.search.arguments.PostProcessingArgs;
 import io.lettuce.core.search.arguments.QueryDialects;
+import io.lettuce.core.search.arguments.ScoringFunction;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SortByArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
@@ -26,11 +32,15 @@ import io.lettuce.core.search.arguments.SugGetArgs;
 import io.lettuce.core.search.arguments.SynUpdateArgs;
 import io.lettuce.core.search.arguments.TagFieldArgs;
 import io.lettuce.core.search.arguments.TextFieldArgs;
+import io.lettuce.core.search.arguments.VectorFieldArgs;
+import io.lettuce.test.condition.EnabledOnCommand;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,11 +86,14 @@ public class RediSearchIntegrationTests {
 
     protected static RedisCommands<String, String> redis;
 
+    protected static RedisCommands<byte[], byte[]> redisBinary;
+
     public RediSearchIntegrationTests() {
         RedisURI redisURI = RedisURI.Builder.redis("127.0.0.1").withPort(16379).build();
         client = RedisClient.create(redisURI);
         client.setOptions(getOptions());
         redis = client.connect().sync();
+        redisBinary = client.connect(ByteArrayCodec.INSTANCE).sync();
     }
 
     protected ClientOptions getOptions() {
@@ -1185,6 +1198,133 @@ public class RediSearchIntegrationTests {
 
         // Cleanup
         assertThat(redis.ftDropindex(testIndex)).isEqualTo("OK");
+    }
+
+    @Test
+    @EnabledOnCommand("FT.HYBRID")
+    void ftHybridAdvancedMultiQueryWithPostProcessing() {
+        String indexName = "idx:ecommerce";
+
+        FieldArgs<String> titleField = TextFieldArgs.<String> builder().name("title").build();
+        FieldArgs<String> categoryField = TagFieldArgs.<String> builder().name("category").build();
+        FieldArgs<String> brandField = TagFieldArgs.<String> builder().name("brand").build();
+        FieldArgs<String> priceField = NumericFieldArgs.<String> builder().name("price").build();
+        FieldArgs<String> ratingField = NumericFieldArgs.<String> builder().name("rating").build();
+
+        FieldArgs<String> vectorField = VectorFieldArgs.<String> builder().name("image_embedding").hnsw()
+                .type(VectorFieldArgs.VectorType.FLOAT32).dimensions(10).distanceMetric(VectorFieldArgs.DistanceMetric.COSINE)
+                .build();
+
+        CreateArgs<String, String> createArgs = CreateArgs.<String, String> builder().withPrefix("product:")
+                .on(CreateArgs.TargetType.HASH).build();
+
+        assertThat(redis.ftCreate(indexName, createArgs,
+                Arrays.asList(titleField, categoryField, brandField, priceField, ratingField, vectorField))).isEqualTo("OK");
+
+        // Add sample products
+        createProduct("1", "Apple iPhone 15 Pro smartphone with advanced camera", "electronics", "apple", "999", "4.8",
+                new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
+
+        createProduct("2", "Samsung Galaxy S24 smartphone camera", "electronics", "samsung", "799", "4.6",
+                new float[] { 0.15f, 0.25f, 0.35f, 0.45f, 0.55f, 0.65f, 0.75f, 0.85f, 0.95f, 0.9f });
+
+        createProduct("3", "Google Pixel 8 Pro camera smartphone", "electronics", "google", "699", "4.5",
+                new float[] { 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f, 0.8f });
+
+        createProduct("4", "Apple iPhone 15 Pro smartphone camera", "electronics", "apple", "999", "4.8",
+                new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
+
+        createProduct("5", "Samsung Galaxy S24", "electronics", "samsung", "799", "4.6",
+                new float[] { 0.15f, 0.25f, 0.35f, 0.45f, 0.55f, 0.65f, 0.75f, 0.85f, 0.95f, 0.9f });
+
+        createProduct("6", "Google Pixel 8 Pro", "electronics", "google", "699", "4.5",
+                new float[] { 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f, 0.8f });
+
+        createProduct("7", "Best T-shirt", "apparel", "denim", "255", "4.2",
+                new float[] { 0.12f, 0.22f, 0.32f, 0.42f, 0.52f, 0.62f, 0.72f, 0.82f, 0.92f, 0.85f });
+
+        createProduct("8", "Best makeup", "beauty", "loreal", "155", "4.4",
+                new float[] { 0.18f, 0.28f, 0.38f, 0.48f, 0.58f, 0.68f, 0.78f, 0.88f, 0.98f, 0.75f });
+
+        createProduct("9", "Best punching bag", "sports", "lonsdale", "733", "4.6",
+                new float[] { 0.11f, 0.21f, 0.31f, 0.41f, 0.51f, 0.61f, 0.71f, 0.81f, 0.91f, 0.95f });
+
+        createProduct("10", "Apple iPhone 15 Pro smartphone camera", "electronics", "apple", "999", "4.8",
+                new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
+
+        byte[] queryVector = floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
+
+        HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
+                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
+                        .scorer(HybridSearchArgs.Scorer.of(ScoringFunction.BM25)).scoreAlias("text_score").build())
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
+                        .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
+                        .scoreAlias("vector_score").build())
+                .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
+                .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
+                        .addOperation(PostProcessingArgs.GroupBy.<String, String> of("@brand")
+                                .reduce(PostProcessingArgs.Reducer
+                                        .<String, String> of(PostProcessingArgs.ReduceFunction.SUM, "@price").as("sum"))
+                                .reduce(PostProcessingArgs.Reducer.<String, String> of(PostProcessingArgs.ReduceFunction.COUNT)
+                                        .as("count")))
+                        .addOperation(PostProcessingArgs.SortBy.of(
+                                new PostProcessingArgs.SortProperty<>("@sum", PostProcessingArgs.SortDirection.ASC),
+                                new PostProcessingArgs.SortProperty<>("@count", PostProcessingArgs.SortDirection.DESC)))
+                        .addOperation(PostProcessingArgs.Apply.of("@sum * 0.9", "discounted_price"))
+                        .addOperation(PostProcessingArgs.Filter.of("@sum > 700"))
+                        .addOperation(PostProcessingArgs.Limit.of(0, 20)).build())
+                .param("discount_rate", "0.9").param("$vector", new String(queryVector)).build();
+
+        HybridReply<String, String> reply = redis.ftHybrid(indexName, hybridArgs);
+
+        // Verify results
+        assertThat(reply).isNotNull();
+        assertThat(reply.getResults()).isNotEmpty();
+        assertThat(reply.getTotalResults()).isEqualTo(3);
+        assertThat(reply.getResults()).isNotEmpty();
+        assertThat(reply.getWarnings().size()).isGreaterThanOrEqualTo(0);
+        assertThat(reply.getExecutionTime()).isGreaterThan(0L);
+
+        // Verify first result (google)
+        Map<String, String> r1 = reply.getResults().get(0).getFields();
+        assertThat(r1.get("brand")).isEqualTo("google");
+        assertThat(r1.get("count")).isEqualTo("2");
+        assertThat(r1.get("sum")).isEqualTo("1398");
+        assertThat(r1.get("discounted_price")).isEqualTo("1258.2");
+
+        // Verify second result (samsung)
+        Map<String, String> r2 = reply.getResults().get(1).getFields();
+        assertThat(r2.get("brand")).isEqualTo("samsung");
+        assertThat(r2.get("count")).isEqualTo("2");
+        assertThat(r2.get("sum")).isEqualTo("1598");
+        assertThat(r2.get("discounted_price")).isEqualTo("1438.2");
+
+        // Verify third result (apple)
+        Map<String, String> r3 = reply.getResults().get(2).getFields();
+        assertThat(r3.get("brand")).isEqualTo("apple");
+        assertThat(r3.get("count")).isEqualTo("3");
+        assertThat(r3.get("sum")).isEqualTo("2997");
+        assertThat(r3.get("discounted_price")).isEqualTo("2697.3");
+
+        redis.ftDropindex(indexName);
+    }
+
+    private void createProduct(String id, String title, String category, String brand, String price, String rating,
+            float[] embedding) {
+        redis.hset("product:" + id, "title", title);
+        redis.hset("product:" + id, "category", category);
+        redis.hset("product:" + id, "brand", brand);
+        redis.hset("product:" + id, "price", price);
+        redis.hset("product:" + id, "rating", rating);
+        redisBinary.hset(("product:" + id).getBytes(), "image_embedding".getBytes(), floatArrayToByteArray(embedding));
+    }
+
+    private byte[] floatArrayToByteArray(float[] vector) {
+        ByteBuffer buffer = ByteBuffer.allocate(vector.length * 4).order(ByteOrder.LITTLE_ENDIAN);
+        for (float value : vector) {
+            buffer.putFloat(value);
+        }
+        return buffer.array();
     }
 
 }

@@ -7,21 +7,27 @@ package io.lettuce.core;
  * Licensed under the MIT License.
  */
 import static io.lettuce.core.protocol.CommandType.FT_CURSOR;
-import static io.lettuce.core.search.arguments.AggregateArgs.*;
 
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.protocol.Command;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.search.AggregationReply;
+import io.lettuce.core.search.HybridReply;
 import io.lettuce.core.search.SearchReply;
-import io.lettuce.core.search.arguments.AggregateArgs;
-import io.lettuce.core.search.arguments.CreateArgs;
-import io.lettuce.core.search.arguments.FieldArgs;
-import io.lettuce.core.search.arguments.NumericFieldArgs;
-import io.lettuce.core.search.arguments.QueryDialects;
 import io.lettuce.core.search.SpellCheckResult;
 import io.lettuce.core.search.Suggestion;
+import io.lettuce.core.search.arguments.AggregateArgs;
+import io.lettuce.core.search.arguments.CombineArgs;
+import io.lettuce.core.search.arguments.CreateArgs;
 import io.lettuce.core.search.arguments.ExplainArgs;
+import io.lettuce.core.search.arguments.FieldArgs;
+import io.lettuce.core.search.arguments.HybridArgs;
+import io.lettuce.core.search.arguments.HybridSearchArgs;
+import io.lettuce.core.search.arguments.HybridVectorArgs;
+import io.lettuce.core.search.arguments.NumericFieldArgs;
+import io.lettuce.core.search.arguments.PostProcessingArgs;
+import io.lettuce.core.search.arguments.QueryDialects;
+import io.lettuce.core.search.arguments.ScoringFunction;
 import io.lettuce.core.search.arguments.SearchArgs;
 import io.lettuce.core.search.arguments.SpellCheckArgs;
 import io.lettuce.core.search.arguments.SugAddArgs;
@@ -34,6 +40,8 @@ import io.netty.buffer.Unpooled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
@@ -643,10 +651,11 @@ class RediSearchCommandBuilderUnitTests {
         AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
                 .apply("@price * @quantity", "total_value")// First operation
                 .filter("@total_value > 100")// Second operation
-                .groupBy(GroupBy.<String, String> of("category").reduce(Reducer.<String, String> count().as("count")))// Third
-                                                                                                                      // operation
+                .groupBy(AggregateArgs.GroupBy.<String, String> of("category")
+                        .reduce(AggregateArgs.Reducer.<String, String> count().as("count")))// Third
+                // operation
                 .limit(0, 5)// Fourth operation
-                .sortBy(SortBy.of("count", SortDirection.DESC))// Fifth operation
+                .sortBy(AggregateArgs.SortBy.of("count", AggregateArgs.SortDirection.DESC))// Fifth operation
                 .build();
 
         Command<String, String, AggregationReply<String, String>> command = builder.ftAggregate(MY_KEY, MY_QUERY,
@@ -674,12 +683,13 @@ class RediSearchCommandBuilderUnitTests {
         AggregateArgs<String, String> aggregateArgs = AggregateArgs.<String, String> builder()//
                 .verbatim()//
                 .load("title")//
-                .groupBy(GroupBy.<String, String> of("category").reduce(Reducer.<String, String> count().as("count")))//
-                .sortBy(SortBy.of("count", SortDirection.DESC))//
-                .apply(Apply.of("@title", "title_upper"))//
+                .groupBy(AggregateArgs.GroupBy.<String, String> of("category")
+                        .reduce(AggregateArgs.Reducer.<String, String> count().as("count")))//
+                .sortBy(AggregateArgs.SortBy.of("count", AggregateArgs.SortDirection.DESC))//
+                .apply(AggregateArgs.Apply.of("@title", "title_upper"))//
                 .limit(0, 10)//
                 .filter("@category:{$category}")//
-                .withCursor(WithCursor.of(10L, Duration.ofSeconds(10)))//
+                .withCursor(AggregateArgs.WithCursor.of(10L, Duration.ofSeconds(10)))//
                 .param("category", "electronics")//
                 .scorer("TFIDF")//
                 .addScores()//
@@ -768,6 +778,54 @@ class RediSearchCommandBuilderUnitTests {
 
         // buggy implementation returns "RETURN 2 key<as_is> key<$.field> key<alias> DIALECT "
         assertThat("RETURN 4 key<as_is> key<$.field> AS key<alias> DIALECT 2").isEqualTo(args.toCommandString());
+    }
+
+    @Test
+    void shouldCorrectlyConstructFtHybridCommand() {
+
+        byte[] queryVector = floatArrayToByteArray(new float[] { 0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f });
+
+        HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
+                .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
+                        .scorer(HybridSearchArgs.Scorer.of(ScoringFunction.TF_IDF_NORMALIZED)).scoreAlias("text_score").build())
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
+                        .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
+                        .scoreAlias("vector_score").build())
+                .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
+                .postProcessing(PostProcessingArgs.<String, String> builder().load("@price", "@brand", "@category")
+                        .addOperation(PostProcessingArgs.GroupBy.<String, String> of("@brand")
+                                .reduce(PostProcessingArgs.Reducer
+                                        .<String, String> of(PostProcessingArgs.ReduceFunction.SUM, "@price").as("sum"))
+                                .reduce(PostProcessingArgs.Reducer.<String, String> of(PostProcessingArgs.ReduceFunction.COUNT)
+                                        .as("count")))
+                        .addOperation(PostProcessingArgs.SortBy
+                                .of(new PostProcessingArgs.SortProperty<>("@sum", PostProcessingArgs.SortDirection.ASC)))
+                        .addOperation(PostProcessingArgs.Apply.of("@sum * 0.9", "discounted_price"))
+                        .addOperation(PostProcessingArgs.Filter.of("@sum > 700"))
+                        .addOperation(PostProcessingArgs.Limit.of(0, 20)).build())
+                .param("discount_rate", "0.9").param("$vector", new String(queryVector)).build();
+
+        Command<String, String, HybridReply<String, String>> command = builder.ftHybrid("idx:ecommerce", hybridArgs);
+
+        String args = command.getArgs().toCommandString();
+
+        String expected = "idx:ecommerce SEARCH value<@category:{electronics} smartphone camera> SCORER TFIDF.DOCNORM "
+                + "YIELD_SCORE_AS key<text_score> VSIM key<@image_embedding> zczMPc3MTD6amZk+zczMPgAAAD+amRk/MzMzP83MTD9mZmY/AACAPw== "
+                + "KNN 4 K 20 EF_RUNTIME 150 FILTER @brand:{apple|samsung|google} YIELD_SCORE_AS key<vector_score> "
+                + "COMBINE LINEAR 4 ALPHA 0.7 BETA 0.3 LOAD 3 key<@price> key<@brand> key<@category> GROUPBY 1 @brand "
+                + "REDUCE U1VN 1 value<@price> AS sum REDUCE Q09VTlQ= 0 AS count SORTBY 2 @sum ASC "
+                + "APPLY value<@sum * 0.9> AS discounted_price FILTER value<@sum > 700> LIMIT 0 20 "
+                + "PARAMS 4 key<discount_rate> value<0.9> key<$vector> value<" + new String(queryVector) + ">";
+
+        assertThat(args).isEqualTo(expected);
+    }
+
+    private byte[] floatArrayToByteArray(float[] vector) {
+        ByteBuffer buffer = ByteBuffer.allocate(vector.length * 4).order(ByteOrder.LITTLE_ENDIAN);
+        for (float value : vector) {
+            buffer.putFloat(value);
+        }
+        return buffer.array();
     }
 
 }
