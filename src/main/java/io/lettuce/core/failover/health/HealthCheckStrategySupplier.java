@@ -11,6 +11,7 @@ import io.lettuce.core.failover.DatabaseRawConnectionFactory;
  * @since 7.4
  */
 @Experimental
+@FunctionalInterface
 public interface HealthCheckStrategySupplier {
 
     /**
