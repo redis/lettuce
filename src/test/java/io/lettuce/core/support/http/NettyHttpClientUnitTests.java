@@ -21,6 +21,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -514,6 +515,51 @@ class NettyHttpClientUnitTests {
     }
 
     @Test
+    void shouldCompletePendingRequestsWhenConnectionCloses() throws Exception {
+        // Handler that never responds - leaves requests pending
+        // Only 1 request reaches the server because HTTP/1.1 waits for response before sending next request.
+        // The other 2 requests are queued client-side in SequentialHttpHandler's pending queue.
+        CountDownLatch requestsReceived = new CountDownLatch(1);
+        int port = startMockServer(new NoResponseHandler(requestsReceived));
+
+        URI uri = URI.create("http://localhost:" + port);
+        HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().build();
+
+        HttpClient.HttpConnection connection = httpClient.connect(uri, config);
+
+        // Submit multiple async requests that will be pending
+        // first request is sent, second and third are queued
+        HttpClient.Request request1 = HttpClient.Request.get("/pending1").build();
+        HttpClient.Request request2 = HttpClient.Request.get("/pending2").build();
+        HttpClient.Request request3 = HttpClient.Request.get("/pending3").build();
+
+        CompletableFuture<HttpClient.Response> future1 = connection.executeAsync(request1);
+        CompletableFuture<HttpClient.Response> future2 = connection.executeAsync(request2);
+        CompletableFuture<HttpClient.Response> future3 = connection.executeAsync(request3);
+
+        // Wait for first request to reach the handler
+        assertThat(requestsReceived.await(5, TimeUnit.SECONDS)).isTrue();
+
+        // Verify requests are not yet completed
+        assertThat(future1.isDone()).isFalse();
+        assertThat(future2.isDone()).isFalse();
+        assertThat(future3.isDone()).isFalse();
+
+        // Close the connection - this should complete all pending requests exceptionally
+        connection.closeAsync().get(5, TimeUnit.SECONDS);
+
+        // Verify all pending requests are now completed exceptionally
+        assertThat(future1).isCompletedExceptionally();
+        assertThat(future2).isCompletedExceptionally();
+        assertThat(future3).isCompletedExceptionally();
+
+        // Verify the exception type and message
+        assertThatThrownBy(() -> future1.get()).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(() -> future2.get()).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(() -> future3.get()).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+    }
+
+    @Test
     void shouldHandleMultipleConnectionsFromSameClient() throws Exception {
         // Start three separate mock servers
         int port1 = startMockServer(new SimpleHttpHandler("Server1", 200));
@@ -715,6 +761,25 @@ class NettyHttpClientUnitTests {
             response.headers().set("X-Custom-Header", "CustomValue");
 
             ctx.writeAndFlush(response);
+        }
+
+    }
+
+    /**
+     * HTTP handler that never responds - leaves requests pending.
+     */
+    private static class NoResponseHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+
+        private final CountDownLatch requestsReceived;
+
+        NoResponseHandler(CountDownLatch requestsReceived) {
+            this.requestsReceived = requestsReceived;
+        }
+
+        @Override
+        protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest request) {
+            requestsReceived.countDown();
+            // Do nothing else - don't respond, leaving the request pending
         }
 
     }

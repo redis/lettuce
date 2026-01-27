@@ -391,8 +391,20 @@ class NettyHttpClient implements HttpClient {
             ctx.close();
         }
 
-        // todo : handle disconnect - pending requests must be completed exceptionally
-        // todo : verify timeout if response is not received in time
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            requestInFlight = false;
+
+            // Fail all pending requests with connection closed exception
+            PendingRequest pending;
+            while ((pending = requestQueue.poll()) != null) {
+                if (!pending.future.isDone()) {
+                    pending.future.completeExceptionally(new java.io.IOException("Connection closed"));
+                }
+            }
+
+            super.channelInactive(ctx);
+        }
 
     }
 
