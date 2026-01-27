@@ -13,6 +13,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
@@ -51,15 +52,18 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @AfterEach
-    void tearDown() throws InterruptedException, ExecutionException {
+    void tearDown() throws TimeoutException, InterruptedException, ExecutionException {
         // Drain all into a list from the queue
         List<MultiDbConnectionFuture> futures = new ArrayList<>();
         cleanupList.drainTo(futures);
 
         // clean up connections
+        List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
         for (MultiDbConnectionFuture<? extends StatefulRedisMultiDbConnection> future : futures) {
-            future.thenAccept(i -> i.closeAsync());
+            CompletableFuture<Void> o = (CompletableFuture<Void>) future.thenCompose(conn -> conn.closeAsync());
+            closeFutures.add(o);
         }
+        CompletableFuture.allOf(closeFutures.toArray(new CompletableFuture[0])).get(10, TimeUnit.SECONDS);
     }
 
     @Test

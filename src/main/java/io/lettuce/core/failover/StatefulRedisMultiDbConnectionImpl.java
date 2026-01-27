@@ -416,10 +416,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
         CompletableFuture<Void> closeAllFuture = CompletableFuture.allOf(asyncCloseStream.toArray(CompletableFuture[]::new));
 
-        CompletableFuture<Void> healthManagerFuture = closeAllFuture.whenComplete((v, t) -> {
-            healthStatusManager.close();
-        });
-
         CompletableFuture<Void> deferredsFuture;
         if (completion != null) {
             deferredsFuture = completion.closeAsync();
@@ -427,11 +423,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             deferredsFuture = CompletableFuture.completedFuture(null);
         }
 
-        CompletableFuture<Void> onCloseListenersFuture = closeAllFuture.whenComplete((v, t) -> {
+        return closeAllFuture.thenCompose(v -> deferredsFuture).whenComplete((v, t) -> {
+            healthStatusManager.close();
+        }).whenComplete((v, t) -> {
             onCloseListeners.forEach(c -> c.accept(this));
         });
-
-        return CompletableFuture.allOf(closeAllFuture, healthManagerFuture, deferredsFuture, onCloseListenersFuture);
     }
 
     @Override

@@ -35,7 +35,7 @@ class RedisDatabaseAsyncCompletion<SC extends StatefulRedisConnection<?, ?>> imp
      */
     @SuppressWarnings({ "unchecked" })
     CompletableFuture<RedisDatabaseImpl<SC>>[] whenComplete(BiConsumer<RedisDatabaseImpl<SC>, Throwable> action) {
-        // lets return array of void futures for each future.whenComplete(action)
+        // Returns array of futures that complete when each database future completes
         return databaseFutures.stream().map(f -> f.whenComplete(action)).toArray(CompletableFuture[]::new);
     }
 
