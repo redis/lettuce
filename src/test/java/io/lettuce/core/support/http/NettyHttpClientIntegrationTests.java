@@ -1,11 +1,12 @@
 /*
- * Copyright 2024-Present, Redis Ltd. and Contributors
+ * Copyright 2026-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
  */
 package io.lettuce.core.support.http;
 
+import io.lettuce.test.LettuceExtension;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -14,6 +15,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.*;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -25,14 +27,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Unit tests for {@link NettyHttpClient}.
+ * Integration tests for {@link NettyHttpClient}.
  *
  * @author Ivo Gaydazhiev
  */
-class NettyHttpClientUnitTests {
+@Tag(INTEGRATION_TEST)
+class NettyHttpClientIntegrationTests {
 
     private static EventLoopGroup bossGroup;
 
