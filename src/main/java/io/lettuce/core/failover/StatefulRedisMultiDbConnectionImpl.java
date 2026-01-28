@@ -89,6 +89,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private final ClientResources clientResources;
 
+    private final MultiDbOptions multiDbOptions;
+
     private ScheduledFuture<?> failbackTask;
 
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
@@ -116,6 +118,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         this.codec = codec;
         this.connectionFactory = connectionFactory;
         this.healthStatusManager = healthStatusManager;
+        this.multiDbOptions = multiDbOptions;
 
         // Set current BEFORE registering listeners to avoid race condition where
         // onHealthStatusChange or onCircuitBreakerStateChange are triggered before current is set
@@ -136,10 +139,10 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         // Re-validate that current is still healthy after registering listeners
         // This handles the case where the initial database became unhealthy between selection and listener registration
         RedisDatabaseImpl<C> instance = current;
-        if (!DatabasePredicates.isHealthyAndCbClosed.test(instance)) {
+        if (instance.isHealthy()) {
             failoverFrom(instance, SwitchReason.FORCED);
             // if still unhealthy after failoverFrom, lets stop here
-            if (!DatabasePredicates.isHealthyAndCbClosed.test(current)) {
+            if (!current.isHealthy()) {
                 // remove listeners as we are going to throw an exception
                 databases.values().forEach(db -> db.getCircuitBreaker().removeListener(this::onCircuitBreakerStateChange));
                 databases.values()
@@ -191,12 +194,15 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                         current.getId());
             }
         }
-        if (!event.getNewState().isClosed() && event.getCircuitBreaker() == current.getCircuitBreaker()) {
+        RedisDatabaseImpl<C> fromDb = current;
+        if (!event.getNewState().isClosed() && event.getCircuitBreaker() == fromDb.getCircuitBreaker()) {
             if (logger.isInfoEnabled()) {
                 logger.info("Circuit breaker {} running for {} changed state from {} to {}", event.getCircuitBreaker().getId(),
-                        current.getId(), event.getPreviousState(), event.getNewState());
+                        fromDb.getId(), event.getPreviousState(), event.getNewState());
             }
-            failoverFrom(current, SwitchReason.CIRCUIT_BREAKER);
+            // Start grace period for the database we're failing over from
+            fromDb.startGracePeriod(multiDbOptions.getGracePeriod());
+            failoverFrom(fromDb, SwitchReason.CIRCUIT_BREAKER);
         }
     }
 
@@ -212,14 +218,13 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             return;
         }
 
-        if (!event.getNewStatus().isHealthy() && isCurrent(database)) {
+        RedisDatabaseImpl<C> fromDb = current;
+        if (!event.getNewStatus().isHealthy() && fromDb == database) {
             logger.info("Current database {} became unhealthy, initiating failover", database.getId());
-            failoverFrom(database, SwitchReason.HEALTH_CHECK);
+            // Start grace period for the database we're failing over from
+            fromDb.startGracePeriod(multiDbOptions.getGracePeriod());
+            failoverFrom(fromDb, SwitchReason.HEALTH_CHECK);
         }
-    }
-
-    private boolean isCurrent(RedisDatabaseImpl<C> database) {
-        return database == current;
     }
 
     /**
@@ -259,7 +264,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                     logger.info("Failover successful from {} to {}", fromDb.getId(), selectedDatabase.getId());
                 }
                 // check if we missed any events during the switch
-                if (!DatabasePredicates.isHealthyAndCbClosed.test(selectedDatabase)) {
+                if (!selectedDatabase.isHealthy()) {
                     logger.warn("Database {} became unhealthy during failover, attempting cascading failover",
                             selectedDatabase.getId());
                     failoverFromRecursive(selectedDatabase, reason, recursionAttempt);
@@ -280,8 +285,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     private RedisDatabaseImpl<C> getNextHealthyDatabase(RedisDatabaseImpl<C> dbToExclude) {
-        return databases.values().stream().filter(DatabasePredicates.isHealthyAndCbClosed)
-                .filter(DatabasePredicates.isNot(dbToExclude)).max(DatabaseComparators.byWeight).orElse(null);
+        return databases.values().stream().filter(RedisDatabaseImpl::isHealthy).filter(DatabasePredicates.isNot(dbToExclude))
+                .max(DatabaseComparators.byWeight).orElse(null);
     }
 
     /**
@@ -289,6 +294,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
      * <p>
      * This method is called by the failback scheduler at regular intervals. It checks if there is a higher-weighted healthy
      * database available than the current one, and if so, initiates a failback to that database.
+     * <p>
+     * Additionally, this method checks for databases whose circuit breaker is not closed but whose grace period has ended. For
+     * such databases, it resets the circuit breaker to closed state and attempts a failover if appropriate.
      */
     private void periodicFailbackCheck() {
         try {
@@ -297,9 +305,12 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 return;
             }
 
+            // Check for databases with circuit breaker not closed but grace period ended
+            checkAndResetCircuitBreakersAfterGracePeriod();
+
             // Find the highest-weighted healthy database
-            RedisDatabaseImpl<C> highestWeightedHealthy = databases.values().stream()
-                    .filter(DatabasePredicates.isHealthyAndCbClosed).max(DatabaseComparators.byWeight).orElse(null);
+            RedisDatabaseImpl<C> highestWeightedHealthy = databases.values().stream().filter(RedisDatabaseImpl::isHealthy)
+                    .max(DatabaseComparators.byWeight).orElse(null);
 
             // If we found a healthy database with higher weight than current, failback to it
             if (highestWeightedHealthy != null && highestWeightedHealthy != currentDb
@@ -316,6 +327,24 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         }
     }
 
+    /**
+     * Checks all databases for circuit breakers that are not closed but whose grace period has ended. For such databases,
+     * resets the circuit breaker to closed state and attempts a failover if the database is the current one.
+     */
+    private void checkAndResetCircuitBreakersAfterGracePeriod() {
+        for (RedisDatabaseImpl<C> db : databases.values()) {
+            CircuitBreaker circuitBreaker = db.getCircuitBreaker();
+            CircuitBreaker.State cbState = circuitBreaker.getCurrentState();
+            if (!cbState.isClosed() && !db.isInGracePeriod()) {
+                if (logger.isInfoEnabled()) {
+                    logger.info("Circuit breaker for database {} is {} and grace period has ended, resetting to CLOSED",
+                            db.getId(), cbState);
+                }
+                circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
+            }
+        }
+    }
+
     static class DatabaseComparators {
 
         public static final Comparator<RedisDatabaseImpl<?>> byWeight = Comparator
@@ -324,20 +353,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     }
 
     static class DatabasePredicates {
-
-        public static final Predicate<RedisDatabaseImpl<?>> isHealthCheckHealthy = db -> {
-            HealthCheck healthCheck = db.getHealthCheck();
-            // If no health check configured, assume healthy
-            if (healthCheck == null) {
-                return true;
-            }
-            return healthCheck.getStatus() == HealthStatus.HEALTHY;
-        };
-
-        public static final Predicate<RedisDatabaseImpl<?>> isCbClosed = db -> db.getCircuitBreaker().getCurrentState()
-                .isClosed();
-
-        public static final Predicate<RedisDatabaseImpl<?>> isHealthyAndCbClosed = isHealthCheckHealthy.and(isCbClosed);
 
         public static Predicate<RedisDatabaseImpl<?>> isNot(RedisDatabaseImpl<?> dbInstance) {
             return db -> !db.equals(dbInstance);
@@ -522,9 +537,18 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         if (target == null) {
             throw new IllegalArgumentException("Unknown endpoint: " + redisURI);
         }
+
+        // Check if target has unhealthy health check results before attempting switch
+        HealthCheck healthCheck = target.getHealthCheck();
+        if (healthCheck != null && healthCheck.getStatus() == HealthStatus.UNHEALTHY) {
+            throw new IllegalStateException("Cannot switch to database " + target.getId()
+                    + " - health check reports UNHEALTHY status. Database endpoint: " + redisURI);
+        }
+
         if (safeSwitch(target, false, SwitchReason.FORCED)) {
             // if target got unhealthy along the way, failover from it
-            if (!DatabasePredicates.isHealthyAndCbClosed.test(target)) {
+            // For forced switches, ignore grace period when checking health
+            if (!target.isHealthyIgnoreGracePeriod()) {
                 failoverFrom(target, SwitchReason.FORCED);
                 throw new IllegalStateException("Failed to switch to database " + target.getId() + " - target is unhealthy");
             }
@@ -689,7 +713,11 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                             + target.getId() + ", found database: " + toDb.getId() + " , endpoint: " + toDb.getRedisURI());
         }
 
-        if (!DatabasePredicates.isHealthyAndCbClosed.test(toDb)) {
+        // For internal calls (automatic failover/failback), check grace period
+        // For external calls (forced switches), ignore grace period
+        boolean canSwitchTo = internalCall ? toDb.isHealthy() : toDb.isHealthyIgnoreGracePeriod();
+
+        if (!canSwitchTo) {
             if (internalCall) {
                 logger.info("Requested database ({}) is unhealthy or circuit breaker is open. Skipping switch request.",
                         toDb.getId());
@@ -757,7 +785,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             throw new IllegalArgumentException("Unknown endpoint: " + endpoint);
         }
 
-        return DatabasePredicates.isHealthyAndCbClosed.test(database);
+        return database.isHealthy();
     }
 
     @Override

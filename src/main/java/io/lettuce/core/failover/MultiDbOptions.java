@@ -14,9 +14,12 @@ public class MultiDbOptions {
 
     private final long failbackCheckInterval;
 
+    private final long gracePeriod;
+
     private MultiDbOptions(Builder builder) {
         this.failbackSupported = builder.failbackSupported;
         this.failbackCheckInterval = builder.failbackCheckInterval;
+        this.gracePeriod = builder.gracePeriod;
     }
 
     /**
@@ -35,6 +38,16 @@ public class MultiDbOptions {
      */
     public long getFailbackCheckInterval() {
         return failbackCheckInterval;
+    }
+
+    /**
+     * Returns the grace period duration that starts when a database is failed over from. During this grace period, no failbacks
+     * or failovers can trigger a switch back to that database until the duration ends.
+     *
+     * @return the grace period duration, or {@code null} if no grace period is configured
+     */
+    public long getGracePeriod() {
+        return gracePeriod;
     }
 
     /**
@@ -63,10 +76,15 @@ public class MultiDbOptions {
         /** Default interval in milliseconds for checking if failed databases have recovered. */
         private static final long FAILBACK_CHECK_INTERVAL_DEFAULT = 120000;
 
+        /** Default grace period duration. */
+        private static final long GRACE_PERIOD_DEFAULT = 30000;
+
         /** Whether automatic failback to higher-priority databases is supported. */
         private boolean failbackSupported = true;
 
         private long failbackCheckInterval = FAILBACK_CHECK_INTERVAL_DEFAULT;
+
+        private long gracePeriod = GRACE_PERIOD_DEFAULT;
 
         private Builder() {
         }
@@ -90,6 +108,20 @@ public class MultiDbOptions {
          */
         public Builder failbackCheckInterval(long failbackCheckInterval) {
             this.failbackCheckInterval = failbackCheckInterval;
+            return this;
+        }
+
+        /**
+         * Sets the grace period duration that starts when a database is failed over from. During this grace period, no
+         * failbacks or failovers can trigger a switch back to that database until the duration ends.
+         * <p>
+         * Defaults to 30 seconds. Set to {@code null} to disable grace period.
+         *
+         * @param gracePeriod the grace period duration in milliseconds, or {@code null} to disable
+         * @return this builder
+         */
+        public Builder gracePeriod(long gracePeriod) {
+            this.gracePeriod = gracePeriod;
             return this;
         }
 

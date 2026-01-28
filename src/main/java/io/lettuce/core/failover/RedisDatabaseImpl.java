@@ -11,6 +11,8 @@ import io.lettuce.core.failover.api.RedisDatabase;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Represents a Redis database with a weight and a connection.
@@ -22,6 +24,8 @@ import io.lettuce.core.failover.metrics.MetricsSnapshot;
  */
 @Experimental
 class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements RedisDatabase, Closeable {
+
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisDatabaseImpl.class);
 
     private static final AtomicInteger ID_COUNTER = new AtomicInteger(1);
 
@@ -38,6 +42,12 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
     private final HealthCheck healthCheck;
 
     private final String id;
+
+    /**
+     * Timestamp (in milliseconds) when the grace period ends. A value of 0 means no grace period is active. During the grace
+     * period, this database cannot be selected for failover or failback.
+     */
+    private volatile long gracePeriodEndTime = 0;
 
     public RedisDatabaseImpl(DatabaseConfig config, C connection, DatabaseEndpoint databaseEndpoint,
             CircuitBreaker circuitBreaker, HealthCheck healthCheck) {
@@ -106,6 +116,53 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
     @Override
     public State getCircuitBreakerState() {
         return circuitBreaker.getCurrentState();
+    }
+
+    boolean isHealthy() {
+        return !isInGracePeriod() && getHealthCheckStatus().isHealthy() && getCircuitBreakerState().isClosed();
+    }
+
+    boolean isHealthyIgnoreGracePeriod() {
+        return getHealthCheckStatus().isHealthy() && getCircuitBreakerState().isClosed();
+    }
+
+    /**
+     * Starts a grace period for this database. During the grace period, this database cannot be selected for failover or
+     * failback.
+     *
+     * @param durationMillis the duration of the grace period in milliseconds
+     */
+    void startGracePeriod(long durationMillis) {
+        if (durationMillis > 0) {
+            this.gracePeriodEndTime = System.currentTimeMillis() + durationMillis;
+            logger.info("Started grace period of {}ms for database {}", durationMillis, getId());
+        }
+    }
+
+    /**
+     * Checks if this database is currently in a grace period.
+     *
+     * @return {@code true} if the database is in a grace period, {@code false} otherwise
+     */
+    boolean isInGracePeriod() {
+        long endTime = this.gracePeriodEndTime;
+        if (endTime == 0) {
+            return false;
+        }
+        boolean inGracePeriod = System.currentTimeMillis() < endTime;
+        if (!inGracePeriod) {
+            // Grace period has ended, reset the end time
+            clearGracePeriod();
+            circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
+        }
+        return inGracePeriod;
+    }
+
+    /**
+     * Clears the grace period for this database.
+     */
+    void clearGracePeriod() {
+        this.gracePeriodEndTime = 0;
     }
 
 }

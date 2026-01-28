@@ -67,6 +67,14 @@ public interface CircuitBreaker extends Closeable {
     boolean isClosed();
 
     /**
+     * Transition the circuit breaker to the specified state. This method is used to force the circuit breaker to a specific
+     * state.
+     *
+     * @param newState the target state
+     */
+    void transitionTo(State newState);
+
+    /**
      * Add a listener for circuit breaker state change events.
      *
      * @param listener the listener to add, must not be {@code null}
