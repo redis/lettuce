@@ -258,6 +258,12 @@
         </dependency>
 
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson-version}</version>
@@ -1052,6 +1058,7 @@
         <profile>
             <id>ci</id>
         </profile>
+
         <profile>
             <id>entraid-it</id>
             <build>
