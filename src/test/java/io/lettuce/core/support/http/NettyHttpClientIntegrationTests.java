@@ -18,7 +18,6 @@ import org.junit.jupiter.api.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -383,7 +382,7 @@ class NettyHttpClientIntegrationTests {
     @Test
     void shouldHandleConnectionTimeout() {
         // Use a non-routable IP address to trigger actual connection timeout
-        // 10.255.255.1 is a non-routable address that will cause timeout, not connection refused
+        // 203.0.113.1 is a non-routable address that will cause timeout, not connection refused
         URI uri = URI.create("http://203.0.113.1:80");
 
         HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().connectionTimeout(100).build();
@@ -440,27 +439,6 @@ class NettyHttpClientIntegrationTests {
             assertThat(response.getResponseBody(StandardCharsets.UTF_8)).isEqualTo("Async Connect");
         } finally {
             connection.close();
-        }
-    }
-
-    @Test
-    void shouldHandleByteBufferResponse() throws Exception {
-        int port = startMockServer(new SimpleHttpHandler("Binary Data", 200));
-
-        URI uri = URI.create("http://localhost:" + port);
-        HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().build();
-
-        try (HttpClient.HttpConnection connection = httpClient.connect(uri, config)) {
-            HttpClient.Request request = HttpClient.Request.get("/binary").build();
-            HttpClient.Response response = connection.execute(request);
-
-            ByteBuffer buffer = response.getResponseBodyAsByteBuffer();
-            assertThat(buffer).isNotNull();
-            assertThat(buffer.remaining()).isGreaterThan(0);
-
-            byte[] bytes = new byte[buffer.remaining()];
-            buffer.get(bytes);
-            assertThat(new String(bytes, StandardCharsets.UTF_8)).isEqualTo("Binary Data");
         }
     }
 

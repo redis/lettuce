@@ -77,7 +77,7 @@ class NettyHttpClient implements HttpClient {
             this.eventLoopGroup = eventLoopGroup;
             this.ownEventLoopGroup = false;
         } else {
-            this.eventLoopGroup = new MultiThreadIoEventLoopGroup( 2, NioIoHandler.newFactory());
+            this.eventLoopGroup = new MultiThreadIoEventLoopGroup(2, NioIoHandler.newFactory());
             this.ownEventLoopGroup = true;
         }
     }
@@ -150,7 +150,8 @@ class NettyHttpClient implements HttpClient {
     }
 
     /**
-     * Shutdown this client.*
+     * Shutdown this client.
+     *
      * The shutdown is executed without quiet time and a timeout of 2 {@link TimeUnit#SECONDS}.
      * 
      * @see #shutdown(long, long, TimeUnit)

@@ -50,11 +50,6 @@ class DefaultHttpResponse implements HttpClient.Response {
     }
 
     @Override
-    public ByteBuffer getResponseBodyAsByteBuffer() {
-        return body;
-    }
-
-    @Override
     public String getResponseBody(Charset charset) {
         LettuceAssert.notNull(charset, "Charset must not be null");
 

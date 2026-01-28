@@ -163,17 +163,6 @@ public interface HttpClient extends Closeable {
         int getStatusCode();
 
         /**
-         * Returns the response body as a {@link ByteBuffer}. The buffer is ready to be read (position is 0).
-         * <p>
-         * Note: This method can be called multiple times and will return the same buffer each time. The buffer should not be
-         * modified.
-         * </p>
-         *
-         * @return the response body as a {@link ByteBuffer}.
-         */
-        ByteBuffer getResponseBodyAsByteBuffer();
-
-        /**
          * Returns the entire response body as a String using the specified charset.
          *
          * @param charset the charset to use when decoding the response body.
