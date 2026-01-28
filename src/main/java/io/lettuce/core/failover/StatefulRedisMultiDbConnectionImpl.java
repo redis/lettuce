@@ -139,7 +139,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         // Re-validate that current is still healthy after registering listeners
         // This handles the case where the initial database became unhealthy between selection and listener registration
         RedisDatabaseImpl<C> instance = current;
-        if (instance.isHealthy()) {
+        if (!instance.isHealthy()) {
             failoverFrom(instance, SwitchReason.FORCED);
             // if still unhealthy after failoverFrom, lets stop here
             if (!current.isHealthy()) {
