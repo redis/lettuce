@@ -305,9 +305,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
                 return;
             }
 
-            // Check for databases with circuit breaker not closed but grace period ended
-            checkAndResetCircuitBreakersAfterGracePeriod();
-
             // Find the highest-weighted healthy database
             RedisDatabaseImpl<C> highestWeightedHealthy = databases.values().stream().filter(RedisDatabaseImpl::isHealthy)
                     .max(DatabaseComparators.byWeight).orElse(null);
@@ -324,24 +321,6 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             }
         } catch (Exception e) {
             logger.error("Error during periodic failback check", e);
-        }
-    }
-
-    /**
-     * Checks all databases for circuit breakers that are not closed but whose grace period has ended. For such databases,
-     * resets the circuit breaker to closed state and attempts a failover if the database is the current one.
-     */
-    private void checkAndResetCircuitBreakersAfterGracePeriod() {
-        for (RedisDatabaseImpl<C> db : databases.values()) {
-            CircuitBreaker circuitBreaker = db.getCircuitBreaker();
-            CircuitBreaker.State cbState = circuitBreaker.getCurrentState();
-            if (!cbState.isClosed() && !db.isInGracePeriod()) {
-                if (logger.isInfoEnabled()) {
-                    logger.info("Circuit breaker for database {} is {} and grace period has ended, resetting to CLOSED",
-                            db.getId(), cbState);
-                }
-                circuitBreaker.transitionTo(CircuitBreaker.State.CLOSED);
-            }
         }
     }
 
