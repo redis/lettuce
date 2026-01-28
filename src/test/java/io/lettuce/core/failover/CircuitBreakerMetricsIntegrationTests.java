@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.NoFailback;
 import io.lettuce.test.ReflectionTestUtils;
 
 /**
@@ -35,7 +36,7 @@ import io.lettuce.test.ReflectionTestUtils;
 class CircuitBreakerMetricsIntegrationTests extends MultiDbTestSupport {
 
     @Inject
-    CircuitBreakerMetricsIntegrationTests(MultiDbClient client) {
+    CircuitBreakerMetricsIntegrationTests(@NoFailback MultiDbClient client) {
         super(client);
     }
 

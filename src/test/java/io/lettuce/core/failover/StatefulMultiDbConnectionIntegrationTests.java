@@ -50,6 +50,7 @@ import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.NoFailback;
 import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.settings.TestSettings;
 
@@ -66,7 +67,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
     public static final String TESTKEY = "testkey";
 
     @Inject
-    StatefulMultiDbConnectionIntegrationTests(MultiDbClient client) {
+    StatefulMultiDbConnectionIntegrationTests(@NoFailback MultiDbClient client) {
         super(client);
     }
 

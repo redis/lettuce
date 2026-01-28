@@ -9,6 +9,8 @@ import io.lettuce.core.failover.health.HealthCheckStrategySupplier;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.health.ProbingPolicy;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.NoFailback;
+
 import org.awaitility.core.ConditionFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,7 +66,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
     private final RedisCommandTimeoutException timeoutException = new RedisCommandTimeoutException("Test Timeout");
 
     @Inject
-    HealthCheckIntegrationTests(MultiDbClient client) {
+    HealthCheckIntegrationTests(@NoFailback MultiDbClient client) {
         super(client);
     }
 

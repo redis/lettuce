@@ -12,6 +12,7 @@ import io.lettuce.core.failover.MultiDbClient;
 import io.lettuce.core.failover.MultiDbTestSupport;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.NoFailback;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.resource.TestClientResources;
 import io.lettuce.test.settings.TestSettings;
@@ -52,7 +53,7 @@ public class PingStrategyIntegrationTests extends MultiDbTestSupport {
     private static TestRawConnectionFactoryImpl rawConnectionFactory;
 
     @Inject
-    PingStrategyIntegrationTests(MultiDbClient client) {
+    PingStrategyIntegrationTests(@NoFailback MultiDbClient client) {
         super(client);
     }
 

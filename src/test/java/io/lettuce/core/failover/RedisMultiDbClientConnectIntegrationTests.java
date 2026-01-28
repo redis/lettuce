@@ -39,6 +39,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.TestFutures;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.NoFailback;
 
 /**
  * 
@@ -50,7 +51,7 @@ import io.lettuce.test.LettuceExtension;
 class RedisMultiDbClientConnectIntegrationTests extends MultiDbTestSupport {
 
     @Inject
-    RedisMultiDbClientConnectIntegrationTests(MultiDbClient client) {
+    RedisMultiDbClientConnectIntegrationTests(@NoFailback MultiDbClient client) {
         super(client);
     }
 
