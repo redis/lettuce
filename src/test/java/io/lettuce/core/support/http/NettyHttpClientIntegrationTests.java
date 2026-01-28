@@ -6,16 +6,14 @@
  */
 package io.lettuce.core.support.http;
 
-import io.lettuce.test.LettuceExtension;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.*;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -48,8 +46,8 @@ class NettyHttpClientIntegrationTests {
 
     @BeforeAll
     static void setUpClass() {
-        bossGroup = new NioEventLoopGroup(1);
-        workerGroup = new NioEventLoopGroup(2);
+        bossGroup = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
+        workerGroup = new MultiThreadIoEventLoopGroup(2, NioIoHandler.newFactory());
     }
 
     @AfterAll
@@ -390,7 +388,7 @@ class NettyHttpClientIntegrationTests {
 
         HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().connectionTimeout(100).build();
 
-        assertThatThrownBy(() -> httpClient.connect(uri, config)).isInstanceOf(IOException.class)
+        assertThatThrownBy(() -> httpClient.connect(uri, config)).isInstanceOf(IOException.class).cause()
                 .hasMessageContaining("connection timed out");
     }
 
@@ -419,7 +417,7 @@ class NettyHttpClientIntegrationTests {
         connection.close();
 
         HttpClient.Request request = HttpClient.Request.get("/test").build();
-        assertThatThrownBy(() -> connection.execute(request)).isInstanceOf(IOException.class)
+        assertThatThrownBy(() -> connection.execute(request)).isInstanceOf(IOException.class).cause()
                 .hasMessageContaining("Connection is not active");
     }
 
@@ -560,9 +558,9 @@ class NettyHttpClientIntegrationTests {
         assertThat(future3).isCompletedExceptionally();
 
         // Verify the exception type and message
-        assertThatThrownBy(() -> future1.get()).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
-        assertThatThrownBy(() -> future2.get()).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
-        assertThatThrownBy(() -> future3.get()).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(future1::get).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(future2::get).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(future3::get).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
     }
 
     @Test

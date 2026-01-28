@@ -11,7 +11,7 @@ import io.lettuce.core.internal.LettuceAssert;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
@@ -77,7 +77,7 @@ class NettyHttpClient implements HttpClient {
             this.eventLoopGroup = eventLoopGroup;
             this.ownEventLoopGroup = false;
         } else {
-            this.eventLoopGroup = new NioEventLoopGroup(2);
+            this.eventLoopGroup = new MultiThreadIoEventLoopGroup( 2, NioIoHandler.newFactory());
             this.ownEventLoopGroup = true;
         }
     }
@@ -150,8 +150,7 @@ class NettyHttpClient implements HttpClient {
     }
 
     /**
-     * Shutdown this client.
-     *
+     * Shutdown this client.*
      * The shutdown is executed without quiet time and a timeout of 2 {@link TimeUnit#SECONDS}.
      * 
      * @see #shutdown(long, long, TimeUnit)
@@ -201,7 +200,7 @@ class NettyHttpClient implements HttpClient {
         }
 
         @Override
-        protected void initChannel(SocketChannel ch) throws Exception {
+        protected void initChannel(SocketChannel ch) {
 
             ChannelPipeline pipeline = ch.pipeline();
 
@@ -248,7 +247,7 @@ class NettyHttpClient implements HttpClient {
                 return executeAsync(request).get();
             } catch (ExecutionException | InterruptedException e) {
 
-                throw new IOException("HTTP request failed", Exceptions.unwrap(e));
+                throw new IOException("HTTP request failed: " + request.getUri(), Exceptions.unwrap(e));
             }
         }
 
@@ -413,7 +412,7 @@ class NettyHttpClient implements HttpClient {
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse response) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse response) {
 
             // Get the current in-flight request
             PendingRequest completed = requestQueue.poll();
@@ -451,7 +450,7 @@ class NettyHttpClient implements HttpClient {
         }
 
         @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
             requestInFlight = false;
 
             // Fail all pending requests
