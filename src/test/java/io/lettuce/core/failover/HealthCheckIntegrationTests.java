@@ -210,7 +210,8 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             DatabaseConfig config2 = DatabaseConfig.builder(uri2).weight(0.5f).healthCheckStrategySupplier(supplier2).build();
 
             // When: Create MultiDbClient with different strategies per endpoint
-            MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
+            MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2),
+                    MultiDbOptions.builder().failbackSupported(false).gracePeriod(0).build());
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
             try {
@@ -275,7 +276,8 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
                     .build();
 
             // When: Create MultiDbClient and connect
-            MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(databaseConfig));
+            MultiDbClient testClient = MultiDbClient.create(Collections.singletonList(databaseConfig),
+                    MultiDbOptions.builder().failbackSupported(false).gracePeriod(0).build());
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
 
             try {
