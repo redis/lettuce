@@ -1,5 +1,6 @@
 package io.lettuce.core.failover;
 
+import java.io.Closeable;
 import java.lang.reflect.Proxy;
 import java.time.Duration;
 import java.util.Collection;
@@ -13,7 +14,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import io.lettuce.core.AbstractRedisClient;
 import io.lettuce.core.ClientOptions;
@@ -23,7 +26,6 @@ import io.lettuce.core.RedisConnectionStateListener;
 import io.lettuce.core.RedisReactiveCommandsImpl;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.api.StatefulConnection;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.push.PushListener;
@@ -91,12 +93,16 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private final MultiDbOptions multiDbOptions;
 
-    private ScheduledFuture<?> failbackTask;
+    private final RedisDatabaseDeferredCompletion<C> completion;
+
+    private final Set<Consumer<Closeable>> onCloseListeners = ConcurrentHashMap.newKeySet();
+
+    private volatile ScheduledFuture<?> failbackTask;
 
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
             DatabaseFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<C> completion) {
+            RedisDatabaseDeferredCompletion<C> completion) {
         this(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion,
                 MultiDbOptions.create());
     }
@@ -104,7 +110,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
             DatabaseFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<C> completion, MultiDbOptions multiDbOptions) {
+            RedisDatabaseDeferredCompletion<C> completion, MultiDbOptions multiDbOptions) {
 
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
@@ -128,9 +134,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             this.current = initialDatabase;
         }
 
-        if (current == null) {
-            throw new IllegalStateException("InitialDatabase must not be null");
-        }
+        LettuceAssert.notNull(current, "InitialDatabase must not be null");
 
         // Now register listeners - they can safely access current
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
@@ -154,6 +158,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         this.async = newRedisAsyncCommandsImpl();
         this.sync = newRedisSyncCommandsImpl();
         this.reactive = newRedisReactiveCommandsImpl();
+        this.completion = completion;
         if (completion != null) {
             completion.whenComplete(this::onDatabaseCompletion);
         }
@@ -436,17 +441,42 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public void close() {
-        if (failbackTask != null) {
-            failbackTask.cancel(false);
-        }
-        healthStatusManager.close();
-        databases.values().forEach(RedisDatabaseImpl::close);
+        closeAsync().join();
+    }
+
+    /**
+     * Register MultiDbConnection as Closeable resource. Internal access only.
+     *
+     * @param registry registry of closeables
+     */
+    protected void registerAsCloseable(final Collection<Closeable> registry) {
+        registry.add(this);
+        onCloseListeners.add(resource -> {
+            registry.remove(resource);
+        });
     }
 
     @Override
     public CompletableFuture<Void> closeAsync() {
-        return CompletableFuture.allOf(databases.values().stream().map(db -> db.getConnection())
-                .map(StatefulConnection::closeAsync).toArray(CompletableFuture[]::new));
+        if (failbackTask != null) {
+            failbackTask.cancel(false);
+        }
+        Stream<CompletableFuture<Void>> asyncCloseStream = databases.values().stream().map(RedisDatabaseImpl<C>::closeAsync);
+
+        CompletableFuture<Void> closeAllFuture = CompletableFuture.allOf(asyncCloseStream.toArray(CompletableFuture[]::new));
+
+        CompletableFuture<Void> deferredsFuture;
+        if (completion != null) {
+            deferredsFuture = completion.closeAsync();
+        } else {
+            deferredsFuture = CompletableFuture.completedFuture(null);
+        }
+
+        return closeAllFuture.whenComplete((v, t) -> {
+            healthStatusManager.close();
+        }).thenCompose(v -> deferredsFuture).whenComplete((v, t) -> {
+            onCloseListeners.forEach(c -> c.accept(this));
+        });
     }
 
     @Override
@@ -774,9 +804,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public void addDatabase(DatabaseConfig databaseConfig) {
-        if (databaseConfig == null) {
-            throw new IllegalArgumentException("DatabaseConfig must not be null");
-        }
+        LettuceAssert.notNull(databaseConfig, "DatabaseConfig must not be null");
 
         if (connectionFactory == null) {
             throw new UnsupportedOperationException(
@@ -814,9 +842,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public void removeDatabase(RedisURI redisURI) {
-        if (redisURI == null) {
-            throw new IllegalArgumentException("RedisURI must not be null");
-        }
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+
         doByExclusiveLock(() -> {
             RedisDatabaseImpl<C> database = null;
             database = databases.get(redisURI);
@@ -833,7 +860,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
             // Remove the database and close its connection
             databases.remove(redisURI);
-            database.close();
+            database.closeAsync().join();
         });
     }
 

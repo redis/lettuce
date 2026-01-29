@@ -1,6 +1,6 @@
 package io.lettuce.core.failover.health;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +24,7 @@ class HealthCheckImplProbingPolicyUnitTests {
 
     @BeforeEach
     void setUp() {
-        testEndpoint = RedisURI.create("redis://localhost:6379");
+        testEndpoint = RedisURI.create("redis://dummy:9999");
     }
 
     @Test
@@ -33,8 +33,11 @@ class HealthCheckImplProbingPolicyUnitTests {
         AtomicInteger callCount = new AtomicInteger(0);
         CountDownLatch unhealthyLatch = new CountDownLatch(1);
 
-        TestHealthCheckStrategy strategy = new TestHealthCheckStrategy(HealthCheckStrategy.Config.builder().interval(5)
-                .timeout(200).numProbes(3).policy(ProbingPolicy.BuiltIn.ALL_SUCCESS).delayInBetweenProbes(100).build(), e -> {
+        // Use a long interval to prevent race condition with scheduled executions
+        // The test verifies that within a single health check cycle, the ALL_SUCCESS policy
+        // stops probing after the first failure (not across multiple scheduled executions)
+        TestHealthCheckStrategy strategy = new TestHealthCheckStrategy(HealthCheckStrategy.Config.builder().interval(5000)
+                .timeout(200).numProbes(3).policy(ProbingPolicy.BuiltIn.ALL_SUCCESS).delayInBetweenProbes(5).build(), e -> {
                     int c = callCount.incrementAndGet();
                     return c == 1 ? HealthStatus.UNHEALTHY : HealthStatus.HEALTHY;
                 });

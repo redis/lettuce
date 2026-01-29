@@ -7,11 +7,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
-import java.util.Queue;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
@@ -42,24 +44,27 @@ import io.lettuce.test.TestFutures;
 class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
     @SuppressWarnings("rawtypes")
-    private final Queue<MultiDbConnectionFuture> cleanupList = new ConcurrentLinkedQueue<>();
+    private final LinkedBlockingQueue<MultiDbConnectionFuture> cleanupList = new LinkedBlockingQueue<MultiDbConnectionFuture>();
 
     @Inject
     MultiDbClientConnectAsyncIntegrationTests(@NoFailback MultiDbClient client) {
         super(client);
     }
 
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @AfterEach
-    void tearDown() {
+    void tearDown() throws TimeoutException, InterruptedException, ExecutionException {
+        // Drain all into a list from the queue
+        List<MultiDbConnectionFuture> futures = new ArrayList<>();
+        cleanupList.drainTo(futures);
+
         // clean up connections
-        while (!cleanupList.isEmpty()) {
-            try {
-                ((StatefulRedisMultiDbConnection) cleanupList.poll().get(2, TimeUnit.SECONDS)).closeAsync();
-            } catch (Exception e) {
-                // Ignore
-            }
+        List<CompletableFuture<Void>> closeFutures = new ArrayList<>();
+        for (MultiDbConnectionFuture<? extends StatefulRedisMultiDbConnection> future : futures) {
+            CompletableFuture<Void> o = (CompletableFuture<Void>) future.thenCompose(conn -> conn.closeAsync());
+            closeFutures.add(o);
         }
+        CompletableFuture.allOf(closeFutures.toArray(new CompletableFuture[0])).get(10, TimeUnit.SECONDS);
     }
 
     @Test
@@ -537,9 +542,14 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
 
     /**
      * Test that connectAsync future handles exceptions properly in composition.
+     * 
+     * @throws TimeoutException
+     * @throws ExecutionException
+     * @throws InterruptedException
      */
     @Test
-    void connectAsyncFutureShouldHandleExceptionsInComposition() {
+    void connectAsyncFutureShouldHandleExceptionsInComposition()
+            throws InterruptedException, ExecutionException, TimeoutException {
         // Create a client with invalid endpoint
         DatabaseConfig invalidDb = DatabaseConfig.builder(RedisURI.create("redis://localhost:9999")).weight(1.0f).build();
         MultiDbClient failClient = MultiDbClient.create(java.util.Arrays.asList(invalidDb));
@@ -550,10 +560,8 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
             CompletableFuture<String> composedFuture = future.toCompletableFuture().thenApply(conn -> conn.sync().ping())
                     .exceptionally(throwable -> "ERROR: " + throwable.getMessage());
 
-            String result = composedFuture.get(15, TimeUnit.SECONDS);
+            String result = composedFuture.get(5, TimeUnit.SECONDS);
             assertThat(result).startsWith("ERROR:");
-        } catch (Exception e) {
-            // Expected
         } finally {
             failClient.shutdown();
         }

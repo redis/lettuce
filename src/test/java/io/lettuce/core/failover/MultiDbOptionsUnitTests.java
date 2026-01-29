@@ -110,21 +110,17 @@ class MultiDbOptionsUnitTests {
         @Test
         @DisplayName("Should handle zero failback check interval")
         void shouldHandleZeroFailbackCheckInterval() {
-            // When: Set interval to zero
-            MultiDbOptions options = MultiDbOptions.builder().failbackCheckInterval(0L).build();
-
-            // Then: Interval should be zero (though not recommended in practice)
-            assertThat(options.getFailbackCheckInterval()).isEqualTo(0L);
+            // should throw exception
+            assertThatThrownBy(() -> MultiDbOptions.builder().failbackCheckInterval(0L).build())
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be greater than 0");
         }
 
         @Test
         @DisplayName("Should handle negative failback check interval")
         void shouldHandleNegativeFailbackCheckInterval() {
-            // When: Set interval to negative value
-            MultiDbOptions options = MultiDbOptions.builder().failbackCheckInterval(-1000L).build();
-
-            // Then: Interval should be negative (though not recommended in practice)
-            assertThat(options.getFailbackCheckInterval()).isEqualTo(-1000L);
+            // should throw exception
+            assertThatThrownBy(() -> MultiDbOptions.builder().failbackCheckInterval(-1000L).build())
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("must be greater than 0");
         }
 
         @Test

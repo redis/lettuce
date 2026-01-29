@@ -1,18 +1,20 @@
 package io.lettuce.core.failover;
 
-import java.io.Closeable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.api.AsyncCloseable;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.failover.CircuitBreaker.State;
 import io.lettuce.core.failover.api.RedisDatabase;
 import io.lettuce.core.failover.health.HealthCheck;
 import io.lettuce.core.failover.health.HealthStatus;
 import io.lettuce.core.failover.metrics.MetricsSnapshot;
-import io.netty.util.internal.logging.InternalLogger;
-import io.netty.util.internal.logging.InternalLoggerFactory;
 
 /**
  * Represents a Redis database with a weight and a connection.
@@ -23,9 +25,9 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
  * @since 7.4
  */
 @Experimental
-class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements RedisDatabase, Closeable {
+class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements RedisDatabase, AsyncCloseable {
 
-    private static final InternalLogger logger = InternalLoggerFactory.getInstance(RedisDatabaseImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(RedisDatabaseImpl.class);
 
     private static final AtomicInteger ID_COUNTER = new AtomicInteger(1);
 
@@ -98,9 +100,15 @@ class RedisDatabaseImpl<C extends StatefulRedisConnection<?, ?>> implements Redi
     }
 
     @Override
-    public void close() {
-        connection.close();
-        circuitBreaker.close();
+    public CompletableFuture<Void> closeAsync() {
+        CompletableFuture<Void> closeFuture = connection.closeAsync().whenComplete((v, t) -> {
+            circuitBreaker.close();
+        });
+        closeFuture.exceptionally(exc -> {
+            logger.error("Error while closing database :", exc);
+            return null;
+        });
+        return closeFuture;
     }
 
     @Override

@@ -766,7 +766,7 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
             assertThat(connection.getEndpoints()).doesNotContain(uri2);
             verify(healthStatusManager).unregisterListener(eq(uri2), any());
             verify(healthStatusManager).remove(uri2);
-            verify(connection2).close();
+            verify(connection2).closeAsync();
         }
 
         @Test
@@ -920,9 +920,9 @@ class StatefulRedisMultiDbConnectionImplUnitTests {
         void shouldCloseAllConnections() {
             connection.close();
 
-            verify(connection1).close();
-            verify(connection2).close();
-            verify(connection3).close();
+            verify(connection1).closeAsync();
+            verify(connection2).closeAsync();
+            verify(connection3).closeAsync();
             verify(healthStatusManager).close();
         }
 

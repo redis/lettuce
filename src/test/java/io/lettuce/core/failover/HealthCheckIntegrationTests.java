@@ -103,6 +103,7 @@ public class HealthCheckIntegrationTests extends MultiDbTestSupport {
             // When: Create MultiDbClient and connect
             MultiDbClient testClient = MultiDbClient.create(java.util.Arrays.asList(config1, config2));
             StatefulRedisMultiDbConnection<String, String> connection = testClient.connect();
+            waitForEndpoints(connection, 2, 1);
 
             try {
                 // Then: Connection should work normally

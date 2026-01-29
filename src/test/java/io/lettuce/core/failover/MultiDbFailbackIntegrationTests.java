@@ -3,9 +3,12 @@ package io.lettuce.core.failover;
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertTrue;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.concurrent.ScheduledFuture;
+
 import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.core.failover.health.PingStrategy;
+import io.lettuce.test.ReflectionTestUtils;
 import io.lettuce.test.resource.FastShutdown;
 import io.lettuce.test.settings.TestSettings;
 
@@ -380,7 +384,8 @@ class MultiDbFailbackIntegrationTests {
 
             // Then: Connection should be closed
             assertThat(connection.isOpen()).isFalse();
-            // Failback task should be cancelled (verified by no exceptions during close)
+            ScheduledFuture<?> failbackTask = ReflectionTestUtils.getField(connection, "failbackTask");
+            assertTrue(failbackTask.isCancelled());
         }
 
     }
