@@ -26,8 +26,6 @@ import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
 import io.lettuce.core.dynamic.support.ResolvableType;
 import io.lettuce.core.failover.MultiDbClient;
-import io.lettuce.core.failover.MultiDbOptions;
-import io.lettuce.core.failover.MultiDbTestSupport;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.test.resource.DefaultRedisClient;
@@ -176,7 +174,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
                 CloseAfterTest closeables = store.getOrComputeIfAbsent(CloseAfterTest.class, it -> new CloseAfterTest(),
                         CloseAfterTest.class);
 
-                closeables.add(instance);
+                closeables.add(closeables);
             }
 
             return instance;
@@ -272,22 +270,6 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
             if (connection != null) {
                 connection.close();
                 store.remove(StatefulRedisConnection.class);
-            }
-        });
-
-        // Clean up all qualified instances
-        QUALIFIED_SUPPLIERS.forEach((qualifierType, qualifiedSupplier) -> {
-            String qualifierKey = qualifiedSupplier.targetType.getName() + ":" + qualifierType.getSimpleName();
-            Object instance = store.get(qualifierKey, qualifiedSupplier.targetType);
-            if (instance != null) {
-                if (instance instanceof AutoCloseable) {
-                    try {
-                        ((AutoCloseable) instance).close();
-                    } catch (Exception e) {
-                        LOGGER.warn("Failed to close qualified instance: " + qualifierKey, e);
-                    }
-                }
-                store.remove(qualifierKey);
             }
         });
     }
@@ -447,8 +429,7 @@ public class LettuceExtension implements ParameterResolver, AfterAllCallback, Af
 
         @Override
         public MultiDbClient get() {
-            MultiDbOptions options = MultiDbOptions.builder().failbackSupported(false).build();
-            return MultiDbClient.create(MultiDbTestSupport.DBs, options);
+            return DefaultRedisMultiDbClient.getNoFailback();
         }
 
     }
