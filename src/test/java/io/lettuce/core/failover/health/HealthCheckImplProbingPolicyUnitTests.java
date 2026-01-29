@@ -24,7 +24,7 @@ class HealthCheckImplProbingPolicyUnitTests {
 
     @BeforeEach
     void setUp() {
-        testEndpoint = RedisURI.create("redis://dummy:99999");
+        testEndpoint = RedisURI.create("redis://dummy:9999");
     }
 
     @Test
