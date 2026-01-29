@@ -917,6 +917,9 @@ public class StreamCommandIntegrationTests extends TestSupport {
         byte[] idempotentId1 = "msg-001".getBytes();
         byte[] idempotentId2 = "msg-002".getBytes();
 
+        // Create stream first (XCFGSET requires an existing stream)
+        redis.xadd(key, Collections.singletonMap("init", "init"));
+
         // Configure idempotency parameters
         redis.xcfgset(key, new XCfgSetArgs().idmpDuration(300).idmpMaxsize(500));
 
