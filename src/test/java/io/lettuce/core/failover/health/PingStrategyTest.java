@@ -14,7 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.failover.DatabaseRawConnectionFactory;
+import io.lettuce.core.failover.RawConnectionFactory;
 
 /**
  * Unit tests for {@link PingStrategy}.
@@ -26,7 +26,7 @@ import io.lettuce.core.failover.DatabaseRawConnectionFactory;
 class PingStrategyTest {
 
     @Mock
-    private DatabaseRawConnectionFactory connectionFactory;
+    private RawConnectionFactory connectionFactory;
 
     @Mock
     private StatefulRedisConnection<?, ?> connection;
@@ -90,7 +90,7 @@ class PingStrategyTest {
         @SuppressWarnings("unchecked")
         void shouldReturnHealthyWhenPingSucceeds() {
             // Given
-            when(connectionFactory.connectToDatabase(testUri)).thenReturn((StatefulRedisConnection) connection);
+            when(connectionFactory.create(testUri)).thenReturn((StatefulRedisConnection) connection);
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenReturn("PONG");
 
@@ -101,7 +101,7 @@ class PingStrategyTest {
 
             // Then
             assertThat(status).isEqualTo(HealthStatus.HEALTHY);
-            verify(connectionFactory).connectToDatabase(testUri);
+            verify(connectionFactory).create(testUri);
             verify(connection).sync();
             verify(syncCommands).ping();
             verify(connection).close();
@@ -112,7 +112,7 @@ class PingStrategyTest {
         @SuppressWarnings("unchecked")
         void shouldReturnUnhealthyWhenPingReturnsNonPong() {
             // Given
-            when(connectionFactory.connectToDatabase(testUri)).thenReturn((StatefulRedisConnection) connection);
+            when(connectionFactory.create(testUri)).thenReturn((StatefulRedisConnection) connection);
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenReturn("UNEXPECTED");
 
@@ -130,7 +130,7 @@ class PingStrategyTest {
         @DisplayName("Should return UNHEALTHY when connection is null")
         void shouldReturnUnhealthyWhenConnectionIsNull() {
             // Given
-            when(connectionFactory.connectToDatabase(testUri)).thenReturn(null);
+            when(connectionFactory.create(testUri)).thenReturn(null);
 
             PingStrategy strategy = new PingStrategy(connectionFactory);
 
@@ -139,7 +139,7 @@ class PingStrategyTest {
 
             // Then
             assertThat(status).isEqualTo(HealthStatus.UNHEALTHY);
-            verify(connectionFactory).connectToDatabase(testUri);
+            verify(connectionFactory).create(testUri);
             verifyNoInteractions(connection);
         }
 
@@ -147,7 +147,7 @@ class PingStrategyTest {
         @DisplayName("Should return UNHEALTHY when connection throws exception")
         void shouldReturnUnhealthyWhenConnectionThrowsException() {
             // Given
-            when(connectionFactory.connectToDatabase(testUri)).thenThrow(new RuntimeException("Connection failed"));
+            when(connectionFactory.create(testUri)).thenThrow(new RuntimeException("Connection failed"));
 
             PingStrategy strategy = new PingStrategy(connectionFactory);
 
@@ -163,7 +163,7 @@ class PingStrategyTest {
         @SuppressWarnings("unchecked")
         void shouldReturnUnhealthyWhenPingThrowsException() {
             // Given
-            when(connectionFactory.connectToDatabase(testUri)).thenReturn((StatefulRedisConnection) connection);
+            when(connectionFactory.create(testUri)).thenReturn((StatefulRedisConnection) connection);
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenThrow(new RuntimeException("PING failed"));
 
@@ -182,7 +182,7 @@ class PingStrategyTest {
         @SuppressWarnings("unchecked")
         void shouldCloseConnectionWhenPingThrowsException() {
             // Given
-            when(connectionFactory.connectToDatabase(testUri)).thenReturn((StatefulRedisConnection) connection);
+            when(connectionFactory.create(testUri)).thenReturn((StatefulRedisConnection) connection);
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenThrow(new RuntimeException("PING failed"));
 
@@ -200,7 +200,7 @@ class PingStrategyTest {
         @SuppressWarnings("unchecked")
         void shouldHandleMultipleHealthChecks() {
             // Given
-            when(connectionFactory.connectToDatabase(testUri)).thenReturn((StatefulRedisConnection) connection);
+            when(connectionFactory.create(testUri)).thenReturn((StatefulRedisConnection) connection);
             when(connection.sync()).thenReturn((RedisCommands) syncCommands);
             when(syncCommands.ping()).thenReturn("PONG");
 
@@ -215,7 +215,7 @@ class PingStrategyTest {
             assertThat(status1).isEqualTo(HealthStatus.HEALTHY);
             assertThat(status2).isEqualTo(HealthStatus.HEALTHY);
             assertThat(status3).isEqualTo(HealthStatus.HEALTHY);
-            verify(connectionFactory, times(3)).connectToDatabase(testUri);
+            verify(connectionFactory, times(3)).create(testUri);
             verify(connection, times(3)).close();
         }
 

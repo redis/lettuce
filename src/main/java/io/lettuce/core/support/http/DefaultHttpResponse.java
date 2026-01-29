@@ -1,17 +1,17 @@
 /*
- * Copyright 2024-Present, Redis Ltd. and Contributors
+ * Copyright 2026-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
  */
 package io.lettuce.core.support.http;
 
-import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.internal.LettuceAssert;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -20,7 +20,6 @@ import java.util.Map;
  * @author Ivo Gaydazhiev
  * @since 7.4
  */
-@Experimental
 class DefaultHttpResponse implements HttpClient.Response {
 
     private final int statusCode;
@@ -41,19 +40,13 @@ class DefaultHttpResponse implements HttpClient.Response {
         LettuceAssert.notNull(headers, "Headers must not be null");
 
         this.statusCode = statusCode;
-        this.body = body;
-        this.headers = headers;
+        this.body = body.asReadOnlyBuffer();
+        this.headers = Collections.unmodifiableMap(new HashMap<>(headers));
     }
 
     @Override
     public int getStatusCode() {
         return statusCode;
-    }
-
-    @Override
-    public ByteBuffer getResponseBodyAsByteBuffer() {
-        // Return a duplicate to allow multiple reads without affecting the original position
-        return body.duplicate();
     }
 
     @Override

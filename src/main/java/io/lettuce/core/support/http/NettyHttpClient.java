@@ -1,18 +1,17 @@
 /*
- * Copyright 2024-Present, Redis Ltd. and Contributors
+ * Copyright 2026-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
  */
 package io.lettuce.core.support.http;
 
-import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.internal.Exceptions;
 import io.lettuce.core.internal.LettuceAssert;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
@@ -24,7 +23,13 @@ import io.netty.util.concurrent.Future;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ThreadFactory;
 
@@ -35,8 +40,22 @@ import java.util.concurrent.ThreadFactory;
  * @author Ivo Gaydazhiev
  * @since 7.4
  */
-@Experimental
 class NettyHttpClient implements HttpClient {
+
+    /**
+     * Default port for HTTPS.
+     */
+    private static final int DEFAULT_HTTPS_PORT = 443;
+
+    /**
+     * Default port for HTTP.
+     */
+    private static final int DEFAULT_HTTP_PORT = 80;
+
+    /**
+     * Default maximum content length for HTTP responses (1MB).
+     */
+    public static final int DEFAULT_MAX_CONTENT_LENGTH = 1024 * 1024;
 
     private final EventLoopGroup eventLoopGroup;
 
@@ -59,7 +78,7 @@ class NettyHttpClient implements HttpClient {
             this.eventLoopGroup = eventLoopGroup;
             this.ownEventLoopGroup = false;
         } else {
-            this.eventLoopGroup = new NioEventLoopGroup(Runtime.getRuntime().availableProcessors());
+            this.eventLoopGroup = new MultiThreadIoEventLoopGroup(2, NioIoHandler.newFactory());
             this.ownEventLoopGroup = true;
         }
     }
@@ -74,7 +93,7 @@ class NettyHttpClient implements HttpClient {
         LettuceAssert.isTrue(numberOfThreads > 0, "Number of threads must be greater than zero");
         LettuceAssert.notNull(threadFactory, "ThreadFactory must not be null");
 
-        this.eventLoopGroup = new NioEventLoopGroup(numberOfThreads, threadFactory);
+        this.eventLoopGroup = new MultiThreadIoEventLoopGroup(numberOfThreads, threadFactory, NioIoHandler.newFactory());
         this.ownEventLoopGroup = true;
     }
 
@@ -82,11 +101,9 @@ class NettyHttpClient implements HttpClient {
     public HttpConnection connect(URI uri, ConnectionConfig connectionConfig) throws IOException {
         try {
             return connectAsync(uri, connectionConfig).get();
-        } catch (Exception e) {
-            if (e.getCause() instanceof IOException) {
-                throw (IOException) e.getCause();
-            }
-            throw new IOException("Failed to establish HTTP connection", e);
+        } catch (ExecutionException | InterruptedException e) {
+
+            throw new IOException("Failed to establish HTTP connection", Exceptions.unwrap(e));
         }
     }
 
@@ -110,12 +127,12 @@ class NettyHttpClient implements HttpClient {
             return future;
         }
 
+        boolean isHttps = "https".equalsIgnoreCase(scheme);
+
         int port = uri.getPort();
         if (port == -1) {
-            port = scheme.equals("https") ? 443 : 80;
+            port = isHttps ? DEFAULT_HTTPS_PORT : DEFAULT_HTTP_PORT;
         }
-
-        boolean isHttps = "https".equalsIgnoreCase(scheme);
 
         // Create SSL context if needed
         SslContext sslContext = null;
@@ -147,12 +164,35 @@ class NettyHttpClient implements HttpClient {
         return future;
     }
 
-    @Override
-    public void close() {
+    /**
+     * Shutdown this client.
+     *
+     * The shutdown is executed without quiet time and a timeout of 2 {@link TimeUnit#SECONDS}.
+     *
+     * @see #shutdown(long, long, TimeUnit)
+     */
+    public void shutdown() {
+        shutdown(0, 2, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Shutdown this client.
+     *
+     * @param quietPeriod the quiet period to allow the executor gracefully shut down.
+     * @param timeout the maximum amount of time to wait until the backing executor is shutdown regardless if a task was
+     *        submitted during the quiet period.
+     * @param timeUnit the unit of {@code quietPeriod} and {@code timeout}.
+     */
+    public void shutdown(long quietPeriod, long timeout, TimeUnit timeUnit) {
         if (ownEventLoopGroup) {
-            Future<?> shutdownFuture = eventLoopGroup.shutdownGracefully(0, 2, TimeUnit.SECONDS);
+            Future<?> shutdownFuture = eventLoopGroup.shutdownGracefully(quietPeriod, timeout, timeUnit);
             shutdownFuture.awaitUninterruptibly();
         }
+    }
+
+    @Override
+    public void close() {
+        shutdown();
     }
 
     /**
@@ -176,17 +216,21 @@ class NettyHttpClient implements HttpClient {
         }
 
         @Override
-        protected void initChannel(SocketChannel ch) throws Exception {
+        protected void initChannel(SocketChannel ch) {
 
             ChannelPipeline pipeline = ch.pipeline();
 
-            if (isHttps && sslContext != null) {
-                int port = uri.getPort() != -1 ? uri.getPort() : 443;
+            if (isHttps && sslContext == null) {
+                throw new IllegalStateException("SSL context must be provided for HTTPS");
+            }
+
+            if (isHttps) {
+                int port = uri.getPort() != -1 ? uri.getPort() : DEFAULT_HTTPS_PORT;
                 pipeline.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), port));
             }
 
             pipeline.addLast(new HttpClientCodec());
-            pipeline.addLast(new HttpObjectAggregator(1024 * 1024)); // 1MB max response size
+            pipeline.addLast(new HttpObjectAggregator(DEFAULT_MAX_CONTENT_LENGTH));
             pipeline.addLast(new ReadTimeoutHandler(readTimeoutMs, TimeUnit.MILLISECONDS));
         }
 
@@ -217,11 +261,9 @@ class NettyHttpClient implements HttpClient {
         public HttpClient.Response execute(HttpClient.Request request) throws IOException {
             try {
                 return executeAsync(request).get();
-            } catch (Exception e) {
-                if (e.getCause() instanceof IOException) {
-                    throw (IOException) e.getCause();
-                }
-                throw new IOException("HTTP request failed", e);
+            } catch (ExecutionException | InterruptedException e) {
+
+                throw new IOException("HTTP request failed: " + request.getUri(), Exceptions.unwrap(e));
             }
         }
 
@@ -245,16 +287,15 @@ class NettyHttpClient implements HttpClient {
             CompletableFuture<HttpClient.Response> responseFuture = new CompletableFuture<>();
 
             // Build the Netty HTTP request
-            FullHttpRequest nettyRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, request.getUri(),
-                    Unpooled.EMPTY_BUFFER);
+            FullHttpRequest nettyRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, request.getUri());
 
-            nettyRequest.headers().set(HttpHeaderNames.HOST, baseUri.getHost());
+            setHostHeader(nettyRequest, baseUri);
             nettyRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
 
             // Add custom headers from the request
-            java.util.Map<String, String> headers = request.getHeaders();
+            Map<String, String> headers = request.getHeaders();
             if (headers != null && !headers.isEmpty()) {
-                for (java.util.Map.Entry<String, String> header : headers.entrySet()) {
+                for (Entry<String, String> header : headers.entrySet()) {
                     nettyRequest.headers().set(header.getKey(), header.getValue());
                 }
             }
@@ -263,6 +304,23 @@ class NettyHttpClient implements HttpClient {
             sequentialHandler.sendRequest(channel, nettyRequest, responseFuture);
 
             return responseFuture;
+        }
+
+        private void setHostHeader(FullHttpRequest nettyRequest, URI baseUri) {
+            String hostHeader;
+            int port = baseUri.getPort();
+
+            if (port == -1 || port == getDefaultPort()) {
+                hostHeader = baseUri.getHost();
+            } else {
+                hostHeader = baseUri.getHost() + ":" + port;
+            }
+            nettyRequest.headers().set(HttpHeaderNames.HOST, hostHeader);
+        }
+
+        private int getDefaultPort() {
+            boolean isHttps = "https".equalsIgnoreCase(baseUri.getScheme());
+            return isHttps ? DEFAULT_HTTPS_PORT : DEFAULT_HTTP_PORT;
         }
 
         @Override
@@ -306,7 +364,7 @@ class NettyHttpClient implements HttpClient {
 
         private final URI baseUri;
 
-        private final java.util.Queue<PendingRequest> requestQueue = new java.util.ArrayDeque<>();
+        private final Queue<PendingRequest> requestQueue = new ArrayDeque<>();
 
         private boolean requestInFlight = false;
 
@@ -370,7 +428,7 @@ class NettyHttpClient implements HttpClient {
         }
 
         @Override
-        protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse response) throws Exception {
+        protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse response) {
 
             // Get the current in-flight request
             PendingRequest completed = requestQueue.poll();
@@ -389,8 +447,8 @@ class NettyHttpClient implements HttpClient {
                 buffer.flip();
 
                 // Extract headers
-                java.util.Map<String, String> headers = new java.util.HashMap<>();
-                for (java.util.Map.Entry<String, String> header : response.headers()) {
+                Map<String, String> headers = new HashMap<>();
+                for (Entry<String, String> header : response.headers()) {
                     headers.put(header.getKey(), header.getValue());
                 }
 
@@ -408,7 +466,7 @@ class NettyHttpClient implements HttpClient {
         }
 
         @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
             requestInFlight = false;
 
             // Fail all pending requests
@@ -430,7 +488,7 @@ class NettyHttpClient implements HttpClient {
             PendingRequest pending;
             while ((pending = requestQueue.poll()) != null) {
                 if (!pending.future.isDone()) {
-                    pending.future.completeExceptionally(new java.io.IOException("Connection closed"));
+                    pending.future.completeExceptionally(new IOException("Connection closed"));
                 }
             }
 

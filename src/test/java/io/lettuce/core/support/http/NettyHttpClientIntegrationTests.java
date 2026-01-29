@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-Present, Redis Ltd. and Contributors
+ * Copyright 2026-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
@@ -9,7 +9,7 @@ package io.lettuce.core.support.http;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.*;
@@ -18,21 +18,22 @@ import org.junit.jupiter.api.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- * Unit tests for {@link NettyHttpClient}.
+ * Integration tests for {@link NettyHttpClient}.
  *
  * @author Ivo Gaydazhiev
  */
-class NettyHttpClientUnitTests {
+@Tag(INTEGRATION_TEST)
+class NettyHttpClientIntegrationTests {
 
     private static EventLoopGroup bossGroup;
 
@@ -44,8 +45,8 @@ class NettyHttpClientUnitTests {
 
     @BeforeAll
     static void setUpClass() {
-        bossGroup = new NioEventLoopGroup(1);
-        workerGroup = new NioEventLoopGroup(2);
+        bossGroup = new MultiThreadIoEventLoopGroup(1, NioIoHandler.newFactory());
+        workerGroup = new MultiThreadIoEventLoopGroup(2, NioIoHandler.newFactory());
     }
 
     @AfterAll
@@ -381,12 +382,12 @@ class NettyHttpClientUnitTests {
     @Test
     void shouldHandleConnectionTimeout() {
         // Use a non-routable IP address to trigger actual connection timeout
-        // 10.255.255.1 is a non-routable address that will cause timeout, not connection refused
+        // 203.0.113.1 is a non-routable address that will cause timeout, not connection refused
         URI uri = URI.create("http://203.0.113.1:80");
 
         HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().connectionTimeout(100).build();
 
-        assertThatThrownBy(() -> httpClient.connect(uri, config)).isInstanceOf(IOException.class)
+        assertThatThrownBy(() -> httpClient.connect(uri, config)).isInstanceOf(IOException.class).cause()
                 .hasMessageContaining("connection timed out");
     }
 
@@ -415,7 +416,7 @@ class NettyHttpClientUnitTests {
         connection.close();
 
         HttpClient.Request request = HttpClient.Request.get("/test").build();
-        assertThatThrownBy(() -> connection.execute(request)).isInstanceOf(IOException.class)
+        assertThatThrownBy(() -> connection.execute(request)).isInstanceOf(IOException.class).cause()
                 .hasMessageContaining("Connection is not active");
     }
 
@@ -438,27 +439,6 @@ class NettyHttpClientUnitTests {
             assertThat(response.getResponseBody(StandardCharsets.UTF_8)).isEqualTo("Async Connect");
         } finally {
             connection.close();
-        }
-    }
-
-    @Test
-    void shouldHandleByteBufferResponse() throws Exception {
-        int port = startMockServer(new SimpleHttpHandler("Binary Data", 200));
-
-        URI uri = URI.create("http://localhost:" + port);
-        HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().build();
-
-        try (HttpClient.HttpConnection connection = httpClient.connect(uri, config)) {
-            HttpClient.Request request = HttpClient.Request.get("/binary").build();
-            HttpClient.Response response = connection.execute(request);
-
-            ByteBuffer buffer = response.getResponseBodyAsByteBuffer();
-            assertThat(buffer).isNotNull();
-            assertThat(buffer.remaining()).isGreaterThan(0);
-
-            byte[] bytes = new byte[buffer.remaining()];
-            buffer.get(bytes);
-            assertThat(new String(bytes, StandardCharsets.UTF_8)).isEqualTo("Binary Data");
         }
     }
 
@@ -556,9 +536,9 @@ class NettyHttpClientUnitTests {
         assertThat(future3).isCompletedExceptionally();
 
         // Verify the exception type and message
-        assertThatThrownBy(() -> future1.get()).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
-        assertThatThrownBy(() -> future2.get()).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
-        assertThatThrownBy(() -> future3.get()).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(future1::get).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(future2::get).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
+        assertThatThrownBy(future3::get).hasCauseInstanceOf(IOException.class).hasMessageContaining("Connection closed");
     }
 
     @Test

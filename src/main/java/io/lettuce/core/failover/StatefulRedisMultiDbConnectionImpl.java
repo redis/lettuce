@@ -77,7 +77,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     protected final Set<RedisConnectionStateListener> connectionStateListeners = ConcurrentHashMap.newKeySet();
 
-    protected final DatabaseConnectionFactory<C, K, V> connectionFactory;
+    protected final DatabaseFactory<C, K, V> connectionFactory;
 
     private final ReadWriteLock multiDbLock = new ReentrantReadWriteLock();
 
@@ -89,7 +89,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
-            DatabaseConnectionFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
+            DatabaseFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
             RedisDatabaseAsyncCompletion<C> completion) {
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
@@ -716,7 +716,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
         if (connectionFactory == null) {
             throw new UnsupportedOperationException(
-                    "Adding databases dynamically is not supported. Connection was created without a DatabaseConnectionFactory.");
+                    "Adding databases dynamically is not supported. Connection was created without a DatabaseFactory.");
         }
 
         RedisURI redisURI = databaseConfig.getRedisURI();
