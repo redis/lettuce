@@ -2,7 +2,7 @@ package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
-import io.lettuce.core.failover.DatabaseRawConnectionFactory;
+import io.lettuce.core.failover.RawConnectionFactory;
 
 /**
  * Supplier for health check strategies.
@@ -28,6 +28,6 @@ public interface HealthCheckStrategySupplier {
      * @param connectionFactory the connection factory
      * @return the health check strategy
      */
-    HealthCheckStrategy get(RedisURI redisURI, DatabaseRawConnectionFactory connectionFactory);
+    HealthCheckStrategy get(RedisURI redisURI, RawConnectionFactory connectionFactory);
 
 }

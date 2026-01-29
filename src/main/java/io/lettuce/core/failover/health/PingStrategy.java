@@ -3,7 +3,7 @@ package io.lettuce.core.failover.health;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.failover.DatabaseRawConnectionFactory;
+import io.lettuce.core.failover.RawConnectionFactory;
 
 /**
  * Health check strategy that uses PING command to check endpoint health.
@@ -14,15 +14,15 @@ import io.lettuce.core.failover.DatabaseRawConnectionFactory;
 @Experimental
 public class PingStrategy implements HealthCheckStrategy {
 
-    private final DatabaseRawConnectionFactory connectionFactory;
+    private final RawConnectionFactory connectionFactory;
 
     private final HealthCheckStrategy.Config config;
 
-    public PingStrategy(DatabaseRawConnectionFactory connectionFactory) {
+    public PingStrategy(RawConnectionFactory connectionFactory) {
         this(connectionFactory, HealthCheckStrategy.Config.create());
     }
 
-    public PingStrategy(DatabaseRawConnectionFactory connectionFactory, HealthCheckStrategy.Config config) {
+    public PingStrategy(RawConnectionFactory connectionFactory, HealthCheckStrategy.Config config) {
         this.connectionFactory = connectionFactory;
         this.config = config;
     }
@@ -54,7 +54,7 @@ public class PingStrategy implements HealthCheckStrategy {
 
     @Override
     public HealthStatus doHealthCheck(RedisURI endpoint) {
-        try (StatefulRedisConnection<?, ?> connection = connectionFactory.connectToDatabase(endpoint)) {
+        try (StatefulRedisConnection<?, ?> connection = connectionFactory.create(endpoint)) {
 
             if (connection == null) {
                 return HealthStatus.UNHEALTHY;

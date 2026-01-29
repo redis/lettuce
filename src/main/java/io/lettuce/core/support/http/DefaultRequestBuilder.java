@@ -1,3 +1,10 @@
+/*
+ * Copyright 2026-Present, Redis Ltd. and Contributors
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
+
 package io.lettuce.core.support.http;
 
 import io.lettuce.core.internal.LettuceAssert;
@@ -13,6 +20,7 @@ import java.util.Map;
  * Default implementation of {@link HttpClient.Request.RequestBuilder}.
  *
  * @author Ivo Gaydazhiev
+ * @since 7.4
  */
 class DefaultRequestBuilder implements HttpClient.Request.RequestBuilder {
 

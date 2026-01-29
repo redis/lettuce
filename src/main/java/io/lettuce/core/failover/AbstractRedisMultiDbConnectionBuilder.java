@@ -293,7 +293,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                     HealthCheck healthCheck = null;
                     if (HealthCheckStrategySupplier.NO_HEALTH_CHECK != config.getHealthCheckStrategySupplier()) {
                         HealthCheckStrategy hcStrategy = config.getHealthCheckStrategySupplier().get(config.getRedisURI(),
-                                new DatabaseRawConnectionFactoryImpl(config.getClientOptions(), client));
+                                new RawConnectionFactoryImpl(config.getClientOptions(), client));
                         healthCheck = healthStatusManager.add(uri, hcStrategy);
                     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-Present, Redis Ltd. and Contributors
+ * Copyright 2026-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
@@ -20,7 +20,7 @@ import java.util.concurrent.ThreadFactory;
  * @since 7.4
  */
 @Experimental
-class NettyHttpClientProvider implements HttpClientProvider {
+public class NettyHttpClientProvider implements HttpClientProvider {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NettyHttpClientProvider.class);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-Present, Redis Ltd. and Contributors
+ * Copyright 2026-Present, Redis Ltd. and Contributors
  * All rights reserved.
  *
  * Licensed under the MIT License.
@@ -7,7 +7,7 @@
 package io.lettuce.core.support.http;
 
 import io.lettuce.core.SslOptions;
-import io.lettuce.core.annotations.Experimental;
+import io.lettuce.core.internal.LettuceAssert;
 
 /**
  * Default implementation of {@link HttpClient.ConnectionConfig}.
@@ -15,7 +15,6 @@ import io.lettuce.core.annotations.Experimental;
  * @author Ivo Gaydazhiev
  * @since 7.4
  */
-@Experimental
 class DefaultConnectionConfig implements HttpClient.ConnectionConfig {
 
     static final DefaultConnectionConfig DEFAULTS = new DefaultConnectionConfig(new Builder());
@@ -60,18 +59,21 @@ class DefaultConnectionConfig implements HttpClient.ConnectionConfig {
 
         @Override
         public Builder connectionTimeout(int timeoutMs) {
+            LettuceAssert.isTrue(timeoutMs >= 0, "Connection timeout must be greater than or equal to 0");
             this.connectionTimeout = timeoutMs;
             return this;
         }
 
         @Override
         public Builder readTimeout(int timeoutMs) {
+            LettuceAssert.isTrue(timeoutMs > 0, "Read timeout must be greater than or equal to 0");
             this.readTimeout = timeoutMs;
             return this;
         }
 
         @Override
         public Builder sslOptions(SslOptions sslOptions) {
+            LettuceAssert.notNull(sslOptions, "SslOptions must not be null");
             this.sslOptions = sslOptions;
             return this;
         }

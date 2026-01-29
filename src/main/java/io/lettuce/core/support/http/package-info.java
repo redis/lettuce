@@ -16,7 +16,7 @@
  * <li>{@link io.lettuce.core.support.http.HttpClient.Response} - HTTP response with status, headers, and body</li>
  * <li>{@link io.lettuce.core.support.http.HttpClient.ConnectionConfig} - Per-connection configuration (SSL, timeouts)</li>
  * <li>{@link io.lettuce.core.support.http.HttpClientProvider} - SPI for custom HTTP client implementations</li>
- * <li>{@link io.lettuce.core.support.http.HttpClientResources} - Shared resource management with reference counting</li>
+ * <li>{@link io.lettuce.core.support.http.HttpClientResources} - Shared resource management with lazy initialization</li>
  * </ul>
  *
  * <h2>Basic Usage</h2>
@@ -28,36 +28,31 @@
  * 
  * {
  *     &#64;code
- *     // Acquire a shared HTTP client
- *     HttpClient client = HttpClientResources.acquire();
+ *     // Get the shared HTTP client
+ *     HttpClient client = HttpClientResources.get();
  *
- *     try {
- *         // Configure connection settings
- *         HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().connectionTimeout(5000).readTimeout(5000)
- *                 .build();
+ *     // Configure connection settings
+ *     HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().connectionTimeout(5000).readTimeout(5000)
+ *             .build();
  *
- *         // Establish connection (reusable for multiple requests)
- *         try (HttpClient.HttpConnection connection = client.connect(URI.create("https://api.example.com"), config)) {
+ *     // Establish connection (reusable for multiple requests)
+ *     try (HttpClient.HttpConnection connection = client.connect(URI.create("https://api.example.com"), config)) {
  *
- *             // Execute first request
- *             HttpClient.Request request1 = HttpClient.Request.get("/v1/health").build();
- *             HttpClient.Response response1 = connection.execute(request1);
+ *         // Execute first request
+ *         HttpClient.Request request1 = HttpClient.Request.get("/v1/health").build();
+ *         HttpClient.Response response1 = connection.execute(request1);
  *
- *             if (response1.getStatusCode() == 200) {
- *                 String body = response1.getResponseBody(StandardCharsets.UTF_8);
- *                 System.out.println("Health check: " + body);
- *             }
- *
- *             // Reuse connection for second request
- *             HttpClient.Request request2 = HttpClient.Request.get("/v1/databases").queryParam("fields", "uid,status")
- *                     .header("Authorization", "Bearer token").build();
- *             HttpClient.Response response2 = connection.execute(request2);
- *
- *             // Process response2...
+ *         if (response1.getStatusCode() == 200) {
+ *             String body = response1.getResponseBody(StandardCharsets.UTF_8);
+ *             System.out.println("Health check: " + body);
  *         }
- *     } finally {
- *         // Release the reference (client closed when last reference is released)
- *         HttpClientResources.release(client);
+ *
+ *         // Reuse connection for second request
+ *         HttpClient.Request request2 = HttpClient.Request.get("/v1/databases").queryParam("fields", "uid,status")
+ *                 .header("Authorization", "Bearer token").build();
+ *         HttpClient.Response response2 = connection.execute(request2);
+ *
+ *         // Process response2...
  *     }
  * }
  * </pre>
@@ -71,28 +66,23 @@
  * 
  * {
  *     &#64;code
- *     HttpClient client = HttpClientResources.acquire();
+ *     HttpClient client = HttpClientResources.get();
+ *     HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.defaults();
  *
- *     try {
- *         HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.defaults();
+ *     // Async connection
+ *     CompletableFuture&lt;HttpClient.HttpConnection&gt; connectionFuture = client
+ *             .connectAsync(URI.create("https://api.example.com"), config);
  *
- *         // Async connection
- *         CompletableFuture&lt;HttpClient.HttpConnection&gt; connectionFuture = client
- *                 .connectAsync(URI.create("https://api.example.com"), config);
- *
- *         connectionFuture.thenCompose(connection -&gt; {
- *             HttpClient.Request request = HttpClient.Request.get("/v1/status").build();
- *             // Async request execution
- *             return connection.executeAsync(request);
- *         }).thenAccept(response -&gt; {
- *             System.out.println("Status: " + response.getStatusCode());
- *         }).exceptionally(ex -&gt; {
- *             ex.printStackTrace();
- *             return null;
- *         });
- *     } finally {
- *         HttpClientResources.release(client);
- *     }
+ *     connectionFuture.thenCompose(connection -&gt; {
+ *         HttpClient.Request request = HttpClient.Request.get("/v1/status").build();
+ *         // Async request execution
+ *         return connection.executeAsync(request);
+ *     }).thenAccept(response -&gt; {
+ *         System.out.println("Status: " + response.getStatusCode());
+ *     }).exceptionally(ex -&gt; {
+ *         ex.printStackTrace();
+ *         return null;
+ *     });
  * }
  * </pre>
  *
@@ -113,13 +103,11 @@
  *     HttpClient.ConnectionConfig config = HttpClient.ConnectionConfig.builder().sslOptions(sslOptions).connectionTimeout(5000)
  *             .readTimeout(5000).build();
  *
- *     HttpClient client = HttpClientResources.acquire();
+ *     HttpClient client = HttpClientResources.get();
  *     try (HttpClient.HttpConnection connection = client.connect(URI.create("https://secure-api.example.com"), config)) {
  *         HttpClient.Request request = HttpClient.Request.get("/secure/endpoint").build();
  *         HttpClient.Response response = connection.execute(request);
  *         // Process response...
- *     } finally {
- *         HttpClientResources.release(client);
  *     }
  * }
  * </pre>
@@ -209,24 +197,8 @@
  *
  * <h2>Resource Management</h2>
  * <p>
- * {@link io.lettuce.core.support.http.HttpClientResources} manages shared HTTP client instances with reference counting:
+ * {@link io.lettuce.core.support.http.HttpClientResources} manages a shared HTTP client instance with lazy initialization:
  * </p>
- * <ul>
- * <li>Lazy initialization - client created on first {@code acquire()}</li>
- * <li>Reference counting - tracks number of active references</li>
- * <li>Automatic cleanup - client closed when last reference is released</li>
- * <li>Thread-safe - safe for concurrent access from multiple threads</li>
- * </ul>
- *
- * <h2>Thread Safety</h2>
- * <p>
- * All components in this package are thread-safe:
- * </p>
- * <ul>
- * <li>{@link io.lettuce.core.support.http.HttpClient} - Thread-safe, can be shared across threads</li>
- * <li>{@link io.lettuce.core.support.http.HttpClient.HttpConnection} - Thread-safe for sequential requests</li>
- * <li>{@link io.lettuce.core.support.http.HttpClientResources} - Thread-safe reference counting</li>
- * </ul>
  *
  * @author Ivo Gaydazhiev
  * @since 7.4
