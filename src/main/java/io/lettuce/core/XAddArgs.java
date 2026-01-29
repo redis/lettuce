@@ -19,6 +19,9 @@
  */
 package io.lettuce.core;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 import io.lettuce.core.internal.LettuceAssert;
 import io.lettuce.core.protocol.CommandArgs;
 import io.lettuce.core.protocol.CommandKeyword;
@@ -50,6 +53,12 @@ public class XAddArgs implements CompositeArgument {
     private Long limit;
 
     private StreamDeletionPolicy trimmingMode;
+
+    private byte[] producerId;
+
+    private byte[] idempotentId;
+
+    private boolean autoIdempotent;
 
     /**
      * Builder entry points for {@link XAddArgs}.
@@ -94,6 +103,52 @@ public class XAddArgs implements CompositeArgument {
          */
         public static XAddArgs minId(String minid) {
             return new XAddArgs().minId(minid);
+        }
+
+        /**
+         * Creates new {@link XAddArgs} with {@literal IDMP} (idempotent producer with explicit ID).
+         *
+         * @param producerId the producer ID (must be unique per producer).
+         * @param idempotentId the idempotent ID (must be unique per message).
+         * @return new {@link XAddArgs} with {@literal IDMP} set.
+         * @see XAddArgs#idmp(byte[], byte[])
+         */
+        public static XAddArgs idmp(byte[] producerId, byte[] idempotentId) {
+            return new XAddArgs().idmp(producerId, idempotentId);
+        }
+
+        /**
+         * Creates new {@link XAddArgs} with {@literal IDMP} (idempotent producer with explicit ID).
+         *
+         * @param producerId the producer ID (must be unique per producer).
+         * @param idempotentId the idempotent ID (must be unique per message).
+         * @return new {@link XAddArgs} with {@literal IDMP} set.
+         * @see XAddArgs#idmp(String, String)
+         */
+        public static XAddArgs idmp(String producerId, String idempotentId) {
+            return new XAddArgs().idmp(producerId, idempotentId);
+        }
+
+        /**
+         * Creates new {@link XAddArgs} with {@literal IDMPAUTO} (idempotent producer with auto-generated ID).
+         *
+         * @param producerId the producer ID (must be unique per producer).
+         * @return new {@link XAddArgs} with {@literal IDMPAUTO} set.
+         * @see XAddArgs#idmpAuto(byte[])
+         */
+        public static XAddArgs idmpAuto(byte[] producerId) {
+            return new XAddArgs().idmpAuto(producerId);
+        }
+
+        /**
+         * Creates new {@link XAddArgs} with {@literal IDMPAUTO} (idempotent producer with auto-generated ID).
+         *
+         * @param producerId the producer ID (must be unique per producer).
+         * @return new {@link XAddArgs} with {@literal IDMPAUTO} set.
+         * @see XAddArgs#idmpAuto(String)
+         */
+        public static XAddArgs idmpAuto(String producerId) {
+            return new XAddArgs().idmpAuto(producerId);
         }
 
     }
@@ -236,7 +291,89 @@ public class XAddArgs implements CompositeArgument {
         return this;
     }
 
+    /**
+     * Enable idempotent producer mode with explicit idempotent ID.
+     *
+     * @param producerId the producer ID (must be unique per producer and consistent across restarts).
+     * @param idempotentId the idempotent ID (must be unique per message and consistent across resends).
+     * @return {@code this}
+     */
+    public XAddArgs idmp(byte[] producerId, byte[] idempotentId) {
+
+        LettuceAssert.notNull(producerId, "Producer ID must not be null");
+        LettuceAssert.notNull(idempotentId, "Idempotent ID must not be null");
+        LettuceAssert.isTrue(!autoIdempotent, "Cannot use both IDMP and IDMPAUTO");
+
+        this.producerId = producerId;
+        this.idempotentId = idempotentId;
+        return this;
+    }
+
+    /**
+     * Enable idempotent producer mode with explicit idempotent ID.
+     *
+     * @param producerId the producer ID (must be unique per producer and consistent across restarts).
+     * @param idempotentId the idempotent ID (must be unique per message and consistent across resends).
+     * @return {@code this}
+     */
+    public XAddArgs idmp(String producerId, String idempotentId) {
+
+        LettuceAssert.notNull(producerId, "Producer ID must not be null");
+        LettuceAssert.notNull(idempotentId, "Idempotent ID must not be null");
+
+        return idmp(producerId.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                idempotentId.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Enable idempotent producer mode with auto-generated idempotent ID (content-based).
+     *
+     * @param producerId the producer ID (must be unique per producer and consistent across restarts).
+     * @return {@code this}
+     */
+    public XAddArgs idmpAuto(byte[] producerId) {
+
+        LettuceAssert.notNull(producerId, "Producer ID must not be null");
+        LettuceAssert.isTrue(idempotentId == null, "Cannot use both IDMP and IDMPAUTO");
+
+        this.producerId = producerId;
+        this.autoIdempotent = true;
+        return this;
+    }
+
+    /**
+     * Enable idempotent producer mode with auto-generated idempotent ID (content-based).
+     *
+     * @param producerId the producer ID (must be unique per producer and consistent across restarts).
+     * @return {@code this}
+     */
+    public XAddArgs idmpAuto(String producerId) {
+
+        LettuceAssert.notNull(producerId, "Producer ID must not be null");
+
+        return idmpAuto(producerId.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
     public <K, V> void build(CommandArgs<K, V> args) {
+
+        // Order: NOMKSTREAM → trimmingMode → IDMP/IDMPAUTO → MAXLEN/MINID → LIMIT → id
+
+        if (nomkstream) {
+            args.add(CommandKeyword.NOMKSTREAM);
+        }
+
+        if (trimmingMode != null) {
+            args.add(trimmingMode);
+        }
+
+        if (autoIdempotent) {
+            args.add(CommandKeyword.IDMPAUTO);
+            args.add(producerId);
+        } else if (producerId != null && idempotentId != null) {
+            args.add(CommandKeyword.IDMP);
+            args.add(producerId);
+            args.add(idempotentId);
+        }
 
         if (maxlen != null) {
             args.add(CommandKeyword.MAXLEN);
@@ -267,19 +404,35 @@ public class XAddArgs implements CompositeArgument {
             args.add(CommandKeyword.LIMIT).add(limit);
         }
 
-        if (trimmingMode != null) {
-            args.add(trimmingMode);
-        }
-
-        if (nomkstream) {
-            args.add(CommandKeyword.NOMKSTREAM);
-        }
-
         if (id != null) {
             args.add(id);
         } else {
             args.add("*");
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        XAddArgs xAddArgs = (XAddArgs) o;
+        return approximateTrimming == xAddArgs.approximateTrimming && exactTrimming == xAddArgs.exactTrimming
+                && nomkstream == xAddArgs.nomkstream && autoIdempotent == xAddArgs.autoIdempotent
+                && Objects.equals(id, xAddArgs.id) && Objects.equals(maxlen, xAddArgs.maxlen)
+                && Objects.equals(minid, xAddArgs.minid) && Objects.equals(limit, xAddArgs.limit)
+                && trimmingMode == xAddArgs.trimmingMode && Arrays.equals(producerId, xAddArgs.producerId)
+                && Arrays.equals(idempotentId, xAddArgs.idempotentId);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(id, maxlen, approximateTrimming, exactTrimming, nomkstream, minid, limit, trimmingMode,
+                autoIdempotent);
+        result = 31 * result + Arrays.hashCode(producerId);
+        result = 31 * result + Arrays.hashCode(idempotentId);
+        return result;
     }
 
 }
