@@ -323,6 +323,8 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
         assertThat(connection).isNotNull();
         assertThat(connection.isOpen()).isTrue();
 
+        MultiDbTestSupport.waitForEndpoints(connection, 2, 2);
+
         // Verify that the connection has the correct options despite resetOptions() being called immediately
         StatefulRedisConnection<?, ?> conn1 = ((RedisDatabaseImpl<?>) connection.getDatabase(URI1)).getConnection();
         StatefulRedisConnection<?, ?> conn2 = ((RedisDatabaseImpl<?>) connection.getDatabase(URI2)).getConnection();
