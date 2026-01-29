@@ -30,6 +30,7 @@ import io.lettuce.core.codec.ByteArrayCodec;
 import io.lettuce.core.codec.RedisCodec;
 import io.lettuce.core.failover.api.StatefulRedisMultiDbConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.NoFailback;
 import io.lettuce.test.TestFutures;
 
 /**
@@ -46,7 +47,7 @@ class MultiDbClientConnectAsyncIntegrationTests extends MultiDbTestSupport {
     private final LinkedBlockingQueue<MultiDbConnectionFuture> cleanupList = new LinkedBlockingQueue<MultiDbConnectionFuture>();
 
     @Inject
-    MultiDbClientConnectAsyncIntegrationTests(MultiDbClient client) {
+    MultiDbClientConnectAsyncIntegrationTests(@NoFailback MultiDbClient client) {
         super(client);
     }
 

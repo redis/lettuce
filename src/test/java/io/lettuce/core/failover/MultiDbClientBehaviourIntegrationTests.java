@@ -53,6 +53,7 @@ import io.lettuce.core.failover.api.StatefulRedisMultiDbPubSubConnection;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
 import io.lettuce.test.LettuceExtension;
+import io.lettuce.test.NoFailback;
 import io.lettuce.test.TestFutures;
 
 /**
@@ -88,7 +89,7 @@ class MultiDbClientBehaviourIntegrationTests extends MultiDbTestSupport {
     private StatefulRedisConnection<String, String> directConnection2;
 
     @Inject
-    MultiDbClientBehaviourIntegrationTests(MultiDbClient multiDbClient) {
+    MultiDbClientBehaviourIntegrationTests(@NoFailback MultiDbClient multiDbClient) {
         super(multiDbClient);
         Iterator<RedisURI> endpoints = multiDbClient.getRedisURIs().iterator();
         this.endpoint1 = endpoints.next();
