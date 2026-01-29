@@ -94,7 +94,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
      */
     protected abstract MC createMultiDbConnection(RedisDatabaseImpl<SC> selected,
             Map<RedisURI, RedisDatabaseImpl<SC>> databases, RedisCodec<K, V> codec, HealthStatusManager healthStatusManager,
-            RedisDatabaseAsyncCompletion<SC> completion);
+            RedisDatabaseDeferredCompletion<SC> completion);
 
     /**
      * Asynchronously establishes connections to all configured Redis databases and creates a multi-database connection.
@@ -162,7 +162,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
         AtomicReference<RedisDatabaseImpl<SC>> initialDb = new AtomicReference<>();
 
         for (CompletableFuture<HealthStatus> healthStatusFuture : healthStatusFutures.values()) {
-            healthStatusFuture.handle((healthStatus, throwable) -> {
+            healthStatusFuture.handleAsync((healthStatus, throwable) -> {
 
                 MC conn = null;
                 Exception capturedFailure = null;
@@ -173,15 +173,20 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                 } catch (Exception e) {
                     // this should not happen in theory, but if it does, lets stop playing wizard.
                     logger.error("Error while finding initial db candidate", e);
-                    connectionFuture.completeExceptionally(e);
+                    connectionFuture
+                            .completeExceptionally(new RedisConnectionException("Error while finding initial db candidate", e));
                 }
                 try {
                     if (selected != null) {
                         logger.info("Selected {} as primary database", selected);
+                        // here its is possible race condition if other thread running this handler at the same time.
+                        // but only one can provide non null 'selected', and that's the one we want.
+                        // check how 'findInitialDbCandidate' guards against it.
                         conn = buildConn(healthStatusManager, databases, databaseFutures, selected);
                         connectionFuture.complete(conn);
                     }
                 } catch (Exception e) {
+                    logger.error("Error while building connection", e);
                     capturedFailure = e;
                 } finally {
                     // if we dont have the connection then its either
@@ -191,15 +196,42 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
                     if (conn == null) {
                         // check if everything seems to be somehow failed at this point.
                         if (checkIfAllFailed(healthStatusFutures)) {
-                            connectionFuture.completeExceptionally(capturedFailure != null ? capturedFailure
-                                    : new RedisConnectionException("No healthy database available !!"));
+                            connectionFuture.completeExceptionally(
+                                    new RedisConnectionException("No healthy database available !!", capturedFailure));
                         }
                     }
                 }
                 return null;
             });
         }
+
+        connectionFuture.whenComplete((conn, throwable) -> {
+            if (throwable != null) {
+                destroyBuilderResources(databaseFutures, healthStatusFutures, healthStatusManager);
+            }
+        });
         return connectionFuture;
+    }
+
+    void destroyBuilderResources(DatabaseFutureMap<SC> databaseFutures,
+            Map<RedisURI, CompletableFuture<HealthStatus>> healthStatusFutures, HealthStatusManager healthStatusManager) {
+
+        // 1. Close databases that have already been created successfully
+        databaseFutures.values().forEach(dbf -> dbf.whenComplete((db, ex) -> {
+            if (db != null) {
+                db.closeAsync();
+            }
+        }));
+
+        // 2. Cancel all health status futures first (they depend on databases)
+        healthStatusFutures.values().forEach(f -> f.cancel(false));
+
+        // 3. Close health status manager last (it manages health checks for all databases)
+        try {
+            healthStatusManager.close();
+        } catch (Exception e) {
+            logger.error("Error while closing health status manager", e);
+        }
     }
 
     /**
@@ -225,7 +257,7 @@ abstract class AbstractRedisMultiDbConnectionBuilder<MC extends BaseRedisMultiDb
         remainingDbFutures = databaseFutures.entrySet().stream().filter(entry -> !clone.containsKey(entry.getKey()))
                 .map(entry -> entry.getValue()).collect(Collectors.toList());
 
-        RedisDatabaseAsyncCompletion<SC> completion = new RedisDatabaseAsyncCompletion<SC>(remainingDbFutures);
+        RedisDatabaseDeferredCompletion<SC> completion = new RedisDatabaseDeferredCompletion<SC>(remainingDbFutures);
         return createMultiDbConnection(selected, clone, codec, healthStatusManager, completion);
     }
 

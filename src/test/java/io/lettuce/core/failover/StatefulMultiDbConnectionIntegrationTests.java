@@ -183,6 +183,7 @@ class StatefulMultiDbConnectionIntegrationTests extends MultiDbTestSupport {
         // Set value in first database
         connection.sync().set("switchKey", "value1");
         assertEquals("value1", connection.sync().get("switchKey"));
+        waitForEndpoints(connection, 2, 2);
 
         // Switch to second database
         RedisURI other = StreamSupport.stream(connection.getEndpoints().spliterator(), false)

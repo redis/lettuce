@@ -1,5 +1,7 @@
 package io.lettuce.core.failover.api;
 
+import java.io.Closeable;
+
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.annotations.Experimental;
 import io.lettuce.core.failover.DatabaseConfig;
@@ -9,7 +11,7 @@ import io.lettuce.core.failover.DatabaseConfig;
  * @since 7.4
  */
 @Experimental
-public interface BaseRedisMultiDbConnection {
+public interface BaseRedisMultiDbConnection extends Closeable {
 
     /**
      * Switch to a different database.

@@ -912,6 +912,7 @@
                         <exclude>**/*Test</exclude>
                         <exclude>**/*IntegrationTests</exclude>
                     </excludes>
+                    <excludedGroups>integration</excludedGroups>
                 </configuration>
             </plugin>
 
