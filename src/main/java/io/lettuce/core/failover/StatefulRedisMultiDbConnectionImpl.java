@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -93,14 +95,26 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     private final Set<Consumer<Closeable>> onCloseListeners = ConcurrentHashMap.newKeySet();
 
+    private volatile ScheduledFuture<?> failbackTask;
+
     public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
             Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
             DatabaseFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
             RedisDatabaseDeferredCompletion<C> completion) {
+        this(initialDatabase, connections, resources, codec, connectionFactory, healthStatusManager, completion,
+                MultiDbOptions.create());
+    }
+
+    public StatefulRedisMultiDbConnectionImpl(RedisDatabaseImpl<C> initialDatabase,
+            Map<RedisURI, RedisDatabaseImpl<C>> connections, ClientResources resources, RedisCodec<K, V> codec,
+            DatabaseFactory<C, K, V> connectionFactory, HealthStatusManager healthStatusManager,
+            RedisDatabaseDeferredCompletion<C> completion, MultiDbOptions multiDbOptions) {
+
         if (connections == null || connections.isEmpty()) {
             throw new IllegalArgumentException("connections must not be empty");
         }
         LettuceAssert.notNull(healthStatusManager, "healthStatusManager must not be null");
+        LettuceAssert.notNull(multiDbOptions, "multiDbOptions must not be null");
 
         this.databases = new ConcurrentHashMap<>(connections);
 
@@ -117,9 +131,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
             this.current = initialDatabase;
         }
 
-        if (current == null) {
-            throw new IllegalStateException("InitialDatabase must not be null");
-        }
+        LettuceAssert.notNull(current, "InitialDatabase must not be null");
 
         // Now register listeners - they can safely access current
         databases.values().forEach(db -> db.getCircuitBreaker().addListener(this::onCircuitBreakerStateChange));
@@ -147,6 +159,14 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
         if (completion != null) {
             completion.whenComplete(this::onDatabaseCompletion);
         }
+
+        // Start periodic failback checker
+        if (multiDbOptions.isFailbackSupported()) {
+            long failbackInterval = multiDbOptions.getFailbackCheckInterval();
+            this.failbackTask = resources.eventExecutorGroup().scheduleAtFixedRate(this::periodicFailbackCheck,
+                    failbackInterval, failbackInterval, TimeUnit.MILLISECONDS);
+        }
+
     }
 
     private void onDatabaseCompletion(RedisDatabaseImpl<C> db, Throwable e) {
@@ -267,6 +287,38 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
     private RedisDatabaseImpl<C> getNextHealthyDatabase(RedisDatabaseImpl<C> dbToExclude) {
         return databases.values().stream().filter(DatabasePredicates.isHealthyAndCbClosed)
                 .filter(DatabasePredicates.isNot(dbToExclude)).max(DatabaseComparators.byWeight).orElse(null);
+    }
+
+    /**
+     * Periodically checks if a higher-priority database has become healthy and performs failback if configured.
+     * <p>
+     * This method is called by the failback scheduler at regular intervals. It checks if there is a higher-weighted healthy
+     * database available than the current one, and if so, initiates a failback to that database.
+     */
+    private void periodicFailbackCheck() {
+        try {
+            RedisDatabaseImpl<C> currentDb = current;
+            if (currentDb == null) {
+                return;
+            }
+
+            // Find the highest-weighted healthy database
+            RedisDatabaseImpl<C> highestWeightedHealthy = databases.values().stream()
+                    .filter(DatabasePredicates.isHealthyAndCbClosed).max(DatabaseComparators.byWeight).orElse(null);
+
+            // If we found a healthy database with higher weight than current, failback to it
+            if (highestWeightedHealthy != null && highestWeightedHealthy != currentDb
+                    && highestWeightedHealthy.getWeight() > currentDb.getWeight()) {
+                logger.info(
+                        "Failback check: Found higher-priority healthy database {} (weight: {}) than current {} (weight: {})",
+                        highestWeightedHealthy.getId(), highestWeightedHealthy.getWeight(), currentDb.getId(),
+                        currentDb.getWeight());
+                // safeSwitch(highestWeightedHealthy, true, SwitchReason.FAILBACK);
+                failoverFrom(currentDb, SwitchReason.FAILBACK);
+            }
+        } catch (Exception e) {
+            logger.error("Error during periodic failback check", e);
+        }
     }
 
     static class DatabaseComparators {
@@ -412,6 +464,9 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public CompletableFuture<Void> closeAsync() {
+        if (failbackTask != null) {
+            failbackTask.cancel(false);
+        }
         Stream<CompletableFuture<Void>> asyncCloseStream = databases.values().stream().map(RedisDatabaseImpl<C>::closeAsync);
 
         CompletableFuture<Void> closeAllFuture = CompletableFuture.allOf(asyncCloseStream.toArray(CompletableFuture[]::new));
@@ -742,9 +797,7 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public void addDatabase(DatabaseConfig databaseConfig) {
-        if (databaseConfig == null) {
-            throw new IllegalArgumentException("DatabaseConfig must not be null");
-        }
+        LettuceAssert.notNull(databaseConfig, "DatabaseConfig must not be null");
 
         if (connectionFactory == null) {
             throw new UnsupportedOperationException(
@@ -782,9 +835,8 @@ class StatefulRedisMultiDbConnectionImpl<C extends StatefulRedisConnection<K, V>
 
     @Override
     public void removeDatabase(RedisURI redisURI) {
-        if (redisURI == null) {
-            throw new IllegalArgumentException("RedisURI must not be null");
-        }
+        LettuceAssert.notNull(redisURI, "RedisURI must not be null");
+
         doByExclusiveLock(() -> {
             RedisDatabaseImpl<C> database = null;
             database = databases.get(redisURI);
