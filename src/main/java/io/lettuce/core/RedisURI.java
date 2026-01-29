@@ -278,6 +278,30 @@ public class RedisURI implements Serializable, ConnectionPoint {
     }
 
     /**
+     * Copy constructor.
+     *
+     * @param source the source {@link RedisURI} to copy from.
+     */
+    protected RedisURI(RedisURI source) {
+        this.host = source.host;
+        this.socket = source.socket;
+        this.sentinelMasterId = source.sentinelMasterId;
+        this.port = source.port;
+        this.database = source.database;
+        this.clientName = source.clientName;
+        this.driverInfo = source.driverInfo;
+        this.libraryVersion = source.libraryVersion;
+        this.credentialsProvider = source.credentialsProvider;
+        this.ssl = source.ssl;
+        this.verifyMode = source.verifyMode;
+        this.startTls = source.startTls;
+        this.timeout = source.timeout;
+        for (RedisURI sentinel : source.sentinels) {
+            this.sentinels.add(new RedisURI(sentinel));
+        }
+    }
+
+    /**
      * Return a new {@link RedisURI.Builder} to construct a {@link RedisURI}.
      *
      * @return a new {@link RedisURI.Builder} to construct a {@link RedisURI}.
