@@ -1257,7 +1257,7 @@ public class RediSearchIntegrationTests {
         HybridArgs<String, String> hybridArgs = HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics} smartphone camera")
                         .scorer(HybridSearchArgs.Scorer.of(ScoringFunction.BM25)).scoreAlias("text_score").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector("$vector")
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@image_embedding").vector(queryVector)
                         .method(HybridVectorArgs.Knn.of(20).efRuntime(150)).filter("@brand:{apple|samsung|google}")
                         .scoreAlias("vector_score").build())
                 .combine(CombineArgs.of(new CombineArgs.Linear<String>().alpha(0.7).beta(0.3)))
@@ -1273,7 +1273,7 @@ public class RediSearchIntegrationTests {
                         .addOperation(PostProcessingArgs.Apply.of("@sum * 0.9", "discounted_price"))
                         .addOperation(PostProcessingArgs.Filter.of("@sum > 700"))
                         .addOperation(PostProcessingArgs.Limit.of(0, 20)).build())
-                .param("discount_rate", "0.9").param("vector", queryVector).build();
+                .param("discount_rate", "0.9").param("$vector", new String(queryVector)).build();
 
         HybridReply<String, String> reply = redis.ftHybrid(indexName, hybridArgs);
 

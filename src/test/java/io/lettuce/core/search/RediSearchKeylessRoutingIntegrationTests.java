@@ -360,9 +360,9 @@ public class RediSearchKeylessRoutingIntegrationTests extends TestSupport {
         float[] queryVector = { 0.15f, 0.25f, 0.35f, 0.45f };
         return HybridArgs.<String, String> builder()
                 .search(HybridSearchArgs.<String, String> builder().query("@category:{electronics}").build())
-                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding").vector("$vector")
-                        .method(HybridVectorArgs.Knn.of(5)).build())
-                .param("vector", floatArrayToByteArray(queryVector)).build();
+                .vectorSearch(HybridVectorArgs.<String, String> builder().field("@embedding")
+                        .vector(floatArrayToByteArray(queryVector)).method(HybridVectorArgs.Knn.of(5)).build())
+                .build();
     }
 
     private void prepareHybrid() {
