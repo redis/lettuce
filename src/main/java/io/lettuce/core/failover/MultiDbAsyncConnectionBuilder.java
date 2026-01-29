@@ -1,5 +1,7 @@
 package io.lettuce.core.failover;
 
+import java.io.Closeable;
+import java.util.Collection;
 import java.util.Map;
 
 import io.lettuce.core.ConnectionFuture;
@@ -20,6 +22,8 @@ import io.lettuce.core.resource.ClientResources;
 class MultiDbAsyncConnectionBuilder<K, V> extends
         AbstractRedisMultiDbConnectionBuilder<StatefulRedisMultiDbConnection<K, V>, StatefulRedisConnection<K, V>, K, V> {
 
+    private final Collection<Closeable> closeableResources;
+
     /**
      * Creates a new regular multi-database connection builder.
      *
@@ -29,8 +33,9 @@ class MultiDbAsyncConnectionBuilder<K, V> extends
      * @param multiDbOptions the multi-database configuration
      */
     MultiDbAsyncConnectionBuilder(MultiDbClientImpl client, ClientResources resources, RedisCodec<K, V> codec,
-            MultiDbOptions multiDbOptions) {
+            Collection<Closeable> closeableResources, MultiDbOptions multiDbOptions) {
         super(client, resources, codec, multiDbOptions);
+        this.closeableResources = closeableResources;
     }
 
     @Override
@@ -42,11 +47,14 @@ class MultiDbAsyncConnectionBuilder<K, V> extends
     protected StatefulRedisMultiDbConnection<K, V> createMultiDbConnection(
             RedisDatabaseImpl<StatefulRedisConnection<K, V>> selected,
             Map<RedisURI, RedisDatabaseImpl<StatefulRedisConnection<K, V>>> databases, RedisCodec<K, V> codec,
-            HealthStatusManager healthStatusManager, RedisDatabaseAsyncCompletion<StatefulRedisConnection<K, V>> completion,
+            HealthStatusManager healthStatusManager, RedisDatabaseDeferredCompletion<StatefulRedisConnection<K, V>> completion,
             MultiDbOptions multiDbOptions) {
 
-        return new StatefulRedisMultiDbConnectionImpl<>(selected, databases, resources, codec, this::createRedisDatabaseAsync,
-                healthStatusManager, completion, multiDbOptions);
+        StatefulRedisMultiDbConnectionImpl<?, K, V> connection = new StatefulRedisMultiDbConnectionImpl<>(selected, databases,
+                resources, codec, this::createRedisDatabaseAsync, healthStatusManager, completion, multiDbOptions);
+
+        connection.registerAsCloseable(closeableResources);
+        return connection;
     }
 
 }

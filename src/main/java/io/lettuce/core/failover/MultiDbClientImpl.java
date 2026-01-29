@@ -176,7 +176,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         CompletableFuture<StatefulRedisMultiDbConnection<K, V>> future = builder.connectAsync(databaseConfigMap);
 
-        return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
+        return MultiDbConnectionFuture.from(future);
     }
 
     protected HealthStatusManager createHealthStatusManager() {
@@ -192,7 +192,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * @return a new multi-database async connection builder
      */
     protected <K, V> MultiDbAsyncConnectionBuilder<K, V> createConnectionBuilder(RedisCodec<K, V> codec) {
-        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec, multiDbOptions);
+        return new MultiDbAsyncConnectionBuilder<>(this, getResources(), codec, closeableResources, multiDbOptions);
     }
 
     /**
@@ -242,7 +242,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
 
         CompletableFuture<StatefulRedisMultiDbPubSubConnection<K, V>> future = builder.connectAsync(databaseConfigMap);
 
-        return MultiDbConnectionFuture.from(future, getResources().eventExecutorGroup());
+        return MultiDbConnectionFuture.from(future);
     }
 
     /**
@@ -254,7 +254,7 @@ class MultiDbClientImpl extends RedisClient implements MultiDbClient {
      * @return a new multi-database async pub/sub connection builder
      */
     protected <K, V> MultiDbAsyncPubSubConnectionBuilder<K, V> createPubSubConnectionBuilder(RedisCodec<K, V> codec) {
-        return new MultiDbAsyncPubSubConnectionBuilder<>(this, getResources(), codec, multiDbOptions);
+        return new MultiDbAsyncPubSubConnectionBuilder<>(this, getResources(), codec, closeableResources, multiDbOptions);
     }
 
     @Override
