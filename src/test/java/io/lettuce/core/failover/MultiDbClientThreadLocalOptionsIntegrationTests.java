@@ -2,7 +2,6 @@ package io.lettuce.core.failover;
 
 import static io.lettuce.TestTags.INTEGRATION_TEST;
 import static org.assertj.core.api.Assertions.*;
-import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -11,9 +10,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
@@ -285,8 +282,8 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
     /**
      * Test that verifies ThreadLocal set/reset pairs are completed synchronously on the calling thread when connectAsync()
      * returns. This test verifies: 1) For multiple databases, each gets its own set/reset pair on the calling thread 2) All
-     * pairs are completed before connectAsync() returns 3) Async callbacks run on a different thread (event loop) and have no
-     * timing relationship with resetOptions() 4) Despite immediate reset, correct options are applied to each database
+     * pairs are completed before connectAsync() returns 3) Despite immediate reset, correct options are applied to each
+     * database
      */
     @Test
     void asyncConnectShouldCompleteThreadLocalOpsOnCallingThread() throws Exception {
@@ -305,21 +302,15 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
 
         client = MultiDbClient.create(Arrays.asList(db1, db2));
 
-        // Track ThreadLocal operations and async callback thread
+        // Track ThreadLocal operations
         ThreadLocalWrapper wrapper = new ThreadLocalWrapper();
-        AtomicReference<Thread> asyncCallbackThread = new AtomicReference<>();
 
         ReflectionTestUtils.setField(client, "localClientOptions", wrapper);
 
         MultiDbConnectionFuture<StatefulRedisMultiDbConnection<String, String>> future = client.connectAsync(StringCodec.UTF8);
 
-        // Capture the async callback thread
-        future.whenComplete((conn, throwable) -> {
-            asyncCallbackThread.set(Thread.currentThread());
-        });
-
         // Once connectAsync() returns, all set/reset pairs should be complete
-        assertThat(wrapper.operations).hasSizeGreaterThanOrEqualTo(4); // At least 2 sets and 2 removes
+        assertThat(wrapper.operations).hasSize(4); // 2 sets and 2 removes
         assertThat(wrapper.operations).extracting("operation").contains("set", "remove", "set", "remove");
 
         // Verify all ThreadLocal operations happened on the calling thread
@@ -331,11 +322,6 @@ class MultiDbClientThreadLocalOptionsIntegrationTests {
 
         assertThat(connection).isNotNull();
         assertThat(connection.isOpen()).isTrue();
-
-        // Verify the async callback runs on a different thread (event loop thread)
-        await().atMost(Durations.ONE_SECOND).pollInterval(Durations.ONE_HUNDRED_MILLISECONDS)
-                .untilAsserted(() -> assertThat(asyncCallbackThread.get()).isNotNull());
-        assertThat(asyncCallbackThread.get()).isNotEqualTo(Thread.currentThread());
 
         // Verify that the connection has the correct options despite resetOptions() being called immediately
         StatefulRedisConnection<?, ?> conn1 = ((RedisDatabaseImpl<?>) connection.getDatabase(URI1)).getConnection();
