@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import static io.lettuce.TestTags.UNIT_TEST;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -65,6 +66,9 @@ class RedisRestClientUnitTests {
     private HttpClient.HttpConnection httpConnection;
 
     @Mock
+    private HttpClient.HttpConnection reconnectedHttpConnection;
+
+    @Mock
     private HttpClient.Response response;
 
     @Mock
@@ -74,14 +78,14 @@ class RedisRestClientUnitTests {
 
     @BeforeEach
     void setUp() {
-        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
-                .thenReturn(CompletableFuture.completedFuture(httpConnection));
         redisRestClient = new RedisRestClient(REST_ENDPOINT, credentialsSupplier, 1000, null, httpClient);
     }
 
     @Test
     void getBdbsParsesBdbsCorrectly() throws Exception {
         // Setup mock response
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
@@ -110,7 +114,9 @@ class RedisRestClientUnitTests {
     }
 
     @Test
-    void bdbInfoMatchesByDnsName() throws Exception {
+    void bdbInfoMatchesByDnsName() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
@@ -126,7 +132,9 @@ class RedisRestClientUnitTests {
     }
 
     @Test
-    void bdbInfoMatchesByIpAddress() throws Exception {
+    void bdbInfoMatchesByIpAddress() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
@@ -141,7 +149,9 @@ class RedisRestClientUnitTests {
     }
 
     @Test
-    void getBdbsThrowsExceptionOnNonSuccessStatus() throws Exception {
+    void getBdbsThrowsExceptionOnNonSuccessStatus() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(401);
@@ -151,16 +161,26 @@ class RedisRestClientUnitTests {
     }
 
     @Test
-    void getBdbsThrowsExceptionOnIOException() throws Exception {
+    void getBdbsThrowsExceptionOnIOException() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection))
+                .thenReturn(CompletableFuture.completedFuture(reconnectedHttpConnection));
+
         CompletableFuture<HttpClient.Response> failedFuture = new CompletableFuture<>();
         failedFuture.completeExceptionally(new IOException("Connection failed"));
         when(httpConnection.executeAsync(any(HttpClient.Request.class))).thenReturn(failedFuture);
+        when(httpConnection.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+
+        when(reconnectedHttpConnection.executeAsync(any(HttpClient.Request.class))).thenReturn(failedFuture);
 
         assertThrows(RedisRestException.class, () -> redisRestClient.getBdbs());
     }
 
     @Test
-    void checkBdbAvailabilityReturnsTrueOnSuccess() throws Exception {
+    void checkBdbAvailabilityReturnsTrueOnSuccess() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
+
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
@@ -171,9 +191,12 @@ class RedisRestClientUnitTests {
     }
 
     @Test
-    void checkBdbAvailabilityReturnsFalseOnNonSuccessStatus() throws Exception {
+    void checkBdbAvailabilityReturnsFalseOnNonSuccessStatus() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
+        when(httpConnection.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
         when(response.getStatusCode()).thenReturn(503);
 
         boolean result = redisRestClient.checkBdbAvailability(1L, false, null);
@@ -182,18 +205,26 @@ class RedisRestClientUnitTests {
     }
 
     @Test
-    void checkBdbAvailabilityReturnsFalseOnIOException() throws Exception {
+    void checkBdbAvailabilityThrowsRedisRestExceptionOnIOException() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection))
+                .thenReturn(CompletableFuture.completedFuture(reconnectedHttpConnection));
         CompletableFuture<HttpClient.Response> failedFuture = new CompletableFuture<>();
         failedFuture.completeExceptionally(new IOException("Connection failed"));
         when(httpConnection.executeAsync(any(HttpClient.Request.class))).thenReturn(failedFuture);
+        when(httpConnection.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
 
-        boolean result = redisRestClient.checkBdbAvailability(1L, false, null);
+        when(reconnectedHttpConnection.executeAsync(any(HttpClient.Request.class))).thenReturn(failedFuture);
 
-        assertFalse(result);
+        assertThatThrownBy((() -> redisRestClient.checkBdbAvailability(1L, false, null)))
+                .isInstanceOf(RedisRestException.class);
     }
 
     @Test
-    void checkBdbAvailabilityWithoutExtendedCheck() throws Exception {
+    void checkBdbAvailabilityWithoutExtendedCheck() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
+
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
@@ -209,7 +240,9 @@ class RedisRestClientUnitTests {
     }
 
     @Test
-    void checkBdbAvailabilityWithExtendedCheckWithoutLagTolerance() throws Exception {
+    void checkBdbAvailabilityWithExtendedCheckWithoutLagTolerance() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
@@ -226,7 +259,9 @@ class RedisRestClientUnitTests {
     }
 
     @Test
-    void checkBdbAvailabilityWithExtendedCheckAndLagTolerance() throws Exception {
+    void checkBdbAvailabilityWithExtendedCheckAndLagTolerance() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(response.getStatusCode()).thenReturn(200);
@@ -244,11 +279,14 @@ class RedisRestClientUnitTests {
     }
 
     @Test
-    void httpConnectionIsReestablishedOnUnexpectedClose() throws Exception {
-        // Setup for requests
+    void httpConnectionIsReestablishedOnUnexpectedClose() {
+        when(httpClient.connectAsync(any(URI.class), any(HttpClient.ConnectionConfig.class)))
+                .thenReturn(CompletableFuture.completedFuture(httpConnection));
+
         when(httpConnection.executeAsync(any(HttpClient.Request.class)))
                 .thenReturn(CompletableFuture.completedFuture(response));
         when(httpConnection.closeAsync()).thenReturn(CompletableFuture.completedFuture(null));
+
         when(response.getStatusCode()).thenReturn(200);
 
         // First request - connection will be established (httpConnection is null initially)

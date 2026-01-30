@@ -1,3 +1,10 @@
+/*
+ * Copyright 2026-Present, Redis Ltd. and Contributors
+ * 
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.ClientOptions;
@@ -15,6 +22,8 @@ import io.netty.util.internal.logging.InternalLoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -70,17 +79,19 @@ class RedisRestClient {
         this.connectionConfig = configBuilder.build();
     }
 
+    /**
+     * Retrieves all databases (BDBs) from the Redis Enterprise cluster using the {@code GET /v1/bdbs} REST API endpoint.
+     *
+     * @return list of {@link BdbInfo} containing database uid and endpoint information
+     * @throws RedisRestException if the request fails or returns a non-2xx status code
+     * @see <a href="https://redis.io/docs/latest/operate/rs/references/rest-api/requests/bdbs/">BDBs REST API</a>
+     */
     public List<BdbInfo> getBdbs() throws RedisRestException {
         HttpClient.Request request = HttpClient.Request.get(V_1_BDBS).queryParam("fields", "uid,endpoints")
                 .headers(createAuthHeaders()).build();
 
         HttpClient.Response response;
-        try {
-            response = executeWithRetryAsync(request).join();
-        } catch (Exception e) {
-            Throwable cause = Exceptions.unwrap(e);
-            throw new RedisRestException("Failed to get BDBs: " + cause.getMessage(), cause);
-        }
+        response = executeWithRetry(request);
 
         // Validate response status
         if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
@@ -91,10 +102,27 @@ class RedisRestClient {
         }
     }
 
+    /**
+     * Checks database availability using {@code GET /v1/bdbs/<uid>/availability}.
+     *
+     * @param uid the database identifier
+     * @param lagAware if {@code true}, uses {@code extend_check=lag} for lag-aware validation
+     * @return {@code true} if available (HTTP 2xx), {@code false} otherwise
+     * @see <a href="https://redis.io/docs/latest/operate/rs/monitoring/db-availability/">Database Availability API</a>
+     */
     public boolean checkBdbAvailability(Long uid, boolean lagAware) {
         return checkBdbAvailability(uid, lagAware, null);
     }
 
+    /**
+     * Checks database availability using {@code GET /v1/bdbs/<uid>/availability}.
+     *
+     * @param uid the database identifier
+     * @param extendedCheckEnabled if {@code true}, uses {@code extend_check=lag} for lag-aware validation
+     * @param availabilityLagToleranceMs optional lag tolerance threshold in milliseconds (overrides cluster default)
+     * @return {@code true} if available (HTTP 2xx), {@code false} otherwise
+     * @see <a href="https://redis.io/docs/latest/operate/rs/monitoring/db-availability/">Database Availability API</a>
+     */
     public boolean checkBdbAvailability(Long uid, boolean extendedCheckEnabled, Long availabilityLagToleranceMs) {
         String availabilityPath = String.format(V_1_BDBS_S_AVAILABILITY, uid);
 
@@ -111,14 +139,8 @@ class RedisRestClient {
 
         HttpClient.Request request = requestBuilder.build();
 
-        try {
-            HttpClient.Response response = executeWithRetryAsync(request).join();
-            return response.getStatusCode() >= 200 && response.getStatusCode() < 300;
-        } catch (Exception e) {
-            Throwable cause = Exceptions.unwrap(e);
-            log.warn("Availability check for {} failed: {}", uid, cause.getMessage());
-            return false;
-        }
+        HttpClient.Response response = executeWithRetry(request);
+        return response.getStatusCode() >= 200 && response.getStatusCode() < 300;
     }
 
     /**
@@ -139,13 +161,41 @@ class RedisRestClient {
         String username = credentials.getUsername();
         char[] password = credentials.getPassword();
 
-        // Create Basic Auth header: "Basic base64(username:password)"
-        String auth = username + ":" + new String(password);
-        String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
+        // Combine username and password into "username:password" bytes
+        CharBuffer combined = CharBuffer.allocate(username.length() + 1 + password.length);
+        combined.put(username).put(':').put(password).flip();
+
+        ByteBuffer bytes = StandardCharsets.UTF_8.encode(combined);
+        String encodedAuth = Base64.getEncoder().encodeToString(bytes.array());
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Authorization", "Basic " + encodedAuth);
         return headers;
+    }
+
+    /**
+     * Executes the given HTTP request synchronously with retry semantics.
+     *
+     * <p>
+     * This method wraps {@link #executeWithRetryAsync(HttpClient.Request)} and blocks until the asynchronous operation
+     * completes. Any exceptions thrown during the asynchronous execution (including
+     * {@link java.util.concurrent.CompletionException}) are unwrapped and converted into unchecked
+     * {@link io.lettuce.core.RedisException} via {@link RedisRestExceptions#bubble(Throwable)}.
+     *
+     * <p>
+     * The retry logic is identical to {@link #executeWithRetryAsync(HttpClient.Request)}, i.e. the request is retried once if
+     * the connection fails or if a retryable HTTP status code (408, 429, 500, 502, 503, 504) is received.
+     *
+     * @param request the HTTP request to execute; must not be {@code null}
+     * @return the HTTP response
+     * @throws io.lettuce.core.RedisException if the request fails or an exception occurs during execution
+     */
+    private HttpClient.Response executeWithRetry(HttpClient.Request request) {
+        try {
+            return executeWithRetryAsync(request).join();
+        } catch (Exception e) {
+            throw RedisRestExceptions.bubble(e);
+        }
     }
 
     /**
@@ -155,7 +205,6 @@ class RedisRestClient {
      *
      * @param request the HTTP request to execute
      * @return the HTTP response
-     * @throws IOException if both the initial attempt and retry fail with IOException
      */
     private CompletableFuture<HttpClient.Response> executeWithRetryAsync(HttpClient.Request request) {
         return executeRequestAsync(request).handle((response, ex) -> {
@@ -366,10 +415,14 @@ class RedisRestClient {
         /**
          * Check if this BDB matches the given database host by comparing endpoints.
          *
-         * @param host the database host to match
+         *
+         * @param host the database host to match. Host must not be null.
          * @return true if this BDB has an endpoint matching the host
+         * @throws IllegalArgumentException if h
          */
         boolean matches(String host) {
+            LettuceAssert.notNull(host, "Host must not be null");
+
             for (EndpointInfo endpoint : this.endpoints) {
                 // First check dns_name
                 if (host.equals(endpoint.getDnsName())) {
@@ -435,6 +488,37 @@ class RedisRestClient {
         public String toString() {
             return "EndpointInfo{" + "addr=" + addr + ", dnsName='" + dnsName + '\'' + ", port=" + port + ", uid='" + uid + '\''
                     + '}';
+        }
+
+    }
+
+    final static class RedisRestExceptions {
+
+        private RedisRestExceptions() {
+        }
+
+        static RuntimeException bubble(Throwable t) {
+
+            Throwable cause = Exceptions.unwrap(t);
+
+            if (cause instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+                return new RedisRestException("REST Call was interrupted", cause);
+            }
+
+            if (cause instanceof IOException) {
+                return new RedisRestException("REST call failed", cause);
+            }
+
+            if (cause instanceof RedisRestException) {
+                return (RedisRestException) cause;
+            }
+
+            if (cause instanceof RuntimeException) {
+                return (RuntimeException) cause;
+            }
+
+            return new RedisRestException("Unexpected REST failure", cause);
         }
 
     }

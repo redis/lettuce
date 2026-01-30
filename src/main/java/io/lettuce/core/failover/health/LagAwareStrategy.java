@@ -134,10 +134,10 @@ public class LagAwareStrategy implements HealthCheckStrategy {
                     return HealthStatus.HEALTHY;
                 }
             }
-        } catch (Exception e) {
-            log.error("Error while checking database availability", e);
+        } catch (RedisRestException e) {
             cachedBdbId = null;
-            throw new RedisException("Error while checking availability", e);
+            log.debug("Redis REST call failed", e);
+            return HealthStatus.UNHEALTHY;
         }
         return HealthStatus.UNHEALTHY;
     }
@@ -172,7 +172,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
         private final SslOptions sslOptions;
 
         // Maximum acceptable lag in milliseconds (default: 5000);
-        private final Duration availability_lag_tolerance;
+        private final Duration availabilityLagTolerance;
 
         // Enable extended lag checking (default: true - performs lag validation in addition to standard
         // datapath validation )
@@ -189,7 +189,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
             this.restEndpoint = builder.restEndpoint;
             this.credentialsSupplier = builder.credentialsSupplier;
             this.sslOptions = builder.sslOptions;
-            this.availability_lag_tolerance = builder.availabilityLagTolerance;
+            this.availabilityLagTolerance = builder.availabilityLagTolerance;
             this.extendedCheckEnabled = builder.extendedCheckEnabled;
         }
 
@@ -206,7 +206,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
         }
 
         public Duration getAvailabilityLagTolerance() {
-            return availability_lag_tolerance;
+            return availabilityLagTolerance;
         }
 
         public boolean isExtendedCheckEnabled() {
