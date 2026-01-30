@@ -48,8 +48,7 @@ public class HttpClientResources {
         }
 
         if (selectedProvider == null) {
-            throw new IllegalStateException(
-                    "No HTTP client provider available. To use default HTTP client provider, add dependency io.netty:netty-codec-http. For custom provider, implement and register an SPI implementation of HttpClientProvider.");
+            throw new IllegalStateException("No HTTP client provider available");
         }
 
         logger.debug("Using HTTP client provider: {}", selectedProvider.getClass().getName());
