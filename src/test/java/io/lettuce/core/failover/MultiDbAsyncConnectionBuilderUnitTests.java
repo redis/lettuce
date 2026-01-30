@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
+import java.io.Closeable;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.*;
@@ -78,6 +79,9 @@ class MultiDbAsyncConnectionBuilderUnitTests {
     @Mock
     private HealthCheck mockHealthCheck2;
 
+    @Mock
+    private Collection<Closeable> closeableResources;
+
     private static final ClientResources resources = DefaultClientResources.create();
 
     private final RedisCodec<String, String> codec = StringCodec.UTF8;
@@ -103,8 +107,8 @@ class MultiDbAsyncConnectionBuilderUnitTests {
 
     @BeforeEach
     void setUp() {
-        regularBuilder = new MultiDbAsyncConnectionBuilder<>(client, resources, codec);
-        pubSubBuilder = new MultiDbAsyncPubSubConnectionBuilder<>(client, resources, codec);
+        regularBuilder = new MultiDbAsyncConnectionBuilder<>(client, resources, codec, closeableResources);
+        pubSubBuilder = new MultiDbAsyncPubSubConnectionBuilder<>(client, resources, codec, closeableResources);
     }
 
     @AfterAll
