@@ -1,3 +1,10 @@
+/*
+ * Copyright 2026-Present, Redis Ltd. and Contributors
+ * 
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisCredentials;
@@ -15,6 +22,36 @@ import java.time.Duration;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * Health check strategy that uses the Redis Enterprise REST API database availability endpoint.
+ * <p>
+ * This strategy uses the {@code /v1/bdbs/<database_id>/availability} REST API to verify whether the database is available to
+ * perform read and write operations and can respond to queries from client applications.
+ * </p>
+ *
+ * <h2>Health Check Process</h2>
+ * <ol>
+ * <li>Resolves the BDB (database) ID by matching the endpoint host against known database endpoints</li>
+ * <li>Caches the BDB ID for subsequent health checks to avoid repeated lookups</li>
+ * <li>Calls the availability API to check if the database is healthy</li>
+ * </ol>
+ *
+ * <h2>Lag-Aware Availability Checks</h2>
+ * <p>
+ * When {@link Config#isExtendedCheckEnabled()} is {@code true}, performs a lag-aware availability check using the
+ * {@code extend_check=lag} query parameter. This considers replication lag tolerance and helps reduce the risk of data
+ * inconsistencies during disaster recovery by ensuring failover only occurs when databases are sufficiently synchronized.
+ * </p>
+ * <p>
+ * The lag tolerance threshold can be configured via {@link Config#getAvailabilityLagTolerance()} (default: 100ms). Depending on
+ * factors such as workload, network conditions, and throughput, you might want to adjust this threshold.
+ * </p>
+ *
+ * @author Ivo Gaydazhiev
+ * @since 7.4
+ * @see <a href="https://redis.io/docs/latest/operate/rs/monitoring/db-availability/">Redis Enterprise Database Availability
+ *      API</a>
+ */
 public class LagAwareStrategy implements HealthCheckStrategy {
 
     private static final InternalLogger log = InternalLoggerFactory.getInstance(LagAwareStrategy.class);
@@ -140,8 +177,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
         private final Duration availability_lag_tolerance;
 
         // Enable extended lag checking (default: true - performs lag validation in addition to standard
-        // datapath
-        // validation )
+        // datapath validation )
         private final boolean extendedCheckEnabled;
 
         public Config(URI restEndpoint, Supplier<RedisCredentials> credentialsSupplier) {
@@ -149,7 +185,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
                     .extendedCheckEnabled(EXTENDED_CHECK_DEFAULT));
         }
 
-        private Config(ConfigBuilder builder) {
+        private Config(Builder builder) {
             super(builder);
 
             this.restEndpoint = builder.restEndpoint;
@@ -181,22 +217,22 @@ public class LagAwareStrategy implements HealthCheckStrategy {
 
         /**
          * Create a new builder for LagAwareStrategy.Config.
-         * 
+         *
          * @param restEndpoint the Redis Enterprise REST API endpoint
          * @param credentialsSupplier the credentials supplier
          * @return a new ConfigBuilder instance
          */
-        public static ConfigBuilder builder(URI restEndpoint, Supplier<RedisCredentials> credentialsSupplier) {
-            return new ConfigBuilder(restEndpoint, credentialsSupplier);
+        public static Builder builder(URI restEndpoint, Supplier<RedisCredentials> credentialsSupplier) {
+            return builder().restEndpoint(restEndpoint).credentialsSupplier(credentialsSupplier);
         }
 
         /**
          * Use {@link Config#builder(URI, Supplier)} instead.
-         * 
+         *
          * @return a new Builder instance
          */
-        public static ConfigBuilder builder() {
-            throw new UnsupportedOperationException("Endpoint and credentials are required to build LagAwareStrategy.Config.");
+        public static Builder builder() {
+            return new LagAwareStrategy.Config.Builder();
         }
 
         /**
@@ -208,7 +244,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
          * </p>
          */
         public static Config create(URI restEndpoint, Supplier<RedisCredentials> credentialsSupplier) {
-            return new ConfigBuilder(restEndpoint, credentialsSupplier).build();
+            return builder(restEndpoint, credentialsSupplier).build();
         }
 
         /**
@@ -219,7 +255,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
          * </p>
          */
         public static Config databaseAvailability(URI restEndpoint, Supplier<RedisCredentials> credentialsSupplier) {
-            return new ConfigBuilder(restEndpoint, credentialsSupplier).extendedCheckEnabled(false).build();
+            return builder(restEndpoint, credentialsSupplier).extendedCheckEnabled(false).build();
         }
 
         /**
@@ -229,7 +265,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
          * </p>
          */
         public static Config lagAware(URI restEndpoint, Supplier<RedisCredentials> credentialsSupplier) {
-            return new ConfigBuilder(restEndpoint, credentialsSupplier).extendedCheckEnabled(true).build();
+            return builder(restEndpoint, credentialsSupplier).extendedCheckEnabled(true).build();
         }
 
         /**
@@ -237,18 +273,18 @@ public class LagAwareStrategy implements HealthCheckStrategy {
          */
         public static Config lagAwareWithTolerance(URI restEndpoint, Supplier<RedisCredentials> credentialsSupplier,
                 Duration availabilityLagTolerance) {
-            return new ConfigBuilder(restEndpoint, credentialsSupplier).extendedCheckEnabled(true)
+            return builder(restEndpoint, credentialsSupplier).extendedCheckEnabled(true)
                     .availabilityLagTolerance(availabilityLagTolerance).build();
         }
 
         /**
          * Builder for LagAwareStrategy.Config.
          */
-        public static class ConfigBuilder extends HealthCheckStrategy.Config.Builder<ConfigBuilder, Config> {
+        public static class Builder extends HealthCheckStrategy.Config.Builder<Builder, Config> {
 
-            private final URI restEndpoint;
+            private URI restEndpoint;
 
-            private final Supplier<RedisCredentials> credentialsSupplier;
+            private Supplier<RedisCredentials> credentialsSupplier;
 
             // SSL configuration for HTTPS connections
             private SslOptions sslOptions;
@@ -259,12 +295,21 @@ public class LagAwareStrategy implements HealthCheckStrategy {
             // Enable extended lag checking
             private boolean extendedCheckEnabled = EXTENDED_CHECK_DEFAULT;
 
-            private ConfigBuilder(URI restEndpoint, Supplier<RedisCredentials> credentialsSupplier) {
+            private Builder() {
+            }
+
+            public Builder restEndpoint(URI restEndpoint) {
                 LettuceAssert.notNull(restEndpoint, "Redis Enterprise REST API endpoint must not be null");
 
                 this.restEndpoint = restEndpoint;
-                this.credentialsSupplier = credentialsSupplier;
+                return this;
+            }
 
+            public Builder credentialsSupplier(Supplier<RedisCredentials> credentialsSupplier) {
+                LettuceAssert.notNull(credentialsSupplier, "Credentials supplier must not be null");
+
+                this.credentialsSupplier = credentialsSupplier;
+                return this;
             }
 
             /**
@@ -274,7 +319,9 @@ public class LagAwareStrategy implements HealthCheckStrategy {
              * @param sslOptions the SSL configuration options
              * @return this builder
              */
-            public ConfigBuilder sslOptions(SslOptions sslOptions) {
+            public Builder sslOptions(SslOptions sslOptions) {
+                LettuceAssert.notNull(sslOptions, "SSL options must not be null");
+
                 this.sslOptions = sslOptions;
                 return this;
             }
@@ -285,7 +332,11 @@ public class LagAwareStrategy implements HealthCheckStrategy {
              * @param availabilityLagTolerance the lag tolerance in milliseconds (default: 100)
              * @return this builder
              */
-            public ConfigBuilder availabilityLagTolerance(Duration availabilityLagTolerance) {
+            public Builder availabilityLagTolerance(Duration availabilityLagTolerance) {
+                LettuceAssert.notNull(availabilityLagTolerance, "Availability lag tolerance must not be null");
+                LettuceAssert.isTrue(availabilityLagTolerance.toMillis() > 0,
+                        "Availability lag tolerance must be greater than zero");
+
                 this.availabilityLagTolerance = availabilityLagTolerance;
                 return this;
             }
@@ -297,7 +348,7 @@ public class LagAwareStrategy implements HealthCheckStrategy {
              * @param extendedCheckEnabled true to enable extended lag checking (default: false)
              * @return this builder
              */
-            public ConfigBuilder extendedCheckEnabled(boolean extendedCheckEnabled) {
+            public Builder extendedCheckEnabled(boolean extendedCheckEnabled) {
                 this.extendedCheckEnabled = extendedCheckEnabled;
                 return this;
             }
@@ -309,6 +360,8 @@ public class LagAwareStrategy implements HealthCheckStrategy {
              */
             @Override
             public Config build() {
+                LettuceAssert.notNull(restEndpoint, "Redis Enterprise REST API endpoint must not be null");
+
                 return new Config(this);
             }
 

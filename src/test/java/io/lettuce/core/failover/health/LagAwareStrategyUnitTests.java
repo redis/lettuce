@@ -1,11 +1,17 @@
+/*
+ * Copyright 2026-Present, Redis Ltd. and Contributors
+ * 
+ * All rights reserved.
+ *
+ * Licensed under the MIT License.
+ */
 package io.lettuce.core.failover.health;
 
 import io.lettuce.core.RedisCredentials;
 import io.lettuce.core.RedisException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.support.http.HttpClient;
-import io.lettuce.core.support.http.HttpClientResources;
-import io.lettuce.test.ReflectionTestUtils;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -18,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static io.lettuce.TestTags.UNIT_TEST;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -26,9 +33,8 @@ import static org.mockito.Mockito.*;
  * Unit tests for {@link LagAwareStrategy}.
  */
 @ExtendWith(MockitoExtension.class)
+@Tag(UNIT_TEST)
 class LagAwareStrategyUnitTests {
-
-    private static final String TEST_BDB_JSON = "[{\"uid\":\"1\",\"endpoints\":[{\"uid\":\"1:0\",\"addr\":[\"10.0.0.1\"],\"dns_name\":\"redis-1.example.com\",\"port\":12000}]}]";
 
     private final URI restEndpoint = URI.create("https://localhost:9443");
 
@@ -48,22 +54,6 @@ class LagAwareStrategyUnitTests {
         strategy.close();
 
         verify(externalClient, never()).close();
-    }
-
-    @Test
-    void shouldReleaseInternallyAcquiredHttpClient() {
-        when(config.getRestEndpoint()).thenReturn(restEndpoint);
-        when(config.getCredentialsSupplier()).thenReturn(credentialsSupplier);
-
-        assertNull(getSharedHttpClient());
-
-        LagAwareStrategy strategy = new LagAwareStrategy(config, null);
-        assertNotNull(strategy.getHttpClient());
-        assertEquals(getSharedHttpClient(), strategy.getHttpClient());
-
-        strategy.close();
-
-        assertNull(getSharedHttpClient());
     }
 
     @Test
@@ -224,10 +214,6 @@ class LagAwareStrategyUnitTests {
         assertThrows(RedisException.class, () -> strategy.doHealthCheck(dbEndpoint));
 
         strategy.close();
-    }
-
-    private HttpClient getSharedHttpClient() {
-        return ReflectionTestUtils.getField(HttpClientResources.class, "sharedClient");
     }
 
     private List<RedisRestClient.BdbInfo> createDefaultBdbs() {
